@@ -1,13 +1,8 @@
 import * as DateField from "front-end/lib/components/form-field/date";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as Phase from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase";
 import React from "react";
@@ -106,63 +101,72 @@ export function setStartingPhase(
   return updateAssignmentDate(state, assignmentDate);
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   startingPhase = SWUOpportunityPhaseType.Inception
 }) => {
   const totalMaxBudget = opportunity?.totalMaxBudget;
   const assignmentDate = opportunity?.assignmentDate || new Date();
-  return {
-    startingPhase,
-    inceptionPhase: immutable(
-      await Phase.init({
-        phase: opportunity?.inceptionPhase,
-        totalMaxBudget,
-        isAccordionOpen: false,
-        validateStartDate: (raw) =>
-          opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
-            raw,
-            assignmentDate
-          ),
-        validateCompletionDate:
-          opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-      })
-    ),
-    prototypePhase: immutable(
-      await Phase.init({
-        phase: opportunity?.prototypePhase,
-        totalMaxBudget,
-        isAccordionOpen: false,
-        validateStartDate: (raw) =>
-          opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
-            raw,
-            startingPhase === SWUOpportunityPhaseType.Prototype
-              ? opportunity?.assignmentDate
-              : opportunity?.inceptionPhase?.completionDate
-          ),
-        validateCompletionDate:
-          opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-      })
-    ),
-    implementationPhase: immutable(
-      await Phase.init({
-        phase: opportunity?.implementationPhase,
-        totalMaxBudget,
-        // If only implementation phase, have it be open.
-        isAccordionOpen:
-          startingPhase === SWUOpportunityPhaseType.Implementation,
-        validateStartDate: (raw) =>
-          opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
-            raw,
-            startingPhase === SWUOpportunityPhaseType.Implementation
-              ? opportunity?.assignmentDate
-              : opportunity?.prototypePhase?.completionDate
-          ),
-        validateCompletionDate:
-          opportunityValidation.validateSWUOpportunityPhaseCompletionDate
-      })
-    )
-  };
+  const [inceptionPhaseState, inceptionPhaseCmds] = Phase.init({
+    phase: opportunity?.inceptionPhase,
+    totalMaxBudget,
+    isAccordionOpen: false,
+    validateStartDate: (raw) =>
+      opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
+        raw,
+        assignmentDate
+      ),
+    validateCompletionDate:
+      opportunityValidation.validateSWUOpportunityPhaseCompletionDate
+  });
+  const [prototypePhaseState, prototypePhaseCmds] = Phase.init({
+    phase: opportunity?.prototypePhase,
+    totalMaxBudget,
+    isAccordionOpen: false,
+    validateStartDate: (raw) =>
+      opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
+        raw,
+        startingPhase === SWUOpportunityPhaseType.Prototype
+          ? opportunity?.assignmentDate
+          : opportunity?.inceptionPhase?.completionDate
+      ),
+    validateCompletionDate:
+      opportunityValidation.validateSWUOpportunityPhaseCompletionDate
+  });
+  const [implementationPhaseState, implementationPhaseCmds] = Phase.init({
+    phase: opportunity?.implementationPhase,
+    totalMaxBudget,
+    // If only implementation phase, have it be open.
+    isAccordionOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
+    validateStartDate: (raw) =>
+      opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
+        raw,
+        startingPhase === SWUOpportunityPhaseType.Implementation
+          ? opportunity?.assignmentDate
+          : opportunity?.prototypePhase?.completionDate
+      ),
+    validateCompletionDate:
+      opportunityValidation.validateSWUOpportunityPhaseCompletionDate
+  });
+  return [
+    {
+      startingPhase,
+      inceptionPhase: immutable(inceptionPhaseState),
+      prototypePhase: immutable(prototypePhaseState),
+      implementationPhase: immutable(implementationPhaseState)
+    },
+    [
+      ...component_.cmd.mapMany(inceptionPhaseCmds, (msg) =>
+        adt("inceptionPhase", msg)
+      ),
+      ...component_.cmd.mapMany(prototypePhaseCmds, (msg) =>
+        adt("prototypePhase", msg)
+      ),
+      ...component_.cmd.mapMany(implementationPhaseCmds, (msg) =>
+        adt("implementationPhase", msg)
+      )
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
 function hasPhase(
@@ -179,10 +183,10 @@ function hasPhase(
   }
 }
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "inceptionPhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["inceptionPhase"],
         childUpdate: Phase.update,
@@ -191,27 +195,24 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => {
           if (msg.value.tag === "completionDate") {
             return [
-              state,
-              async (state1) =>
-                state1.set(
-                  "prototypePhase",
-                  await Phase.setValidateStartDate(
-                    state1.prototypePhase,
-                    (raw) =>
-                      opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
-                        raw,
-                        DateField.getDate(state1.inceptionPhase.completionDate)
-                      )
+              state.set(
+                "prototypePhase",
+                Phase.setValidateStartDate(state.prototypePhase, (raw) =>
+                  opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
+                    raw,
+                    DateField.getDate(state.inceptionPhase.completionDate)
                   )
                 )
+              ),
+              []
             ];
           }
-          return [state];
+          return [state, []];
         }
       });
 
     case "prototypePhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["prototypePhase"],
         childUpdate: Phase.update,
@@ -220,27 +221,24 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => {
           if (msg.value.tag === "completionDate") {
             return [
-              state,
-              async (state1) =>
-                state1.set(
-                  "implementationPhase",
-                  await Phase.setValidateStartDate(
-                    state1.implementationPhase,
-                    (raw) =>
-                      opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
-                        raw,
-                        DateField.getDate(state1.prototypePhase.completionDate)
-                      )
+              state.set(
+                "implementationPhase",
+                Phase.setValidateStartDate(state.implementationPhase, (raw) =>
+                  opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
+                    raw,
+                    DateField.getDate(state.prototypePhase.completionDate)
                   )
                 )
+              ),
+              []
             ];
           }
-          return [state];
+          return [state, []];
         }
       });
 
     case "implementationPhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["implementationPhase"],
         childUpdate: Phase.update,
@@ -300,11 +298,15 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
   const isImplementationPhaseValid = Phase.isValid(state.implementationPhase);
@@ -314,7 +316,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         <Phase.view
           className="mb-4"
           state={state.inceptionPhase}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("inceptionPhase" as const, value)
           )}
           icon={isInceptionPhaseValid ? "map" : "exclamation-circle"}
@@ -334,7 +336,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         <Phase.view
           className="mb-4"
           state={state.prototypePhase}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("prototypePhase" as const, value)
           )}
           icon={isPrototypePhaseValid ? "rocket" : "exclamation-circle"}
@@ -354,7 +356,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
       ) : null}
       <Phase.view
         state={state.implementationPhase}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
           adt("implementationPhase" as const, value)
         )}
         icon={isImplementationPhaseValid ? "cogs" : "exclamation-circle"}

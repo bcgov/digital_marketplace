@@ -1,5 +1,5 @@
 import {
-  getContextualActionsValid,
+  getActionsValid,
   getModalValid,
   makePageMetadata,
   makeStartLoading,
@@ -11,18 +11,9 @@ import {
 import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  mapComponentDispatch,
-  newRoute,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Form from "front-end/lib/pages/content/lib/components/form";
@@ -35,6 +26,7 @@ import {
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { UserType } from "shared/lib/resources/user";
+import * as ContentResource from "shared/lib/resources/content";
 import { ADT, adt } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
 
@@ -52,89 +44,141 @@ type InnerMsg =
   | ADT<"form", Form.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"publish">;
+  | ADT<"publish">
+  | ADT<
+      "onPublishResponse",
+      api.ResponseValidation<
+        ContentResource.Content,
+        ContentResource.CreateValidationErrors
+      >
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-export const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType<
+export const init: component_.page.Init<
   RouteParams,
+  SharedState,
   State,
-  Msg
->({
+  InnerMsg,
+  Route
+> = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Admin],
-  async success({ routeParams, shared }) {
-    return valid(
-      immutable({
-        loading: 0,
-        showModal: null,
-        form: immutable(await Form.init({}))
-      })
-    );
-  },
-  async fail({ dispatch, routePath }) {
-    dispatch(
-      replaceRoute(
-        adt("notFound" as const, {
-          path: routePath
+  success() {
+    const [formState, formCmds] = Form.init({});
+    return [
+      valid(
+        immutable({
+          loading: 0,
+          showModal: null,
+          form: immutable(formState)
         })
-      )
-    );
-    return invalid(null);
+      ),
+      [
+        ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+        component_.cmd.dispatch(component_.page.readyMsg())
+      ]
+    ];
+  },
+  fail({ routePath }) {
+    return [
+      invalid(null),
+      [
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(
+            adt("notFound", {
+              path: routePath
+            }) as Route
+          )
+        )
+      ]
+    ];
   }
 });
 
 const startLoading = makeStartLoading<ValidState>("loading");
 const stopLoading = makeStopLoading<ValidState>("loading");
 
-export const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "form":
-      return updateComponentChild({
-        state,
-        childStatePath: ["form"],
-        childUpdate: Form.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("form", value)
-      });
-    case "showModal":
-      return [state.set("showModal", msg.value)];
-    case "hideModal":
-      return [state.set("showModal", null)];
-    case "publish":
-      return [
-        startLoading(state).set("showModal", null),
-        async (state, dispatch) => {
-          const values = Form.getValues(state.form);
-          const result = await api.content.create(values);
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                newRoute(adt("contentEdit", result.value.slug) as Route)
-              );
-              dispatch(
-                toast(adt("success", toasts.published.success(result.value)))
-              );
-              return state;
-            case "invalid":
-              dispatch(toast(adt("error", toasts.published.error)));
-              state = state.update("form", (s) =>
-                Form.setErrors(s, result.value)
-              );
-              return stopLoading(state);
-            case "unhandled":
-              dispatch(toast(adt("error", toasts.published.error)));
-              return stopLoading(state);
-          }
+export const update: component_.page.Update<State, InnerMsg, Route> =
+  updateValid(({ state, msg }) => {
+    switch (msg.tag) {
+      case "form":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["form"],
+          childUpdate: Form.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("form", value)
+        });
+      case "showModal":
+        return [state.set("showModal", msg.value), []];
+      case "hideModal":
+        return [state.set("showModal", null), []];
+      case "publish": {
+        const values = Form.getValues(state.form);
+        return [
+          startLoading(state).set("showModal", null),
+          [
+            api.content.create(values, (response) =>
+              adt("onPublishResponse", response)
+            ) as component_.Cmd<Msg>
+          ]
+        ];
+      }
+      case "onPublishResponse": {
+        const response = msg.value;
+        switch (response.tag) {
+          case "valid":
+            return [
+              state,
+              [
+                component_.cmd.dispatch(
+                  component_.global.newRouteMsg(
+                    adt("contentEdit", response.value.slug) as Route
+                  )
+                ),
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("success", toasts.published.success(response.value))
+                  )
+                )
+              ]
+            ];
+          case "invalid":
+            state = state.update("form", (s) =>
+              Form.setErrors(s, response.value)
+            );
+            return [
+              stopLoading(state),
+              [
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("error", toasts.published.error)
+                  )
+                )
+              ]
+            ];
+          case "unhandled":
+          default:
+            return [
+              stopLoading(state),
+              [
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("error", toasts.published.error)
+                  )
+                )
+              ]
+            ];
         }
-      ];
-    default:
-      return [state];
-  }
-});
+      }
+      default:
+        return [state, []];
+    }
+  });
 
-export const view: ComponentView<State, Msg> = viewValid(
+export const view: component_.base.ComponentView<State, Msg> = viewValid(
   ({ state, dispatch }) => {
     return (
       <div>
@@ -145,8 +189,9 @@ export const view: ComponentView<State, Msg> = viewValid(
         </Row>
         <Form.view
           state={state.form}
-          dispatch={mapComponentDispatch(dispatch, (msg) =>
-            adt("form" as const, msg)
+          dispatch={component_.base.mapDispatch(
+            dispatch,
+            (msg) => adt("form", msg) as Msg
           )}
         />
       </div>
@@ -154,14 +199,20 @@ export const view: ComponentView<State, Msg> = viewValid(
   }
 );
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
   getMetadata() {
     return makePageMetadata("Create a New Page");
   },
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: getActionsValid(({ state, dispatch }) => {
     const loading = state.loading > 0;
     const isValid = Form.isValid(state.form);
     return adt("links", [
@@ -184,7 +235,7 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
   getModal: getModalValid<ValidState, Msg>((state) => {
     switch (state.showModal) {
       case "publish":
-        return {
+        return component_.page.modal.show({
           title: "Publish Page?",
           body: () =>
             "Are you sure you want to publish this page? Once published, all users will be able to access it by navigating to its URL.",
@@ -192,20 +243,20 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
           actions: [
             {
               text: "Publish Page",
-              icon: "bullhorn",
-              color: "primary",
-              msg: adt("publish"),
+              icon: "bullhorn" as const,
+              color: "primary" as const,
+              msg: adt("publish") as Msg,
               button: true
             },
             {
               text: "Cancel",
-              color: "secondary",
+              color: "secondary" as const,
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
   })
 };

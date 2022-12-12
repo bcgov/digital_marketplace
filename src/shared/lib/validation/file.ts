@@ -49,7 +49,11 @@ export function validateFilePermissions(
 ): ArrayValidation<FilePermissions<Id, UserType>> {
   raw = isArray(raw) ? raw : [raw];
   const validatedFilePermissions = validateArray(raw, validateFilePermission);
-  return mapValid(validatedFilePermissions, (perms) => {
+  return mapValid<
+    FilePermissions<Id, UserType>[],
+    string[][],
+    FilePermissions<Id, UserType>[]
+  >(validatedFilePermissions, (perms) => {
     return Array.from(new Set(perms.map((v) => JSON.stringify(v)))).map(
       (v) => JSON.parse(v) as FilePermissions<Id, UserType>
     );

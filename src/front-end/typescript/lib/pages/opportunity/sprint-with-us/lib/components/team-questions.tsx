@@ -2,15 +2,9 @@ import * as FormField from "front-end/lib/components/form-field";
 import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
-  ComponentViewProps,
-  Dispatch,
+  component as component_,
   immutable,
-  Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  Immutable
 } from "front-end/lib/framework";
 import Link, { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import React from "react";
@@ -49,104 +43,126 @@ export interface Params {
   questions: SWUTeamQuestion[];
 }
 
-export const init: Init<Params, State> = async ({ questions }) => {
-  return {
-    questions: await Promise.all(questions.map((q) => createQuestion(q)))
-  };
+export const init: component_.base.Init<Params, State, Msg> = (params) => {
+  const [questions, cmds] = params.questions
+    .map((q, index) => createQuestion(index, q))
+    .reduce(
+      ([accQuestions, accCmds], [q, cs]) => [
+        [...accQuestions, q],
+        [...accCmds, ...cs]
+      ],
+      [[], []] as component_.base.InitReturnValue<Question[], Msg>
+    );
+  return [
+    {
+      questions
+    },
+    cmds
+  ];
 };
 
-async function createQuestion(question?: SWUTeamQuestion): Promise<Question> {
+function createQuestion(
+  qIndex: number,
+  question?: SWUTeamQuestion
+): component_.base.InitReturnValue<Question, Msg> {
   const idNamespace = String(Math.random());
-  return {
-    question: immutable(
-      await LongText.init({
-        errors: [],
-        validate: opportunityValidation.validateTeamQuestionQuestion,
-        child: {
-          value: question?.question || "",
-          id: `${idNamespace}-team-questions-question`
-        }
-      })
-    ),
-    guideline: immutable(
-      await LongText.init({
-        errors: [],
-        validate: opportunityValidation.validateTeamQuestionGuideline,
-        child: {
-          value: question?.guideline || "",
-          id: `${idNamespace}-team-questions-response-guidelines`
-        }
-      })
-    ),
-
-    wordLimit: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid word limit."]);
-          }
-          return opportunityValidation.validateTeamQuestionWordLimit(v);
-        },
-        child: {
-          value: question
-            ? question.wordLimit
-            : DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT,
-          id: `${idNamespace}-team-questions-word-limit`,
-          min: 1
-        }
-      })
-    ),
-
-    score: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid score."]);
-          }
-          return opportunityValidation.validateTeamQuestionScore(v);
-        },
-        child: {
-          value: question
-            ? question.score
-            : DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE,
-          id: `${idNamespace}-team-questions-score`,
-          min: 1
-        }
-      })
-    )
-  };
+  const [questionState, questionCmds] = LongText.init({
+    errors: [],
+    validate: opportunityValidation.validateTeamQuestionQuestion,
+    child: {
+      value: question?.question || "",
+      id: `${idNamespace}-team-questions-question`
+    }
+  });
+  const [guidelineState, guidelineCmds] = LongText.init({
+    errors: [],
+    validate: opportunityValidation.validateTeamQuestionGuideline,
+    child: {
+      value: question?.guideline || "",
+      id: `${idNamespace}-team-questions-response-guidelines`
+    }
+  });
+  const [wordLimitState, wordLimitCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid word limit."]);
+      }
+      return opportunityValidation.validateTeamQuestionWordLimit(v);
+    },
+    child: {
+      value: question
+        ? question.wordLimit
+        : DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT,
+      id: `${idNamespace}-team-questions-word-limit`,
+      min: 1
+    }
+  });
+  const [scoreState, scoreCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid score."]);
+      }
+      return opportunityValidation.validateTeamQuestionScore(v);
+    },
+    child: {
+      value: question ? question.score : DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE,
+      id: `${idNamespace}-team-questions-score`,
+      min: 1
+    }
+  });
+  return [
+    {
+      question: immutable(questionState),
+      guideline: immutable(guidelineState),
+      wordLimit: immutable(wordLimitState),
+      score: immutable(scoreState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        questionCmds,
+        (childMsg) => adt("questionText", { childMsg, qIndex }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        guidelineCmds,
+        (childMsg) => adt("guidelineText", { childMsg, qIndex }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        wordLimitCmds,
+        (childMsg) => adt("wordLimit", { childMsg, qIndex }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        scoreCmds,
+        (childMsg) => adt("score", { childMsg, qIndex }) as Msg
+      )
+    ]
+  ];
 }
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "addQuestion": {
-      return [
-        state,
-        async (state) => {
-          return state.set("questions", [
-            ...state.questions,
-            await createQuestion()
-          ]);
-        }
-      ];
+      const [question, cmds] = createQuestion(state.questions.length);
+      return [state.set("questions", [...state.questions, question]), cmds];
     }
 
     case "deleteQuestion": {
       return [
-        state,
-        async (state) => {
-          state.questions.splice(msg.value, 1);
-          return state.set("questions", state.questions);
-        }
+        state.set(
+          "questions",
+          state.questions.reduce((acc, q, index) => {
+            return index === msg.value ? acc : [...acc, q];
+          }, [] as Question[])
+        ),
+        []
       ];
     }
 
     case "questionText": {
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["questions", `${qIndex}`, "question"],
         childUpdate: LongText.update,
@@ -158,7 +174,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case "guidelineText": {
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["questions", `${qIndex}`, "guideline"],
         childUpdate: LongText.update,
@@ -171,7 +187,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case "wordLimit": {
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["questions", `${qIndex}`, "wordLimit"],
         childUpdate: NumberField.update,
@@ -183,7 +199,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
     case "score": {
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["questions", `${qIndex}`, "score"],
         childUpdate: NumberField.update,
@@ -216,31 +232,45 @@ export function getValues(state: Immutable<State>): Values {
 
 export type Errors = CreateSWUTeamQuestionValidationErrors[];
 
-export function setErrors(state: any, errors: Errors = []): Immutable<State> {
+export function setErrors(
+  state: Immutable<State>,
+  errors: Errors = []
+): Immutable<State> {
   return errors.reduce((acc, e, i) => {
     return acc
       .updateIn(["questions", i, "question"], (s) =>
-        FormField.setErrors(s, e.question || [])
+        FormField.setErrors(s as Immutable<LongText.State>, e.question || [])
       )
       .updateIn(["questions", i, "guideline"], (s) =>
-        FormField.setErrors(s, e.guideline || [])
+        FormField.setErrors(s as Immutable<LongText.State>, e.guideline || [])
       )
       .updateIn(["questions", i, "wordLimit"], (s) =>
-        FormField.setErrors(s, e.wordLimit || [])
+        FormField.setErrors(
+          s as Immutable<NumberField.State>,
+          e.wordLimit || []
+        )
       )
       .updateIn(["questions", i, "score"], (s) =>
-        FormField.setErrors(s, e.score || [])
+        FormField.setErrors(s as Immutable<NumberField.State>, e.score || [])
       );
   }, state);
 }
 
-export function validate(state: any): Immutable<State> {
+export function validate(state: Immutable<State>): Immutable<State> {
   return state.questions.reduce((acc, q, i) => {
     return acc
-      .updateIn(["questions", i, "question"], (s) => FormField.validate(s))
-      .updateIn(["questions", i, "guideline"], (s) => FormField.validate(s))
-      .updateIn(["questions", i, "wordLimit"], (s) => FormField.validate(s))
-      .updateIn(["questions", i, "score"], (s) => FormField.validate(s));
+      .updateIn(["questions", i, "question"], (s) =>
+        FormField.validate(s as Immutable<LongText.State>)
+      )
+      .updateIn(["questions", i, "guideline"], (s) =>
+        FormField.validate(s as Immutable<LongText.State>)
+      )
+      .updateIn(["questions", i, "wordLimit"], (s) =>
+        FormField.validate(s as Immutable<NumberField.State>)
+      )
+      .updateIn(["questions", i, "score"], (s) =>
+        FormField.validate(s as Immutable<NumberField.State>)
+      );
   }, state);
 }
 
@@ -263,10 +293,10 @@ interface QuestionViewProps {
   index: number;
   question: Question;
   disabled?: boolean;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-const QuestionView: View<QuestionViewProps> = (props) => {
+const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
   const { question, dispatch, index, disabled } = props;
   return (
     <div className={index > 0 ? "pt-5 mt-5 border-top" : ""}>
@@ -301,7 +331,7 @@ const QuestionView: View<QuestionViewProps> = (props) => {
             }}
             disabled={disabled}
             state={question.question}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("questionText" as const, { childMsg: value, qIndex: index })
             )}
           />
@@ -319,7 +349,7 @@ const QuestionView: View<QuestionViewProps> = (props) => {
             }}
             disabled={disabled}
             state={question.guideline}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("guidelineText" as const, { childMsg: value, qIndex: index })
             )}
           />
@@ -336,7 +366,7 @@ const QuestionView: View<QuestionViewProps> = (props) => {
             required
             disabled={disabled}
             state={question.wordLimit}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("wordLimit" as const, { childMsg: value, qIndex: index })
             )}
           />
@@ -354,7 +384,7 @@ const QuestionView: View<QuestionViewProps> = (props) => {
             required
             disabled={disabled}
             state={question.score}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("score" as const, { childMsg: value, qIndex: index })
             )}
           />
@@ -364,11 +394,15 @@ const QuestionView: View<QuestionViewProps> = (props) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-const AddButton: View<Props> = ({ state, disabled, dispatch }) => {
+const AddButton: component_.base.View<Props> = ({
+  state,
+  disabled,
+  dispatch
+}) => {
   if (disabled) {
     return null;
   }
@@ -394,7 +428,7 @@ const AddButton: View<Props> = ({ state, disabled, dispatch }) => {
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, disabled } = props;
   return (
     <div>

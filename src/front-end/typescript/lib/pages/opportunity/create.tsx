@@ -1,15 +1,7 @@
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  newRoute,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import { TextColor } from "front-end/lib/types";
 import { routeDest } from "front-end/lib/views/link";
 import ProgramCard from "front-end/lib/views/program-card";
@@ -24,44 +16,55 @@ export interface State {
   empty: true;
 }
 
-type InnerMsg = ADT<"noop">;
+export type InnerMsg = ADT<"noop">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = isUserType({
   userType: [UserType.Government, UserType.Admin],
-  async success() {
-    return { empty: true };
+  success() {
+    return [
+      { empty: true },
+      [component_.cmd.dispatch(component_.page.readyMsg())]
+    ];
   },
-  async fail({ dispatch, routePath, shared }) {
-    if (!shared.session) {
-      dispatch(
-        newRoute(
-          adt("signIn" as const, {
-            redirectOnSuccess: routePath
-          })
-        )
-      );
-    } else {
-      dispatch(
-        replaceRoute(
-          adt("notFound" as const, {
-            path: routePath
-          })
-        )
-      );
-    }
-    return { empty: true };
+  fail({ routePath, shared }) {
+    return [
+      { empty: true },
+      [
+        shared.session
+          ? component_.cmd.dispatch(
+              component_.global.replaceRouteMsg(
+                adt("notFound" as const, {
+                  path: routePath
+                })
+              )
+            )
+          : component_.cmd.dispatch(
+              component_.global.newRouteMsg(
+                adt("signIn" as const, {
+                  redirectOnSuccess: routePath
+                })
+              )
+            )
+      ]
+    ];
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
+const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
+  return [state, []];
 };
 
-const view: ComponentView<State, Msg> = () => {
+const view: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
       <Row>
@@ -129,7 +132,13 @@ const view: ComponentView<State, Msg> = () => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   backgroundColor: "c-opportunity-create-bg",
   //verticallyCentered: true,
   init,

@@ -2,7 +2,8 @@ name: Sonar
 on:
   # Trigger analysis when pushing in development or pull requests, and when creating
   # a pull request.
-  push:
+  pull_request:
+    types: [review_requested]
     branches:
       - development
       - master

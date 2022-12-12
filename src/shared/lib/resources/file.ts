@@ -17,8 +17,6 @@ export interface FileRecord {
   createdAt: Date;
   fileBlob: Id;
   name: string;
-  fileSize?: string;
-  format?: string;
 }
 
 export interface FileBlob {
@@ -45,7 +43,7 @@ export type FileUploadMetadata = Array<FilePermissions<Id, UserType>>;
  */
 export function parseFilePermissions(raw: any): FileUploadMetadata | null {
   const validatedFilePermissions = validateFilePermissions(raw);
-  if (isValid(validatedFilePermissions)) {
+  if (isValid<FilePermissions<string, UserType>[]>(validatedFilePermissions)) {
     return validatedFilePermissions.value;
   }
   return null;

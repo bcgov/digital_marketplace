@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import React, { Fragment } from "react";
 import { Pagination, PaginationItem, PaginationLink } from "reactstrap";
 
@@ -11,7 +11,7 @@ export interface Props {
 
 const extraPageLinks = 2; // On either side of the active page.
 
-const PaginationView: View<Props> = ({
+const PaginationView: component.base.View<Props> = ({
   page,
   numPages,
   disabled,
@@ -19,7 +19,7 @@ const PaginationView: View<Props> = ({
 }) => {
   const onClick = (newPage: number) =>
     disabled ? undefined : () => onPageChange(newPage);
-  const pages: any = [];
+  const pages: component.base.ViewElement[] = [];
   const startingPageLink = Math.max(
     1,
     Math.min(numPages - extraPageLinks * 2, page - extraPageLinks)

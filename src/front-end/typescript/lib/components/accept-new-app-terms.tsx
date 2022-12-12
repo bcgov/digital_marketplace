@@ -1,19 +1,10 @@
 import { APP_TERMS_CONTENT_ID } from "front-end/config";
-import { AsyncWithState, WithState } from "front-end/lib";
+import { WithState } from "front-end/lib";
+import * as UserResource from "shared/lib/resources/user";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
-import {
-  Component,
-  ComponentViewProps,
-  GlobalComponentMsg,
-  Immutable,
-  mapComponentDispatch,
-  PageModal,
-  reload,
-  UpdateReturnValue,
-  View
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
@@ -48,14 +39,14 @@ export interface MakeModalParams<ParentMsg> {
 }
 export function makeModal<ParentMsg>(
   params: MakeModalParams<ParentMsg>
-): PageModal<ParentMsg> {
-  return {
+): component_.page.Modal<ParentMsg> {
+  return component_.page.modal.show({
     title: "Review Updated Terms and Conditions",
     body: (dispatch) => (
       <View
         disabled={params.loading}
         state={params.state}
-        dispatch={mapComponentDispatch(dispatch, params.mapMsg)}
+        dispatch={component_.base.mapDispatch(dispatch, params.mapMsg)}
       />
     ),
     onCloseMsg: params.onCloseMsg,
@@ -74,43 +65,66 @@ export function makeModal<ParentMsg>(
         msg: params.onCloseMsg
       }
     ]
-  };
+  });
 }
 
-export interface SubmitAcceptNewTermsParams<
-  ParentState extends object,
-  ParentInnerMsg
-> {
+export type AcceptNewTermsResponse = api.ResponseValidation<
+  UserResource.User,
+  UserResource.UpdateValidationErrors
+>;
+
+export interface SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg> {
   state: Immutable<ParentState>;
   userId: Id;
   startLoading: WithState<ParentState>;
-  stopLoading: WithState<ParentState>;
-  onSuccess?: AsyncWithState<ParentState>;
+  onAcceptNewTermsResponse(response: AcceptNewTermsResponse): ParentInnerMsg;
 }
 
-export function submitAcceptNewTerms<
-  ParentState extends object,
-  ParentInnerMsg
->(
+export function submitAcceptNewTerms<ParentState, ParentInnerMsg>(
   params: SubmitAcceptNewTermsParams<ParentState, ParentInnerMsg>
-): UpdateReturnValue<ParentState, GlobalComponentMsg<ParentInnerMsg, Route>> {
+): component_.base.UpdateReturnValue<
+  ParentState,
+  component_.global.Msg<ParentInnerMsg, Route>
+> {
   return [
     params.startLoading(params.state),
-    async (state, dispatch) => {
-      const result = await api.users.update(params.userId, adt("acceptTerms"));
-      if (!api.isValid(result)) {
-        return params.stopLoading(state);
-      }
-      dispatch(reload());
-      return params.onSuccess ? await params.onSuccess(state) : state;
-    }
+    [
+      api.users.update(params.userId, adt("acceptTerms"), (response) =>
+        params.onAcceptNewTermsResponse(response)
+      ) as component_.Cmd<component_.global.Msg<ParentInnerMsg, Route>>
+    ]
   ];
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface OnAcceptNewTermsResponseParams<ParentState> {
+  state: Immutable<ParentState>;
+  stopLoading: WithState<ParentState>;
+  response: api.ResponseValidation<
+    UserResource.User,
+    UserResource.UpdateValidationErrors
+  >;
+}
+
+export function onAcceptNewTermsResponse<ParentState, ParentInnerMsg>(
+  params: OnAcceptNewTermsResponseParams<ParentState>
+): component_.base.UpdateReturnValue<
+  ParentState,
+  component_.global.Msg<ParentInnerMsg, Route>
+> {
+  if (api.isValid(params.response)) {
+    return [
+      params.state,
+      [component_.cmd.dispatch(component_.global.reloadMsg())]
+    ];
+  } else {
+    return [params.stopLoading(params.state), []];
+  }
+}
+
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
-const View: View<Props> = ({ disabled, state, dispatch }) => {
+const View: component_.base.View<Props> = ({ disabled, state, dispatch }) => {
   const termsRoute = adt("contentView", APP_TERMS_CONTENT_ID) as Route;
   return (
     <div>
@@ -145,7 +159,7 @@ const View: View<Props> = ({ disabled, state, dispatch }) => {
 
 export const view = View;
 
-export const component: Component<Params, State, Msg> = {
+export const component: component_.base.Component<Params, State, Msg> = {
   init,
   update,
   view

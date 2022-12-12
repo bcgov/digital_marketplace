@@ -106,7 +106,7 @@ export const request: RequestFunction = async (
   } catch (error) {
     return {
       status: 500,
-      data: [error.message]
+      data: [(error as Error).message]
     };
   }
 };

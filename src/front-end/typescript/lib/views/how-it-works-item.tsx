@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import React, { ReactElement } from "react";
@@ -17,7 +17,7 @@ export interface Props {
   className?: string;
 }
 
-export const HowItWorksItem: View<Props> = ({
+export const HowItWorksItem: component.base.View<Props> = ({
   symbol_,
   mobileSymbol,
   bgColor = "c-how-it-works-item-bg",

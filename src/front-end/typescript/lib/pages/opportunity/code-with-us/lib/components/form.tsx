@@ -13,14 +13,9 @@ import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
-  ComponentViewProps,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import Link, { externalDest } from "front-end/lib/views/link";
@@ -38,15 +33,17 @@ import {
   CWUOpportunity,
   CWUOpportunityStatus,
   FORMATTED_MAX_BUDGET,
+  UpdateValidationErrors,
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/code-with-us";
-import { adt, ADT } from "shared/lib/types";
+import { adt, ADT, Id } from "shared/lib/types";
 import {
   invalid,
   mapInvalid,
   mapValid,
   valid,
-  Validation
+  Validation,
+  isValid as isValid_
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 
@@ -136,256 +133,282 @@ export function setValidateDate(
   );
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
-  return {
-    opportunity,
-
-    tabbedForm: immutable(
-      await TabbedFormComponent.init({
-        tabs: ["Overview", "Description", "Details", "Attachments"],
-        activeTab
-      })
-    ),
-
-    title: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: opportunityValidation.validateTitle,
-        child: {
-          type: "text",
-          value: opportunity?.title || "",
-          id: "cwu-opportunity-title"
+  const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
+    tabs: ["Overview", "Description", "Details", "Attachments"],
+    activeTab
+  });
+  const [titleState, titleCmds] = ShortText.init({
+    errors: [],
+    validate: opportunityValidation.validateTitle,
+    child: {
+      type: "text",
+      value: opportunity?.title || "",
+      id: "cwu-opportunity-title"
+    }
+  });
+  const [teaserState, teaserCmds] = LongText.init({
+    errors: [],
+    validate: opportunityValidation.validateTeaser,
+    child: {
+      value: opportunity?.teaser || "",
+      id: "cwu-opportunity-teaser"
+    }
+  });
+  const [locationState, locationCmds] = ShortText.init({
+    errors: [],
+    validate: opportunityValidation.validateLocation,
+    child: {
+      type: "text",
+      value: opportunity?.location || DEFAULT_LOCATION,
+      id: "cwu-opportunity-location"
+    }
+  });
+  const [rewardState, rewardCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid reward."]);
+      }
+      return opportunityValidation.validateReward(v);
+    },
+    child: {
+      value: opportunity?.reward || null,
+      id: "cwu-opportunity-reward",
+      min: 1
+    }
+  });
+  const [skillsState, skillsCmds] = SelectMulti.init({
+    errors: [],
+    validate: (v) => {
+      const strings = v.map(({ value }) => value);
+      const validated0 = opportunityValidation.validateSkills(strings);
+      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
+      return mapInvalid(validated1, (es) => flatten(es));
+    },
+    child: {
+      value:
+        opportunity?.skills.map((value) => ({ value, label: value })) || [],
+      id: "cwu-opportunity-skills",
+      creatable: true,
+      options: SelectMulti.stringsToOptions(SKILLS)
+    }
+  });
+  const [remoteOkState, remoteOkCmds] = RemoteOkRadioGroup.init({
+    errors: [],
+    validate: (v) =>
+      v === null ? invalid(["Please select an option."]) : valid(v),
+    child: {
+      id: "cwu-opportunity-remote-ok",
+      value: (() => {
+        const existing = opportunity?.remoteOk;
+        if (existing === true) {
+          return "yes" as const;
+        } else if (existing === false) {
+          return "no" as const;
         }
-      })
+        return null;
+      })(),
+      options: [
+        { label: "Yes", value: "yes" },
+        { label: "No", value: "no" }
+      ]
+    }
+  });
+  const [remoteDescState, remoteDescCmds] = LongText.init({
+    errors: [],
+    validate: (v) =>
+      opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
+    child: {
+      value: opportunity?.remoteDesc || "",
+      id: "cwu-opportunity-remote-desc"
+    }
+  });
+  const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
+    errors: [],
+    validate: opportunityValidation.validateDescription,
+    child: {
+      value: opportunity?.description || "",
+      id: "cwu-opportunity-description",
+      uploadImage: api.files.markdownImages.makeUploadImage()
+    }
+  });
+  const [proposalDeadlineState, proposalDeadlineCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateProposalDeadline(v, opportunity)
     ),
-
-    teaser: immutable(
-      await LongText.init({
-        errors: [],
-        validate: opportunityValidation.validateTeaser,
-        child: {
-          value: opportunity?.teaser || "",
-          id: "cwu-opportunity-teaser"
-        }
-      })
+    child: {
+      value: opportunity
+        ? DateField.dateToValue(opportunity.proposalDeadline)
+        : null,
+      id: "cwu-opportunity-proposal-deadline"
+    }
+  });
+  const [assignmentDateState, assignmentDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateAssignmentDate(
+        v,
+        opportunity?.proposalDeadline || new Date()
+      )
     ),
-
-    location: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: opportunityValidation.validateLocation,
-        child: {
-          type: "text",
-          value: opportunity?.location || DEFAULT_LOCATION,
-          id: "cwu-opportunity-location"
-        }
-      })
+    child: {
+      value: opportunity
+        ? DateField.dateToValue(opportunity.assignmentDate)
+        : null,
+      id: "cwu-opportunity-assignment-date"
+    }
+  });
+  const [startDateState, startDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateStartDate(
+        v,
+        opportunity?.assignmentDate || new Date()
+      )
     ),
-
-    reward: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid reward."]);
-          }
-          return opportunityValidation.validateReward(v);
-        },
-        child: {
-          value: opportunity?.reward || null,
-          id: "cwu-opportunity-reward",
-          min: 1
-        }
-      })
-    ),
-
-    skills: immutable(
-      await SelectMulti.init({
-        errors: [],
-        validate: (v) => {
-          const strings = v.map(({ value }) => value);
-          const validated0 = opportunityValidation.validateSkills(strings);
-          const validated1 = mapValid(validated0, () => v);
-          return mapInvalid(validated1, (es) => flatten(es));
-        },
-        child: {
-          value:
-            opportunity?.skills.map((value) => ({ value, label: value })) || [],
-          id: "cwu-opportunity-skills",
-          creatable: true,
-          options: SelectMulti.stringsToOptions(SKILLS)
-        }
-      })
-    ),
-
-    remoteOk: immutable(
-      await RemoteOkRadioGroup.init({
-        errors: [],
-        validate: (v) =>
-          v === null ? invalid(["Please select an option."]) : valid(v),
-        child: {
-          id: "cwu-opportunity-remote-ok",
-          value: (() => {
-            const existing = opportunity?.remoteOk;
-            if (existing === true) {
-              return "yes" as const;
-            } else if (existing === false) {
-              return "no" as const;
-            }
-            return null;
-          })(),
-          options: [
-            { label: "Yes", value: "yes" },
-            { label: "No", value: "no" }
-          ]
-        }
-      })
-    ),
-
-    remoteDesc: immutable(
-      await LongText.init({
-        errors: [],
-        validate: (v) =>
-          opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
-        child: {
-          value: opportunity?.remoteDesc || "",
-          id: "cwu-opportunity-remote-desc"
-        }
-      })
-    ),
-
-    description: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: opportunityValidation.validateDescription,
-        child: {
-          value: opportunity?.description || "",
-          id: "cwu-opportunity-description",
-          uploadImage: api.makeUploadMarkdownImage()
-        }
-      })
-    ),
-
-    proposalDeadline: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) =>
-          opportunityValidation.validateProposalDeadline(v, opportunity)
+    child: {
+      value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
+      id: "cwu-opportunity-start-date"
+    }
+  });
+  const [completionDateState, completionDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) => {
+      return mapValid(
+        opportunityValidation.validateCompletionDate(
+          v,
+          opportunity?.startDate || new Date()
         ),
-        child: {
-          value: opportunity
-            ? DateField.dateToValue(opportunity.proposalDeadline)
-            : null,
-          id: "cwu-opportunity-proposal-deadline"
-        }
-      })
-    ),
-
-    assignmentDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) =>
-          opportunityValidation.validateAssignmentDate(
-            v,
-            opportunity?.proposalDeadline || new Date()
-          )
-        ),
-        child: {
-          value: opportunity
-            ? DateField.dateToValue(opportunity.assignmentDate)
-            : null,
-          id: "cwu-opportunity-assignment-date"
-        }
-      })
-    ),
-
-    startDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) =>
-          opportunityValidation.validateStartDate(
-            v,
-            opportunity?.assignmentDate || new Date()
-          )
-        ),
-        child: {
-          value: opportunity
-            ? DateField.dateToValue(opportunity.startDate)
-            : null,
-          id: "cwu-opportunity-start-date"
-        }
-      })
-    ),
-
-    completionDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) => {
-          return mapValid(
-            opportunityValidation.validateCompletionDate(
-              v,
-              opportunity?.startDate || new Date()
-            ),
-            (w) => w || null
-          );
-        }),
-        child: {
-          value: opportunity?.completionDate
-            ? DateField.dateToValue(opportunity.completionDate)
-            : null,
-          id: "cwu-opportunity-completion-date"
-        }
-      })
-    ),
-
-    submissionInfo: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: opportunityValidation.validateSubmissionInfo,
-        child: {
-          type: "text",
-          value: opportunity?.submissionInfo || "",
-          id: "cwu-opportunity-submission-info"
-        }
-      })
-    ),
-
-    acceptanceCriteria: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: opportunityValidation.validateAcceptanceCriteria,
-        child: {
-          value: opportunity?.acceptanceCriteria || "",
-          id: "cwu-opportunity-acceptance-criteria",
-          uploadImage: api.makeUploadMarkdownImage()
-        }
-      })
-    ),
-
-    evaluationCriteria: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: opportunityValidation.validateEvaluationCriteria,
-        child: {
-          value: opportunity?.evaluationCriteria || "",
-          id: "cwu-opportunity-evaluation-criteria",
-          uploadImage: api.makeUploadMarkdownImage()
-        }
-      })
-    ),
-
-    attachments: immutable(
-      await Attachments.init({
-        canRemoveExistingAttachments,
-        existingAttachments: opportunity?.attachments || [],
-        newAttachmentMetadata
-      })
-    )
-  };
+        (w) => w || null
+      );
+    }),
+    child: {
+      value: opportunity?.completionDate
+        ? DateField.dateToValue(opportunity.completionDate)
+        : null,
+      id: "cwu-opportunity-completion-date"
+    }
+  });
+  const [submissionInfoState, submissionInfoCmds] = ShortText.init({
+    errors: [],
+    validate: opportunityValidation.validateSubmissionInfo,
+    child: {
+      type: "text",
+      value: opportunity?.submissionInfo || "",
+      id: "cwu-opportunity-submission-info"
+    }
+  });
+  const [acceptanceCriteriaState, acceptanceCriteriaCmds] =
+    RichMarkdownEditor.init({
+      errors: [],
+      validate: opportunityValidation.validateAcceptanceCriteria,
+      child: {
+        value: opportunity?.acceptanceCriteria || "",
+        id: "cwu-opportunity-acceptance-criteria",
+        uploadImage: api.files.markdownImages.makeUploadImage()
+      }
+    });
+  const [evaluationCriteriaState, evaluationCriteriaCmds] =
+    RichMarkdownEditor.init({
+      errors: [],
+      validate: opportunityValidation.validateEvaluationCriteria,
+      child: {
+        value: opportunity?.evaluationCriteria || "",
+        id: "cwu-opportunity-evaluation-criteria",
+        uploadImage: api.files.markdownImages.makeUploadImage()
+      }
+    });
+  const [attachmentsState, attachmentsCmds] = Attachments.init({
+    canRemoveExistingAttachments,
+    existingAttachments: opportunity?.attachments || [],
+    newAttachmentMetadata
+  });
+  return [
+    {
+      opportunity,
+      tabbedForm: immutable(tabbedFormState),
+      title: immutable(titleState),
+      teaser: immutable(teaserState),
+      location: immutable(locationState),
+      reward: immutable(rewardState),
+      skills: immutable(skillsState),
+      remoteOk: immutable(remoteOkState),
+      remoteDesc: immutable(remoteDescState),
+      description: immutable(descriptionState),
+      proposalDeadline: immutable(proposalDeadlineState),
+      assignmentDate: immutable(assignmentDateState),
+      startDate: immutable(startDateState),
+      completionDate: immutable(completionDateState),
+      submissionInfo: immutable(submissionInfoState),
+      acceptanceCriteria: immutable(acceptanceCriteriaState),
+      evaluationCriteria: immutable(evaluationCriteriaState),
+      attachments: immutable(attachmentsState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        tabbedFormCmds,
+        (msg) => adt("tabbedForm", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(titleCmds, (msg) => adt("title", msg) as Msg),
+      ...component_.cmd.mapMany(teaserCmds, (msg) => adt("teaser", msg) as Msg),
+      ...component_.cmd.mapMany(
+        locationCmds,
+        (msg) => adt("location", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(rewardCmds, (msg) => adt("reward", msg) as Msg),
+      ...component_.cmd.mapMany(skillsCmds, (msg) => adt("skills", msg) as Msg),
+      ...component_.cmd.mapMany(
+        remoteOkCmds,
+        (msg) => adt("remoteOk", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        remoteDescCmds,
+        (msg) => adt("remoteDesc", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        descriptionCmds,
+        (msg) => adt("description", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        proposalDeadlineCmds,
+        (msg) => adt("proposalDeadline", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        assignmentDateCmds,
+        (msg) => adt("assignmentDate", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        startDateCmds,
+        (msg) => adt("startDate", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        completionDateCmds,
+        (msg) => adt("completionDate", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        submissionInfoCmds,
+        (msg) => adt("submissionInfo", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        acceptanceCriteriaCmds,
+        (msg) => adt("acceptanceCriteria", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        evaluationCriteriaCmds,
+        (msg) => adt("evaluationCriteria", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        attachmentsCmds,
+        (msg) => adt("attachments", msg) as Msg
+      )
+    ]
+  ];
 };
 
 function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
@@ -522,10 +545,15 @@ export function getValues(state: Immutable<State>): Values {
 
 type PersistAction = ADT<"create", CreateCWUOpportunityStatus> | ADT<"update">;
 
-export async function persist(
+export type PersistResult = Validation<
+  [Immutable<State>, component_.Cmd<Msg>[], CWUOpportunity],
+  Immutable<State>
+>;
+
+export function persist(
   state: Immutable<State>,
   action: PersistAction
-): Promise<Validation<[Immutable<State>, CWUOpportunity], Immutable<State>>> {
+): component_.Cmd<PersistResult> {
   const values = getValues(state);
   const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
   const isCreateDraft =
@@ -537,7 +565,7 @@ export async function persist(
       canCWUOpportunityDetailsBeEdited(state.opportunity));
   // Transform remoteOk
   if (!isRemoteOkChecked && !isCreateDraft) {
-    return invalid(state);
+    return component_.cmd.dispatch(invalid(state));
   }
   // Default remoteOk to true for drafts where it isn't defined.
   const remoteOk =
@@ -546,87 +574,132 @@ export async function persist(
       : RadioGroup.valueEquals(state.remoteOk, "yes");
   // Get new attachments to be uploaded.
   const newAttachments = Attachments.getNewAttachments(state.attachments);
-  let attachments = state.attachments.existingAttachments.map(({ id }) => id);
-  // Upload new attachments if necessary.
-  if (shouldUploadAttachmentsAndUpdate && newAttachments.length) {
-    const result = await api.uploadFiles(newAttachments);
-    switch (result.tag) {
-      case "valid":
-        attachments = [...attachments, ...result.value.map(({ id }) => id)];
-        break;
-      case "invalid":
-        return invalid(
-          state.update("attachments", (attachments) =>
-            Attachments.setNewAttachmentErrors(attachments, result.value)
-          )
-        );
-      case "unhandled":
-        return invalid(state);
+  const existingAttachments = state.attachments.existingAttachments.map(
+    ({ id }) => id
+  );
+  // Cmd helpers
+  const uploadNewAttachmentsCmd = api.files.createMany(
+    newAttachments,
+    (response) => {
+      switch (response.tag) {
+        case "valid":
+          return valid([
+            ...existingAttachments,
+            ...response.value.map(({ id }) => id)
+          ]);
+        case "invalid":
+          return invalid(
+            state.update("attachments", (attachments) =>
+              Attachments.setNewAttachmentErrors(attachments, response.value)
+            )
+          );
+        case "unhandled":
+          return invalid(state);
+      }
     }
-  }
-  const actionResult: api.ResponseValidation<
-    CWUOpportunity,
-    CreateValidationErrors | UpdateEditValidationErrors
-  > = await (async () => {
+  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  const actionCmd = (
+    attachments: Id[]
+  ): component_.cmd.Cmd<
+    api.ResponseValidation<
+      CWUOpportunity,
+      UpdateEditValidationErrors | CreateValidationErrors
+    >
+  > => {
     switch (action.tag) {
       case "create":
-        return await api.opportunities.cwu.create({
-          ...values,
-          remoteOk,
-          attachments,
-          status: action.value
-        });
+        return api.opportunities.cwu.create(
+          {
+            ...values,
+            remoteOk,
+            attachments,
+            status: action.value
+          },
+          (response) => response
+        ) as component_.cmd.Cmd<
+          api.ResponseValidation<CWUOpportunity, CreateValidationErrors>
+        >;
       case "update":
         if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
-          const updateResult = await api.opportunities.cwu.update(
+          return api.opportunities.cwu.update(
             state.opportunity.id,
             adt("edit" as const, {
               ...values,
               remoteOk,
               attachments
-            })
-          );
-          return api.mapInvalid(updateResult, (errors) => {
-            if (errors.opportunity && errors.opportunity.tag === "edit") {
-              return errors.opportunity.value;
-            } else {
-              return {};
+            }),
+            (
+              response: api.ResponseValidation<
+                CWUOpportunity,
+                UpdateValidationErrors
+              >
+            ) => {
+              return api.mapInvalid(response, (errors) => {
+                if (errors.opportunity && errors.opportunity.tag === "edit") {
+                  return errors.opportunity.value;
+                } else {
+                  return {};
+                }
+              });
             }
-          });
+          ) as component_.cmd.Cmd<
+            api.ResponseValidation<CWUOpportunity, UpdateEditValidationErrors>
+          >;
         } else if (state.opportunity) {
-          return valid(state.opportunity);
+          return component_.cmd.dispatch(valid(state.opportunity));
         } else {
           // Should never happen because state.opportunity should be defined
           // when updating.
-          return invalid({});
+          return component_.cmd.dispatch(invalid({}));
         }
     }
-  })();
-  switch (actionResult.tag) {
-    case "unhandled":
-      return invalid(state);
-    case "invalid":
-      return invalid(setErrors(state, actionResult.value));
-    case "valid":
-      state = setErrors(state, {});
-      // Update the attachments component accordingly.
-      state = state.set(
-        "attachments",
-        immutable(
-          await Attachments.init({
-            existingAttachments: actionResult.value.attachments || [],
-            newAttachmentMetadata
-          })
-        )
+  };
+  // Upload new attachments if necessary.
+  const attachmentsCmd: component_.cmd.Cmd<Validation<Id[], Immutable<State>>> =
+    shouldUploadAttachmentsAndUpdate && newAttachments.length
+      ? uploadNewAttachmentsCmd
+      : component_.cmd.dispatch(valid(existingAttachments));
+  return component_.cmd.andThen(attachmentsCmd, (attachmentsResult) => {
+    if (isValid_(attachmentsResult)) {
+      return component_.cmd.map(
+        actionCmd(attachmentsResult.value),
+        (actionResult) => {
+          switch (actionResult.tag) {
+            case "unhandled":
+              return invalid(state);
+            case "invalid":
+              return invalid(setErrors(state, actionResult.value));
+            case "valid": {
+              state = setErrors(state, {});
+              // Update the attachments component accordingly.
+              const [newAttachmentsState, newAttachmentsCmds] =
+                Attachments.init({
+                  existingAttachments: actionResult.value.attachments || [],
+                  newAttachmentMetadata
+                });
+              state = state.set("attachments", immutable(newAttachmentsState));
+              return valid([
+                state,
+                component_.cmd.mapMany(
+                  newAttachmentsCmds,
+                  (msg) => adt("attachments", msg) as Msg
+                ),
+                actionResult.value
+              ]);
+            }
+          }
+        }
       );
-      return valid([state, actionResult.value]);
-  }
+    } else {
+      return component_.cmd.dispatch(invalid(attachmentsResult.value));
+    }
+  });
 }
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "tabbedForm":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["tabbedForm"],
         childUpdate: TabbedFormComponent.update,
@@ -635,7 +708,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "title":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["title"],
         childUpdate: ShortText.update,
@@ -644,7 +717,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "teaser":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["teaser"],
         childUpdate: LongText.update,
@@ -653,7 +726,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "location":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["location"],
         childUpdate: ShortText.update,
@@ -662,7 +735,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "reward":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["reward"],
         childUpdate: NumberField.update,
@@ -671,7 +744,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "skills":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["skills"],
         childUpdate: SelectMulti.update,
@@ -680,7 +753,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "remoteOk":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["remoteOk"],
         childUpdate: RemoteOkRadioGroup.update,
@@ -694,12 +767,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               (v) => opportunityValidation.validateRemoteDesc(v, remoteOk),
               remoteOk
             );
-          })
+          }),
+          []
         ]
       });
 
     case "remoteDesc":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["remoteDesc"],
         childUpdate: ShortText.update,
@@ -708,7 +782,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "description":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["description"],
         childUpdate: RichMarkdownEditor.update,
@@ -717,7 +791,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "proposalDeadline": {
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["proposalDeadline"],
         childUpdate: DateField.update,
@@ -729,13 +803,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               v,
               DateField.getDate(state.proposalDeadline) || new Date()
             )
-          )
+          ),
+          []
         ]
       });
     }
 
     case "assignmentDate": {
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["assignmentDate"],
         childUpdate: DateField.update,
@@ -747,13 +822,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               v,
               DateField.getDate(state.assignmentDate) || new Date()
             )
-          )
+          ),
+          []
         ]
       });
     }
 
     case "startDate": {
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["startDate"],
         childUpdate: DateField.update,
@@ -768,13 +844,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               ),
               (w) => w || null
             )
-          )
+          ),
+          []
         ]
       });
     }
 
     case "completionDate":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["completionDate"],
         childUpdate: DateField.update,
@@ -783,7 +860,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "submissionInfo":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["submissionInfo"],
         childUpdate: ShortText.update,
@@ -792,7 +869,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "acceptanceCriteria":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["acceptanceCriteria"],
         childUpdate: RichMarkdownEditor.update,
@@ -801,7 +878,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "evaluationCriteria":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["evaluationCriteria"],
         childUpdate: RichMarkdownEditor.update,
@@ -810,7 +887,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "attachments":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["attachments"],
         childUpdate: Attachments.update,
@@ -820,7 +897,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
+const OverviewView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -832,7 +913,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.title}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("title" as const, value)
           )}
         />
@@ -848,7 +929,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           disabled={disabled}
           state={state.teaser}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teaser" as const, value)
           )}
         />
@@ -862,7 +943,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
           disabled={disabled}
           state={state.remoteOk}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("remoteOk" as const, value)
           )}
         />
@@ -879,7 +960,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
               style: { height: "160px" }
             }}
             state={state.remoteDesc}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("remoteDesc" as const, value)
             )}
           />
@@ -895,7 +976,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.location}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("location" as const, value)
           )}
         />
@@ -922,7 +1003,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.reward}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("reward" as const, value)
           )}
         />
@@ -937,7 +1018,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.skills}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("skills" as const, value)
           )}
         />
@@ -946,7 +1027,11 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
+const DescriptionView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -960,7 +1045,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           disabled={disabled}
           state={state.description}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("description" as const, value)
           )}
         />
@@ -969,7 +1054,11 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
+const DetailsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12" md="6">
@@ -991,7 +1080,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           }
           state={state.proposalDeadline}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("proposalDeadline" as const, value)
           )}
         />
@@ -1004,7 +1093,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time."
           state={state.assignmentDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("assignmentDate" as const, value)
           )}
         />
@@ -1018,7 +1107,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
           state={state.startDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("startDate" as const, value)
           )}
         />
@@ -1030,7 +1119,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("completionDate" as const, value)
           )}
         />
@@ -1044,7 +1133,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           placeholder="e.g. GitHub repository URL"
           state={state.submissionInfo}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("submissionInfo" as const, value)
           )}
         />
@@ -1061,7 +1150,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           state={state.acceptanceCriteria}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("acceptanceCriteria" as const, value)
           )}
         />
@@ -1106,7 +1195,7 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           state={state.evaluationCriteria}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("evaluationCriteria" as const, value)
           )}
         />
@@ -1116,7 +1205,11 @@ const DetailsView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+const AttachmentsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -1125,7 +1218,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           must be smaller than 10MB.
         </p>
         <Attachments.view
-          dispatch={mapComponentDispatch(dispatch, (msg) =>
+          dispatch={component_.base.mapDispatch(dispatch, (msg) =>
             adt("attachments" as const, msg)
           )}
           state={state.attachments}
@@ -1137,11 +1230,11 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
@@ -1173,7 +1266,7 @@ export const view: View<Props> = (props) => {
         }
       }}
       state={state.tabbedForm}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)
       )}>
       {activeTab}

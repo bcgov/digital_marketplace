@@ -21,8 +21,6 @@ import {
   Validation
 } from "shared/lib/validation";
 import { isBoolean } from "util";
-import { MAX_NOTE_LENGTH } from "shared/lib/resources/note";
-
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
 export function validateCWUOpportunityStatus(
@@ -89,7 +87,9 @@ export function validateSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateDescription(raw: string): Validation<string> {
@@ -154,9 +154,5 @@ export function validateEvaluationCriteria(raw: string): Validation<string> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "Status Note", 0, MAX_NOTE_LENGTH);
-}
-
-export function validateHistoryNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "History Note", 1, MAX_NOTE_LENGTH);
+  return validateGenericString(raw, "Status Note", 0, 1000);
 }

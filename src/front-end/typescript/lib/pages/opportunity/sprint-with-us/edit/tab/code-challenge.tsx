@@ -3,18 +3,9 @@ import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  Dispatch,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  newRoute,
-  toast,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
@@ -41,7 +32,8 @@ import {
   canViewSWUOpportunityProposals,
   hasSWUOpportunityPassedCodeChallenge,
   SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunityStatus,
+  UpdateValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   canSWUProposalBeScreenedToFromTeamScenario,
@@ -50,71 +42,66 @@ import {
   isSWUProposalInCodeChallenge,
   NUM_SCORE_DECIMALS,
   SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposal,
+  SWUProposalStatus,
+  UpdateValidationErrors as ProposalUpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
 
 type ModalId = ADT<"completeCodeChallenge">;
 
 export interface State extends Tab.Params {
+  opportunity: SWUOpportunity | null;
+  proposals: SWUProposalSlim[];
   showModal: ModalId | null;
   completeCodeChallengeLoading: number;
   screenToFromLoading: Id | null;
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
-  proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
 }
 
 export type InnerMsg =
+  | ADT<"onInitResponse", Tab.InitResponse>
   | ADT<"table", Table.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"screenInToTeamScenario", Id>
-  | ADT<"screenOutOfTeamScenario", Id>
-  | ADT<"completeCodeChallenge">;
+  | ADT<
+      "onScreenInToTeamScenarioResponse",
+      api.ResponseValidation<SWUProposal, ProposalUpdateValidationErrors>
+    >
+  | ADT<"screenOutFromTeamScenario", Id>
+  | ADT<
+      "onScreenOutFromTeamScenarioResponse",
+      api.ResponseValidation<SWUProposal, ProposalUpdateValidationErrors>
+    >
+  | ADT<"completeCodeChallenge">
+  | ADT<
+      "onCompleteCodeChallenge",
+      api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  const canViewProposals =
-    canViewSWUOpportunityProposals(params.opportunity) &&
-    hasSWUOpportunityPassedCodeChallenge(params.opportunity);
-  let proposals: SWUProposalSlim[] = [];
-  if (canViewProposals) {
-    const proposalResult = await api.proposals.swu.readMany(
-      params.opportunity.id
-    );
-    proposals = api
-      .getValidValue(proposalResult, [])
-      .filter((p) => isSWUProposalInCodeChallenge(p))
-      .sort((a, b) =>
-        compareSWUProposalsForPublicSector(a, b, "challengeScore")
-      );
-  }
-  // Can be screened in if...
-  // - Opportunity has the appropriate status; and
-  // - At least one proposal has been evaluated.
-  const canProposalsBeScreened =
-    canSWUOpportunityBeScreenedInToTeamScenario(params.opportunity) &&
-    proposals.reduce(
-      (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
-      false as boolean
-    );
-  return {
-    completeCodeChallengeLoading: 0,
-    screenToFromLoading: null,
-    showModal: null,
-    canViewProposals: canViewProposals && !!proposals.length,
-    canProposalsBeScreened,
-    proposals,
-    table: immutable(
-      await Table.init({
-        idNamespace: "proposal-table"
-      })
-    ),
-    ...params
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "proposal-table"
+  });
+  return [
+    {
+      ...params,
+      opportunity: null,
+      proposals: [],
+      completeCodeChallengeLoading: 0,
+      screenToFromLoading: null,
+      showModal: null,
+      canViewProposals: false,
+      canProposalsBeScreened: false,
+      table: immutable(tableState)
+    },
+    component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
+  ];
 };
 
 const startCompleteCodeChallengeLoading = makeStartLoading<State>(
@@ -124,20 +111,68 @@ const stopCompleteCodeChallengeLoading = makeStopLoading<State>(
   "completeCodeChallengeLoading"
 );
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
-    case "completeCodeChallenge":
+    case "onInitResponse": {
+      const opportunity = msg.value[0];
+      let proposals = msg.value[1];
+      const canViewProposals =
+        canViewSWUOpportunityProposals(opportunity) &&
+        hasSWUOpportunityPassedCodeChallenge(opportunity) &&
+        !!proposals.length;
+      proposals = proposals
+        .filter((p) => isSWUProposalInCodeChallenge(p))
+        .sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "challengeScore")
+        );
+      // Can be screened in if...
+      // - Opportunity has the appropriate status; and
+      // - At least one proposal has been evaluated.
+      const canProposalsBeScreened =
+        canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
+        proposals.reduce(
+          (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
+          false as boolean
+        );
+      return [
+        state
+          .set("opportunity", opportunity)
+          .set("proposals", proposals)
+          .set("canViewProposals", canViewProposals)
+          .set("canProposalsBeScreened", canProposalsBeScreened),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
+
+    case "completeCodeChallenge": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
       state = state.set("showModal", null);
       return [
         startCompleteCodeChallengeLoading(state),
-        async (state, dispatch) => {
-          const result = await api.opportunities.swu.update(
-            state.opportunity.id,
-            adt("startTeamScenario", "")
-          );
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(
+        [
+          api.opportunities.swu.update(
+            opportunity.id,
+            adt("startTeamScenario", ""),
+            (response) => adt("onCompleteCodeChallenge", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+
+    case "onCompleteCodeChallenge": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          stopCompleteCodeChallengeLoading(state),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
                 adt(
                   "error",
                   opportunityToasts.statusChanged.error(
@@ -145,11 +180,15 @@ const update: Update<State, Msg> = ({ state, msg }) => {
                   )
                 )
               )
-            );
-            return stopCompleteCodeChallengeLoading(state);
-          }
-          dispatch(
-            toast(
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
               adt(
                 "success",
                 opportunityToasts.statusChanged.success(
@@ -157,91 +196,141 @@ const update: Update<State, Msg> = ({ state, msg }) => {
                 )
               )
             )
-          );
-          dispatch(
-            newRoute(
+          ),
+          component_.cmd.dispatch(
+            component_.global.newRouteMsg(
               adt("opportunitySWUEdit", {
-                opportunityId: state.opportunity.id,
+                opportunityId: opportunity.id,
                 tab: "teamScenario" as const
               })
             ) as Msg
-          );
-          return state;
-        }
+          )
+        ]
       ];
+    }
 
-    case "screenInToTeamScenario":
+    case "screenInToTeamScenario": {
       state = state.set("showModal", null);
       return [
         state.set("screenToFromLoading", msg.value),
-        async (state, dispatch) => {
-          state = state.set("screenToFromLoading", null);
-          const updateResult = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             msg.value,
-            adt("screenInToTeamScenario", "")
-          );
-          switch (updateResult.tag) {
-            case "valid":
-              dispatch(
-                toast(adt("success", proposalToasts.screenedIn.success))
-              );
-              return immutable(
-                await init({
-                  opportunity: api.getValidValue(
-                    await api.opportunities.swu.readOne(state.opportunity.id),
-                    state.opportunity
-                  ),
-                  viewerUser: state.viewerUser
-                })
-              );
-            case "invalid":
-            case "unhandled":
-              dispatch(toast(adt("error", proposalToasts.screenedIn.error)));
-              return state;
-          }
-        }
+            adt("screenInToTeamScenario", ""),
+            (response) => adt("onScreenInToTeamScenarioResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
 
-    case "screenOutOfTeamScenario":
+    case "onScreenInToTeamScenarioResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = state.set("screenToFromLoading", null);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", proposalToasts.screenedIn.success)
+                )
+              ),
+              component_.cmd.join(
+                api.opportunities.swu.readOne(opportunity.id, (response) =>
+                  api.getValidValue(response, opportunity)
+                ),
+                api.proposals.swu.readMany(opportunity.id)((response) =>
+                  api.getValidValue(response, state.proposals)
+                ),
+                (newOpp, newProposals) =>
+                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+              ) as component_.Cmd<Msg>
+            ]
+          ];
+        case "invalid":
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", proposalToasts.screenedIn.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
+
+    case "screenOutFromTeamScenario": {
       state = state.set("showModal", null);
       return [
         state.set("screenToFromLoading", msg.value),
-        async (state, dispatch) => {
-          state = state.set("screenToFromLoading", null);
-          const updateResult = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             msg.value,
-            adt("screenOutFromTeamScenario", "")
-          );
-          switch (updateResult.tag) {
-            case "valid":
-              dispatch(
-                toast(adt("success", proposalToasts.screenedOut.success))
-              );
-              return immutable(
-                await init({
-                  opportunity: api.getValidValue(
-                    await api.opportunities.swu.readOne(state.opportunity.id),
-                    state.opportunity
-                  ),
-                  viewerUser: state.viewerUser
-                })
-              );
-            case "invalid":
-            case "unhandled":
-              dispatch(toast(adt("error", proposalToasts.screenedOut.error)));
-              return state;
-          }
-        }
+            adt("screenOutFromTeamScenario", ""),
+            (response) => adt("onScreenOutFromTeamScenarioResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+
+    case "onScreenOutFromTeamScenarioResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = state.set("screenToFromLoading", null);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", proposalToasts.screenedOut.success)
+                )
+              ),
+              component_.cmd.join(
+                api.opportunities.swu.readOne(opportunity.id, (response) =>
+                  api.getValidValue(response, opportunity)
+                ),
+                api.proposals.swu.readMany(opportunity.id)((response) =>
+                  api.getValidValue(response, state.proposals)
+                ),
+                (newOpp, newProposals) =>
+                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+              ) as component_.Cmd<Msg>
+            ]
+          ];
+        case "invalid":
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", proposalToasts.screenedOut.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
 
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
 
     case "hideModal":
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
 
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -250,7 +339,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -299,7 +388,7 @@ const makeCardData = (
   ];
 };
 
-const WaitForCodeChallenge: ComponentView<State, Msg> = ({ state }) => {
+const WaitForCodeChallenge: component_.base.ComponentView<State, Msg> = () => {
   return (
     <div>
       Participants will be displayed here once this opportunity has reached the
@@ -308,11 +397,11 @@ const WaitForCodeChallenge: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const ContextMenuCell: View<{
+const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   loading: boolean;
   proposal: SWUProposalSlim;
-  dispatch: Dispatch<Msg>;
+  dispatch: component_.base.Dispatch<Msg>;
 }> = ({ disabled, loading, proposal, dispatch }) => {
   switch (proposal.status) {
     case SWUProposalStatus.EvaluatedCodeChallenge:
@@ -340,7 +429,7 @@ const ContextMenuCell: View<{
           disabled={disabled || loading}
           loading={loading}
           onClick={() =>
-            dispatch(adt("screenOutOfTeamScenario" as const, proposal.id))
+            dispatch(adt("screenOutFromTeamScenario" as const, proposal.id))
           }>
           Screen Out
         </Link>
@@ -356,7 +445,7 @@ interface ProponentCellProps {
   disabled: boolean;
 }
 
-const ProponentCell: View<ProponentCellProps> = ({
+const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
   disabled
@@ -389,8 +478,10 @@ const ProponentCell: View<ProponentCellProps> = ({
 
 function evaluationTableBodyRows(
   state: Immutable<State>,
-  dispatch: Dispatch<Msg>
+  dispatch: component_.base.Dispatch<Msg>
 ): Table.BodyRows {
+  const opportunity = state.opportunity;
+  if (!opportunity) return [];
   const isCompleteCodeChallengeLoading = state.completeCodeChallengeLoading > 0;
   const isScreenToFromLoading = !!state.screenToFromLoading;
   const isLoading = isCompleteCodeChallengeLoading || isScreenToFromLoading;
@@ -402,7 +493,7 @@ function evaluationTableBodyRows(
         children: (
           <ProponentCell
             proposal={p}
-            opportunity={state.opportunity}
+            opportunity={opportunity}
             disabled={isLoading}
           />
         )
@@ -474,22 +565,26 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-const EvaluationTable: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   return (
     <Table.view
       headCells={evaluationTableHeadCells(state)}
       bodyRows={evaluationTableBodyRows(state, dispatch)}
       state={state.table}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("table" as const, msg)
       )}
     />
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state } = props;
   const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const cardData = makeCardData(opportunity, state.proposals);
   return (
     <div>
@@ -524,15 +619,24 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
-  getContextualActions: ({ state, dispatch }) => {
-    if (!state.canViewProposals || !state.canProposalsBeScreened) {
-      return null;
+  onInitResponse(response) {
+    return adt("onInitResponse", response);
+  },
+
+  getActions: ({ state, dispatch }) => {
+    const opportunity = state.opportunity;
+    if (
+      !opportunity ||
+      !state.canViewProposals ||
+      !state.canProposalsBeScreened
+    ) {
+      return component_.page.actions.none();
     }
     const isCompleteCodeChallengeLoading =
       state.completeCodeChallengeLoading > 0;
     const isScreenToFromLoading = !!state.screenToFromLoading;
     const isLoading = isCompleteCodeChallengeLoading || isScreenToFromLoading;
-    return adt("links", [
+    return component_.page.actions.links([
       {
         children: "Complete Code Challenge",
         symbol_: leftPlacement(iconLinkSymbol("code-outline")),
@@ -544,7 +648,7 @@ export const component: Tab.Component<State, Msg> = {
           return (
             isLoading ||
             !(
-              canSWUOpportunityBeScreenedInToTeamScenario(state.opportunity) &&
+              canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
               state.proposals.reduce(
                 (acc, p) =>
                   acc || p.status === SWUProposalStatus.UnderReviewTeamScenario,
@@ -561,13 +665,13 @@ export const component: Tab.Component<State, Msg> = {
 
   getModal: (state) => {
     if (!state.showModal) {
-      return null;
+      return component_.page.modal.hide();
     }
     switch (state.showModal.tag) {
       case "completeCodeChallenge":
-        return {
+        return component_.page.modal.show({
           title: "Complete Code Challenge?",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Complete Code Challenge",
@@ -584,7 +688,7 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to complete the evaluation of this opportunity's Code Challenge? You will no longer be able to screen proponents in or out of the Team Scenario."
-        };
+        });
     }
   }
 };

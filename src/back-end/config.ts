@@ -271,7 +271,7 @@ export function getConfigErrors(): string[] {
   } catch (error) {
     logger.error(
       "error caught trying to create FILE_STORAGE_DIR",
-      errorToJson(error)
+      errorToJson(error as Error)
     );
     errors.push(
       "FILE_STORAGE_DIR does not exist and this process was unable to create it."
@@ -287,7 +287,10 @@ export function getConfigErrors(): string[] {
       mkdirSync(TMP_DIR, { recursive: true });
     }
   } catch (error) {
-    logger.error("error caught trying to create TMP_DIR", errorToJson(error));
+    logger.error(
+      "error caught trying to create TMP_DIR",
+      errorToJson(error as Error)
+    );
     errors.push(
       "TMP_DIR does not exist and this process was unable to create it."
     );

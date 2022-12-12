@@ -94,7 +94,7 @@ const resource: Resource = {
       // If it's a valid UUID, query by id.
       // If not a valid UUID, or query by id failed (possible a UUID was used as a slug), then query by slug
       const validatedId = validateUUID(request.params.id);
-      let dbResult: any = null;
+      let dbResult: db.DatabaseValidation<Content | null> | null = null;
       if (isValid(validatedId)) {
         dbResult = await db.readOneContentById(
           connection,

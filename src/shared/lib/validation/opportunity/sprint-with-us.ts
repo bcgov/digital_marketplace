@@ -39,8 +39,6 @@ import {
   Validation
 } from "shared/lib/validation";
 import { isArray, isBoolean } from "util";
-import { MAX_NOTE_LENGTH } from "shared/lib/resources/note";
-
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
@@ -218,11 +216,11 @@ export function validateSWUOpportunityInceptionPhase(
           startDate: getInvalidValue(validatedStartDate, undefined),
           completionDate: getInvalidValue(validatedCompletionDate, undefined),
           maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-          requiredCapabilities: getInvalidValue(
-            validatedRequiredCapabilities,
+          requiredCapabilities: getInvalidValue<
+            CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
             undefined
-          )
-        });
+          >(validatedRequiredCapabilities, undefined)
+        } as CreateSWUOpportunityPhaseValidationErrors);
       }
     }
   );
@@ -280,11 +278,11 @@ export function validateSWUOpportunityPrototypePhase(
           startDate: getInvalidValue(validatedStartDate, undefined),
           completionDate: getInvalidValue(validatedCompletionDate, undefined),
           maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-          requiredCapabilities: getInvalidValue(
-            validatedRequiredCapabilities,
+          requiredCapabilities: getInvalidValue<
+            CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
             undefined
-          )
-        });
+          >(validatedRequiredCapabilities, undefined)
+        } as CreateSWUOpportunityPhaseValidationErrors);
       }
     }
   );
@@ -334,11 +332,11 @@ export function validateSWUOpportunityImplementationPhase(
       startDate: getInvalidValue(validatedStartDate, undefined),
       completionDate: getInvalidValue(validatedCompletionDate, undefined),
       maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-      requiredCapabilities: getInvalidValue(
-        validatedRequiredCapabilities,
+      requiredCapabilities: getInvalidValue<
+        CreateSWUOpportunityPhaseRequiredCapabilityErrors[],
         undefined
-      )
-    });
+      >(validatedRequiredCapabilities, undefined)
+    } as CreateSWUOpportunityPhaseValidationErrors);
   }
 }
 
@@ -475,14 +473,18 @@ export function validateMandatorySkills(
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Mandatory Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Optional Skill", 1, 100)
   );
-  return mapValid(validatedArray, (skills) => uniq(skills));
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
 }
 
 export function validateDescription(raw: string): Validation<string> {
@@ -536,9 +538,5 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 }
 
 export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "Status Note", 0, MAX_NOTE_LENGTH);
-}
-
-export function validateHistoryNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "History Note", 1, MAX_NOTE_LENGTH);
+  return validateGenericString(raw, "Status Note", 0, 1000);
 }

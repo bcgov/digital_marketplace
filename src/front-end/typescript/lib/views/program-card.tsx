@@ -1,4 +1,4 @@
-import { View, ViewElement } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Link, { ButtonProps } from "front-end/lib/views/link";
 import React from "react";
 import { Col } from "reactstrap";
@@ -6,13 +6,13 @@ import { Col } from "reactstrap";
 export interface Props {
   img: string;
   title: string;
-  description: ViewElement;
+  description: component.base.ViewElement;
   className?: string;
   links: ButtonProps[];
   wideLinks?: boolean;
 }
 
-const ProgramCard: View<Props> = ({
+const ProgramCard: component.base.View<Props> = ({
   img,
   title,
   description,

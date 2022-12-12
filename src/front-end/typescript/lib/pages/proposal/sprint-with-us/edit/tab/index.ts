@@ -1,6 +1,6 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
-import { immutable, Immutable } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import * as ProposalTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab/proposal";
 import * as ScoresheetTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab/scoresheet";
 import { routeDest } from "front-end/lib/views/link";
@@ -12,6 +12,11 @@ import { adt } from "shared/lib/types";
 // Parent page types & functions.
 
 export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
+
+export type ParentInnerMsg<
+  K extends TabId,
+  InnerMsg
+> = TabbedPage.ParentInnerMsg<Tabs, K, InnerMsg>;
 
 export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
   Tabs,
@@ -27,18 +32,26 @@ export interface Params {
   viewerUser: User;
 }
 
-export type Component<State extends object, Msg> = TabbedPage.TabComponent<
+export type InitResponse = null;
+
+export type Component<State, Msg> = TabbedPage.TabComponent<
   Params,
   State,
-  Msg
+  Msg,
+  InitResponse
 >;
-
 export interface Tabs {
-  proposal: TabbedPage.Tab<Params, ProposalTab.State, ProposalTab.InnerMsg>;
+  proposal: TabbedPage.Tab<
+    Params,
+    ProposalTab.State,
+    ProposalTab.InnerMsg,
+    InitResponse
+  >;
   scoresheet: TabbedPage.Tab<
     Params,
     ScoresheetTab.State,
-    ScoresheetTab.InnerMsg
+    ScoresheetTab.InnerMsg,
+    InitResponse
   >;
 }
 
@@ -98,26 +111,24 @@ export function makeSidebarLink(
   });
 }
 
-export async function makeSidebarState(
-  proposal: SWUProposal,
-  activeTab: TabId
-): Promise<Immutable<MenuSidebar.State>> {
-  return immutable(
-    await MenuSidebar.init({
-      items: [
-        adt("heading", "Proposal Management"),
-        makeSidebarLink("proposal", proposal, activeTab),
-        adt("heading", "Vendor Evaluation"),
-        makeSidebarLink("scoresheet", proposal, activeTab),
-        adt("heading", "Need Help?"),
-        adt("link", {
-          icon: "external-link-alt",
-          text: "Read Guide",
-          active: false,
-          newTab: true,
-          dest: routeDest(adt("contentView", "sprint-with-us-proposal-guide"))
-        })
-      ]
-    })
-  );
+export function makeSidebarState(
+  activeTab: TabId,
+  proposal: SWUProposal
+): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  return MenuSidebar.init({
+    items: [
+      adt("heading", "Proposal Management"),
+      makeSidebarLink("proposal", proposal, activeTab),
+      adt("heading", "Vendor Evaluation"),
+      makeSidebarLink("scoresheet", proposal, activeTab),
+      adt("heading", "Need Help?"),
+      adt("link", {
+        icon: "external-link-alt",
+        text: "Read Guide",
+        active: false,
+        newTab: true,
+        dest: routeDest(adt("contentView", "sprint-with-us-proposal-guide"))
+      })
+    ]
+  });
 }

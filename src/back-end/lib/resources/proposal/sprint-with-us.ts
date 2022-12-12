@@ -26,10 +26,14 @@ import {
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
-import { SWUOpportunityStatus } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  CreateSWUTeamQuestionValidationErrors,
+  SWUOpportunityStatus
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   CreateRequestBody,
+  CreateSWUProposalReferenceValidationErrors,
   CreateValidationErrors,
   DeleteValidationErrors,
   isValidStatusChange,
@@ -39,6 +43,7 @@ import {
   UpdateEditValidationErrors,
   UpdateRequestBody,
   UpdateTeamQuestionScoreBody,
+  UpdateTeamQuestionScoreValidationErrors,
   UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
@@ -284,7 +289,7 @@ const resource: Resource = {
           connection,
           attachments
         );
-        if (isInvalid(validatedAttachments)) {
+        if (isInvalid<string[][]>(validatedAttachments)) {
           return invalid({
             attachments: validatedAttachments.value
           });
@@ -443,11 +448,14 @@ const resource: Resource = {
               validatedImplementationPhase,
               undefined
             ),
-            teamQuestionResponses: getInvalidValue(
-              validatedTeamQuestionResponses,
+            teamQuestionResponses: getInvalidValue<
+              CreateSWUTeamQuestionValidationErrors[],
               undefined
-            ),
-            references: getInvalidValue(validatedReferences, undefined),
+            >(validatedTeamQuestionResponses, undefined),
+            references: getInvalidValue<
+              CreateSWUProposalReferenceValidationErrors[],
+              undefined
+            >(validatedReferences, undefined),
             totalProposedCost: getInvalidValue(
               validatedTotalProposedCost,
               undefined
@@ -650,7 +658,7 @@ const resource: Resource = {
               connection,
               attachments
             );
-            if (isInvalid(validatedAttachments)) {
+            if (isInvalid<string[][]>(validatedAttachments)) {
               return invalid({
                 proposal: adt("edit" as const, {
                   attachments: validatedAttachments.value
@@ -809,11 +817,14 @@ const resource: Resource = {
                       validatedImplementationPhase,
                       undefined
                     ),
-                    references: getInvalidValue(validatedReferences, undefined),
-                    teamQuestionResponses: getInvalidValue(
-                      validatedTeamQuestionResponses,
+                    references: getInvalidValue<
+                      CreateSWUProposalReferenceValidationErrors[],
                       undefined
-                    )
+                    >(validatedReferences, undefined),
+                    teamQuestionResponses: getInvalidValue<
+                      CreateSWUTeamQuestionValidationErrors[],
+                      undefined
+                    >(validatedTeamQuestionResponses, undefined)
                   } as UpdateEditValidationErrors
                 )
               });
@@ -1044,7 +1055,11 @@ const resource: Resource = {
                 request.body.value,
                 swuOpportunity.teamQuestions
               );
-            if (isInvalid(validatedQuestionsScore)) {
+            if (
+              isInvalid<UpdateTeamQuestionScoreValidationErrors[]>(
+                validatedQuestionsScore
+              )
+            ) {
               return invalid({
                 proposal: adt(
                   "scoreQuestions" as const,

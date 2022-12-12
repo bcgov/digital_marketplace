@@ -1,4 +1,4 @@
-import { View, ViewElementChildren } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import React from "react";
 
 /**
@@ -7,11 +7,14 @@ import React from "react";
  */
 
 export interface Props {
-  children: ViewElementChildren;
+  children: component.base.ViewElementChildren;
   className?: string;
 }
 
-export const view: View<Props> = ({ children, className = "" }) => {
+export const view: component.base.View<Props> = ({
+  children,
+  className = ""
+}) => {
   return <div className={`sticky-md ${className}`}>{children}</div>;
 };
 

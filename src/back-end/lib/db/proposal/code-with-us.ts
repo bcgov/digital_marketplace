@@ -244,7 +244,7 @@ async function createCWUProposalAttachments(
 
 async function rawCWUProposalHistoryRecordToCWUProposalHistoryRecord(
   connection: Connection,
-  session: Session,
+  _session: Session,
   raw: RawCWUProposalHistoryRecord
 ): Promise<CWUProposalHistoryRecord> {
   const { createdBy: createdById, status, event, ...restOfRaw } = raw;

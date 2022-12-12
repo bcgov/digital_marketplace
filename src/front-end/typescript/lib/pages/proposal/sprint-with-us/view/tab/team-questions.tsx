@@ -4,17 +4,9 @@ import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  PageContextualActions,
-  toast,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
@@ -40,7 +32,8 @@ import {
   SWUProposal,
   SWUProposalStatus,
   SWUProposalTeamQuestionResponse,
-  UpdateTeamQuestionScoreBody
+  UpdateTeamQuestionScoreBody,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
@@ -61,50 +54,72 @@ export type InnerMsg =
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"submitScore">
+  | ADT<
+      "onSubmitScoreResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >
   | ADT<"screenIn">
+  | ADT<"onScreenInResponse", SWUProposal | null>
   | ADT<"screenOut">
+  | ADT<"onScreenOutResponse", SWUProposal | null>
   | ADT<"scoreMsg", [number, NumberField.Msg]>; //[index, msg]
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function initScores(
+function initScores(
   opp: SWUOpportunity,
   prop: SWUProposal
-): Promise<Array<Immutable<NumberField.State>>> {
-  return await Promise.all(
-    (prop.teamQuestionResponses || []).map(async (r, i) => {
+): [Immutable<NumberField.State>[], component_.Cmd<Msg>[]] {
+  return (prop.teamQuestionResponses || []).reduce(
+    ([states, cmds], r, i) => {
       const question = getQuestionByOrder(opp, r.order);
-      return immutable(
-        await NumberField.init({
-          errors: [],
-          validate: (v) => {
-            if (v === null) {
-              return invalid(["Please enter a valid score."]);
-            }
-            return validateTeamQuestionScoreScore(v, question?.score || 0);
-          },
-          child: {
-            step: 0.01,
-            value: r.score === null || r.score === undefined ? null : r.score,
-            id: `swu-proposal-question-score-${i}`
+      const [state, cmd] = NumberField.init({
+        errors: [],
+        validate: (v) => {
+          if (v === null) {
+            return invalid(["Please enter a valid score."]);
           }
-        })
-      );
-    })
+          return validateTeamQuestionScoreScore(v, question?.score || 0);
+        },
+        child: {
+          step: 0.01,
+          value: r.score === null || r.score === undefined ? null : r.score,
+          id: `swu-proposal-question-score-${i}`
+        }
+      });
+      return [
+        [...states, immutable(state)],
+        [
+          ...cmds,
+          ...component_.cmd.mapMany(
+            cmd,
+            (msg) => adt("scoreMsg", [i, msg]) as Msg
+          )
+        ]
+      ];
+    },
+    [[], []] as [Immutable<NumberField.State>[], component_.Cmd<Msg>[]]
   );
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    showModal: null,
-    screenToFromLoading: 0,
-    enterScoreLoading: 0,
-    openAccordions: new Set(
-      params.proposal.teamQuestionResponses.map((p, i) => i)
-    ),
-    scores: await initScores(params.opportunity, params.proposal)
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [scoreStates, scoreCmds] = initScores(
+    params.opportunity,
+    params.proposal
+  );
+  return [
+    {
+      ...params,
+      showModal: null,
+      screenToFromLoading: 0,
+      enterScoreLoading: 0,
+      openAccordions: new Set(
+        params.proposal.teamQuestionResponses.map((p, i) => i)
+      ),
+      scores: scoreStates
+    },
+    scoreCmds
+  ];
 };
 
 const startScreenToFromLoading = makeStartLoading<State>("screenToFromLoading");
@@ -112,7 +127,7 @@ const stopScreenToFromLoading = makeStopLoading<State>("screenToFromLoading");
 const startEnterScoreLoading = makeStartLoading<State>("enterScoreLoading");
 const stopEnterScoreLoading = makeStopLoading<State>("enterScoreLoading");
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleAccordion":
       return [
@@ -123,133 +138,189 @@ const update: Update<State, Msg> = ({ state, msg }) => {
             s.add(msg.value);
           }
           return s;
-        })
+        }),
+        []
       ];
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
       if (state.enterScoreLoading > 0) {
-        return [state];
+        return [state, []];
       }
-      return [state.set("showModal", null)];
-    case "submitScore":
+      return [state.set("showModal", null), []];
+    case "submitScore": {
+      const scores = state.proposal.teamQuestionResponses.reduce(
+        (acc, r, i) => {
+          if (!acc) {
+            return null;
+          }
+          const field = state.scores[i];
+          if (!field) {
+            return null;
+          }
+          const score = FormField.getValue(field);
+          if (score === null) {
+            return null;
+          }
+          acc.push({
+            order: r.order,
+            score
+          });
+          return acc;
+        },
+        [] as UpdateTeamQuestionScoreBody[] | null
+      );
+      if (scores === null) {
+        return [state, []];
+      }
       return [
         startEnterScoreLoading(state),
-        async (state, dispatch) => {
-          state = stopEnterScoreLoading(state);
-          const scores = state.proposal.teamQuestionResponses.reduce(
-            (acc, r, i) => {
-              if (!acc) {
-                return null;
-              }
-              const field = state.scores[i];
-              if (!field) {
-                return null;
-              }
-              const score = FormField.getValue(field);
-              if (score === null) {
-                return null;
-              }
-              acc.push({
-                order: r.order,
-                score
-              });
-              return acc;
-            },
-            [] as UpdateTeamQuestionScoreBody[] | null
-          );
-          if (scores === null) {
-            return state;
-          }
-          const result = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             state.proposal.id,
-            adt("scoreQuestions", scores)
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(adt("success", toasts.scored.success("Team Questions")))
-              );
-              return state
-                .set(
-                  "scores",
-                  await initScores(state.opportunity, result.value)
-                )
-                .set("showModal", null)
-                .set("proposal", result.value);
-            case "invalid": {
-              dispatch(
-                toast(adt("error", toasts.scored.error("Team Questions")))
-              );
-              let scores = state.scores;
-              if (
-                result.value.proposal &&
-                result.value.proposal.tag === "scoreQuestions"
-              ) {
-                scores = result.value.proposal.value.map((e, i) =>
-                  FormField.setErrors(scores[i], e.score || [])
-                );
-              }
-              return state.set("scores", scores);
-            }
-            case "unhandled":
-              dispatch(
-                toast(adt("error", toasts.scored.error("Team Questions")))
-              );
-              return state;
-          }
-        }
+            adt("scoreQuestions", scores),
+            (response) => adt("onSubmitScoreResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+    case "onSubmitScoreResponse": {
+      state = stopEnterScoreLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [scoreStates, scoreCmds] = initScores(
+            state.opportunity,
+            result.value
+          );
+          return [
+            state
+              .set("scores", scoreStates)
+              .set("showModal", null)
+              .set("proposal", result.value),
+            [
+              ...scoreCmds,
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.scored.success("Team Questions"))
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let scores = state.scores;
+          if (
+            result.value.proposal &&
+            result.value.proposal.tag === "scoreQuestions"
+          ) {
+            scores = result.value.proposal.value.map((e, i) =>
+              FormField.setErrors(scores[i], e.score || [])
+            );
+          }
+          return [
+            state.set("scores", scores),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.scored.error("Team Questions"))
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.scored.error("Team Questions"))
+                )
+              )
+            ]
+          ];
+      }
+    }
     case "screenIn":
       return [
         startScreenToFromLoading(state).set("showModal", null),
-        async (state, dispatch) => {
-          state = stopScreenToFromLoading(state);
-          const result = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             state.proposal.id,
-            adt("screenInToCodeChallenge", "")
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(toast(adt("success", toasts.screenedIn.success)));
-              return state
-                .set(
-                  "scores",
-                  await initScores(state.opportunity, result.value)
-                )
-                .set("proposal", result.value);
-            case "invalid":
-            case "unhandled":
-              return state;
-          }
-        }
+            adt("screenInToCodeChallenge", ""),
+            (response) =>
+              adt(
+                "onScreenInResponse",
+                api.isValid(response) ? response.value : null
+              )
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    case "onScreenInResponse": {
+      state = stopScreenToFromLoading(state);
+      const proposal = msg.value;
+      if (proposal) {
+        const [scoreStates, scoreCmds] = initScores(
+          state.opportunity,
+          proposal
+        );
+        return [
+          state.set("scores", scoreStates).set("proposal", proposal),
+          [
+            ...scoreCmds,
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("success", toasts.screenedIn.success)
+              )
+            )
+          ]
+        ];
+      } else {
+        return [state, []];
+      }
+    }
     case "screenOut":
       return [
         startScreenToFromLoading(state).set("showModal", null),
-        async (state, dispatch) => {
-          state = stopScreenToFromLoading(state);
-          const result = await api.proposals.swu.update(
+        [
+          api.proposals.swu.update(
             state.proposal.id,
-            adt("screenOutFromCodeChallenge", "")
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(toast(adt("success", toasts.screenedOut.success)));
-              return state
-                .set(
-                  "scores",
-                  await initScores(state.opportunity, result.value)
-                )
-                .set("proposal", result.value);
-            case "invalid":
-            case "unhandled":
-              return state;
-          }
-        }
+            adt("screenOutFromCodeChallenge", ""),
+            (response) =>
+              adt(
+                "onScreenOutResponse",
+                api.isValid(response) ? response.value : null
+              )
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    case "onScreenOutResponse": {
+      state = stopScreenToFromLoading(state);
+      const proposal = msg.value;
+      if (proposal) {
+        const [scoreStates, scoreCmds] = initScores(
+          state.opportunity,
+          proposal
+        );
+        return [
+          state.set("scores", scoreStates).set("proposal", proposal),
+          [
+            ...scoreCmds,
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("success", toasts.screenedOut.success)
+              )
+            )
+          ]
+        ];
+      } else {
+        return [state, []];
+      }
+    }
     case "scoreMsg":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["scores", String(msg.value[0])],
         childUpdate: NumberField.update,
@@ -257,7 +328,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("scoreMsg", [msg.value[0], value]) as Msg
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -270,14 +341,9 @@ interface TeamQuestionResponseViewProps {
   toggleAccordion(): void;
 }
 
-const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({
-  opportunity,
-  response,
-  index,
-  isOpen,
-  className,
-  toggleAccordion
-}) => {
+const TeamQuestionResponseView: component_.base.View<
+  TeamQuestionResponseViewProps
+> = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
   const question = getQuestionByOrder(opportunity, response.order);
   if (!question) {
     return null;
@@ -319,7 +385,10 @@ const TeamQuestionResponseView: View<TeamQuestionResponseViewProps> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   return (
     <div>
@@ -383,14 +452,18 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
+
   getModal: (state) => {
     const isEnterScoreLoading = state.enterScoreLoading > 0;
     const valid = isValid(state);
     switch (state.showModal) {
       case "enterScore":
-        return {
+        return component_.page.modal.show({
           title: "Enter Score",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Submit Score",
@@ -423,7 +496,7 @@ export const component: Tab.Component<State, Msg> = {
                     disabled={isEnterScoreLoading}
                     label={`Question ${i + 1} Score`}
                     placeholder="Score"
-                    dispatch={mapComponentDispatch(
+                    dispatch={component_.base.mapDispatch(
                       dispatch,
                       (v) => adt("scoreMsg" as const, [i, v]) as Msg
                     )}
@@ -433,19 +506,19 @@ export const component: Tab.Component<State, Msg> = {
               })}
             </div>
           )
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
   },
 
-  getContextualActions: ({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
     const isScreenToFromLoading = state.screenToFromLoading > 0;
     switch (propStatus) {
       case SWUProposalStatus.UnderReviewTeamQuestions:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Enter Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
@@ -455,7 +528,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case SWUProposalStatus.EvaluatedTeamQuestions:
-        return adt("links", [
+        return component_.page.actions.links([
           ...(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
             ? [
                 {
@@ -464,7 +537,7 @@ export const component: Tab.Component<State, Msg> = {
                   loading: isScreenToFromLoading,
                   disabled: isScreenToFromLoading,
                   button: true,
-                  color: "primary",
+                  color: "primary" as const,
                   onClick: () => dispatch(adt("screenIn" as const))
                 }
               ]
@@ -477,12 +550,12 @@ export const component: Tab.Component<State, Msg> = {
             color: "info",
             onClick: () => dispatch(adt("showModal", "enterScore" as const))
           }
-        ]) as PageContextualActions;
+        ]) as component_.page.Actions;
       case SWUProposalStatus.UnderReviewCodeChallenge:
         if (hasSWUOpportunityPassedCodeChallenge(state.opportunity)) {
-          return null;
+          return component_.page.actions.none();
         }
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Screen Out",
             symbol_: leftPlacement(iconLinkSymbol("ban")),
@@ -494,7 +567,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       default:
-        return null;
+        return component_.page.actions.none();
     }
   }
 };

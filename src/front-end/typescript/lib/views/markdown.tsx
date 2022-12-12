@@ -1,5 +1,5 @@
 import { fileBlobPath, prefixPath } from "front-end/lib";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import isRelativeUrl from "is-relative-url";
 import React from "react";
 import ReactMarkdown, { Renderers } from "react-markdown";
@@ -46,7 +46,7 @@ function decodeImgSrc(src: string): string {
   return decoded ? fileBlobPath({ id: decoded }) : src;
 }
 
-const Markdown: View<Props> = ({
+const Markdown: component.base.View<Props> = ({
   source,
   box,
   className = "",
@@ -66,7 +66,7 @@ const Markdown: View<Props> = ({
             </span>
           );
         }
-      : (props: any) => {
+      : (props) => {
           const href =
             isRelativeUrl(props.href) && !isHashLink(props.href)
               ? prefixPath(props.href)
@@ -91,11 +91,11 @@ const Markdown: View<Props> = ({
             </span>
           );
         }
-      : (props: any) => {
+      : (props) => {
           return <img {...props} src={decodeImgSrc(props.src || "")} />;
         },
     heading: smallerHeadings
-      ? ({ level, children }: any) => {
+      ? ({ level, children }) => {
           //React-Markdown types are not helpful here.
           return (
             <div
@@ -129,7 +129,9 @@ type ProposalMarkdownProps = Pick<
   "source" | "className" | "box" | "noLinks" | "noImages"
 >;
 
-export const ProposalMarkdown: View<ProposalMarkdownProps> = (props) => {
+export const ProposalMarkdown: component.base.View<ProposalMarkdownProps> = (
+  props
+) => {
   return (
     <Markdown openLinksInNewTabs smallerHeadings noLinks noImages {...props} />
   );
