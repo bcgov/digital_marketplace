@@ -67,9 +67,29 @@ oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml -p TAG_NAM
 ------
 ## Application deploy
 To deploy the Digital Marketplace app, run these commands in each namespace (dev/test/prod).
-Replace `<secret>` with the KeyCloak client secret for the target environment.
+Replace `<secret>` with the KeyCloak `{"credentials": {"secret": <value> }}` for the target environment. Configuration for each of the environments can be retrieved from the [Common Hosted Single Sign-on Service](https://bcgov.github.io/sso-requests). Mappings between a sample output from the SSO service and the application config are as follows:
 
-To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
+```json
+{
+  "confidential-port": 0,
+  "auth-server-url": "<url>/auth",
+  "realm": "<realm>",
+  "ssl-required": "external",
+  "resource": "<resource>",
+  "credentials": {
+    "secret": "<secret>"
+  }
+}
+````
+
+```yaml
+KEYCLOAK_CLIENT_ID="<resource>"
+KEYCLOAK_CLIENT_SECRET="<secret>"
+KEYCLOAK_URL="<url>"
+KEYCLOAK_REALM="<realm>"
+```
+
+**Optional:** To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
 
 The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app.
 
