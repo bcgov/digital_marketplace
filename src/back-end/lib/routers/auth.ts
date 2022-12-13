@@ -382,14 +382,47 @@ async function establishSessionWithClaims(
   request: Request<any, Session>,
   tokenSet: TokenSet
 ) {
+  /**
+   * With current OIDC instance, returns an object similar to the following:
+   * @example (githubpublic)
+   * ```json
+   * {
+   *   exp: ,
+   *   iat: ,
+   *   auth_time: ,
+   *   jti: '',
+   *   iss: '',
+   *   aud: '',
+   *   sub: '',
+   *   typ: '',
+   *   azp: '',
+   *   nonce: '',
+   *   session_state: '',
+   *   at_hash: '',
+   *   sid: '',
+   *   identity_provider: '',
+   *   org_verified: '',
+   *   email_verified: ,
+   *   name: '',
+   *   github_username: '',
+   *   github_id: '',
+   *   preferred_username: '',
+   *   orgs: '',
+   *   given_name: '',
+   *   display_name: '',
+   *   family_name: '',
+   *   email: ''
+   *  }
+   * ```
+   */
   const claims = tokenSet.claims();
   let userType: UserType;
-  const identityProvider = getString(claims, "loginSource");
+  const identityProvider = getString(claims, "identity_provider");
   switch (identityProvider) {
-    case GOV_IDP_SUFFIX.toUpperCase():
+    case GOV_IDP_SUFFIX:
       userType = UserType.Government;
       break;
-    case VENDOR_IDP_SUFFIX.toUpperCase():
+    case VENDOR_IDP_SUFFIX:
       userType = UserType.Vendor;
       break;
     default:
@@ -402,7 +435,12 @@ async function establishSessionWithClaims(
   }
 
   let username = getString(claims, "preferred_username");
-  const idpId = getString(claims, "idp_id");
+
+  // Different keys returned, depending on identity provider
+  const idpId =
+    userType === UserType.Government
+      ? getString(claims, "idir_username")
+      : getString(claims, "github_username");
 
   // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
   if (
