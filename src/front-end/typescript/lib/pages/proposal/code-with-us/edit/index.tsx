@@ -106,8 +106,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               proposalId,
               (response) => response
             ),
-            api.proposals.cwu.readOne(opportunityId)(
-              proposalId,
+            api.opportunities.cwu.readOne(
+              opportunityId,
               (response) => response
             ),
             api.affiliations.readMany((response) => response),
