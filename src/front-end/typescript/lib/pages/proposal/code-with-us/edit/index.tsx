@@ -185,10 +185,21 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const proposal = proposalResponse.value;
               const opportunity = opportunityResponse.value;
               const affiliations = affiliationsResponse.value;
+              const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
+                tabId,
+                proposal.id,
+                opportunity.id
+              );
               const tabComponent = Tab.idToDefinition(tabId).component;
               return [
-                state.set("proposal", proposal),
+                state
+                  .set("proposal", proposal)
+                  .set("sidebar", immutable(sidebarState)),
                 [
+                  ...component_.cmd.mapMany(
+                    sidebarCmds,
+                    (msg) => adt("sidebar", msg) as Msg
+                  ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
                       tabComponent.onInitResponse([
