@@ -37,6 +37,7 @@ import {
 import { CWUProposalSlim } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
+import { valid } from "shared/lib/validation";
 
 type InfoTab = "details" | "attachments" | "addenda";
 
@@ -98,7 +99,7 @@ const init: component_.page.Init<
         viewerUser && isVendor(viewerUser)
           ? api.proposals.cwu.readExistingProposalForOpportunity(
               opportunityId,
-              (response) => response
+              (response) => valid(response)
             )
           : component_.cmd.dispatch(null),
         (opportunityResponse, proposalResponse) =>
