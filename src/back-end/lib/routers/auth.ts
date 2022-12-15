@@ -417,6 +417,8 @@ async function establishSessionWithClaims(
    * ```
    */
   const claims = tokenSet.claims();
+
+  // set userType - Government or Vendor, else error
   let userType: UserType;
   const identityProvider = getString(claims, "identity_provider");
   switch (identityProvider) {
@@ -435,22 +437,18 @@ async function establishSessionWithClaims(
       return null;
   }
 
-  let username = getString(claims, "preferred_username");
+  /**
+   * set username - stored in db as idpUsername
+   * set idpId - used as unique identifier in db, MUST be lowercase
+   */
+  let username, idpId: string;
 
-  // Different keys returned, depending on identity provider
-  const idpId =
-    userType === UserType.Government
-      ? getString(claims, "idir_username")
-      : getString(claims, "github_username");
-
-  // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
-  if (
-    (username.endsWith("@" + VENDOR_IDP_SUFFIX) &&
-      userType === UserType.Vendor) ||
-    (username.endsWith("@" + GOV_IDP_SUFFIX) &&
-      userType === UserType.Government)
-  ) {
-    username = username.slice(0, username.lastIndexOf("@"));
+  if (userType === UserType.Government) {
+    username = getString(claims, "idir_username");
+    idpId = getString(claims, "idir_username").toLowerCase();
+  } else {
+    username = getString(claims, "github_username");
+    idpId = getString(claims, "github_username").toLowerCase();
   }
 
   if (
