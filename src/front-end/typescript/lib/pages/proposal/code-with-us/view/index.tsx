@@ -97,7 +97,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           immutable({
             proposal: null,
             tab: [tabId, immutable(tabState)],
-            sidebar: sidebarState
+            sidebar: immutable(sidebarState)
           })
         ) as Valid<Immutable<ValidState<keyof Tab.Tabs>>>,
         [
@@ -111,8 +111,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               proposalId,
               (response) => response
             ),
-            api.proposals.cwu.readOne(opportunityId)(
-              proposalId,
+            api.opportunities.cwu.readOne(
+              opportunityId,
               (response) => response
             ),
             (proposalResponse, opportunityResponse) =>
