@@ -137,7 +137,7 @@ const init: component_.page.Init<
         viewerUser && isVendor(viewerUser)
           ? api.proposals.swu.readExistingProposalForOpportunity(
               opportunityId,
-              (response) => response
+              (response) => valid(response)
             )
           : component_.cmd.dispatch(null),
 
