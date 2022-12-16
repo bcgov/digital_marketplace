@@ -214,6 +214,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const [formState, formCmds] = Form.init({
         viewerUser: state.viewerUser,
         opportunity: state.opportunity,
+        proposal: state.proposal,
         organizations,
         evaluationContent
       });
