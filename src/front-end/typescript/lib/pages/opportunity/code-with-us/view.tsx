@@ -56,7 +56,7 @@ export type InnerMsg =
       [
         string,
         api.ResponseValidation<CWUOpportunity, string[]>,
-        api.ResponseValidation<CWUProposalSlim, string[]> | null
+        CWUProposalSlim | null
       ]
     >
   | ADT<"toggleWatch">
@@ -136,8 +136,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       } else {
         state = state.set("opportunity", opportunityResponse.value);
       }
-      if (proposalResponse && api.isValid(proposalResponse)) {
-        state = state.set("existingProposal", proposalResponse.value);
+      if (proposalResponse) {
+        state = state.set("existingProposal", proposalResponse);
       }
       return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
     }
