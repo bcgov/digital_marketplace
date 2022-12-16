@@ -78,7 +78,7 @@ type InnerMsg =
       [
         string,
         api.ResponseValidation<SWUOpportunity, string[]>,
-        api.ResponseValidation<SWUProposalSlim, string[]> | null,
+        SWUProposalSlim | null,
         api.ResponseValidation<Content, string[]>,
         boolean
       ]
@@ -137,7 +137,7 @@ const init: component_.page.Init<
         viewerUser && isVendor(viewerUser)
           ? api.proposals.swu.readExistingProposalForOpportunity(
               opportunityId,
-              (response) => valid(response)
+              (response) => response
             )
           : component_.cmd.dispatch(null),
 
@@ -196,8 +196,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         } else {
           state = state.set("opportunity", opportunityResponse.value);
         }
-        if (proposalResponse && api.isValid(proposalResponse)) {
-          state = state.set("existingProposal", proposalResponse.value);
+        if (proposalResponse) {
+          state = state.set("existingProposal", proposalResponse);
         }
         if (contentResponse && api.isValid(contentResponse)) {
           state = state.set("scopeContent", contentResponse.value.body);

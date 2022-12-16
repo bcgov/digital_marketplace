@@ -37,7 +37,6 @@ import {
 import { CWUProposalSlim } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { valid } from "shared/lib/validation";
 
 type InfoTab = "details" | "attachments" | "addenda";
 
@@ -57,7 +56,7 @@ export type InnerMsg =
       [
         string,
         api.ResponseValidation<CWUOpportunity, string[]>,
-        api.ResponseValidation<CWUProposalSlim, string[]> | null
+        CWUProposalSlim | null
       ]
     >
   | ADT<"toggleWatch">
@@ -99,7 +98,7 @@ const init: component_.page.Init<
         viewerUser && isVendor(viewerUser)
           ? api.proposals.cwu.readExistingProposalForOpportunity(
               opportunityId,
-              (response) => valid(response)
+              (response) => response
             )
           : component_.cmd.dispatch(null),
         (opportunityResponse, proposalResponse) =>
@@ -137,8 +136,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       } else {
         state = state.set("opportunity", opportunityResponse.value);
       }
-      if (proposalResponse && api.isValid(proposalResponse)) {
-        state = state.set("existingProposal", proposalResponse.value);
+      if (proposalResponse) {
+        state = state.set("existingProposal", proposalResponse);
       }
       return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
     }
