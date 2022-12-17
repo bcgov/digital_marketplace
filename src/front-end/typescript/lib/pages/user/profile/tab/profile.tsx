@@ -241,7 +241,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 (response) =>
                   adt(
                     "onToggleAccountActivationResponse",
-                    api.isValid(response)
+                    api.isValid(response) ? response.value : null
                   )
               ) as component_.Cmd<Msg>)
         ]
