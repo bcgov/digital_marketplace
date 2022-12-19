@@ -441,7 +441,7 @@ async function establishSessionWithClaims(
    * set username - stored in db as idpUsername
    * set idpId - used as unique identifier in db, MUST be lowercase
    */
-  let username, idpId: string;
+  let username: string, idpId: string;
 
   if (userType === UserType.Government) {
     username = getString(claims, "idir_username");
