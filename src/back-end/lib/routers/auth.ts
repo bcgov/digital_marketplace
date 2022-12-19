@@ -440,15 +440,19 @@ async function establishSessionWithClaims(
   /**
    * set username - stored in db as idpUsername
    * set idpId - used as unique identifier in db, MUST be lowercase
+   * set nameConcat - account for differences in IDP's name handling
    */
-  let username: string, idpId: string;
+  let username: string, idpId: string, nameConcat: string;
 
   if (userType === UserType.Government) {
-    username = getString(claims, "idir_username");
-    idpId = getString(claims, "idir_username").toLowerCase();
+    idpId = username = getString(claims, "idir_username").toLowerCase();
+    nameConcat = getString(claims, "given_name").concat(
+      " ",
+      getString(claims, "family_name")
+    );
   } else {
-    username = getString(claims, "github_username");
-    idpId = getString(claims, "github_username").toLowerCase();
+    idpId = username = getString(claims, "github_username").toLowerCase();
+    nameConcat = getString(claims, "display_name");
   }
 
   if (
@@ -472,7 +476,7 @@ async function establishSessionWithClaims(
         idpId,
         type: userType,
         status: UserStatus.Active,
-        name: claims.name || "",
+        name: nameConcat,
         email: claims.email || null,
         jobTitle: "",
         idpUsername: username
