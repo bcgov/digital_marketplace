@@ -169,11 +169,17 @@ export const MAILER_FROM = get(
 export const MAILER_BATCH_SIZE = parseInt(get("MAILER_BATCH_SIZE", "50"), 10);
 
 // Keycloak configuration
-export const KEYCLOAK_URL = get("KEYCLOAK_URL", "https://dev.oidc.gov.bc.ca");
+export const KEYCLOAK_URL = get(
+  "KEYCLOAK_URL",
+  "https://dev.loginproxy.gov.bc.ca"
+);
 
-export const KEYCLOAK_REALM = get("KEYCLOAK_REALM", "p2zhow64");
+export const KEYCLOAK_REALM = get("KEYCLOAK_REALM", "standard");
 
-export const KEYCLOAK_CLIENT_ID = get("KEYCLOAK_CLIENT_ID", "dm-auth-web");
+export const KEYCLOAK_CLIENT_ID = get(
+  "KEYCLOAK_CLIENT_ID",
+  "digital-marketplace-4144"
+);
 
 export const KEYCLOAK_CLIENT_SECRET = get("KEYCLOAK_CLIENT_SECRET", "");
 
