@@ -383,14 +383,49 @@ async function establishSessionWithClaims(
   request: Request<any, Session>,
   tokenSet: TokenSet
 ) {
+  /**
+   * With current OIDC instance, returns an object similar to the following:
+   * @example (githubpublic)
+   * ```json
+   * {
+   *   exp: ,
+   *   iat: ,
+   *   auth_time: ,
+   *   jti: '',
+   *   iss: '',
+   *   aud: '',
+   *   sub: '',
+   *   typ: '',
+   *   azp: '',
+   *   nonce: '',
+   *   session_state: '',
+   *   at_hash: '',
+   *   sid: '',
+   *   identity_provider: '',
+   *   org_verified: '',
+   *   email_verified: ,
+   *   name: '',
+   *   github_username: '',
+   *   github_id: '',
+   *   preferred_username: '',
+   *   orgs: '',
+   *   given_name: '',
+   *   display_name: '',
+   *   family_name: '',
+   *   email: ''
+   *  }
+   * ```
+   */
   const claims = tokenSet.claims();
+
+  // set userType - Government or Vendor, else error
   let userType: UserType;
-  const identityProvider = getString(claims, "loginSource");
+  const identityProvider = getString(claims, "identity_provider");
   switch (identityProvider) {
-    case GOV_IDP_SUFFIX.toUpperCase():
+    case GOV_IDP_SUFFIX:
       userType = UserType.Government;
       break;
-    case VENDOR_IDP_SUFFIX.toUpperCase():
+    case VENDOR_IDP_SUFFIX:
       userType = UserType.Vendor;
       break;
     default:
@@ -402,17 +437,22 @@ async function establishSessionWithClaims(
       return null;
   }
 
-  let username = getString(claims, "preferred_username");
-  const idpId = getString(claims, "idp_id");
+  /**
+   * set username - stored in db as idpUsername
+   * set idpId - used as unique identifier in db, MUST be lowercase
+   * set nameConcat - account for differences in IDP's name handling
+   */
+  let username: string, idpId: string, nameConcat: string;
 
-  // Strip the vendor/gov suffix if present.  We want to match and store the username without suffix.
-  if (
-    (username.endsWith("@" + VENDOR_IDP_SUFFIX) &&
-      userType === UserType.Vendor) ||
-    (username.endsWith("@" + GOV_IDP_SUFFIX) &&
-      userType === UserType.Government)
-  ) {
-    username = username.slice(0, username.lastIndexOf("@"));
+  if (userType === UserType.Government) {
+    idpId = username = getString(claims, "idir_username").toLowerCase();
+    nameConcat = getString(claims, "given_name").concat(
+      " ",
+      getString(claims, "family_name")
+    );
+  } else {
+    idpId = username = getString(claims, "github_username").toLowerCase();
+    nameConcat = getString(claims, "display_name");
   }
 
   if (
@@ -436,7 +476,7 @@ async function establishSessionWithClaims(
         idpId,
         type: userType,
         status: UserStatus.Active,
-        name: claims.name || "",
+        name: nameConcat,
         email: claims.email || null,
         jobTitle: "",
         idpUsername: username
