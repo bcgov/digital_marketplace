@@ -1,6 +1,6 @@
 import { prefixPath } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
-import * as Router from "front-end/lib/framework/router";
+import { component, router as router_ } from "front-end/lib/framework";
 import * as PageNotice from "front-end/lib/pages/notice";
 import * as CWUOpportunityEditTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as SWUOpportunityEditTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
@@ -13,25 +13,15 @@ import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
 import { getString } from "shared/lib";
 import { adt } from "shared/lib/types";
 
-export function pushState(route: Route) {
-  Router.pushState(router.routeToUrl(route), 0);
+export function pushState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
+  return component.cmd.pushUrlState(router.routeToUrl(route), msg);
 }
 
-export function replaceState(route: Route) {
-  Router.replaceState(router.routeToUrl(route), 0);
+export function replaceState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
+  return component.cmd.replaceUrlState(router.routeToUrl(route), msg);
 }
 
-export function redirect(path: string) {
-  window.location.href = `${window.location.origin}/${path}`;
-}
-
-export function back() {
-  if (window.history && window.history.back) {
-    window.history.back();
-  }
-}
-
-const router: Router.Router<Route> = {
+const router: router_.Router<Route> = {
   routes: [
     {
       path: prefixPath("/opportunities/create"),
@@ -138,7 +128,7 @@ const router: Router.Router<Route> = {
       path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export"
       ),
-      makeRoute({ params, query }) {
+      makeRoute({ params }) {
         return {
           tag: "proposalSWUExportOne",
           value: {
@@ -215,7 +205,7 @@ const router: Router.Router<Route> = {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/export"
       ),
-      makeRoute({ params, query }) {
+      makeRoute({ params }) {
         return {
           tag: "proposalCWUExportAll",
           value: {
@@ -243,7 +233,7 @@ const router: Router.Router<Route> = {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/:proposalId/export"
       ),
-      makeRoute({ params, query }) {
+      makeRoute({ params }) {
         return {
           tag: "proposalCWUExportOne",
           value: {
@@ -299,7 +289,7 @@ const router: Router.Router<Route> = {
       path: prefixPath(
         "/organizations/:id/sprint-with-us-terms-and-conditions"
       ),
-      makeRoute({ params, query }) {
+      makeRoute({ params }) {
         return {
           tag: "orgSWUTerms",
           value: {
@@ -453,8 +443,8 @@ const router: Router.Router<Route> = {
 
     {
       path: prefixPath("/notice/:noticeId"),
-      makeRoute({ path, params, query }) {
-        const noticeId = PageNotice.parseNoticeId(params.noticeId, query);
+      makeRoute({ path, params }) {
+        const noticeId = PageNotice.parseNoticeId(params.noticeId);
         return noticeId ? adt("notice", noticeId) : adt("notFound", { path });
       }
     },

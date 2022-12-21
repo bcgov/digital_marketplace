@@ -1,19 +1,12 @@
-import { makeStartLoading, makeStopLoading } from "front-end/lib";
+import { makeStartLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  ComponentViewProps,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
@@ -40,7 +33,9 @@ import {
   memberIsOwner,
   memberIsPending,
   membersHaveCapability,
-  MembershipType
+  MembershipType,
+  Affiliation,
+  CreateValidationErrors
 } from "shared/lib/resources/affiliation";
 import { isAdmin, isVendor } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -64,8 +59,11 @@ export interface State extends Tab.Params {
 
 export type InnerMsg =
   | ADT<"addTeamMembers">
+  | ADT<"onAddTeamMembersResponse", AddTeamMemberState>
   | ADT<"removeTeamMember", AffiliationMember> //Id of affiliation, not user
+  | ADT<"onRemoveTeamMemberResponse", [boolean, AffiliationMember]>
   | ADT<"approveAffiliation", AffiliationMember>
+  | ADT<"onApproveAffiliationResponse", [boolean, AffiliationMember]>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"membersTable", Table.Msg>
@@ -73,7 +71,7 @@ export type InnerMsg =
   | ADT<"addTeamMembersEmailsAddField">
   | ADT<"addTeamMembersEmailsRemoveField", number>; //index
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export function determineCapabilities(
   members: AffiliationMember[]
@@ -86,135 +84,169 @@ export function determineCapabilities(
   }));
 }
 
-function resetCapabilities(state: Immutable<State>): Immutable<State> {
-  return state.set("capabilities", determineCapabilities(state.affiliations));
-}
-
-async function initAddTeamMemberEmailField(): Promise<
-  Immutable<ShortText.State>
+function initAddTeamMemberEmailField(): component_.base.InitReturnValue<
+  ShortText.State,
+  ShortText.Msg
 > {
-  return immutable(
-    await ShortText.init({
-      errors: [],
-      validate: validateUserEmail,
-      child: {
-        id: "organization-team-add-team-members-emails",
-        type: "email",
-        value: ""
-      }
-    })
-  );
+  return ShortText.init({
+    errors: [],
+    validate: validateUserEmail,
+    child: {
+      id: "organization-team-add-team-members-emails",
+      type: "email",
+      value: ""
+    }
+  });
 }
 
-async function resetAddTeamMemberEmails(
+function resetAddTeamMemberEmails(
   state: Immutable<State>
-): Promise<Immutable<State>> {
-  return state.set("addTeamMembersEmails", [
-    await initAddTeamMemberEmailField()
-  ]);
+): component_.base.UpdateReturnValue<State, Msg> {
+  const [fieldState, fieldCmds] = initAddTeamMemberEmailField();
+  return [
+    state.set("addTeamMembersEmails", [immutable(fieldState)]),
+    component_.cmd.mapMany(
+      fieldCmds,
+      (msg) => adt("addTeamMembersEmails", [0, msg]) as Msg
+    )
+  ];
 }
 
-const init: Init<Tab.Params, State> = async (params) => {
-  return {
-    ...params,
-    showModal: null,
-    addTeamMembersLoading: 0,
-    removeTeamMemberLoading: null,
-    approveAffiliationLoading: null,
-    capabilities: determineCapabilities(params.affiliations),
-    membersTable: immutable(
-      await Table.init({
-        idNamespace: "organization-members"
-      })
-    ),
-    addTeamMembersEmails: [await initAddTeamMemberEmailField()]
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "organization-members"
+  });
+  const [addTeamMemberEmailState, addTeamMemberEmailCmds] =
+    initAddTeamMemberEmailField();
+  return [
+    {
+      ...params,
+      showModal: null,
+      addTeamMembersLoading: 0,
+      removeTeamMemberLoading: null,
+      approveAffiliationLoading: null,
+      capabilities: determineCapabilities(params.affiliations),
+      membersTable: immutable(tableState),
+      addTeamMembersEmails: [immutable(addTeamMemberEmailState)]
+    },
+    [
+      ...component_.cmd.mapMany(
+        tableCmds,
+        (msg) => adt("membersTable", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        addTeamMemberEmailCmds,
+        (msg) => adt("addTeamMembersEmails", [0, msg]) as Msg
+      )
+    ]
+  ];
 };
 
 const startAddTeamMembersLoading = makeStartLoading<State>(
   "addTeamMembersLoading"
 );
-const stopAddTeamMembersLoading = makeStopLoading<State>(
-  "addTeamMembersLoading"
-);
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+interface AddTeamMemberState {
+  successToasts: string[];
+  warningToasts: string[];
+  errorToasts: string[];
+}
+
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
 
     case "hideModal": {
       const existingShowModal = state.showModal;
-      return [
-        state.set("showModal", null),
-        async (state) => {
-          if (existingShowModal && existingShowModal.tag === "addTeamMembers") {
-            return await resetAddTeamMemberEmails(state);
-          }
-          return null;
-        }
-      ];
+      state = state.set("showModal", null);
+      if (existingShowModal && existingShowModal.tag === "addTeamMembers") {
+        return resetAddTeamMemberEmails(state);
+      }
+      return [state, []];
     }
 
     case "addTeamMembers": {
-      state = state.set("showModal", null);
-      return [
-        startAddTeamMembersLoading(state),
-        async (state, dispatch) => {
-          state = stopAddTeamMembersLoading(state);
-          const successToasts: string[] = []; //emails
-          const warningToasts: string[] = []; //emails
-          const errorToasts: string[] = []; //emails
-          for (const s of state.addTeamMembersEmails) {
-            const userEmail = FormField.getValue(s);
-            const result = await api.affiliations.create({
+      state = startAddTeamMembersLoading(state).set("showModal", null);
+      let cmd = component_.cmd.dispatch({
+        successToasts: [],
+        warningToasts: [],
+        errorToasts: []
+      } as AddTeamMemberState);
+      for (const s of state.addTeamMembersEmails) {
+        const userEmail = FormField.getValue(s);
+        cmd = component_.cmd.join(
+          cmd,
+          api.affiliations.create(
+            {
               userEmail,
               organization: state.organization.id,
               membershipType: MembershipType.Member
-            });
-            switch (result.tag) {
+            },
+            (response) => response
+          ) as component_.Cmd<
+            api.ResponseValidation<Affiliation, CreateValidationErrors>
+          >,
+          (acc, response) => {
+            switch (response.tag) {
               case "valid":
-                successToasts.push(userEmail);
-                state = state.update("affiliations", (affs) => [
-                  ...affs,
-                  result.value
-                ]);
+                acc.successToasts.push(userEmail);
                 break;
               case "invalid":
-                if (result.value.inviteeNotRegistered?.length) {
-                  warningToasts.push(userEmail);
+                if (response.value.inviteeNotRegistered?.length) {
+                  acc.warningToasts.push(userEmail);
                 } else {
-                  errorToasts.push(userEmail);
+                  acc.errorToasts.push(userEmail);
                 }
                 break;
               case "unhandled":
-                errorToasts.push(userEmail);
+                acc.errorToasts.push(userEmail);
                 break;
             }
+            return acc;
           }
-          //Dispatch resulting toasts to user.
-          if (successToasts.length) {
-            dispatch(
-              toast(
-                adt("success", toasts.addedTeamMembers.success(successToasts))
-              )
-            );
-          }
-          if (warningToasts.length) {
-            dispatch(
-              toast(
-                adt("warning", toasts.addedTeamMembers.warning(warningToasts))
-              )
-            );
-          }
-          if (errorToasts.length) {
-            dispatch(
-              toast(adt("error", toasts.addedTeamMembers.error(errorToasts)))
-            );
-          }
-          state = resetCapabilities(state);
-          return await resetAddTeamMemberEmails(state);
-        }
+        );
+      }
+      return [
+        startAddTeamMembersLoading(state),
+        [component_.cmd.map(cmd, (acc) => adt("onAddTeamMembersResponse", acc))]
+      ];
+    }
+
+    case "onAddTeamMembersResponse": {
+      const { successToasts, warningToasts, errorToasts } = msg.value;
+      // Dispatch resulting toasts to user.
+      let toastsCmd: component_.Cmd<Msg>[] = [];
+      if (successToasts.length) {
+        toastsCmd = [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.addedTeamMembers.success(successToasts))
+            )
+          )
+        ];
+      }
+      if (warningToasts.length) {
+        toastsCmd = [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("warning", toasts.addedTeamMembers.warning(warningToasts))
+            )
+          )
+        ];
+      }
+      if (errorToasts.length) {
+        toastsCmd = [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("error", toasts.addedTeamMembers.error(errorToasts))
+            )
+          )
+        ];
+      }
+      return [
+        state,
+        [...toastsCmd, component_.cmd.dispatch(component_.global.reloadMsg())]
       ];
     }
 
@@ -223,67 +255,86 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         state
           .set("approveAffiliationLoading", msg.value.id)
           .set("showModal", null),
-        async (state, dispatch) => {
-          state = state.set("approveAffiliationLoading", null);
-          const result = await api.affiliations.update(msg.value.id, null);
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(adt("error", toasts.approvedTeamMember.error(msg.value)))
-            );
-            return state;
-          }
-          const params = await Tab.initParams(
-            state.organization.id,
-            state.viewerUser
-          );
-          if (params) {
-            state = state
-              .set("organization", params.organization)
-              .set("affiliations", params.affiliations)
-              .set("viewerUser", params.viewerUser)
-              .set("swuQualified", params.swuQualified);
-          }
-
-          dispatch(
-            toast(adt("success", toasts.approvedTeamMember.success(msg.value)))
-          );
-          return resetCapabilities(state);
-        }
+        [
+          api.affiliations.update(msg.value.id, null, (response) =>
+            adt("onApproveAffiliationResponse", [
+              api.isValid(response),
+              msg.value
+            ])
+          ) as component_.Cmd<Msg>
+        ]
       ];
+
+    case "onApproveAffiliationResponse": {
+      const [succeeded, member] = msg.value;
+      if (!succeeded) {
+        return [
+          state.set("approveAffiliationLoading", null),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.approvedTeamMember.error(member))
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.approvedTeamMember.success(member))
+            )
+          ),
+          component_.cmd.dispatch(component_.global.reloadMsg())
+        ]
+      ];
+    }
 
     case "removeTeamMember":
       state = state.set("showModal", null);
       return [
         state.set("removeTeamMemberLoading", msg.value.id),
-        async (state, dispatch) => {
-          state = state.set("removeTeamMemberLoading", null);
-          const result = await api.affiliations.delete(msg.value.id);
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(adt("error", toasts.removedTeamMember.error(msg.value)))
-            );
-            return state;
-          }
-          const params = await Tab.initParams(
-            state.organization.id,
-            state.viewerUser
-          );
-          if (params) {
-            state = state
-              .set("organization", params.organization)
-              .set("affiliations", params.affiliations)
-              .set("viewerUser", params.viewerUser)
-              .set("swuQualified", params.swuQualified);
-          }
-          dispatch(
-            toast(adt("success", toasts.removedTeamMember.success(msg.value)))
-          );
-          return resetCapabilities(state);
-        }
+        [
+          api.affiliations.delete_(msg.value.id, (response) =>
+            adt("onRemoveTeamMemberResponse", [
+              api.isValid(response),
+              msg.value
+            ])
+          ) as component_.Cmd<Msg>
+        ]
       ];
 
+    case "onRemoveTeamMemberResponse": {
+      const [succeeded, member] = msg.value;
+      if (!succeeded) {
+        return [
+          state.set("removeTeamMemberLoading", null),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.removedTeamMember.error(member))
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.removedTeamMember.success(member))
+            )
+          ),
+          component_.cmd.dispatch(component_.global.reloadMsg())
+        ]
+      ];
+    }
+
     case "membersTable":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["membersTable"],
         childUpdate: Table.update,
@@ -292,7 +343,7 @@ const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "addTeamMembersEmails":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["addTeamMembersEmails", String(msg.value[0])],
         childUpdate: ShortText.update,
@@ -301,29 +352,37 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           adt("addTeamMembersEmails", [msg.value[0], value]) as Msg
       });
 
-    case "addTeamMembersEmailsAddField":
+    case "addTeamMembersEmailsAddField": {
+      const [newFieldState, newFieldCmds] = initAddTeamMemberEmailField();
       return [
-        state,
-        async (state) =>
-          state.set("addTeamMembersEmails", [
-            ...state.addTeamMembersEmails,
-            await initAddTeamMemberEmailField()
-          ])
+        state.set("addTeamMembersEmails", [
+          ...state.addTeamMembersEmails,
+          immutable(newFieldState)
+        ]),
+        component_.cmd.mapMany(
+          newFieldCmds,
+          (msg) =>
+            adt("addTeamMembersEmails", [
+              state.addTeamMembersEmails.length,
+              msg
+            ]) as Msg
+        )
       ];
-
+    }
     case "addTeamMembersEmailsRemoveField":
       return [
         state.update("addTeamMembersEmails", (vs) => {
           return vs.filter((v, i) => i !== msg.value);
-        })
+        }),
+        []
       ];
 
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function membersTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Team Member",
@@ -342,7 +401,7 @@ function membersTableHeadCells(state: Immutable<State>): Table.HeadCells {
 }
 
 function membersTableBodyRows(
-  props: ComponentViewProps<State, Msg>
+  props: component_.base.ComponentViewProps<State, Msg>
 ): Table.BodyRows {
   const { state, dispatch } = props;
   const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
@@ -422,7 +481,7 @@ function membersTableBodyRows(
   });
 }
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   return (
     <div>
@@ -441,10 +500,10 @@ const view: ComponentView<State, Msg> = (props) => {
           </p>
           {state.affiliations.length ? (
             <Table.view
-              headCells={membersTableHeadCells(state)}
+              headCells={membersTableHeadCells()}
               bodyRows={membersTableBodyRows(props)}
               state={state.membersTable}
-              dispatch={mapComponentDispatch(dispatch, (v) =>
+              dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("membersTable" as const, v)
               )}
             />
@@ -482,23 +541,26 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
   getModal: (state) => {
     if (!state.showModal) {
-      return null;
+      return component_.page.modal.hide();
     }
     switch (state.showModal.tag) {
       case "viewTeamMember":
         return makeViewTeamMemberModal({
           member: state.showModal.value,
-          onCloseMsg: adt("hideModal")
+          onCloseMsg: adt("hideModal") as Msg
         });
 
       case "approveAffiliation":
-        return {
+        return component_.page.modal.show({
           title: "Approve Request?",
           body: () =>
             "Approving this request will allow this company to put you forward as a team member on proposals for opportunities.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Approve Request",
@@ -513,13 +575,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
 
       case "addTeamMembers": {
         const isValid = isAddTeamMembersEmailsValid(state);
-        return {
+        return component_.page.modal.show({
           title: "Add Team Member(s)",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           body: (dispatch) => {
             const addField = () =>
               dispatch(adt("addTeamMembersEmailsAddField"));
@@ -544,7 +606,7 @@ export const component: Tab.Component<State, Msg> = {
                     extraChildProps: {},
                     className: "flex-grow-1 mb-0",
                     placeholder: "Email Address",
-                    dispatch: mapComponentDispatch(
+                    dispatch: component_.base.mapDispatch(
                       dispatch,
                       (v) => adt("addTeamMembersEmails", [i, v]) as Msg
                     ),
@@ -611,16 +673,16 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       }
 
       case "removeTeamMember": {
         const affiliation = state.showModal.value;
-        return {
+        return component_.page.modal.show({
           title: `Remove ${affiliation.user.name}?`,
           body: () =>
             `Are you sure you want to remove ${affiliation.user.name} from this organization?`,
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Remove Team Member",
@@ -635,18 +697,18 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       }
     }
   },
-  getContextualActions: ({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) {
-      return null;
+      return component_.page.actions.none();
     }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
     const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
-    return adt("links", [
+    return component_.page.actions.links([
       {
         children: "Add Team Member(s)",
         onClick: () => dispatch(adt("showModal", adt("addTeamMembers")) as Msg),

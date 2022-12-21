@@ -3,17 +3,9 @@ import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  newRoute,
-  reload,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
@@ -54,41 +46,60 @@ export interface State extends Tab.Params {
 export type InnerMsg =
   | ADT<"profileForm", ProfileForm.Msg>
   | ADT<"startEditingForm">
+  | ADT<"onStartEditingResponse", User | null>
   | ADT<"cancelEditingForm">
   | ADT<"saveChanges">
+  | ADT<"onSaveChangesResponse", ProfileForm.PersistResult>
   | ADT<"toggleAccountActivation">
+  | ADT<"onToggleAccountActivationResponse", User | null>
   | ADT<"adminCheckbox", Checkbox.Msg>
+  | ADT<"onToggleAdmin", User | null>
   | ADT<"hideActivationModal">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-async function resetProfileForm(
+function resetProfileForm(
   user: User
-): Promise<Immutable<ProfileForm.State>> {
-  return immutable(await ProfileForm.init({ user }));
+): component_.base.InitReturnValue<ProfileForm.State, ProfileForm.Msg> {
+  return ProfileForm.init({ user });
 }
 
-const init: Init<Tab.Params, State> = async ({ viewerUser, profileUser }) => {
-  return {
-    viewerUser,
-    profileUser,
-    saveChangesLoading: 0,
-    accountActivationLoading: 0,
-    startEditingFormLoading: 0,
-    savePermissionsLoading: 0,
-    isEditingForm: false,
-    showActivationModal: false,
-    profileForm: await resetProfileForm(profileUser),
-    adminCheckbox: immutable(
-      await Checkbox.init({
-        errors: [],
-        child: {
-          value: isAdmin(profileUser),
-          id: "user-permissions-admin-checkbox"
-        }
-      })
-    )
-  };
+const init: component_.base.Init<Tab.Params, State, Msg> = ({
+  viewerUser,
+  profileUser
+}) => {
+  const [profileFormState, profileFormCmds] = resetProfileForm(profileUser);
+  const [adminCheckboxState, adminCheckboxCmds] = Checkbox.init({
+    errors: [],
+    child: {
+      value: isAdmin(profileUser),
+      id: "user-permissions-admin-checkbox"
+    }
+  });
+  return [
+    {
+      viewerUser,
+      profileUser,
+      saveChangesLoading: 0,
+      accountActivationLoading: 0,
+      startEditingFormLoading: 0,
+      savePermissionsLoading: 0,
+      isEditingForm: false,
+      showActivationModal: false,
+      profileForm: immutable(profileFormState),
+      adminCheckbox: immutable(adminCheckboxState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        profileFormCmds,
+        (msg) => adt("profileForm", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        adminCheckboxCmds,
+        (msg) => adt("adminCheckbox", msg) as Msg
+      )
+    ]
+  ];
 };
 
 const startStartEditingFormLoading = makeStartLoading<State>(
@@ -112,10 +123,10 @@ const stopSavePermissionsLoading = makeStopLoading<State>(
   "savePermissionsLoading"
 );
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "profileForm":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["profileForm"],
         childUpdate: ProfileForm.update,
@@ -125,117 +136,171 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case "startEditingForm":
       return [
         startStartEditingFormLoading(state),
-        async (state) => {
-          state = stopStartEditingFormLoading(state);
-          // Reload the profile user before editing.
-          const result = await api.users.readOne(state.profileUser.id);
-          if (!api.isValid(result)) {
-            return state;
-          } // Do not allow editing if fetching the user failed.
-          state = state
-            .set("isEditingForm", true)
-            .set("profileUser", result.value)
-            .set("profileForm", await resetProfileForm(result.value));
-          return state;
-        }
+        [
+          api.users.readOne(state.profileUser.id, (response) =>
+            adt(
+              "onStartEditingResponse",
+              api.isValid(response) ? response.value : null
+            )
+          ) as component_.Cmd<Msg>
+        ]
       ];
-    case "cancelEditingForm":
+    case "onStartEditingResponse": {
+      state = stopStartEditingFormLoading(state);
+      const user = msg.value;
+      if (!user) return [state, []];
+      const [formState, formCmds] = resetProfileForm(user);
       return [
-        state,
-        async (state) => {
-          return state
-            .set("isEditingForm", false)
-            .set("profileForm", await resetProfileForm(state.profileUser));
-        }
+        state
+          .set("isEditingForm", true)
+          .set("profileUser", user)
+          .set("profileForm", immutable(formState)),
+        component_.cmd.mapMany(
+          formCmds,
+          (msg) => adt("profileForm", msg) as Msg
+        )
       ];
+    }
+    case "cancelEditingForm": {
+      const [formState, formCmds] = resetProfileForm(state.profileUser);
+      return [
+        state
+          .set("isEditingForm", false)
+          .set("profileForm", immutable(formState)),
+        component_.cmd.mapMany(
+          formCmds,
+          (msg) => adt("profileForm", msg) as Msg
+        )
+      ];
+    }
     case "saveChanges":
       return [
         startSaveChangesLoading(state),
-        async (state, dispatch) => {
-          const result = await ProfileForm.persist({
-            state: state.profileForm,
-            userId: state.profileUser.id
-          });
-          switch (result.tag) {
-            case "valid":
-              dispatch(reload());
-              dispatch(toast(adt("success", toasts.updated.success)));
-              return state;
-            case "invalid":
-              dispatch(toast(adt("error", toasts.updated.error)));
-              return stopSaveChangesLoading(state).set(
-                "profileForm",
-                result.value
-              );
-          }
-        }
+        [
+          component_.cmd.map(
+            ProfileForm.persist({
+              state: state.profileForm,
+              userId: state.profileUser.id
+            }),
+            (response) => adt("onSaveChangesResponse", response)
+          )
+        ]
       ];
-    case "toggleAccountActivation":
+    case "onSaveChangesResponse": {
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid":
+          return [
+            state,
+            [
+              component_.cmd.dispatch(component_.global.reloadMsg()),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.updated.success)
+                )
+              )
+            ]
+          ];
+        case "invalid":
+        default:
+          return [
+            stopSaveChangesLoading(state).set("profileForm", result.value),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.updated.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "toggleAccountActivation": {
       if (!state.showActivationModal) {
-        return [state.set("showActivationModal", true)];
+        return [state.set("showActivationModal", true), []];
       } else {
         state = startAccountActivationLoading(state).set(
           "showActivationModal",
           false
         );
       }
+      const isActive = state.profileUser.status === UserStatus.Active;
       return [
         state,
-        async (state, dispatch) => {
-          state = stopAccountActivationLoading(state);
-          const isOwner = usersAreEquivalent(
-            state.profileUser,
-            state.viewerUser
-          );
-          const isActive = state.profileUser.status === UserStatus.Active;
-          const result = isActive
-            ? await api.users.delete(state.profileUser.id)
-            : await api.users.update(
+        [
+          isActive
+            ? (api.users.delete_(state.profileUser.id, (response) =>
+                adt(
+                  "onToggleAccountActivationResponse",
+                  api.isValid(response) ? response.value : null
+                )
+              ) as component_.Cmd<Msg>)
+            : (api.users.update(
                 state.profileUser.id,
-                adt("reactivateUser")
-              );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(
+                adt("reactivateUser"),
+                (response) =>
                   adt(
-                    "success",
-                    isActive
-                      ? toasts.deactivated.success
-                      : toasts.reactivated.success
+                    "onToggleAccountActivationResponse",
+                    api.isValid(response) ? response.value : null
                   )
-                )
-              );
-              state = state.set("profileUser", result.value);
-              if (isOwner && result.value.status !== UserStatus.Active) {
-                dispatch(
-                  newRoute(
-                    adt(
-                      "notice" as const,
-                      adt("deactivatedOwnAccount" as const)
-                    )
-                  )
-                );
-              }
-              return state;
-            case "invalid":
-            case "unhandled":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    isActive
-                      ? toasts.deactivated.error
-                      : toasts.reactivated.error
-                  )
-                )
-              );
-              return state;
-          }
-        }
+              ) as component_.Cmd<Msg>)
+        ]
       ];
+    }
+    case "onToggleAccountActivationResponse": {
+      state = stopAccountActivationLoading(state);
+      const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
+      const user = msg.value;
+      if (user) {
+        const isActive = user.status === UserStatus.Active;
+        state = state.set("profileUser", user);
+        if (isOwner && !isActive) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.newRouteMsg(
+                  adt("notice" as const, adt("deactivatedOwnAccount" as const))
+                )
+              )
+            ]
+          ];
+        }
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt(
+                  "success",
+                  isActive
+                    ? toasts.reactivated.success
+                    : toasts.deactivated.success
+                )
+              )
+            )
+          ]
+        ];
+      } else {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt(
+                  "error",
+                  state.profileUser.status === UserStatus.Active
+                    ? toasts.deactivated.error
+                    : toasts.reactivated.error
+                )
+              )
+            )
+          ]
+        ];
+      }
+    }
     case "adminCheckbox":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["adminCheckbox"],
         childUpdate: Checkbox.update,
@@ -245,41 +310,62 @@ const update: Update<State, Msg> = ({ state, msg }) => {
           const adminValueChanged =
             msg.value.tag === "child" && msg.value.value.tag === "onChange";
           if (!adminValueChanged) {
-            return [state];
+            return [state, []];
           }
           return [
             startSavePermissionsLoading(state),
-            async (state, dispatch) => {
-              state = stopSavePermissionsLoading(state);
-              // Persist change to back-end.
-              const result = await api.users.update(
+            [
+              api.users.update(
                 state.profileUser.id,
                 adt(
                   "updateAdminPermissions",
                   FormField.getValue(state.adminCheckbox)
-                )
-              );
-              if (api.isValid(result)) {
-                dispatch(
-                  toast(adt("success", toasts.adminStatusChanged.success))
-                );
-                return state.set("profileUser", result.value);
-              } else {
-                dispatch(toast(adt("error", toasts.adminStatusChanged.error)));
-                return state;
-              }
-            }
+                ),
+                (response) =>
+                  adt("onToggleAdmin", api.getValidValue(response, null))
+              ) as component_.Cmd<Msg>
+            ]
           ];
         }
       });
+    case "onToggleAdmin": {
+      state = stopSavePermissionsLoading(state);
+      const user = msg.value;
+      if (user) {
+        return [
+          state.set("profileUser", user),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("success", toasts.adminStatusChanged.success)
+              )
+            )
+          ]
+        ];
+      } else {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.adminStatusChanged.error)
+              )
+            )
+          ]
+        ];
+      }
+    }
     case "hideActivationModal":
-      return [state.set("showActivationModal", false)];
+      return [state.set("showActivationModal", false), []];
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
+const ViewPermissionsAsGovernment: component_.base.ComponentView<
+  State,
+  Msg
+> = ({ state }) => {
   const permissions = userTypeToPermissions(state.profileUser.type);
   if (!permissions.length) {
     return null;
@@ -299,7 +385,7 @@ const ViewPermissionsAsGovernment: ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({
+const ViewPermissionsAsAdmin: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
@@ -323,7 +409,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({
         className="mb-0 mr-3"
         disabled={isLoading}
         state={state.adminCheckbox}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
           adt("adminCheckbox" as const, value)
         )}
       />
@@ -331,7 +417,7 @@ const ViewPermissionsAsAdmin: ComponentView<State, Msg> = ({
   );
 };
 
-const ViewPermissions: ComponentView<State, Msg> = (props) => {
+const ViewPermissions: component_.base.ComponentView<State, Msg> = (props) => {
   const { state } = props;
   const profileUser = state.profileUser;
   const isOwner = usersAreEquivalent(profileUser, state.viewerUser);
@@ -353,7 +439,7 @@ const ViewPermissions: ComponentView<State, Msg> = (props) => {
   }
 };
 
-const ViewDetails: ComponentView<State, Msg> = (props) => {
+const ViewDetails: component_.base.ComponentView<State, Msg> = (props) => {
   const profileUser = props.state.profileUser;
   return (
     <Row>
@@ -377,9 +463,8 @@ const ViewDetails: ComponentView<State, Msg> = (props) => {
   );
 };
 
-const ViewProfileFormHeading: ComponentView<State, Msg> = ({
-  state,
-  dispatch
+const ViewProfileFormHeading: component_.base.ComponentView<State, Msg> = ({
+  state
 }) => {
   // Admins can't edit other user profiles.
   if (
@@ -397,7 +482,7 @@ const ViewProfileFormHeading: ComponentView<State, Msg> = ({
   );
 };
 
-const ViewProfileForm: ComponentView<State, Msg> = (props) => {
+const ViewProfileForm: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
   const isStartEditingFormLoading = state.startEditingFormLoading > 0;
@@ -414,7 +499,7 @@ const ViewProfileForm: ComponentView<State, Msg> = (props) => {
       <ProfileForm.view
         disabled={isDisabled}
         state={state.profileForm}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
           adt("profileForm" as const, value)
         )}
       />
@@ -422,7 +507,7 @@ const ViewProfileForm: ComponentView<State, Msg> = (props) => {
   );
 };
 
-const ViewAccountActivation: ComponentView<State, Msg> = ({
+const ViewAccountActivation: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
@@ -472,7 +557,7 @@ const ViewAccountActivation: ComponentView<State, Msg> = ({
   );
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state } = props;
   const profileUser = state.profileUser;
   return (
@@ -493,13 +578,16 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return component_.page.readyMsg();
+  },
   getModal(state) {
     if (state.showActivationModal) {
       const isActive = state.profileUser.status === UserStatus.Active;
       const isOwner = usersAreEquivalent(state.profileUser, state.viewerUser);
       const your = isOwner ? "your" : "user's";
       const action = isActive ? "deactivate" : "reactivate";
-      return {
+      return component_.page.modal.show({
         title: `${startCase(action)} ${your} account?`,
         body: () => {
           if (!isOwner && isActive) {
@@ -513,7 +601,7 @@ export const component: Tab.Component<State, Msg> = {
             return "Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace.";
           }
         },
-        onCloseMsg: adt("hideActivationModal"),
+        onCloseMsg: adt("hideActivationModal") as Msg,
         actions: [
           {
             text: `${startCase(action)} Account`,
@@ -528,18 +616,18 @@ export const component: Tab.Component<State, Msg> = {
             msg: adt("hideActivationModal")
           }
         ]
-      };
+      });
     }
-    return null;
+    return component_.page.modal.hide();
   },
-  getContextualActions({ state, dispatch }) {
+  getActions({ state, dispatch }) {
     const isEditingForm = state.isEditingForm;
     // Admins can't edit other user profiles.
     if (
       isAdmin(state.viewerUser) &&
       !usersAreEquivalent(state.profileUser, state.viewerUser)
     ) {
-      return null;
+      return component_.page.actions.none();
     }
     const isSaveChangesLoading = state.saveChangesLoading > 0;
     const isStartEditingFormLoading = state.startEditingFormLoading > 0;
@@ -552,7 +640,7 @@ export const component: Tab.Component<State, Msg> = {
       isSavePermissionsLoading ||
       isAccountActivationLoading;
     if (!isEditingForm) {
-      return adt("links", [
+      return component_.page.actions.links([
         {
           children: "Edit Profile",
           onClick: () => dispatch(adt("startEditingForm")),
@@ -564,7 +652,7 @@ export const component: Tab.Component<State, Msg> = {
         }
       ]);
     } else {
-      return adt("links", [
+      return component_.page.actions.links([
         {
           children: "Save Changes",
           disabled: !isValid || isDisabled,

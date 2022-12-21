@@ -1,6 +1,6 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
-import { immutable, Immutable } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import * as CapabilitiesTab from "front-end/lib/pages/user/profile/tab/capabilities";
 import * as LegalTab from "front-end/lib/pages/user/profile/tab/legal";
 import * as NotificationsTab from "front-end/lib/pages/user/profile/tab/notifications";
@@ -13,6 +13,11 @@ import { adt, Id } from "shared/lib/types";
 // Parent page types & functions.
 
 export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
+
+export type ParentInnerMsg<
+  K extends TabId,
+  InnerMsg
+> = TabbedPage.ParentInnerMsg<Tabs, K, InnerMsg>;
 
 export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
   Tabs,
@@ -45,29 +50,45 @@ export interface Params {
   };
 }
 
-export type Component<State extends object, Msg> = TabbedPage.TabComponent<
+export type InitResponse = null;
+
+export type Component<State, Msg> = TabbedPage.TabComponent<
   Params,
   State,
-  Msg
+  Msg,
+  InitResponse
 >;
 
 export interface Tabs {
-  profile: TabbedPage.Tab<Params, ProfileTab.State, ProfileTab.InnerMsg>;
+  profile: TabbedPage.Tab<
+    Params,
+    ProfileTab.State,
+    ProfileTab.InnerMsg,
+    InitResponse
+  >;
   capabilities: TabbedPage.Tab<
     Params,
     CapabilitiesTab.State,
-    CapabilitiesTab.InnerMsg
+    CapabilitiesTab.InnerMsg,
+    InitResponse
   >;
   notifications: TabbedPage.Tab<
     Params,
     NotificationsTab.State,
-    NotificationsTab.InnerMsg
+    NotificationsTab.InnerMsg,
+    InitResponse
   >;
-  legal: TabbedPage.Tab<Params, LegalTab.State, LegalTab.InnerMsg>;
+  legal: TabbedPage.Tab<
+    Params,
+    LegalTab.State,
+    LegalTab.InnerMsg,
+    InitResponse
+  >;
   organizations: TabbedPage.Tab<
     Params,
     OrganizationsTab.State,
-    OrganizationsTab.InnerMsg
+    OrganizationsTab.InnerMsg,
+    InitResponse
   >;
 }
 
@@ -144,11 +165,11 @@ export function makeSidebarLink(
   });
 }
 
-export async function makeSidebarState(
-  profileUser: User,
+export function makeSidebarState(
+  activeTab: TabId,
   viewerUser: User,
-  activeTab: TabId
-): Promise<Immutable<MenuSidebar.State>> {
+  profileUser: User
+): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   const items = (() => {
     switch (viewerUser.type) {
       case UserType.Admin:
@@ -175,5 +196,5 @@ export async function makeSidebarState(
         ];
     }
   })();
-  return immutable(await MenuSidebar.init({ items }));
+  return MenuSidebar.init({ items });
 }

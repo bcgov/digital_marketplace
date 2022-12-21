@@ -1,6 +1,6 @@
 import router from "front-end/lib/app/router";
 import { Route } from "front-end/lib/app/types";
-import { View, ViewElementChildren } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { ButtonColor, TextColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import React, { CSSProperties, KeyboardEvent, MouseEvent } from "react";
@@ -50,7 +50,7 @@ const ICON_SIZE_LINK = 1; //rem
 const ICON_SIZE_SMALL_BUTTON = 1; //rem
 const ICON_SIZE_MEDIUM_BUTTON = 1.2; //rem
 
-const LinkSymbol: View<LinkSymbolProps> = ({
+const LinkSymbol: component.base.View<LinkSymbolProps> = ({
   symbol_,
   iconSymbolSize = ICON_SIZE_LINK,
   className = "",
@@ -116,7 +116,7 @@ interface BaseProps {
   symbolClassName?: string;
   symbolStyle?: CSSProperties;
   iconSymbolSize?: number; //rem
-  children?: ViewElementChildren;
+  children?: component.base.ViewElementChildren;
   className?: string;
   style?: CSSProperties;
   disabled?: boolean;

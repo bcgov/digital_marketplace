@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
 import Link, {
   emailDest,
@@ -14,7 +14,11 @@ export interface Props {
   disabled?: boolean;
 }
 
-const GotQuestions: View<Props> = ({ title, className = "", disabled }) => {
+const GotQuestions: component.base.View<Props> = ({
+  title,
+  className = "",
+  disabled
+}) => {
   return (
     <div className="sticky-md">
       <div

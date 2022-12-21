@@ -1,12 +1,6 @@
 import { makePageMetadata } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import {
-  ComponentView,
-  GlobalComponentMsg,
-  PageComponent,
-  PageInit,
-  Update
-} from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React, { ReactElement } from "react";
 import { Col, Row } from "reactstrap";
@@ -14,7 +8,7 @@ import { adt, ADT } from "shared/lib/types";
 
 export type NoticeId = ADT<"deactivatedOwnAccount"> | ADT<"authFailure">;
 
-export function parseNoticeId(tag: any, value: any): NoticeId | null {
+export function parseNoticeId(tag?: string): NoticeId | null {
   switch (tag) {
     case "deactivatedOwnAccount":
       return adt("deactivatedOwnAccount");
@@ -59,19 +53,28 @@ export interface State {
   };
 }
 
-export type Msg = GlobalComponentMsg<null, Route>;
+export type InnerMsg = ADT<"noop">;
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  routeParams
+export type Msg = component_.page.Msg<InnerMsg, Route>;
+
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ routeParams }) => [
+  noticeIdToState(routeParams),
+  [component_.cmd.dispatch(component_.page.readyMsg())]
+];
+
+const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
+  return [state, []];
+};
+
+const ConditionalButton: component_.page.View<State, InnerMsg, Route> = ({
+  state
 }) => {
-  return noticeIdToState(routeParams);
-};
-
-const update: Update<State, Msg> = ({ state, msg }) => {
-  return [state];
-};
-
-const ConditionalButton: ComponentView<State, Msg> = ({ state, dispatch }) => {
   if (state.button) {
     return (
       <Row>
@@ -87,7 +90,7 @@ const ConditionalButton: ComponentView<State, Msg> = ({ state, dispatch }) => {
   }
 };
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state } = props;
   return (
     <div>
@@ -106,7 +109,13 @@ const view: ComponentView<State, Msg> = (props) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,

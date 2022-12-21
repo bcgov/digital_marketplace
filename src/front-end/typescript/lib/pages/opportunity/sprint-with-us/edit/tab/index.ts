@@ -1,6 +1,6 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
-import { immutable, Immutable } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import * as AddendaTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/addenda";
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
@@ -16,10 +16,16 @@ import {
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
+import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 
 // Parent page types & functions.
 
 export type ParentState<K extends TabId> = TabbedPage.ParentState<Tabs, K>;
+
+export type ParentInnerMsg<
+  K extends TabId,
+  InnerMsg
+> = TabbedPage.ParentInnerMsg<Tabs, K, InnerMsg>;
 
 export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
   Tabs,
@@ -30,41 +36,67 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 // Tab component types & functions.
 
 export interface Params {
-  opportunity: SWUOpportunity;
   viewerUser: User;
 }
 
-export type Component<State extends object, Msg> = TabbedPage.TabComponent<
+export type InitResponse = [SWUOpportunity, SWUProposalSlim[]];
+
+export type Component<State, Msg> = TabbedPage.TabComponent<
   Params,
   State,
-  Msg
+  Msg,
+  InitResponse
 >;
 
 export interface Tabs {
-  summary: TabbedPage.Tab<Params, SummaryTab.State, SummaryTab.InnerMsg>;
+  summary: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
   opportunity: TabbedPage.Tab<
     Params,
     OpportunityTab.State,
-    OpportunityTab.InnerMsg
+    OpportunityTab.InnerMsg,
+    InitResponse
   >;
-  addenda: TabbedPage.Tab<Params, AddendaTab.State, AddendaTab.InnerMsg>;
+  addenda: TabbedPage.Tab<
+    Params,
+    AddendaTab.State,
+    AddendaTab.InnerMsg,
+    InitResponse
+  >;
   teamQuestions: TabbedPage.Tab<
     Params,
     TeamQuestionsTab.State,
-    TeamQuestionsTab.InnerMsg
+    TeamQuestionsTab.InnerMsg,
+    InitResponse
   >;
-  history: TabbedPage.Tab<Params, HistoryTab.State, HistoryTab.InnerMsg>;
+  history: TabbedPage.Tab<
+    Params,
+    HistoryTab.State,
+    HistoryTab.InnerMsg,
+    InitResponse
+  >;
   codeChallenge: TabbedPage.Tab<
     Params,
     CodeChallengeTab.State,
-    CodeChallengeTab.InnerMsg
+    CodeChallengeTab.InnerMsg,
+    InitResponse
   >;
   teamScenario: TabbedPage.Tab<
     Params,
     TeamScenarioTab.State,
-    TeamScenarioTab.InnerMsg
+    TeamScenarioTab.InnerMsg,
+    InitResponse
   >;
-  proposals: TabbedPage.Tab<Params, ProposalsTab.State, ProposalsTab.InnerMsg>;
+  proposals: TabbedPage.Tab<
+    Params,
+    ProposalsTab.State,
+    ProposalsTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -159,38 +191,43 @@ export function makeSidebarLink(
   });
 }
 
-export async function makeSidebarState(
-  opportunity: SWUOpportunity,
-  activeTab: TabId
-): Promise<Immutable<MenuSidebar.State>> {
-  return immutable(
-    await MenuSidebar.init({
-      items: [
-        adt("heading", "Summary"),
-        makeSidebarLink("summary", opportunity.id, activeTab),
-        adt("heading", "Opportunity Management"),
-        makeSidebarLink("opportunity", opportunity.id, activeTab),
-        //Only show Addenda sidebar link if opportunity can have addenda.
-        ...(canAddAddendumToSWUOpportunity(opportunity)
-          ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
-          : []),
-        makeSidebarLink("history", opportunity.id, activeTab),
-        adt("heading", "Opportunity Evaluation"),
-        makeSidebarLink("proposals", opportunity.id, activeTab),
-        makeSidebarLink("teamQuestions", opportunity.id, activeTab),
-        makeSidebarLink("codeChallenge", opportunity.id, activeTab),
-        makeSidebarLink("teamScenario", opportunity.id, activeTab),
-        adt("heading", "Need Help?"),
-        adt("link", {
-          icon: "external-link-alt",
-          text: "Read Guide",
-          active: false,
-          newTab: true,
-          dest: routeDest(
-            adt("contentView", "sprint-with-us-opportunity-guide")
-          )
-        })
-      ]
-    })
-  );
+export function makeSidebarState(
+  activeTab: TabId,
+  opportunity?: SWUOpportunity
+): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  return MenuSidebar.init({
+    items: opportunity
+      ? [
+          adt("heading", "Summary"),
+          makeSidebarLink("summary", opportunity.id, activeTab),
+          adt("heading", "Opportunity Management"),
+          makeSidebarLink("opportunity", opportunity.id, activeTab),
+          //Only show Addenda sidebar link if opportunity can have addenda.
+          ...(canAddAddendumToSWUOpportunity(opportunity)
+            ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
+            : []),
+          makeSidebarLink("history", opportunity.id, activeTab),
+          adt("heading", "Opportunity Evaluation"),
+          makeSidebarLink("proposals", opportunity.id, activeTab),
+          makeSidebarLink("teamQuestions", opportunity.id, activeTab),
+          makeSidebarLink("codeChallenge", opportunity.id, activeTab),
+          makeSidebarLink("teamScenario", opportunity.id, activeTab),
+          adt("heading", "Need Help?"),
+          adt("link", {
+            icon: "external-link-alt",
+            text: "Read Guide",
+            active: false,
+            newTab: true,
+            dest: routeDest(
+              adt("contentView", "sprint-with-us-opportunity-guide")
+            )
+          })
+        ]
+      : []
+  });
+}
+
+export function shouldLoadProposalsForTab(tabId: TabId): boolean {
+  const proposalTabs: TabId[] = ["proposals", "teamQuestions", "codeChallenge", "teamScenario"];
+  return proposalTabs.includes(tabId)
 }

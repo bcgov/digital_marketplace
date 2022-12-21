@@ -4,7 +4,7 @@ import {
 } from "front-end/config";
 import {
   getAlertsValid,
-  getContextualActionsValid,
+  getActionsValid,
   getMetadataValid,
   makePageMetadata,
   makeStartLoading,
@@ -16,15 +16,9 @@ import { Route, SharedState } from "front-end/lib/app/types";
 import { AddendaList } from "front-end/lib/components/addenda";
 import { AttachmentList } from "front-end/lib/components/attachments";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  PageComponent,
-  PageInit,
-  replaceRoute,
-  Update,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { OpportunityBadge } from "front-end/lib/views/badge";
@@ -59,15 +53,16 @@ import { doesOrganizationMeetSWUQualification } from "shared/lib/resources/organ
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
+import { valid, Validation } from "shared/lib/validation";
+import { Content } from "shared/lib/resources/content";
 
 type InfoTab = "details" | "scope" | "attachments" | "addenda";
 
 interface ValidState {
   toggleWatchLoading: number;
-  opportunity: SWUOpportunity;
-  existingProposal?: SWUProposalSlim;
-  viewerUser?: User;
+  opportunity: SWUOpportunity | null;
+  existingProposal?: SWUProposalSlim | null;
+  viewerUser: User | null;
   activeInfoTab: InfoTab;
   routePath: string;
   scopeContent: string;
@@ -76,9 +71,23 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg = ADT<"toggleWatch"> | ADT<"setActiveInfoTab", InfoTab>;
+type InnerMsg =
+  | ADT<"noop">
+  | ADT<
+      "onInitResponse",
+      [
+        string,
+        api.ResponseValidation<SWUOpportunity, string[]>,
+        SWUProposalSlim | null,
+        api.ResponseValidation<Content, string[]>,
+        boolean
+      ]
+    >
+  | ADT<"toggleWatch">
+  | ADT<"onToggleWatchResponse", boolean>
+  | ADT<"setActiveInfoTab", InfoTab>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface RouteParams {
   opportunityId: Id;
@@ -89,60 +98,72 @@ function canVendorStartProposal(state: Immutable<ValidState>): boolean {
     !!state.viewerUser &&
     isVendor(state.viewerUser) &&
     !state.existingProposal &&
+    !!state.opportunity &&
     isSWUOpportunityAcceptingProposals(state.opportunity) &&
     state.isQualified
   );
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  dispatch,
-  routeParams,
-  shared,
-  routePath
-}) => {
-  const fail = () => {
-    dispatch(replaceRoute(adt("notFound", { path: routePath }) as Route));
-    return invalid(null);
-  };
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ routeParams, shared, routePath }) => {
   const { opportunityId } = routeParams;
-  const viewerUser = shared.session?.user;
-  const oppR = await api.opportunities.swu.readOne(opportunityId);
-  if (!api.isValid(oppR)) {
-    return fail();
-  }
-  const scopeContentResult = await api.content.readOne(
-    SWU_OPPORTUNITY_SCOPE_CONTENT_ID
-  );
-  if (!api.isValid(scopeContentResult)) {
-    return fail();
-  }
-  await api.counters.update(
-    getSWUOpportunityViewsCounterName(opportunityId),
-    null
-  );
-  let existingProposal: SWUProposalSlim | undefined;
-  let isQualified = false;
-  if (viewerUser && isVendor(viewerUser)) {
-    existingProposal =
-      await api.proposals.swu.getExistingProposalForOpportunity(opportunityId);
-    const orgs = api.getValidValue(await api.ownedOrganizations.readMany(), []);
-    isQualified = orgs.reduce(
-      (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
-      false as boolean
-    );
-  }
-  return valid(
-    immutable({
-      isQualified,
-      toggleWatchLoading: 0,
-      viewerUser,
-      opportunity: oppR.value,
-      existingProposal,
-      activeInfoTab: "details",
-      routePath,
-      scopeContent: scopeContentResult.value.body
-    })
-  );
+  const viewerUser = shared.session?.user || null;
+  return [
+    valid(
+      immutable({
+        toggleWatchLoading: 0,
+        viewerUser,
+        opportunity: null,
+        existingProposal: null,
+        activeInfoTab: "details",
+        routePath,
+        scopeContent: "",
+        isQualified: false
+      })
+    ),
+    [
+      api.counters.update(
+        getSWUOpportunityViewsCounterName(opportunityId),
+        null,
+        () => adt("noop")
+      ) as component_.Cmd<Msg>,
+      component_.cmd.join4(
+        api.opportunities.swu.readOne(opportunityId, (response) => response),
+        viewerUser && isVendor(viewerUser)
+          ? api.proposals.swu.readExistingProposalForOpportunity(
+              opportunityId,
+              (response) => response
+            )
+          : component_.cmd.dispatch(null),
+
+        api.content.readOne(
+          SWU_OPPORTUNITY_SCOPE_CONTENT_ID,
+          (response) => response
+        ),
+        api.organizations.owned.readMany((response) => {
+          return api
+            .getValidValue(response, [])
+            .reduce(
+              (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
+              false as boolean
+            );
+        }),
+        (opportunityResponse, proposalResponse, contentResponse, isQualified) =>
+          adt("onInitResponse", [
+            routePath,
+            opportunityResponse,
+            proposalResponse,
+            contentResponse,
+            isQualified
+          ]) as Msg
+      )
+    ]
+  ];
 };
 
 const startToggleWatchLoading =
@@ -150,45 +171,91 @@ const startToggleWatchLoading =
 const stopToggleWatchLoading =
   makeStopLoading<ValidState>("toggleWatchLoading");
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
-    case "setActiveInfoTab":
-      return [state.set("activeInfoTab", msg.value)];
-    case "toggleWatch":
-      return [
-        startToggleWatchLoading(state),
-        async (state) => {
-          state = stopToggleWatchLoading(state);
-          const id = state.opportunity.id;
-          const result = state.opportunity.subscribed
-            ? await api.subscribers.swu.delete(id)
-            : await api.subscribers.swu.create({ opportunity: id });
-          if (result.tag === "valid") {
-            state = state.update("opportunity", (o) => ({
-              ...o,
-              subscribed: !o.subscribed
-            }));
-          }
-          return state;
+const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
+  ({ state, msg }) => {
+    switch (msg.tag) {
+      case "onInitResponse": {
+        const [
+          routePath,
+          opportunityResponse,
+          proposalResponse,
+          contentResponse,
+          isQualified
+        ] = msg.value;
+        if (!api.isValid(opportunityResponse)) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
+                  adt("notFound", { path: routePath }) as Route
+                )
+              )
+            ]
+          ];
+        } else {
+          state = state.set("opportunity", opportunityResponse.value);
         }
-      ];
-    default:
-      return [state];
+        if (proposalResponse) {
+          state = state.set("existingProposal", proposalResponse);
+        }
+        if (contentResponse && api.isValid(contentResponse)) {
+          state = state.set("scopeContent", contentResponse.value.body);
+        }
+        state = state.set("isQualified", isQualified);
+        return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
+      }
+      case "setActiveInfoTab":
+        return [state.set("activeInfoTab", msg.value), []];
+      case "toggleWatch": {
+        if (!state.opportunity) return [state, []];
+        const id = state.opportunity.id;
+        return [
+          startToggleWatchLoading(state),
+          [
+            state.opportunity.subscribed
+              ? (api.subscribers.swu.delete_(id, (response) =>
+                  adt("onToggleWatchResponse", api.isValid(response))
+                ) as component_.Cmd<Msg>)
+              : (api.subscribers.swu.create({ opportunity: id }, (response) =>
+                  adt("onToggleWatchResponse", api.isValid(response))
+                ) as component_.Cmd<Msg>)
+          ]
+        ];
+      }
+      case "onToggleWatchResponse": {
+        const isValid = msg.value;
+        if (isValid) {
+          state = state.update(
+            "opportunity",
+            (o) =>
+              o && {
+                ...o,
+                subscribed: !o.subscribed
+              }
+          );
+        }
+        return [stopToggleWatchLoading(state), []];
+      }
+      default:
+        return [state, []];
+    }
   }
-});
+);
 
-const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
-  const opp = state.opportunity;
+const Header: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const isToggleWatchLoading = state.toggleWatchLoading > 0;
-  const isAcceptingProposals = isSWUOpportunityAcceptingProposals(
-    state.opportunity
-  );
+  const isAcceptingProposals = isSWUOpportunityAcceptingProposals(opportunity);
   const compNumber =
-    opp.publishedAt &&
-    opp.publishedAt.valueOf() < new Date("2022-08-29").valueOf()
+    opportunity.publishedAt &&
+    opportunity.publishedAt.valueOf() < new Date("2022-08-29").valueOf()
       ? "ON-003166"
       : "ON-003166-1";
-
   return (
     <div>
       <Container>
@@ -197,17 +264,17 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
             <DateMetadata
               className="mb-2"
               dates={[
-                opp.publishedAt
+                opportunity.publishedAt
                   ? {
                       tag: "date",
-                      date: opp.publishedAt,
+                      date: opportunity.publishedAt,
                       label: "Published",
                       withTimeZone: true
                     }
                   : null,
                 {
                   tag: "date",
-                  date: opp.updatedAt,
+                  date: opportunity.updatedAt,
                   label: "Updated",
                   withTimeZone: true
                 }
@@ -222,29 +289,31 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
         </Row>
         <Row className="align-items-center">
           <Col xs="12" md="6" lg="6">
-            <h2 className="mb-2">{opp.title || DEFAULT_OPPORTUNITY_TITLE}</h2>
+            <h2 className="mb-2">
+              {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
+            </h2>
             <ProgramType size="lg" type_="swu" className="mb-4" />
             <div className="d-flex flex-column flex-sm-row flex-nowrap align-items-start align-items-md-center mb-4">
               <OpportunityBadge
-                opportunity={adt("swu", opp)}
-                viewerUser={state.viewerUser}
+                opportunity={adt("swu", opportunity)}
+                viewerUser={state.viewerUser || undefined}
                 className="mb-2 mb-sm-0"
               />
               <IconInfo
                 name="alarm-clock-outline"
                 value={`Close${
                   isAcceptingProposals ? "s" : "d"
-                } ${formatDateAtTime(opp.proposalDeadline, true)}`}
+                } ${formatDateAtTime(opportunity.proposalDeadline, true)}`}
                 className="ml-sm-3 flex-shrink-0"
               />
             </div>
-            {opp.teaser ? (
-              <p className="text-secondary mb-4">{opp.teaser}</p>
+            {opportunity.teaser ? (
+              <p className="text-secondary mb-4">{opportunity.teaser}</p>
             ) : null}
             <div className="d-flex flex-nowrap align-items-center">
               <Link
                 disabled={isToggleWatchLoading}
-                dest={emailDest([CONTACT_EMAIL, opp.title])}
+                dest={emailDest([CONTACT_EMAIL, opportunity.title])}
                 symbol_={leftPlacement(iconLinkSymbol("envelope"))}
                 color="info"
                 size="sm"
@@ -252,20 +321,21 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 button>
                 Contact
               </Link>
-              {state.viewerUser && state.viewerUser.id !== opp.createdBy?.id ? (
+              {state.viewerUser &&
+              state.viewerUser.id !== opportunity.createdBy?.id ? (
                 <Link
                   className="ml-3"
                   disabled={isToggleWatchLoading}
                   loading={isToggleWatchLoading}
                   onClick={() => dispatch(adt("toggleWatch"))}
                   symbol_={leftPlacement(
-                    iconLinkSymbol(opp.subscribed ? "check" : "eye")
+                    iconLinkSymbol(opportunity.subscribed ? "check" : "eye")
                   )}
-                  color={opp.subscribed ? "info" : "primary"}
+                  color={opportunity.subscribed ? "info" : "primary"}
                   size="sm"
-                  outline={!opp.subscribed}
+                  outline={!opportunity.subscribed}
                   button>
-                  {opp.subscribed ? "Watching" : "Watch"}
+                  {opportunity.subscribed ? "Watching" : "Watch"}
                 </Link>
               ) : null}
             </div>
@@ -282,7 +352,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 <OpportunityInfo
                   icon="comment-dollar-outline"
                   name="Proposal Deadline"
-                  value={formatDate(opp.proposalDeadline)}
+                  value={formatDate(opportunity.proposalDeadline)}
                 />
               </Col>
               <Col
@@ -292,8 +362,8 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                   icon="badge-dollar-outline"
                   name="Value"
                   value={
-                    opp.totalMaxBudget
-                      ? formatAmount(opp.totalMaxBudget, "$")
+                    opportunity.totalMaxBudget
+                      ? formatAmount(opportunity.totalMaxBudget, "$")
                       : EMPTY_STRING
                   }
                 />
@@ -306,7 +376,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 <OpportunityInfo
                   icon="map-marker-outline"
                   name="Location"
-                  value={opp.location || EMPTY_STRING}
+                  value={opportunity.location || EMPTY_STRING}
                 />
               </Col>
               <Col
@@ -315,19 +385,19 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 <OpportunityInfo
                   icon="laptop-outline"
                   name="Remote OK?"
-                  value={opp.remoteOk ? "Yes" : "No"}
+                  value={opportunity.remoteOk ? "Yes" : "No"}
                 />
               </Col>
             </Row>
             <Row>
-              {opp.minTeamMembers ? (
+              {opportunity.minTeamMembers ? (
                 <Col
                   xs="6"
                   className="d-flex justify-content-start align-items-start flex-nowrap">
                   <OpportunityInfo
                     icon="users-outline"
                     name="Recommended Min. Team Size"
-                    value={String(opp.minTeamMembers)}
+                    value={String(opportunity.minTeamMembers)}
                   />
                 </Col>
               ) : null}
@@ -337,7 +407,7 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
                 <OpportunityInfo
                   icon="award-outline"
                   name="Assignment Date"
-                  value={formatDate(opp.assignmentDate)}
+                  value={formatDate(opportunity.assignmentDate)}
                 />
               </Col>
             </Row>
@@ -348,10 +418,10 @@ const Header: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string }> = ({
-  icon,
-  text
-}) => {
+const InfoDetailsHeading: component_.base.View<{
+  icon: AvailableIcons;
+  text: string;
+}> = ({ icon, text }) => {
   return (
     <div className="d-flex align-items-start flex-nowrap mb-3">
       <Icon
@@ -366,8 +436,11 @@ const InfoDetailsHeading: View<{ icon: AvailableIcons; text: string }> = ({
   );
 };
 
-const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
-  const opp = state.opportunity;
+const InfoDetails: component_.base.ComponentView<ValidState, Msg> = ({
+  state
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
   return (
     <Row>
       <Col xs="12">
@@ -379,33 +452,33 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
           To submit a proposal for this opportunity, you must possess the
           following skills:
         </p>
-        <Skills skills={opp.mandatorySkills} />
-        {opp.optionalSkills.length ? (
+        <Skills skills={opportunity.mandatorySkills} />
+        {opportunity.optionalSkills.length ? (
           <Fragment>
             <p className="mt-3 mb-2">
               Additionally, possessing the following skills would be considered
               a bonus:
             </p>
-            <Skills skills={opp.optionalSkills} />
+            <Skills skills={opportunity.optionalSkills} />
           </Fragment>
         ) : null}
       </Col>
       <Col xs="12" className="mt-5">
         <InfoDetailsHeading icon="info-circle-outline" text="Description" />
         <Markdown
-          source={opp.description || EMPTY_STRING}
+          source={opportunity.description || EMPTY_STRING}
           smallerHeadings
           openLinksInNewTabs
         />
       </Col>
-      {opp.remoteOk && opp.remoteDesc ? (
+      {opportunity.remoteOk && opportunity.remoteDesc ? (
         <Col xs="12" className="mt-5">
           <InfoDetailsHeading
             icon="laptop-outline"
             text="Remote Work Options"
           />
           <p className="mb-0" style={{ whiteSpace: "pre-line" }}>
-            {opp.remoteDesc}
+            {opportunity.remoteDesc}
           </p>
         </Col>
       ) : null}
@@ -413,7 +486,9 @@ const InfoDetails: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoScope: ComponentView<ValidState, Msg> = ({ state }) => {
+const InfoScope: component_.base.ComponentView<ValidState, Msg> = ({
+  state
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -426,8 +501,12 @@ const InfoScope: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
-  const attachments = state.opportunity.attachments;
+const InfoAttachments: component_.base.ComponentView<ValidState, Msg> = ({
+  state
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const attachments = opportunity.attachments;
   return (
     <Row>
       <Col xs="12">
@@ -435,7 +514,7 @@ const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
       </Col>
       <Col xs="12" className="mt-4">
         {attachments.length ? (
-          <AttachmentList files={state.opportunity.attachments} />
+          <AttachmentList files={opportunity.attachments} />
         ) : (
           "There are currently no attachments for this opportunity."
         )}
@@ -444,8 +523,12 @@ const InfoAttachments: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
-  const addenda = state.opportunity.addenda;
+const InfoAddenda: component_.base.ComponentView<ValidState, Msg> = ({
+  state
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const addenda = opportunity.addenda;
   return (
     <Row>
       <Col xs="12">
@@ -453,7 +536,7 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
       </Col>
       <Col xs="12" className="mt-4">
         {addenda.length ? (
-          <AddendaList addenda={state.opportunity.addenda} />
+          <AddendaList addenda={opportunity.addenda} />
         ) : (
           "There are currently no addenda for this opportunity."
         )}
@@ -462,9 +545,13 @@ const InfoAddenda: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
-  const activeTab = state.activeInfoTab;
+const InfoTabs: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
   const opp = state.opportunity;
+  if (!opp) return null;
+  const activeTab = state.activeInfoTab;
   const getTabInfo = (tab: InfoTab) => ({
     active: activeTab === tab,
     onClick: () => dispatch(adt("setActiveInfoTab", tab))
@@ -498,8 +585,10 @@ const InfoTabs: ComponentView<ValidState, Msg> = ({ state, dispatch }) => {
   );
 };
 
-const Info: ComponentView<ValidState, Msg> = (props) => {
+const Info: component_.base.ComponentView<ValidState, Msg> = (props) => {
   const { state } = props;
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
   const activeTab = (() => {
     switch (state.activeInfoTab) {
       case "details":
@@ -527,7 +616,7 @@ const Info: ComponentView<ValidState, Msg> = (props) => {
             className="mt-5 mt-md-0">
             <GotQuestions
               disabled={state.toggleWatchLoading > 0}
-              title={state.opportunity.title}
+              title={opportunity.title}
             />
           </Col>
         </Row>
@@ -536,8 +625,10 @@ const Info: ComponentView<ValidState, Msg> = (props) => {
   );
 };
 
-const Budget: ComponentView<ValidState, Msg> = ({ state }) => {
-  const totalMaxBudget = state.opportunity.totalMaxBudget;
+const Budget: component_.base.ComponentView<ValidState, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const totalMaxBudget = opportunity.totalMaxBudget;
   return (
     <Container>
       <div className="mt-5 pt-5 border-top">
@@ -566,7 +657,7 @@ interface PhaseProps {
   phase: SWUOpportunityPhase;
 }
 
-const Phase: View<PhaseProps> = ({ icon, phase }) => {
+const Phase: component_.base.View<PhaseProps> = ({ icon, phase }) => {
   return (
     <Col xs="12" md="4" className="mb-4 mb-md-0">
       <div className="rounded border overflow-hidden">
@@ -606,10 +697,12 @@ const Phase: View<PhaseProps> = ({ icon, phase }) => {
   );
 };
 
-const Phases: ComponentView<ValidState, Msg> = ({ state }) => {
-  const inception = state.opportunity.inceptionPhase;
-  const prototype = state.opportunity.prototypePhase;
-  const implementation = state.opportunity.implementationPhase;
+const Phases: component_.base.ComponentView<ValidState, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const inception = opportunity.inceptionPhase;
+  const prototype = opportunity.prototypePhase;
+  const implementation = opportunity.implementationPhase;
   return (
     <Container>
       <div className="mt-5 pt-5 border-top">
@@ -639,11 +732,15 @@ const Phases: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
+const HowToApply: component_.base.ComponentView<ValidState, Msg> = ({
+  state
+}) => {
   const viewerUser = state.viewerUser;
+  const opportunity = state.opportunity;
   if (
+    !opportunity ||
     (viewerUser && !isVendor(viewerUser)) ||
-    !isSWUOpportunityAcceptingProposals(state.opportunity)
+    !isSWUOpportunityAcceptingProposals(opportunity)
   ) {
     return null;
   }
@@ -685,7 +782,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
                 color="primary"
                 dest={routeDest(
                   adt("proposalSWUCreate", {
-                    opportunityId: state.opportunity.id
+                    opportunityId: opportunity.id
                   })
                 )}
                 symbol_={leftPlacement(iconLinkSymbol("comment-dollar"))}>
@@ -700,7 +797,7 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
             <OpportunityInfo
               icon="comment-dollar-outline"
               name="Proposal Deadline"
-              value={formatDate(state.opportunity.proposalDeadline, true)}
+              value={formatDate(opportunity.proposalDeadline, true)}
             />
           </Col>
         </Row>
@@ -709,22 +806,30 @@ const HowToApply: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
-  const isDetails = props.state.activeInfoTab === "details";
-  return (
-    <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
-      <div className="mb-5">
-        <Header {...props} />
-        <Info {...props} />
-        {isDetails ? <Budget {...props} /> : null}
-        {isDetails ? <Phases {...props} /> : null}
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  (props) => {
+    const isDetails = props.state.activeInfoTab === "details";
+    return (
+      <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+        <div className="mb-5">
+          <Header {...props} />
+          <Info {...props} />
+          {isDetails ? <Budget {...props} /> : null}
+          {isDetails ? <Phases {...props} /> : null}
+        </div>
+        <HowToApply {...props} />
       </div>
-      <HowToApply {...props} />
-    </div>
-  );
-});
+    );
+  }
+);
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   fullWidth: true,
   init,
   update,
@@ -732,21 +837,22 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
 
   getMetadata: getMetadataValid((state) => {
     return makePageMetadata(
-      state.opportunity.title || DEFAULT_OPPORTUNITY_TITLE
+      state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
     );
   }, makePageMetadata("Opportunity")),
 
   getAlerts: getAlertsValid((state) => {
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.alerts.empty();
     const viewerUser = state.viewerUser;
     const existingProposal = state.existingProposal;
-    const successfulProponentName = state.opportunity.successfulProponent?.name;
+    const successfulProponentName = opportunity.successfulProponent?.name;
     const vendor = !!viewerUser && isVendor(viewerUser);
-    const isAcceptingProposals = isSWUOpportunityAcceptingProposals(
-      state.opportunity
-    );
+    const isAcceptingProposals =
+      isSWUOpportunityAcceptingProposals(opportunity);
     return {
       info: (() => {
-        const alerts: any = [];
+        const alerts: component_.page.alerts.Alert<Msg>[] = [];
         if (vendor && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAtTime(
@@ -802,15 +908,16 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
     };
   }),
 
-  getContextualActions: getContextualActionsValid(({ state }) => {
+  getActions: getActionsValid(({ state }) => {
+    const opportunity = state.opportunity;
     const viewerUser = state.viewerUser;
-    if (!viewerUser) {
-      return null;
+    if (!opportunity || !viewerUser) {
+      return component_.page.actions.none();
     }
     const isToggleWatchLoading = state.toggleWatchLoading > 0;
     switch (viewerUser.type) {
       case UserType.Admin:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             disabled: isToggleWatchLoading,
             children: "Edit Opportunity",
@@ -819,14 +926,14 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
             color: "primary",
             dest: routeDest(
               adt("opportunitySWUEdit", {
-                opportunityId: state.opportunity.id
+                opportunityId: opportunity.id
               })
             )
           }
         ]);
       case UserType.Government:
-        if (state.opportunity.createdBy?.id === viewerUser.id) {
-          return adt("links", [
+        if (opportunity.createdBy?.id === viewerUser.id) {
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "Edit Opportunity",
@@ -835,17 +942,17 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               color: "primary",
               dest: routeDest(
                 adt("opportunitySWUEdit", {
-                  opportunityId: state.opportunity.id
+                  opportunityId: opportunity.id
                 })
               )
             }
           ]);
         } else {
-          return null;
+          return component_.page.actions.none();
         }
       case UserType.Vendor: {
         if (state.existingProposal) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "View Proposal",
@@ -854,14 +961,14 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               color: "primary",
               dest: routeDest(
                 adt("proposalSWUEdit", {
-                  opportunityId: state.opportunity.id,
+                  opportunityId: opportunity.id,
                   proposalId: state.existingProposal.id
                 })
               )
             }
           ]);
         } else if (canVendorStartProposal(state)) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,
               children: "Start Proposal",
@@ -870,13 +977,13 @@ export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
               color: "primary",
               dest: routeDest(
                 adt("proposalSWUCreate", {
-                  opportunityId: state.opportunity.id
+                  opportunityId: opportunity.id
                 })
               )
             }
           ]);
         } else {
-          return null;
+          return component_.page.actions.none();
         }
       }
     }

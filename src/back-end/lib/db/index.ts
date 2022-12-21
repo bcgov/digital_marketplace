@@ -12,7 +12,7 @@ export type Transaction = Knex.Transaction;
 
 export const ERROR_MESSAGE = "Database error.";
 
-type DatabaseValidation<Valid> = Validation<Valid, null>;
+export type DatabaseValidation<Valid> = Validation<Valid, null>;
 
 type DbFn<Args extends unknown[], Valid> = (
   connection: Connection,
@@ -26,9 +26,10 @@ export function tryDb<Args extends unknown[], Valid>(
     try {
       return await fn(connection, ...args);
     } catch (e) {
+      const error = e as Error;
       logger.error("database operation failed", {
-        message: e.message,
-        stack: e.stack
+        message: error.message,
+        stack: error.stack
       });
       return invalid(null);
     }

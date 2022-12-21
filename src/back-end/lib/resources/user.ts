@@ -41,7 +41,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as userValidation from "shared/lib/validation/user";
-import { isArray } from "util";
+import { isArray } from "lodash";
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
@@ -63,7 +63,7 @@ type Resource = crud.Resource<
   null,
   null,
   null,
-  UpdateRequestBody | any,
+  UpdateRequestBody,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors,
   DeleteValidatedReqBody,
@@ -229,7 +229,7 @@ const resource: Resource = {
             const validatedCapabilities = userValidation.validateCapabilities(
               request.body.value
             );
-            if (isValid(validatedCapabilities)) {
+            if (isValid<string[]>(validatedCapabilities)) {
               return valid(
                 adt("updateCapabilities" as const, validatedCapabilities.value)
               );

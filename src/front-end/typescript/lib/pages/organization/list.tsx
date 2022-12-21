@@ -8,15 +8,9 @@ import { pushState } from "front-end/lib/app/router";
 import { Route, SharedState } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import Link, {
@@ -28,8 +22,10 @@ import Pagination from "front-end/lib/views/pagination";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { DEFAULT_PAGE_SIZE } from "shared/config";
-import { compareStrings } from "shared/lib";
-import { OrganizationSlim } from "shared/lib/resources/organization";
+import {
+  OrganizationSlim,
+  ReadManyResponseBody
+} from "shared/lib/resources/organization";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
 
@@ -45,69 +41,86 @@ export interface State {
 }
 
 type InnerMsg =
+  | ADT<"noop">
+  | ADT<"onInitResponse", ReadManyResponseBody>
   | ADT<"table", Table.Msg>
   | ADT<"pageChange", number>
+  | ADT<"onPageChangeResponse", ReadManyResponseBody>
   | ADT<"startLoading">
   | ADT<"stopLoading">;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface RouteParams {
   page?: number;
 }
 
-function updateUrl(page: number) {
-  pushState(adt("orgList", { page }));
+function updateUrl(page: number): component_.Cmd<Msg> {
+  return pushState(adt("orgList", { page }), adt("noop"));
 }
 
-async function baseState(): Promise<State> {
-  return {
-    loading: 0,
-    page: 1,
-    numPages: 5,
-    organizations: [],
-    table: immutable(
-      await Table.init({
-        idNamespace: "org-list-table"
-      })
-    ),
-    sessionUser: null
-  };
+const DEFAULT_PAGE = 1;
+const DEFAULT_NUM_PAGES = 5;
+
+function loadPage(page: number): component_.Cmd<ReadManyResponseBody> {
+  return api.organizations.readMany(page, DEFAULT_PAGE_SIZE, (response) => {
+    if (api.isValid(response)) return response.value;
+    return {
+      page,
+      pageSize: DEFAULT_PAGE_SIZE,
+      numPages: Math.max(page, DEFAULT_NUM_PAGES),
+      items: []
+    };
+  });
 }
 
-async function loadPage(page: number) {
-  return await api.organizations.readMany(page, DEFAULT_PAGE_SIZE);
-}
-
-const init: PageInit<RouteParams, SharedState, State, Msg> = async ({
-  routeParams,
-  shared
-}) => {
-  const result = await loadPage(
-    routeParams.page && routeParams.page > 0 ? routeParams.page : 1
-  );
-  if (!api.isValid(result)) {
-    return await baseState();
-  }
-  const page = result.value.page;
-  return {
-    ...(await baseState()),
-    sessionUser: shared.session && shared.session.user,
-    page,
-    numPages: result.value.numPages,
-    organizations: result.value.items.sort((a, b) =>
-      compareStrings(a.legalName, b.legalName)
-    )
-  };
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = ({ routeParams, shared }) => {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "org-list-table"
+  });
+  const page =
+    routeParams.page && routeParams.page > 0 ? routeParams.page : DEFAULT_PAGE;
+  return [
+    {
+      loading: 0,
+      page,
+      numPages: Math.max(page, DEFAULT_NUM_PAGES),
+      organizations: [],
+      table: immutable(tableState),
+      sessionUser: shared.session?.user || null
+    },
+    [
+      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
+      component_.cmd.map(loadPage(page), (response) =>
+        adt("onInitResponse", response)
+      )
+    ]
+  ];
 };
 
 const startLoading = makeStartLoading<State>("loading");
 const stopLoading = makeStopLoading<State>("loading");
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const { page, numPages, items } = msg.value;
+      return [
+        state
+          .set("page", page)
+          .set("numPages", numPages)
+          .set("organizations", items),
+        [component_.cmd.dispatch(component_.page.readyMsg())]
+      ];
+    }
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -117,24 +130,24 @@ const update: Update<State, Msg> = ({ state, msg }) => {
     case "pageChange":
       return [
         startLoading(state),
-        async (state) => {
-          state = stopLoading(state);
-          const result = await loadPage(msg.value);
-          if (!api.isValid(result)) {
-            return state;
-          }
-          const page = result.value.page;
-          updateUrl(page);
-          window.scrollTo(0, 0);
-          return state.merge({
-            page,
-            numPages: result.value.numPages,
-            organizations: result.value.items
-          });
-        }
+        [
+          component_.cmd.map(loadPage(msg.value), (response) =>
+            adt("onPageChangeResponse", response)
+          )
+        ]
       ];
+    case "onPageChangeResponse": {
+      const { page, numPages, items } = msg.value;
+      return [
+        stopLoading(state)
+          .set("page", page)
+          .set("numPages", numPages)
+          .set("organizations", items),
+        [updateUrl(page), component_.cmd.scrollTo(0, 0, adt("noop"))]
+      ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
 };
 
@@ -190,8 +203,11 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
+  const dispatchTable = component_.base.mapDispatch<Msg, Table.Msg>(
     dispatch,
     (value) => ({ tag: "table", value })
   );
@@ -224,18 +240,24 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,
   getMetadata() {
     return makePageMetadata("Organizations");
   },
-  getContextualActions: ({ state, dispatch }) => {
+  getActions: ({ state }) => {
     if (!state.sessionUser || !isVendor(state.sessionUser)) {
-      return null;
+      return component_.page.actions.none();
     }
-    return adt("links", [
+    return component_.page.actions.links([
       {
         children: "Create Organization",
         button: true,

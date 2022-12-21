@@ -1,31 +1,41 @@
-import { State } from "front-end/lib/app/types";
+import { State, Msg } from "front-end/lib/app/types";
 import * as Nav from "front-end/lib/app/view/nav";
 import * as AcceptNewTerms from "front-end/lib/components/accept-new-app-terms";
-import { immutable, Init } from "front-end/lib/framework";
+import { immutable, component } from "front-end/lib/framework";
+import { adt } from "shared/lib/types";
 
-const init: Init<null, State> = async () => {
-  return {
-    ready: false,
-    transitionLoading: 0,
-    toasts: [],
-    showModal: null,
-    acceptNewTerms: immutable(
-      await AcceptNewTerms.init({
-        errors: [],
-        child: {
-          value: false,
-          id: "global-accept-new-terms"
-        }
-      })
-    ),
-    acceptNewTermsLoading: 0,
-    shared: {
-      session: null
+const init: component.base.Init<null, State, Msg> = () => {
+  const [acceptNewTermsState, acceptNewTermsCmds] = AcceptNewTerms.init({
+    errors: [],
+    child: {
+      value: false,
+      id: "global-accept-new-terms"
+    }
+  });
+  const [navState, navCmds] = Nav.init(null);
+  return [
+    {
+      ready: false,
+      incomingRoute: null,
+      toasts: [],
+      showModal: null,
+      acceptNewTerms: immutable(acceptNewTermsState),
+      acceptNewTermsLoading: 0,
+      shared: {
+        session: null
+      },
+      activeRoute: adt("landing", null),
+      nav: immutable(navState),
+      pages: {}
     },
-    activeRoute: { tag: "landing", value: null },
-    nav: immutable(await Nav.init(null)),
-    pages: {}
-  };
+    [
+      ...component.cmd.mapMany(
+        acceptNewTermsCmds,
+        (msg) => adt("acceptNewTerms", msg) as Msg
+      ),
+      ...component.cmd.mapMany(navCmds, (msg) => adt("nav", msg) as Msg)
+    ]
+  ];
 };
 
 export default init;

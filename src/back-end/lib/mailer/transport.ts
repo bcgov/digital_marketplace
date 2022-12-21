@@ -53,9 +53,10 @@ export function makeSend<Args extends unknown[]>(
         await send(email);
       }
     } catch (e) {
+      const err = e as Error;
       logger.error("Unable to create email content", {
-        errorMessage: e.message,
-        errorStack: e.error,
+        errorMessage: err.message,
+        errorStack: err.stack,
         args
       });
     }

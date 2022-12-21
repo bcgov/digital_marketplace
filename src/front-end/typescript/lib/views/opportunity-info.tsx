@@ -1,5 +1,5 @@
 import { EMPTY_STRING } from "front-end/config";
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import { AvailableIcons, IconInfo } from "front-end/lib/views/icon";
 import React from "react";
 
@@ -10,7 +10,7 @@ export interface Props {
   className?: string;
 }
 
-const OpportunityInfo: View<Props> = ({
+const OpportunityInfo: component.base.View<Props> = ({
   icon,
   name,
   value,

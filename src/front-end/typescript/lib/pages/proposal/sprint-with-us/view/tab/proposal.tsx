@@ -2,28 +2,14 @@ import {
   EMPTY_STRING,
   SWU_PROPOSAL_EVALUATION_CONTENT_ID
 } from "front-end/config";
-import {
-  getContextualActionsValid,
-  getModalValid,
-  makeStartLoading,
-  makeStopLoading,
-  updateValid,
-  viewValid
-} from "front-end/lib";
+import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as LongText from "front-end/lib/components/form-field/long-text";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  mapPageModalMsg,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Form from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
@@ -47,118 +33,142 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   NUM_SCORE_DECIMALS,
   SWUProposal,
-  SWUProposalStatus
+  SWUProposalStatus,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
-import { invalid, valid, Validation } from "shared/lib/validation";
 import { validateDisqualificationReason } from "shared/lib/validation/proposal/sprint-with-us";
 
 type ModalId = "disqualify" | "award";
 
-interface ValidState extends Tab.Params {
-  organizations: OrganizationSlim[];
-  evaluationContent: string;
+export interface State extends Tab.Params {
+  organizations: OrganizationSlim[] | null;
+  evaluationContent: string | null;
   disqualifyLoading: number;
   awardLoading: number;
   showModal: ModalId | null;
-  form: Immutable<Form.State>;
+  form: Immutable<Form.State> | null;
   disqualificationReason: Immutable<LongText.State>;
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
-
 export type InnerMsg =
+  | ADT<"noop">
+  | ADT<"onInitResponse", [OrganizationSlim[], string]>
   | ADT<"hideModal">
   | ADT<"showModal", ModalId>
   | ADT<"form", Form.Msg>
   | ADT<"disqualificationReasonMsg", LongText.Msg>
   | ADT<"disqualify">
-  | ADT<"award">;
+  | ADT<
+      "onDisqualifyResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >
+  | ADT<"award">
+  | ADT<
+      "onAwardResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
-  const { opportunity, proposal, viewerUser } = params;
-  const organizationsResult = await api.ownedOrganizations.readMany();
-  if (!api.isValid(organizationsResult)) {
-    return invalid(null);
-  }
-  const evalContentResult = await api.content.readOne(
-    SWU_PROPOSAL_EVALUATION_CONTENT_ID
-  );
-  if (!api.isValid(evalContentResult)) {
-    return invalid(null);
-  }
-  const organizations = organizationsResult.value;
-  const evaluationContent = evalContentResult.value.body;
-  return valid(
-    immutable({
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [disqualificationReasonState, disqualificationReasonCmds] =
+    LongText.init({
+      errors: [],
+      validate: validateDisqualificationReason,
+      child: {
+        value: "",
+        id: "swu-proposal-disqualification-reason"
+      }
+    });
+  return [
+    {
       ...params,
-      organizations,
-      evaluationContent,
+      organizations: null,
+      evaluationContent: null,
       disqualifyLoading: 0,
       awardLoading: 0,
       showModal: null,
-      form: immutable(
-        await Form.init({
-          viewerUser,
-          opportunity,
-          proposal,
-          organizations,
-          evaluationContent
-        })
+      form: null,
+      disqualificationReason: immutable(disqualificationReasonState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        disqualificationReasonCmds,
+        (msg) => adt("disqualificationReasonMsg", msg) as Msg
       ),
-      disqualificationReason: immutable(
-        await LongText.init({
-          errors: [],
-          validate: validateDisqualificationReason,
-          child: {
-            value: "",
-            id: "swu-proposal-disqualification-reason"
-          }
-        })
+      component_.cmd.join(
+        api.organizations.owned.readMany((response) =>
+          api.getValidValue(response, [])
+        ) as component_.Cmd<OrganizationSlim[]>,
+        api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+          api.isValid(response) ? response.value.body : ""
+        ) as component_.Cmd<string>,
+        (organizations, evalContent) =>
+          adt("onInitResponse", [organizations, evalContent]) as Msg
       )
-    })
-  );
+    ]
+  ];
 };
 
-const startDisqualifyLoading =
-  makeStartLoading<ValidState>("disqualifyLoading");
-const stopDisqualifyLoading = makeStopLoading<ValidState>("disqualifyLoading");
-const startAwardLoading = makeStartLoading<ValidState>("awardLoading");
-const stopAwardLoading = makeStopLoading<ValidState>("awardLoading");
+const startDisqualifyLoading = makeStartLoading<State>("disqualifyLoading");
+const stopDisqualifyLoading = makeStopLoading<State>("disqualifyLoading");
+const startAwardLoading = makeStartLoading<State>("awardLoading");
+const stopAwardLoading = makeStopLoading<State>("awardLoading");
 
-async function resetProposal(
-  state: Immutable<ValidState>,
+function resetProposal(
+  state: Immutable<State>,
   proposal: SWUProposal
-): Promise<Immutable<ValidState>> {
+): component_.base.UpdateReturnValue<State, Msg> {
+  const organizations = state.organizations;
+  const evaluationContent = state.evaluationContent;
+  if (!organizations || !evaluationContent) return [state, []];
   state = state.set("proposal", proposal);
-  return state.set(
-    "form",
-    immutable(
-      await Form.init({
+  const [formState, formCmds] = Form.init({
+    viewerUser: state.viewerUser,
+    opportunity: state.opportunity,
+    proposal: state.proposal,
+    organizations,
+    evaluationContent,
+    activeTab: state.form ? Form.getActiveTab(state.form) : undefined
+  });
+  return [
+    state.set("form", immutable(formState)),
+    component_.cmd.mapMany(formCmds, (msg) => adt("form", msg))
+  ];
+}
+
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case "onInitResponse": {
+      const [organizations, evaluationContent] = msg.value;
+      const [formState, formCmds] = Form.init({
         viewerUser: state.viewerUser,
         opportunity: state.opportunity,
         proposal: state.proposal,
-        organizations: state.organizations,
-        evaluationContent: state.evaluationContent,
-        activeTab: Form.getActiveTab(state.form)
-      })
-    )
-  );
-}
-
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
-  switch (msg.tag) {
+        organizations,
+        evaluationContent
+      });
+      return [
+        state
+          .set("form", immutable(formState))
+          .set("organizations", organizations)
+          .set("evaluationContent", evaluationContent),
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(component_.page.readyMsg())
+        ]
+      ];
+    }
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
       if (state.disqualifyLoading > 0) {
-        return [state];
+        return [state, []];
       }
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
     case "form":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["form"],
         childUpdate: Form.update,
@@ -166,88 +176,129 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         mapChildMsg: (value) => adt("form", value)
       });
     case "disqualificationReasonMsg":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["disqualificationReason"],
         childUpdate: LongText.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("disqualificationReasonMsg", value)
       });
-    case "disqualify":
+    case "disqualify": {
+      const proposal = state.proposal;
+      const reason: LongText.Value = FormField.getValue(
+        state.disqualificationReason
+      );
       return [
         startDisqualifyLoading(state),
-        async (state, dispatch) => {
-          state = stopDisqualifyLoading(state);
-          const reason: any = FormField.getValue(state.disqualificationReason);
-          const result = await api.proposals.swu.update(
-            state.proposal.id,
-            adt("disqualify", reason)
-          );
-          switch (result.tag) {
-            case "valid":
-              dispatch(
-                toast(
+        [
+          api.proposals.swu.update(
+            proposal.id,
+            adt("disqualify", reason),
+            (response) => adt("onDisqualifyResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onDisqualifyResponse": {
+      state = stopDisqualifyLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [newState, cmds] = resetProposal(state, result.value);
+          return [
+            newState.set("showModal", null).set("proposal", result.value),
+            [
+              ...cmds,
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
                   adt(
                     "success",
                     toasts.statusChanged.success(SWUProposalStatus.Disqualified)
                   )
                 )
-              );
-              return (await resetProposal(state, result.value)).set(
-                "showModal",
-                null
-              );
-            case "invalid":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(SWUProposalStatus.Disqualified)
-                  )
-                )
-              );
-              return state.update("disqualificationReason", (s) => {
-                if (result.value.proposal?.tag !== "disqualify") {
-                  return s;
-                }
-                return FormField.setErrors(s, result.value.proposal.value);
-              });
-            case "unhandled":
-              dispatch(
-                toast(
-                  adt(
-                    "error",
-                    toasts.statusChanged.error(SWUProposalStatus.Disqualified)
-                  )
-                )
-              );
-              return state;
-          }
+              )
+            ]
+          ];
         }
-      ];
-    case "award":
+        case "invalid":
+          return [
+            state.update("disqualificationReason", (s) => {
+              if (result.value.proposal?.tag !== "disqualify") {
+                return s;
+              }
+              return FormField.setErrors(s, result.value.proposal.value);
+            }),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(SWUProposalStatus.Disqualified)
+                  )
+                )
+              )
+            ]
+          ];
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(SWUProposalStatus.Disqualified)
+                  )
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "award": {
+      const proposal = state.proposal;
       return [
         startAwardLoading(state).set("showModal", null),
-        async (state, dispatch) => {
-          state = stopAwardLoading(state);
-          const result = await api.proposals.swu.update(
-            state.proposal.id,
-            adt("award", "")
-          );
-          if (!api.isValid(result)) {
-            dispatch(toast(adt("error", toasts.awarded.error)));
-            return state;
-          }
-          dispatch(toast(adt("success", toasts.awarded.success)));
-          return await resetProposal(state, result.value);
-        }
+        [
+          api.proposals.swu.update(proposal.id, adt("award", ""), (response) =>
+            adt("onAwardResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
+    }
+    case "onAwardResponse": {
+      const result = msg.value;
+      state = stopAwardLoading(state);
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(adt("error", toasts.awarded.error))
+            )
+          ]
+        ];
+      }
+      const [newState, cmds] = resetProposal(state, result.value);
+      return [
+        newState.set("proposal", result.value),
+        [
+          ...cmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.awarded.success)
+            )
+          )
+        ]
+      ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
-});
+};
 
-const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
+const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const proposal = state.proposal;
   const reportCards: Array<ReportCard | null> = [
     {
@@ -276,8 +327,10 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
+  const form = state.form;
+  if (!form) return null;
   const show = hasSWUOpportunityPassedCodeChallenge(state.opportunity);
   return (
     <div>
@@ -307,8 +360,8 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
           {show ? (
             <Form.view
               disabled
-              state={state.form}
-              dispatch={mapComponentDispatch(dispatch, (v) =>
+              state={form}
+              dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("form" as const, v)
               )}
             />
@@ -322,27 +375,32 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
       </Row>
     </div>
   );
-});
+};
 
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+  onInitResponse() {
+    return adt("noop");
+  },
 
-  getModal: getModalValid<ValidState, Msg>((state) => {
-    const formModal = mapPageModalMsg(
-      Form.getModal(state.form),
+  getModal: (state) => {
+    const form = state.form;
+    if (!form) return component_.page.modal.hide();
+    const formModal = component_.page.modal.map(
+      Form.getModal(form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null) {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
       case "award":
-        return {
+        return component_.page.modal.show({
           title: "Award Sprint With Us Opportunity?",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Award Opportunity",
@@ -359,11 +417,11 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to award this opportunity to this proponent? Once awarded, all of this opportunity's subscribers and proponents will be notified accordingly."
-        };
+        });
       case "disqualify":
-        return {
+        return component_.page.modal.show({
           title: "Disqualification Reason",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Disqualify",
@@ -398,20 +456,20 @@ export const component: Tab.Component<State, Msg> = {
                 required
                 label="Reason"
                 placeholder="Reason"
-                dispatch={mapComponentDispatch(dispatch, (v) =>
+                dispatch={component_.base.mapDispatch(dispatch, (v) =>
                   adt("disqualificationReasonMsg" as const, v)
                 )}
                 state={state.disqualificationReason}
               />
             </div>
           )
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
-  }),
+  },
 
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
     switch (propStatus) {
@@ -420,7 +478,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUProposalStatus.UnderReviewTeamScenario:
       case SWUProposalStatus.EvaluatedTeamQuestions:
       case SWUProposalStatus.EvaluatedCodeChallenge:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Disqualify",
             symbol_: leftPlacement(iconLinkSymbol("user-slash")),
@@ -431,7 +489,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case SWUProposalStatus.EvaluatedTeamScenario:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Award",
             symbol_: leftPlacement(iconLinkSymbol("award")),
@@ -449,7 +507,7 @@ export const component: Tab.Component<State, Msg> = {
           }
         ]);
       case SWUProposalStatus.NotAwarded:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Award",
             symbol_: leftPlacement(iconLinkSymbol("award")),
@@ -463,7 +521,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUProposalStatus.Withdrawn:
       case SWUProposalStatus.Awarded:
       case SWUProposalStatus.Disqualified:
-        return null;
+        return component_.page.actions.none();
     }
-  })
+  }
 };

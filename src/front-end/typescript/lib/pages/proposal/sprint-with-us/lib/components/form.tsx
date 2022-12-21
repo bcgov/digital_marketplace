@@ -9,18 +9,9 @@ import * as NumberField from "front-end/lib/components/form-field/number";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
-  Component,
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  mapPageModalMsg,
-  PageAlerts,
-  PageGetModal,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
@@ -105,6 +96,7 @@ export interface State
     Params,
     "viewerUser" | "opportunity" | "evaluationContent" | "organizations"
   > {
+  proposal: SWUProposal | null;
   showModal: ModalId | null;
   getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
@@ -129,11 +121,13 @@ export interface State
 }
 
 export type Msg =
+  | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   // Team Tab
   | ADT<"organization", Select.Msg>
+  | ADT<"onGetAffiliationsResponse", [Id, AffiliationMember[]]>
   | ADT<"team", Team.Msg>
   // Pricing Tab
   | ADT<"inceptionCost", NumberField.Msg>
@@ -152,14 +146,13 @@ export type Msg =
 
 const DEFAULT_ACTIVE_TAB: TabId = "Evaluation";
 
-async function getAffiliations(orgId?: Id): Promise<AffiliationMember[]> {
+function getAffiliations(orgId?: Id): component_.Cmd<AffiliationMember[]> {
   if (!orgId) {
-    return [];
+    return component_.cmd.dispatch([]);
   }
-  return api.getValidValue(
-    await api.affiliations.readManyForOrganization(orgId),
-    []
-  );
+  return api.affiliations.readManyForOrganization(orgId)((response) =>
+    api.getValidValue(response, [])
+  ) as component_.Cmd<AffiliationMember[]>;
 }
 
 function isSelectedOrgQualified(
@@ -177,7 +170,7 @@ function isSelectedOrgQualified(
   ];
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,
   opportunity,
   organizations,
@@ -197,174 +190,188 @@ export const init: Init<Params, State> = async ({
         value: proposal.organization.id
       }
     : null;
-  return {
-    showModal: null,
-    getAffiliationsLoading: 0,
-    viewerUser,
-    evaluationContent,
+  const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
+    tabs: [
+      "Evaluation",
+      "Team",
+      "Pricing",
+      "Team Questions",
+      "References",
+      "Review Proposal"
+    ],
+    activeTab
+  });
+  const [organizationState, organizationCmds] = Select.init({
+    errors: [],
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select an organization."]);
+      }
+      if (
+        !isSelectedOrgQualified(option.value, opportunity, organizations)[0]
+      ) {
+        return invalid([
+          "Please select an organization that is a Qualified Supplier."
+        ]);
+      }
+      return valid(option);
+    },
+    child: {
+      value: selectedOrganizationOption,
+      id: "swu-proposal-organization",
+      options: adt("options", organizationOptions)
+    }
+  });
+  const [teamState, teamCmds] = Team.init({
     opportunity,
-    organizations,
-    isReviewInceptionPhaseAccordionOpen: true,
-    isReviewPrototypePhaseAccordionOpen: true,
-    isReviewImplementationPhaseAccordionOpen: true,
-    openReviewTeamQuestionResponseAccordions: new Set(
-      opportunity.teamQuestions.map((q, i) => i)
-    ),
-
-    tabbedForm: immutable(
-      await TabbedFormComponent.init({
-        tabs: [
-          "Evaluation",
-          "Team",
-          "Pricing",
-          "Team Questions",
-          "References",
-          "Review Proposal"
-        ],
-        activeTab
-      })
-    ),
-
-    organization: immutable(
-      await Select.init({
-        errors: [],
-        validate: (option) => {
-          if (!option) {
-            return invalid(["Please select an organization."]);
-          }
-          if (
-            !isSelectedOrgQualified(option.value, opportunity, organizations)[0]
-          ) {
-            return invalid([
-              "Please select an organization that is a Qualified Supplier."
-            ]);
-          }
-          return valid(option);
-        },
-        child: {
-          value: selectedOrganizationOption,
-          id: "swu-proposal-organization",
-          options: adt("options", organizationOptions)
-        }
-      })
-    ),
-
-    team: immutable(
-      await Team.init({
-        opportunity,
-        orgId: proposal?.organization?.id,
-        affiliations: await getAffiliations(proposal?.organization?.id),
-        proposal
-      })
-    ),
-
-    inceptionCost: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid([
-              `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
-                SWUProposalPhaseType.Inception
-              )} phase.`
-            ]);
-          }
-          return proposalValidation.validateSWUPhaseProposedCost(
-            v,
-            opportunity.inceptionPhase?.maxBudget || 0
-          );
-        },
-        child: {
-          value: inceptionCost || null,
-          id: "swu-proposal-inception-cost",
-          min: 1
-        }
-      })
-    ),
-
-    prototypeCost: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid([
-              `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
-                SWUProposalPhaseType.Prototype
-              )} phase.`
-            ]);
-          }
-          return proposalValidation.validateSWUPhaseProposedCost(
-            v,
-            opportunity.prototypePhase?.maxBudget || 0
-          );
-        },
-        child: {
-          value: prototypeCost || null,
-          id: "swu-proposal-prototype-cost",
-          min: 1
-        }
-      })
-    ),
-
-    implementationCost: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid([
-              `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
-                SWUProposalPhaseType.Implementation
-              )} phase.`
-            ]);
-          }
-          return proposalValidation.validateSWUPhaseProposedCost(
-            v,
-            opportunity.implementationPhase?.maxBudget || 0
-          );
-        },
-        child: {
-          value: implementationCost || null,
-          id: "swu-proposal-implementation-cost",
-          min: 1
-        }
-      })
-    ),
-
-    totalCost: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return valid(v);
-          }
-          return proposalValidation.validateSWUProposalProposedCost(
-            v,
-            0,
-            0,
-            opportunity.totalMaxBudget
-          );
-        },
-        child: {
-          value: inceptionCost + prototypeCost + implementationCost,
-          id: "swu-proposal-total-cost",
-          min: 1
-        }
-      })
-    ),
-
-    teamQuestions: immutable(
-      await TeamQuestions.init({
-        questions: opportunity.teamQuestions,
-        responses: proposal?.teamQuestionResponses || []
-      })
-    ),
-
-    references: immutable(
-      await References.init({
-        references: proposal?.references || []
-      })
-    )
-  };
+    orgId: proposal?.organization?.id,
+    affiliations: [], // Re-initialize with affiliations once loaded.
+    proposal
+  });
+  const [inceptionCostState, inceptionCostCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid([
+          `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
+            SWUProposalPhaseType.Inception
+          )} phase.`
+        ]);
+      }
+      return proposalValidation.validateSWUPhaseProposedCost(
+        v,
+        opportunity.inceptionPhase?.maxBudget || 0
+      );
+    },
+    child: {
+      value: inceptionCost || null,
+      id: "swu-proposal-inception-cost",
+      min: 1
+    }
+  });
+  const [prototypeCostState, prototypeCostCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid([
+          `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
+            SWUProposalPhaseType.Prototype
+          )} phase.`
+        ]);
+      }
+      return proposalValidation.validateSWUPhaseProposedCost(
+        v,
+        opportunity.prototypePhase?.maxBudget || 0
+      );
+    },
+    child: {
+      value: prototypeCost || null,
+      id: "swu-proposal-prototype-cost",
+      min: 1
+    }
+  });
+  const [implementationCostState, implementationCostCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid([
+          `Please enter a valid proposed cost for the ${swuProposalPhaseTypeToTitleCase(
+            SWUProposalPhaseType.Implementation
+          )} phase.`
+        ]);
+      }
+      return proposalValidation.validateSWUPhaseProposedCost(
+        v,
+        opportunity.implementationPhase?.maxBudget || 0
+      );
+    },
+    child: {
+      value: implementationCost || null,
+      id: "swu-proposal-implementation-cost",
+      min: 1
+    }
+  });
+  const [totalCostState, totalCostCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return valid(v);
+      }
+      return proposalValidation.validateSWUProposalProposedCost(
+        v,
+        0,
+        0,
+        opportunity.totalMaxBudget
+      );
+    },
+    child: {
+      value: inceptionCost + prototypeCost + implementationCost,
+      id: "swu-proposal-total-cost",
+      min: 1
+    }
+  });
+  const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
+    questions: opportunity.teamQuestions,
+    responses: proposal?.teamQuestionResponses || []
+  });
+  const [referencesState, referencesCmds] = References.init({
+    references: proposal?.references || []
+  });
+  return [
+    {
+      proposal: proposal || null,
+      showModal: null,
+      getAffiliationsLoading: 0,
+      viewerUser,
+      evaluationContent,
+      opportunity,
+      organizations,
+      isReviewInceptionPhaseAccordionOpen: true,
+      isReviewPrototypePhaseAccordionOpen: true,
+      isReviewImplementationPhaseAccordionOpen: true,
+      openReviewTeamQuestionResponseAccordions: new Set(
+        opportunity.teamQuestions.map((q, i) => i)
+      ),
+      tabbedForm: immutable(tabbedFormState),
+      organization: immutable(organizationState),
+      team: immutable(teamState),
+      inceptionCost: immutable(inceptionCostState),
+      prototypeCost: immutable(prototypeCostState),
+      implementationCost: immutable(implementationCostState),
+      totalCost: immutable(totalCostState),
+      teamQuestions: immutable(teamQuestionsState),
+      references: immutable(referencesState)
+    },
+    [
+      ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
+        adt("tabbedForm", msg)
+      ),
+      ...component_.cmd.mapMany(organizationCmds, (msg) =>
+        adt("organization", msg)
+      ),
+      ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
+      ...component_.cmd.mapMany(inceptionCostCmds, (msg) =>
+        adt("inceptionCost", msg)
+      ),
+      ...component_.cmd.mapMany(prototypeCostCmds, (msg) =>
+        adt("prototypeCost", msg)
+      ),
+      ...component_.cmd.mapMany(implementationCostCmds, (msg) =>
+        adt("implementationCost", msg)
+      ),
+      ...component_.cmd.mapMany(totalCostCmds, (msg) => adt("totalCost", msg)),
+      ...component_.cmd.mapMany(teamQuestionsCmds, (msg) =>
+        adt("teamQuestions", msg)
+      ),
+      ...component_.cmd.mapMany(referencesCmds, (msg) =>
+        adt("references", msg)
+      ),
+      component_.cmd.map(
+        getAffiliations(proposal?.organization?.id),
+        (as) => adt("onInitResponse", as) as Msg
+      )
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
 export type Errors = CreateValidationErrors | UpdateEditValidationErrors;
@@ -497,50 +504,64 @@ export function getSelectedOrganization(
   return (value && find(state.organizations, { id: value.value })) || null;
 }
 
-type PersistAction = ADT<"create", CreateSWUProposalStatus> | ADT<"update", Id>;
+export type PersistAction =
+  | ADT<"create", CreateSWUProposalStatus>
+  | ADT<"update", Id>;
 
-type ValidPersistResult = [Immutable<State>, SWUProposal];
+export type PersistResult = Validation<
+  [Immutable<State>, SWUProposal],
+  Immutable<State>
+>;
 
-type InvalidPersistResult = Immutable<State>;
-
-export async function persist(
+export function persist(
   state: Immutable<State>,
   action: PersistAction
-): Promise<Validation<ValidPersistResult, InvalidPersistResult>> {
+): component_.Cmd<PersistResult> {
   const formValues = getValues(state);
-  const actionResult: api.ResponseValidation<
-    SWUProposal,
-    CreateValidationErrors | UpdateEditValidationErrors
-  > = await (async () => {
-    switch (action.tag) {
-      case "create":
-        return await api.proposals.swu.create({
+  switch (action.tag) {
+    case "create":
+      return api.proposals.swu.create(
+        {
           ...formValues,
           opportunity: state.opportunity.id,
           status: action.value
-        });
-      case "update": {
-        const updateResult = await api.proposals.swu.update(
-          action.value,
-          adt("edit" as const, formValues)
-        );
-        return api.mapInvalid(updateResult, (errors) => {
-          if (errors.proposal && errors.proposal.tag === "edit") {
-            return errors.proposal.value;
-          } else {
-            return {};
+        },
+        (response) => {
+          switch (response.tag) {
+            case "valid":
+              state = setErrors(state, {});
+              return valid([state, response.value]);
+            case "invalid":
+              return invalid(setErrors(state, response.value));
+            case "unhandled":
+              return invalid(state);
           }
-        });
-      }
+        }
+      ) as component_.Cmd<PersistResult>;
+    case "update": {
+      return api.proposals.swu.update(
+        action.value,
+        adt("edit" as const, formValues),
+        (response) => {
+          switch (response.tag) {
+            case "valid":
+              state = setErrors(state, {});
+              return valid([state, response.value]);
+            case "invalid":
+              if (
+                response.value.proposal &&
+                response.value.proposal.tag === "edit"
+              ) {
+                return invalid(setErrors(state, response.value.proposal.value));
+              } else {
+                return invalid(state);
+              }
+            case "unhandled":
+              return invalid(state);
+          }
+        }
+      ) as component_.Cmd<PersistResult>;
     }
-  })();
-  switch (actionResult.tag) {
-    case "valid":
-      state = setErrors(state, {});
-      return valid([state, actionResult.value]);
-    case "unhandled":
-    case "invalid":
-      return invalid(setErrors(state, actionResult.value));
   }
 }
 
@@ -562,10 +583,23 @@ const stopGetAffiliationsLoading = makeStopLoading<State>(
   "getAffiliationsLoading"
 );
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const affiliations = msg.value;
+      const [teamState, teamCmds] = Team.init({
+        opportunity: state.opportunity,
+        orgId: state.proposal?.organization?.id || undefined,
+        affiliations,
+        proposal: state.proposal || undefined
+      });
+      return [
+        state.set("team", immutable(teamState)),
+        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
+      ];
+    }
     case "tabbedForm":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["tabbedForm"],
         childUpdate: TabbedFormComponent.update,
@@ -574,13 +608,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
 
     case "hideModal":
-      return [state.set("showModal", null)];
+      return [state.set("showModal", null), []];
 
     case "organization":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["organization"],
         childUpdate: Select.update,
@@ -593,7 +627,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             !orgId ||
             orgId === state.team.orgId
           ) {
-            return [state];
+            return [state, []];
           }
           state = startGetAffiliationsLoading(state);
           state = state.update("organization", (s) =>
@@ -601,27 +635,26 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
           );
           return [
             state,
-            async (state1) => {
-              state1 = stopGetAffiliationsLoading(state1);
-              const orgId = FormField.getValue(state1.organization)?.value;
-              if (orgId) {
-                return state1.set(
-                  "team",
-                  Team.setAffiliations(
-                    state1.team,
-                    await getAffiliations(orgId),
-                    orgId
-                  )
-                );
-              }
-              return state1;
-            }
+            [
+              component_.cmd.map(
+                getAffiliations(orgId),
+                (as) => adt("onGetAffiliationsResponse", [orgId, as]) as Msg
+              )
+            ]
           ];
         }
       });
 
+    case "onGetAffiliationsResponse": {
+      const [orgId, affiliations] = msg.value;
+      state = state.update("team", (t) =>
+        Team.setAffiliations(t, affiliations, orgId)
+      );
+      return [stopGetAffiliationsLoading(state), []];
+    }
+
     case "team":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["team"],
         childUpdate: Team.update,
@@ -630,37 +663,37 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "inceptionCost":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["inceptionCost"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("inceptionCost", value),
-        updateAfter: (state) => [updateTotalCost(state)]
+        updateAfter: (state) => [updateTotalCost(state), []]
       });
 
     case "prototypeCost":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["prototypeCost"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("prototypeCost", value),
-        updateAfter: (state) => [updateTotalCost(state)]
+        updateAfter: (state) => [updateTotalCost(state), []]
       });
 
     case "implementationCost":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["implementationCost"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("implementationCost", value),
-        updateAfter: (state) => [updateTotalCost(state)]
+        updateAfter: (state) => [updateTotalCost(state), []]
       });
 
     case "totalCost":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["totalCost"],
         childUpdate: NumberField.update,
@@ -669,7 +702,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "teamQuestions":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["teamQuestions"],
         childUpdate: TeamQuestions.update,
@@ -678,7 +711,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "references":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["references"],
         childUpdate: References.update,
@@ -687,14 +720,21 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "toggleReviewInceptionPhaseAccordion":
-      return [state.update("isReviewInceptionPhaseAccordionOpen", (v) => !v)];
+      return [
+        state.update("isReviewInceptionPhaseAccordionOpen", (v) => !v),
+        []
+      ];
 
     case "toggleReviewPrototypePhaseAccordion":
-      return [state.update("isReviewPrototypePhaseAccordionOpen", (v) => !v)];
+      return [
+        state.update("isReviewPrototypePhaseAccordionOpen", (v) => !v),
+        []
+      ];
 
     case "toggleReviewImplementationPhaseAccordion":
       return [
-        state.update("isReviewImplementationPhaseAccordionOpen", (v) => !v)
+        state.update("isReviewImplementationPhaseAccordionOpen", (v) => !v),
+        []
       ];
 
     case "toggleReviewTeamQuestionResponseAccordion":
@@ -706,12 +746,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
             s.add(msg.value);
           }
           return s;
-        })
+        }),
+        []
       ];
   }
 };
 
-const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
+const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -773,7 +814,11 @@ const EvaluationView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
   return (
     <div>
@@ -826,7 +871,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
               ) : undefined
             }
             state={state.organization}
-            dispatch={mapComponentDispatch(dispatch, (v) =>
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("organization" as const, v)
             )}
             disabled={disabled}
@@ -838,7 +883,7 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
               <Team.view
                 disabled={disabled}
                 state={state.team}
-                dispatch={mapComponentDispatch(dispatch, (value) =>
+                dispatch={component_.base.mapDispatch(dispatch, (value) =>
                   adt("team" as const, value)
                 )}
               />
@@ -850,7 +895,11 @@ const TeamView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
+const PricingView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const {
     inceptionPhase,
     prototypePhase,
@@ -891,7 +940,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               )}`}
               disabled={disabled}
               state={state.inceptionCost}
-              dispatch={mapComponentDispatch(dispatch, (value) =>
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("inceptionCost" as const, value)
               )}
             />
@@ -917,7 +966,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
               )}`}
               disabled={disabled}
               state={state.prototypeCost}
-              dispatch={mapComponentDispatch(dispatch, (value) =>
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("prototypeCost" as const, value)
               )}
             />
@@ -942,7 +991,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
             )}`}
             disabled={disabled}
             state={state.implementationCost}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("implementationCost" as const, value)
             )}
           />
@@ -960,7 +1009,7 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
             )}`}
             disabled
             state={state.totalCost}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("totalCost" as const, value)
             )}
           />
@@ -970,7 +1019,11 @@ const PricingView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamQuestionsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -989,7 +1042,7 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
         <TeamQuestions.view
           disabled={disabled}
           state={state.teamQuestions}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teamQuestions" as const, value)
           )}
         />
@@ -998,7 +1051,11 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const ReferencesView: View<Props> = ({ state, dispatch, disabled }) => {
+const ReferencesView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <div>
       <Row>
@@ -1017,7 +1074,7 @@ const ReferencesView: View<Props> = ({ state, dispatch, disabled }) => {
       <References.view
         disabled={disabled}
         state={state.references}
-        dispatch={mapComponentDispatch(dispatch, (v) =>
+        dispatch={component_.base.mapDispatch(dispatch, (v) =>
           adt("references" as const, v)
         )}
       />
@@ -1037,7 +1094,7 @@ interface ReviewPhaseViewProps {
   viewTeamMember(m: Phase.Member): void;
 }
 
-const ReviewPhaseView: View<ReviewPhaseViewProps> = ({
+const ReviewPhaseView: component_.base.View<ReviewPhaseViewProps> = ({
   className,
   title,
   icon,
@@ -1136,7 +1193,7 @@ function getQuestionTextByOrder(
   return null;
 }
 
-const ReviewTeamQuestionResponseView: View<
+const ReviewTeamQuestionResponseView: component_.base.View<
   ReviewTeamQuestionResponseViewProps
 > = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
   const questionText = getQuestionTextByOrder(opportunity, response.order);
@@ -1167,7 +1224,10 @@ const ReviewTeamQuestionResponseView: View<
   );
 };
 
-const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
+const ReviewProposalView: component_.base.View<Props> = ({
+  state,
+  dispatch
+}) => {
   const phaseMembers = Team.getAddedMembers(state.team);
   const organization = getSelectedOrganization(state);
   const opportunity = state.opportunity;
@@ -1322,11 +1382,15 @@ const ReviewProposalView: View<Props> = ({ state, dispatch }) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const props = {
     state,
     dispatch,
@@ -1370,7 +1434,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         }
       }}
       state={state.tabbedForm}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)
       )}>
       {activeTab}
@@ -1378,22 +1442,22 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-export const component: Component<Params, State, Msg> = {
+export const component: component_.base.Component<Params, State, Msg> = {
   init,
   update,
   view
 };
 
-export const getModal: PageGetModal<State, Msg> = (state) => {
-  const teamModal = mapPageModalMsg(
+export const getModal: component_.page.GetModal<State, Msg> = (state) => {
+  const teamModal = component_.page.modal.map(
     Team.getModal(state.team),
     (msg) => adt("team", msg) as Msg
   );
-  if (teamModal) {
+  if (teamModal && teamModal.tag === "show") {
     return teamModal;
   }
   if (!state.showModal) {
-    return null;
+    return component_.page.modal.hide();
   }
   switch (state.showModal.tag) {
     case "viewTeamMember":
@@ -1404,10 +1468,12 @@ export const getModal: PageGetModal<State, Msg> = (state) => {
   }
 };
 
-export function getAlerts<Msg>(state: Immutable<State>): PageAlerts<Msg> {
+export function getAlerts<Msg>(
+  state: Immutable<State>
+): component_.page.Alerts<Msg> {
   const orgId = FormField.getValue(state.organization)?.value;
   if (!orgId) {
-    return {};
+    return component_.page.alerts.empty();
   }
   const [isQualified, org] = isSelectedOrgQualified(
     orgId,

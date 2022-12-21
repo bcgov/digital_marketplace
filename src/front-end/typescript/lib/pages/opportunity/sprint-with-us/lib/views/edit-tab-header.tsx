@@ -1,4 +1,4 @@
-import { View } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
 import {
   swuOpportunityStatusToColor,
   swuOpportunityStatusToTitleCase
@@ -22,7 +22,10 @@ export interface Props {
   viewerUser: User;
 }
 
-const EditTabHeader: View<Props> = ({ opportunity, viewerUser }) => {
+const EditTabHeader: component.base.View<Props> = ({
+  opportunity,
+  viewerUser
+}) => {
   const createdBy = opportunity.createdBy;
   const oppStatus = opportunity.status;
   const dates = [

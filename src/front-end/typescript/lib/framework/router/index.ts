@@ -1,4 +1,4 @@
-import { Dispatch } from "front-end/lib/framework";
+import * as base from "front-end/lib/framework/component/base";
 import clickHandler from "front-end/lib/framework/router/click-handler";
 import { debounce } from "lodash";
 import { match, MatchFunction } from "path-to-regexp";
@@ -20,7 +20,7 @@ export type IncomingRouteMsg<Route> = ADT<
 
 export type NewUrlMsg = ADT<"@newUrl", string>;
 
-export function newUrl(url: string): NewUrlMsg {
+export function newUrlMsg(url: string): NewUrlMsg {
   return {
     tag: "@newUrl",
     value: url
@@ -29,7 +29,7 @@ export function newUrl(url: string): NewUrlMsg {
 
 export type ReplaceUrlMsg = ADT<"@replaceUrl", string>;
 
-export function replaceUrl(url: string): ReplaceUrlMsg {
+export function replaceUrlMsg(url: string): ReplaceUrlMsg {
   return {
     tag: "@replaceUrl",
     value: url
@@ -38,7 +38,7 @@ export function replaceUrl(url: string): ReplaceUrlMsg {
 
 export type NewRouteMsg<Route> = ADT<"@newRoute", Route>;
 
-export function newRoute<Route>(route: Route): NewRouteMsg<Route> {
+export function newRouteMsg<Route>(route: Route): NewRouteMsg<Route> {
   return {
     tag: "@newRoute",
     value: route
@@ -47,7 +47,7 @@ export function newRoute<Route>(route: Route): NewRouteMsg<Route> {
 
 export type ReplaceRouteMsg<Route> = ADT<"@replaceRoute", Route>;
 
-export function replaceRoute<Route>(route: Route): ReplaceRouteMsg<Route> {
+export function replaceRouteMsg<Route>(route: Route): ReplaceRouteMsg<Route> {
   return {
     tag: "@replaceRoute",
     value: route
@@ -79,20 +79,6 @@ export interface Router<Route> {
   routes: Array<RouteDefinition<Route>>;
   routeToUrl(route: Route): string;
 }
-
-//export function pushState<Route>(router: Router<Route>, route: Route) {
-//if (window.history && window.history.pushState) {
-//const url = router.routeToUrl(route);
-//window.history.pushState({ url }, '', url);
-//}
-//}
-
-//export function replaceState<Route>(router: Router<Route>, route: Route) {
-//if (window.history && window.history.replaceState) {
-//const url = router.routeToUrl(route);
-//window.history.replaceState({ url }, '', url);
-//}
-//}
 
 export function pushState(url: string, routeScrollY?: number): void {
   if (window.history && window.history.pushState) {
@@ -161,9 +147,9 @@ interface ProcessedRouteDefinition<Route> extends RouteDefinition<Route> {
 
 type ProcessedRouter<Route> = Array<ProcessedRouteDefinition<Route>>;
 
-export function makeRouteManager<State, Msg, Route>(
+export function makeRouteManager<Route>(
   router: Router<Route>,
-  dispatch: Dispatch<IncomingRouteMsg<Route>>
+  dispatch: base.Dispatch<IncomingRouteMsg<Route>>
 ): RouteManager<Route> {
   // Manually handle scroll position when going "back".
   if ("scrollRestoration" in window.history) {
@@ -226,7 +212,6 @@ export function makeRouteManager<State, Msg, Route>(
         dispatchRoute(msg.value, routeScrollY, true);
         return true;
     }
-    return false;
   }
   return { dispatchRoute, dispatchUrl, handleRouterMsg };
 }

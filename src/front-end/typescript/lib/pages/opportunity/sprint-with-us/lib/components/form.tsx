@@ -11,15 +11,9 @@ import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
-  Component,
-  ComponentViewProps,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases";
@@ -36,6 +30,7 @@ import {
   CreateRequestBody,
   CreateSWUOpportunityStatus,
   CreateValidationErrors,
+  UpdateValidationErrors,
   DEFAULT_CODE_CHALLENGE_WEIGHT,
   DEFAULT_PRICE_WEIGHT,
   DEFAULT_QUESTIONS_WEIGHT,
@@ -48,12 +43,13 @@ import {
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
-import { adt, ADT } from "shared/lib/types";
+import { adt, ADT, Id } from "shared/lib/types";
 import {
   invalid,
   mapInvalid,
   mapValid,
   valid,
+  isValid as isValid_,
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
@@ -190,7 +186,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
   });
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
@@ -217,349 +213,361 @@ export const init: Init<Params, State> = async ({
     "priceWeight",
     DEFAULT_PRICE_WEIGHT
   );
-  return {
+  const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
+    tabs: [
+      "Overview",
+      "Description",
+      "Phases",
+      "Team Questions",
+      "Scoring",
+      "Attachments"
+    ],
+    activeTab
+  });
+  const [titleState, titleCmds] = ShortText.init({
+    errors: [],
+    validate: opportunityValidation.validateTitle,
+    child: {
+      type: "text",
+      value: opportunity?.title || "",
+      id: "swu-opportunity-title"
+    }
+  });
+  const [teaserState, teaserCmds] = LongText.init({
+    errors: [],
+    validate: opportunityValidation.validateTeaser,
+    child: {
+      value: opportunity?.teaser || "",
+      id: "swu-opportunity-teaser"
+    }
+  });
+  const [locationState, locationCmds] = ShortText.init({
+    errors: [],
+    validate: opportunityValidation.validateLocation,
+    child: {
+      type: "text",
+      value: opportunity?.location || DEFAULT_LOCATION,
+      id: "swu-opportunity-location"
+    }
+  });
+  const [remoteOkState, remoteOkCmds] = RemoteOkRadioGroup.init({
+    errors: [],
+    validate: (v) =>
+      v === null ? invalid(["Please select an option."]) : valid(v),
+    child: {
+      id: "swu-opportunity-remote-ok",
+      value: (() => {
+        const existing = opportunity?.remoteOk;
+        if (existing === true) {
+          return "yes" as const;
+        } else if (existing === false) {
+          return "no" as const;
+        }
+        return null;
+      })(),
+      options: [
+        { label: "Yes", value: "yes" },
+        { label: "No", value: "no" }
+      ]
+    }
+  });
+  const [remoteDescState, remoteDescCmds] = LongText.init({
+    errors: [],
+    validate: (v) =>
+      opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
+    child: {
+      value: opportunity?.remoteDesc || "",
+      id: "swu-opportunity-remote-desc"
+    }
+  });
+  const [proposalDeadlineState, proposalDeadlineCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateProposalDeadline(v, opportunity)
+    ),
+    child: {
+      value: opportunity
+        ? DateField.dateToValue(opportunity.proposalDeadline)
+        : null,
+      id: "swu-opportunity-proposal-deadline"
+    }
+  });
+  const [assignmentDateState, assignmentDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateAssignmentDate(
+        v,
+        opportunity?.proposalDeadline || new Date()
+      )
+    ),
+    child: {
+      value: opportunity
+        ? DateField.dateToValue(opportunity.assignmentDate)
+        : null,
+      id: "swu-opportunity-assignment-date"
+    }
+  });
+  const [totalMaxBudgetState, totalMaxBudgetCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid Total Maximum Budget."]);
+      }
+      return opportunityValidation.validateTotalMaxBudget(v);
+    },
+    child: {
+      value: opportunity?.totalMaxBudget || null,
+      id: "swu-opportunity-total-max-budget",
+      min: 1
+    }
+  });
+  const [minTeamMembersState, minTeamMembersCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return valid(null);
+      }
+      return opportunityValidation.validateMinimumTeamMembers(v);
+    },
+    child: {
+      value: opportunity?.minTeamMembers || null,
+      id: "swu-opportunity-min-team-members",
+      min: 1
+    }
+  });
+  const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
+    errors: [],
+    validate: (v) => {
+      const strings = v.map(({ value }) => value);
+      const validated0 = opportunityValidation.validateMandatorySkills(strings);
+      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
+      return mapInvalid(validated1, (es) => flatten(es));
+    },
+    child: {
+      value:
+        opportunity?.mandatorySkills.map((value) => ({
+          value,
+          label: value
+        })) || [],
+      id: "swu-opportunity-mandatory-skills",
+      creatable: true,
+      options: SelectMulti.stringsToOptions(SKILLS)
+    }
+  });
+  const [optionalSkillsState, optionalSkillsCmds] = SelectMulti.init({
+    errors: [],
+    validate: (v) => {
+      const strings = v.map(({ value }) => value);
+      const validated0 = opportunityValidation.validateOptionalSkills(strings);
+      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
+      return mapInvalid(validated1, (es) => flatten(es));
+    },
+    child: {
+      value:
+        opportunity?.optionalSkills.map((value) => ({
+          value,
+          label: value
+        })) || [],
+      id: "swu-opportunity-optional-skills",
+      creatable: true,
+      options: SelectMulti.stringsToOptions(SKILLS)
+    }
+  });
+  const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
+    errors: [],
+    validate: opportunityValidation.validateDescription,
+    child: {
+      value: opportunity?.description || "",
+      id: "swu-opportunity-description",
+      uploadImage: api.files.markdownImages.makeUploadImage()
+    }
+  });
+  const [startingPhaseState, startingPhaseCmds] = Select.init({
+    errors: [],
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select a starting phase."]);
+      }
+      return valid(option);
+    },
+    child: {
+      value: startingPhase && makePhaseTypeOption(startingPhase),
+      id: "swu-opportunity-starting-phase",
+      options: adt(
+        "options",
+        [
+          SWUOpportunityPhaseType.Inception,
+          SWUOpportunityPhaseType.Prototype,
+          SWUOpportunityPhaseType.Implementation
+        ].map((value) => makePhaseTypeOption(value))
+      )
+    }
+  });
+  const [phasesState, phasesCmds] = Phases.init({
     opportunity,
-    viewerUser,
-    showPhaseInfo: true,
-    tabbedForm: immutable(
-      await TabbedFormComponent.init({
-        tabs: [
-          "Overview",
-          "Description",
-          "Phases",
-          "Team Questions",
-          "Scoring",
-          "Attachments"
-        ],
-        activeTab
-      })
-    ),
-
-    title: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: opportunityValidation.validateTitle,
-        child: {
-          type: "text",
-          value: opportunity?.title || "",
-          id: "swu-opportunity-title"
-        }
-      })
-    ),
-
-    teaser: immutable(
-      await LongText.init({
-        errors: [],
-        validate: opportunityValidation.validateTeaser,
-        child: {
-          value: opportunity?.teaser || "",
-          id: "swu-opportunity-teaser"
-        }
-      })
-    ),
-
-    location: immutable(
-      await ShortText.init({
-        errors: [],
-        validate: opportunityValidation.validateLocation,
-        child: {
-          type: "text",
-          value: opportunity?.location || DEFAULT_LOCATION,
-          id: "swu-opportunity-location"
-        }
-      })
-    ),
-
-    remoteOk: immutable(
-      await RemoteOkRadioGroup.init({
-        errors: [],
-        validate: (v) =>
-          v === null ? invalid(["Please select an option."]) : valid(v),
-        child: {
-          id: "swu-opportunity-remote-ok",
-          value: (() => {
-            const existing = opportunity?.remoteOk;
-            if (existing === true) {
-              return "yes" as const;
-            } else if (existing === false) {
-              return "no" as const;
-            }
-            return null;
-          })(),
-          options: [
-            { label: "Yes", value: "yes" },
-            { label: "No", value: "no" }
-          ]
-        }
-      })
-    ),
-
-    remoteDesc: immutable(
-      await LongText.init({
-        errors: [],
-        validate: (v) =>
-          opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
-        child: {
-          value: opportunity?.remoteDesc || "",
-          id: "swu-opportunity-remote-desc"
-        }
-      })
-    ),
-
-    proposalDeadline: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) =>
-          opportunityValidation.validateProposalDeadline(v, opportunity)
-        ),
-        child: {
-          value: opportunity
-            ? DateField.dateToValue(opportunity.proposalDeadline)
-            : null,
-          id: "swu-opportunity-proposal-deadline"
-        }
-      })
-    ),
-
-    assignmentDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((v) =>
-          opportunityValidation.validateAssignmentDate(
-            v,
-            opportunity?.proposalDeadline || new Date()
-          )
-        ),
-        child: {
-          value: opportunity
-            ? DateField.dateToValue(opportunity.assignmentDate)
-            : null,
-          id: "swu-opportunity-assignment-date"
-        }
-      })
-    ),
-
-    totalMaxBudget: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid Total Maximum Budget."]);
-          }
-          return opportunityValidation.validateTotalMaxBudget(v);
-        },
-        child: {
-          value: opportunity?.totalMaxBudget || null,
-          id: "swu-opportunity-total-max-budget",
-          min: 1
-        }
-      })
-    ),
-
-    minTeamMembers: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return valid(null);
-          }
-          return opportunityValidation.validateMinimumTeamMembers(v);
-        },
-        child: {
-          value: opportunity?.minTeamMembers || null,
-          id: "swu-opportunity-min-team-members",
-          min: 1
-        }
-      })
-    ),
-
-    mandatorySkills: immutable(
-      await SelectMulti.init({
-        errors: [],
-        validate: (v) => {
-          const strings = v.map(({ value }) => value);
-          const validated0 =
-            opportunityValidation.validateMandatorySkills(strings);
-          const validated1 = mapValid(validated0, () => v);
-          return mapInvalid(validated1, (es) => flatten(es));
-        },
-        child: {
-          value:
-            opportunity?.mandatorySkills.map((value) => ({
-              value,
-              label: value
-            })) || [],
-          id: "swu-opportunity-mandatory-skills",
-          creatable: true,
-          options: SelectMulti.stringsToOptions(SKILLS)
-        }
-      })
-    ),
-
-    optionalSkills: immutable(
-      await SelectMulti.init({
-        errors: [],
-        validate: (v) => {
-          const strings = v.map(({ value }) => value);
-          const validated0 =
-            opportunityValidation.validateOptionalSkills(strings);
-          const validated1 = mapValid(validated0, () => v);
-          return mapInvalid(validated1, (es) => flatten(es));
-        },
-        child: {
-          value:
-            opportunity?.optionalSkills.map((value) => ({
-              value,
-              label: value
-            })) || [],
-          id: "swu-opportunity-optional-skills",
-          creatable: true,
-          options: SelectMulti.stringsToOptions(SKILLS)
-        }
-      })
-    ),
-
-    description: immutable(
-      await RichMarkdownEditor.init({
-        errors: [],
-        validate: opportunityValidation.validateDescription,
-        child: {
-          value: opportunity?.description || "",
-          id: "swu-opportunity-description",
-          uploadImage: api.makeUploadMarkdownImage()
-        }
-      })
-    ),
-
-    startingPhase: immutable(
-      await Select.init({
-        errors: [],
-        validate: (option) => {
-          if (!option) {
-            return invalid(["Please select a starting phase."]);
-          }
-          return valid(option);
-        },
-        child: {
-          value: startingPhase && makePhaseTypeOption(startingPhase),
-          id: "swu-opportunity-starting-phase",
-          options: adt(
-            "options",
-            [
-              SWUOpportunityPhaseType.Inception,
-              SWUOpportunityPhaseType.Prototype,
-              SWUOpportunityPhaseType.Implementation
-            ].map((value) => makePhaseTypeOption(value))
-          )
-        }
-      })
-    ),
-
-    phases: immutable(
-      await Phases.init({
-        opportunity,
-        startingPhase: startingPhase || SWUOpportunityPhaseType.Inception
-      })
-    ),
-
-    teamQuestions: immutable(
-      await TeamQuestions.init({
-        questions: opportunity?.teamQuestions || []
-      })
-    ),
-
-    questionsWeight: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid weight for team questions."]);
-          }
-          return opportunityValidation.validateQuestionsWeight(v);
-        },
-        child: {
-          value: questionsWeight,
-          id: "swu-opportunity-questions-weight",
-          min: 0
-        }
-      })
-    ),
-
-    codeChallengeWeight: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid code challenge weight."]);
-          }
-          return opportunityValidation.validateCodeChallengeWeight(v);
-        },
-        child: {
-          value: codeChallengeWeight,
-          id: "swu-opportunity-code-challenge-weight",
-          min: 0
-        }
-      })
-    ),
-
-    scenarioWeight: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid team scenario weight."]);
-          }
-          return opportunityValidation.validateTeamScenarioWeight(v);
-        },
-        child: {
-          value: scenarioWeight,
-          id: "swu-opportunity-scenario-weight",
-          min: 0
-        }
-      })
-    ),
-
-    priceWeight: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid price weight."]);
-          }
-          return opportunityValidation.validatePriceWeight(v);
-        },
-        child: {
-          value: priceWeight,
-          id: "swu-opportunity-price-weight",
-          min: 0
-        }
-      })
-    ),
-
-    weightsTotal: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: validateWeightsTotal,
-        child: {
-          value:
-            questionsWeight +
-            codeChallengeWeight +
-            scenarioWeight +
-            priceWeight,
-          id: "swu-opportunity-weights-total",
-          min: 1
-        }
-      })
-    ),
-
-    attachments: immutable(
-      await Attachments.init({
-        canRemoveExistingAttachments,
-        existingAttachments: opportunity?.attachments || [],
-        newAttachmentMetadata: [adt("any")]
-      })
-    )
-  };
+    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception
+  });
+  const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
+    questions: opportunity?.teamQuestions || []
+  });
+  const [questionsWeightState, questionsWeightCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid weight for team questions."]);
+      }
+      return opportunityValidation.validateQuestionsWeight(v);
+    },
+    child: {
+      value: questionsWeight,
+      id: "swu-opportunity-questions-weight",
+      min: 0
+    }
+  });
+  const [codeChallengeWeightState, codeChallengeWeightCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid code challenge weight."]);
+      }
+      return opportunityValidation.validateCodeChallengeWeight(v);
+    },
+    child: {
+      value: codeChallengeWeight,
+      id: "swu-opportunity-code-challenge-weight",
+      min: 0
+    }
+  });
+  const [scenarioWeightState, scenarioWeightCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid team scenario weight."]);
+      }
+      return opportunityValidation.validateTeamScenarioWeight(v);
+    },
+    child: {
+      value: scenarioWeight,
+      id: "swu-opportunity-scenario-weight",
+      min: 0
+    }
+  });
+  const [priceWeightState, priceWeightCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid price weight."]);
+      }
+      return opportunityValidation.validatePriceWeight(v);
+    },
+    child: {
+      value: priceWeight,
+      id: "swu-opportunity-price-weight",
+      min: 0
+    }
+  });
+  const [weightsTotalState, weightsTotalCmds] = NumberField.init({
+    errors: [],
+    validate: validateWeightsTotal,
+    child: {
+      value:
+        questionsWeight + codeChallengeWeight + scenarioWeight + priceWeight,
+      id: "swu-opportunity-weights-total",
+      min: 1
+    }
+  });
+  const [attachmentsState, attachmentsCmds] = Attachments.init({
+    canRemoveExistingAttachments,
+    existingAttachments: opportunity?.attachments || [],
+    newAttachmentMetadata: [adt("any")]
+  });
+  return [
+    {
+      opportunity,
+      viewerUser,
+      showPhaseInfo: true,
+      tabbedForm: immutable(tabbedFormState),
+      title: immutable(titleState),
+      teaser: immutable(teaserState),
+      location: immutable(locationState),
+      remoteOk: immutable(remoteOkState),
+      remoteDesc: immutable(remoteDescState),
+      proposalDeadline: immutable(proposalDeadlineState),
+      assignmentDate: immutable(assignmentDateState),
+      totalMaxBudget: immutable(totalMaxBudgetState),
+      minTeamMembers: immutable(minTeamMembersState),
+      mandatorySkills: immutable(mandatorySkillsState),
+      optionalSkills: immutable(optionalSkillsState),
+      description: immutable(descriptionState),
+      startingPhase: immutable(startingPhaseState),
+      phases: immutable(phasesState),
+      teamQuestions: immutable(teamQuestionsState),
+      questionsWeight: immutable(questionsWeightState),
+      codeChallengeWeight: immutable(codeChallengeWeightState),
+      scenarioWeight: immutable(scenarioWeightState),
+      priceWeight: immutable(priceWeightState),
+      weightsTotal: immutable(weightsTotalState),
+      attachments: immutable(attachmentsState)
+    },
+    [
+      ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
+        adt("tabbedForm", msg)
+      ),
+      ...component_.cmd.mapMany(titleCmds, (msg) => adt("title", msg)),
+      ...component_.cmd.mapMany(teaserCmds, (msg) => adt("teaser", msg)),
+      ...component_.cmd.mapMany(locationCmds, (msg) => adt("location", msg)),
+      ...component_.cmd.mapMany(remoteOkCmds, (msg) => adt("remoteOk", msg)),
+      ...component_.cmd.mapMany(remoteDescCmds, (msg) =>
+        adt("remoteDesc", msg)
+      ),
+      ...component_.cmd.mapMany(proposalDeadlineCmds, (msg) =>
+        adt("proposalDeadline", msg)
+      ),
+      ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
+        adt("assignmentDate", msg)
+      ),
+      ...component_.cmd.mapMany(totalMaxBudgetCmds, (msg) =>
+        adt("totalMaxBudget", msg)
+      ),
+      ...component_.cmd.mapMany(minTeamMembersCmds, (msg) =>
+        adt("minTeamMembers", msg)
+      ),
+      ...component_.cmd.mapMany(mandatorySkillsCmds, (msg) =>
+        adt("mandatorySkills", msg)
+      ),
+      ...component_.cmd.mapMany(optionalSkillsCmds, (msg) =>
+        adt("optionalSkills", msg)
+      ),
+      ...component_.cmd.mapMany(descriptionCmds, (msg) =>
+        adt("description", msg)
+      ),
+      ...component_.cmd.mapMany(startingPhaseCmds, (msg) =>
+        adt("startingPhase", msg)
+      ),
+      ...component_.cmd.mapMany(phasesCmds, (msg) => adt("phases", msg)),
+      ...component_.cmd.mapMany(teamQuestionsCmds, (msg) =>
+        adt("teamQuestions", msg)
+      ),
+      ...component_.cmd.mapMany(questionsWeightCmds, (msg) =>
+        adt("questionsWeight", msg)
+      ),
+      ...component_.cmd.mapMany(codeChallengeWeightCmds, (msg) =>
+        adt("codeChallengeWeight", msg)
+      ),
+      ...component_.cmd.mapMany(scenarioWeightCmds, (msg) =>
+        adt("scenarioWeight", msg)
+      ),
+      ...component_.cmd.mapMany(priceWeightCmds, (msg) =>
+        adt("priceWeight", msg)
+      ),
+      ...component_.cmd.mapMany(weightsTotalCmds, (msg) =>
+        adt("weightsTotal", msg)
+      ),
+      ...component_.cmd.mapMany(attachmentsCmds, (msg) =>
+        adt("attachments", msg)
+      )
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
 export type Errors = CreateValidationErrors;
@@ -721,10 +729,15 @@ export function getValues(state: Immutable<State>): Values {
 
 type PersistAction = ADT<"create", CreateSWUOpportunityStatus> | ADT<"update">;
 
-export async function persist(
+export type PersistResult = Validation<
+  [Immutable<State>, component_.Cmd<Msg>[], SWUOpportunity],
+  Immutable<State>
+>;
+
+export function persist(
   state: Immutable<State>,
   action: PersistAction
-): Promise<Validation<[Immutable<State>, SWUOpportunity], Immutable<State>>> {
+): component_.Cmd<PersistResult> {
   const values = getValues(state);
   const isRemoteOkChecked = RadioGroup.isChecked(state.remoteOk);
   const isCreateDraft =
@@ -739,7 +752,7 @@ export async function persist(
       ));
   // Transform remoteOk
   if (!isRemoteOkChecked && !isCreateDraft) {
-    return invalid(state);
+    return component_.cmd.dispatch(invalid(state));
   }
   // Default remoteOk to true for drafts where it isn't defined.
   const remoteOk =
@@ -748,81 +761,126 @@ export async function persist(
       : RadioGroup.valueEquals(state.remoteOk, "yes");
   // Get new attachments to be uploaded.
   const newAttachments = Attachments.getNewAttachments(state.attachments);
-  let attachments = state.attachments.existingAttachments.map(({ id }) => id);
-  // Upload new attachments if necessary.
-  if (shouldUploadAttachmentsAndUpdate && newAttachments.length) {
-    const result = await api.uploadFiles(newAttachments);
-    switch (result.tag) {
-      case "valid":
-        attachments = [...attachments, ...result.value.map(({ id }) => id)];
-        break;
-      case "invalid":
-        return invalid(
-          state.update("attachments", (attachments) =>
-            Attachments.setNewAttachmentErrors(attachments, result.value)
-          )
-        );
-      case "unhandled":
-        return invalid(state);
+  const existingAttachments = state.attachments.existingAttachments.map(
+    ({ id }) => id
+  );
+  // Cmd helpers
+  const uploadNewAttachmentsCmd = api.files.createMany(
+    newAttachments,
+    (response) => {
+      switch (response.tag) {
+        case "valid":
+          return valid([
+            ...existingAttachments,
+            ...response.value.map(({ id }) => id)
+          ]);
+        case "invalid":
+          return invalid(
+            state.update("attachments", (attachments) =>
+              Attachments.setNewAttachmentErrors(attachments, response.value)
+            )
+          );
+        case "unhandled":
+          return invalid(state);
+      }
     }
-  }
-  const actionResult: api.ResponseValidation<
-    SWUOpportunity,
-    CreateValidationErrors | UpdateEditValidationErrors
-  > = await (async () => {
+  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  const actionCmd = (
+    attachments: Id[]
+  ): component_.cmd.Cmd<
+    api.ResponseValidation<
+      SWUOpportunity,
+      UpdateEditValidationErrors | CreateValidationErrors
+    >
+  > => {
     switch (action.tag) {
       case "create":
-        return await api.opportunities.swu.create({
-          ...values,
-          remoteOk,
-          attachments,
-          status: action.value
-        });
+        return api.opportunities.swu.create(
+          {
+            ...values,
+            remoteOk,
+            attachments,
+            status: action.value
+          },
+          (response) => response
+        ) as component_.cmd.Cmd<
+          api.ResponseValidation<SWUOpportunity, CreateValidationErrors>
+        >;
       case "update":
         if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
-          const updateResult = await api.opportunities.swu.update(
+          return api.opportunities.swu.update(
             state.opportunity.id,
             adt("edit" as const, {
               ...values,
               remoteOk,
               attachments
-            })
-          );
-          return api.mapInvalid(updateResult, (errors) => {
-            if (errors.opportunity && errors.opportunity.tag === "edit") {
-              return errors.opportunity.value;
-            } else {
-              return {};
+            }),
+            (
+              response: api.ResponseValidation<
+                SWUOpportunity,
+                UpdateValidationErrors
+              >
+            ) => {
+              return api.mapInvalid(response, (errors) => {
+                if (errors.opportunity && errors.opportunity.tag === "edit") {
+                  return errors.opportunity.value;
+                } else {
+                  return {};
+                }
+              });
             }
-          });
+          ) as component_.cmd.Cmd<
+            api.ResponseValidation<SWUOpportunity, UpdateEditValidationErrors>
+          >;
         } else if (state.opportunity) {
-          return valid(state.opportunity);
+          return component_.cmd.dispatch(valid(state.opportunity));
         } else {
           // Should never happen because state.opportunity should be defined
           // when updating.
-          return invalid({});
+          return component_.cmd.dispatch(invalid({}));
         }
     }
-  })();
-  switch (actionResult.tag) {
-    case "unhandled":
-      return invalid(state);
-    case "invalid":
-      return invalid(setErrors(state, actionResult.value));
-    case "valid":
-      state = setErrors(state, {});
-      // Update the attachments component accordingly.
-      state = state.set(
-        "attachments",
-        immutable(
-          await Attachments.init({
-            existingAttachments: actionResult.value.attachments || [],
-            newAttachmentMetadata
-          })
-        )
+  };
+  // Upload new attachments if necessary.
+  const attachmentsCmd: component_.cmd.Cmd<Validation<Id[], Immutable<State>>> =
+    shouldUploadAttachmentsAndUpdate && newAttachments.length
+      ? uploadNewAttachmentsCmd
+      : component_.cmd.dispatch(valid(existingAttachments));
+  return component_.cmd.andThen(attachmentsCmd, (attachmentsResult) => {
+    if (isValid_(attachmentsResult)) {
+      return component_.cmd.map(
+        actionCmd(attachmentsResult.value),
+        (actionResult) => {
+          switch (actionResult.tag) {
+            case "unhandled":
+              return invalid(state);
+            case "invalid":
+              return invalid(setErrors(state, actionResult.value));
+            case "valid": {
+              state = setErrors(state, {});
+              // Update the attachments component accordingly.
+              const [newAttachmentsState, newAttachmentsCmds] =
+                Attachments.init({
+                  existingAttachments: actionResult.value.attachments || [],
+                  newAttachmentMetadata
+                });
+              state = state.set("attachments", immutable(newAttachmentsState));
+              return valid([
+                state,
+                component_.cmd.mapMany(
+                  newAttachmentsCmds,
+                  (msg) => adt("attachments", msg) as Msg
+                ),
+                actionResult.value
+              ]);
+            }
+          }
+        }
       );
-      return valid([state, actionResult.value]);
-  }
+    } else {
+      return component_.cmd.dispatch(invalid(attachmentsResult.value));
+    }
+  });
 }
 
 function validateWeightsTotal(n: number | null): Validation<number> {
@@ -844,10 +902,10 @@ function updateWeightsTotal(state: Immutable<State>): Immutable<State> {
   });
 }
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "tabbedForm":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["tabbedForm"],
         childUpdate: TabbedFormComponent.update,
@@ -856,10 +914,10 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "hidePhaseInfo":
-      return [state.set("showPhaseInfo", false)];
+      return [state.set("showPhaseInfo", false), []];
 
     case "title":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["title"],
         childUpdate: ShortText.update,
@@ -868,7 +926,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "teaser":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["teaser"],
         childUpdate: LongText.update,
@@ -877,7 +935,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "remoteOk":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["remoteOk"],
         childUpdate: RemoteOkRadioGroup.update,
@@ -891,12 +949,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               (v) => opportunityValidation.validateRemoteDesc(v, remoteOk),
               remoteOk
             );
-          })
+          }),
+          []
         ]
       });
 
     case "remoteDesc":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["remoteDesc"],
         childUpdate: ShortText.update,
@@ -905,7 +964,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "location":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["location"],
         childUpdate: ShortText.update,
@@ -914,17 +973,17 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "proposalDeadline":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["proposalDeadline"],
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("proposalDeadline", value),
-        updateAfter: (state) => [resetAssignmentDate(state)]
+        updateAfter: (state) => [resetAssignmentDate(state), []]
       });
 
     case "assignmentDate":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["assignmentDate"],
         childUpdate: DateField.update,
@@ -936,12 +995,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               s,
               DateField.getDate(state.assignmentDate)
             )
-          )
+          ),
+          []
         ]
       });
 
     case "totalMaxBudget":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["totalMaxBudget"],
         childUpdate: NumberField.update,
@@ -953,12 +1013,13 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
               s,
               FormField.getValue(state.totalMaxBudget) || undefined
             )
-          )
+          ),
+          []
         ]
       });
 
     case "minTeamMembers":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["minTeamMembers"],
         childUpdate: NumberField.update,
@@ -967,7 +1028,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "mandatorySkills":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["mandatorySkills"],
         childUpdate: SelectMulti.update,
@@ -976,7 +1037,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "optionalSkills":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["optionalSkills"],
         childUpdate: SelectMulti.update,
@@ -985,7 +1046,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "description":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["description"],
         childUpdate: RichMarkdownEditor.update,
@@ -994,7 +1055,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "startingPhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["startingPhase"],
         childUpdate: Select.update,
@@ -1017,13 +1078,14 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
                   DateField.getDate(state.assignmentDate)
                 )
               )
-              .set("showPhaseInfo", true)
+              .set("showPhaseInfo", true),
+            []
           ];
         }
       });
 
     case "phases":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["phases"],
         childUpdate: Phases.update,
@@ -1032,7 +1094,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "teamQuestions":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["teamQuestions"],
         childUpdate: TeamQuestions.update,
@@ -1041,47 +1103,47 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "questionsWeight":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["questionsWeight"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("questionsWeight", value),
-        updateAfter: (state) => [updateWeightsTotal(state)]
+        updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
     case "codeChallengeWeight":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["codeChallengeWeight"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("codeChallengeWeight", value),
-        updateAfter: (state) => [updateWeightsTotal(state)]
+        updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
     case "scenarioWeight":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["scenarioWeight"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("scenarioWeight", value),
-        updateAfter: (state) => [updateWeightsTotal(state)]
+        updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
     case "priceWeight":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["priceWeight"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("priceWeight", value),
-        updateAfter: (state) => [updateWeightsTotal(state)]
+        updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
     case "weightsTotal":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["weightsTotal"],
         childUpdate: NumberField.update,
@@ -1090,7 +1152,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "attachments":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["attachments"],
         childUpdate: Attachments.update,
@@ -1100,7 +1162,11 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
+const OverviewView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -1112,7 +1178,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.title}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("title" as const, value)
           )}
         />
@@ -1128,7 +1194,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           disabled={disabled}
           state={state.teaser}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teaser" as const, value)
           )}
         />
@@ -1142,7 +1208,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
           disabled={disabled}
           state={state.remoteOk}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("remoteOk" as const, value)
           )}
         />
@@ -1159,7 +1225,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
               style: { height: "160px" }
             }}
             state={state.remoteDesc}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("remoteDesc" as const, value)
             )}
           />
@@ -1175,7 +1241,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.location}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("location" as const, value)
           )}
         />
@@ -1200,7 +1266,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           }
           state={state.proposalDeadline}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("proposalDeadline" as const, value)
           )}
         />
@@ -1214,7 +1280,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time."
           state={state.assignmentDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("assignmentDate" as const, value)
           )}
         />
@@ -1229,7 +1295,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.totalMaxBudget}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("totalMaxBudget" as const, value)
           )}
         />
@@ -1243,7 +1309,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Provide the recommended minimum number of team members that you will require the successful proponent to supply in order to complete the work as outlined in the opportunity’s details."
           disabled={disabled}
           state={state.minTeamMembers}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("minTeamMembers" as const, value)
           )}
         />
@@ -1258,7 +1324,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           required
           disabled={disabled}
           state={state.mandatorySkills}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("mandatorySkills" as const, value)
           )}
         />
@@ -1272,7 +1338,7 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Select the skill(s) from the list provided that the successful proponent may possess that would be considered a bonus, or nice-to-have, but is/are not required in order to be awarded the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below."
           disabled={disabled}
           state={state.optionalSkills}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("optionalSkills" as const, value)
           )}
         />
@@ -1281,7 +1347,11 @@ const OverviewView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
+const DescriptionView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -1295,7 +1365,7 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
           }}
           disabled={disabled}
           state={state.description}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("description" as const, value)
           )}
         />
@@ -1304,7 +1374,11 @@ const DescriptionView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
+const PhasesView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const rawStartingPhase = FormField.getValue(state.startingPhase);
   const startingPhase = rawStartingPhase
     ? parseSWUOpportunityPhaseType(rawStartingPhase.value)
@@ -1321,7 +1395,7 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
           help="Select the phase from which you would like to begin the opportunity. The phases progress in order from Inception, Proof of Concept and Implementation. Each phase has its own expected set of tasks and deliverables."
           state={state.startingPhase}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("startingPhase" as const, value)
           )}
         />
@@ -1369,7 +1443,7 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
             <Phases.view
               disabled={disabled}
               state={state.phases}
-              dispatch={mapComponentDispatch(dispatch, (value) =>
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("phases" as const, value)
               )}
             />
@@ -1380,14 +1454,18 @@ const PhasesView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
+const TeamQuestionsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
         <TeamQuestions.view
           disabled={disabled}
           state={state.teamQuestions}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teamQuestions" as const, value)
           )}
         />
@@ -1396,7 +1474,11 @@ const TeamQuestionsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
+const ScoringView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <div>
       <Row>
@@ -1419,7 +1501,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
             label="Team Questions"
             disabled={disabled}
             state={state.questionsWeight}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("questionsWeight" as const, value)
             )}
           />
@@ -1432,7 +1514,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
             label="Code Challenge"
             disabled={disabled}
             state={state.codeChallengeWeight}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("codeChallengeWeight" as const, value)
             )}
           />
@@ -1445,7 +1527,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
             label="Team Scenario"
             disabled={disabled}
             state={state.scenarioWeight}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("scenarioWeight" as const, value)
             )}
           />
@@ -1458,7 +1540,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
             label="Price"
             disabled={disabled}
             state={state.priceWeight}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("priceWeight" as const, value)
             )}
           />
@@ -1471,7 +1553,7 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
             label="Total Score"
             disabled
             state={state.weightsTotal}
-            dispatch={mapComponentDispatch(dispatch, (value) =>
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("weightsTotal" as const, value)
             )}
           />
@@ -1482,7 +1564,11 @@ const ScoringView: View<Props> = ({ state, dispatch, disabled }) => {
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
+const AttachmentsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -1491,7 +1577,7 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
           must be smaller than 10MB.
         </p>
         <Attachments.view
-          dispatch={mapComponentDispatch(dispatch, (msg) =>
+          dispatch={component_.base.mapDispatch(dispatch, (msg) =>
             adt("attachments" as const, msg)
           )}
           state={state.attachments}
@@ -1503,11 +1589,11 @@ const AttachmentsView: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-interface Props extends ComponentViewProps<State, Msg> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
@@ -1547,7 +1633,7 @@ export const view: View<Props> = (props) => {
         }
       }}
       state={state.tabbedForm}
-      dispatch={mapComponentDispatch(dispatch, (msg) =>
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)
       )}>
       {activeTab}
@@ -1555,7 +1641,7 @@ export const view: View<Props> = (props) => {
   );
 };
 
-export const component: Component<Params, State, Msg> = {
+export const component: component_.base.Component<Params, State, Msg> = {
   init,
   update,
   view

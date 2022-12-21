@@ -21,6 +21,7 @@ import {
   makeTextResponseBody,
   nullRequestBodyHandler,
   Request,
+  Response,
   Router,
   TextResponseBody
 } from "back-end/lib/server";
@@ -109,7 +110,7 @@ async function makeRouter(
         } catch (error) {
           request.logger.error(
             "authorization failed",
-            makeErrorResponseBody(error)
+            makeErrorResponseBody(error as Error)
           );
           return makeAuthErrorRedirect(request);
         }
@@ -178,7 +179,7 @@ async function makeRouter(
         } catch (error) {
           request.logger.error(
             "authentication failed",
-            makeErrorResponseBody(error)
+            makeErrorResponseBody(error as Error)
           );
           return makeAuthErrorRedirect(request);
         }
@@ -191,57 +192,56 @@ async function makeRouter(
           {
             method: ServerHttpMethod.Get,
             path: "/auth/createsessiongov",
-            handler: nullRequestBodyHandler(async (request) => {
-              try {
-                const userType = UserType.Government;
-                const idpId = "test-gov";
-                const dbResult = await findOneUserByTypeAndIdp(
-                  connection,
-                  userType,
-                  idpId
-                );
-                if (isInvalid(dbResult)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
-                }
-                const user = dbResult.value as User | null;
+            handler: nullRequestBodyHandler<TextResponseBody, Session>(
+              async (request) => {
+                try {
+                  const userType = UserType.Government;
+                  const idpId = "test-gov";
+                  const dbResult = await findOneUserByTypeAndIdp(
+                    connection,
+                    userType,
+                    idpId
+                  );
+                  if (isInvalid(dbResult)) {
+                    return makeAuthErrorRedirect(request);
+                  }
+                  const user = dbResult.value as User | null;
 
-                if (!user) {
-                  console.log("Error: Test user does not exist in database");
-                  return;
-                }
-                const result = await createSession(connection, {
-                  user: user && user.id,
-                  accessToken: "" // This token isn't required anywhere
-                });
-                if (isInvalid(result)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
+                  if (!user) {
+                    console.log("Error: Test user does not exist in database");
+                    return makeAuthErrorRedirect(request);
+                  }
+                  const result = await createSession(connection, {
+                    user: user && user.id,
+                    accessToken: "" // This token isn't required anywhere
+                  });
+                  if (isInvalid(result)) {
+                    console.log("Error: Unsuccessful login");
+                    return makeAuthErrorRedirect(request);
+                  }
+
+                  const session = result.value;
+
+                  const signinCompleteLocation = prefixPath("/dashboard");
+                  return {
+                    code: 302,
+                    headers: {
+                      Location: signinCompleteLocation
+                    },
+                    session,
+                    body: makeTextResponseBody("")
+                  };
+                } catch (error) {
+                  request.logger.error(
+                    "authentication failed",
+                    makeErrorResponseBody(error as Error)
+                  );
                   console.log("Error: Unsuccessful login");
-                  return null;
+                  // @ts-ignore
+                  return makeAuthErrorRedirect(request);
                 }
-
-                const session = result.value;
-
-                const signinCompleteLocation = prefixPath("/dashboard");
-                return {
-                  code: 302,
-                  headers: {
-                    Location: signinCompleteLocation
-                  },
-                  session,
-                  body: makeTextResponseBody("")
-                };
-              } catch (error) {
-                request.logger.error(
-                  "authentication failed",
-                  makeErrorResponseBody(error)
-                );
-                console.log("Error: Unsuccessful login");
-                // @ts-ignore
-                return makeAuthErrorRedirect(request);
               }
-            })
+            )
           }
         ]
       : []),
@@ -251,57 +251,57 @@ async function makeRouter(
           {
             method: ServerHttpMethod.Get,
             path: "/auth/createsessionadmin",
-            handler: nullRequestBodyHandler(async (request) => {
-              try {
-                const userType = UserType.Admin;
-                const idpId = "test-admin";
-                const dbResult = await findOneUserByTypeAndIdp(
-                  connection,
-                  userType,
-                  idpId
-                );
-                if (isInvalid(dbResult)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
-                }
-                const user = dbResult.value as User | null;
+            handler: nullRequestBodyHandler<TextResponseBody, Session>(
+              async (request) => {
+                try {
+                  const userType = UserType.Admin;
+                  const idpId = "test-admin";
+                  const dbResult = await findOneUserByTypeAndIdp(
+                    connection,
+                    userType,
+                    idpId
+                  );
+                  if (isInvalid(dbResult)) {
+                    // @ts-ignore
+                    makeAuthErrorRedirect(request);
+                  }
+                  const user = dbResult.value as User | null;
 
-                if (!user) {
-                  console.log("Error: Test user does not exist in database");
-                  return;
-                }
-                const result = await createSession(connection, {
-                  user: user && user.id,
-                  accessToken: "" // This token isn't required anywhere
-                });
-                if (isInvalid(result)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
+                  if (!user) {
+                    console.log("Error: Test user does not exist in database");
+                    return makeAuthErrorRedirect(request);
+                  }
+                  const result = await createSession(connection, {
+                    user: user && user.id,
+                    accessToken: "" // This token isn't required anywhere
+                  });
+                  if (isInvalid(result)) {
+                    console.log("Error: Unsuccessful login");
+                    return makeAuthErrorRedirect(request);
+                  }
+
+                  const session = result.value;
+
+                  const signinCompleteLocation = prefixPath("/dashboard");
+                  return {
+                    code: 302,
+                    headers: {
+                      Location: signinCompleteLocation
+                    },
+                    session,
+                    body: makeTextResponseBody("")
+                  };
+                } catch (error) {
+                  request.logger.error(
+                    "authentication failed",
+                    makeErrorResponseBody(error as Error)
+                  );
                   console.log("Error: Unsuccessful login");
-                  return null;
+                  // @ts-ignore
+                  return makeAuthErrorRedirect(request);
                 }
-
-                const session = result.value;
-
-                const signinCompleteLocation = prefixPath("/dashboard");
-                return {
-                  code: 302,
-                  headers: {
-                    Location: signinCompleteLocation
-                  },
-                  session,
-                  body: makeTextResponseBody("")
-                };
-              } catch (error) {
-                request.logger.error(
-                  "authentication failed",
-                  makeErrorResponseBody(error)
-                );
-                console.log("Error: Unsuccessful login");
-                // @ts-ignore
-                return makeAuthErrorRedirect(request);
               }
-            })
+            )
           }
         ]
       : []),
@@ -311,57 +311,56 @@ async function makeRouter(
           {
             method: ServerHttpMethod.Get,
             path: "/auth/createsessionvendor/:id",
-            handler: nullRequestBodyHandler(async (request) => {
-              try {
-                const userType = UserType.Vendor;
-                const idpId = `test-vendor-${request.params.id}`;
-                const dbResult = await findOneUserByTypeAndIdp(
-                  connection,
-                  userType,
-                  idpId
-                );
-                if (isInvalid(dbResult)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
-                }
-                const user = dbResult.value as User | null;
+            handler: nullRequestBodyHandler<TextResponseBody, Session>(
+              async (request) => {
+                try {
+                  const userType = UserType.Vendor;
+                  const idpId = `test-vendor-${request.params.id}`;
+                  const dbResult = await findOneUserByTypeAndIdp(
+                    connection,
+                    userType,
+                    idpId
+                  );
+                  if (isInvalid(dbResult)) {
+                    return makeAuthErrorRedirect(request);
+                  }
+                  const user = dbResult.value as User | null;
 
-                if (!user) {
-                  console.log("Error: Test user does not exist in database");
-                  return;
-                }
-                const result = await createSession(connection, {
-                  user: user && user.id,
-                  accessToken: "" // This token isn't required anywhere
-                });
-                if (isInvalid(result)) {
-                  // @ts-ignore
-                  makeAuthErrorRedirect(request);
+                  if (!user) {
+                    console.log("Error: Test user does not exist in database");
+                    return makeAuthErrorRedirect(request);
+                  }
+                  const result = await createSession(connection, {
+                    user: user && user.id,
+                    accessToken: "" // This token isn't required anywhere
+                  });
+                  if (isInvalid(result)) {
+                    console.log("Error: Unsuccessful login");
+                    return makeAuthErrorRedirect(request);
+                  }
+
+                  const session = result.value;
+
+                  const signinCompleteLocation = prefixPath("/dashboard");
+                  return {
+                    code: 302,
+                    headers: {
+                      Location: signinCompleteLocation
+                    },
+                    session,
+                    body: makeTextResponseBody("")
+                  };
+                } catch (error) {
+                  request.logger.error(
+                    "authentication failed",
+                    makeErrorResponseBody(error as Error)
+                  );
                   console.log("Error: Unsuccessful login");
-                  return null;
+                  // @ts-ignore
+                  return makeAuthErrorRedirect(request);
                 }
-
-                const session = result.value;
-
-                const signinCompleteLocation = prefixPath("/dashboard");
-                return {
-                  code: 302,
-                  headers: {
-                    Location: signinCompleteLocation
-                  },
-                  session,
-                  body: makeTextResponseBody("")
-                };
-              } catch (error) {
-                request.logger.error(
-                  "authentication failed",
-                  makeErrorResponseBody(error)
-                );
-                console.log("Error: Unsuccessful login");
-                // @ts-ignore
-                return makeAuthErrorRedirect(request);
               }
-            })
+            )
           }
         ]
       : [])
@@ -520,7 +519,9 @@ async function establishSessionWithClaims(
   return { session: result.value, existingUser };
 }
 
-function makeAuthErrorRedirect(request: Request<any, Session>) {
+function makeAuthErrorRedirect(
+  request: Request<any, Session>
+): Response<TextResponseBody, Session> {
   return {
     code: 302,
     headers: {

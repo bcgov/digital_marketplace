@@ -1,28 +1,11 @@
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
-import {
-  getAlertsValid,
-  getContextualActionsValid,
-  getModalValid,
-  makeStartLoading,
-  makeStopLoading,
-  updateValid,
-  viewValid
-} from "front-end/lib";
+import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   Immutable,
   immutable,
-  Init,
-  mapComponentDispatch,
-  mapPageModalMsg,
-  PageContextualActions,
-  replaceRoute,
-  toast,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
@@ -47,7 +30,7 @@ import {
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { invalid, isInvalid, valid, Validation } from "shared/lib/validation";
+import { isInvalid } from "shared/lib/validation";
 
 type ModalId =
   | "submit"
@@ -57,7 +40,7 @@ type ModalId =
   | "withdrawAfterDeadline"
   | "delete";
 
-interface ValidState extends Tab.Params {
+export interface State extends Tab.Params {
   organizations: OrganizationSlim[];
   evaluationContent: string;
   isEditing: boolean;
@@ -72,7 +55,7 @@ interface ValidState extends Tab.Params {
   submitTerms: Immutable<SubmitProposalTerms.State>;
 }
 
-function isLoading(state: Immutable<ValidState>): boolean {
+function isLoading(state: Immutable<State>): boolean {
   return (
     state.startEditingLoading > 0 ||
     state.saveChangesLoading > 0 ||
@@ -83,42 +66,66 @@ function isLoading(state: Immutable<ValidState>): boolean {
   );
 }
 
-export type State = Validation<Immutable<ValidState>, null>;
-
 export type InnerMsg =
+  | ADT<"noop">
+  | ADT<"onInitResponse", [OrganizationSlim[], string]>
   | ADT<"hideModal">
   | ADT<"showModal", ModalId>
   | ADT<"form", Form.Msg>
   | ADT<"submitTerms", SubmitProposalTerms.Msg>
   | ADT<"startEditing">
+  | ADT<"onStartEditingResponse", api.ResponseValidation<SWUProposal, string[]>>
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
+  | ADT<"onSaveChangesAcceptTermsResponse", boolean>
+  | ADT<"onSaveChangesPersistResponse", Form.PersistResult>
   | ADT<"saveChangesAndSubmit">
+  | ADT<"onSaveChangesAndSubmitAcceptTermsResponse", boolean>
+  | ADT<"onSaveChangesAndSubmitPersistResponse", Form.PersistResult>
+  | ADT<
+      "onSaveChangesAndSubmitSubmitResponse",
+      api.ResponseValidation<SWUProposal, string[]>
+    >
   | ADT<"submit">
+  | ADT<"onSubmitAcceptTermsResponse", boolean>
+  | ADT<"onSubmitSubmitResponse", api.ResponseValidation<SWUProposal, string[]>>
   | ADT<"withdraw">
-  | ADT<"delete">;
+  | ADT<"onWithdrawResponse", api.ResponseValidation<SWUProposal, string[]>>
+  | ADT<"delete">
+  | ADT<"onDeleteResponse", api.ResponseValidation<SWUProposal, string[]>>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: Init<Tab.Params, State> = async (params) => {
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   const { opportunity, proposal, viewerUser } = params;
-  const organizationsResult = await api.ownedOrganizations.readMany();
-  if (!api.isValid(organizationsResult)) {
-    return invalid(null);
-  }
-  const evalContentResult = await api.content.readOne(
-    SWU_PROPOSAL_EVALUATION_CONTENT_ID
-  );
-  if (!api.isValid(evalContentResult)) {
-    return invalid(null);
-  }
-  const organizations = organizationsResult.value;
-  const evaluationContent = evalContentResult.value.body;
-  return valid(
-    immutable({
+  const [formState, formCmds] = Form.init({
+    viewerUser,
+    opportunity,
+    proposal,
+    organizations: [],
+    evaluationContent: ""
+  });
+  const [submitTermsState, submitTermsCmds] = SubmitProposalTerms.init({
+    proposal: {
+      errors: [],
+      child: {
+        value: false,
+        id: "edit-swu-proposal-submit-terms-proposal"
+      }
+    },
+    app: {
+      errors: [],
+      child: {
+        value: false,
+        id: "edit-swu-proposal-submit-terms-app"
+      }
+    }
+  });
+  return [
+    {
       ...params,
-      organizations,
-      evaluationContent,
+      organizations: [],
+      evaluationContent: "",
       isEditing: false,
       startEditingLoading: 0,
       saveChangesLoading: 0,
@@ -127,85 +134,71 @@ const init: Init<Tab.Params, State> = async (params) => {
       withdrawLoading: 0,
       deleteLoading: 0,
       showModal: null,
-      form: immutable(
-        await Form.init({
-          viewerUser,
-          opportunity,
-          proposal,
-          organizations,
-          evaluationContent
-        })
+      form: immutable(formState),
+      submitTerms: immutable(submitTermsState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        submitTermsCmds,
+        (msg) => adt("submitTerms", msg) as Msg
       ),
-      submitTerms: immutable(
-        await SubmitProposalTerms.init({
-          proposal: {
-            errors: [],
-            child: {
-              value: false,
-              id: "edit-swu-proposal-submit-terms-proposal"
-            }
-          },
-          app: {
-            errors: [],
-            child: {
-              value: false,
-              id: "edit-swu-proposal-submit-terms-app"
-            }
-          }
-        })
+      ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+      component_.cmd.join(
+        api.organizations.owned.readMany((response) =>
+          api.getValidValue(response, [])
+        ) as component_.Cmd<OrganizationSlim[]>,
+        api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+          api.isValid(response) ? response.value.body : ""
+        ) as component_.Cmd<string>,
+        (organizations, evalContent) =>
+          adt("onInitResponse", [organizations, evalContent]) as Msg
       )
-    })
-  );
+    ]
+  ];
 };
 
-const startStartEditingLoading = makeStartLoading<ValidState>(
-  "startEditingLoading"
-);
-const stopStartEditingLoading = makeStopLoading<ValidState>(
-  "startEditingLoading"
-);
-const startSaveChangesLoading =
-  makeStartLoading<ValidState>("saveChangesLoading");
-const stopSaveChangesLoading =
-  makeStopLoading<ValidState>("saveChangesLoading");
-const startSaveChangesAndSubmitLoading = makeStartLoading<ValidState>(
+const startStartEditingLoading = makeStartLoading<State>("startEditingLoading");
+const stopStartEditingLoading = makeStopLoading<State>("startEditingLoading");
+const startSaveChangesLoading = makeStartLoading<State>("saveChangesLoading");
+const stopSaveChangesLoading = makeStopLoading<State>("saveChangesLoading");
+const startSaveChangesAndSubmitLoading = makeStartLoading<State>(
   "saveChangesAndSubmitLoading"
 );
-const stopSaveChangesAndSubmitLoading = makeStopLoading<ValidState>(
+const stopSaveChangesAndSubmitLoading = makeStopLoading<State>(
   "saveChangesAndSubmitLoading"
 );
-const startSubmitLoading = makeStartLoading<ValidState>("submitLoading");
-const stopSubmitLoading = makeStopLoading<ValidState>("submitLoading");
-const startWithdrawLoading = makeStartLoading<ValidState>("withdrawLoading");
-const stopWithdrawLoading = makeStopLoading<ValidState>("withdrawLoading");
-const startDeleteLoading = makeStartLoading<ValidState>("deleteLoading");
-const stopDeleteLoading = makeStopLoading<ValidState>("deleteLoading");
+const startSubmitLoading = makeStartLoading<State>("submitLoading");
+const stopSubmitLoading = makeStopLoading<State>("submitLoading");
+const startWithdrawLoading = makeStartLoading<State>("withdrawLoading");
+const stopWithdrawLoading = makeStopLoading<State>("withdrawLoading");
+const startDeleteLoading = makeStartLoading<State>("deleteLoading");
+const stopDeleteLoading = makeStopLoading<State>("deleteLoading");
 
-async function resetProposal(
-  state: Immutable<ValidState>,
+function resetProposal(
+  state: Immutable<State>,
   proposal: SWUProposal,
   validate = false
-): Promise<Immutable<ValidState>> {
-  state = state.set("proposal", proposal).set(
-    "form",
-    immutable(
-      await Form.init({
-        viewerUser: state.viewerUser,
-        opportunity: state.opportunity,
-        proposal,
-        organizations: state.organizations,
-        evaluationContent: state.evaluationContent,
-        activeTab: Form.getActiveTab(state.form)
-      })
-    )
-  );
+): component_.base.UpdateReturnValue<State, Msg> {
+  state = state.set("proposal", proposal);
+  const [formState, formCmds] = Form.init({
+    viewerUser: state.viewerUser,
+    opportunity: state.opportunity,
+    proposal: state.proposal,
+    organizations: state.organizations,
+    evaluationContent: state.evaluationContent,
+    activeTab: state.form ? Form.getActiveTab(state.form) : undefined
+  });
+  let immutableFormState = immutable(formState);
   if (validate) {
-    state = state.update("form", (s) => Form.validate(s));
+    immutableFormState = Form.validate(immutableFormState);
   }
-  return state;
+  return [
+    state.set("form", immutableFormState),
+    component_.cmd.mapMany(formCmds, (msg) => adt("form", msg))
+  ];
 }
 
-function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
+function hideModal(state: Immutable<State>): Immutable<State> {
   return state
     .set("showModal", null)
     .update("submitTerms", (s) =>
@@ -214,14 +207,35 @@ function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
     .update("submitTerms", (s) => SubmitProposalTerms.setAppCheckbox(s, false));
 }
 
-const update: Update<State, Msg> = updateValid(({ state, msg }) => {
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const [organizations, evaluationContent] = msg.value;
+      const [formState, formCmds] = Form.init({
+        viewerUser: state.viewerUser,
+        opportunity: state.opportunity,
+        proposal: state.proposal,
+        organizations,
+        evaluationContent
+      });
+      return [
+        state
+          .set("organizations", organizations)
+          .set("evaluationContent", evaluationContent)
+          .set("form", immutable(formState)),
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(component_.page.readyMsg())
+        ]
+      ];
+    }
+
     case "showModal":
-      return [state.set("showModal", msg.value)];
+      return [state.set("showModal", msg.value), []];
     case "hideModal":
-      return [hideModal(state)];
+      return [hideModal(state), []];
     case "form":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["form"],
         childUpdate: Form.update,
@@ -229,51 +243,111 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
         mapChildMsg: (value) => adt("form", value)
       });
     case "submitTerms":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["submitTerms"],
         childUpdate: SubmitProposalTerms.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("submitTerms", value)
       });
-    case "startEditing":
+    case "startEditing": {
+      const proposal = state.proposal;
       return [
         startStartEditingLoading(state),
-        async (state) => {
-          state = stopStartEditingLoading(state);
-          const proposalResult = await api.proposals.swu.readOne(
-            state.proposal.opportunity.id,
-            state.proposal.id
-          );
-          if (!api.isValid(proposalResult)) {
-            return state;
-          }
-          state = await resetProposal(
-            state,
-            proposalResult.value,
-            proposalResult.value.status === SWUProposalStatus.Draft
-          );
-          state = state.set("isEditing", true);
-          return state;
-        }
+        [
+          api.proposals.swu.readOne(proposal.opportunity.id)(
+            proposal.id,
+            (response) => adt("onStartEditingResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
       ];
-    case "cancelEditing":
-      return [
-        state.set("isEditing", false),
-        async (state) => await resetProposal(state, state.proposal)
-      ];
-    case "saveChanges":
+    }
+    case "onStartEditingResponse": {
+      const result = msg.value;
+      state = stopStartEditingLoading(state);
+      if (!api.isValid(result)) {
+        return [state, []];
+      }
+      const [newState, cmds] = resetProposal(
+        state,
+        result.value,
+        result.value.status === SWUProposalStatus.Draft
+      );
+      return [newState.set("isEditing", true), cmds];
+    }
+    case "cancelEditing": {
+      const [newState, cmds] = resetProposal(state, state.proposal);
+      return [newState.set("isEditing", false), cmds];
+    }
+    case "saveChanges": {
+      const proposal = state.proposal;
       state = hideModal(state);
+      const isSave =
+        proposal.status === SWUProposalStatus.Draft ||
+        proposal.status === SWUProposalStatus.Withdrawn;
       return [
         startSaveChangesLoading(state),
-        async (state, dispatch) => {
-          state = stopSaveChangesLoading(state);
-          const isSave =
-            state.proposal.status === SWUProposalStatus.Draft ||
-            state.proposal.status === SWUProposalStatus.Withdrawn;
-          const errorToast = () => {
-            dispatch(
-              toast(
+        [
+          !isSave && isVendor(state.viewerUser)
+            ? (api.users.update(
+                state.viewerUser.id,
+                adt("acceptTerms"),
+                (response) =>
+                  adt("onSaveChangesAcceptTermsResponse", api.isValid(response))
+              ) as component_.Cmd<Msg>)
+            : component_.cmd.dispatch(
+                adt("onSaveChangesAcceptTermsResponse", true)
+              )
+        ]
+      ];
+    }
+    case "onSaveChangesAcceptTermsResponse": {
+      const proposal = state.proposal;
+      const form = state.form;
+      const isSave =
+        proposal.status === SWUProposalStatus.Draft ||
+        proposal.status === SWUProposalStatus.Withdrawn;
+      const acceptedTerms = msg.value;
+      return acceptedTerms
+        ? [
+            state,
+            [
+              component_.cmd.map(
+                Form.persist(form, adt("update", proposal.id)),
+                (result) => adt("onSaveChangesPersistResponse", result)
+              )
+            ]
+          ]
+        : [
+            stopSaveChangesLoading(state),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    isSave
+                      ? toasts.changesSaved.error
+                      : toasts.changesSubmitted.error
+                  )
+                )
+              )
+            ]
+          ];
+    }
+    case "onSaveChangesPersistResponse": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
+      const result = msg.value;
+      state = stopSaveChangesLoading(state);
+      const isSave =
+        proposal.status === SWUProposalStatus.Draft ||
+        proposal.status === SWUProposalStatus.Withdrawn;
+      if (isInvalid<Immutable<Form.State>>(result)) {
+        return [
+          state.set("form", result.value),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
                 adt(
                   "error",
                   isSave
@@ -281,29 +355,19 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
                     : toasts.changesSubmitted.error
                 )
               )
-            );
-          };
-          if (!isSave && isVendor(state.viewerUser)) {
-            // Accept app T&Cs if submitted.
-            const result = await api.users.update(
-              state.viewerUser.id,
-              adt("acceptTerms")
-            );
-            if (api.isInvalid(result)) {
-              errorToast();
-              return state;
-            }
-          }
-          const result = await Form.persist(
-            state.form,
-            adt("update", state.proposal.id)
-          );
-          if (isInvalid(result)) {
-            errorToast();
-            return state.set("form", result.value);
-          }
-          dispatch(
-            toast(
+            )
+          ]
+        ];
+      }
+      const newProposal = result.value[1];
+      state = state.set("isEditing", false);
+      const [newState, cmds] = resetProposal(state, newProposal);
+      return [
+        newState,
+        [
+          ...cmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
               adt(
                 "success",
                 isSave
@@ -311,144 +375,296 @@ const update: Update<State, Msg> = updateValid(({ state, msg }) => {
                   : toasts.changesSubmitted.success
               )
             )
-          );
-          return (await resetProposal(state, result.value[1])).set(
-            "isEditing",
-            false
-          );
-        }
+          )
+        ]
       ];
-    case "saveChangesAndSubmit":
+    }
+    case "saveChangesAndSubmit": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
       state = hideModal(state);
       return [
         startSaveChangesAndSubmitLoading(state),
-        async (state, dispatch) => {
-          state = stopSaveChangesAndSubmitLoading(state);
-          const errorToast = () => {
-            dispatch(toast(adt("error", toasts.submitted.error)));
-          };
-          if (isVendor(state.viewerUser)) {
-            // Accept app T&Cs.
-            const result = await api.users.update(
-              state.viewerUser.id,
-              adt("acceptTerms")
-            );
-            if (api.isInvalid(result)) {
-              errorToast();
-              return state;
-            }
-          }
-          const saveResult = await Form.persist(
-            state.form,
-            adt("update", state.proposal.id)
-          );
-          if (isInvalid(saveResult)) {
-            return state.set("form", saveResult.value);
-          }
-          const submitResult = await api.proposals.swu.update(
-            state.proposal.id,
-            adt("submit", "")
-          );
-          if (!api.isValid(submitResult)) {
-            errorToast();
-            return state;
-          }
-          dispatch(toast(adt("success", toasts.submitted.success)));
-          state = state.set("isEditing", false);
-          return await resetProposal(state, submitResult.value);
-        }
+        [
+          isVendor(state.viewerUser)
+            ? (api.users.update(
+                state.viewerUser.id,
+                adt("acceptTerms"),
+                (response) =>
+                  adt(
+                    "onSaveChangesAndSubmitAcceptTermsResponse",
+                    api.isValid(response)
+                  )
+              ) as component_.Cmd<Msg>)
+            : component_.cmd.dispatch(
+                adt("onSaveChangesAndSubmitAcceptTermsResponse", true)
+              )
+        ]
       ];
-    case "submit":
+    }
+    case "onSaveChangesAndSubmitAcceptTermsResponse": {
+      const proposal = state.proposal;
+      const form = state.form;
+      if (!proposal || !form) return [state, []];
+      const acceptedTerms = msg.value;
+      return acceptedTerms
+        ? [
+            state,
+            [
+              component_.cmd.map(
+                Form.persist(form, adt("update", proposal.id)),
+                (result) => adt("onSaveChangesAndSubmitPersistResponse", result)
+              )
+            ]
+          ]
+        : [
+            stopSaveChangesAndSubmitLoading(state),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.submitted.error)
+                )
+              )
+            ]
+          ];
+    }
+    case "onSaveChangesAndSubmitPersistResponse": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
+      const result = msg.value;
+      if (isInvalid<Immutable<Form.State>>(result)) {
+        return [
+          stopSaveChangesAndSubmitLoading(state).set("form", result.value),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.submitted.error)
+              )
+            )
+          ]
+        ];
+      }
+      const newProposal = result.value[1];
+      state = state.set("isEditing", false);
+      const [newState, cmds] = resetProposal(state, newProposal);
+      return [
+        newState,
+        [
+          ...cmds,
+          api.proposals.swu.update(
+            newProposal.id,
+            adt("submit", ""),
+            (response) => adt("onSaveChangesAndSubmitSubmitResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onSaveChangesAndSubmitSubmitResponse": {
+      state = stopSaveChangesAndSubmitLoading(state);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.submitted.error)
+              )
+            )
+          ]
+        ];
+      }
+      const newProposal = result.value;
+      state = state.set("isEditing", false);
+      const [newState, cmds] = resetProposal(state, newProposal);
+      return [
+        newState,
+        [
+          ...cmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.submitted.success)
+            )
+          )
+        ]
+      ];
+    }
+    case "submit": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
       state = hideModal(state);
       return [
         startSubmitLoading(state),
-        async (state, dispatch) => {
-          state = stopSubmitLoading(state);
-          const errorToast = () => {
-            dispatch(toast(adt("error", toasts.submitted.error)));
-          };
-          if (isVendor(state.viewerUser)) {
-            // Accept app T&Cs.
-            const result = await api.users.update(
-              state.viewerUser.id,
-              adt("acceptTerms")
-            );
-            if (api.isInvalid(result)) {
-              errorToast();
-              return state;
-            }
-          }
-          const result = await api.proposals.swu.update(
-            state.proposal.id,
-            adt("submit", "")
-          );
-          if (!api.isValid(result)) {
-            errorToast();
-            return state;
-          }
-          dispatch(toast(adt("success", toasts.submitted.success)));
-          return await resetProposal(state, result.value);
-        }
+        [
+          isVendor(state.viewerUser)
+            ? (api.users.update(
+                state.viewerUser.id,
+                adt("acceptTerms"),
+                (response) =>
+                  adt("onSubmitAcceptTermsResponse", api.isValid(response))
+              ) as component_.Cmd<Msg>)
+            : component_.cmd.dispatch(adt("onSubmitAcceptTermsResponse", true))
+        ]
       ];
-    case "withdraw":
+    }
+    case "onSubmitAcceptTermsResponse": {
+      const proposal = state.proposal;
+      const form = state.form;
+      if (!proposal || !form) return [state, []];
+      const acceptedTerms = msg.value;
+      return acceptedTerms
+        ? [
+            state,
+            [
+              api.proposals.swu.update(
+                proposal.id,
+                adt("submit", ""),
+                (response) => adt("onSubmitSubmitResponse", response)
+              ) as component_.Cmd<Msg>
+            ]
+          ]
+        : [
+            stopSubmitLoading(state),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.submitted.error)
+                )
+              )
+            ]
+          ];
+    }
+    case "onSubmitSubmitResponse": {
+      state = stopSubmitLoading(state);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.submitted.error)
+              )
+            )
+          ]
+        ];
+      }
+      const newProposal = result.value;
+      const [newState, cmds] = resetProposal(state, newProposal);
+      return [
+        newState,
+        [
+          ...cmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.submitted.success)
+            )
+          )
+        ]
+      ];
+    }
+    case "withdraw": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
       state = hideModal(state);
       return [
         startWithdrawLoading(state),
-        async (state, dispatch) => {
-          state = stopWithdrawLoading(state);
-          const result = await api.proposals.swu.update(
-            state.proposal.id,
-            adt("withdraw", "")
-          );
-          if (!api.isValid(result)) {
-            dispatch(
-              toast(
+        [
+          api.proposals.swu.update(
+            proposal.id,
+            adt("withdraw", ""),
+            (response) => adt("onWithdrawResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onWithdrawResponse": {
+      state = stopWithdrawLoading(state);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
                 adt(
                   "error",
                   toasts.statusChanged.error(SWUProposalStatus.Withdrawn)
                 )
               )
-            );
-            return state;
-          }
-          dispatch(
-            toast(
+            )
+          ]
+        ];
+      }
+      const newProposal = result.value;
+      const [newState, cmds] = resetProposal(state, newProposal);
+      return [
+        newState,
+        [
+          ...cmds,
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
               adt(
                 "success",
                 toasts.statusChanged.success(SWUProposalStatus.Withdrawn)
               )
             )
-          );
-          return await resetProposal(state, result.value);
-        }
+          )
+        ]
       ];
-    case "delete":
+    }
+    case "delete": {
+      const proposal = state.proposal;
+      if (!proposal) return [state, []];
       state = hideModal(state);
       return [
         startDeleteLoading(state),
-        async (state, dispatch) => {
-          const result = await api.proposals.swu.delete(state.proposal.id);
-          if (!api.isValid(result)) {
-            dispatch(toast(adt("error", toasts.deleted.error)));
-            return stopDeleteLoading(state);
-          }
-          dispatch(toast(adt("success", toasts.deleted.success)));
-          dispatch(
-            replaceRoute(
+        [
+          api.proposals.swu.delete_(proposal.id, (response) =>
+            adt("onDeleteResponse", response)
+          ) as component_.Cmd<Msg>
+        ]
+      ];
+    }
+    case "onDeleteResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = stopDeleteLoading(state);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(adt("error", toasts.deleted.error))
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.deleted.success)
+            )
+          ),
+          component_.cmd.dispatch(
+            component_.global.replaceRouteMsg(
               adt("opportunitySWUView" as const, {
-                opportunityId: state.opportunity.id
+                opportunityId: opportunity.id
               })
             )
-          );
-          return state;
-        }
+          )
+        ]
       ];
+    }
     default:
-      return [state];
+      return [state, []];
   }
-});
+};
 
-const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
+const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const proposal = state.proposal;
   const numTeamMembers = swuProposalNumTeamMembers(proposal);
   const totalProposedCost = swuProposalTotalProposedCost(proposal);
@@ -478,7 +694,7 @@ const Reporting: ComponentView<ValidState, Msg> = ({ state }) => {
   );
 };
 
-const view: ComponentView<State, Msg> = viewValid((props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   return (
     <div>
@@ -489,7 +705,7 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
           <Form.view
             disabled={!state.isEditing || isLoading(state)}
             state={state.form}
-            dispatch={mapComponentDispatch(dispatch, (v) =>
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("form" as const, v)
             )}
           />
@@ -497,32 +713,37 @@ const view: ComponentView<State, Msg> = viewValid((props) => {
       </Row>
     </div>
   );
-});
+};
 
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
 
-  getAlerts: getAlertsValid<ValidState, Msg>((state) => {
-    return Form.getAlerts(state.form);
-  }),
+  onInitResponse() {
+    return adt("noop");
+  },
 
-  getModal: getModalValid<ValidState, Msg>((state) => {
-    const formModal = mapPageModalMsg(
+  getAlerts: (state) => {
+    return Form.getAlerts(state.form);
+  },
+
+  getModal: (state) => {
+    const formModal = component_.page.modal.map(
       Form.getModal(state.form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null) {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
       SubmitProposalTerms.getAppCheckbox(state.submitTerms);
+
     switch (state.showModal) {
       case "submit":
       case "saveChangesAndSubmit":
-        return {
+        return component_.page.modal.show({
           title: "Review Terms and Conditions",
           body: (dispatch) => (
             <SubmitProposalTerms.view
@@ -534,13 +755,13 @@ export const component: Tab.Component<State, Msg> = {
                 "sprint-with-us-terms-and-conditions"
               )}
               state={state.submitTerms}
-              dispatch={mapComponentDispatch(
+              dispatch={component_.base.mapDispatch(
                 dispatch,
                 (msg) => adt("submitTerms", msg) as Msg
               )}
             />
           ),
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Submit Proposal",
@@ -559,9 +780,9 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "submitChanges":
-        return {
+        return component_.page.modal.show({
           title: "Review Terms and Conditions",
           body: (dispatch) => (
             <SubmitProposalTerms.view
@@ -573,13 +794,13 @@ export const component: Tab.Component<State, Msg> = {
                 "sprint-with-us-terms-and-conditions"
               )}
               state={state.submitTerms}
-              dispatch={mapComponentDispatch(
+              dispatch={component_.base.mapDispatch(
                 dispatch,
                 (msg) => adt("submitTerms", msg) as Msg
               )}
             />
           ),
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Submit Changes",
@@ -595,13 +816,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "withdrawBeforeDeadline":
-        return {
+        return component_.page.modal.show({
           title: "Withdraw Sprint With Us Proposal?",
           body: () =>
             "Are you sure you want to withdraw your Sprint With Us proposal? You will still be able to resubmit your proposal prior to the opportunity's proposal deadline.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Withdraw Proposal",
@@ -616,13 +837,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "withdrawAfterDeadline":
-        return {
+        return component_.page.modal.show({
           title: "Withdraw Sprint With Us Proposal?",
           body: () =>
             "Are you sure you want to withdraw your Sprint With Us proposal? You will no longer be considered for this opportunity.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Withdraw Proposal",
@@ -637,13 +858,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case "delete":
-        return {
+        return component_.page.modal.show({
           title: "Delete Sprint With Us Proposal?",
           body: () =>
             "Are you sure you want to delete your Sprint With Us proposal? You will not be able to recover the proposal once it has been deleted.",
-          onCloseMsg: adt("hideModal"),
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
               text: "Delete Proposal",
@@ -658,13 +879,13 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
-        };
+        });
       case null:
-        return null;
+        return component_.page.modal.hide();
     }
-  }),
+  },
 
-  getContextualActions: getContextualActionsValid(({ state, dispatch }) => {
+  getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
     const isStartEditingLoading = state.startEditingLoading > 0;
@@ -683,8 +904,7 @@ export const component: Tab.Component<State, Msg> = {
     if (state.isEditing) {
       const separateSubmitButton =
         (isDraft || isWithdrawn) && isAcceptingProposals;
-      return adt(
-        "links",
+      return component_.page.actions.links(
         compact([
           // Submit Changes
           separateSubmitButton
@@ -733,7 +953,7 @@ export const component: Tab.Component<State, Msg> = {
             color: "c-nav-fg-alt"
           }
         ])
-      ) as PageContextualActions;
+      ) as component_.page.Actions;
     }
     switch (propStatus) {
       case SWUProposalStatus.Draft:
@@ -770,7 +990,7 @@ export const component: Tab.Component<State, Msg> = {
             ]
           });
         } else {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               button: true,
               outline: true,
@@ -782,14 +1002,14 @@ export const component: Tab.Component<State, Msg> = {
           ]);
         }
       case SWUProposalStatus.Submitted:
-        return adt("links", [
+        return component_.page.actions.links([
           ...(isAcceptingProposals
             ? [
                 {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   button: true,
-                  color: "primary",
+                  color: "primary" as const,
                   disabled,
                   loading: isStartEditingLoading,
                   onClick: () => dispatch(adt("startEditing"))
@@ -814,7 +1034,7 @@ export const component: Tab.Component<State, Msg> = {
                 )
               )
           }
-        ]) as PageContextualActions;
+        ]) as component_.page.Actions;
       case SWUProposalStatus.UnderReviewTeamQuestions:
       case SWUProposalStatus.UnderReviewCodeChallenge:
       case SWUProposalStatus.UnderReviewTeamScenario:
@@ -822,7 +1042,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUProposalStatus.EvaluatedCodeChallenge:
       case SWUProposalStatus.EvaluatedTeamScenario:
       case SWUProposalStatus.Awarded:
-        return adt("links", [
+        return component_.page.actions.links([
           {
             children: "Withdraw",
             symbol_: leftPlacement(iconLinkSymbol("ban")),
@@ -837,7 +1057,7 @@ export const component: Tab.Component<State, Msg> = {
         ]);
       case SWUProposalStatus.Withdrawn:
         if (isAcceptingProposals) {
-          return adt("links", [
+          return component_.page.actions.links([
             {
               children: "Submit",
               symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
@@ -858,10 +1078,10 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]);
         } else {
-          return null;
+          return component_.page.actions.none();
         }
       default:
-        return null;
+        return component_.page.actions.none();
     }
-  })
+  }
 };

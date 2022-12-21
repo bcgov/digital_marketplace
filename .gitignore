@@ -5,6 +5,8 @@
 *.map
 *.DS_Store
 .env
+.envrc
+.direnv/
 make.sh
 .sass-cache/
 node_modules/
@@ -27,3 +29,9 @@ __tmp/
 *.nix
 flake.lock
 result
+
+# Yarn
+yarn-error.log
+
+# TypeScript
+tsconfig.tsbuildinfo

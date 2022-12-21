@@ -3,14 +3,9 @@ import * as FormField from "front-end/lib/components/form-field";
 import * as DateField from "front-end/lib/components/form-field/date";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
 import Accordion from "front-end/lib/views/accordion";
@@ -110,7 +105,7 @@ export function setIsAccordionOpen(
   return state.set("isAccordionOpen", isAccordionOpen);
 }
 
-export const init: Init<Params, State> = async ({
+export const init: component_.base.Init<Params, State, Msg> = ({
   isAccordionOpen,
   totalMaxBudget,
   phase,
@@ -119,87 +114,93 @@ export const init: Init<Params, State> = async ({
 }) => {
   const idNamespace = String(Math.random());
   const existingCapabilities = phase?.requiredCapabilities || [];
-  return {
-    isAccordionOpen,
-    validateCompletionDate,
-    capabilities: immutable(
-      await CapabilityGrid.init({
-        showFullTimeSwitch: true,
-        capabilities: CAPABILITIES.map((capability) => {
-          const found = find(existingCapabilities, { capability });
-          return {
-            capability,
-            fullTime: found?.fullTime === undefined ? true : found.fullTime,
-            checked: !!found
-          };
-        })
-      })
+  const [capabilitiesState, capabilitiesCmds] = CapabilityGrid.init({
+    showFullTimeSwitch: true,
+    capabilities: CAPABILITIES.map((capability) => {
+      const found = find(existingCapabilities, { capability });
+      return {
+        capability,
+        fullTime: found?.fullTime === undefined ? true : found.fullTime,
+        checked: !!found
+      };
+    })
+  });
+  const [startDateState, startDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate(validateStartDate),
+    child: {
+      value: phase?.startDate ? DateField.dateToValue(phase.startDate) : null,
+      id: `swu-opportunity-phase-${idNamespace}-start-date`
+    }
+  });
+  const [completionDateState, completionDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((raw) =>
+      validateCompletionDate(raw, phase?.startDate)
     ),
-    startDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate(validateStartDate),
-        child: {
-          value: phase?.startDate
-            ? DateField.dateToValue(phase.startDate)
-            : null,
-          id: `swu-opportunity-phase-${idNamespace}-start-date`
-        }
-      })
-    ),
-    completionDate: immutable(
-      await DateField.init({
-        errors: [],
-        validate: DateField.validateDate((raw) =>
-          validateCompletionDate(raw, phase?.startDate)
-        ),
-        child: {
-          value: phase?.completionDate
-            ? DateField.dateToValue(phase.completionDate)
-            : null,
-          id: `swu-opportunity-phase-${idNamespace}-completion-date`
-        }
-      })
-    ),
-    maxBudget: immutable(
-      await NumberField.init({
-        errors: [],
-        validate: (v) => {
-          if (v === null) {
-            return invalid(["Please enter a valid Maximum Phase Budget."]);
-          }
-          return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(
-            v,
-            totalMaxBudget
-          );
-        },
-        child: {
-          value: phase ? phase.maxBudget : null,
-          id: `swu-opportunity-phase-${idNamespace}-max-budget`,
-          min: 1
-        }
-      })
-    )
-  };
+    child: {
+      value: phase?.completionDate
+        ? DateField.dateToValue(phase.completionDate)
+        : null,
+      id: `swu-opportunity-phase-${idNamespace}-completion-date`
+    }
+  });
+  const [maxBudgetState, maxBudgetCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid Maximum Phase Budget."]);
+      }
+      return opportunityValidation.validateSWUOpportunityPhaseMaxBudget(
+        v,
+        totalMaxBudget
+      );
+    },
+    child: {
+      value: phase ? phase.maxBudget : null,
+      id: `swu-opportunity-phase-${idNamespace}-max-budget`,
+      min: 1
+    }
+  });
+  return [
+    {
+      isAccordionOpen,
+      validateCompletionDate,
+      capabilities: immutable(capabilitiesState),
+      startDate: immutable(startDateState),
+      completionDate: immutable(completionDateState),
+      maxBudget: immutable(maxBudgetState)
+    },
+    [
+      ...component_.cmd.mapMany(capabilitiesCmds, (msg) =>
+        adt("capabilities", msg)
+      ),
+      ...component_.cmd.mapMany(startDateCmds, (msg) => adt("startDate", msg)),
+      ...component_.cmd.mapMany(completionDateCmds, (msg) =>
+        adt("completionDate", msg)
+      ),
+      ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg))
+    ] as component_.Cmd<Msg>[]
+  ];
 };
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleAccordion":
-      return [state.update("isAccordionOpen", (v) => !v)];
+      return [state.update("isAccordionOpen", (v) => !v), []];
 
     case "startDate":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["startDate"],
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("startDate", value),
-        updateAfter: (state) => [resetCompletionDate(state)]
+        updateAfter: (state) => [resetCompletionDate(state), []]
       });
 
     case "completionDate":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["completionDate"],
         childUpdate: DateField.update,
@@ -208,7 +209,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "maxBudget":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["maxBudget"],
         childUpdate: NumberField.update,
@@ -217,7 +218,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "capabilities":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["capabilities"],
         childUpdate: CapabilityGrid.update,
@@ -273,7 +274,7 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   title: string;
   description: string;
   icon: AvailableIcons;
@@ -283,7 +284,10 @@ export interface Props extends ComponentViewProps<State, Msg> {
   className?: string;
 }
 
-const Description: View<Props> = ({ description, deliverables }) => {
+const Description: component_.base.View<Props> = ({
+  description,
+  deliverables
+}) => {
   return (
     <Row className="mb-4">
       <Col xs="12">
@@ -302,7 +306,11 @@ const Description: View<Props> = ({ description, deliverables }) => {
   );
 };
 
-const Details: View<Props> = ({ state, dispatch, disabled }) => {
+const Details: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row className="mb-4">
       <Col xs="12">
@@ -316,7 +324,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date for when you expect to begin the work required for this phase."
           state={state.startDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("startDate" as const, value)
           )}
         />
@@ -329,7 +337,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           help="Choose a date for when you expect to complete the work required for this phase."
           state={state.completionDate}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("completionDate" as const, value)
           )}
         />
@@ -343,7 +351,7 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
           help="Provide a dollar value for the maximum amount of money that you can spend to complete the work required for this phase."
           state={state.maxBudget}
           disabled={disabled}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("maxBudget" as const, value)
           )}
         />
@@ -352,7 +360,11 @@ const Details: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
+const Capabilities: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   return (
     <Row>
       <Col xs="12">
@@ -365,7 +377,7 @@ const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
       <Col xs="12">
         <CapabilityGrid.view
           state={state.capabilities}
-          dispatch={mapComponentDispatch(dispatch, (v) =>
+          dispatch={component_.base.mapDispatch(dispatch, (v) =>
             adt("capabilities" as const, v)
           )}
           disabled={disabled}
@@ -375,7 +387,7 @@ const Capabilities: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-export const view: View<Props> = (props) => {
+export const view: component_.base.View<Props> = (props) => {
   const { state, title, icon, iconColor, dispatch, className } = props;
   return (
     <Accordion

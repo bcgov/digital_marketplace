@@ -4,17 +4,10 @@ import { isUserType } from "front-end/lib/access-control";
 import router from "front-end/lib/app/router";
 import { Route, SharedState } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
-import { replaceRoute } from "front-end/lib/framework";
 import {
-  ComponentView,
-  GlobalComponentMsg,
   immutable,
   Immutable,
-  mapComponentDispatch,
-  PageComponent,
-  PageInit,
-  Update,
-  updateComponentChild
+  component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
@@ -40,74 +33,101 @@ export interface State {
   users: TableUser[];
 }
 
-type InnerMsg = ADT<"table", Table.Msg>;
+type InnerMsg = ADT<"onInitResponse", TableUser[]> | ADT<"table", Table.Msg>;
 
-export type Msg = GlobalComponentMsg<InnerMsg, Route>;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
-async function baseState(): Promise<State> {
-  return {
-    users: [],
-    table: immutable(
-      await Table.init({
-        idNamespace: "user-list-table"
-      })
-    )
-  };
+function baseInit(): component_.base.InitReturnValue<State, Msg> {
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "user-list-table"
+  });
+  return [
+    {
+      users: [],
+      table: immutable(tableState)
+    },
+    [
+      component_.cmd.dispatch(component_.page.readyMsg()),
+      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
+    ]
+  ];
 }
 
-const init: PageInit<RouteParams, SharedState, State, Msg> = isUserType({
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = isUserType({
   userType: [UserType.Admin],
-  async success({ shared }) {
-    const result = await api.users.readMany();
-    if (!api.isValid(result)) {
-      return await baseState();
-    }
-    return {
-      ...(await baseState()),
-      users: result.value
-        .map((user) => ({
-          ...user,
-          typeTitleCase: userTypeToTitleCase(user.type),
-          statusTitleCase: userStatusToTitleCase(user.status)
-        }))
-        .sort((a, b) => {
-          const statusCompare = compareStrings(
-            a.statusTitleCase,
-            b.statusTitleCase
-          );
-          if (statusCompare) {
-            return statusCompare;
-          }
-          const typeCompare = compareStrings(a.typeTitleCase, b.typeTitleCase);
-          if (typeCompare) {
-            return typeCompare;
-          }
-          return compareStrings(a.name, b.name);
-        })
-    };
+  success() {
+    const [initState, initCmds] = baseInit();
+    return [
+      initState,
+      [
+        ...initCmds,
+        api.users.readMany((response) => {
+          if (!api.isValid(response)) return adt("onInitResponse", []);
+          const users = response.value
+            .map((user) => ({
+              ...user,
+              typeTitleCase: userTypeToTitleCase(user.type),
+              statusTitleCase: userStatusToTitleCase(user.status)
+            }))
+            .sort((a, b) => {
+              const statusCompare = compareStrings(
+                a.statusTitleCase,
+                b.statusTitleCase
+              );
+              if (statusCompare) {
+                return statusCompare;
+              }
+              const typeCompare = compareStrings(
+                a.typeTitleCase,
+                b.typeTitleCase
+              );
+              if (typeCompare) {
+                return typeCompare;
+              }
+              return compareStrings(a.name, b.name);
+            });
+          return adt("onInitResponse", users);
+        }) as component_.Cmd<Msg>
+      ]
+    ];
   },
-  async fail({ routePath, shared, dispatch }) {
-    if (!shared.session) {
-      dispatch(
-        replaceRoute(
-          adt("signIn" as const, {
-            redirectOnSuccess: router.routeToUrl(adt("userList", null))
-          })
+  fail({ routePath, shared }) {
+    const [initState, initCmds] = baseInit();
+    return [
+      initState,
+      [
+        ...initCmds,
+        component_.cmd.dispatch(
+          component_.global.replaceRouteMsg(
+            shared.session
+              ? adt("notFound" as const, { path: routePath })
+              : adt("signIn" as const, {
+                  redirectOnSuccess: router.routeToUrl(adt("userList", null))
+                })
+          )
         )
-      );
-    } else {
-      dispatch(replaceRoute(adt("notFound" as const, { path: routePath })));
-    }
-    return await baseState();
+      ]
+    ];
   }
 });
 
-const update: Update<State, Msg> = ({ state, msg }) => {
+const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state,
+  msg
+}) => {
   switch (msg.tag) {
+    case "onInitResponse":
+      return [state.set("users", msg.value), []];
     case "table":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["table"],
         childUpdate: Table.update,
@@ -115,11 +135,11 @@ const update: Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => ({ tag: "table", value })
       });
     default:
-      return [state];
+      return [state, []];
   }
 };
 
-function tableHeadCells(state: Immutable<State>): Table.HeadCells {
+function tableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Status",
@@ -177,8 +197,11 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
-  const dispatchTable = mapComponentDispatch<Msg, Table.Msg>(
+const view: component_.page.View<State, InnerMsg, Route> = ({
+  state,
+  dispatch
+}) => {
+  const dispatchTable = component_.base.mapDispatch<Msg, Table.Msg>(
     dispatch,
     (value) => ({ tag: "table", value })
   );
@@ -187,7 +210,7 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
       <Col xs="12">
         <h1 className="mb-5">Digital Marketplace Users</h1>
         <Table.view
-          headCells={tableHeadCells(state)}
+          headCells={tableHeadCells()}
           bodyRows={tableBodyRows(state)}
           state={state.table}
           dispatch={dispatchTable}
@@ -197,7 +220,13 @@ const view: ComponentView<State, Msg> = ({ state, dispatch }) => {
   );
 };
 
-export const component: PageComponent<RouteParams, SharedState, State, Msg> = {
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
   init,
   update,
   view,

@@ -7,25 +7,12 @@ import getAppModal from "front-end/lib/app/modal";
 import {
   isAllowedRouteForUsersWithUnacceptedTerms,
   Msg,
-  Route,
   State
 } from "front-end/lib/app/types";
 import Footer from "front-end/lib/app/view/footer";
 import * as Nav from "front-end/lib/app/view/nav";
 import ViewPage, { Props as ViewPageProps } from "front-end/lib/app/view/page";
-import {
-  AppMsg,
-  ComponentView,
-  ComponentViewProps,
-  Dispatch,
-  Immutable,
-  mapAppDispatch,
-  mapComponentDispatch,
-  mapPageModalMsg,
-  PageModal,
-  Toast as FrameworkToast,
-  View
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import * as PageContentCreate from "front-end/lib/pages/content/create";
 import * as PageContentEdit from "front-end/lib/pages/content/edit";
 import * as PageContentList from "front-end/lib/pages/content/list";
@@ -90,8 +77,8 @@ import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
 
-function makeViewPageProps<RouteParams, PageState extends object, PageMsg>(
-  props: ComponentViewProps<State, Msg>,
+function makeViewPageProps<RouteParams, PageState, PageMsg>(
+  props: component_.base.ComponentViewProps<State, Msg>,
   component: ViewPageProps<RouteParams, PageState, PageMsg>["component"],
   getPageState: (state: Immutable<State>) => Immutable<PageState> | undefined,
   mapPageMsg: ViewPageProps<RouteParams, PageState, PageMsg>["mapPageMsg"]
@@ -111,7 +98,7 @@ function makeViewPageProps<RouteParams, PageState extends object, PageMsg>(
 }
 
 function pageToViewPageProps(
-  props: ComponentViewProps<State, Msg>
+  props: component_.base.ComponentViewProps<State, Msg>
 ): ViewPageProps<any, any, any> {
   switch (props.state.activeRoute.tag) {
     case "landing":
@@ -429,15 +416,19 @@ function pageToViewPageProps(
 }
 
 interface ViewModalProps {
-  dispatch: Dispatch<AppMsg<Msg, Route>>;
-  pageModal: PageModal<Msg> | null;
-  appModal: PageModal<Msg> | null;
+  dispatch: component_.base.Dispatch<Msg>;
+  pageModal: component_.page.Modal<Msg>;
+  appModal: component_.page.Modal<Msg>;
 }
 
-const ViewModal: View<ViewModalProps> = ({ dispatch, pageModal, appModal }) => {
-  const modal = appModal || pageModal;
+const ViewModal: component_.base.View<ViewModalProps> = ({
+  dispatch,
+  pageModal,
+  appModal
+}) => {
+  const modalToShow = appModal?.value || pageModal?.value;
   // Return empty modal if none to display to support transitions
-  if (!modal) {
+  if (!modalToShow) {
     return (
       <Modal isOpen={false}>
         <ModalHeader
@@ -450,11 +441,7 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, pageModal, appModal }) => {
     );
   }
   const closeModal = () => {
-    if (appModal) {
-      dispatch(adt("hideModal"));
-    } else if (pageModal) {
-      dispatch(pageModal.onCloseMsg);
-    }
+    dispatch(modalToShow.onCloseMsg);
   };
   return (
     <Modal isOpen={true} toggle={closeModal}>
@@ -464,15 +451,15 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, pageModal, appModal }) => {
         close={
           <Icon hover name="times" color="secondary" onClick={closeModal} />
         }>
-        {modal.title}
+        {modalToShow.title}
       </ModalHeader>
-      <ModalBody>{modal.body(dispatch)}</ModalBody>
-      {modal.actions.length ? (
+      <ModalBody>{modalToShow.body(dispatch)}</ModalBody>
+      {modalToShow.actions.length ? (
         <ModalFooter
           className="p-0"
           style={{ overflowX: "auto", justifyContent: "normal" }}>
           <div className="p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1">
-            {modal.actions.map(
+            {modalToShow.actions.map(
               ({ loading, disabled, icon, button, text, color, msg }, i) => {
                 const props = {
                   key: `modal-action-${i}`,
@@ -501,7 +488,9 @@ const ViewModal: View<ViewModalProps> = ({ dispatch, pageModal, appModal }) => {
   );
 };
 
-const ViewToastIcon: View<{ toast: FrameworkToast }> = ({ toast }) => {
+const ViewToastIcon: component_.base.View<{
+  toast: component_.global.Toast;
+}> = ({ toast }) => {
   const name: AvailableIcons = (() => {
     switch (toast.tag) {
       case "info":
@@ -529,7 +518,10 @@ const ViewToastIcon: View<{ toast: FrameworkToast }> = ({ toast }) => {
   return <Icon name={name} color={color} />;
 };
 
-const ViewToasts: ComponentView<State, Msg> = ({ state, dispatch }) => {
+const ViewToasts: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const toasts = state.toasts;
   if (!toasts.length) {
     return null;
@@ -704,33 +696,35 @@ function navAppLinks(state: Immutable<State>): Nav.Props["appLinks"] {
 }
 
 function navContextualLinks(
-  props: ComponentViewProps<State, Msg>
+  props: component_.base.ComponentViewProps<State, Msg>
 ): Nav.Props["contextualActions"] {
   const viewPageProps = pageToViewPageProps(props);
-  if (
-    !viewPageProps.component.getContextualActions ||
-    !viewPageProps.pageState
-  ) {
+  if (!viewPageProps.component.getActions || !viewPageProps.pageState) {
     return undefined;
   }
   return (
-    viewPageProps.component.getContextualActions({
+    viewPageProps.component.getActions({
       state: viewPageProps.pageState,
-      dispatch: mapAppDispatch(props.dispatch, viewPageProps.mapPageMsg)
+      dispatch: component_.app.mapDispatch(
+        props.dispatch,
+        viewPageProps.mapPageMsg
+      )
     }) || undefined
   );
 }
 
-function regularNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
+function regularNavProps(
+  props: component_.base.ComponentViewProps<State, Msg>
+): Nav.Props {
   const { state, dispatch } = props;
-  const dispatchNav = mapComponentDispatch(
+  const dispatchNav = component_.base.mapDispatch(
     dispatch,
     adtCurried<ADT<"nav", Nav.Msg>>("nav")
   );
   return {
     state: state.nav,
     dispatch: dispatchNav,
-    isLoading: state.transitionLoading > 0,
+    isLoading: !!state.incomingRoute,
     logoImageUrl: prefixPath(
       SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
     ),
@@ -750,7 +744,9 @@ const completeProfileAction = Nav.linkAccountAction({
   dest: routeDest(adt("signUpStepTwo", null))
 });
 
-function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
+function simpleNavProps(
+  props: component_.base.ComponentViewProps<State, Msg>
+): Nav.Props {
   const accountMenu = (color: ThemeColor) =>
     Nav.unauthenticatedAccountMenu([
       ...(props.state.activeRoute.tag !== "signUpStepTwo"
@@ -775,7 +771,7 @@ function simpleNavProps(props: ComponentViewProps<State, Msg>): Nav.Props {
   };
 }
 
-const view: ComponentView<State, Msg> = (props) => {
+const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   if (!state.ready) {
     return null;
@@ -784,18 +780,18 @@ const view: ComponentView<State, Msg> = (props) => {
     const navProps = viewPageProps.component.simpleNav
       ? simpleNavProps(props)
       : regularNavProps(props);
-    const pageModal =
+    const pageModal: component_.page.Modal<Msg> =
       viewPageProps.component.getModal && viewPageProps.pageState
-        ? mapPageModalMsg(
+        ? (component_.page.modal.mapPage(
             viewPageProps.component.getModal(viewPageProps.pageState),
             viewPageProps.mapPageMsg
-          )
-        : null;
+          ) as component_.page.Modal<Msg>)
+        : (component_.page.modal.hide() as component_.page.Modal<Msg>);
     const appModal = getAppModal(state);
     return (
       <div
         className={`route-${state.activeRoute.tag} ${
-          state.transitionLoading > 0 ? "in-transition" : ""
+          state.incomingRoute ? "in-transition" : ""
         } ${
           navProps.contextualActions ? "contextual-actions-visible" : ""
         } app d-flex flex-column`}

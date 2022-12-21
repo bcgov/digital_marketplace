@@ -1,14 +1,7 @@
 import {
-  ComponentViewProps,
   immutable,
   Immutable,
-  Init,
-  mapComponentDispatch,
-  mapPageModalMsg,
-  PageGetModal,
-  Update,
-  updateComponentChild,
-  View
+  component as component_
 } from "front-end/lib/framework";
 import * as Phase from "front-end/lib/pages/proposal/sprint-with-us/lib/components/phase";
 import React from "react";
@@ -62,41 +55,54 @@ export function setAffiliations(
     );
 }
 
-export const init: Init<Params, State> = async (params) => {
+export const init: component_.base.Init<Params, State, Msg> = (params) => {
   const { orgId, affiliations, opportunity, proposal } = params;
-  return {
+  const [inceptionPhaseState, inceptionPhaseCmds] = Phase.init({
+    orgId,
     affiliations,
-    opportunity,
-    proposal,
-    orgId: orgId || null,
-    inceptionPhase: immutable(
-      await Phase.init({
-        orgId,
-        affiliations,
-        opportunityPhase: opportunity.inceptionPhase,
-        proposalPhase: proposal?.inceptionPhase,
-        isAccordionOpen: false
-      })
-    ),
-    prototypePhase: immutable(
-      await Phase.init({
-        orgId,
-        affiliations,
-        opportunityPhase: opportunity.prototypePhase,
-        proposalPhase: proposal?.prototypePhase,
-        isAccordionOpen: false
-      })
-    ),
-    implementationPhase: immutable(
-      await Phase.init({
-        orgId,
-        affiliations,
-        opportunityPhase: opportunity.implementationPhase,
-        proposalPhase: proposal?.implementationPhase,
-        isAccordionOpen: !opportunity.prototypePhase
-      })
-    )
-  };
+    opportunityPhase: opportunity.inceptionPhase,
+    proposalPhase: proposal?.inceptionPhase,
+    isAccordionOpen: false
+  });
+  const [prototypePhaseState, prototypePhaseCmds] = Phase.init({
+    orgId,
+    affiliations,
+    opportunityPhase: opportunity.prototypePhase,
+    proposalPhase: proposal?.prototypePhase,
+    isAccordionOpen: false
+  });
+  const [implementationPhaseState, implementationPhaseCmds] = Phase.init({
+    orgId,
+    affiliations,
+    opportunityPhase: opportunity.implementationPhase,
+    proposalPhase: proposal?.implementationPhase,
+    isAccordionOpen: !opportunity.prototypePhase
+  });
+  return [
+    {
+      affiliations,
+      opportunity,
+      proposal,
+      orgId: orgId || null,
+      inceptionPhase: immutable(inceptionPhaseState),
+      prototypePhase: immutable(prototypePhaseState),
+      implementationPhase: immutable(implementationPhaseState)
+    },
+    [
+      ...component_.cmd.mapMany(
+        inceptionPhaseCmds,
+        (msg) => adt("inceptionPhase", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        prototypePhaseCmds,
+        (msg) => adt("prototypePhase", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        implementationPhaseCmds,
+        (msg) => adt("implementationPhase", msg) as Msg
+      )
+    ]
+  ];
 };
 
 function hasPhase(
@@ -113,10 +119,10 @@ function hasPhase(
   }
 }
 
-export const update: Update<State, Msg> = ({ state, msg }) => {
+export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "inceptionPhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["inceptionPhase"],
         childUpdate: Phase.update,
@@ -125,7 +131,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "prototypePhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["prototypePhase"],
         childUpdate: Phase.update,
@@ -134,7 +140,7 @@ export const update: Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "implementationPhase":
-      return updateComponentChild({
+      return component_.base.updateChild({
         state,
         childStatePath: ["implementationPhase"],
         childUpdate: Phase.update,
@@ -213,11 +219,15 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
-export interface Props extends ComponentViewProps<State, Msg> {
+export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-export const view: View<Props> = ({ state, dispatch, disabled }) => {
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
   const isImplementationPhaseValid = Phase.isValid(state.implementationPhase);
@@ -227,7 +237,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         <Phase.view
           className="mb-4"
           state={state.inceptionPhase}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("inceptionPhase" as const, value)
           )}
           icon={isInceptionPhaseValid ? "map" : "exclamation-circle"}
@@ -242,7 +252,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
         <Phase.view
           className="mb-4"
           state={state.prototypePhase}
-          dispatch={mapComponentDispatch(dispatch, (value) =>
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("prototypePhase" as const, value)
           )}
           icon={isPrototypePhaseValid ? "rocket" : "exclamation-circle"}
@@ -255,7 +265,7 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
       ) : null}
       <Phase.view
         state={state.implementationPhase}
-        dispatch={mapComponentDispatch(dispatch, (value) =>
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
           adt("implementationPhase" as const, value)
         )}
         icon={isImplementationPhaseValid ? "cogs" : "exclamation-circle"}
@@ -269,25 +279,31 @@ export const view: View<Props> = ({ state, dispatch, disabled }) => {
   );
 };
 
-export const getModal: PageGetModal<State, Msg> = (state) => {
+export const getModal: component_.page.GetModal<State, Msg> = (state) => {
   const inceptionModal = () =>
     hasPhase(state, SWUProposalPhaseType.Inception)
-      ? mapPageModalMsg(
+      ? component_.page.modal.map(
           Phase.getModal(state.inceptionPhase),
           (msg) => adt("inceptionPhase", msg) as Msg
         )
       : null;
   const prototypeModal = () =>
     hasPhase(state, SWUProposalPhaseType.Prototype)
-      ? mapPageModalMsg(
+      ? component_.page.modal.map(
           Phase.getModal(state.prototypePhase),
           (msg) => adt("prototypePhase", msg) as Msg
         )
       : null;
   const implementationModal = () =>
-    mapPageModalMsg(
+    component_.page.modal.map(
       Phase.getModal(state.implementationPhase),
       (msg) => adt("implementationPhase", msg) as Msg
     );
-  return inceptionModal() || prototypeModal() || implementationModal();
+
+  const activeModal = [
+    inceptionModal(),
+    prototypeModal(),
+    implementationModal()
+  ].filter((modal) => modal && modal.tag === "show");
+  return activeModal[0] ?? implementationModal();
 };
