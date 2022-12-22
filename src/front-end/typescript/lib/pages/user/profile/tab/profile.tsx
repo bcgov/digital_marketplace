@@ -241,7 +241,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 (response) =>
                   adt(
                     "onToggleAccountActivationResponse",
-                    api.isValid(response)
+                    api.isValid(response) ? response.value : null
                   )
               ) as component_.Cmd<Msg>)
         ]
@@ -321,7 +321,8 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   "updateAdminPermissions",
                   FormField.getValue(state.adminCheckbox)
                 ),
-                (response) => adt("onToggleAdmin", api.isValid(response))
+                (response) =>
+                  adt("onToggleAdmin", api.getValidValue(response, null))
               ) as component_.Cmd<Msg>
             ]
           ];
@@ -591,13 +592,13 @@ export const component: Tab.Component<State, Msg> = {
         body: () => {
           if (!isOwner && isActive) {
             // Admin deactivating user.
-            return "Are you sure you want to deactivate this user’s account? They will no longer be able to access the Digital Marketplace.";
+            return "Are you sure you want to deactivate this user’s account? They will no longer be able to access the Digital Marketplace and email notifications will be discontinued.";
           } else if (!isOwner && !isActive) {
             // Admin reactivating user.
             return "Are you sure you want to reactivate this user’s account? They will be notified that their access to the Digital Marketplace has been renewed.";
           } else {
             // User deactivating self.
-            return "Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace.";
+            return "Are you sure you want to deactivate your account? You will no longer be able to access the Digital Marketplace and email notifications will be discontinued.";
           }
         },
         onCloseMsg: adt("hideActivationModal") as Msg,

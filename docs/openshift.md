@@ -67,9 +67,29 @@ oc process -f openshift/templates/database/patroni-digmkt-deploy.yaml -p TAG_NAM
 ------
 ## Application deploy
 To deploy the Digital Marketplace app, run these commands in each namespace (dev/test/prod).
-Replace `<secret>` with the KeyCloak client secret for the target environment.
+Replace `<secret>` with the KeyCloak `{"credentials": {"secret": <value> }}` for the target environment. Configuration for each of the environments can be retrieved from the [Common Hosted Single Sign-on Service](https://bcgov.github.io/sso-requests). Mappings between a sample output from the SSO service and the application config are as follows:
 
-To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
+```json
+{
+  "confidential-port": 0,
+  "auth-server-url": "<url>/auth",
+  "realm": "<realm>",
+  "ssl-required": "external",
+  "resource": "<resource>",
+  "credentials": {
+    "secret": "<secret>"
+  }
+}
+````
+
+```yaml
+KEYCLOAK_CLIENT_ID="<resource>"
+KEYCLOAK_CLIENT_SECRET="<secret>"
+KEYCLOAK_URL="<url>"
+KEYCLOAK_REALM="<realm>"
+```
+
+**Optional:** To password protect the dev and test namespace deployments, replace `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD_HASH` with the basic auth credentials desired. Leaving these parameters off the deployment command will deactivate login. The hashed password can be generated using the npm library bcrypt `bcrypt.hash('<password>',10)`. (NOTE:  This login is unrelated to keycloak authentication.)
 
 The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to after a user logs into the app.
 
@@ -78,7 +98,7 @@ The `ORIGIN` parameter specifies the url Keycloak will redirect the browser to a
 oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://dev.oidc.gov.bc.ca \
+-p KEYCLOAK_URL=https://dev.loginproxy.gov.bc.ca/auth \
 -p SHOW_TEST_INDICATOR=1 \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
@@ -92,7 +112,7 @@ oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://test.oidc.gov.bc.ca \
+-p KEYCLOAK_URL=https://test.loginproxy.gov.bc.ca/auth \
 -p SHOW_TEST_INDICATOR=1 \
 -p ORIGIN=https://app-digmkt-test.apps.silver.devops.gov.bc.ca \
 -p HOST=app-digmkt-test.apps.silver.devops.gov.bc.ca \
@@ -106,7 +126,7 @@ oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
--p KEYCLOAK_URL=https://oidc.gov.bc.ca \
+-p KEYCLOAK_URL=https://loginproxy.gov.bc.ca/auth \
 -p SHOW_TEST_INDICATOR=0 \
 -p ORIGIN=https://marketplace.digital.gov.bc.ca \
 -p HOST=marketplace.digital.gov.bc.ca \

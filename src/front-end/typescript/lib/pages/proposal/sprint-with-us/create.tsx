@@ -478,7 +478,7 @@ export const component: component_.page.Component<
         symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
         button: true,
         loading: isSubmitLoading,
-        disabled: isLoading || isValid,
+        disabled: isLoading || !isValid,
         color: "primary",
         onClick: () => dispatch(adt("showModal", "submit" as const))
       },
@@ -508,7 +508,7 @@ export const component: component_.page.Component<
       Form.getModal(form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null) {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const hasAcceptedTerms =

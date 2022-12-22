@@ -19,6 +19,8 @@ node_modules/
 .vscode/
 /cypress/screenshots/
 /cypress/videos/
+*.tsbuildinfo
+yarn-error.log
 
 Session.vim
 tags

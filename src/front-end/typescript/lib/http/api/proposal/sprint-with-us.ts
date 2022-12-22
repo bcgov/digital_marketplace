@@ -18,12 +18,11 @@ export function readMany<Msg>(
   opportunityId?: Id
 ): crud.ReadManyAction<Resource.SWUProposalSlim, string[], Msg> {
   return crud.makeReadManyAction(
-    `${NAMESPACE}${
-      opportunityId !== undefined
-        ? `?opportunity=${window.encodeURIComponent(opportunityId)}`
-        : ""
-    }`,
-    rawSWUProposalSlimToSWUProposalSlim
+    NAMESPACE,
+    rawSWUProposalSlimToSWUProposalSlim,
+    opportunityId !== undefined
+      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
+      : ""
   );
 }
 
@@ -31,8 +30,9 @@ export function readOne<Msg>(
   opportunityId: Id
 ): crud.ReadOneAction<Resource.SWUProposal, string[], Msg> {
   return crud.makeReadOneAction(
-    `${NAMESPACE}?opportunity=${window.encodeURIComponent(opportunityId)}`,
-    rawSWUProposalToSWUProposal
+    NAMESPACE,
+    rawSWUProposalToSWUProposal,
+    `opportunity=${window.encodeURIComponent(opportunityId)}`
   );
 }
 

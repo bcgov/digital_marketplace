@@ -40,7 +40,7 @@ export type State = State_<Tab.TabId>;
 
 export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
   K,
-  ADT<"onInitResponse", [User, RouteParams, SWUOpportunity, SWUProposal]>
+  ADT<"onInitResponse", [User, RouteParams, SWUProposal, SWUOpportunity]>
 >;
 
 export type InnerMsg = InnerMsg_<Tab.TabId>;
@@ -79,7 +79,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ) as component_.Cmd<SWUProposal | null>,
-            api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
+            api.opportunities.swu.readOne(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ) as component_.Cmd<SWUOpportunity | null>,
             (proposal, opportunity) => {
@@ -139,7 +139,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [viewerUser, routeParams, opportunity, proposal] =
+              const [viewerUser, routeParams, proposal, opportunity] =
                 msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";

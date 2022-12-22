@@ -299,5 +299,11 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
       Phase.getModal(state.implementationPhase),
       (msg) => adt("implementationPhase", msg) as Msg
     );
-  return inceptionModal() || prototypeModal() || implementationModal();
+
+  const activeModal = [
+    inceptionModal(),
+    prototypeModal(),
+    implementationModal()
+  ].filter((modal) => modal && modal.tag === "show");
+  return activeModal[0] ?? implementationModal();
 };

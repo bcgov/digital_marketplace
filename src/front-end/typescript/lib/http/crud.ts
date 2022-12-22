@@ -50,12 +50,13 @@ export function makeCreateAction<
   Msg
 >(
   path: string,
-  transformResponse: (raw: RawResponse) => ValidResponse
+  transformResponse: (raw: RawResponse) => ValidResponse,
+  query?: string
 ): CreateAction<RequestBody, ValidResponse, InvalidResponse, Msg> {
   return (body, handleResponse) =>
     component.cmd.httpRequest({
       method: ClientHttpMethod.Post,
-      url: apiNamespace(path),
+      url: `${apiNamespace(path)}${makeQueryString(query)}`,
       body,
       transformResponse,
       handleResponse
@@ -167,12 +168,13 @@ function appendInvalidCreateResult<ValidItem, InvalidItem>(
 
 export function makeReadManyAction<RawItem, ValidItem, InvalidResponse, Msg>(
   path: string,
-  transformItem: (raw: RawItem) => ValidItem
+  transformItem: (raw: RawItem) => ValidItem,
+  query?: string
 ): ReadManyAction<ValidItem, InvalidResponse, Msg> {
   return (handleResponse) =>
     component.cmd.httpRequest({
       method: ClientHttpMethod.Get,
-      url: apiNamespace(path),
+      url: `${apiNamespace(path)}${makeQueryString(query)}`,
       transformResponse: (rawItems: RawItem[]) =>
         rawItems.map((item) => transformItem(item)),
       handleResponse
@@ -188,12 +190,13 @@ export function makeReadOneAction<
   Msg
 >(
   path: string,
-  transformResponse: (raw: RawResponse) => ValidResponse
+  transformResponse: (raw: RawResponse) => ValidResponse,
+  query?: string
 ): ReadOneAction<ValidResponse, InvalidResponse, Msg> {
   return (id, handleResponse) =>
     component.cmd.httpRequest({
       method: ClientHttpMethod.Get,
-      url: apiNamespace(`${path}/${id}`),
+      url: `${apiNamespace(`${path}/${id}`)}${makeQueryString(query)}`,
       transformResponse,
       handleResponse
     });
@@ -209,12 +212,13 @@ export function makeUpdateAction<
   Msg
 >(
   path: string,
-  transformResponse: (raw: RawResponse) => ValidResponse
+  transformResponse: (raw: RawResponse) => ValidResponse,
+  query?: string
 ): UpdateAction<RequestBody, ValidResponse, InvalidResponse, Msg> {
   return (id, body, handleResponse) =>
     component.cmd.httpRequest({
       method: ClientHttpMethod.Put,
-      url: apiNamespace(`${path}/${id}`),
+      url: `${apiNamespace(`${path}/${id}`)}${makeQueryString(query)}`,
       body: body,
       transformResponse,
       handleResponse
@@ -230,13 +234,20 @@ export function makeDeleteAction<
   Msg
 >(
   path: string,
-  transformResponse: (raw: RawResponse) => ValidResponse
+  transformResponse: (raw: RawResponse) => ValidResponse,
+  query?: string
 ): DeleteAction<ValidResponse, InvalidResponse, Msg> {
   return (id, handleResponse) =>
     component.cmd.httpRequest({
       method: ClientHttpMethod.Delete,
-      url: apiNamespace(`${path}/${id}`),
+      url: `${apiNamespace(`${path}/${id}`)}${makeQueryString(query)}`,
       transformResponse,
       handleResponse
     });
+}
+
+// Helpers
+
+function makeQueryString(query?: string): string {
+  return query ? `?${query}` : "";
 }

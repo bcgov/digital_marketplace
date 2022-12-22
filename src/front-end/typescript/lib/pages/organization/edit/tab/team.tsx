@@ -169,10 +169,10 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "addTeamMembers": {
       state = startAddTeamMembersLoading(state).set("showModal", null);
       let cmd = component_.cmd.dispatch({
-        success: [],
-        warning: [],
-        error: []
-      } as unknown as AddTeamMemberState);
+        successToasts: [],
+        warningToasts: [],
+        errorToasts: []
+      } as AddTeamMemberState);
       for (const s of state.addTeamMembersEmails) {
         const userEmail = FormField.getValue(s);
         cmd = component_.cmd.join(

@@ -214,6 +214,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const [formState, formCmds] = Form.init({
         viewerUser: state.viewerUser,
         opportunity: state.opportunity,
+        proposal: state.proposal,
         organizations,
         evaluationContent
       });
@@ -732,12 +733,13 @@ export const component: Tab.Component<State, Msg> = {
       Form.getModal(state.form),
       (msg) => adt("form", msg) as Msg
     );
-    if (formModal !== null) {
+    if (formModal.tag !== "hide") {
       return formModal;
     }
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
       SubmitProposalTerms.getAppCheckbox(state.submitTerms);
+
     switch (state.showModal) {
       case "submit":
       case "saveChangesAndSubmit":

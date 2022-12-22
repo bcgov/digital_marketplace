@@ -41,7 +41,7 @@ export function makeLogger(adapter: Adapter): Logger {
   };
 }
 
-const noOpLog: LogFunction = logWith((domain, msg) => {
+const noOpLog: LogFunction = logWith((_domain, _msg) => {
   return;
 });
 
