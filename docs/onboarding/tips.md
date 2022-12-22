@@ -18,9 +18,9 @@ A list of the available user types can be found in the `UserType` enum in `/src/
 ## Front-end
 
 ### State Management
-As mentioned in the README, the front-end state management was based on the Elm architecture, and functions comparably to Redux. The relevant files can be found in
-`src/front-end/typescript/lib/framework/**/*.tsx`. The state object itself is created using `Immutable.js`. (Reference https://immutable-js.com/docs/v4.0.0)
-In `src/front-end/typescript/lib/framework/index.tsx` the `start` function is defined. To better understand how the state management works in this project, spend some time reading this function. Notable points in it include:
+As mentioned in the README, the front-end state management is based on the Elm architecture, and functions comparably to Redux. The relevant files can be found in
+`src/front-end/typescript/lib/framework/**/*.tsx`. The state object itself is created using `Immutable.js` [Reference](https://immutable-js.com/docs/v4.0.0).
+In `src/front-end/typescript/lib/framework/index.tsx` the `start()` function is defined. To better understand how the state management works in this project, spend some time reading this function. Notable points in it include:
 - `state` object is created using Immutable
 - `getState` accessor for `state`
 - `routeManager` to handle route changes
@@ -28,19 +28,19 @@ In `src/front-end/typescript/lib/framework/index.tsx` the `start` function is de
 
 Each page in the app has an `init`, `update`, and `view` function defined.
 `init` initializes the state for the page.
-`view` is where the pages layout is created.
-`update` handles the staate changes made on the page. The update method takes the `state` and a `msg` as its args, and uses a switch satement on `msg.tag`. The `msg` values are defined as ADTs at the top of the pages, and can also have a second param which is accessed through `msg.value` inside the update function. Inside each case, `state` is modified using `state = state.set('<property>', value)` and the new `state` object is returned. The `msg` ADTs defined in each page, are imported into `src/front-end/typescript/lib/app/types.ts` where they are added to the `state` type under the appropriate page.
+`view` is where the page layout is created.
+`update` handles the state changes made on the page. The update method takes the `state` and a `msg` as its args, and uses a switch statement on `msg.tag`. The `msg` values are defined as ADTs at the top of the pages, and can also have a second param which is accessed through `msg.value` inside the update function. Inside each case, `state` is modified using `state = state.set('<property>', value)` and the new `state` object is returned. The `msg` ADTs defined in each page, are imported into `src/front-end/typescript/lib/app/types.ts` where they are added to the `state` type under the appropriate page.
 
 The general process of handling a new state change:
 - Add an ADT to the list in the page with an appropriate `msg`, and if necessary `value`.
 - Add a case to the `update` switch statement for your new `msg`.
-- Handle the chage in that case.
+- Handle the change in that case.
 - Return the new state object.
 
 Each pages props are created in the `pageToViewPageProps` function found in `src/front-end/typescript/lib/app/view/index.tsx`.
 
 ### Styles
-Styles can be found in `src/front-end/sass/`. Bootsrap is heavily used, and any other styling is in the `index.scss` file.
+Styles can be found in `src/front-end/sass/`. Bootstrap is heavily used, and any other styling is in the `index.scss` file.
 
 ### Static
 `src/front-end/static/` contains fonts, and images used in the app.
@@ -50,7 +50,7 @@ The CRUD abstractions can be found in `src/front-end/typescript/lib/http/crud.ts
 `create`, `readMany`, `readOne`, `update`, and `delete`. These are used to create the requests to the API.
 
 ## Shared
-The shared folder contains types and functions used by both the `back-end` and `front-end`. Many of the commonly used types can be found in `src/shared/lib/types.ts` (for example the `ADT` interface mentioned above), and more specific types can be found in the appropriate files within `src/shared/lib/resources`. Also in the files in resources are functions used by both sides of the app, such as parse functions for proposals and opportunities.
+The shared folder contains types and functions used by both the `back-end` and `front-end`. Many of the commonly used types can be found in `src/shared/lib/types.ts` (for example the `ADT` interface mentioned above), and more specific types can be found in the appropriate files within `src/shared/lib/resources`. Functions in `src/back-end/shared/lib/resources` are used by both sides of the app, such as parse functions for proposals and opportunities.
 `src/shared/lib/validation/` contains the validation functions used. For example, file validation functions can be found in `src/shared/lib/validation/file.ts`.
 
 ## Back-end
