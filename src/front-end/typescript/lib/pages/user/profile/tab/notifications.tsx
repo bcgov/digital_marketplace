@@ -31,7 +31,8 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 const init: component_.base.Init<Tab.Params, State, Msg> = ({
   viewerUser,
-  profileUser
+  profileUser,
+  unsubscribe
 }) => {
   const [newOpportunitiesState, newOpportunitiesCmds] = Checkbox.init({
     errors: [],
