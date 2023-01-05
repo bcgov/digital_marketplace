@@ -86,7 +86,7 @@ async function makeRouter(
 
           // If redirectOnSuccess specified, include that as query parameter for callback
           if (redirectOnSuccess) {
-            authQuery.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
+            authQuery.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(redirectOnSuccess)}`;
           }
 
           if (provider === VENDOR_IDP_SUFFIX || provider === GOV_IDP_SUFFIX) {
@@ -136,7 +136,7 @@ async function makeRouter(
 
           // If redirectOnSuccess was provided on callback, this must also be provided on token request (redirect_uri must match for each request)
           if (redirectOnSuccess) {
-            data.redirect_uri += `?redirectOnSuccess=${redirectOnSuccess}`;
+            data.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(redirectOnSuccess)}`;
           }
 
           const headers = {
