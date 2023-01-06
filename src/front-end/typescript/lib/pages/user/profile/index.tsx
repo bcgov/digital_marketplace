@@ -91,7 +91,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 component_.global.replaceRouteMsg(
                   adt("signIn" as const, {
                     redirectOnSuccess: router.routeToUrl(
-                      adt("userProfile", { userId: routeParams.userId })
+                      adt("userProfile", routeParams)
                     )
                   })
                 )
