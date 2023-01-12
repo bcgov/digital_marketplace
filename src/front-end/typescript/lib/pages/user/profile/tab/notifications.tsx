@@ -15,10 +15,8 @@ import { Col, Row } from "reactstrap";
 import { adt, ADT } from "shared/lib/types";
 import { User, UpdateValidationErrors } from "shared/lib/resources/user";
 
-type ModalId = ADT<"unsubscribe">;
-
 export interface State extends Tab.Params {
-  showModal: ModalId | null,
+  showModal: boolean,
   newOpportunitiesLoading: number;
   newOpportunities: Immutable<Checkbox.State>;
 }
@@ -30,8 +28,8 @@ export type InnerMsg =
       api.ResponseValidation<User, UpdateValidationErrors>
     >
   | ADT<"updateNotifications", boolean>
-  | ADT<"showModal", ModalId>
-  | ADT<"hideModal">;;
+  | ADT<"showModal", boolean>
+  | ADT<"hideModal">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -49,11 +47,11 @@ const init: component_.base.Init<Tab.Params, State, Msg> = ({
   });
   return [
     {
-      showModal: unsubscribe && newOpportunitiesState.child.value ? adt("unsubscribe") : null,
+      showModal: (unsubscribe ?? false) && newOpportunitiesState.child.value,
       profileUser,
       viewerUser,
       newOpportunitiesLoading: 0,
-      newOpportunities: immutable(newOpportunitiesState)
+      newOpportunities: immutable(newOpportunitiesState),
     },
     component_.cmd.mapMany(newOpportunitiesCmds, (msg) =>
       adt("newOpportunities", msg)
@@ -71,7 +69,7 @@ const stopNewOpportunitiesLoading = makeStopLoading<State>(
 const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "hideModal":
-      return [state.set("showModal", null), []];
+      return [state.set("showModal", false), []];
     case "newOpportunities": {
       const valueChanged =
         msg.value.tag === "child" && msg.value.value.tag === "onChange";
@@ -98,7 +96,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "updateNotifications": {
       return [
         startNewOpportunitiesLoading(state)
-          .set("showModal", null),
+          .set("showModal", false),
         [
           api.users.update(
             state.profileUser.id,
@@ -193,28 +191,25 @@ export const component: Tab.Component<State, Msg> = {
     if (!state.showModal) {
       return component_.page.modal.hide();
     }
-    switch (state.showModal.tag) {
-      case "unsubscribe":
-        return component_.page.modal.show({
-          title: "Unsubscribe?",
-          body: () =>
-            `Are you sure you want to unsubscribe? ${state.profileUser.email ?? 'You'} will no longer receive notifications about new opportunities.`,
-          onCloseMsg: adt("hideModal") as Msg,
-          actions: [
-            {
-              text: "Unsubscribe",
-              icon: "bell-slash-outline",
-              color: "success",
-              msg: adt("updateNotifications", false),
-              button: true
-            },
-            {
-              text: "Cancel",
-              color: "secondary",
-              msg: adt("hideModal")
-            }
-          ]
-        });
-      }
-    }
+    return component_.page.modal.show({
+      title: "Unsubscribe?",
+      body: () =>
+        `Are you sure you want to unsubscribe? ${state.profileUser.email ?? 'You'} will no longer receive notifications about new opportunities.`,
+      onCloseMsg: adt("hideModal") as Msg,
+      actions: [
+        {
+          text: "Unsubscribe",
+          icon: "bell-slash-outline",
+          color: "success",
+          msg: adt("updateNotifications", false),
+          button: true
+        },
+        {
+          text: "Cancel",
+          color: "secondary",
+          msg: adt("hideModal")
+        }
+      ]
+    });
+  }
 };
