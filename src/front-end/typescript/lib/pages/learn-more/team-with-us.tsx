@@ -123,7 +123,7 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
                 <Link
                   button
                   dest={routeDest(
-                    adt("contentView", "code-with-us-proposal-guide")
+                    adt("contentView", "team-with-us-proposal-guide")
                   )}
                   color="info"
                   outline
