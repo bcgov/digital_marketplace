@@ -2,6 +2,7 @@ import { prefixPath } from "back-end/lib";
 import { CSSProperties, default as React, Fragment, ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SHOW_TEST_INDICATOR } from "shared/config";
+import { VIEWER_USER_ROUTE_PARAM } from "shared/lib/resources/user";
 
 // Styles.
 
@@ -406,6 +407,12 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
             <Row style={styles.classes.description}>{description}</Row>
           ) : null}
           <Fragment>{children}</Fragment>
+          <Row style={{ ...styles.utilities.text.center }} >
+            <Link 
+              text="Unsubscribe"
+              url={makeUrl(`users/${VIEWER_USER_ROUTE_PARAM}?tab=notifications&unsubscribe`)}
+            />
+          </Row>
         </Container>
       </body>
     </html>
