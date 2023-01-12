@@ -124,6 +124,7 @@ export const readManyUsersNotificationsOn = tryDb<[], User[]>(
   async (connection) => {
     const results = await connection<RawUser>("users")
       .whereNotNull("notificationsOn")
+      .whereNull("deactivatedOn")
       .select("*");
     return valid(
       await Promise.all(
