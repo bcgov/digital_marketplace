@@ -198,7 +198,7 @@ export const component: Tab.Component<State, Msg> = {
         return component_.page.modal.show({
           title: "Unsubscribe?",
           body: () =>
-            "Are you sure you want to unsubscribe? You will no longer receive notifications about new opportunities.",
+            `Are you sure you want to unsubscribe? ${state.profileUser.email ?? 'You'} will no longer receive notifications about new opportunities.`,
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
