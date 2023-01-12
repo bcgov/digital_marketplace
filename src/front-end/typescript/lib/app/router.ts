@@ -307,7 +307,6 @@ const router: router_.Router<Route> = {
           UserProfileTab.parseInvitationResponseParam(
             getString(query, "invitationResponse")
           ) || undefined;
-        const unsubscribe = "unsubscribe" in query;
         return {
           tag: "userProfile",
           value: {
@@ -317,7 +316,7 @@ const router: router_.Router<Route> = {
               affiliationId && response
                 ? { affiliationId, response }
                 : undefined,
-            unsubscribe
+            ...('unsubscribe' in query && {unsubscribe: true})
           }
         };
       }
