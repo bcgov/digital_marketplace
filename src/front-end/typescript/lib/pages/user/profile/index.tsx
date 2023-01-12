@@ -22,6 +22,7 @@ import {
   isAdmin,
   isPublicSectorEmployee,
   isVendor,
+  VIEWER_USER_ROUTE_PARAM,
   User
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -75,7 +76,10 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          api.users.readOne(routeParams.userId, (response) =>
+          api.users.readOne(routeParams.userId === VIEWER_USER_ROUTE_PARAM
+            ? viewerUser.id
+            : routeParams.userId,
+          (response) =>
             adt("onInitResponse", [routePath, routeParams, response])
           ) as component_.Cmd<Msg>
         ]
