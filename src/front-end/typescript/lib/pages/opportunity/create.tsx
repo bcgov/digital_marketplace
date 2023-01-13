@@ -126,7 +126,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
             },
             {
               button: true,
-              dest: routeDest(adt("opportunityCWUCreate", null)),
+              dest: routeDest(adt("opportunityTWUCreate", null)),
               children: ["Get Started"],
               color: "primary" as TextColor
             }

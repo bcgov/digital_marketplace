@@ -21,6 +21,9 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
+// import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
+// import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
@@ -86,6 +89,9 @@ export type Route =
   | ADT<"opportunityCWUCreate", PageOpportunityCWUCreate.RouteParams>
   | ADT<"opportunityCWUEdit", PageOpportunityCWUEdit.RouteParams>
   | ADT<"opportunityCWUView", PageOpportunityCWUView.RouteParams>
+  | ADT<"opportunityTWUCreate", PageOpportunityTWUCreate.RouteParams>
+  // | ADT<"opportunityTWUEdit", PageOpportunityTWUEdit.RouteParams>
+  // | ADT<"opportunityTWUView", PageOpportunityTWUView.RouteParams>
   | ADT<"proposalCWUCreate", PageProposalCWUCreate.RouteParams>
   | ADT<"proposalCWUEdit", PageProposalCWUEdit.RouteParams>
   | ADT<"proposalCWUView", PageProposalCWUView.RouteParams>
@@ -168,6 +174,9 @@ export interface State {
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
+    opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
+    // opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
+    // opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
     opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
     opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
     opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
@@ -227,6 +236,9 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUCreate", PageOpportunitySWUCreate.Msg>
   | ADT<"pageOpportunitySWUEdit", PageOpportunitySWUEdit.Msg>
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
+  | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
+  // | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
+  // | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
   | ADT<"pageOpportunityCWUCreate", PageOpportunityCWUCreate.Msg>
   | ADT<"pageOpportunityCWUEdit", PageOpportunityCWUEdit.Msg>
   | ADT<"pageOpportunityCWUView", PageOpportunityCWUView.Msg>
