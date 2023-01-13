@@ -20,7 +20,7 @@ export function twuOpportunityStatusToColor(
       return "success";
     case TWUOpportunityStatus.EvaluationResourceQuestions:
       return "warning";
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
       return "warning";
     case TWUOpportunityStatus.Awarded:
       return "success";
@@ -43,7 +43,7 @@ export function twuOpportunityStatusToTitleCase(
       return "Published";
     case TWUOpportunityStatus.EvaluationResourceQuestions:
       return "Team Questions";
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
       return "Code Challenge";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";

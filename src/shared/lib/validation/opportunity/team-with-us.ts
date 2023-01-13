@@ -233,7 +233,7 @@ export function validateQuestionsWeight(
   return validateNumber(raw, 0, 100, "weight for resource questions", "a");
 }
 
-export function validateCodeChallengeWeight(
+export function validateChallengeWeight(
   raw: string | number
 ): Validation<number> {
   return validateNumber(raw, 0, 100, "code challenge weight", "a");

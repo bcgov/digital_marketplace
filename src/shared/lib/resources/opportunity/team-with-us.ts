@@ -21,7 +21,7 @@ export enum TWUOpportunityStatus {
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
   EvaluationResourceQuestions = "EVAL_QUESTIONS",
-  EvaluationCodeChallenge = "EVAL_CC",
+  EvaluationChallenge = "EVAL_C",
   Awarded = "AWARDED",
   Suspended = "SUSPENDED",
   Canceled = "CANCELED"
@@ -54,8 +54,8 @@ export function parseTWUOpportunityStatus(
       return TWUOpportunityStatus.Published;
     case TWUOpportunityStatus.EvaluationResourceQuestions:
       return TWUOpportunityStatus.EvaluationResourceQuestions;
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
-      return TWUOpportunityStatus.EvaluationCodeChallenge;
+    case TWUOpportunityStatus.EvaluationChallenge:
+      return TWUOpportunityStatus.EvaluationChallenge;
     case TWUOpportunityStatus.Awarded:
       return TWUOpportunityStatus.Awarded;
     case TWUOpportunityStatus.Suspended:
@@ -72,7 +72,7 @@ export function isTWUOpportunityStatusInEvaluation(
 ): boolean {
   switch (s) {
     case TWUOpportunityStatus.EvaluationResourceQuestions:
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
       return true;
     default:
       return false;
@@ -82,7 +82,7 @@ export function isTWUOpportunityStatusInEvaluation(
 export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Published,
   TWUOpportunityStatus.EvaluationResourceQuestions,
-  TWUOpportunityStatus.EvaluationCodeChallenge,
+  TWUOpportunityStatus.EvaluationChallenge,
   TWUOpportunityStatus.Awarded
 ];
 
@@ -147,7 +147,7 @@ export interface TWUOpportunity {
   proposalDeadline: Date;
   assignmentDate: Date;
   questionsWeight: number;
-  codeChallengeWeight: number;
+  challengeWeight: number;
   priceWeight: number;
   status: TWUOpportunityStatus;
   attachments: FileRecord[];
@@ -233,7 +233,7 @@ export interface CreateRequestBody {
   optionalSkills: string[];
   description: string;
   questionsWeight: number;
-  codeChallengeWeight: number;
+  challengeWeight: number;
   priceWeight: number;
   attachments: Id[];
   status: CreateTWUOpportunityStatus;
@@ -263,7 +263,7 @@ export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submitForReview", string>
   | ADT<"publish", string>
-  | ADT<"startCodeChallenge", string>
+  | ADT<"startChallenge", string>
   | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
@@ -285,7 +285,7 @@ type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
   | ADT<"publish", string[]>
-  | ADT<"startCodeChallenge", string[]>
+  | ADT<"startChallenge", string[]>
   | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
@@ -339,9 +339,9 @@ export function isValidStatusChange(
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
-        TWUOpportunityStatus.EvaluationCodeChallenge
+        TWUOpportunityStatus.EvaluationChallenge
       ].includes(to);
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended
@@ -356,7 +356,7 @@ export function isValidStatusChange(
   }
 }
 
-export function canTWUOpportunityBeScreenedInToCodeChallenge(
+export function canTWUOpportunityBeScreenedInToChallenge(
   o: TWUOpportunity
 ): boolean {
   switch (o.status) {
@@ -369,7 +369,7 @@ export function canTWUOpportunityBeScreenedInToCodeChallenge(
 
 export function canTWUOpportunityBeAwarded(o: TWUOpportunity): boolean {
   switch (o.status) {
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
       return true;
     default:
@@ -411,7 +411,7 @@ export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
     case TWUOpportunityStatus.EvaluationResourceQuestions:
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Canceled:
       return true;
@@ -424,7 +424,7 @@ export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
     case TWUOpportunityStatus.EvaluationResourceQuestions:
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.Canceled:
@@ -456,7 +456,7 @@ export function hasTWUOpportunityPassedResourceQuestions(
     }
     switch (h.type.value) {
       case TWUOpportunityStatus.EvaluationResourceQuestions:
-      case TWUOpportunityStatus.EvaluationCodeChallenge:
+      case TWUOpportunityStatus.EvaluationChallenge:
       case TWUOpportunityStatus.Awarded:
         return true;
       default:
@@ -465,7 +465,7 @@ export function hasTWUOpportunityPassedResourceQuestions(
   }, false as boolean);
 }
 
-export function hasTWUOpportunityPassedCodeChallenge(
+export function hasTWUOpportunityPassedChallenge(
   o: Pick<TWUOpportunity, "history">
 ): boolean {
   if (!o.history) {
@@ -476,7 +476,7 @@ export function hasTWUOpportunityPassedCodeChallenge(
       return acc;
     }
     switch (h.type.value) {
-      case TWUOpportunityStatus.EvaluationCodeChallenge:
+      case TWUOpportunityStatus.EvaluationChallenge:
       case TWUOpportunityStatus.Awarded:
         return true;
       default:
@@ -502,7 +502,7 @@ export function doesTWUOpportunityStatusAllowGovToViewFullProposal(
   s: TWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case TWUOpportunityStatus.EvaluationCodeChallenge:
+    case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
       return true;
     default:

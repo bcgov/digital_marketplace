@@ -82,7 +82,7 @@ export interface State {
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Scoring Tab
   questionsWeight: Immutable<NumberField.State>;
-  codeChallengeWeight: Immutable<NumberField.State>;
+  challengeWeight: Immutable<NumberField.State>;
   priceWeight: Immutable<NumberField.State>;
   weightsTotal: Immutable<NumberField.State>;
   // Attachments tab
@@ -107,7 +107,7 @@ export type Msg =
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Scoring Tab
   | ADT<"questionsWeight", NumberField.Msg>
-  | ADT<"codeChallengeWeight", NumberField.Msg>
+  | ADT<"challengeWeight", NumberField.Msg>
   | ADT<"priceWeight", NumberField.Msg>
   | ADT<"weightsTotal", NumberField.Msg>
   // Attachments tab
@@ -152,9 +152,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     "questionsWeight",
     DEFAULT_QUESTIONS_WEIGHT
   );
-  const codeChallengeWeight = getNumber(
+  const challengeWeight = getNumber(
     opportunity,
-    "codeChallengeWeight",
+    "challengeWeight",
     DEFAULT_CODE_CHALLENGE_WEIGHT
   );
   const priceWeight = getNumber(
@@ -321,16 +321,16 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       min: 0
     }
   });
-  const [codeChallengeWeightState, codeChallengeWeightCmds] = NumberField.init({
+  const [challengeWeightState, challengeWeightCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
       if (v === null) {
         return invalid(["Please enter a valid code challenge weight."]);
       }
-      return opportunityValidation.validateCodeChallengeWeight(v);
+      return opportunityValidation.validateChallengeWeight(v);
     },
     child: {
-      value: codeChallengeWeight,
+      value: challengeWeight,
       id: "twu-opportunity-code-challenge-weight",
       min: 0
     }
@@ -354,7 +354,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: validateWeightsTotal,
     child: {
-      value: questionsWeight + codeChallengeWeight + priceWeight,
+      value: questionsWeight + challengeWeight + priceWeight,
       id: "twu-opportunity-weights-total",
       min: 1
     }
@@ -381,7 +381,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       description: immutable(descriptionState),
       resourceQuestions: immutable(resourceQuestionsState),
       questionsWeight: immutable(questionsWeightState),
-      codeChallengeWeight: immutable(codeChallengeWeightState),
+      challengeWeight: immutable(challengeWeightState),
       priceWeight: immutable(priceWeightState),
       weightsTotal: immutable(weightsTotalState),
       attachments: immutable(attachmentsState)
@@ -418,8 +418,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(questionsWeightCmds, (msg) =>
         adt("questionsWeight", msg)
       ),
-      ...component_.cmd.mapMany(codeChallengeWeightCmds, (msg) =>
-        adt("codeChallengeWeight", msg)
+      ...component_.cmd.mapMany(challengeWeightCmds, (msg) =>
+        adt("challengeWeight", msg)
       ),
       ...component_.cmd.mapMany(priceWeightCmds, (msg) =>
         adt("priceWeight", msg)
@@ -486,7 +486,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("description", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s))
     .update("questionsWeight", (s) => FormField.validate(s))
-    .update("codeChallengeWeight", (s) => FormField.validate(s))
+    .update("challengeWeight", (s) => FormField.validate(s))
     .update("priceWeight", (s) => FormField.validate(s))
     .update("weightsTotal", (s) => FormField.validate(s))
     .update("attachments", (s) => Attachments.validate(s));
@@ -518,7 +518,7 @@ export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
 export function isScoringTabValid(state: Immutable<State>): boolean {
   return (
     FormField.isValid(state.questionsWeight) &&
-    FormField.isValid(state.codeChallengeWeight) &&
+    FormField.isValid(state.challengeWeight) &&
     FormField.isValid(state.priceWeight) &&
     FormField.isValid(state.weightsTotal)
   );
@@ -542,8 +542,7 @@ export type Values = Omit<CreateRequestBody, "attachments" | "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
-  const codeChallengeWeight =
-    FormField.getValue(state.codeChallengeWeight) || 0;
+  const challengeWeight = FormField.getValue(state.challengeWeight) || 0;
   const priceWeight = FormField.getValue(state.priceWeight) || 0;
   const resourceQuestions = ResourceQuestions.getValues(
     state.resourceQuestions
@@ -560,7 +559,7 @@ export function getValues(state: Immutable<State>): Values {
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
     description: FormField.getValue(state.description),
     questionsWeight,
-    codeChallengeWeight,
+    challengeWeight,
     priceWeight,
     resourceQuestions
   };
@@ -730,10 +729,9 @@ function validateWeightsTotal(n: number | null): Validation<number> {
 
 function updateWeightsTotal(state: Immutable<State>): Immutable<State> {
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
-  const codeChallengeWeight =
-    FormField.getValue(state.codeChallengeWeight) || 0;
+  const challengeWeight = FormField.getValue(state.challengeWeight) || 0;
   const priceWeight = FormField.getValue(state.priceWeight) || 0;
-  const total = questionsWeight + codeChallengeWeight + priceWeight;
+  const total = questionsWeight + challengeWeight + priceWeight;
   return state.update("weightsTotal", (s) => {
     return FormField.validateAndSetValue(s, total, validateWeightsTotal);
   });
@@ -871,13 +869,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
-    case "codeChallengeWeight":
+    case "challengeWeight":
       return component_.base.updateChild({
         state,
-        childStatePath: ["codeChallengeWeight"],
+        childStatePath: ["challengeWeight"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("codeChallengeWeight", value),
+        mapChildMsg: (value) => adt("challengeWeight", value),
         updateAfter: (state) => [updateWeightsTotal(state), []]
       });
 
@@ -1158,11 +1156,11 @@ const ScoringView: component_.base.View<Props> = ({
         <Col xs="12" md="4">
           <NumberField.view
             extraChildProps={{ suffix: "%" }}
-            label="Interview/Code Challenge"
+            label="Interview/Challenge"
             disabled={disabled}
-            state={state.codeChallengeWeight}
+            state={state.challengeWeight}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("codeChallengeWeight" as const, value)
+              adt("challengeWeight" as const, value)
             )}
           />
         </Col>
