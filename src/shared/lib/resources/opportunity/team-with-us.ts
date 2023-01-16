@@ -33,6 +33,13 @@ export enum TWUOpportunityEvent {
   NoteAdded = "NOTE_ADDED"
 }
 
+export enum TWUServiceAreas {
+  Developer = "DEVELOPER",
+  DataSpecialist = "DATA_SPECIALIST",
+  ScrumMaster = "SCRUM_MASTER",
+  DevOpsSpecialist = "DEVOPS_SPECIALIST"
+}
+
 export interface TWUOpportunityHistoryRecord {
   id: Id;
   createdAt: Date;
@@ -146,6 +153,7 @@ export interface TWUOpportunity {
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
+  serviceArea: string;
   questionsWeight: number;
   challengeWeight: number;
   priceWeight: number;
@@ -229,6 +237,7 @@ export interface CreateRequestBody {
   location: string;
   proposalDeadline: string;
   assignmentDate: string;
+  serviceArea: string;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;

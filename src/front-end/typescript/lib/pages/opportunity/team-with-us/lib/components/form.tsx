@@ -7,6 +7,7 @@ import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
 import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
+import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
@@ -33,8 +34,10 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   TWUOpportunity,
   TWUOpportunityStatus,
+  TWUServiceAreas,
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
+import { stringsToOptions } from "front-end/lib/components/form-field/lib/select";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
@@ -74,6 +77,7 @@ export interface State {
   location: Immutable<ShortText.State>;
   proposalDeadline: Immutable<DateField.State>;
   assignmentDate: Immutable<DateField.State>;
+  serviceArea: Immutable<Select.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
   optionalSkills: Immutable<SelectMulti.State>;
   // Description Tab
@@ -99,6 +103,7 @@ export type Msg =
   | ADT<"location", ShortText.Msg>
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"assignmentDate", DateField.Msg>
+  | ADT<"serviceArea", Select.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
   | ADT<"optionalSkills", SelectMulti.Msg>
   // Description Tab
@@ -141,6 +146,9 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
   });
 }
 
+/**
+ * Initializes components on the page
+ */
 export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
@@ -253,6 +261,20 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         ? DateField.dateToValue(opportunity.assignmentDate)
         : null,
       id: "twu-opportunity-assignment-date"
+    }
+  });
+  const [serviceAreaState, serviceAreaCmds] = Select.init({
+    errors: [],
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select a Service Area."]);
+      }
+      return valid(option);
+    },
+    child: {
+      value: null,
+      id: "twu-service-area",
+      options: stringsToOptions(Object.values(TWUServiceAreas))
     }
   });
   const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
@@ -376,6 +398,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteDesc: immutable(remoteDescState),
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
+      serviceArea: immutable(serviceAreaState),
       mandatorySkills: immutable(mandatorySkillsState),
       optionalSkills: immutable(optionalSkillsState),
       description: immutable(descriptionState),
@@ -402,6 +425,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
         adt("assignmentDate", msg)
+      ),
+      ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
+        adt("serviceArea", msg)
       ),
       ...component_.cmd.mapMany(mandatorySkillsCmds, (msg) =>
         adt("mandatorySkills", msg)
@@ -472,6 +498,13 @@ export function setErrors(
   }
 }
 
+/**
+ * Checks and sets state. Takes a value, checks to see if it's of a type "Validate".
+ * Returns state with the new value.
+ *
+ * @param state
+ * @returns
+ */
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("title", (s) => FormField.validate(s))
@@ -481,6 +514,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("location", (s) => FormField.validate(s))
     .update("proposalDeadline", (s) => FormField.validate(s))
     .update("assignmentDate", (s) => FormField.validate(s))
+    .update("serviceArea", (s) => FormField.validate(s))
     .update("mandatorySkills", (s) => FormField.validate(s))
     .update("optionalSkills", (s) => FormField.validate(s))
     .update("description", (s) => FormField.validate(s))
@@ -492,6 +526,14 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("attachments", (s) => Attachments.validate(s));
 }
 
+/**
+ * Certain form fields belong to different tabs on the page.
+ * This checks that all fields in the 'Overview' tab (1 of 5) are valid, meaning
+ * the state is an ADT.
+ *
+ * @param state
+ * @returns
+ */
 export function isOverviewTabValid(state: Immutable<State>): boolean {
   const remoteOk = FormField.getValue(state.remoteOk) === "yes";
   return (
@@ -502,19 +544,38 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
     FormField.isValid(state.location) &&
     FormField.isValid(state.proposalDeadline) &&
     FormField.isValid(state.assignmentDate) &&
+    FormField.isValid(state.serviceArea) &&
     FormField.isValid(state.mandatorySkills) &&
     FormField.isValid(state.optionalSkills)
   );
 }
 
+/**
+ * Checks that all fields in the 'Description' tab (2 of 5) are valid.
+ *
+ * @param state
+ * @returns
+ */
 export function isDescriptionTabValid(state: Immutable<State>): boolean {
   return FormField.isValid(state.description);
 }
 
+/**
+ * Checks that all fields in the 'Resource Questions' tab (3 of 5) are valid.
+ *
+ * @param state
+ * @returns
+ */
 export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
   return ResourceQuestions.isValid(state.resourceQuestions);
 }
 
+/**
+ * Checks that all fields in the 'Scoring' tab (4 of 5) are valid.
+ *
+ * @param state
+ * @returns
+ */
 export function isScoringTabValid(state: Immutable<State>): boolean {
   return (
     FormField.isValid(state.questionsWeight) &&
@@ -524,10 +585,22 @@ export function isScoringTabValid(state: Immutable<State>): boolean {
   );
 }
 
+/**
+ * Checks that all fields in the 'Attachments' tab (5 of 5) are valid.
+ *
+ * @param state
+ * @returns
+ */
 export function isAttachmentsTabValid(state: Immutable<State>): boolean {
   return Attachments.isValid(state.attachments);
 }
 
+/**
+ * Checks if all (5) tabs have valid content
+ *
+ * @param state
+ * @returns boolean
+ */
 export function isValid(state: Immutable<State>): boolean {
   return (
     isOverviewTabValid(state) &&
@@ -540,6 +613,14 @@ export function isValid(state: Immutable<State>): boolean {
 
 export type Values = Omit<CreateRequestBody, "attachments" | "status">;
 
+/**
+ * Where state is stored as an object, some types
+ * require converting the values of state objects to their
+ * desired type (such as Date, string, or string[])
+ *
+ * @param state
+ * @returns
+ */
 export function getValues(state: Immutable<State>): Values {
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
   const challengeWeight = FormField.getValue(state.challengeWeight) || 0;
@@ -555,6 +636,7 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
+    serviceArea: Select.getValue(state.serviceArea),
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
     description: FormField.getValue(state.description),
@@ -823,6 +905,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("assignmentDate", value)
       });
 
+    case "serviceArea":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["serviceArea"],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("serviceArea", value)
+      });
+
     case "mandatorySkills":
       return component_.base.updateChild({
         state,
@@ -1034,10 +1125,18 @@ const OverviewView: component_.base.View<Props> = ({
       </Col>
 
       <Col md="8" xs="12">
-        <label>
-          <b>Service Area</b> PLACEHOLDER
-        </label>
-        <input></input>
+        <Select.view
+          extraChildProps={{}}
+          label="Service Area"
+          placeholder=""
+          help="Each TWU Opportunity must be matched to one and only one Service Area."
+          required
+          disabled={disabled}
+          state={state.serviceArea}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("serviceArea" as const, value)
+          )}
+        />
       </Col>
 
       <Col xs="12">

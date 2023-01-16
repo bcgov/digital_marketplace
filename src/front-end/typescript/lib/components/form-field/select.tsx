@@ -130,3 +130,14 @@ export function setValueFromString(
     };
   }
 }
+
+/**
+ * Converts the state object into a string value
+ *
+ * @param state
+ * @returns string | null
+ */
+export function getValue(state: Immutable<State>): string {
+  console.log(state);
+  return state.child.value ? state.child.value.toString() : "";
+}
