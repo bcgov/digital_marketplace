@@ -64,9 +64,6 @@ interface ValidatedCreateRequestBody
     | "history"
     | "publishedAt"
     | "subscribed"
-    | "inceptionPhase"
-    | "prototypePhase"
-    | "implementationPhase"
     | "resourceQuestions"
     | "challengeEndDate"
   > {
@@ -174,9 +171,6 @@ const create: crud.Create<
         remoteOk: get(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
-        // Can't use undefined as fallback for minTeamMembers
-        // as getNumber will default it to zero.
-        minTeamMembers: getNumber<null>(body, "minTeamMembers", null),
         mandatorySkills: getStringArray(body, "mandatorySkills"),
         optionalSkills: getStringArray(body, "optionalSkills"),
         description: getString(body, "description"),
@@ -184,13 +178,9 @@ const create: crud.Create<
         assignmentDate: getString(body, "assignmentDate"),
         questionsWeight: getNumber(body, "questionsWeight"),
         challengeWeight: getNumber(body, "challengeWeight"),
-        scenarioWeight: getNumber(body, "scenarioWeight"),
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        inceptionPhase: get(body, "inceptionPhase"),
-        prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase"),
         resourceQuestions: get(body, "resourceQuestions")
       };
     },

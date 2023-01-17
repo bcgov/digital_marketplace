@@ -164,7 +164,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     })
   );
   const addenda = getValidValue(
-    await readManyAddendum(connection, raw.id),
+    await readManyTWUAddendum(connection, raw.id),
     undefined
   );
   const resourceQuestions = getValidValue(
