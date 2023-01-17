@@ -37,7 +37,7 @@ export enum TWUServiceAreas {
   Developer = "DEVELOPER",
   DataSpecialist = "DATA_SPECIALIST",
   ScrumMaster = "SCRUM_MASTER",
-  DevOpsSpecialist = "DEVOPS_SPECIALIST"
+  DevopsSpecialist = "DEVOPS_SPECIALIST"
 }
 
 export interface TWUOpportunityHistoryRecord {

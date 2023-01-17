@@ -1,5 +1,6 @@
 import { component } from "front-end/lib/framework";
 import Icon from "front-end/lib/views/icon";
+import { startCase } from "lodash";
 import React from "react";
 import Select, { Props as SelectProps } from "react-select";
 import SelectCreatable from "react-select/creatable";
@@ -20,10 +21,36 @@ export type Options =
   | ADT<"options", Option[]>
   | ADT<"optionGroups", OptionGroup[]>;
 
+/**
+ * Converts an Array of strings into the format needed for a select list.
+ * For example, labels and values.
+ *
+ * @param values
+ * @returns adt
+ */
 export function stringsToOptions(values: string[]): ADT<"options", Option[]> {
   return adt(
     "options",
     values.map((value) => ({ value, label: value }))
+  );
+}
+
+/**
+ * Converts an object with strings for both keys and values into the format
+ * needed for a select list. For example, labels and values.
+ *
+ * @param values
+ * @returns adt
+ */
+export function objectToOptions(
+  values: Record<string, string>
+): ADT<"options", Option[]> {
+  return adt(
+    "options",
+    Object.entries(values).map(([key, value]) => ({
+      value,
+      label: startCase(key)
+    }))
   );
 }
 

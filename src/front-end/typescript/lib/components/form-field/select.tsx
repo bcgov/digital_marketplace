@@ -13,6 +13,7 @@ import { ADT } from "shared/lib/types";
 
 export {
   stringsToOptions,
+  objectToOptions,
   Options,
   OptionGroup,
   Option

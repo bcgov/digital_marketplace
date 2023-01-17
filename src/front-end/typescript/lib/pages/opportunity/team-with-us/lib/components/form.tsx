@@ -37,7 +37,6 @@ import {
   TWUServiceAreas,
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
-import { stringsToOptions } from "front-end/lib/components/form-field/lib/select";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
@@ -274,7 +273,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     child: {
       value: null,
       id: "twu-service-area",
-      options: stringsToOptions(Object.values(TWUServiceAreas))
+      options: Select.objectToOptions(TWUServiceAreas)
     }
   });
   const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
