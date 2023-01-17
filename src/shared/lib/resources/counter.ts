@@ -18,3 +18,7 @@ export function getCWUOpportunityViewsCounterName(id: Id): string {
 export function getSWUOpportunityViewsCounterName(id: Id): string {
   return `opportunity.sprint-with-us.${id}.views`;
 }
+
+export function getTWUOpportunityViewsCounterName(id: Id): string {
+  return `opportunity.team-with-us.${id}.views`;
+}

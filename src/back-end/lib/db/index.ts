@@ -46,6 +46,7 @@ export * from "back-end/lib/db/counter";
 export * from "back-end/lib/db/metrics";
 export * from "back-end/lib/db/opportunity/code-with-us";
 export * from "back-end/lib/db/opportunity/sprint-with-us";
+export * from "back-end/lib/db/opportunity/team-with-us";
 export * from "back-end/lib/db/organization";
 export * from "back-end/lib/db/proposal/code-with-us";
 export * from "back-end/lib/db/proposal/sprint-with-us";

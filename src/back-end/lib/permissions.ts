@@ -25,6 +25,10 @@ import {
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  CreateTWUOpportunityStatus,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
+import {
   doesOrganizationMeetSWUQualification,
   Organization
 } from "shared/lib/resources/organization";
@@ -699,6 +703,18 @@ export async function deleteSWUProposal(
     (session &&
       (await isSWUProposalAuthor(connection, session.user, proposalId))) ||
     false
+  );
+}
+
+// TWU Opportunities
+
+export function createTWUOpportunity(
+  session: Session,
+  createStatus: CreateTWUOpportunityStatus
+): boolean {
+  return (
+    isAdmin(session) ||
+    (isGovernment(session) && createStatus !== TWUOpportunityStatus.Published)
   );
 }
 
