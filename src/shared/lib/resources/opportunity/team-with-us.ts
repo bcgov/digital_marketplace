@@ -150,10 +150,10 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
+  serviceArea: string;
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
-  serviceArea: string;
   questionsWeight: number;
   challengeWeight: number;
   priceWeight: number;
@@ -237,9 +237,9 @@ export interface CreateRequestBody {
   location: string;
   proposalDeadline: string;
   assignmentDate: string;
-  serviceArea: string;
   mandatorySkills: string[];
   optionalSkills: string[];
+  serviceArea: string;
   description: string;
   questionsWeight: number;
   challengeWeight: number;

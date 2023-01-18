@@ -1,3 +1,4 @@
+import { Set } from "immutable";
 import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
@@ -9,7 +10,8 @@ import {
   MAX_RESOURCE_QUESTIONS,
   parseTWUOpportunityStatus,
   TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceAreas
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -23,6 +25,7 @@ import {
   validateDate,
   validateGenericString,
   validateNumber,
+  validateStringInArray,
   Validation
 } from "shared/lib/validation";
 import { isArray, isBoolean } from "util";
@@ -155,7 +158,7 @@ export function validateTeaser(raw: string): Validation<string> {
 }
 
 export function validateRemoteOk(raw: any): Validation<boolean> {
-  return isBoolean(raw)
+  return typeof raw === "boolean"
     ? valid(raw)
     : invalid(["Invalid remote option provided."]);
 }
@@ -236,7 +239,7 @@ export function validateQuestionsWeight(
 export function validateChallengeWeight(
   raw: string | number
 ): Validation<number> {
-  return validateNumber(raw, 0, 100, "code challenge weight", "a");
+  return validateNumber(raw, 0, 100, "challenge weight", "a");
 }
 
 export function validatePriceWeight(raw: string | number): Validation<number> {
@@ -245,4 +248,16 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 
 export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, "Status Note", 0, 1000);
+}
+/**
+ * Takes a string from the form and validates that its in an enumerated list
+ *
+ * @param raw
+ * @returns
+ */
+export function validateServiceArea(raw: string): Validation<string> {
+  const service_area: Immutable.Set<string> = Set(
+    Object.values(TWUServiceAreas)
+  );
+  return validateStringInArray(raw, service_area, "Service Area");
 }
