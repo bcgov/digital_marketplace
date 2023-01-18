@@ -153,6 +153,7 @@ export interface TWUOpportunity {
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
+  maxBudget: number;
   serviceArea: string;
   questionsWeight: number;
   challengeWeight: number;

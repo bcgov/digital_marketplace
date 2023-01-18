@@ -76,6 +76,7 @@ export interface State {
   location: Immutable<ShortText.State>;
   proposalDeadline: Immutable<DateField.State>;
   assignmentDate: Immutable<DateField.State>;
+  maxBudget: Immutable<NumberField.State>;
   serviceArea: Immutable<Select.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
   optionalSkills: Immutable<SelectMulti.State>;
@@ -102,6 +103,7 @@ export type Msg =
   | ADT<"location", ShortText.Msg>
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"assignmentDate", DateField.Msg>
+  | ADT<"maxBudget", NumberField.Msg>
   | ADT<"serviceArea", Select.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
   | ADT<"optionalSkills", SelectMulti.Msg>
@@ -262,6 +264,20 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "twu-opportunity-assignment-date"
     }
   });
+  const [maxBudgetState, maxBudgetCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return invalid(["Please enter a valid Maximum Budget."]);
+      }
+      return opportunityValidation.validateMaxBudget(v);
+    },
+    child: {
+      value: opportunity?.maxBudget ?? null,
+      id: "twu-opportunity-max-budget",
+      min: 1
+    }
+  });
   const [serviceAreaState, serviceAreaCmds] = Select.init({
     errors: [],
     validate: (option) => {
@@ -397,6 +413,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteDesc: immutable(remoteDescState),
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
+      maxBudget: immutable(maxBudgetState),
       serviceArea: immutable(serviceAreaState),
       mandatorySkills: immutable(mandatorySkillsState),
       optionalSkills: immutable(optionalSkillsState),
@@ -424,6 +441,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
         adt("assignmentDate", msg)
+      ),
+      ...component_.cmd.mapMany(maxBudgetCmds, (msg) =>
+        adt("maxBudget", msg)
       ),
       ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
         adt("serviceArea", msg)
@@ -904,6 +924,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("assignmentDate", value)
       });
 
+    case "maxBudget":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["maxBudget"],
+        childUpdate: NumberField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("maxBudget", value)
+      })
+
     case "serviceArea":
       return component_.base.updateChild({
         state,
@@ -1119,6 +1148,21 @@ const OverviewView: component_.base.View<Props> = ({
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("assignmentDate" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col xs="12">
+        <NumberField.view
+          extraChildProps={{ prefix: "$" }}
+          label="Maximum Budget"
+          placeholder="Maximum Budget"
+          help="Provide a dollar value for the maximum amount of money that you can spend to complete the work as provided in the opportunity’s details."
+          required
+          disabled={disabled}
+          state={state.maxBudget}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("maxBudget" as const, value)
           )}
         />
       </Col>
