@@ -1,14 +1,7 @@
 import { generateUuid } from "back-end/lib";
 import { Connection, Transaction, tryDb } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
-// import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
-// import {
-//   readOneTWUAwardedProposal,
-//   readSubmittedTWUProposalCount
-// } from "back-end/lib/db/proposal/team-with-us";
-import { RawTWUOpportunitySubscriber } from "back-end/lib/db/subscribers/team-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
-import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-wtih-us";
 import { QueryBuilder } from "knex";
 import { valid } from "shared/lib/http";
 import { Addendum } from "shared/lib/resources/addendum";
@@ -26,14 +19,15 @@ import {
   TWUOpportunityStatus,
   TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
-// import {
-//   TWUProposalSlim,
-//   TWUProposalStatus
-// } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
+
+/**
+ * Summary: This file holds SQL queries for interacting with data associated
+ * with Team With Us Opportunities
+ */
 
 interface CreateTWUOpportunityParams
   extends Omit<
@@ -45,9 +39,7 @@ interface CreateTWUOpportunityParams
     | "status"
     | "id"
     | "addenda"
-    | "inceptionPhase"
-    | "prototypePhase"
-    | "implementationPhase"
+    | "serviceArea"
     | "resourceQuestions"
   > {
   status: CreateTWUOpportunityStatus;
@@ -88,23 +80,13 @@ interface TWUOpportunityStatusRecord {
 export interface RawTWUOpportunity
   extends Omit<
     TWUOpportunity,
-    | "createdBy"
-    | "updatedBy"
-    | "attachments"
-    | "addenda"
-    | "resourceQuestions"
-    | "inceptionPhase"
-    | "prototypePhase"
-    | "implementationPhase"
+    "createdBy" | "updatedBy" | "attachments" | "addenda" | "resourceQuestions"
   > {
   createdBy?: Id;
   updatedBy?: Id;
   attachments: Id[];
   addenda: Id[];
   resourceQuestions: Id[];
-  inceptionPhase?: Id;
-  prototypePhase?: Id;
-  implementationPhase: Id;
   versionId?: Id;
 }
 
@@ -142,9 +124,6 @@ async function rawTWUOpportunityToTWUOpportunity(
     createdBy: createdById,
     updatedBy: updatedById,
     attachments: attachmentIds,
-    inceptionPhase: inceptionPhaseId,
-    prototypePhase: prototypePhaseId,
-    implementationPhase: implementationPhaseId,
     ...restOfRaw
   } = raw;
 
@@ -437,58 +416,6 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
   }
 );
 
-export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
-  async (connection, session) => {
-    let query = generateTWUOpportunityQuery(connection);
-
-    if (!session || session.user.type === UserType.Vendor) {
-      // Anonymous users and vendors can only see public opportunities
-      query = query.whereIn(
-        "statuses.status",
-        publicOpportunityStatuses as TWUOpportunityStatus[]
-      );
-    } else if (session.user.type === UserType.Government) {
-      // Gov basic users should only see private opportunities that they own, and public opportunities
-      query = query
-        .whereIn(
-          "statuses.status",
-          publicOpportunityStatuses as TWUOpportunityStatus[]
-        )
-        .orWhere(function () {
-          this.whereIn(
-            "statuses.status",
-            privateOpportunityStatuses as TWUOpportunityStatus[]
-          ).andWhere({ "opportunities.createdBy": session.user?.id });
-        });
-    }
-    // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
-    // Process results to eliminate fields not viewable by the current role
-    const results = await Promise.all(
-      (
-        await query
-      ).map(async (result) => {
-        if (session) {
-          result.subscribed = await isSubscribed(
-            connection,
-            result.id,
-            session.user.id
-          );
-        }
-        return processForRole(result, session);
-      })
-    );
-
-    return valid(
-      await Promise.all(
-        results.map(
-          async (raw) =>
-            await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, raw)
-        )
-      )
-    );
-  }
-);
-
 async function createTWUOpportunityAttachments(
   connection: Connection,
   trx: Transaction,
@@ -545,17 +472,17 @@ export const readOneTWUOpportunitySlim = tryDb<
     : valid(null);
 });
 
-async function isSubscribed(
-  connection: Connection,
-  oppId: Id,
-  userId: Id
-): Promise<boolean> {
-  return !!(await connection<RawTWUOpportunitySubscriber>(
-    "twuOpportunitySubscribers"
-  )
-    .where({ opportunity: oppId, user: userId })
-    .first());
-}
+// async function isSubscribed(
+//   connection: Connection,
+//   oppId: Id,
+//   userId: Id
+// ): Promise<boolean> {
+//   return !!(await connection<RawTWUOpportunitySubscriber>(
+//     "twuOpportunitySubscribers"
+//   )
+//     .where({ opportunity: oppId, user: userId })
+//     .first());
+// }
 
 export const readOneTWUOpportunity = tryDb<
   [Id, Session],
@@ -616,48 +543,6 @@ export const readOneTWUOpportunity = tryDb<
         .orderBy("createdAt", "desc")
         .first()
     )?.createdAt;
-
-    // Set awarded proponent flag if applicable
-    // let awardedProposal: TWUProposalSlim | null;
-    // if (result.status === TWUOpportunityStatus.Awarded) {
-    //   awardedProposal = getValidValue(
-    //     await readOneTWUAwardedProposal(connection, result.id, session),
-    //     null
-    //   );
-    //   if (
-    //     awardedProposal &&
-    //     awardedProposal.organization &&
-    //     awardedProposal.createdBy
-    //   ) {
-    //     // Use the score to determine if session is user is permitted to see detailed
-    //     // proponent information.
-    //     const fullPermissions = !!awardedProposal.totalScore;
-    //     let email: string | undefined;
-    //     if (fullPermissions) {
-    //       const result = await readOneOrganizationContactEmail(
-    //         connection,
-    //         awardedProposal.organization.id
-    //       );
-    //       email = isValid(result) && result.value ? result.value : undefined;
-    //     }
-    //     result.successfulProponent = {
-    //       id: awardedProposal.organization.id,
-    //       name: awardedProposal.organization.legalName,
-    //       email,
-    //       totalScore: awardedProposal.totalScore,
-    //       createdBy: fullPermissions ? awardedProposal.createdBy : undefined
-    //     };
-    //   }
-    // }
-
-    // If authenticated, add on subscription status flag
-    if (session) {
-      result.subscribed = await isSubscribed(
-        connection,
-        result.id,
-        session.user.id
-      );
-    }
 
     // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
     if (
@@ -907,37 +792,6 @@ export const updateTWUOpportunityVersion = tryDb<
   return valid(dbResult.value);
 });
 
-export const updateTWUOpportunityStatus = tryDb<
-  [Id, TWUOpportunityStatus, string, AuthenticatedSession],
-  TWUOpportunity
->(async (connection, id, status, note, session) => {
-  const now = new Date();
-  const [result] = await connection<
-    RawTWUOpportunityHistoryRecord & { opportunity: Id }
-  >("twuOpportunityStatuses").insert(
-    {
-      id: generateUuid(),
-      opportunity: id,
-      createdAt: now,
-      createdBy: session.user.id,
-      status,
-      note
-    },
-    "*"
-  );
-
-  if (!result) {
-    throw new Error("unable to update opportunity");
-  }
-
-  const dbResult = await readOneTWUOpportunity(connection, id, session);
-  if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error("unable to update opportunity");
-  }
-
-  return valid(dbResult.value);
-});
-
 export const addTWUOpportunityAddendum = tryDb<
   [Id, string, AuthenticatedSession],
   TWUOpportunity
@@ -1081,10 +935,10 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
         rawOpportunity.addenda = [];
         rawOpportunity.resourceQuestions = [];
 
-        twuOpportunityNotifications.handleTWUReadyForEvaluation(
-          connection,
-          await rawTWUOpportunityToTWUOpportunity(connection, rawOpportunity)
-        );
+        // twuOpportunityNotifications.handleTWUReadyForEvaluation(
+        //   connection,
+        //   await rawTWUOpportunityToTWUOpportunity(connection, rawOpportunity)
+        // );
       }
       return lapsedOpportunities.length;
     })

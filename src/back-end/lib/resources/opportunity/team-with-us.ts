@@ -1,7 +1,5 @@
-// import { FileRecord } from "back-end/../shared/lib/resources/file";
 import * as crud from "back-end/lib/crud";
 import * as db from "back-end/lib/db";
-import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-wtih-us";
 import * as permissions from "back-end/lib/permissions";
 import {
   basicResponse,
@@ -12,13 +10,7 @@ import {
 } from "back-end/lib/server";
 import { validateAttachments } from "back-end/lib/validation";
 import { get, omit } from "lodash";
-import {
-  addDays,
-  //   getBoolean,
-  getNumber,
-  getString,
-  getStringArray
-} from "shared/lib";
+import { addDays, getNumber, getString, getStringArray } from "shared/lib";
 import { invalid } from "shared/lib/http";
 import {
   CreateRequestBody as SharedCreateRequestBody,
@@ -26,28 +18,17 @@ import {
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
-  //   DeleteValidationErrors,
-  //   editableOpportunityStatuses,
-  //   isValidStatusChange,
   TWUOpportunity,
-  TWUOpportunitySlim,
   TWUOpportunityStatus
-  //   UpdateRequestBody as SharedUpdateRequestBody,
-  //   UpdateValidationErrors,
-  //   UpdateWithNoteRequestBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-// import { ADT, Id } from "shared/lib/types";
 import {
   allValid,
   getInvalidValue,
   getValidValue,
   isInvalid,
-  //   isValid,
-  //   optional,
   valid,
   validateUUID
-  //   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 
@@ -66,64 +47,18 @@ interface ValidatedCreateRequestBody
     | "subscribed"
     | "resourceQuestions"
     | "challengeEndDate"
+    | "serviceArea"
   > {
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-// interface ValidatedUpdateRequestBody {
-//   session: AuthenticatedSession;
-//   body:
-//     | ADT<"edit", ValidatedUpdateEditRequestBody>
-//     | ADT<"submitForReview", string>
-//     | ADT<"publish", string>
-//     | ADT<"startChallenge", string>
-//     | ADT<"suspend", string>
-//     | ADT<"cancel", string>
-//     | ADT<"addAddendum", string>
-//     | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>;
-// }
-
-// type ValidatedUpdateEditRequestBody = Omit<
-//   ValidatedCreateRequestBody,
-//   "status" | "session"
-// >;
-
-// interface ValidatedUpdateWithNoteRequestBody
-//   extends Omit<UpdateWithNoteRequestBody, "attachments"> {
-//   attachments: FileRecord[];
-// }
-
-// type ValidatedDeleteRequestBody = Id;
-
 type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
 
-// type UpdateRequestBody = SharedUpdateRequestBody | null;
-
 const routeNamespace = "opportunities/team-with-us";
-
-const readMany: crud.ReadMany<Session, db.Connection> = (
-  connection: db.Connection
-) => {
-  return nullRequestBodyHandler<
-    JsonResponseBody<TWUOpportunitySlim[] | string[]>,
-    Session
-  >(async (request) => {
-    const respond = (code: number, body: TWUOpportunitySlim[] | string[]) =>
-      basicResponse(code, request.session, makeJsonResponseBody(body));
-    const dbResult = await db.readManyTWUOpportunities(
-      connection,
-      request.session
-    );
-    if (isInvalid(dbResult)) {
-      return respond(503, [db.ERROR_MESSAGE]);
-    }
-    return respond(200, dbResult.value);
-  });
-};
 
 const readOne: crud.ReadOne<Session, db.Connection> = (
   connection: db.Connection
@@ -173,6 +108,7 @@ const create: crud.Create<
         location: getString(body, "location"),
         mandatorySkills: getStringArray(body, "mandatorySkills"),
         optionalSkills: getStringArray(body, "optionalSkills"),
+        serviceArea: getString(body, "serviceArea"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
@@ -193,6 +129,7 @@ const create: crud.Create<
         location,
         mandatorySkills,
         optionalSkills,
+        serviceArea,
         description,
         proposalDeadline,
         assignmentDate,
@@ -256,6 +193,7 @@ const create: crud.Create<
           location,
           mandatorySkills,
           optionalSkills,
+          serviceArea,
           description,
           questionsWeight,
           challengeWeight,
@@ -295,6 +233,8 @@ const create: crud.Create<
         opportunityValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
+      const validatedServiceArea =
+        opportunityValidation.validateServiceArea(serviceArea);
       const validatedDescription =
         opportunityValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -315,6 +255,7 @@ const create: crud.Create<
           validatedLocation,
           validatedMandatorySkills,
           validatedOptionalSkills,
+          validatedServiceArea,
           validatedDescription,
           validatedQuestionsWeight,
           validatedChallengeWeight,
@@ -347,6 +288,7 @@ const create: crud.Create<
           location: validatedLocation.value,
           mandatorySkills: validatedMandatorySkills.value,
           optionalSkills: validatedOptionalSkills.value,
+          serviceArea: validatedServiceArea.value,
           description: validatedDescription.value,
           questionsWeight: validatedQuestionsWeight.value,
           challengeWeight: validatedChallengeWeight.value,
@@ -409,20 +351,20 @@ const create: crud.Create<
           );
         }
         // If submitted for review, notify
-        if (dbResult.value.status === TWUOpportunityStatus.UnderReview) {
-          twuOpportunityNotifications.handleTWUSubmittedForReview(
-            connection,
-            dbResult.value
-          );
-        }
-        // If published, notify subscribed users
-        if (dbResult.value.status === TWUOpportunityStatus.Published) {
-          twuOpportunityNotifications.handleTWUPublished(
-            connection,
-            dbResult.value,
-            false
-          );
-        }
+        // if (dbResult.value.status === TWUOpportunityStatus.UnderReview) {
+        //   twuOpportunityNotifications.handleTWUSubmittedForReview(
+        //     connection,
+        //     dbResult.value
+        //   );
+        // }
+        // // If published, notify subscribed users
+        // if (dbResult.value.status === TWUOpportunityStatus.Published) {
+        //   twuOpportunityNotifications.handleTWUPublished(
+        //     connection,
+        //     dbResult.value,
+        //     false
+        //   );
+        // }
         return basicResponse(
           201,
           request.session,
@@ -443,10 +385,7 @@ const create: crud.Create<
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
-  readMany,
   create
-  // update,
-  // delete: delete_
 };
 
 export default resource;
