@@ -261,7 +261,7 @@ parameters:
 - name: MEMORY_LIMIT
   displayName: Resources Memory Limit
   required: true
-  value: 240Mi
+  value: 360Mi
 
 - name: REPLICAS
   displayName: The number of replicas to run
