@@ -315,7 +315,8 @@ const router: router_.Router<Route> = {
             invitation:
               affiliationId && response
                 ? { affiliationId, response }
-                : undefined
+                : undefined,
+            ...('unsubscribe' in query && {unsubscribe: true})
           }
         };
       }
@@ -512,6 +513,9 @@ const router: router_.Router<Route> = {
             `invitationAffiliationId=${route.value.invitation.affiliationId}`
           );
           query.push(`invitationResponse=${route.value.invitation.response}`);
+        }
+        if (route.value.unsubscribe) {
+          query.push("unsubscribe")
         }
         let qs = "";
         if (query.length) {

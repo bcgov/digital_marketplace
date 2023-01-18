@@ -239,12 +239,12 @@ parameters:
 - description: Starting amount of memory the container can use.
   displayName: Memory Request
   name: MEMORY_REQUEST
-  value: 200Mi
+  value: 220Mi
 
 - description: Maximum amount of memory the container can use.
   displayName: Memory Limit
   name: MEMORY_LIMIT
-  value: 400Mi
+  value: 660Mi
 
 - description: The OpenShift Namespace where the patroni and postgresql ImageStream
     resides.
