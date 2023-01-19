@@ -89,6 +89,7 @@ export const request: RequestFunction = async (
   data: any,
   headers: any
 ) => {
+  console.log(data);
   try {
     const axiosResponse = await axios({
       method,
@@ -99,6 +100,7 @@ export const request: RequestFunction = async (
       },
       headers
     });
+    console.log(axiosResponse);
     return {
       status: axiosResponse.status,
       data: axiosResponse.data

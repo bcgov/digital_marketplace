@@ -40,8 +40,14 @@ export type DeleteAction<ValidResponse, InvalidResponse, Msg> = (
   handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
 ) => component.cmd.Cmd<Msg>;
 
-// makeCreateAction
-
+/**
+ * Ensuring the http request is formatted in the correct way, prior to sending to the back-end
+ *
+ * @param path
+ * @param transformResponse
+ * @param query
+ * @returns
+ */
 export function makeCreateAction<
   RequestBody extends object | null,
   RawResponse,

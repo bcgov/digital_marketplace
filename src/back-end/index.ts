@@ -30,6 +30,7 @@ import fileResource from "back-end/lib/resources/file";
 import metricsResource from "back-end/lib/resources/metrics";
 import codeWithUsOpportunityResource from "back-end/lib/resources/opportunity/code-with-us";
 import sprintWithUsOpportunityResource from "back-end/lib/resources/opportunity/sprint-with-us";
+import teamWithUsOpportunityResource from "back-end/lib/resources/opportunity/team-with-us";
 import organizationResource from "back-end/lib/resources/organization";
 import ownedOrganizationResource from "back-end/lib/resources/owned-organization";
 import codeWithUsProposalResource from "back-end/lib/resources/proposal/code-with-us";
@@ -128,6 +129,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsOpportunityResource,
     contentResource,
     sprintWithUsOpportunityResource,
+    teamWithUsOpportunityResource,
     codeWithUsProposalResource,
     sprintWithUsProposalResource,
     codeWithUsSubscriberResource,
