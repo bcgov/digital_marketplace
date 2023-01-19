@@ -24,7 +24,7 @@ enum TWUServiceArea {
   Developer = "DEVELOPER",
   DataSpecialist = "DATA_SPECIALIST",
   ScrumMaster = "SCRUM_MASTER",
-  DevOpsSpecialist = "DEVOPS_SPECIALIST"
+  DevopsSpecialist = "DEVOPS_SPECIALIST"
 }
 
 // eslint-disable-next-line no-empty
@@ -51,6 +51,7 @@ export async function up(connection: Knex): Promise<void> {
     table.boolean("remoteOk").defaultTo(false).notNullable();
     table.text("remoteDesc").notNullable();
     table.text("location").notNullable();
+    table.integer("maxBudget").notNullable();
     table.specificType("mandatorySkills", "text ARRAY").notNullable();
     table.specificType("optionalSkills", "text ARRAY").notNullable();
     table.text("description").notNullable();
@@ -60,6 +61,7 @@ export async function up(connection: Knex): Promise<void> {
     table.integer("challengeWeight").notNullable();
     table.integer("priceWeight").notNullable();
     table.enu("serviceArea", Object.values(TWUServiceArea)).notNullable();
+    table.integer("targetAllocation").notNullable();
   });
   logger.info("Created twuOpportunityVersions table.");
 
