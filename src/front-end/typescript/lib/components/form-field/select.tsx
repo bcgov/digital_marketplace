@@ -139,6 +139,5 @@ export function setValueFromString(
  * @returns string | null
  */
 export function getValue(state: Immutable<State>): string {
-  console.log(state);
-  return state.child.value ? state.child.value.toString() : "";
+  return state.child.value?.value ? state.child.value?.value : "";
 }
