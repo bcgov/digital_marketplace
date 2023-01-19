@@ -20,7 +20,7 @@ import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us
 import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { getNumber } from "shared/lib";
+import { arrayFromRange, getNumber } from "shared/lib";
 import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
 import {
@@ -78,6 +78,7 @@ export interface State {
   assignmentDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
   serviceArea: Immutable<Select.State>;
+  targetAllocation: Immutable<Select.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
   optionalSkills: Immutable<SelectMulti.State>;
   // Description Tab
@@ -105,6 +106,7 @@ export type Msg =
   | ADT<"assignmentDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
   | ADT<"serviceArea", Select.Msg>
+  | ADT<"targetAllocation", Select.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
   | ADT<"optionalSkills", SelectMulti.Msg>
   // Description Tab
@@ -292,6 +294,36 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: Select.objectToOptions(TWUServiceAreas)
     }
   });
+  const selectedTargetAllocationOption = opportunity?.targetAllocation
+    ? {
+        label: String(opportunity.targetAllocation),
+        value: String(opportunity.targetAllocation)
+      }
+    : null;
+  const [targetAllocationState, targetAllocationCmds] = Select.init({
+    errors: [],
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select a Target Allocation."]);
+      }
+      return valid(option);
+    },
+    child: {
+      value: selectedTargetAllocationOption ?? null,
+      id: "swu-opportunity-target-allocation",
+      options: adt(
+        "options",
+        [...arrayFromRange<Select.Option>(10, {
+          offset: 1, 
+          step: 10, 
+          cb: number => {
+            const value = String(number);
+            return {value, label: value};
+          }
+        })].reverse()
+      )
+    }
+  });
   const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
     errors: [],
     validate: (v) => {
@@ -415,6 +447,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       assignmentDate: immutable(assignmentDateState),
       maxBudget: immutable(maxBudgetState),
       serviceArea: immutable(serviceAreaState),
+      targetAllocation: immutable(targetAllocationState),
       mandatorySkills: immutable(mandatorySkillsState),
       optionalSkills: immutable(optionalSkillsState),
       description: immutable(descriptionState),
@@ -447,6 +480,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
         adt("serviceArea", msg)
+      ),
+      ...component_.cmd.mapMany(targetAllocationCmds, (msg) =>
+        adt("targetAllocation", msg)
       ),
       ...component_.cmd.mapMany(mandatorySkillsCmds, (msg) =>
         adt("mandatorySkills", msg)
@@ -630,6 +666,17 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
+/**
+ * Gets the numerical value of a select field.
+ *
+ * @param state
+ * @returns number | null
+ */
+export function getNumberSelectValue(state: Immutable<Select.State>) {
+  const value = parseFloat(Select.getValue(state));
+  return isNaN(value) ? null : value;
+}
+
 export type Values = Omit<CreateRequestBody, "attachments" | "status">;
 
 /**
@@ -644,6 +691,8 @@ export function getValues(state: Immutable<State>): Values {
   const questionsWeight = FormField.getValue(state.questionsWeight) || 0;
   const challengeWeight = FormField.getValue(state.challengeWeight) || 0;
   const priceWeight = FormField.getValue(state.priceWeight) || 0;
+  const maxBudget = FormField.getValue(state.maxBudget) || 0;
+  const targetAllocation = getNumberSelectValue(state.targetAllocation) || 0;
   const resourceQuestions = ResourceQuestions.getValues(
     state.resourceQuestions
   );
@@ -655,7 +704,9 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
+    maxBudget,
     serviceArea: Select.getValue(state.serviceArea),
+    targetAllocation,
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
     description: FormField.getValue(state.description),
@@ -942,6 +993,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("serviceArea", value)
       });
 
+      case "targetAllocation":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["targetAllocation"],
+          childUpdate: Select.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("targetAllocation", value)
+        });
+
     case "mandatorySkills":
       return component_.base.updateChild({
         state,
@@ -1167,7 +1227,7 @@ const OverviewView: component_.base.View<Props> = ({
         />
       </Col>
 
-      <Col md="8" xs="12">
+      <Col md="6" xs="12">
         <Select.view
           extraChildProps={{}}
           label="Service Area"
@@ -1178,6 +1238,21 @@ const OverviewView: component_.base.View<Props> = ({
           state={state.serviceArea}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("serviceArea" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col md="6" xs="12">
+        <Select.view
+          extraChildProps={{}}
+          label="Target Allocation"
+          placeholder="% Allocation"
+          help="Indicate the percentage of full-time allocation for the successful proponent."
+          required
+          disabled={disabled}
+          state={state.targetAllocation}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("targetAllocation" as const, value)
           )}
         />
       </Col>
