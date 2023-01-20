@@ -131,13 +131,3 @@ export function setValueFromString(
     };
   }
 }
-
-/**
- * Converts the state object into a string value
- *
- * @param state
- * @returns string | null
- */
-export function getValue(state: Immutable<State>): string {
-  return state.child.value?.value ? state.child.value?.value : "";
-}
