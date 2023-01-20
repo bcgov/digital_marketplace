@@ -343,7 +343,6 @@ const create: crud.Create<
           omit(request.body, "session"),
           request.body.session
         );
-        console.log(dbResult);
         if (isInvalid(dbResult)) {
           return basicResponse(
             503,
