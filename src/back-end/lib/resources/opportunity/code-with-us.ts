@@ -1056,6 +1056,11 @@ const delete_: crud.Delete<
   };
 };
 
+/**
+ * Resources defined here are exported for use in the router
+ *
+ * @see {@link createRouter} in 'src/back-end/index.ts'
+ */
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readMany,

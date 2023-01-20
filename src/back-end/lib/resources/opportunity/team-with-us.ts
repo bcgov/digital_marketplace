@@ -58,6 +58,11 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
 
+/**
+ * Defined for use in the router
+ *
+ * @see {@link resource}
+ */
 const routeNamespace = "opportunities/team-with-us";
 
 const readOne: crud.ReadOne<Session, db.Connection> = (
@@ -89,6 +94,21 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
   });
 };
 
+/**
+ * Creates a new Team With Us Opportunity.
+ *
+ * @remarks
+ *
+ * Handles both the request and response. Sequence is to parse
+ * the request, validate fields, create the opportunity and
+ * generate the response. It also triggers notifications (email)
+ * in certain conditions, such as if the status of the opportunity
+ * changes to publish.
+ *
+ *
+ * @param connection - database connection
+ * @returns - a response body that is valid or invalid
+ */
 const create: crud.Create<
   Session,
   db.Connection,
@@ -382,6 +402,11 @@ const create: crud.Create<
   };
 };
 
+/**
+ * Resources defined here are exported for use in the router
+ *
+ * @see {@link createRouter} in 'src/back-end/index.ts'
+ */
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
