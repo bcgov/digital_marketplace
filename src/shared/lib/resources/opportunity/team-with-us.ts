@@ -153,7 +153,9 @@ export interface TWUOpportunity {
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
+  maxBudget: number;
   serviceArea: string;
+  targetAllocation: number;
   questionsWeight: number;
   challengeWeight: number;
   priceWeight: number;
@@ -237,7 +239,9 @@ export interface CreateRequestBody {
   location: string;
   proposalDeadline: string;
   assignmentDate: string;
+  maxBudget: number;
   serviceArea: string;
+  targetAllocation: number;
   mandatorySkills: string[];
   optionalSkills: string[];
   description: string;

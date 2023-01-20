@@ -279,3 +279,23 @@ export function sleep(ms: number): Promise<void> {
 export function countWords(raw: string): number {
   return count(raw, "words", {});
 }
+
+/**
+ * Creates an array derived from a range of numbers with
+ * the provided length. 
+ *
+ * @param length - length of the element array
+ * @param offset - offset from the start
+ * @param step - distance between values of the elements
+ * @param cb - formats array elements
+ * @returns Element[]
+ */
+export function arrayFromRange<Element = number>(
+  length: number,
+  {offset = 0, step = 1, cb = (number: number) => number as Element} = {}
+): Element[] {
+  return Array.from({length}, (_, i) => {
+    const number = (i + offset) * step;
+    return cb(number);
+  })
+}
