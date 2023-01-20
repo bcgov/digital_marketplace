@@ -28,7 +28,6 @@ import {
   validateStringInArray,
   Validation
 } from "shared/lib/validation";
-import { isArray, isBoolean } from "util";
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
@@ -59,7 +58,7 @@ export function validateCreateTWUOpportunityStatus(
 }
 
 export function validateFullTime(raw: any): Validation<boolean> {
-  return isBoolean(raw)
+  return typeof raw === 'boolean'
     ? valid(raw)
     : invalid(["You must provide a boolean value."]);
 }
@@ -141,7 +140,7 @@ export function validateResourceQuestions(
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors
 > {
-  if (!isArray(raw)) {
+  if (!Array.isArray(raw)) {
     return invalid([
       { parseFailure: ["Please provide an array of resource questions"] }
     ]);
@@ -158,7 +157,7 @@ export function validateTeaser(raw: string): Validation<string> {
 }
 
 export function validateRemoteOk(raw: any): Validation<boolean> {
-  return typeof raw === "boolean"
+  return typeof raw === 'boolean'
     ? valid(raw)
     : invalid(["Invalid remote option provided."]);
 }
@@ -177,6 +176,12 @@ export function validateRemoteDesc(
 
 export function validateLocation(raw: string): Validation<string> {
   return validateGenericString(raw, "Location", 1);
+}
+
+export function validateMaxBudget(
+  raw: string | number
+): Validation<number> {
+  return validateNumber(raw, 1, undefined, "Maximum Budget")
 }
 
 export function validateMandatorySkills(
