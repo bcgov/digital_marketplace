@@ -335,27 +335,27 @@ export function generateTWUOpportunityQuery(
   return query;
 }
 
-async function createTWUOpportunityNoteAttachments(
-  connection: Connection,
-  trx: Transaction,
-  eventId: Id,
-  attachments: FileRecord[]
-) {
-  for (const attachment of attachments) {
-    const [attachmentResult] = await connection("twuOpportunityNoteAttachments")
-      .transacting(trx)
-      .insert(
-        {
-          event: eventId,
-          file: attachment.id
-        },
-        "*"
-      );
-    if (!attachmentResult) {
-      throw new Error("Unable to create opportunity attachment");
-    }
-  }
-}
+// async function createTWUOpportunityNoteAttachments(
+//   connection: Connection,
+//   trx: Transaction,
+//   eventId: Id,
+//   attachments: FileRecord[]
+// ) {
+//   for (const attachment of attachments) {
+//     const [attachmentResult] = await connection("twuOpportunityNoteAttachments")
+//       .transacting(trx)
+//       .insert(
+//         {
+//           event: eventId,
+//           file: attachment.id
+//         },
+//         "*"
+//       );
+//     if (!attachmentResult) {
+//       throw new Error("Unable to create opportunity attachment");
+//     }
+//   }
+// }
 
 export async function isTWUOpportunityAuthor(
   connection: Connection,
@@ -560,16 +560,16 @@ export const readOneTWUOpportunity = tryDb<
       }
 
       // For reach status record, fetch any attachments and add their ids to the record as an array
-      await Promise.all(
-        rawHistory.map(
-          async (raw) =>
-            (raw.attachments = (
-              await connection<{ file: Id }>("twuOpportunityNoteAttachments")
-                .where({ event: raw.id })
-                .select("file")
-            ).map((row) => row.file))
-        )
-      );
+      // await Promise.all(
+      //   rawHistory.map(
+      //     async (raw) =>
+      //       (raw.attachments = (
+      //         await connection<{ file: Id }>("twuOpportunityNoteAttachments")
+      //           .where({ event: raw.id })
+      //           .select("file")
+      //       ).map((row) => row.file))
+      //   )
+      // );
 
       result.history = await Promise.all(
         rawHistory.map(
@@ -673,8 +673,7 @@ export const createTWUOpportunity = tryDb<
             opportunity: opportunityRootRecord.id,
             createdAt: now,
             createdBy: session.user.id,
-            status,
-            note: ""
+            status
           },
           "*"
         );
@@ -1012,12 +1011,12 @@ export const addTWUOpportunityNote = tryDb<
       throw new Error("unable to create note for opportunity");
     }
 
-    await createTWUOpportunityNoteAttachments(
-      connection,
-      trx,
-      event.id,
-      noteParams.attachments
-    );
+    // await createTWUOpportunityNoteAttachments(
+    //   connection,
+    //   trx,
+    //   event.id,
+    //   noteParams.attachments
+    // );
   });
 
   const dbResult = await readOneTWUOpportunity(connection, id, session);
