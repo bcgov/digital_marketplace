@@ -233,12 +233,7 @@ async function rawHistoryRecordToHistoryRecord(
   _session: Session,
   raw: RawTWUOpportunityHistoryRecord
 ): Promise<TWUOpportunityHistoryRecord> {
-  const {
-    createdBy: createdById,
-    status,
-    event,
-    ...restOfRaw
-  } = raw;
+  const { createdBy: createdById, status, event, ...restOfRaw } = raw;
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), null)
     : null;
@@ -301,13 +296,16 @@ export function generateTWUOpportunityQuery(
       "versions.remoteOk",
       "versions.location",
       "versions.proposalDeadline",
-      "statuses.status"
+      "statuses.status",
+      "versions.serviceArea"
     );
 
   if (full) {
     query.select<RawTWUOpportunity[]>(
       "versions.remoteDesc",
       "versions.serviceArea",
+      "versions.maxBudget",
+      "versions.targetAllocation",
       "versions.mandatorySkills",
       "versions.optionalSkills",
       "versions.description",
