@@ -266,3 +266,15 @@ export function validateServiceArea(raw: string): Validation<string> {
   );
   return validateStringInArray(raw, service_area, "Service Area");
 }
+
+/**
+ * Takes a number and validates that it's a percentage of full-time allocation
+ *
+ * @param raw
+ * @returns
+ */
+export function validateTargetAllocation(
+  raw: number
+): Validation<number> {
+  return validateNumber(raw, 1, 100, "Target Allocation")
+}

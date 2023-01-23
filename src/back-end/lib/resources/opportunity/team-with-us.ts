@@ -129,9 +129,11 @@ const create: crud.Create<
         mandatorySkills: getStringArray(body, "mandatorySkills"),
         optionalSkills: getStringArray(body, "optionalSkills"),
         serviceArea: getString(body, "serviceArea"),
+        targetAllocation: getNumber(body, "targetAllocation"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
+        maxBudget: getNumber(body, "maxBudget"),
         questionsWeight: getNumber(body, "questionsWeight"),
         challengeWeight: getNumber(body, "challengeWeight"),
         priceWeight: getNumber(body, "priceWeight"),
@@ -150,9 +152,11 @@ const create: crud.Create<
         mandatorySkills,
         optionalSkills,
         serviceArea,
+        targetAllocation,
         description,
         proposalDeadline,
         assignmentDate,
+        maxBudget,
         questionsWeight,
         challengeWeight,
         priceWeight,
@@ -211,9 +215,11 @@ const create: crud.Create<
           remoteOk,
           remoteDesc,
           location,
+          maxBudget,
           mandatorySkills,
           optionalSkills,
           serviceArea,
+          targetAllocation,
           description,
           questionsWeight,
           challengeWeight,
@@ -249,12 +255,16 @@ const create: crud.Create<
       );
       const validatedLocation =
         opportunityValidation.validateLocation(location);
+      const validatedMaxBudget =
+        opportunityValidation.validateMaxBudget(location);
       const validatedMandatorySkills =
         opportunityValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
       const validatedServiceArea =
         opportunityValidation.validateServiceArea(serviceArea);
+      const validatedTargetAllocation =
+        opportunityValidation.validateTargetAllocation(targetAllocation)
       const validatedDescription =
         opportunityValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -273,9 +283,11 @@ const create: crud.Create<
           validatedRemoteOk,
           validatedRemoteDesc,
           validatedLocation,
+          validatedMaxBudget,
           validatedMandatorySkills,
           validatedOptionalSkills,
           validatedServiceArea,
+          validatedTargetAllocation,
           validatedDescription,
           validatedQuestionsWeight,
           validatedChallengeWeight,
@@ -306,9 +318,11 @@ const create: crud.Create<
           remoteOk: validatedRemoteOk.value,
           remoteDesc: validatedRemoteDesc.value,
           location: validatedLocation.value,
+          maxBudget: validatedMaxBudget.value,
           mandatorySkills: validatedMandatorySkills.value,
           optionalSkills: validatedOptionalSkills.value,
           serviceArea: validatedServiceArea.value,
+          targetAllocation: validatedTargetAllocation.value,
           description: validatedDescription.value,
           questionsWeight: validatedQuestionsWeight.value,
           challengeWeight: validatedChallengeWeight.value,

@@ -113,7 +113,6 @@ interface RawTWUOpportunityHistoryRecord
   createdBy: Id | null;
   status?: TWUOpportunityStatus;
   event?: TWUOpportunityEvent;
-  attachments: Id[];
 }
 
 async function rawTWUOpportunityToTWUOpportunity(
@@ -238,23 +237,11 @@ async function rawHistoryRecordToHistoryRecord(
     createdBy: createdById,
     status,
     event,
-    attachments: attachmentIds,
     ...restOfRaw
   } = raw;
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), null)
     : null;
-  const attachments = await Promise.all(
-    attachmentIds.map(async (id) => {
-      const result = getValidValue(await readOneFileById(connection, id), null);
-      if (!result) {
-        throw new Error(
-          "unable to process opportunity status record attachments"
-        );
-      }
-      return result;
-    })
-  );
 
   if (!status && !event) {
     throw new Error("unable to process opportunity status record");
@@ -265,8 +252,7 @@ async function rawHistoryRecordToHistoryRecord(
     createdBy,
     type: status
       ? adt("status", status as TWUOpportunityStatus)
-      : adt("event", event as TWUOpportunityEvent),
-    attachments
+      : adt("event", event as TWUOpportunityEvent)
   };
 }
 

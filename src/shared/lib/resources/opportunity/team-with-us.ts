@@ -46,7 +46,6 @@ export interface TWUOpportunityHistoryRecord {
   createdBy: UserSlim | null;
   type: ADT<"status", TWUOpportunityStatus> | ADT<"event", TWUOpportunityEvent>;
   note: string;
-  attachments: FileRecord[];
 }
 
 export function parseTWUOpportunityStatus(
