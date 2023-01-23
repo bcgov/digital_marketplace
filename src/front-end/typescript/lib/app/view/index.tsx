@@ -35,7 +35,7 @@ import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprin
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
-// import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
+import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 // import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
@@ -274,6 +274,7 @@ function pageToViewPageProps(
         (state) => state.pages.opportunitySWUView,
         (value) => ({ tag: "pageOpportunitySWUView", value })
       );
+
     case "opportunityTWUCreate":
       return makeViewPageProps(
         props,
@@ -281,13 +282,14 @@ function pageToViewPageProps(
         (state) => state.pages.opportunityTWUCreate,
         (value) => ({ tag: "pageOpportunityTWUCreate", value })
       );
-    // case "opportunityTWUEdit":
-    //   return makeViewPageProps(
-    //     props,
-    //     PageOpportunityTWUEdit.component,
-    //     (state) => state.pages.opportunityTWUEdit,
-    //     (value) => ({ tag: "pageOpportunityTWUEdit", value })
-    //   );
+
+    case "opportunityTWUEdit":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUEdit.component,
+        (state) => state.pages.opportunityTWUEdit,
+        (value) => ({ tag: "pageOpportunityTWUEdit", value })
+      );
     // case "opportunityTWUView":
     //   return makeViewPageProps(
     //     props,

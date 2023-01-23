@@ -198,7 +198,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const result = msg.value;
         switch (result.tag) {
           case "valid": {
-            const [resultFormState, resultCmds] = result.value;
+            const [resultFormState, resultCmds, opportunity] = result.value;
             return [
               state.set("form", resultFormState),
               [
@@ -206,14 +206,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                   resultCmds,
                   (msg) => adt("form", msg) as Msg
                 ),
-                // component_.cmd.dispatch(
-                //   component_.global.newRouteMsg(
-                //     adt("opportunityTWUEdit", {
-                //       opportunityId: opportunity.id,
-                //       tab: "opportunity" as const
-                //     }) as Route
-                //   )
-                // ),
+                component_.cmd.dispatch(
+                  component_.global.newRouteMsg(
+                    adt("opportunityTWUEdit", {
+                      opportunityId: opportunity.id,
+                      tab: "opportunity" as const
+                    }) as Route
+                  )
+                ),
                 component_.cmd.dispatch(
                   component_.global.showToastMsg(
                     adt("success", toasts.draftCreated.success)

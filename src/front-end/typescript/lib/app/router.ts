@@ -4,6 +4,7 @@ import { component, router as router_ } from "front-end/lib/framework";
 import * as PageNotice from "front-end/lib/pages/notice";
 import * as CWUOpportunityEditTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as SWUOpportunityEditTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
+import * as TWUOpportunityEditTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import * as OrganizationEditTab from "front-end/lib/pages/organization/edit/tab";
 import * as CWUProposalEditTab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/view/tab";
@@ -255,6 +256,18 @@ const router: router_.Router<Route> = {
         return {
           tag: "opportunityTWUCreate",
           value: null
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId/edit"),
+      makeRoute({ params, query }) {
+        return {
+          tag: "opportunityTWUEdit",
+          value: {
+            opportunityId: params.opportunityId || "",
+            tab: TWUOpportunityEditTab.parseTabId(query.tab) || undefined
+          }
         };
       }
     },
@@ -612,12 +625,12 @@ const router: router_.Router<Route> = {
         );
       case "opportunityTWUCreate":
         return prefixPath("/opportunities/team-with-us/create");
-      // case "opportunityTWUEdit":
-      //   return prefixPath(
-      //     `/opportunities/team-with-us/${route.value.opportunityId}/edit${
-      //       route.value.tab ? `?tab=${route.value.tab}` : ""
-      //     }`
-      //   );
+      case "opportunityTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
       // case "opportunityTWUView":
       //   return prefixPath(
       //     `/opportunities/team-with-us/${route.value.opportunityId}`

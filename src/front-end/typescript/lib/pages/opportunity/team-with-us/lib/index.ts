@@ -161,7 +161,6 @@ export function opportunityToHistoryItems({
           : undefined
     },
     note: s.note,
-    attachments: s.attachments,
     createdAt: s.createdAt,
     createdBy: s.createdBy || undefined
   }));
