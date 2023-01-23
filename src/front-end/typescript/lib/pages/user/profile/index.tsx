@@ -22,6 +22,7 @@ import {
   isAdmin,
   isPublicSectorEmployee,
   isVendor,
+  VIEWER_USER_ROUTE_PARAM,
   User
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -50,7 +51,7 @@ export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, InnerMsg>;
 
 export type Msg = Msg_<Tab.TabId>;
 
-export interface RouteParams extends Pick<Tab.Params, "invitation"> {
+export interface RouteParams extends Pick<Tab.Params, "invitation" | "unsubscribe"> {
   userId: Id;
   tab?: Tab.TabId;
 }
@@ -75,7 +76,10 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          api.users.readOne(routeParams.userId, (response) =>
+          api.users.readOne(routeParams.userId === VIEWER_USER_ROUTE_PARAM
+            ? viewerUser.id
+            : routeParams.userId,
+          (response) =>
             adt("onInitResponse", [routePath, routeParams, response])
           ) as component_.Cmd<Msg>
         ]
@@ -91,7 +95,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 component_.global.replaceRouteMsg(
                   adt("signIn" as const, {
                     redirectOnSuccess: router.routeToUrl(
-                      adt("userProfile", { userId: routeParams.userId })
+                      adt("userProfile", routeParams)
                     )
                   })
                 )
@@ -183,7 +187,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabState, tabCmds] = tabComponent.init({
                 profileUser,
                 viewerUser: state.viewerUser,
-                invitation: routeParams.invitation
+                invitation: routeParams.invitation,
+                unsubscribe: routeParams.unsubscribe
               });
               // Everything checks out, return valid state.
               return [

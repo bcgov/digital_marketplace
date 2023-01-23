@@ -48,6 +48,7 @@ export interface Params {
     affiliationId: Id;
     response: InvitationResponseParam;
   };
+  unsubscribe?: true;
 }
 
 export type InitResponse = null;

@@ -3,6 +3,8 @@ import { FileRecord } from "shared/lib/resources/file";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
+export const VIEWER_USER_ROUTE_PARAM = "me";
+
 export type KeyCloakIdentityProvider = string;
 
 export enum UserType {
