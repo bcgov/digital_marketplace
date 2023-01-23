@@ -760,7 +760,7 @@ export const component: Tab.Component<State, Msg> = {
       case "publish":
       case "saveChangesAndPublish":
         return component_.page.modal.show({
-          title: "Publish Sprint With Us Opportunity?",
+          title: "Publish Team With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
             {
@@ -808,11 +808,11 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () =>
-            "Are you sure you want to submit this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
+            "Are you sure you want to submit this Team With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
       case "publishChanges":
         return component_.page.modal.show({
-          title: "Publish Changes to Sprint With Us Opportunity?",
+          title: "Publish Changes to Team With Us Opportunity?",
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
@@ -850,11 +850,11 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () =>
-            "Are you sure you want to submit your changes to this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
+            "Are you sure you want to submit your changes to this Team With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
       case "suspend":
         return component_.page.modal.show({
-          title: "Suspend Sprint With Us Opportunity?",
+          title: "Suspend Team With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
             {
@@ -875,7 +875,7 @@ export const component: Tab.Component<State, Msg> = {
         });
       case "delete":
         return component_.page.modal.show({
-          title: "Delete Sprint With Us Opportunity?",
+          title: "Delete Team With Us Opportunity?",
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
@@ -896,7 +896,7 @@ export const component: Tab.Component<State, Msg> = {
         });
       case "cancel":
         return component_.page.modal.show({
-          title: "Cancel Sprint With Us Opportunity?",
+          title: "Cancel Team With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
             {
@@ -920,6 +920,11 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
 
+  /**
+   *
+   * @param param0
+   * @returns
+   */
   getActions({ state, dispatch }) {
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;

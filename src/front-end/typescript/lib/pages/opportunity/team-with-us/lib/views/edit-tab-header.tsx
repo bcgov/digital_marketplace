@@ -71,7 +71,7 @@ const EditTabHeader: component.base.View<Props> = ({
       <Row className="mb-5">
         <Col xs="12">
           <h3 className="mb-2">
-            Sprint With Us:&nbsp;
+            Team With Us:&nbsp;
             {/* <Link
               newTab
               dest={routeDest(
