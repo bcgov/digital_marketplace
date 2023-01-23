@@ -1,6 +1,7 @@
 import * as crud from "back-end/lib/crud";
 import * as db from "back-end/lib/db";
 import * as permissions from "back-end/lib/permissions";
+import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import {
   basicResponse,
   JsonResponseBody,
@@ -47,7 +48,6 @@ interface ValidatedCreateRequestBody
     | "subscribed"
     | "resourceQuestions"
     | "challengeEndDate"
-    | "serviceArea"
   > {
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
@@ -65,6 +65,12 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
  */
 const routeNamespace = "opportunities/team-with-us";
 
+/**
+ * Reads one TWU opportunity from the database.
+ *
+ * @param connection - database connection
+ * @returns - a response code, and a value
+ */
 const readOne: crud.ReadOne<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -264,7 +270,7 @@ const create: crud.Create<
       const validatedServiceArea =
         opportunityValidation.validateServiceArea(serviceArea);
       const validatedTargetAllocation =
-        opportunityValidation.validateTargetAllocation(targetAllocation)
+        opportunityValidation.validateTargetAllocation(targetAllocation);
       const validatedDescription =
         opportunityValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -385,12 +391,12 @@ const create: crud.Create<
           );
         }
         // If submitted for review, notify
-        // if (dbResult.value.status === TWUOpportunityStatus.UnderReview) {
-        //   twuOpportunityNotifications.handleTWUSubmittedForReview(
-        //     connection,
-        //     dbResult.value
-        //   );
-        // }
+        if (dbResult.value.status === TWUOpportunityStatus.UnderReview) {
+          twuOpportunityNotifications.handleTWUSubmittedForReview(
+            connection,
+            dbResult.value
+          );
+        }
         // // If published, notify subscribed users
         // if (dbResult.value.status === TWUOpportunityStatus.Published) {
         //   twuOpportunityNotifications.handleTWUPublished(

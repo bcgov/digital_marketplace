@@ -39,7 +39,6 @@ interface CreateTWUOpportunityParams
     | "status"
     | "id"
     | "addenda"
-    | "serviceArea"
     | "resourceQuestions"
   > {
   status: CreateTWUOpportunityStatus;
@@ -303,7 +302,6 @@ export function generateTWUOpportunityQuery(
   if (full) {
     query.select<RawTWUOpportunity[]>(
       "versions.remoteDesc",
-      "versions.serviceArea",
       "versions.maxBudget",
       "versions.targetAllocation",
       "versions.mandatorySkills",

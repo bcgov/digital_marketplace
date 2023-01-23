@@ -10,15 +10,17 @@ import React from "react";
 import { Emails } from "back-end/lib/mailer";
 
 /**
+ * Handles the logic for sending two different emails
+ * to multiple users.
  *
- * @param connection
- * @param opportunity
+ * @param connection - object, database connection
+ * @param opportunity - object, a TWU opportunity
  */
-export async function handleSWUSubmittedForReview(
+export async function handleTWUSubmittedForReview(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  // Notify all admin users of the submitted SWU
+  // Notify all admin users of the submitted TWU
   const adminUsers =
     getValidValue(
       await db.readManyUsersByRole(connection, UserType.Admin),
@@ -43,15 +45,19 @@ export async function handleSWUSubmittedForReview(
   }
 }
 
+/**
+ * wrapper
+ */
 export const newTWUOpportunitySubmittedForReview = makeSend(
   newTWUOpportunitySubmittedForReviewT
 );
 
 /**
+ * Creates content for an email.
  *
- * @param recipient
- * @param opportunity
- * @returns
+ * @param recipient - object, someone to send it to, in this case the administrators of the system
+ * @param opportunity - object, a TWU opportunity
+ * @returns - object, an email template with content
  */
 export async function newTWUOpportunitySubmittedForReviewT(
   recipient: User,
@@ -94,17 +100,18 @@ export async function newTWUOpportunitySubmittedForReviewT(
 }
 
 /**
- *
+ * wrapper
  */
 export const newTWUOpportunitySubmittedForReviewAuthor = makeSend(
   newTWUOpportunitySubmittedForReviewAuthorT
 );
 
 /**
+ * Creates content for an email.
  *
- * @param recipient
- * @param opportunity
- * @returns
+ * @param recipient - object, someone to send it to, in this case the author of the opportunity
+ * @param opportunity - object, a TWU opportunity
+ * @returns - object, an email template with content
  */
 export async function newTWUOpportunitySubmittedForReviewAuthorT(
   recipient: User,
@@ -142,10 +149,13 @@ export async function newTWUOpportunitySubmittedForReviewAuthorT(
 }
 
 /**
+ * Creates content for use in an email template.
  *
- * @param opportunity
- * @param showDueDate
- * @returns
+ * @see {@link newTWUOpportunitySubmittedForReviewAuthorT}
+ *
+ * @param opportunity - object, a TWU opportunity
+ * @param showDueDate - boolean, if true adds when the proposals are due
+ * @returns - object, content for use in the email
  */
 export function makeTWUOpportunityInformation(
   opportunity: TWUOpportunity,
@@ -174,9 +184,14 @@ export function makeTWUOpportunityInformation(
 }
 
 /**
+ * Creates content for use in an email template.
+ * Makes a url for email recipients to click on
+ * which takes them to the TWU opportunity
  *
- * @param opportunity
- * @returns
+ * @see {@link newTWUOpportunitySubmittedForReviewT} - used in this function, which creates an email template
+ *
+ * @param opportunity - object, a TWU opportunity
+ * @returns - object, text and a url string
  */
 export function viewTWUOpportunityCallToAction(
   opportunity: TWUOpportunity
@@ -186,3 +201,26 @@ export function viewTWUOpportunityCallToAction(
     url: templates.makeUrl(`/opportunities/team-with-us/${opportunity.id}`)
   };
 }
+
+// export async function handleSWUPublished(
+//   connection: db.Connection,
+//   opportunity: TWUOpportunity,
+//   repost: boolean
+// ): Promise<void> {
+//   // Notify all users with notifications on
+//   const subscribedUsers =
+//     getValidValue(await db.readManyUsersNotificationsOn(connection), null) ||
+//     [];
+//   await newTWUOpportunityPublished(subscribedUsers, opportunity, repost);
+
+//   // Notify authoring gov user of successful publish
+//   const author =
+//     opportunity?.createdBy &&
+//     getValidValue(
+//       await db.readOneUser(connection, opportunity.createdBy.id),
+//       null
+//     );
+//   if (author) {
+//     await successfulTWUPublication(author, opportunity, repost);
+//   }
+// }
