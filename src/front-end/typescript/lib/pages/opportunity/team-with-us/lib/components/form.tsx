@@ -173,6 +173,18 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     "priceWeight",
     DEFAULT_PRICE_WEIGHT
   );
+  const selectedTargetAllocationOption = opportunity?.targetAllocation
+    ? {
+        label: String(opportunity.targetAllocation),
+        value: String(opportunity.targetAllocation)
+      }
+    : null;
+  const serviceArea = opportunity?.serviceArea
+    ? {
+        label: opportunity.serviceArea,
+        value: opportunity.serviceArea
+      }
+    : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Overview",
@@ -289,17 +301,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       return valid(option);
     },
     child: {
-      value: null,
+      value: serviceArea,
       id: "twu-service-area",
       options: Select.objectToOptions(TWUServiceAreas)
     }
   });
-  const selectedTargetAllocationOption = opportunity?.targetAllocation
-    ? {
-        label: String(opportunity.targetAllocation),
-        value: String(opportunity.targetAllocation)
-      }
-    : null;
   const [targetAllocationState, targetAllocationCmds] = Select.init({
     errors: [],
     validate: (option) => {
@@ -313,14 +319,16 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "swu-opportunity-target-allocation",
       options: adt(
         "options",
-        [...arrayFromRange<Select.Option>(10, {
-          offset: 1, 
-          step: 10, 
-          cb: number => {
-            const value = String(number);
-            return {value, label: value};
-          }
-        })].reverse()
+        [
+          ...arrayFromRange<Select.Option>(10, {
+            offset: 1,
+            step: 10,
+            cb: (number) => {
+              const value = String(number);
+              return { value, label: value };
+            }
+          })
+        ].reverse()
       )
     }
   });
@@ -475,9 +483,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
         adt("assignmentDate", msg)
       ),
-      ...component_.cmd.mapMany(maxBudgetCmds, (msg) =>
-        adt("maxBudget", msg)
-      ),
+      ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
       ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
         adt("serviceArea", msg)
       ),
@@ -982,7 +988,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childUpdate: NumberField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("maxBudget", value)
-      })
+      });
 
     case "serviceArea":
       return component_.base.updateChild({
@@ -993,14 +999,14 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("serviceArea", value)
       });
 
-      case "targetAllocation":
-        return component_.base.updateChild({
-          state,
-          childStatePath: ["targetAllocation"],
-          childUpdate: Select.update,
-          childMsg: msg.value,
-          mapChildMsg: (value) => adt("targetAllocation", value)
-        });
+    case "targetAllocation":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["targetAllocation"],
+        childUpdate: Select.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("targetAllocation", value)
+      });
 
     case "mandatorySkills":
       return component_.base.updateChild({
