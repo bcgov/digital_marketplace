@@ -11,7 +11,7 @@ import {
   parseTWUOpportunityStatus,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceAreas
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -58,7 +58,7 @@ export function validateCreateTWUOpportunityStatus(
 }
 
 export function validateFullTime(raw: any): Validation<boolean> {
-  return typeof raw === 'boolean'
+  return typeof raw === "boolean"
     ? valid(raw)
     : invalid(["You must provide a boolean value."]);
 }
@@ -157,7 +157,7 @@ export function validateTeaser(raw: string): Validation<string> {
 }
 
 export function validateRemoteOk(raw: any): Validation<boolean> {
-  return typeof raw === 'boolean'
+  return typeof raw === "boolean"
     ? valid(raw)
     : invalid(["Invalid remote option provided."]);
 }
@@ -178,10 +178,8 @@ export function validateLocation(raw: string): Validation<string> {
   return validateGenericString(raw, "Location", 1);
 }
 
-export function validateMaxBudget(
-  raw: string | number
-): Validation<number> {
-  return validateNumber(raw, 1, undefined, "Maximum Budget")
+export function validateMaxBudget(raw: string | number): Validation<number> {
+  return validateNumber(raw, 1, undefined, "Maximum Budget");
 }
 
 export function validateMandatorySkills(
@@ -262,7 +260,7 @@ export function validateNote(raw: string): Validation<string> {
  */
 export function validateServiceArea(raw: string): Validation<string> {
   const service_area: Immutable.Set<string> = Set(
-    Object.values(TWUServiceAreas)
+    Object.values(TWUServiceArea)
   );
   return validateStringInArray(raw, service_area, "Service Area");
 }
@@ -273,8 +271,6 @@ export function validateServiceArea(raw: string): Validation<string> {
  * @param raw
  * @returns
  */
-export function validateTargetAllocation(
-  raw: number
-): Validation<number> {
-  return validateNumber(raw, 1, 100, "Target Allocation")
+export function validateTargetAllocation(raw: number): Validation<number> {
+  return validateNumber(raw, 1, 100, "Target Allocation");
 }

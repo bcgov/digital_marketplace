@@ -33,7 +33,7 @@ export enum TWUOpportunityEvent {
   NoteAdded = "NOTE_ADDED"
 }
 
-export enum TWUServiceAreas {
+export enum TWUServiceArea {
   Developer = "DEVELOPER",
   DataSpecialist = "DATA_SPECIALIST",
   ScrumMaster = "SCRUM_MASTER",

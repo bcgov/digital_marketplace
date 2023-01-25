@@ -17,7 +17,7 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
-import { camelCase, flatten, startCase } from "lodash";
+import { flatten, startCase } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { arrayFromRange, getNumber } from "shared/lib";
@@ -34,7 +34,7 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceAreas,
+  TWUServiceArea as TWUServiceArea,
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
@@ -152,17 +152,17 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
  * Local helper function to obtain and modify the key of
  * (enum) TWUServiceArea if given the value.
  *
- * @see {@link TWUServiceAreas}
+ * @see {@link TWUServiceArea}
  *
  * @param v - a value from the key/value pair of TWUServiceArea
  * @returns - a single label/vale pair for a select list
  */
-function getSingleKeyValueOption(v: TWUServiceAreas): Select.Option {
-  const keyIndex = Object.values(TWUServiceAreas).indexOf(v as TWUServiceAreas);
-  const k = Object.keys(TWUServiceAreas)[keyIndex];
+function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
+  const keyIndex = Object.values(TWUServiceArea).indexOf(v as TWUServiceArea);
+  const k = Object.keys(TWUServiceArea)[keyIndex];
 
   return {
-    label: startCase(camelCase(k)),
+    label: startCase(k),
     value: String(v)
   };
 }
@@ -207,7 +207,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     if (!v) {
       return null;
     }
-    return getSingleKeyValueOption(v as TWUServiceAreas);
+    return getSingleKeyValueOption(v as TWUServiceArea);
   })();
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
@@ -328,7 +328,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     child: {
       value: serviceArea,
       id: "twu-service-area",
-      options: Select.objectToOptions(TWUServiceAreas)
+      options: Select.objectToOptions(TWUServiceArea)
     }
   });
   const [targetAllocationState, targetAllocationCmds] = Select.init({
