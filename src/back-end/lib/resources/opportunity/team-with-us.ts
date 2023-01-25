@@ -346,6 +346,7 @@ const create: crud.Create<
           remoteOk: getInvalidValue(validatedRemoteOk, undefined),
           remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
           location: getInvalidValue(validatedLocation, undefined),
+          maxBudget: getInvalidValue(validatedMaxBudget, undefined),
           mandatorySkills: getInvalidValue<string[][], undefined>(
             validatedMandatorySkills,
             undefined
@@ -354,6 +355,8 @@ const create: crud.Create<
             validatedOptionalSkills,
             undefined
           ),
+          serviceArea: getInvalidValue(validatedServiceArea, undefined),
+          targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
           description: getInvalidValue(validatedDescription, undefined),
           questionsWeight: getInvalidValue(validatedQuestionsWeight, undefined),
           challengeWeight: getInvalidValue(validatedChallengeWeight, undefined),
