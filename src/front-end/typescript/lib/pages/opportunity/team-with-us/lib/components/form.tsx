@@ -17,7 +17,7 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
-import { flatten } from "lodash";
+import { camelCase, flatten, startCase } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { arrayFromRange, getNumber } from "shared/lib";
@@ -148,7 +148,24 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
     );
   });
 }
+/**
+ * Local helper function to obtain and modify the key of
+ * (enum) TWUServiceArea if given the value.
+ *
+ * @see {@link TWUServiceAreas}
+ *
+ * @param v - a value from the key/value pair of TWUServiceArea
+ * @returns - a single label/vale pair for a select list
+ */
+function getSingleKeyValueOption(v: TWUServiceAreas): Select.Option {
+  const keyIndex = Object.values(TWUServiceAreas).indexOf(v as TWUServiceAreas);
+  const k = Object.keys(TWUServiceAreas)[keyIndex];
 
+  return {
+    label: startCase(camelCase(k)),
+    value: String(v)
+  };
+}
 /**
  * Initializes components on the page
  */
@@ -179,12 +196,20 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         value: String(opportunity.targetAllocation)
       }
     : null;
-  const serviceArea = opportunity?.serviceArea
-    ? {
-        label: opportunity.serviceArea,
-        value: opportunity.serviceArea
-      }
-    : null;
+
+  /**
+   * Sets a single key/value pair for service area, or null
+   *
+   * @see {@link getSingleKeyValueOption}
+   */
+  const serviceArea: Select.Option | null = (() => {
+    const v = opportunity?.serviceArea ? opportunity.serviceArea : null;
+    if (!v) {
+      return null;
+    }
+    return getSingleKeyValueOption(v as TWUServiceAreas);
+  })();
+
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Overview",
