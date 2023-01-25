@@ -262,7 +262,7 @@ const create: crud.Create<
       const validatedLocation =
         opportunityValidation.validateLocation(location);
       const validatedMaxBudget =
-        opportunityValidation.validateMaxBudget(location);
+        opportunityValidation.validateMaxBudget(maxBudget);
       const validatedMandatorySkills =
         opportunityValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
