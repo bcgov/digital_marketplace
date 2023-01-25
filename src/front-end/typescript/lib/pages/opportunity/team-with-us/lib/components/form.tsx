@@ -17,7 +17,7 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
-import { flatten } from "lodash";
+import { flatten, startCase } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { arrayFromRange, getNumber } from "shared/lib";
@@ -34,7 +34,7 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceAreas,
+  TWUServiceArea as TWUServiceArea,
   UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
@@ -148,7 +148,24 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
     );
   });
 }
+/**
+ * Local helper function to obtain and modify the key of
+ * (enum) TWUServiceArea if given the value.
+ *
+ * @see {@link TWUServiceArea}
+ *
+ * @param v - a value from the key/value pair of TWUServiceArea
+ * @returns - a single label/vale pair for a select list
+ */
+function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
+  const keyIndex = Object.values(TWUServiceArea).indexOf(v as TWUServiceArea);
+  const k = Object.keys(TWUServiceArea)[keyIndex];
 
+  return {
+    label: startCase(k),
+    value: String(v)
+  };
+}
 /**
  * Initializes components on the page
  */
@@ -179,12 +196,20 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         value: String(opportunity.targetAllocation)
       }
     : null;
-  const serviceArea = opportunity?.serviceArea
-    ? {
-        label: opportunity.serviceArea,
-        value: opportunity.serviceArea
-      }
-    : null;
+
+  /**
+   * Sets a single key/value pair for service area, or null
+   *
+   * @see {@link getSingleKeyValueOption}
+   */
+  const serviceArea: Select.Option | null = (() => {
+    const v = opportunity?.serviceArea ? opportunity.serviceArea : null;
+    if (!v) {
+      return null;
+    }
+    return getSingleKeyValueOption(v as TWUServiceArea);
+  })();
+
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Overview",
@@ -303,7 +328,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     child: {
       value: serviceArea,
       id: "twu-service-area",
-      options: Select.objectToOptions(TWUServiceAreas)
+      options: Select.objectToOptions(TWUServiceArea)
     }
   });
   const [targetAllocationState, targetAllocationCmds] = Select.init({

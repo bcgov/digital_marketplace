@@ -38,9 +38,11 @@ export function stringsToOptions(values: string[]): ADT<"options", Option[]> {
 /**
  * Converts an object with strings for both keys and values into the format
  * needed for a select list. For example, labels and values.
+ * For label/key it converts `CamelCase` words to something
+ * more readable, i.e. `Camel Case`.
  *
- * @param values
- * @returns adt
+ * @param values - key/value object
+ * @returns adt - options for a select list
  */
 export function objectToOptions(
   values: Record<string, string>
