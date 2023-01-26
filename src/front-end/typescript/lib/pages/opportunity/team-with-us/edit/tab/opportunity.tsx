@@ -680,7 +680,9 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
     {
       icon: "eye",
       name: "Watching",
-      value: formatAmount(reporting?.numWatchers || 0)
+      // TODO uncomment when watcher functionality ready to go
+      // value: formatAmount(reporting?.numWatchers || 0)
+      value: formatAmount(0)
     }
   ];
   return (

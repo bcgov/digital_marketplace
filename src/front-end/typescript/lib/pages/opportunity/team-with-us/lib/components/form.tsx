@@ -155,7 +155,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
  * @see {@link TWUServiceArea}
  *
  * @param v - a value from the key/value pair of TWUServiceArea
- * @returns - a single label/vale pair for a select list
+ * @returns - a single label/value pair for a select list
  */
 function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
   const keyIndex = Object.values(TWUServiceArea).indexOf(v as TWUServiceArea);
@@ -341,7 +341,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     },
     child: {
       value: selectedTargetAllocationOption ?? null,
-      id: "swu-opportunity-target-allocation",
+      id: "twu-opportunity-target-allocation",
       options: adt(
         "options",
         [
