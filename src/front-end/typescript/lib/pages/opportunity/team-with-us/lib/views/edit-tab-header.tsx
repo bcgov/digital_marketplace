@@ -72,13 +72,17 @@ const EditTabHeader: component.base.View<Props> = ({
         <Col xs="12">
           <h3 className="mb-2">
             Team With Us:&nbsp;
-            {/* <Link
+            {
+              // TODO replace with link to view
+              opportunity.title
+              /* <Link
               newTab
               dest={routeDest(
-                adt("opportunitySWUView", { opportunityId: opportunity.id })
+                adt("opportunityTWUView", { opportunityId: opportunity.id })
               )}>
               {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
-            </Link> */}
+            </Link> */
+            }
           </h3>
           <DateMetadata dates={compact(dates)} />
         </Col>

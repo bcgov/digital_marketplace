@@ -45,7 +45,7 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
     [
       string,
       Tab.TabId,
-      api.ResponseValidation<TWUOpportunity, string[]>,
+      api.ResponseValidation<TWUOpportunity, string[]>
       // api.ResponseValidation<TWUProposalSlim[], string[]>
     ]
   >
@@ -99,7 +99,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               (response) => response
             ),
             // Tab.shouldLoadProposalsForTab(tabId)
-            //   ? api.proposals.swu.readMany(routeParams.opportunityId)(
+            //   ? api.proposals.twu.readMany(routeParams.opportunityId)(
             //       (response) => response
             //     )
             //   : component_.cmd.dispatch(valid([])),
@@ -151,8 +151,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
           switch (msg.tag) {
             case "onInitResponse": {
               // const [routePath, tabId, opportunityResponse, proposalsResponse] =
-              const [routePath, tabId, opportunityResponse] =
-                msg.value;
+              const [routePath, tabId, opportunityResponse] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -214,7 +213,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         getTitleSuffix: (state) =>
           state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
       }),
-      makePageMetadata("Edit Sprint With Us Opportunity")
+      makePageMetadata("Edit Team With Us Opportunity")
     )
   };
 }

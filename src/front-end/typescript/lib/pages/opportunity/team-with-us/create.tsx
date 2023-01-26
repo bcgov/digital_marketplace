@@ -138,14 +138,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                   resultCmds,
                   (msg) => adt("form", msg) as Msg
                 ),
-                // component_.cmd.dispatch(
-                //   component_.global.newRouteMsg(
-                //     adt("opportunityTWUEdit", {
-                //       opportunityId: opportunity.id,
-                //       tab: "summary" as const
-                //     }) as Route
-                //   )
-                // ),
+                component_.cmd.dispatch(
+                  component_.global.newRouteMsg(
+                    adt("opportunityTWUEdit", {
+                      opportunityId: opportunity.id,
+                      tab: "summary" as const
+                    }) as Route
+                  )
+                ),
                 component_.cmd.dispatch(
                   component_.global.showToastMsg(
                     adt(

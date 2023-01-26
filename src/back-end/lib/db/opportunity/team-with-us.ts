@@ -570,12 +570,12 @@ export const readOneTWUOpportunity = tryDb<
           )?.count || 0;
 
         // Retrieve watchers/subscribers
-        const numWatchers =
-          (
-            await connection("twuOpportunitySubscribers").where({
-              opportunity: result.id
-            })
-          )?.length || 0;
+        // const numWatchers =
+        //   (
+        //     await connection("twuOpportunitySubscribers").where({
+        //       opportunity: result.id
+        //     })
+        //   )?.length || 0;
 
         // Retrieve number of submitted proposals (exclude draft/withdrawn)
         // const numProposals = getValidValue(
@@ -588,7 +588,7 @@ export const readOneTWUOpportunity = tryDb<
 
         result.reporting = {
           numViews,
-          numWatchers,
+          // numWatchers,
           numProposals: numProposals ?? 0
         };
       }
