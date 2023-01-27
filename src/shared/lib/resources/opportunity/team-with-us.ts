@@ -167,7 +167,7 @@ export interface TWUOpportunity {
   subscribed?: boolean;
   reporting?: {
     numProposals: number;
-    // numWatchers: number;
+    numWatchers: number;
     numViews: number;
   };
 }
