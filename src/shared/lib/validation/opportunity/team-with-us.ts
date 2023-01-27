@@ -134,6 +134,30 @@ export function validateResourceQuestion(
   }
 }
 
+export function validateStartDate(
+  raw: string,
+  assignmentDate: Date
+): Validation<Date> {
+  return validateDate(
+    raw,
+    setDateTo4PM(assignmentDate),
+    undefined,
+    setDateTo4PM
+  );
+}
+
+export function validateCompletionDate(
+  raw: string,
+  proposalDeadline: Date
+): Validation<Date> {
+  return validateDate(
+    raw,
+    setDateTo4PM(proposalDeadline),
+    undefined,
+    setDateTo4PM
+  );
+}
+
 export function validateResourceQuestions(
   raw: any
 ): ArrayValidation<

@@ -310,7 +310,9 @@ export function generateTWUOpportunityQuery(
       "versions.assignmentDate",
       "versions.questionsWeight",
       "versions.challengeWeight",
-      "versions.priceWeight"
+      "versions.priceWeight",
+      "versions.startDate",
+      "versions.completionDate"
     );
   }
 
