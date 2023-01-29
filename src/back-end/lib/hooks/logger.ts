@@ -11,36 +11,27 @@ interface MemoryUsage {
   arrayBuffers: number;
 }
 
-const hook: RouteHook<
-  unknown,
-  unknown,
-  unknown,
-  unknown,
-  [MemoryUsage, number],
-  Session
-> = {
+const hook: RouteHook<unknown, unknown, unknown, unknown, number, Session> = {
   async before(request) {
-    const heap = process.memoryUsage();
     request.logger.debug(
       `${chalk.gray("->")} ${request.method} ${request.path}`,
       { sessionId: request.session?.id || "anonymous" }
     );
-    return [heap, Date.now()];
+    return Date.now();
   },
 
-  async after([startMemory, startTime], request, response) {
+  async after(startTime, request, response) {
+    const heap = process.memoryUsage();
     request.logger.debug(
       `${chalk.gray("<-")} ${response.code} ${Date.now() - startTime}ms`
     );
 
     if (LOG_MEM_USAGE) {
-      request.logger.debug("---");
-      for (const key in startMemory) {
+      for (const key in heap) {
         request.logger.debug(
           `${key} ${
-            Math.round(
-              (startMemory[key as keyof MemoryUsage] / 1024 / 1024) * 100
-            ) / 100
+            Math.round((heap[key as keyof MemoryUsage] / 1024 / 1024) * 100) /
+            100
           } MB`
         );
       }
