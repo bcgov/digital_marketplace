@@ -8,314 +8,316 @@ metadata:
   name: "${NAME}-${APP_GROUP}-${TAG_NAME}-deploy"
 
 objects:
-- kind: ConfigMap
-  apiVersion: v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
-  data:
-    NODE_ENV: production
-    SERVER_HOST: 0.0.0.0
-    SERVER_PORT: '3000'
-    DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
-    FILE_STORAGE_DIR: "/usr/app"
-    ORIGIN: ${ORIGIN}
-    HOST: ${HOST}
-    PATH_PREFIX: ''
-    KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
-    KEYCLOAK_URL: ${KEYCLOAK_URL}
-    KEYCLOAK_REALM: ${KEYCLOAK_REALM}
-    CONTACT_EMAIL: changeme@email.com
-    SCHEDULED_DOWNTIME: '0'
-    BASIC_AUTH_PASSWORD_HASH: ${BASIC_AUTH_PASSWORD_HASH}
-    BASIC_AUTH_USERNAME: ${BASIC_AUTH_USERNAME}
-    MAILER_HOST: apps.smtp.gov.bc.ca
-    MAILER_PORT: '25'
-    TZ: America/Vancouver
-    SHOW_TEST_INDICATOR: ${SHOW_TEST_INDICATOR}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
+    data:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: "3000"
+      DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
+      FILE_STORAGE_DIR: "/usr/app"
+      ORIGIN: ${ORIGIN}
+      HOST: ${HOST}
+      PATH_PREFIX: ""
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_URL: ${KEYCLOAK_URL}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      CONTACT_EMAIL: changeme@email.com
+      SCHEDULED_DOWNTIME: "0"
+      BASIC_AUTH_PASSWORD_HASH: ${BASIC_AUTH_PASSWORD_HASH}
+      BASIC_AUTH_USERNAME: ${BASIC_AUTH_USERNAME}
+      MAILER_HOST: apps.smtp.gov.bc.ca
+      MAILER_PORT: "25"
+      TZ: America/Vancouver
+      SHOW_TEST_INDICATOR: ${SHOW_TEST_INDICATOR}
+      PROD_LOG_DEBUG: "1"
+      LOG_MEM_USAGE: "1"
 
-- kind: Secret
-  apiVersion: v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
-  stringData:
-    COOKIE_SECRET: ${COOKIE_SECRET}
-    KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+  - kind: Secret
+    apiVersion: v1
+    metadata:
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
+    stringData:
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
 
-- kind: DeploymentConfig
-  apiVersion: v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    strategy:
-      type: Rolling
-      rollingParams:
-        updatePeriodSeconds: 1
-        intervalSeconds: 1
-        timeoutSeconds: 600
-        maxUnavailable: 25%
-        maxSurge: 25%
-    replicas: ${{REPLICAS}}
-    test: false
-    selector:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    template:
-      metadata:
-        labels:
-          app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-          app-group: "${APP_GROUP}"
-          deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-          template: "${NAME}-deploy"
-      spec:
-        affinity:
-          podAntiAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-            - labelSelector:
-                matchExpressions:
-                  - key: DeploymentConfig
-                    operator: In
-                    values:
-                    - "${NAME}-${APP_GROUP}-${TAG_NAME}"
-              topologyKey: kubernetes.io/hostname
-        containers:
-        - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-          image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}-${APP_GROUP}-${TAG_NAME}:latest
-          ports:
-          - containerPort: 3000
-            protocol: TCP
-          envFrom:
-          - secretRef:
-              name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
-          - secretRef:
-              name: "${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}-secret"
-          - configMapRef:
-              name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
-          resources:
-            requests:
-              cpu: "${CPU_REQUEST}"
-              memory: "${MEMORY_REQUEST}"
-            limits:
-              cpu: "${CPU_LIMIT}"
-              memory: "${MEMORY_LIMIT}"
-          livenessProbe:
-            httpGet:
-              path: "/status"
-              port: 3000
-              scheme: HTTP
-            timeoutSeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            failureThreshold: 3
-          readinessProbe:
-            httpGet:
-              path: "/status"
-              port: 3000
-              scheme: HTTP
-            timeoutSeconds: 10
-            periodSeconds: 30
-            successThreshold: 1
-            failureThreshold: 3
-          terminationMessagePath: "/dev/termination-log"
-          terminationMessagePolicy: File
-          imagePullPolicy: Always
-        restartPolicy: Always
-        terminationGracePeriodSeconds: 30
-        dnsPolicy: ClusterFirst
-        securityContext: {}
-        schedulerName: default-scheduler
-
-- kind: Service
-  apiVersion: v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    creationTimestamp:
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    ports:
-    - name: 3000-tcp
-      protocol: TCP
-      port: 3000
-      targetPort: 3000
-    selector:
-      deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    type: ClusterIP
-    sessionAffinity: None
-  status:
-    loadBalancer: {}
-
-- kind: Route
-  apiVersion: v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    host: "${HOST}"
-    to:
-      kind: Service
+  - kind: DeploymentConfig
+    apiVersion: v1
+    metadata:
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      weight: 100
-    port:
-      targetPort: 3000-tcp
-    tls:
-      termination: edge
-      insecureEdgeTerminationPolicy: Redirect
-    wildcardPolicy: None
-  status:
-    ingress:
-    - host: "${HOST}"
-      routerName: router
-      conditions:
-      - type: Admitted
-        status: 'True'
-      wildcardPolicy: None
-
-- kind: PodDisruptionBudget
-  apiVersion: policy/v1
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    minAvailable: 1
-    selector:
-      matchLabels:
+      labels:
         app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app-group: "${APP_GROUP}"
+        template: "${NAME}-deploy"
+    spec:
+      strategy:
+        type: Rolling
+        rollingParams:
+          updatePeriodSeconds: 1
+          intervalSeconds: 1
+          timeoutSeconds: 600
+          maxUnavailable: 25%
+          maxSurge: 25%
+      replicas: ${{REPLICAS}}
+      test: false
+      selector:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      template:
+        metadata:
+          labels:
+            app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+            app-group: "${APP_GROUP}"
+            deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+            template: "${NAME}-deploy"
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: DeploymentConfig
+                        operator: In
+                        values:
+                          - "${NAME}-${APP_GROUP}-${TAG_NAME}"
+                  topologyKey: kubernetes.io/hostname
+          containers:
+            - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+              image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}-${APP_GROUP}-${TAG_NAME}:latest
+              ports:
+                - containerPort: 3000
+                  protocol: TCP
+              envFrom:
+                - secretRef:
+                    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
+                - secretRef:
+                    name: "${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}-secret"
+                - configMapRef:
+                    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
+              resources:
+                requests:
+                  cpu: "${CPU_REQUEST}"
+                  memory: "${MEMORY_REQUEST}"
+                limits:
+                  cpu: "${CPU_LIMIT}"
+                  memory: "${MEMORY_LIMIT}"
+              livenessProbe:
+                httpGet:
+                  path: "/status"
+                  port: 3000
+                  scheme: HTTP
+                timeoutSeconds: 10
+                periodSeconds: 30
+                successThreshold: 1
+                failureThreshold: 3
+              readinessProbe:
+                httpGet:
+                  path: "/status"
+                  port: 3000
+                  scheme: HTTP
+                timeoutSeconds: 10
+                periodSeconds: 30
+                successThreshold: 1
+                failureThreshold: 3
+              terminationMessagePath: "/dev/termination-log"
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: Always
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          schedulerName: default-scheduler
 
-- kind: HorizontalPodAutoscaler
-  apiVersion: autoscaling/v2
-  metadata:
-    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
-    labels:
-      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-      app-group: "${APP_GROUP}"
-      template: "${NAME}-deploy"
-  spec:
-    scaleTargetRef:
-      apiVersion: apps.openshift.io/v1
-      kind: DeploymentConfig
+  - kind: Service
+    apiVersion: v1
+    metadata:
       name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
-    minReplicas: 3
-    maxReplicas: 6
-    metrics:
-    - type: Resource
-      resource:
-        name: memory
-        target:
-          type: Utilization
-          averageUtilization: 85
+      creationTimestamp:
+      labels:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app-group: "${APP_GROUP}"
+        template: "${NAME}-deploy"
+    spec:
+      ports:
+        - name: 3000-tcp
+          protocol: TCP
+          port: 3000
+          targetPort: 3000
+      selector:
+        deploymentconfig: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      type: ClusterIP
+      sessionAffinity: None
+    status:
+      loadBalancer: {}
+
+  - kind: Route
+    apiVersion: v1
+    metadata:
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      labels:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app-group: "${APP_GROUP}"
+        template: "${NAME}-deploy"
+    spec:
+      host: "${HOST}"
+      to:
+        kind: Service
+        name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        weight: 100
+      port:
+        targetPort: 3000-tcp
+      tls:
+        termination: edge
+        insecureEdgeTerminationPolicy: Redirect
+      wildcardPolicy: None
+    status:
+      ingress:
+        - host: "${HOST}"
+          routerName: router
+          conditions:
+            - type: Admitted
+              status: "True"
+          wildcardPolicy: None
+
+  - kind: PodDisruptionBudget
+    apiVersion: policy/v1
+    metadata:
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-pdb"
+      labels:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app-group: "${APP_GROUP}"
+        template: "${NAME}-deploy"
+    spec:
+      minAvailable: 1
+      selector:
+        matchLabels:
+          app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+
+  - kind: HorizontalPodAutoscaler
+    apiVersion: autoscaling/v2
+    metadata:
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}-hpa-mem"
+      labels:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        app-group: "${APP_GROUP}"
+        template: "${NAME}-deploy"
+    spec:
+      scaleTargetRef:
+        apiVersion: apps.openshift.io/v1
+        kind: DeploymentConfig
+        name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      minReplicas: 3
+      maxReplicas: 6
+      metrics:
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 85
 
 parameters:
-- name: NAME
-  displayName: Name
-  required: true
-  value: app
+  - name: NAME
+    displayName: Name
+    required: true
+    value: app
 
-- name: APP_GROUP
-  displayName: App Group
-  required: true
-  value: digmkt
+  - name: APP_GROUP
+    displayName: App Group
+    required: true
+    value: digmkt
 
-- name: TAG_NAME
-  displayName: Environment tag name.
-  required: true
-  value: dev
+  - name: TAG_NAME
+    displayName: Environment tag name.
+    required: true
+    value: dev
 
-- name: IMAGE_NAMESPACE
-  displayName: Image Namespace
-  required: true
-  value: ccc866-tools
+  - name: IMAGE_NAMESPACE
+    displayName: Image Namespace
+    required: true
+    value: ccc866-tools
 
-- name: DATABASE_SERVICE_NAME
-  displayName: Database Service Name
-  required: true
-  value: patroni-pg12
+  - name: DATABASE_SERVICE_NAME
+    displayName: Database Service Name
+    required: true
+    value: patroni-pg12
 
-- name: CPU_REQUEST
-  displayName: Resources CPU Request
-  required: true
-  value: 25m
+  - name: CPU_REQUEST
+    displayName: Resources CPU Request
+    required: true
+    value: 25m
 
-- name: CPU_LIMIT
-  displayName: Resources CPU Limit
-  description: The resources CPU limit (in cores) for this build.
-  required: true
-  value: 75m
+  - name: CPU_LIMIT
+    displayName: Resources CPU Limit
+    description: The resources CPU limit (in cores) for this build.
+    required: true
+    value: 75m
 
-- name: MEMORY_REQUEST
-  displayName: Resources Memory Request
-  required: true
-  value: 120Mi
+  - name: MEMORY_REQUEST
+    displayName: Resources Memory Request
+    required: true
+    value: 120Mi
 
-- name: MEMORY_LIMIT
-  displayName: Resources Memory Limit
-  required: true
-  value: 360Mi
+  - name: MEMORY_LIMIT
+    displayName: Resources Memory Limit
+    required: true
+    value: 360Mi
 
-- name: REPLICAS
-  displayName: The number of replicas to run
-  required: true
-  value: '3'
+  - name: REPLICAS
+    displayName: The number of replicas to run
+    required: true
+    value: "3"
 
-- name: COOKIE_SECRET
-  displayName: Cookie Secret
-  required: true
-  generate: expression
-  from: "[a-zA-Z0-9]{16}"
+  - name: COOKIE_SECRET
+    displayName: Cookie Secret
+    required: true
+    generate: expression
+    from: "[a-zA-Z0-9]{16}"
 
-- name: KEYCLOAK_CLIENT_SECRET
-  displayName: The KeyCloak client secret.
-  required: true
+  - name: KEYCLOAK_CLIENT_SECRET
+    displayName: The KeyCloak client secret.
+    required: true
 
-- name: KEYCLOAK_CLIENT_ID
-  displayName: The KeyCloak client ID.
-  required: true
-  value: digital-marketplace-4144
+  - name: KEYCLOAK_CLIENT_ID
+    displayName: The KeyCloak client ID.
+    required: true
+    value: digital-marketplace-4144
 
-- name: KEYCLOAK_URL
-  displayName: The URL to the KeyCloak identity broker.
-  required: true
-  value: https://dev.loginproxy.gov.bc.ca
+  - name: KEYCLOAK_URL
+    displayName: The URL to the KeyCloak identity broker.
+    required: true
+    value: https://dev.loginproxy.gov.bc.ca
 
-- name: KEYCLOAK_REALM
-  displayName: The realm for the KeyCloak identity broker.
-  required: true
-  value: standard
+  - name: KEYCLOAK_REALM
+    displayName: The realm for the KeyCloak identity broker.
+    required: true
+    value: standard
 
-- name: SHOW_TEST_INDICATOR
-  displayName: Whether to show the TEST prefix for emails/headers. (0 for hide, 1 for show)
-  required: true
-  value: '0'
+  - name: SHOW_TEST_INDICATOR
+    displayName: Whether to show the TEST prefix for emails/headers. (0 for hide, 1 for show)
+    required: true
+    value: "0"
 
-- name: BASIC_AUTH_PASSWORD_HASH
-  displayName: The hashed password for basic auth protection on test environments.
-  required: false
+  - name: BASIC_AUTH_PASSWORD_HASH
+    displayName: The hashed password for basic auth protection on test environments.
+    required: false
 
-- name: BASIC_AUTH_USERNAME
-  displayName: The username for basic auth protection on test environments.
-  required: false
+  - name: BASIC_AUTH_USERNAME
+    displayName: The username for basic auth protection on test environments.
+    required: false
 
-- name: ORIGIN
-  displayName: The vanity url for the deployment
-  value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
-  required: true
+  - name: ORIGIN
+    displayName: The vanity url for the deployment
+    value: https://${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+    required: true
 
-- name: HOST
-  displayName: For the Service and Route, URL without the protocol. Will be the same as ORIGIN, minus https://.
-  value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
-  required: true
+  - name: HOST
+    displayName: For the Service and Route, URL without the protocol. Will be the same as ORIGIN, minus https://.
+    value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+    required: true
 
-- name: PATH_PREFIX
-  displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
-  required: false
+  - name: PATH_PREFIX
+    displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
+    required: false
