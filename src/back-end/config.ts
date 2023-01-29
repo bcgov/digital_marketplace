@@ -51,6 +51,12 @@ export const ENV = NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, "back-end:config", ENV);
 
+export const PROD_LOG_DEBUG =
+  parseBooleanEnvironmentVariable(get("PROD_LOG_DEBUG", "0")) ?? false;
+
+export const LOG_MEM_USAGE =
+  parseBooleanEnvironmentVariable(get("LOG_MEM_USAGE", "0")) ?? false;
+
 export const SERVER_HOST = get("SERVER_HOST", "0.0.0.0");
 
 export const SERVER_PORT = parseInt(get("SERVER_PORT", "3000"), 10);

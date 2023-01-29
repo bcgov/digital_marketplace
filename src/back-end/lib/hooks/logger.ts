@@ -1,3 +1,4 @@
+import { LOG_MEM_USAGE } from "back-end/config";
 import { RouteHook } from "back-end/lib/server";
 import chalk from "chalk";
 import { Session } from "shared/lib/resources/session";
@@ -20,7 +21,7 @@ const hook: RouteHook<
 > = {
   async before(request) {
     const heap = process.memoryUsage();
-    request.logger.info(
+    request.logger.debug(
       `${chalk.gray("->")} ${request.method} ${request.path}`,
       { sessionId: request.session?.id || "anonymous" }
     );
@@ -28,21 +29,23 @@ const hook: RouteHook<
   },
 
   async after([startMemory, startTime], request, response) {
-    request.logger.info(
+    request.logger.debug(
       `${chalk.gray("<-")} ${response.code} ${Date.now() - startTime}ms`
     );
 
-    request.logger.info("");
-    for (const key in startMemory) {
-      request.logger.info(
-        `${key} ${
-          Math.round(
-            (startMemory[key as keyof MemoryUsage] / 1024 / 1024) * 100
-          ) / 100
-        } MB`
-      );
+    if (LOG_MEM_USAGE) {
+      request.logger.debug("---");
+      for (const key in startMemory) {
+        request.logger.debug(
+          `${key} ${
+            Math.round(
+              (startMemory[key as keyof MemoryUsage] / 1024 / 1024) * 100
+            ) / 100
+          } MB`
+        );
+      }
+      request.logger.debug("---");
     }
-    request.logger.info("");
   }
 };
 
