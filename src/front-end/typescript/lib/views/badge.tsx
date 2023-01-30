@@ -12,8 +12,10 @@ import React from "react";
 import * as reactstrap from "reactstrap";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
 import { ADT } from "shared/lib/types";
+import { twuOpportunityToPublicColor, twuOpportunityToPublicStatus } from "../pages/opportunity/team-with-us/lib";
 
 export interface Props {
   text: string;
@@ -46,6 +48,10 @@ type Opportunity =
   | ADT<
       "swu",
       Pick<SWUOpportunity, "status" | "createdBy" | "proposalDeadline">
+    >
+    | ADT<
+      "twu",
+      Pick<TWUOpportunity, "status" | "createdBy" | "proposalDeadline">
     >;
 
 interface OpportunityBadgeProps {
@@ -74,6 +80,14 @@ export const OpportunityBadge: component.base.View<OpportunityBadgeProps> = ({
           className={className}
           text={swuOpportunityToPublicStatus(opportunity.value, viewerUser)}
           color={swuOpportunityToPublicColor(opportunity.value, viewerUser)}
+        />
+      );
+    case "twu":
+      return (
+        <Badge
+          className={className}
+          text={twuOpportunityToPublicStatus(opportunity.value, viewerUser)}
+          color={twuOpportunityToPublicColor(opportunity.value, viewerUser)}
         />
       );
   }

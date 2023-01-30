@@ -238,6 +238,7 @@ export type TWUOpportunitySlim = Pick<
   | "updatedBy"
   | "status"
   | "proposalDeadline"
+  | "maxBudget"
   | "location"
   | "remoteOk"
   | "subscribed"
