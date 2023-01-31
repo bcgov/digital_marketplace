@@ -79,6 +79,8 @@ interface RawTWUOpportunity
     Resource.TWUOpportunity,
     | "proposalDeadline"
     | "assignmentDate"
+    | "startDate"
+    | "completionDate"
     | "createdAt"
     | "updatedAt"
     | "publishedAt"
@@ -90,6 +92,8 @@ interface RawTWUOpportunity
   > {
   proposalDeadline: string;
   assignmentDate: string;
+  startDate: string;
+  completionDate: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
@@ -107,6 +111,8 @@ function rawTWUOpportunityToTWUOpportunity(
     ...raw,
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
+    startDate: new Date(raw.startDate),
+    completionDate: new Date(raw.completionDate),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt:
