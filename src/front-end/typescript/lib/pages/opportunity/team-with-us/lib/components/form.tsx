@@ -76,6 +76,8 @@ export interface State {
   location: Immutable<ShortText.State>;
   proposalDeadline: Immutable<DateField.State>;
   assignmentDate: Immutable<DateField.State>;
+  startDate: Immutable<DateField.State>;
+  completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
   serviceArea: Immutable<Select.State>;
   targetAllocation: Immutable<Select.State>;
@@ -104,6 +106,8 @@ export type Msg =
   | ADT<"location", ShortText.Msg>
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"assignmentDate", DateField.Msg>
+  | ADT<"startDate", DateField.Msg>
+  | ADT<"completionDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
   | ADT<"serviceArea", Select.Msg>
   | ADT<"targetAllocation", Select.Msg>
@@ -134,20 +138,21 @@ export function getActiveTab(state: Immutable<State>): TabId {
 
 const DEFAULT_ACTIVE_TAB: TabId = "Overview";
 
-function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
-  return state.update("assignmentDate", (s) => {
-    return FormField.setValidate(
+type DateFieldKey = Extract<Msg['tag'], "startDate" | "assignmentDate" | "completionDate">;
+export function setValidateDate(
+  state: Immutable<State>,
+  k: DateFieldKey,
+  validate: (_: string) => Validation<Date | null>
+): Immutable<State> {
+  return state.update(k, (s) =>
+    FormField.setValidate(
       s,
-      DateField.validateDate((v) =>
-        opportunityValidation.validateAssignmentDate(
-          v,
-          DateField.getDate(state.proposalDeadline) || new Date()
-        )
-      ),
+      DateField.validateDate(validate),
       !!FormField.getValue(s)
-    );
-  });
+    )
+  );
 }
+
 /**
  * Local helper function to obtain and modify the key of
  * (enum) TWUServiceArea if given the value.
@@ -301,6 +306,37 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         ? DateField.dateToValue(opportunity.assignmentDate)
         : null,
       id: "twu-opportunity-assignment-date"
+    }
+  });
+  const [startDateState, startDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      opportunityValidation.validateStartDate(
+        v,
+        opportunity?.assignmentDate || new Date()
+      )
+    ),
+    child: {
+      value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
+      id: "twu-opportunity-start-date"
+    }
+  });
+  const [completionDateState, completionDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) => {
+      return mapValid(
+        opportunityValidation.validateCompletionDate(
+          v,
+          opportunity?.startDate || new Date()
+        ),
+        (w) => w || null
+      );
+    }),
+    child: {
+      value: opportunity?.completionDate
+        ? DateField.dateToValue(opportunity.completionDate)
+        : null,
+      id: "twu-opportunity-end-date"
     }
   });
   const [maxBudgetState, maxBudgetCmds] = NumberField.init({
@@ -478,6 +514,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteDesc: immutable(remoteDescState),
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
+      startDate: immutable(startDateState),
+      completionDate: immutable(completionDateState),
       maxBudget: immutable(maxBudgetState),
       serviceArea: immutable(serviceAreaState),
       targetAllocation: immutable(targetAllocationState),
@@ -507,6 +545,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
         adt("assignmentDate", msg)
+      ),
+      ...component_.cmd.mapMany(startDateCmds, (msg) =>
+        adt("proposalDeadline", msg)
+      ),
+      ...component_.cmd.mapMany(completionDateCmds, (msg) =>
+        adt("completionDate", msg)
       ),
       ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
       ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
@@ -735,6 +779,8 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
+    startDate: DateField.getValueAsString(state.startDate),
+    completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
     serviceArea: Select.getValue(state.serviceArea),
     targetAllocation,
@@ -994,7 +1040,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("proposalDeadline", value),
-        updateAfter: (state) => [resetAssignmentDate(state), []]
+        updateAfter: (state) => [
+          setValidateDate(state, "startDate", (v) =>
+            opportunityValidation.validateAssignmentDate(
+              v,
+              DateField.getDate(state.proposalDeadline) || new Date()
+            )
+          ),
+          []
+        ]
       });
 
     case "assignmentDate":
@@ -1003,8 +1057,48 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ["assignmentDate"],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("assignmentDate", value)
+        mapChildMsg: (value) => adt("assignmentDate", value),
+        updateAfter: (state) => [
+          setValidateDate(state, "startDate", (v) =>
+            opportunityValidation.validateStartDate(
+              v,
+              DateField.getDate(state.assignmentDate) || new Date()
+            )
+          ),
+          []
+        ]
       });
+
+    case "startDate": {
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["startDate"],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("startDate" as const, value),
+        updateAfter: (state) => [
+          setValidateDate(state, "completionDate", (v) =>
+            mapValid(
+              opportunityValidation.validateCompletionDate(
+                v,
+                DateField.getDate(state.startDate) || new Date()
+              ),
+              (w) => w || null
+            )
+          ),
+          []
+        ]
+      });
+    }
+
+    case "completionDate":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["completionDate"],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("completionDate", value)
+      });  
 
     case "maxBudget":
       return component_.base.updateChild({
@@ -1239,6 +1333,32 @@ const OverviewView: component_.base.View<Props> = ({
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("assignmentDate" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col xs="12" md="6">
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label="Proposed Start Date"
+          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
+          state={state.startDate}
+          disabled={disabled}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("startDate" as const, value)
+          )}
+        />
+      </Col>
+      <Col xs="12" md="6">
+        <DateField.view
+          extraChildProps={{}}
+          label="Proposed End Date"
+          help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
+          state={state.completionDate}
+          disabled={disabled}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("completionDate" as const, value)
           )}
         />
       </Col>
