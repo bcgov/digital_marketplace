@@ -3,13 +3,17 @@ import { RouteHook } from "back-end/lib/server";
 import chalk from "chalk";
 import { Session } from "shared/lib/resources/session";
 
-interface MemoryUsage {
-  rss: number;
-  heapTotal: number;
-  heapUsed: number;
-  external: number;
-  arrayBuffers: number;
+interface FormattedMemoryUsage {
+  rss: string;
+  heapTotal: string;
+  heapUsed: string;
+  external: string;
+  arrayBuffers: string;
 }
+
+const roundToMb = (value: number): string => {
+  return `${Math.round((value / 1024 / 1024) * 100) / 100} MB`;
+};
 
 const hook: RouteHook<unknown, unknown, unknown, unknown, number, Session> = {
   async before(request) {
@@ -26,16 +30,15 @@ const hook: RouteHook<unknown, unknown, unknown, unknown, number, Session> = {
     );
 
     if (LOG_MEM_USAGE) {
-      const heap = process.memoryUsage();
-      for (const key in heap) {
-        request.logger.debug(
-          `${key} ${
-            Math.round((heap[key as keyof MemoryUsage] / 1024 / 1024) * 100) /
-            100
-          } MB`
-        );
-      }
-      request.logger.debug("---");
+      const rawHeap = process.memoryUsage();
+      const heap: FormattedMemoryUsage = {
+        rss: roundToMb(rawHeap.rss),
+        heapTotal: roundToMb(rawHeap.heapTotal),
+        heapUsed: roundToMb(rawHeap.heapUsed),
+        external: roundToMb(rawHeap.external),
+        arrayBuffers: roundToMb(rawHeap.arrayBuffers)
+      };
+      request.logger.debug(chalk.gray("memory usage"), heap);
     }
   }
 };
