@@ -49,10 +49,12 @@ export const NODE_ENV: "development" | "production" = (() => {
 
 export const ENV = NODE_ENV;
 
-const logger = makeDomainLogger(consoleAdapter, "back-end:config", ENV);
+const logger = makeDomainLogger(consoleAdapter, "back-end:config");
 
-export const PROD_LOG_DEBUG =
-  parseBooleanEnvironmentVariable(get("PROD_LOG_DEBUG", "0")) ?? false;
+export const LOG_DEBUG =
+  parseBooleanEnvironmentVariable(
+    get("LOG_DEBUG", ENV === "development" ? "1" : "0")
+  ) ?? false;
 
 export const LOG_MEM_USAGE =
   parseBooleanEnvironmentVariable(get("LOG_MEM_USAGE", "0")) ?? false;

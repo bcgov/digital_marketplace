@@ -1,4 +1,4 @@
-import { PROD_LOG_DEBUG } from "back-end/config";
+import { LOG_DEBUG } from "back-end/config";
 import { Adapter, AdapterFunction } from "back-end/lib/logger/adapters";
 import { reduce } from "lodash";
 
@@ -48,17 +48,13 @@ const noOpLog: LogFunction = logWith((_domain, _msg) => {
 
 export function makeDomainLogger(
   adapter: Adapter,
-  domain: string,
-  env: "development" | "production"
+  domain: string
 ): DomainLogger {
   const { info, warn, error, debug } = makeLogger(adapter);
-  const isDev = env === "development";
-  const prodDebug = PROD_LOG_DEBUG;
   return {
     info: info.bind(null, domain),
     warn: warn.bind(null, domain),
     error: error.bind(null, domain),
-    debug:
-      isDev || prodDebug ? debug.bind(null, domain) : noOpLog.bind(null, domain)
+    debug: LOG_DEBUG ? debug.bind(null, domain) : noOpLog.bind(null, domain)
   };
 }

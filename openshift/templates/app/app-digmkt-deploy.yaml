@@ -32,8 +32,8 @@ objects:
     MAILER_PORT: '25'
     TZ: America/Vancouver
     SHOW_TEST_INDICATOR: ${SHOW_TEST_INDICATOR}
-    PROD_LOG_DEBUG: "1"
     LOG_MEM_USAGE: "1"
+    LOG_DEBUG: "1"
 
 - kind: Secret
   apiVersion: v1

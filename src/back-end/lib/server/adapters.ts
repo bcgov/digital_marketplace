@@ -1,7 +1,6 @@
 import QueryString from "qs";
 import {
   COOKIE_SECRET,
-  ENV,
   ORIGIN,
   SWAGGER_ENABLE,
   SWAGGER_UI_PATH,
@@ -261,7 +260,7 @@ export function express<
   Session,
   FileUploadMetaData
 > {
-  const logger = makeDomainLogger(consoleAdapter, "adapter:express", ENV);
+  const logger = makeDomainLogger(consoleAdapter, "adapter:express");
 
   return ({
     router,
@@ -403,7 +402,7 @@ export function express<
           method,
           headers,
           session,
-          logger: makeDomainLogger(consoleAdapter, `request:${requestId}`, ENV),
+          logger: makeDomainLogger(consoleAdapter, `request:${requestId}`),
           params: expressReq.params,
           query: processQueryParams(expressReq.query),
           body
