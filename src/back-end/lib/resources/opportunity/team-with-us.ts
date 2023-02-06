@@ -139,6 +139,8 @@ const create: crud.Create<
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
+        startDate: getString(body, "startDate"),
+        completionDate: getString(body, "completionDate"),
         maxBudget: getNumber(body, "maxBudget"),
         questionsWeight: getNumber(body, "questionsWeight"),
         challengeWeight: getNumber(body, "challengeWeight"),
@@ -162,6 +164,8 @@ const create: crud.Create<
         description,
         proposalDeadline,
         assignmentDate,
+        startDate,
+        completionDate,
         maxBudget,
         questionsWeight,
         challengeWeight,
@@ -211,25 +215,21 @@ const create: crud.Create<
           assignmentDate,
           getValidValue(validatedProposalDeadline, now)
         );
-
+      // Validate phase start/completion dates now so that we can coerce to defaults for draft
+      const validatedStartDate = opportunityValidation.validateStartDate(
+        startDate,
+        getValidValue(validatedAssignmentDate, now)
+      );
+      const validatedCompletionDate =
+        opportunityValidation.validateCompletionDate(
+          completionDate,
+          getValidValue(validatedStartDate, now)
+        );
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);
         return valid({
-          title,
-          teaser,
-          remoteOk,
-          remoteDesc,
-          location,
-          maxBudget,
-          mandatorySkills,
-          optionalSkills,
-          serviceArea,
-          targetAllocation,
-          description,
-          questionsWeight,
-          challengeWeight,
-          priceWeight,
+          ...request.body,
           session,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
@@ -247,7 +247,9 @@ const create: crud.Create<
             validatedProposalDeadline,
             defaultDate
           ),
-          assignmentDate: getValidValue(validatedAssignmentDate, defaultDate)
+          assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+          startDate: getValidValue(validatedStartDate, defaultDate),
+          completionDate: getValidValue(validatedCompletionDate, defaultDate)
         });
       }
 
@@ -301,6 +303,8 @@ const create: crud.Create<
           validatedResourceQuestions,
           validatedProposalDeadline,
           validatedAssignmentDate,
+          validatedStartDate,
+          validatedCompletionDate,
           validatedAttachments,
           validatedStatus
         ])
@@ -336,6 +340,8 @@ const create: crud.Create<
           resourceQuestions: validatedResourceQuestions.value,
           proposalDeadline: validatedProposalDeadline.value,
           assignmentDate: validatedAssignmentDate.value,
+          startDate: validatedStartDate.value,
+          completionDate: validatedCompletionDate.value,
           attachments: validatedAttachments.value,
           status: validatedStatus.value
         } as ValidatedCreateRequestBody);
@@ -356,7 +362,10 @@ const create: crud.Create<
             undefined
           ),
           serviceArea: getInvalidValue(validatedServiceArea, undefined),
-          targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
+          targetAllocation: getInvalidValue(
+            validatedTargetAllocation,
+            undefined
+          ),
           description: getInvalidValue(validatedDescription, undefined),
           questionsWeight: getInvalidValue(validatedQuestionsWeight, undefined),
           challengeWeight: getInvalidValue(validatedChallengeWeight, undefined),
@@ -369,7 +378,9 @@ const create: crud.Create<
             validatedProposalDeadline,
             undefined
           ),
-          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined)
+          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
+          startDate: getInvalidValue(validatedStartDate, undefined),
+          completionDate: getInvalidValue(validatedCompletionDate, undefined)
         });
       }
     },
@@ -395,7 +406,7 @@ const create: crud.Create<
         }
         // If submitted for review, notify
         if (dbResult.value.status === TWUOpportunityStatus.UnderReview) {
-          twuOpportunityNotifications.handleTWUSubmittedForReview(
+          await twuOpportunityNotifications.handleTWUSubmittedForReview(
             connection,
             dbResult.value
           );
