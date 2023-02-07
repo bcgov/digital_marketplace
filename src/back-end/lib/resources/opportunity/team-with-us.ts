@@ -415,14 +415,14 @@ const create: crud.Create<
             dbResult.value
           );
         }
-        // // If published, notify subscribed users
-        // if (dbResult.value.status === TWUOpportunityStatus.Published) {
-        //   twuOpportunityNotifications.handleTWUPublished(
-        //     connection,
-        //     dbResult.value,
-        //     false
-        //   );
-        // }
+        // If published, notify subscribed users
+        if (dbResult.value.status === TWUOpportunityStatus.Published) {
+          await twuOpportunityNotifications.handleTWUPublished(
+            connection,
+            dbResult.value,
+            false
+          );
+        }
         return basicResponse(
           201,
           request.session,
