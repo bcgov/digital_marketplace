@@ -103,14 +103,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             //       (response) => response
             //     )
             //   : component_.cmd.dispatch(valid([])),
+
+            //TODO: add proposals as a parameter value when proposals is ready
             component_.cmd.dispatch(valid([])),
-            (opportunity, proposals) =>
-              adt("onInitResponse", [
-                routePath,
-                tabId,
-                opportunity,
-                proposals
-              ]) as Msg
+            (opportunity) =>
+              adt("onInitResponse", [routePath, tabId, opportunity]) as Msg
           )
         ]
       ];

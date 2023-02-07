@@ -28,6 +28,7 @@ import {
   getInvalidValue,
   getValidValue,
   isInvalid,
+  mapValid,
   valid,
   validateUUID
 } from "shared/lib/validation";
@@ -221,11 +222,13 @@ const create: crud.Create<
         startDate,
         getValidValue(validatedAssignmentDate, now)
       );
-      const validatedCompletionDate =
-        genericValidation.validateDateFormatMinMax(
+      const validatedCompletionDate = mapValid(
+        genericValidation.validateCompletionDate(
           completionDate,
           getValidValue(validatedStartDate, now)
-        );
+        ),
+        (v) => v || null
+      );
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);

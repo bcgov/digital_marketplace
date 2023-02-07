@@ -154,7 +154,7 @@ export interface TWUOpportunity {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
-  completionDate: Date;
+  completionDate: Date | null;
   maxBudget: number;
   targetAllocation: number;
   questionsWeight: number;
@@ -241,7 +241,7 @@ export interface CreateRequestBody {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
-  completionDate: string;
+  completionDate?: string;
   maxBudget: number;
   targetAllocation: number;
   mandatorySkills: string[];

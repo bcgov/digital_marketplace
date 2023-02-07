@@ -213,18 +213,6 @@ export function validateProposalDeadline(
   return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
 }
 
-export function validateAssignmentDate(
-  raw: string,
-  proposalDeadline: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(proposalDeadline),
-    undefined,
-    setDateTo4PM
-  );
-}
-
 export function validateQuestionsWeight(
   raw: string | number
 ): Validation<number> {

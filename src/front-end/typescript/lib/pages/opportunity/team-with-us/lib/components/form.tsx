@@ -138,21 +138,35 @@ export function getActiveTab(state: Immutable<State>): TabId {
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = "Overview";
-
-function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
-  return state.update("assignmentDate", (s) => {
-    return FormField.setValidate(
+type DateFieldKey = "startDate" | "assignmentDate" | "completionDate";
+export function setValidateDate(
+  state: Immutable<State>,
+  k: DateFieldKey,
+  validate: (_: string) => Validation<Date | null>
+): Immutable<State> {
+  return state.update(k, (s) =>
+    FormField.setValidate(
       s,
-      DateField.validateDate((v) =>
-        genericValidation.validateDateFormatMinMax(
-          v,
-          DateField.getDate(state.proposalDeadline) || new Date()
-        )
-      ),
+      DateField.validateDate(validate),
       !!FormField.getValue(s)
-    );
-  });
+    )
+  );
 }
+
+// function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
+//   return state.update("assignmentDate", (s) => {
+//     return FormField.setValidate(
+//       s,
+//       DateField.validateDate((v) =>
+//         genericValidation.validateDateFormatMinMax(
+//           v,
+//           DateField.getDate(state.proposalDeadline) || new Date()
+//         )
+//       ),
+//       !!FormField.getValue(s)
+//     );
+//   });
+// }
 /**
  * Local helper function to obtain and modify the key of
  * (enum) TWUServiceArea if given the value.
@@ -308,6 +322,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "twu-opportunity-assignment-date"
     }
   });
+
   const [startDateState, startDateCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
@@ -323,14 +338,17 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [completionDateState, completionDateCmds] = DateField.init({
     errors: [],
-    validate: DateField.validateDate((v) =>
-      genericValidation.validateDateFormatMinMax(
-        v,
-        opportunity?.startDate || new Date()
-      )
-    ),
+    validate: DateField.validateDate((v) => {
+      return mapValid(
+        genericValidation.validateCompletionDate(
+          v,
+          opportunity?.startDate || new Date()
+        ),
+        (w) => w || null
+      );
+    }),
     child: {
-      value: opportunity
+      value: opportunity?.completionDate
         ? DateField.dateToValue(opportunity.completionDate)
         : null,
       id: "twu-opportunity-completion-date"
@@ -1038,33 +1056,65 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("location", value)
       });
 
-    case "proposalDeadline":
+    case "proposalDeadline": {
       return component_.base.updateChild({
         state,
         childStatePath: ["proposalDeadline"],
         childUpdate: DateField.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("proposalDeadline", value),
-        updateAfter: (state) => [resetAssignmentDate(state), []]
+        updateAfter: (state) => [
+          setValidateDate(state, "assignmentDate", (v) =>
+            genericValidation.validateDateFormatMinMax(
+              v,
+              DateField.getDate(state.proposalDeadline) || new Date()
+            )
+          ),
+          []
+        ]
       });
+    }
 
-    case "assignmentDate":
+    case "assignmentDate": {
       return component_.base.updateChild({
         state,
         childStatePath: ["assignmentDate"],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("assignmentDate", value)
+        mapChildMsg: (value) => adt("assignmentDate" as const, value),
+        updateAfter: (state) => [
+          setValidateDate(state, "startDate", (v) =>
+            genericValidation.validateDateFormatMinMax(
+              v,
+              DateField.getDate(state.assignmentDate) || new Date()
+            )
+          ),
+          []
+        ]
       });
+    }
 
-    case "startDate":
+    case "startDate": {
       return component_.base.updateChild({
         state,
         childStatePath: ["startDate"],
         childUpdate: DateField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("startDate", value)
+        mapChildMsg: (value) => adt("startDate" as const, value),
+        updateAfter: (state) => [
+          setValidateDate(state, "completionDate", (v) =>
+            mapValid(
+              genericValidation.validateCompletionDate(
+                v,
+                DateField.getDate(state.startDate) || new Date()
+              ),
+              (w) => w || null
+            )
+          ),
+          []
+        ]
       });
+    }
 
     case "completionDate":
       return component_.base.updateChild({
