@@ -37,9 +37,7 @@ export function validateTWUOpportunityStatus(
 ): Validation<TWUOpportunityStatus> {
   const parsed = parseTWUOpportunityStatus(raw);
   if (!parsed) {
-    return invalid([
-      `"${raw}" is not a valid SprintWithUs opportunity status.`
-    ]);
+    return invalid([`"${raw}" is not a valid TeamWithUs opportunity status.`]);
   }
   if (!isOneOf.includes(parsed)) {
     return invalid([`"${raw}" is not one of: ${isOneOf.join(", ")}`]);
@@ -55,12 +53,6 @@ export function validateCreateTWUOpportunityStatus(
     TWUOpportunityStatus.UnderReview,
     TWUOpportunityStatus.Published
   ]) as Validation<CreateTWUOpportunityStatus>;
-}
-
-export function validateFullTime(raw: any): Validation<boolean> {
-  return typeof raw === "boolean"
-    ? valid(raw)
-    : invalid(["You must provide a boolean value."]);
 }
 
 export function validateResourceQuestionQuestion(
@@ -132,30 +124,6 @@ export function validateResourceQuestion(
       order: getInvalidValue(validatedOrder, undefined)
     });
   }
-}
-
-export function validateStartDate(
-  raw: string,
-  assignmentDate: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(assignmentDate),
-    undefined,
-    setDateTo4PM
-  );
-}
-
-export function validateCompletionDate(
-  raw: string,
-  proposalDeadline: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(proposalDeadline),
-    undefined,
-    setDateTo4PM
-  );
 }
 
 export function validateResourceQuestions(
@@ -279,7 +247,7 @@ export function validateNote(raw: string): Validation<string> {
 /**
  * Takes a string from the form and validates that its in an enumerated list
  *
- * @param raw
+ * @param raw - string argument
  * @returns
  */
 export function validateServiceArea(raw: string): Validation<string> {
@@ -292,7 +260,7 @@ export function validateServiceArea(raw: string): Validation<string> {
 /**
  * Takes a number and validates that it's a percentage of full-time allocation
  *
- * @param raw
+ * @param raw - string argument
  * @returns
  */
 export function validateTargetAllocation(raw: number): Validation<number> {

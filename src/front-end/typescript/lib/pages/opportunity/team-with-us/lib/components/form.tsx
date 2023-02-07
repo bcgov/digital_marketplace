@@ -48,6 +48,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 type RemoteOk = "yes" | "no";
 
@@ -76,6 +77,8 @@ export interface State {
   location: Immutable<ShortText.State>;
   proposalDeadline: Immutable<DateField.State>;
   assignmentDate: Immutable<DateField.State>;
+  startDate: Immutable<DateField.State>;
+  completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
   serviceArea: Immutable<Select.State>;
   targetAllocation: Immutable<Select.State>;
@@ -104,6 +107,8 @@ export type Msg =
   | ADT<"location", ShortText.Msg>
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"assignmentDate", DateField.Msg>
+  | ADT<"startDate", DateField.Msg>
+  | ADT<"completionDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
   | ADT<"serviceArea", Select.Msg>
   | ADT<"targetAllocation", Select.Msg>
@@ -139,7 +144,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
     return FormField.setValidate(
       s,
       DateField.validateDate((v) =>
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           v,
           DateField.getDate(state.proposalDeadline) || new Date()
         )
@@ -291,7 +296,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [assignmentDateState, assignmentDateCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
-      opportunityValidation.validateAssignmentDate(
+      genericValidation.validateDateFormatMinMax(
         v,
         opportunity?.proposalDeadline || new Date()
       )
@@ -301,6 +306,34 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         ? DateField.dateToValue(opportunity.assignmentDate)
         : null,
       id: "twu-opportunity-assignment-date"
+    }
+  });
+  const [startDateState, startDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      genericValidation.validateDateFormatMinMax(
+        v,
+        opportunity?.assignmentDate || new Date()
+      )
+    ),
+    child: {
+      value: opportunity ? DateField.dateToValue(opportunity.startDate) : null,
+      id: "twu-opportunity-start-date"
+    }
+  });
+  const [completionDateState, completionDateCmds] = DateField.init({
+    errors: [],
+    validate: DateField.validateDate((v) =>
+      genericValidation.validateDateFormatMinMax(
+        v,
+        opportunity?.startDate || new Date()
+      )
+    ),
+    child: {
+      value: opportunity
+        ? DateField.dateToValue(opportunity.completionDate)
+        : null,
+      id: "twu-opportunity-completion-date"
     }
   });
   const [maxBudgetState, maxBudgetCmds] = NumberField.init({
@@ -478,6 +511,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteDesc: immutable(remoteDescState),
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
+      startDate: immutable(startDateState),
+      completionDate: immutable(completionDateState),
       maxBudget: immutable(maxBudgetState),
       serviceArea: immutable(serviceAreaState),
       targetAllocation: immutable(targetAllocationState),
@@ -507,6 +542,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(assignmentDateCmds, (msg) =>
         adt("assignmentDate", msg)
+      ),
+      ...component_.cmd.mapMany(startDateCmds, (msg) => adt("startDate", msg)),
+      ...component_.cmd.mapMany(completionDateCmds, (msg) =>
+        adt("completionDate", msg)
       ),
       ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
       ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
@@ -567,6 +606,12 @@ export function setErrors(
       .update("assignmentDate", (s) =>
         FormField.setErrors(s, errors.assignmentDate || [])
       )
+      .update("startDate", (s) =>
+        FormField.setErrors(s, errors.startDate || [])
+      )
+      .update("completionDate", (s) =>
+        FormField.setErrors(s, errors.completionDate || [])
+      )
       .update("mandatorySkills", (s) =>
         FormField.setErrors(s, flatten(errors.mandatorySkills || []))
       )
@@ -600,6 +645,8 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("location", (s) => FormField.validate(s))
     .update("proposalDeadline", (s) => FormField.validate(s))
     .update("assignmentDate", (s) => FormField.validate(s))
+    .update("startDate", (s) => FormField.validate(s))
+    .update("completionDate", (s) => FormField.validate(s))
     .update("serviceArea", (s) => FormField.validate(s))
     .update("mandatorySkills", (s) => FormField.validate(s))
     .update("optionalSkills", (s) => FormField.validate(s))
@@ -630,6 +677,8 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
     FormField.isValid(state.location) &&
     FormField.isValid(state.proposalDeadline) &&
     FormField.isValid(state.assignmentDate) &&
+    FormField.isValid(state.startDate) &&
+    FormField.isValid(state.completionDate) &&
     FormField.isValid(state.serviceArea) &&
     FormField.isValid(state.mandatorySkills) &&
     FormField.isValid(state.optionalSkills)
@@ -735,6 +784,8 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
+    startDate: DateField.getValueAsString(state.startDate),
+    completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
     serviceArea: Select.getValue(state.serviceArea),
     targetAllocation,
@@ -1006,6 +1057,24 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("assignmentDate", value)
       });
 
+    case "startDate":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["startDate"],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("startDate", value)
+      });
+
+    case "completionDate":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["completionDate"],
+        childUpdate: DateField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("completionDate", value)
+      });
+
     case "maxBudget":
       return component_.base.updateChild({
         state,
@@ -1243,6 +1312,34 @@ const OverviewView: component_.base.View<Props> = ({
         />
       </Col>
 
+      <Col xs="12" md="6">
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label="Start Date"
+          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
+          state={state.startDate}
+          disabled={disabled}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("startDate" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col xs="12" md="6">
+        <DateField.view
+          required
+          extraChildProps={{}}
+          label="Completion Date"
+          help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
+          state={state.completionDate}
+          disabled={disabled}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("completionDate" as const, value)
+          )}
+        />
+      </Col>
+
       <Col xs="12">
         <NumberField.view
           extraChildProps={{ prefix: "$" }}
@@ -1262,7 +1359,7 @@ const OverviewView: component_.base.View<Props> = ({
         <Select.view
           extraChildProps={{}}
           label="Service Area"
-          placeholder=""
+          placeholder="Service Area"
           help="Each TWU Opportunity must be matched to one and only one Service Area."
           required
           disabled={disabled}

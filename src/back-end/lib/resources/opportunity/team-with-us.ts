@@ -32,6 +32,7 @@ import {
   validateUUID
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 interface ValidatedCreateRequestBody
   extends Omit<
@@ -211,17 +212,17 @@ const create: crud.Create<
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
       const validatedAssignmentDate =
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           assignmentDate,
           getValidValue(validatedProposalDeadline, now)
         );
       // Validate phase start/completion dates now so that we can coerce to defaults for draft
-      const validatedStartDate = opportunityValidation.validateStartDate(
+      const validatedStartDate = genericValidation.validateDateFormatMinMax(
         startDate,
         getValidValue(validatedAssignmentDate, now)
       );
       const validatedCompletionDate =
-        opportunityValidation.validateCompletionDate(
+        genericValidation.validateDateFormatMinMax(
           completionDate,
           getValidValue(validatedStartDate, now)
         );
