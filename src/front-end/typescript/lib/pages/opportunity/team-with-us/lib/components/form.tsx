@@ -153,20 +153,6 @@ export function setValidateDate(
   );
 }
 
-// function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
-//   return state.update("assignmentDate", (s) => {
-//     return FormField.setValidate(
-//       s,
-//       DateField.validateDate((v) =>
-//         genericValidation.validateDateFormatMinMax(
-//           v,
-//           DateField.getDate(state.proposalDeadline) || new Date()
-//         )
-//       ),
-//       !!FormField.getValue(s)
-//     );
-//   });
-// }
 /**
  * Local helper function to obtain and modify the key of
  * (enum) TWUServiceArea if given the value.
@@ -412,7 +398,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (v) => {
       const strings = v.map(({ value }) => value);
-      const validated0 = opportunityValidation.validateMandatorySkills(strings);
+      const validated0 = genericValidation.validateMandatorySkills(strings);
       const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
       return mapInvalid(validated1, (es) => flatten(es));
     },

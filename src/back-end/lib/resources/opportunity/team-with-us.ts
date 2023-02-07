@@ -270,7 +270,7 @@ const create: crud.Create<
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
       const validatedMandatorySkills =
-        opportunityValidation.validateMandatorySkills(mandatorySkills);
+        genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
       const validatedServiceArea =

@@ -1,5 +1,20 @@
-import { optional, validateDate, Validation } from "shared/lib/validation";
+import {
+  ArrayValidation,
+  invalid,
+  mapValid,
+  optional,
+  validateArray,
+  validateDate,
+  validateGenericString,
+  Validation
+} from "shared/lib/validation";
 import { setDateTo4PM } from "shared/lib";
+import { uniq } from "lodash";
+
+/**
+ * Use this file for (validation) functions that can be used across opportunities
+ * instead of duplicating unnecessarily.
+ */
 
 /**
  * Takes a date value, formats it, sets it to 4pm
@@ -27,5 +42,23 @@ export function validateCompletionDate(
 ): Validation<Date | undefined> {
   return optional(raw, (v) =>
     validateDate(v, setDateTo4PM(startDate), undefined, setDateTo4PM)
+  );
+}
+
+/**
+ *
+ * @param raw - string[] an array of strings
+ */
+export function validateMandatorySkills(
+  raw: string[]
+): ArrayValidation<string> {
+  if (!raw.length) {
+    return invalid([["Please select at least one skill."]]);
+  }
+  const validatedArray = validateArray(raw, (v) =>
+    validateGenericString(v, "Mandatory Skill", 1, 100)
+  );
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
   );
 }

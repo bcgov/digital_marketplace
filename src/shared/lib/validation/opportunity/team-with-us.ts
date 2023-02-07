@@ -1,4 +1,4 @@
-import { Set } from "immutable";
+import Immutable, { Set } from "immutable";
 import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
@@ -174,20 +174,6 @@ export function validateMaxBudget(raw: string | number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Maximum Budget");
 }
 
-export function validateMandatorySkills(
-  raw: string[]
-): ArrayValidation<string> {
-  if (!raw.length) {
-    return invalid([["Please select at least one skill."]]);
-  }
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Mandatory Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
-  );
-}
-
 export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Optional Skill", 1, 100)
@@ -229,9 +215,6 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
   return validateNumber(raw, 0, 100, "price weight", "a");
 }
 
-export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "Status Note", 0, 1000);
-}
 /**
  * Takes a string from the form and validates that its in an enumerated list
  *
