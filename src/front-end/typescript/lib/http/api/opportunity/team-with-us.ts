@@ -100,6 +100,14 @@ interface RawTWUOpportunity
   resourceQuestions: RawTWUResourceQuestion[];
 }
 
+/**
+ * Used for parsing/modifying JSON encoded values in a
+ * request/response scenario. For instance, where Dates are
+ * stored in the db as a timestamp and needs to be
+ * converted to a Date object for processing in the application
+ *
+ * @param raw - json object from db
+ */
 function rawTWUOpportunityToTWUOpportunity(
   raw: RawTWUOpportunity
 ): Resource.TWUOpportunity {
@@ -107,6 +115,8 @@ function rawTWUOpportunityToTWUOpportunity(
     ...raw,
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
+    startDate: new Date(raw.startDate),
+    completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt:
