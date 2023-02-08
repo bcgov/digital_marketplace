@@ -20,7 +20,8 @@ import {
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
   TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea,
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -54,8 +55,9 @@ interface ValidatedCreateRequestBody
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
+type CreateRequestBody = Omit<SharedCreateRequestBody, "status" | "serviceArea"> & {
   status: string;
+  serviceArea: string;
 };
 
 /**
@@ -211,6 +213,20 @@ const create: crud.Create<
           assignmentDate,
           getValidValue(validatedProposalDeadline, now)
         );
+      // Validate phase start/completion dates now so that we can coerce to defaults for draft
+      const validatedStartDate = opportunityValidation.validateStartDate(
+        startDate,
+        getValidValue(validatedAssignmentDate, now)
+      );
+      const validatedCompletionDate =
+        opportunityValidation.validateCompletionDate(
+          completionDate,
+          getValidValue(validatedStartDate, now)
+        );
+
+      // Service areas are required for drafts
+      const validatedServiceArea =
+        opportunityValidation.validateServiceArea(serviceArea);
 
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
@@ -224,7 +240,6 @@ const create: crud.Create<
           maxBudget,
           mandatorySkills,
           optionalSkills,
-          serviceArea,
           targetAllocation,
           description,
           questionsWeight,
@@ -247,7 +262,10 @@ const create: crud.Create<
             validatedProposalDeadline,
             defaultDate
           ),
-          assignmentDate: getValidValue(validatedAssignmentDate, defaultDate)
+          assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
+          startDate: getValidValue(validatedStartDate, defaultDate),
+          completionDate: getValidValue(validatedCompletionDate, defaultDate),
+          serviceArea: getValidValue(validatedServiceArea, TWUServiceArea.Developer)
         });
       }
 
@@ -267,8 +285,6 @@ const create: crud.Create<
         opportunityValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
-      const validatedServiceArea =
-        opportunityValidation.validateServiceArea(serviceArea);
       const validatedTargetAllocation =
         opportunityValidation.validateTargetAllocation(targetAllocation);
       const validatedDescription =

@@ -16,6 +16,7 @@ import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 // import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
+import { twuServiceAreaToTitleCase } from "../../lib";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -160,13 +161,24 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     optionalSkills,
     assignmentDate,
     proposalDeadline,
+    startDate,
+    completionDate,
     maxBudget,
-    location
+    location,
+    serviceArea
   } = opportunity;
   const items = [
     {
       name: "Assignment Date",
       children: formatDate(assignmentDate)
+    },
+    {
+      name: "Proposed Start Date",
+      children: formatDate(startDate)
+    },
+    {
+      name: "Proposed End Date",
+      children: formatDate(completionDate)
     }
   ];
   const reportCards: ReportCard[] = [
@@ -184,7 +196,12 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       icon: "map-marker",
       name: "Location",
       value: location
-    }
+    },
+    {
+      icon: "user",
+      name: "Service Area",
+      value: twuServiceAreaToTitleCase(serviceArea)
+    },
   ];
   return (
     <div className="mt-5 pt-5 border-top">

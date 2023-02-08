@@ -1,4 +1,3 @@
-import { Set } from "immutable";
 import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
@@ -11,7 +10,8 @@ import {
   parseTWUOpportunityStatus,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceArea
+  TWUServiceArea,
+  parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -25,7 +25,6 @@ import {
   validateDate,
   validateGenericString,
   validateNumber,
-  validateStringInArray,
   Validation
 } from "shared/lib/validation";
 export { validateCapabilities } from "shared/lib/validation";
@@ -253,16 +252,20 @@ export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, "Status Note", 0, 1000);
 }
 /**
- * Takes a string from the form and validates that its in an enumerated list
+ * Takes a string from the form and validates that its a parsable Team With Us
+ * service area.
  *
  * @param raw
  * @returns
  */
-export function validateServiceArea(raw: string): Validation<string> {
-  const service_area: Immutable.Set<string> = Set(
-    Object.values(TWUServiceArea)
-  );
-  return validateStringInArray(raw, service_area, "Service Area");
+export function validateServiceArea(raw: string): Validation<TWUServiceArea> {
+  const parsed = parseTWUServiceArea(raw);
+  if (!parsed) {
+    return invalid([
+      `"${raw}" is not a valid service area.`
+    ]);
+  }
+  return valid(parsed);
 }
 
 /**

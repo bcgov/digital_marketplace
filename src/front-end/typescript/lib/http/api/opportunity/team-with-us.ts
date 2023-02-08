@@ -86,7 +86,6 @@ interface RawTWUOpportunity
     | "publishedAt"
     | "addenda"
     | "history"
-    | "serviceArea"
     | "resourceQuestions"
     | "attachments"
   > {
@@ -100,7 +99,6 @@ interface RawTWUOpportunity
   attachments: RawFileRecord[];
   addenda: RawAddendum[];
   history?: RawTWUOpportunityHistoryRecord[];
-  serviceArea: string;
   resourceQuestions: RawTWUResourceQuestion[];
 }
 

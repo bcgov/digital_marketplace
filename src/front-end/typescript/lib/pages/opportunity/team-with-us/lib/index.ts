@@ -4,7 +4,8 @@ import {
   isOpen,
   TWUOpportunity,
   TWUOpportunityEvent,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 
@@ -164,4 +165,23 @@ export function opportunityToHistoryItems({
     createdAt: s.createdAt,
     createdBy: s.createdBy || undefined
   }));
+}
+
+/**
+ * Formats a Team With Us service area to title case.
+ *
+ * @param s
+ * @returns
+ */
+export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
+  switch (s) {
+    case TWUServiceArea.Developer:
+      return 'Developer';
+    case TWUServiceArea.DataSpecialist:
+      return 'Data Specialist';
+    case TWUServiceArea.DevopsSpecialist:
+      return 'DevOps Specialist';
+    case TWUServiceArea.ScrumMaster:
+      return 'Scrum Master';
+  }
 }
