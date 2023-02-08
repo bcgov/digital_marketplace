@@ -39,6 +39,8 @@ import {
   Validation
 } from "shared/lib/validation";
 import { isArray, isBoolean } from "util";
+import { validateDateFormatMinMax } from "shared/lib/validation/opportunity/utility";
+
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
@@ -66,18 +68,6 @@ export function validateCreateSWUOpportunityStatus(
     SWUOpportunityStatus.UnderReview,
     SWUOpportunityStatus.Published
   ]) as Validation<CreateSWUOpportunityStatus>;
-}
-
-export function validateSWUOpportunityInceptionPhaseStartDate(
-  raw: string,
-  assignmentDate: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(assignmentDate),
-    undefined,
-    setDateTo4PM
-  );
 }
 
 export function validateSWUOpportunityPrototypePhaseStartDate(
@@ -181,7 +171,7 @@ export function validateSWUOpportunityInceptionPhase(
       ValidatedCreateSWUOpportunityPhaseBody | undefined,
       CreateSWUOpportunityPhaseValidationErrors
     > => {
-      const validatedStartDate = validateSWUOpportunityInceptionPhaseStartDate(
+      const validatedStartDate = validateDateFormatMinMax(
         getISODateString(raw, "startDate"),
         opportunityAssignmentDate
       );
@@ -419,36 +409,6 @@ export function validateTeamQuestions(
   return validateArrayCustom(raw, validateTeamQuestion, {});
 }
 
-export function validateTitle(raw: string): Validation<string> {
-  return validateGenericString(raw, "Title", 1, 200);
-}
-
-export function validateTeaser(raw: string): Validation<string> {
-  return validateGenericString(raw, "Teaser", 0, 500);
-}
-
-export function validateRemoteOk(raw: any): Validation<boolean> {
-  return isBoolean(raw)
-    ? valid(raw)
-    : invalid(["Invalid remote option provided."]);
-}
-
-export function validateRemoteDesc(
-  raw: string,
-  remoteOk: boolean
-): Validation<string> {
-  return validateGenericString(
-    raw,
-    "Remote description",
-    remoteOk ? 1 : 0,
-    500
-  );
-}
-
-export function validateLocation(raw: string): Validation<string> {
-  return validateGenericString(raw, "Location", 1);
-}
-
 export function validateTotalMaxBudget(
   raw: string | number
 ): Validation<number> {
@@ -487,10 +447,6 @@ export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   );
 }
 
-export function validateDescription(raw: string): Validation<string> {
-  return validateGenericString(raw, "Description", 1, 10000);
-}
-
 export function validateProposalDeadline(
   raw: string,
   opportunity?: SWUOpportunity
@@ -501,18 +457,6 @@ export function validateProposalDeadline(
     minDate = opportunity.proposalDeadline;
   }
   return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
-}
-
-export function validateAssignmentDate(
-  raw: string,
-  proposalDeadline: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(proposalDeadline),
-    undefined,
-    setDateTo4PM
-  );
 }
 
 export function validateQuestionsWeight(
