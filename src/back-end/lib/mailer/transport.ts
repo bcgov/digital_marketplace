@@ -1,4 +1,4 @@
-import { ENV, MAILER_CONFIG, MAILER_FROM } from "back-end/config";
+import { MAILER_CONFIG, MAILER_FROM } from "back-end/config";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import { Emails } from "back-end/lib/mailer";
@@ -6,7 +6,7 @@ import { fromString } from "html-to-text";
 import nodemailer from "nodemailer";
 import { SHOW_TEST_INDICATOR } from "shared/config";
 
-const logger = makeDomainLogger(consoleAdapter, "mailer", ENV);
+const logger = makeDomainLogger(consoleAdapter, "mailer");
 
 const transport = nodemailer.createTransport(MAILER_CONFIG);
 

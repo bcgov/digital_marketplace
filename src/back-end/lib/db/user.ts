@@ -151,11 +151,7 @@ export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(
   }
 );
 
-const tempLogger = makeDomainLogger(
-  consoleAdapter,
-  "create-user-debug",
-  "development"
-);
+const tempLogger = makeDomainLogger(consoleAdapter, "create-user-debug");
 export const createUser = tryDb<[CreateUserParams], User>(
   async (connection, user) => {
     const now = new Date();
