@@ -17,6 +17,7 @@ import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
+import { map } from "lodash";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -182,7 +183,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       children: completionDate ? formatDate(completionDate) : ""
     }
   ];
-  const reportCards: ReportCard[] = [
+  const reportCards = map([
     {
       icon: "alarm-clock",
       name: "Proposals Due",
@@ -208,7 +209,8 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       name: "Target Resource Allocation",
       value: targetAllocation.toString().concat("%")
     },
-  ];
+  ], (rc: ReportCard): ReportCard => ({...rc, className: 'flex-grow-1 mr-4 mb-4'}));
+
   return (
     <div className="mt-5 pt-5 border-top">
       <Row>
