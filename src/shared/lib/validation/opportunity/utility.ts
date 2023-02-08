@@ -37,7 +37,7 @@ export function validateDateFormatMinMax(
  * @param raw - string | undefined
  * @param startDate
  */
-export function validateCompletionDate(
+export function validateDateFormatMinMaxOrUndefined(
   raw: string | undefined,
   startDate: Date
 ): Validation<Date | undefined> {

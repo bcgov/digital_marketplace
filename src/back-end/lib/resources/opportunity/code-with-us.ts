@@ -242,7 +242,7 @@ const create: crud.Create<
         getValidValue(validatedAssignmentDate, new Date())
       );
       const validatedCompletionDate = mapValid(
-        genericValidation.validateCompletionDate(
+        genericValidation.validateDateFormatMinMaxOrUndefined(
           completionDate,
           getValidValue(validatedStartDate, new Date())
         ),
@@ -552,7 +552,7 @@ const update: crud.Update<
             getValidValue(validatedAssignmentDate, now)
           );
           const validatedCompletionDate = mapValid(
-            genericValidation.validateCompletionDate(
+            genericValidation.validateDateFormatMinMaxOrUndefined(
               completionDate,
               getValidValue(validatedStartDate, now)
             ),

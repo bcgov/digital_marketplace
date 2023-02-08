@@ -36,7 +36,7 @@ import {
   TWUOpportunityStatus,
   TWUServiceArea,
   UpdateEditValidationErrors,
-  parseTWUServiceArea,
+  parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -140,7 +140,10 @@ export function getActiveTab(state: Immutable<State>): TabId {
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = "Overview";
-type DateFieldKey = Extract<Msg['tag'], "startDate" | "assignmentDate" | "completionDate">;
+type DateFieldKey = Extract<
+  Msg["tag"],
+  "startDate" | "assignmentDate" | "completionDate"
+>;
 export function setValidateDate(
   state: Immutable<State>,
   k: DateFieldKey,
@@ -323,15 +326,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [completionDateState, completionDateCmds] = DateField.init({
     errors: [],
-    validate: DateField.validateDate((v) => {
-      return mapValid(
-        genericValidation.validateCompletionDate(
-          v,
-          opportunity?.startDate || new Date()
-        ),
-        (w) => w || null
-      );
-    }),
+    validate: DateField.validateDate((v) =>
+      genericValidation.validateDateFormatMinMax(
+        v,
+        opportunity?.startDate || new Date()
+      )
+    ),
     child: {
       value: opportunity?.completionDate
         ? DateField.dateToValue(opportunity.completionDate)
@@ -357,12 +357,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (option) => {
       if (!option) {
-        return invalid(["Please select a Target Allocation."]);
+        return invalid(["Please select a Service Area."]);
       }
-  
+
       return mapValid(
         opportunityValidation.validateServiceArea(option.value),
-        serviceArea => ({label: option.label, value: serviceArea}))
+        (serviceArea) => ({ label: option.label, value: serviceArea })
+      );
     },
     child: {
       value: serviceArea,
@@ -793,7 +794,9 @@ export function getValues(state: Immutable<State>): Values {
     startDate: DateField.getValueAsString(state.startDate),
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
-    serviceArea: parseTWUServiceArea(Select.getValue(state.serviceArea)) ?? TWUServiceArea.Developer,
+    serviceArea:
+      parseTWUServiceArea(Select.getValue(state.serviceArea)) ??
+      TWUServiceArea.Developer,
     targetAllocation,
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
@@ -1044,7 +1047,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("location", value)
       });
 
-    case "proposalDeadline": {
+    case "proposalDeadline":
       return component_.base.updateChild({
         state,
         childStatePath: ["proposalDeadline"],
@@ -1061,9 +1064,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           []
         ]
       });
-    }
 
-    case "assignmentDate": {
+    case "assignmentDate":
       return component_.base.updateChild({
         state,
         childStatePath: ["assignmentDate"],
@@ -1080,9 +1082,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           []
         ]
       });
-    }
 
-    case "startDate": {
+    case "startDate":
       return component_.base.updateChild({
         state,
         childStatePath: ["startDate"],
@@ -1092,7 +1093,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => [
           setValidateDate(state, "completionDate", (v) =>
             mapValid(
-              genericValidation.validateCompletionDate(
+              genericValidation.validateDateFormatMinMaxOrUndefined(
                 v,
                 DateField.getDate(state.startDate) || new Date()
               ),
@@ -1102,7 +1103,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           []
         ]
       });
-    }
 
     case "completionDate":
       return component_.base.updateChild({

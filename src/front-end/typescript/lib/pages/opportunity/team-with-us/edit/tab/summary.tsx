@@ -167,7 +167,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     serviceArea,
     targetAllocation,
     maxBudget,
-    location,
+    location
   } = opportunity;
   const items = [
     {
@@ -180,36 +180,42 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     },
     {
       name: "Proposed End Date",
-      children: completionDate ? formatDate(completionDate) : ""
+      children: formatDate(completionDate)
     }
   ];
-  const reportCards = map([
-    {
-      icon: "alarm-clock",
-      name: "Proposals Due",
-      value: formatDate(proposalDeadline)
-    },
-    {
-      icon: "badge-dollar",
-      name: "Max. Budget",
-      value: formatAmount(maxBudget, "$")
-    },
-    {
-      icon: "map-marker",
-      name: "Location",
-      value: location
-    },
-    {
-      icon: "laptop-code-outline",
-      name: "Service Area",
-      value: twuServiceAreaToTitleCase(serviceArea)
-    },
-    {
-      icon: "balance-scale",
-      name: "Target Resource Allocation",
-      value: targetAllocation.toString().concat("%")
-    },
-  ], (rc: ReportCard): ReportCard => ({...rc, className: 'flex-grow-1 mr-4 mb-4'}));
+  const reportCards = map(
+    [
+      {
+        icon: "alarm-clock",
+        name: "Proposals Due",
+        value: formatDate(proposalDeadline)
+      },
+      {
+        icon: "badge-dollar",
+        name: "Max. Budget",
+        value: formatAmount(maxBudget, "$")
+      },
+      {
+        icon: "map-marker",
+        name: "Location",
+        value: location
+      },
+      {
+        icon: "laptop-code-outline",
+        name: "Service Area",
+        value: twuServiceAreaToTitleCase(serviceArea)
+      },
+      {
+        icon: "balance-scale",
+        name: "Target Resource Allocation",
+        value: targetAllocation.toString().concat("%")
+      }
+    ],
+    (rc: ReportCard): ReportCard => ({
+      ...rc,
+      className: "flex-grow-1 mr-4 mb-4"
+    })
+  );
 
   return (
     <div className="mt-5 pt-5 border-top">

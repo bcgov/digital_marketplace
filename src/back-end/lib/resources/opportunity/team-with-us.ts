@@ -21,7 +21,7 @@ import {
   CreateValidationErrors,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceArea,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -29,7 +29,6 @@ import {
   getInvalidValue,
   getValidValue,
   isInvalid,
-  mapValid,
   valid,
   validateUUID
 } from "shared/lib/validation";
@@ -57,7 +56,10 @@ interface ValidatedCreateRequestBody
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-type CreateRequestBody = Omit<SharedCreateRequestBody, "status" | "serviceArea"> & {
+type CreateRequestBody = Omit<
+  SharedCreateRequestBody,
+  "status" | "serviceArea"
+> & {
   status: string;
   serviceArea: string;
 };
@@ -224,17 +226,14 @@ const create: crud.Create<
         startDate,
         getValidValue(validatedAssignmentDate, now)
       );
-      const validatedCompletionDate = mapValid(
-        genericValidation.validateCompletionDate(
+      const validatedCompletionDate =
+        genericValidation.validateDateFormatMinMax(
           completionDate,
           getValidValue(validatedStartDate, now)
-        ),
-        (v) => v || null
-      );
-
+        );
       // Service areas are required for drafts
       const validatedServiceArea =
-        opportunityValidation.validateServiceArea(serviceArea)
+        opportunityValidation.validateServiceArea(serviceArea);
 
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
@@ -261,7 +260,10 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          serviceArea: getValidValue(validatedServiceArea, TWUServiceArea.Developer)
+          serviceArea: getValidValue(
+            validatedServiceArea,
+            TWUServiceArea.Developer
+          )
         });
       }
 

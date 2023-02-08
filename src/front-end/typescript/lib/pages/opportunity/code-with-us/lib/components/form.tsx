@@ -282,7 +282,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: DateField.validateDate((v) => {
       return mapValid(
-        genericValidation.validateCompletionDate(
+        genericValidation.validateDateFormatMinMaxOrUndefined(
           v,
           opportunity?.startDate || new Date()
         ),
@@ -839,7 +839,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => [
           setValidateDate(state, "completionDate", (v) =>
             mapValid(
-              genericValidation.validateCompletionDate(
+              genericValidation.validateDateFormatMinMaxOrUndefined(
                 v,
                 DateField.getDate(state.startDate) || new Date()
               ),

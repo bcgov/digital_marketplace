@@ -79,9 +79,7 @@ export function parseTWUOpportunityStatus(
  * @param raw
  * @returns
  */
-export function parseTWUServiceArea(
-  raw: string
-): TWUServiceArea | null {
+export function parseTWUServiceArea(raw: string): TWUServiceArea | null {
   switch (raw) {
     case TWUServiceArea.Developer:
       return TWUServiceArea.Developer;
@@ -175,7 +173,7 @@ export interface TWUOpportunity {
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
-  completionDate: Date | null;
+  completionDate: Date;
   maxBudget: number;
   targetAllocation: number;
   questionsWeight: number;
@@ -262,7 +260,7 @@ export interface CreateRequestBody {
   proposalDeadline: string;
   assignmentDate: string;
   startDate: string;
-  completionDate?: string;
+  completionDate: string;
   maxBudget: number;
   targetAllocation: number;
   mandatorySkills: string[];

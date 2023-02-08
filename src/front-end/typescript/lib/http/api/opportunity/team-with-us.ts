@@ -118,7 +118,7 @@ function rawTWUOpportunityToTWUOpportunity(
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
     startDate: new Date(raw.startDate),
-    completionDate: raw.completionDate ? new Date(raw.completionDate) : null,
+    completionDate: new Date(raw.completionDate),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt:
