@@ -2,20 +2,22 @@ const autoprefixer = require("autoprefixer");
 const cssnano = require("cssnano");
 
 module.exports = {
-  prefix: {
+  frontEndPrefix: {
     options: {
-      processors: [
-        autoprefixer({ browsers: "last 2 versions" })
-      ]
+      processors: [autoprefixer({ browsers: "last 2 versions" })]
     },
     src: gruntConfig.frontEnd.build.css
   },
-  min: {
+  frontEndMin: {
     options: {
-      processors: [
-        cssnano()
-      ]
+      processors: [cssnano()]
     },
     src: gruntConfig.frontEnd.build.css
+  },
+  learnFrontEndPrefix: {
+    options: {
+      processors: [autoprefixer({ browsers: "last 2 versions" })]
+    },
+    src: gruntConfig.learnFrontEnd.build.css
   }
 };
