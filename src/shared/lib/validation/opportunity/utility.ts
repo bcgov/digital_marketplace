@@ -3,6 +3,7 @@ import {
   invalid,
   mapValid,
   optional,
+  valid,
   validateArray,
   validateDate,
   validateGenericString,
@@ -61,4 +62,71 @@ export function validateMandatorySkills(
   return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
     uniq(skills)
   );
+}
+
+/**
+ * Checks for a string value with a minimum and maximum length
+ *
+ * @param raw - string, the title
+ */
+export function validateTitle(raw: string): Validation<string> {
+  return validateGenericString(raw, "Title", 1, 200);
+}
+
+/**
+ * Checks for a string value with a minimum and maximum length
+ *
+ * @param raw - string, the teaser
+ */
+export function validateTeaser(raw: string): Validation<string> {
+  return validateGenericString(raw, "Teaser", 0, 500);
+}
+
+/**
+ * Checks if a value is of type boolean
+ *
+ * @param raw - any
+ */
+export function validateRemoteOk(raw: any): Validation<boolean> {
+  return typeof raw === "boolean"
+    ? valid(raw)
+    : invalid(["Invalid remote option provided."]);
+}
+
+/**
+ * Checks for a string value with a maximum length
+ * and uses the numeric value of a boolean to set a minimum length
+ *
+ * @param raw - string, the description
+ * @param remoteOk - boolean, remote yes or no
+ */
+export function validateRemoteDesc(
+  raw: string,
+  remoteOk: boolean
+): Validation<string> {
+  return validateGenericString(
+    raw,
+    "Remote description",
+    remoteOk ? 1 : 0,
+    500
+  );
+}
+
+/**
+ * Checks for a string value with a minimum and maximum length
+ *
+ * @param raw - string
+ */
+export function validateDescription(raw: string): Validation<string> {
+  return validateGenericString(raw, "Description", 1, 10000);
+}
+
+/**
+ * Checks for a string value with a minimum length
+ * TODO - make this check against actual locations in the world
+ *
+ * @param raw - string, Location
+ */
+export function validateLocation(raw: string): Validation<string> {
+  return validateGenericString(raw, "Location", 1);
 }

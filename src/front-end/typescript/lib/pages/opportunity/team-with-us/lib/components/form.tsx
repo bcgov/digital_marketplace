@@ -227,7 +227,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateTitle,
+    validate: genericValidation.validateTitle,
     child: {
       type: "text",
       value: opportunity?.title || "",
@@ -236,7 +236,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teaserState, teaserCmds] = LongText.init({
     errors: [],
-    validate: opportunityValidation.validateTeaser,
+    validate: genericValidation.validateTeaser,
     child: {
       value: opportunity?.teaser || "",
       id: "twu-opportunity-teaser"
@@ -244,7 +244,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [locationState, locationCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateLocation,
+    validate: genericValidation.validateLocation,
     child: {
       type: "text",
       value: opportunity?.location || DEFAULT_LOCATION,
@@ -275,7 +275,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [remoteDescState, remoteDescCmds] = LongText.init({
     errors: [],
     validate: (v) =>
-      opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
+      genericValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
     child: {
       value: opportunity?.remoteDesc || "",
       id: "twu-opportunity-remote-desc"
@@ -434,7 +434,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
     errors: [],
-    validate: opportunityValidation.validateDescription,
+    validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
       id: "twu-opportunity-description",
@@ -1016,7 +1016,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             const remoteOk = FormField.getValue(state.remoteOk) === "yes";
             return FormField.setValidate(
               s,
-              (v) => opportunityValidation.validateRemoteDesc(v, remoteOk),
+              (v) => genericValidation.validateRemoteDesc(v, remoteOk),
               remoteOk
             );
           }),

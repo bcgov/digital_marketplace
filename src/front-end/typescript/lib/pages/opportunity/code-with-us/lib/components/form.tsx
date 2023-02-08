@@ -46,6 +46,7 @@ import {
   isValid as isValid_
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 type RemoteOk = "yes" | "no";
 
@@ -144,7 +145,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateTitle,
+    validate: genericValidation.validateTitle,
     child: {
       type: "text",
       value: opportunity?.title || "",
@@ -153,7 +154,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teaserState, teaserCmds] = LongText.init({
     errors: [],
-    validate: opportunityValidation.validateTeaser,
+    validate: genericValidation.validateTeaser,
     child: {
       value: opportunity?.teaser || "",
       id: "cwu-opportunity-teaser"
@@ -161,7 +162,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [locationState, locationCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateLocation,
+    validate: genericValidation.validateLocation,
     child: {
       type: "text",
       value: opportunity?.location || DEFAULT_LOCATION,
@@ -222,7 +223,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [remoteDescState, remoteDescCmds] = LongText.init({
     errors: [],
     validate: (v) =>
-      opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
+      genericValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
     child: {
       value: opportunity?.remoteDesc || "",
       id: "cwu-opportunity-remote-desc"
@@ -230,7 +231,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
     errors: [],
-    validate: opportunityValidation.validateDescription,
+    validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
       id: "cwu-opportunity-description",
@@ -252,7 +253,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [assignmentDateState, assignmentDateCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
-      opportunityValidation.validateAssignmentDate(
+      genericValidation.validateDateFormatMinMax(
         v,
         opportunity?.proposalDeadline || new Date()
       )
@@ -267,7 +268,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [startDateState, startDateCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
-      opportunityValidation.validateStartDate(
+      genericValidation.validateDateFormatMinMax(
         v,
         opportunity?.assignmentDate || new Date()
       )
@@ -281,7 +282,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: DateField.validateDate((v) => {
       return mapValid(
-        opportunityValidation.validateCompletionDate(
+        genericValidation.validateCompletionDate(
           v,
           opportunity?.startDate || new Date()
         ),
@@ -764,7 +765,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             const remoteOk = FormField.getValue(state.remoteOk) === "yes";
             return FormField.setValidate(
               s,
-              (v) => opportunityValidation.validateRemoteDesc(v, remoteOk),
+              (v) => genericValidation.validateRemoteDesc(v, remoteOk),
               remoteOk
             );
           }),
@@ -799,7 +800,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("proposalDeadline" as const, value),
         updateAfter: (state) => [
           setValidateDate(state, "assignmentDate", (v) =>
-            opportunityValidation.validateAssignmentDate(
+            genericValidation.validateDateFormatMinMax(
               v,
               DateField.getDate(state.proposalDeadline) || new Date()
             )
@@ -818,7 +819,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("assignmentDate" as const, value),
         updateAfter: (state) => [
           setValidateDate(state, "startDate", (v) =>
-            opportunityValidation.validateStartDate(
+            genericValidation.validateDateFormatMinMax(
               v,
               DateField.getDate(state.assignmentDate) || new Date()
             )
@@ -838,7 +839,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => [
           setValidateDate(state, "completionDate", (v) =>
             mapValid(
-              opportunityValidation.validateCompletionDate(
+              genericValidation.validateCompletionDate(
                 v,
                 DateField.getDate(state.startDate) || new Date()
               ),

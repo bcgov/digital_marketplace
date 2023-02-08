@@ -257,16 +257,14 @@ const create: crud.Create<
         });
       }
 
-      const validatedTitle = opportunityValidation.validateTitle(title);
-      const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-      const validatedRemoteOk =
-        opportunityValidation.validateRemoteOk(remoteOk);
-      const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+      const validatedTitle = genericValidation.validateTitle(title);
+      const validatedTeaser = genericValidation.validateTeaser(teaser);
+      const validatedRemoteOk = genericValidation.validateRemoteOk(remoteOk);
+      const validatedRemoteDesc = genericValidation.validateRemoteDesc(
         remoteDesc,
         getValidValue(validatedRemoteOk, false)
       );
-      const validatedLocation =
-        opportunityValidation.validateLocation(location);
+      const validatedLocation = genericValidation.validateLocation(location);
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
       const validatedMandatorySkills =
@@ -278,7 +276,7 @@ const create: crud.Create<
       const validatedTargetAllocation =
         opportunityValidation.validateTargetAllocation(targetAllocation);
       const validatedDescription =
-        opportunityValidation.validateDescription(description);
+        genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
         opportunityValidation.validateQuestionsWeight(questionsWeight);
       const validatedChallengeWeight =

@@ -45,6 +45,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 export interface ValidatedCreateRequestBody
   extends Omit<
@@ -232,16 +233,16 @@ const create: crud.Create<
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
       const validatedAssignmentDate =
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           assignmentDate,
           getValidValue(validatedProposalDeadline, new Date())
         );
-      const validatedStartDate = opportunityValidation.validateStartDate(
+      const validatedStartDate = genericValidation.validateDateFormatMinMax(
         startDate,
         getValidValue(validatedAssignmentDate, new Date())
       );
       const validatedCompletionDate = mapValid(
-        opportunityValidation.validateCompletionDate(
+        genericValidation.validateCompletionDate(
           completionDate,
           getValidValue(validatedStartDate, new Date())
         ),
@@ -267,20 +268,18 @@ const create: crud.Create<
         });
       }
 
-      const validatedTitle = opportunityValidation.validateTitle(title);
-      const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-      const validatedRemoteOk =
-        opportunityValidation.validateRemoteOk(remoteOk);
-      const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+      const validatedTitle = genericValidation.validateTitle(title);
+      const validatedTeaser = genericValidation.validateTeaser(teaser);
+      const validatedRemoteOk = genericValidation.validateRemoteOk(remoteOk);
+      const validatedRemoteDesc = genericValidation.validateRemoteDesc(
         remoteDesc,
         getValidValue(validatedRemoteOk, false)
       );
-      const validatedLocation =
-        opportunityValidation.validateLocation(location);
+      const validatedLocation = genericValidation.validateLocation(location);
       const validatedReward = opportunityValidation.validateReward(reward);
       const validatedSkills = opportunityValidation.validateSkills(skills);
       const validatedDescription =
-        opportunityValidation.validateDescription(description);
+        genericValidation.validateDescription(description);
       const validatedSubmissionInfo =
         opportunityValidation.validateSubmissionInfo(submissionInfo);
       const validatedAcceptanceCriteria =
@@ -544,16 +543,16 @@ const update: crud.Update<
               cwuOpportunity
             );
           const validatedAssignmentDate =
-            opportunityValidation.validateAssignmentDate(
+            genericValidation.validateDateFormatMinMax(
               assignmentDate,
               getValidValue(validatedProposalDeadline, now)
             );
-          const validatedStartDate = opportunityValidation.validateStartDate(
+          const validatedStartDate = genericValidation.validateDateFormatMinMax(
             startDate,
             getValidValue(validatedAssignmentDate, now)
           );
           const validatedCompletionDate = mapValid(
-            opportunityValidation.validateCompletionDate(
+            genericValidation.validateCompletionDate(
               completionDate,
               getValidValue(validatedStartDate, now)
             ),
@@ -583,20 +582,20 @@ const update: crud.Update<
             });
           }
 
-          const validatedTitle = opportunityValidation.validateTitle(title);
-          const validatedTeaser = opportunityValidation.validateTeaser(teaser);
+          const validatedTitle = genericValidation.validateTitle(title);
+          const validatedTeaser = genericValidation.validateTeaser(teaser);
           const validatedRemoteOk =
-            opportunityValidation.validateRemoteOk(remoteOk);
-          const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+            genericValidation.validateRemoteOk(remoteOk);
+          const validatedRemoteDesc = genericValidation.validateRemoteDesc(
             remoteDesc,
             getValidValue(validatedRemoteOk, false)
           );
           const validatedLocation =
-            opportunityValidation.validateLocation(location);
+            genericValidation.validateLocation(location);
           const validatedReward = opportunityValidation.validateReward(reward);
           const validatedSkills = opportunityValidation.validateSkills(skills);
           const validatedDescription =
-            opportunityValidation.validateDescription(description);
+            genericValidation.validateDescription(description);
           const validatedSubmissionInfo =
             opportunityValidation.validateSubmissionInfo(submissionInfo);
           const validatedAcceptanceCriteria =
@@ -684,7 +683,7 @@ const update: crud.Update<
                   validatedAcceptanceCriteria,
                   undefined
                 ),
-                evaluationCrtieria: getInvalidValue(
+                evaluationCriteria: getInvalidValue(
                   validatedEvaluationCriteria,
                   undefined
                 )
@@ -704,20 +703,20 @@ const update: crud.Update<
           // Perform validation on draft to ensure it's ready for publishing
           if (
             !allValid([
-              opportunityValidation.validateTitle(
+              genericValidation.validateTitle(
                 validatedCWUOpportunity.value.title
               ),
-              opportunityValidation.validateTeaser(
+              genericValidation.validateTeaser(
                 validatedCWUOpportunity.value.teaser
               ),
-              opportunityValidation.validateRemoteOk(
+              genericValidation.validateRemoteOk(
                 validatedCWUOpportunity.value.remoteOk
               ),
-              opportunityValidation.validateRemoteDesc(
+              genericValidation.validateRemoteDesc(
                 validatedCWUOpportunity.value.remoteDesc,
                 validatedCWUOpportunity.value.remoteOk
               ),
-              opportunityValidation.validateLocation(
+              genericValidation.validateLocation(
                 validatedCWUOpportunity.value.location
               ),
               opportunityValidation.validateReward(
@@ -726,7 +725,7 @@ const update: crud.Update<
               opportunityValidation.validateSkills(
                 validatedCWUOpportunity.value.skills
               ),
-              opportunityValidation.validateDescription(
+              genericValidation.validateDescription(
                 validatedCWUOpportunity.value.description
               ),
               opportunityValidation.validateSubmissionInfo(

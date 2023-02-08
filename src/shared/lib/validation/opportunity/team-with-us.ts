@@ -140,36 +140,6 @@ export function validateResourceQuestions(
   return validateArrayCustom(raw, validateResourceQuestion, {});
 }
 
-export function validateTitle(raw: string): Validation<string> {
-  return validateGenericString(raw, "Title", 1, 200);
-}
-
-export function validateTeaser(raw: string): Validation<string> {
-  return validateGenericString(raw, "Teaser", 0, 500);
-}
-
-export function validateRemoteOk(raw: any): Validation<boolean> {
-  return typeof raw === "boolean"
-    ? valid(raw)
-    : invalid(["Invalid remote option provided."]);
-}
-
-export function validateRemoteDesc(
-  raw: string,
-  remoteOk: boolean
-): Validation<string> {
-  return validateGenericString(
-    raw,
-    "Remote description",
-    remoteOk ? 1 : 0,
-    500
-  );
-}
-
-export function validateLocation(raw: string): Validation<string> {
-  return validateGenericString(raw, "Location", 1);
-}
-
 export function validateMaxBudget(raw: string | number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Maximum Budget");
 }
@@ -181,10 +151,6 @@ export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
     uniq(skills)
   );
-}
-
-export function validateDescription(raw: string): Validation<string> {
-  return validateGenericString(raw, "Description", 1, 10000);
 }
 
 export function validateProposalDeadline(
