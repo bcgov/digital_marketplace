@@ -20,7 +20,8 @@ import {
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
   TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea,
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -56,8 +57,9 @@ interface ValidatedCreateRequestBody
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
+type CreateRequestBody = Omit<SharedCreateRequestBody, "status" | "serviceArea"> & {
   status: string;
+  serviceArea: string;
 };
 
 /**
@@ -229,6 +231,11 @@ const create: crud.Create<
         ),
         (v) => v || null
       );
+
+      // Service areas are required for drafts
+      const validatedServiceArea =
+        opportunityValidation.validateServiceArea(serviceArea)
+
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);
@@ -253,7 +260,8 @@ const create: crud.Create<
           ),
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
-          completionDate: getValidValue(validatedCompletionDate, defaultDate)
+          completionDate: getValidValue(validatedCompletionDate, defaultDate),
+          serviceArea: getValidValue(validatedServiceArea, TWUServiceArea.Developer)
         });
       }
 
@@ -271,8 +279,6 @@ const create: crud.Create<
         genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
-      const validatedServiceArea =
-        opportunityValidation.validateServiceArea(serviceArea);
       const validatedTargetAllocation =
         opportunityValidation.validateTargetAllocation(targetAllocation);
       const validatedDescription =

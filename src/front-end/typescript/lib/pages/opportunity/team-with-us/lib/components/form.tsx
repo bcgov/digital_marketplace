@@ -17,7 +17,7 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
-import { flatten, startCase } from "lodash";
+import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { arrayFromRange, getNumber } from "shared/lib";
@@ -34,8 +34,9 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceArea as TWUServiceArea,
-  UpdateEditValidationErrors
+  TWUServiceArea,
+  UpdateEditValidationErrors,
+  parseTWUServiceArea,
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -48,6 +49,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib/index";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 type RemoteOk = "yes" | "no";
@@ -138,7 +140,7 @@ export function getActiveTab(state: Immutable<State>): TabId {
 }
 
 const DEFAULT_ACTIVE_TAB: TabId = "Overview";
-type DateFieldKey = "startDate" | "assignmentDate" | "completionDate";
+type DateFieldKey = Extract<Msg['tag'], "startDate" | "assignmentDate" | "completionDate">;
 export function setValidateDate(
   state: Immutable<State>,
   k: DateFieldKey,
@@ -163,12 +165,9 @@ export function setValidateDate(
  * @returns - a single label/value pair for a select list
  */
 function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
-  const keyIndex = Object.values(TWUServiceArea).indexOf(v as TWUServiceArea);
-  const k = Object.keys(TWUServiceArea)[keyIndex];
-
   return {
-    label: startCase(k),
-    value: String(v)
+    label: twuServiceAreaToTitleCase(v),
+    value: v
   };
 }
 /**
@@ -358,9 +357,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (option) => {
       if (!option) {
-        return invalid(["Please select a Service Area."]);
+        return invalid(["Please select a Target Allocation."]);
       }
-      return valid(option);
+  
+      return mapValid(
+        opportunityValidation.validateServiceArea(option.value),
+        serviceArea => ({label: option.label, value: serviceArea}))
     },
     child: {
       value: serviceArea,
@@ -791,7 +793,7 @@ export function getValues(state: Immutable<State>): Values {
     startDate: DateField.getValueAsString(state.startDate),
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
-    serviceArea: Select.getValue(state.serviceArea),
+    serviceArea: parseTWUServiceArea(Select.getValue(state.serviceArea)) ?? TWUServiceArea.Developer,
     targetAllocation,
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),

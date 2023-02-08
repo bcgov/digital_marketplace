@@ -73,6 +73,27 @@ export function parseTWUOpportunityStatus(
   }
 }
 
+/**
+ * Parses a Team With Us service area from a raw string.
+ *
+ * @param raw
+ * @returns
+ */
+export function parseTWUServiceArea(
+  raw: string
+): TWUServiceArea | null {
+  switch (raw) {
+    case TWUServiceArea.Developer:
+      return TWUServiceArea.Developer;
+    case TWUServiceArea.DataSpecialist:
+      return TWUServiceArea.DataSpecialist;
+    case TWUServiceArea.DevopsSpecialist:
+      return TWUServiceArea.DevopsSpecialist;
+    default:
+      return null;
+  }
+}
+
 export function isTWUOpportunityStatusInEvaluation(
   s: TWUOpportunityStatus
 ): boolean {
@@ -149,7 +170,7 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: string;
+  serviceArea: TWUServiceArea;
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
@@ -246,7 +267,7 @@ export interface CreateRequestBody {
   targetAllocation: number;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: string;
+  serviceArea: TWUServiceArea;
   description: string;
   questionsWeight: number;
   challengeWeight: number;

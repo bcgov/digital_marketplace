@@ -79,24 +79,26 @@ interface RawTWUOpportunity
     Resource.TWUOpportunity,
     | "proposalDeadline"
     | "assignmentDate"
+    | "startDate"
+    | "completionDate"
     | "createdAt"
     | "updatedAt"
     | "publishedAt"
     | "addenda"
     | "history"
-    | "serviceArea"
     | "resourceQuestions"
     | "attachments"
   > {
   proposalDeadline: string;
   assignmentDate: string;
+  startDate: string;
+  completionDate: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   attachments: RawFileRecord[];
   addenda: RawAddendum[];
   history?: RawTWUOpportunityHistoryRecord[];
-  serviceArea: string;
   resourceQuestions: RawTWUResourceQuestion[];
 }
 

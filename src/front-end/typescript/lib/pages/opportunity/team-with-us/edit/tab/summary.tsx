@@ -16,7 +16,7 @@ import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 // import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { startCase, toLower } from "lodash";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -166,7 +166,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     serviceArea,
     targetAllocation,
     maxBudget,
-    location
+    location,
   } = opportunity;
   const items = [
     {
@@ -201,13 +201,13 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     {
       icon: "laptop-code-outline",
       name: "Service Area",
-      value: startCase(toLower(serviceArea))
+      value: twuServiceAreaToTitleCase(serviceArea)
     },
     {
       icon: "balance-scale",
       name: "Target Resource Allocation",
       value: targetAllocation.toString().concat("%")
-    }
+    },
   ];
   return (
     <div className="mt-5 pt-5 border-top">
