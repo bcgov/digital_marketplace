@@ -75,7 +75,7 @@ export function parseTWUOpportunityStatus(
 
 /**
  * User-defined type guard to narrow raw input to a TWUServiceArea.
- * https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
  *
  * @param raw
  * @returns
