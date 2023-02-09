@@ -8,61 +8,65 @@
 ### C
 |# |Table Name| Description|
 |--:|----------|------------|
-|2| [cwuOpportunities](#cwuOpportunities) |  |
-|3| [cwuOpportunityAddenda](#cwuOpportunityAddenda) |  |
-|4| [cwuOpportunityAttachments](#cwuOpportunityAttachments) |  |
-|5| [cwuOpportunityStatuses](#cwuOpportunityStatuses) |  |
-|6| [cwuOpportunitySubscribers](#cwuOpportunitySubscribers) |  |
-|7| [cwuOpportunityVersions](#cwuOpportunityVersions) |  |
-|8| [cwuProponents](#cwuProponents) |  |
-|9| [cwuProposalAttachments](#cwuProposalAttachments) |  |
-|10| [cwuProposalStatuses](#cwuProposalStatuses) |  |
-|11| [cwuProposals](#cwuProposals) |  |
+|2| [content](#content) |  |
+|3| [contentVersions](#contentVersions) |  |
+|4| [cwuOpportunities](#cwuOpportunities) |  |
+|5| [cwuOpportunityAddenda](#cwuOpportunityAddenda) |  |
+|6| [cwuOpportunityAttachments](#cwuOpportunityAttachments) |  |
+|7| [cwuOpportunityNoteAttachments](#cwuOpportunityNoteAttachments) |  |
+|8| [cwuOpportunityStatuses](#cwuOpportunityStatuses) |  |
+|9| [cwuOpportunitySubscribers](#cwuOpportunitySubscribers) |  |
+|10| [cwuOpportunityVersions](#cwuOpportunityVersions) |  |
+|11| [cwuProponents](#cwuProponents) |  |
+|12| [cwuProposalAttachments](#cwuProposalAttachments) |  |
+|13| [cwuProposalStatuses](#cwuProposalStatuses) |  |
+|14| [cwuProposals](#cwuProposals) |  |
 ### F
 |# |Table Name| Description|
 |--:|----------|------------|
-|12| [fileBlobs](#fileBlobs) |  |
-|13| [filePermissionsPublic](#filePermissionsPublic) |  |
-|14| [filePermissionsUser](#filePermissionsUser) |  |
-|15| [filePermissionsUserType](#filePermissionsUserType) |  |
-|16| [files](#files) |  |
+|15| [fileBlobs](#fileBlobs) |  |
+|16| [filePermissionsPublic](#filePermissionsPublic) |  |
+|17| [filePermissionsUser](#filePermissionsUser) |  |
+|18| [filePermissionsUserType](#filePermissionsUserType) |  |
+|19| [files](#files) |  |
 ### M
 |# |Table Name| Description|
 |--:|----------|------------|
-|17| [migrations](#migrations) |  |
-|18| [migrations_lock](#migrations_lock) |  |
+|20| [migrations](#migrations) |  |
+|21| [migrations_lock](#migrations_lock) |  |
 ### O
 |# |Table Name| Description|
 |--:|----------|------------|
-|19| [organizations](#organizations) |  |
+|22| [organizations](#organizations) |  |
 ### S
 |# |Table Name| Description|
 |--:|----------|------------|
-|20| [sessions](#sessions) |  |
-|21| [swuOpportunities](#swuOpportunities) |  |
-|22| [swuOpportunityAddenda](#swuOpportunityAddenda) |  |
-|23| [swuOpportunityAttachments](#swuOpportunityAttachments) |  |
-|24| [swuOpportunityPhases](#swuOpportunityPhases) |  |
-|25| [swuOpportunityStatuses](#swuOpportunityStatuses) |  |
-|26| [swuOpportunitySubscribers](#swuOpportunitySubscribers) |  |
-|27| [swuOpportunityVersions](#swuOpportunityVersions) |  |
-|28| [swuPhaseCapabilities](#swuPhaseCapabilities) |  |
-|29| [swuProposalAttachments](#swuProposalAttachments) |  |
-|30| [swuProposalPhases](#swuProposalPhases) |  |
-|31| [swuProposalReferences](#swuProposalReferences) |  |
-|32| [swuProposalStatuses](#swuProposalStatuses) |  |
-|33| [swuProposalTeamMembers](#swuProposalTeamMembers) |  |
-|34| [swuProposals](#swuProposals) |  |
-|35| [swuTeamQuestionResponses](#swuTeamQuestionResponses) |  |
-|36| [swuTeamQuestions](#swuTeamQuestions) |  |
+|23| [sessions](#sessions) |  |
+|24| [swuOpportunities](#swuOpportunities) |  |
+|25| [swuOpportunityAddenda](#swuOpportunityAddenda) |  |
+|26| [swuOpportunityAttachments](#swuOpportunityAttachments) |  |
+|27| [swuOpportunityNoteAttachments](#swuOpportunityNoteAttachments) |  |
+|28| [swuOpportunityPhases](#swuOpportunityPhases) |  |
+|29| [swuOpportunityStatuses](#swuOpportunityStatuses) |  |
+|30| [swuOpportunitySubscribers](#swuOpportunitySubscribers) |  |
+|31| [swuOpportunityVersions](#swuOpportunityVersions) |  |
+|32| [swuPhaseCapabilities](#swuPhaseCapabilities) |  |
+|33| [swuProposalAttachments](#swuProposalAttachments) |  |
+|34| [swuProposalPhases](#swuProposalPhases) |  |
+|35| [swuProposalReferences](#swuProposalReferences) |  |
+|36| [swuProposalStatuses](#swuProposalStatuses) |  |
+|37| [swuProposalTeamMembers](#swuProposalTeamMembers) |  |
+|38| [swuProposals](#swuProposals) |  |
+|39| [swuTeamQuestionResponses](#swuTeamQuestionResponses) |  |
+|40| [swuTeamQuestions](#swuTeamQuestions) |  |
 ### U
 |# |Table Name| Description|
 |--:|----------|------------|
-|37| [users](#users) |  |
+|41| [users](#users) |  |
 ### V
 |# |Table Name| Description|
 |--:|----------|------------|
-|38| [viewCounters](#viewCounters) |  |
+|42| [viewCounters](#viewCounters) |  |
 ## Details
 ### affiliations
 
@@ -73,9 +77,30 @@
 | 2 | organization |  uuid | NO |  | **FK** ([organizations.id](#organizations)) |  |
 | 3 | createdAt |  timestamp with time zone | NO |  |  |  |
 | 4 | membershipType |  text | YES |  |  |  |
-| 5 | updatedAt |  timestamp with time zone | NO | '2020-08-04 00:00:00+00' |  |  |
-| 6 | id |  uuid | NO | '77a5b885-cc5d-4b87-8efe-2850ab3e6a63' | **PK**, **UNIQ** |  |
+| 5 | updatedAt |  timestamp with time zone | NO | '2019-12-09 00:00:00+00' |  |  |
+| 6 | id |  uuid | NO | '5c8d40f0-dfbb-4400-bc38-cbbfbbe63d7b' | **PK**, **UNIQ** |  |
 | 7 | membershipStatus |  text | NO | 'PENDING' |  |  |
+### content
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | id |  uuid | NO |  | **PK**, **UNIQ** |  |
+| 2 | createdAt |  timestamp with time zone | NO |  |  |  |
+| 3 | createdBy |  uuid | YES |  | **FK** ([users.id](#users)) |  |
+| 4 | slug |  text | NO |  | **UNIQ** |  |
+| 5 | fixed |  boolean | NO | false |  |  |
+### contentVersions
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | id |  integer | NO |  | **PK** |  |
+| 2 | title |  text | NO |  |  |  |
+| 3 | body |  text | YES |  |  |  |
+| 4 | createdAt |  timestamp with time zone | NO |  |  |  |
+| 5 | createdBy |  uuid | YES |  | **FK** ([users.id](#users)) |  |
+| 6 | contentId |  uuid | NO |  | **PK**, **FK** ([content.id](#content)) |  |
 ### cwuOpportunities
 
 
@@ -100,6 +125,13 @@
 |# |column|type|nullable|default|constraints|description|
 |--:|------|----|--------|-------|-----------|-----------|
 | 1 | opportunityVersion |  uuid | NO |  | **PK**, **FK** ([cwuOpportunityVersions.id](#cwuOpportunityVersions)) |  |
+| 2 | file |  uuid | NO |  | **PK**, **FK** ([files.id](#files)) |  |
+### cwuOpportunityNoteAttachments
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | event |  uuid | NO |  | **PK**, **FK** ([cwuOpportunityStatuses.id](#cwuOpportunityStatuses)) |  |
 | 2 | file |  uuid | NO |  | **PK**, **FK** ([files.id](#files)) |  |
 ### cwuOpportunityStatuses
 
@@ -171,6 +203,18 @@
 |--:|------|----|--------|-------|-----------|-----------|
 | 1 | proposal |  uuid | NO |  | **PK**, **FK** ([cwuProposals.id](#cwuProposals)) |  |
 | 2 | file |  uuid | NO |  | **PK**, **FK** ([files.id](#files)) |  |
+### cwuProposalStatuses
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | id |  uuid | NO |  | **PK**, **UNIQ** |  |
+| 2 | createdAt |  timestamp with time zone | NO |  | **UNIQ** |  |
+| 3 | createdBy |  uuid | YES |  | **FK** ([users.id](#users)) |  |
+| 4 | proposal |  uuid | NO |  | **UNIQ**, **FK** ([cwuProposals.id](#cwuProposals)) |  |
+| 5 | status |  character varying | YES |  | **UNIQ** |  |
+| 6 | note |  text | YES |  |  |  |
+| 7 | event |  text | YES |  |  |  |
 ### cwuProposals
 
 
@@ -187,18 +231,6 @@
 | 9 | proponentOrganization |  uuid | YES |  | **FK** ([organizations.id](#organizations)) |  |
 | 10 | score |  real | YES |  |  |  |
 | 11 | opportunity |  uuid | NO |  | **UNIQ**, **FK** ([cwuOpportunities.id](#cwuOpportunities)) |  |
-### cwuProposalStatuses
-
-
-|# |column|type|nullable|default|constraints|description|
-|--:|------|----|--------|-------|-----------|-----------|
-| 1 | id |  uuid | NO |  | **PK**, **UNIQ** |  |
-| 2 | createdAt |  timestamp with time zone | NO |  | **UNIQ** |  |
-| 3 | createdBy |  uuid | YES |  | **FK** ([users.id](#users)) |  |
-| 4 | proposal |  uuid | NO |  | **UNIQ**, **FK** ([cwuProposals.id](#cwuProposals)) |  |
-| 5 | status |  character varying | YES |  | **UNIQ** |  |
-| 6 | note |  text | YES |  |  |  |
-| 7 | event |  text | YES |  |  |  |
 ### fileBlobs
 
 
@@ -262,7 +294,7 @@
 | 3 | legalName |  text | NO |  |  |  |
 | 4 | logoImageFile |  uuid | YES |  | **FK** ([files.id](#files)) |  |
 | 5 | websiteUrl |  text | YES |  |  |  |
-| 6 | updatedAt |  timestamp with time zone | NO | '2020-08-04 00:00:00+00' |  |  |
+| 6 | updatedAt |  timestamp with time zone | NO | '2019-12-09 00:00:00+00' |  |  |
 | 7 | streetAddress1 |  text | NO |  |  |  |
 | 8 | streetAddress2 |  text | YES |  |  |  |
 | 9 | city |  text | NO |  |  |  |
@@ -311,6 +343,13 @@
 |# |column|type|nullable|default|constraints|description|
 |--:|------|----|--------|-------|-----------|-----------|
 | 1 | opportunityVersion |  uuid | NO |  | **PK**, **FK** ([swuOpportunityVersions.id](#swuOpportunityVersions)) |  |
+| 2 | file |  uuid | NO |  | **PK**, **FK** ([files.id](#files)) |  |
+### swuOpportunityNoteAttachments
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | event |  uuid | NO |  | **PK**, **FK** ([swuOpportunityStatuses.id](#swuOpportunityStatuses)) |  |
 | 2 | file |  uuid | NO |  | **PK**, **FK** ([files.id](#files)) |  |
 ### swuOpportunityPhases
 
@@ -407,22 +446,6 @@
 | 4 | company |  text | NO |  |  |  |
 | 5 | phone |  text | NO |  |  |  |
 | 6 | email |  text | NO |  |  |  |
-### swuProposals
-
-
-|# |column|type|nullable|default|constraints|description|
-|--:|------|----|--------|-------|-----------|-----------|
-| 1 | id |  uuid | NO |  | **PK**, **UNIQ** |  |
-| 2 | createdAt |  timestamp with time zone | NO |  |  |  |
-| 3 | createdBy |  uuid | NO |  | **FK** ([users.id](#users)) |  |
-| 4 | updatedAt |  timestamp with time zone | NO |  |  |  |
-| 5 | updatedBy |  uuid | NO |  | **FK** ([users.id](#users)) |  |
-| 6 | challengeScore |  real | YES |  |  |  |
-| 7 | scenarioScore |  real | YES |  |  |  |
-| 8 | priceScore |  real | YES |  |  |  |
-| 9 | opportunity |  uuid | YES |  | **FK** ([swuOpportunities.id](#swuOpportunities)) |  |
-| 10 | organization |  uuid | YES |  | **FK** ([organizations.id](#organizations)) |  |
-| 11 | anonymousProponentName |  text | NO | '' |  |  |
 ### swuProposalStatuses
 
 
@@ -443,13 +466,29 @@
 | 1 | member |  uuid | NO |  | **PK**, **FK** ([users.id](#users)) |  |
 | 2 | phase |  uuid | NO |  | **PK**, **FK** ([swuProposalPhases.id](#swuProposalPhases)) |  |
 | 3 | scrumMaster |  boolean | NO | false |  |  |
+### swuProposals
+
+
+|# |column|type|nullable|default|constraints|description|
+|--:|------|----|--------|-------|-----------|-----------|
+| 1 | id |  uuid | NO |  | **PK**, **UNIQ** |  |
+| 2 | createdAt |  timestamp with time zone | NO |  |  |  |
+| 3 | createdBy |  uuid | NO |  | **FK** ([users.id](#users)) |  |
+| 4 | updatedAt |  timestamp with time zone | NO |  |  |  |
+| 5 | updatedBy |  uuid | NO |  | **FK** ([users.id](#users)) |  |
+| 6 | challengeScore |  real | YES |  |  |  |
+| 7 | scenarioScore |  real | YES |  |  |  |
+| 8 | priceScore |  real | YES |  |  |  |
+| 9 | opportunity |  uuid | YES |  | **FK** ([swuOpportunities.id](#swuOpportunities)) |  |
+| 10 | organization |  uuid | YES |  | **FK** ([organizations.id](#organizations)) |  |
+| 11 | anonymousProponentName |  text | NO | '' |  |  |
 ### swuTeamQuestionResponses
 
 
 |# |column|type|nullable|default|constraints|description|
 |--:|------|----|--------|-------|-----------|-----------|
-| 1 | proposal |  uuid | NO |  | **FK** ([swuProposals.id](#swuProposals)) |  |
-| 2 | order |  integer | NO |  |  |  |
+| 1 | proposal |  uuid | NO |  | **PK**, **FK** ([swuProposals.id](#swuProposals)) |  |
+| 2 | order |  integer | NO |  | **PK** |  |
 | 3 | response |  text | NO |  |  |  |
 | 4 | score |  real | YES |  |  |  |
 ### swuTeamQuestions
@@ -481,10 +520,12 @@
 | 9 | jobTitle |  text | YES |  |  |  |
 | 10 | idpUsername |  text | NO |  | **UNIQ** |  |
 | 11 | notificationsOn |  timestamp with time zone | YES |  |  |  |
-| 12 | acceptedTerms |  timestamp with time zone | YES |  |  |  |
+| 12 | acceptedTermsAt |  timestamp with time zone | YES |  |  |  |
 | 13 | deactivatedOn |  timestamp with time zone | YES |  |  |  |
 | 14 | deactivatedBy |  uuid | YES |  | **FK** ([users.id](#users)) |  |
 | 15 | capabilities |  ARRAY | NO | '{}' |  |  |
+| 16 | idpId |  text | NO |  | **UNIQ** |  |
+| 17 | lastAcceptedTermsAt |  timestamp with time zone | YES |  |  |  |
 ### viewCounters
 
 
@@ -493,4 +534,4 @@
 | 1 | name |  text | NO |  | **PK** |  |
 | 2 | count |  integer | NO |  |  |  |
 ---
-generated by [pg-doc](https://github.com/echetzakis/pg-doc) v0.1.1-beta.4
+generated by [pg-doc](https://github.com/echetzakis/pg-doc) v0.1.1

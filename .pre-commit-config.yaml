@@ -24,7 +24,7 @@ repos:
             "typescript-eslint",
             "@typescript-eslint/parser",
             "eslint-plugin-mocha",
-            "eslint-plugin-cypress",
+            "eslint-plugin-cypress"
           ]
         files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
         types: [file]
@@ -42,7 +42,7 @@ repos:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
         exclude: .*/tests/.*
-        additional_dependencies: ['gibberish-detector']
+        additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
     rev: v2.2.0
     hooks:
