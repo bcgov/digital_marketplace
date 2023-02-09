@@ -74,22 +74,26 @@ export function parseTWUOpportunityStatus(
 }
 
 /**
+ * User-defined type guard to narrow raw input to a TWUServiceArea.
+ * https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates
+ *
+ * @param raw
+ * @returns
+ */
+function isTWUServiceArea(raw: string | TWUServiceArea): raw is TWUServiceArea {
+  return Object.values(TWUServiceArea).includes(raw as TWUServiceArea);
+}
+
+/**
  * Parses a Team With Us service area from a raw string.
  *
  * @param raw
  * @returns
  */
-export function parseTWUServiceArea(raw: string): TWUServiceArea | null {
-  switch (raw) {
-    case TWUServiceArea.Developer:
-      return TWUServiceArea.Developer;
-    case TWUServiceArea.DataSpecialist:
-      return TWUServiceArea.DataSpecialist;
-    case TWUServiceArea.DevopsSpecialist:
-      return TWUServiceArea.DevopsSpecialist;
-    default:
-      return null;
-  }
+export function parseTWUServiceArea(
+  raw: string
+): TWUServiceArea | null {
+  return isTWUServiceArea(raw) ? raw : null;
 }
 
 export function isTWUOpportunityStatusInEvaluation(

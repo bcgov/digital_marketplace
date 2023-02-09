@@ -1,5 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { startCase } from "lodash";
 import {
   isOpen,
   TWUOpportunity,
@@ -174,14 +175,7 @@ export function opportunityToHistoryItems({
  * @returns
  */
 export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
-  switch (s) {
-    case TWUServiceArea.Developer:
-      return 'Developer';
-    case TWUServiceArea.DataSpecialist:
-      return 'Data Specialist';
-    case TWUServiceArea.DevopsSpecialist:
-      return 'DevOps Specialist';
-    case TWUServiceArea.ScrumMaster:
-      return 'Scrum Master';
-  }
+  return startCase(
+    Object.keys(TWUServiceArea)[Object.values(TWUServiceArea).indexOf(s)]
+  );     
 }
