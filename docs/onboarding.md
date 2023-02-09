@@ -12,7 +12,7 @@ The front-end application is also implemented in TypeScript, and also employs a 
 
 ## Shared Overview
 
-The shared code implements types and helper functions that used by both the front-end and back-end applications. In some cases, this is so we can stay DRY and abstract common logic. In other cases, shared modules (like the "resource" modules) act as a type-safe "contract" between the back-end and front-end, using the compiler to ensure each application is encoding/decoding the same values over a network connection.
+The shared code implements types and helper functions that are used by both the front-end and back-end applications. In some cases, this is so we can stay DRY and abstract common logic. In other cases, shared modules (like the "resource" modules) act as a type-safe "contract" between the back-end and front-end, using the compiler to ensure each application is encoding/decoding the same values over a network connection.
 
 ## Other Considersations
 
