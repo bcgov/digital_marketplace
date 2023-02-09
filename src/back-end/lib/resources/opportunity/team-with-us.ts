@@ -20,7 +20,8 @@ import {
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
   TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -32,6 +33,7 @@ import {
   validateUUID
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 interface ValidatedCreateRequestBody
   extends Omit<
@@ -54,8 +56,12 @@ interface ValidatedCreateRequestBody
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
+type CreateRequestBody = Omit<
+  SharedCreateRequestBody,
+  "status" | "serviceArea"
+> & {
   status: string;
+  serviceArea: string;
 };
 
 /**
@@ -211,20 +217,24 @@ const create: crud.Create<
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
       const validatedAssignmentDate =
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           assignmentDate,
           getValidValue(validatedProposalDeadline, now)
         );
       // Validate phase start/completion dates now so that we can coerce to defaults for draft
-      const validatedStartDate = opportunityValidation.validateStartDate(
+      const validatedStartDate = genericValidation.validateDateFormatMinMax(
         startDate,
         getValidValue(validatedAssignmentDate, now)
       );
       const validatedCompletionDate =
-        opportunityValidation.validateCompletionDate(
+        genericValidation.validateDateFormatMinMax(
           completionDate,
           getValidValue(validatedStartDate, now)
         );
+      // Service areas are required for drafts
+      const validatedServiceArea =
+        opportunityValidation.validateServiceArea(serviceArea);
+
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);
@@ -249,32 +259,32 @@ const create: crud.Create<
           ),
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
-          completionDate: getValidValue(validatedCompletionDate, defaultDate)
+          completionDate: getValidValue(validatedCompletionDate, defaultDate),
+          serviceArea: getValidValue(
+            validatedServiceArea,
+            TWUServiceArea.Developer
+          )
         });
       }
 
-      const validatedTitle = opportunityValidation.validateTitle(title);
-      const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-      const validatedRemoteOk =
-        opportunityValidation.validateRemoteOk(remoteOk);
-      const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+      const validatedTitle = genericValidation.validateTitle(title);
+      const validatedTeaser = genericValidation.validateTeaser(teaser);
+      const validatedRemoteOk = genericValidation.validateRemoteOk(remoteOk);
+      const validatedRemoteDesc = genericValidation.validateRemoteDesc(
         remoteDesc,
         getValidValue(validatedRemoteOk, false)
       );
-      const validatedLocation =
-        opportunityValidation.validateLocation(location);
+      const validatedLocation = genericValidation.validateLocation(location);
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
       const validatedMandatorySkills =
-        opportunityValidation.validateMandatorySkills(mandatorySkills);
+        genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
-      const validatedServiceArea =
-        opportunityValidation.validateServiceArea(serviceArea);
       const validatedTargetAllocation =
         opportunityValidation.validateTargetAllocation(targetAllocation);
       const validatedDescription =
-        opportunityValidation.validateDescription(description);
+        genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
         opportunityValidation.validateQuestionsWeight(questionsWeight);
       const validatedChallengeWeight =
@@ -411,14 +421,14 @@ const create: crud.Create<
             dbResult.value
           );
         }
-        // // If published, notify subscribed users
-        // if (dbResult.value.status === TWUOpportunityStatus.Published) {
-        //   twuOpportunityNotifications.handleTWUPublished(
-        //     connection,
-        //     dbResult.value,
-        //     false
-        //   );
-        // }
+        // If published, notify subscribed users
+        if (dbResult.value.status === TWUOpportunityStatus.Published) {
+          await twuOpportunityNotifications.handleTWUPublished(
+            connection,
+            dbResult.value,
+            false
+          );
+        }
         return basicResponse(
           201,
           request.session,

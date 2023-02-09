@@ -1,4 +1,3 @@
-import { Set } from "immutable";
 import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
@@ -11,7 +10,8 @@ import {
   parseTWUOpportunityStatus,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceArea
+  TWUServiceArea,
+  parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -25,7 +25,6 @@ import {
   validateDate,
   validateGenericString,
   validateNumber,
-  validateStringInArray,
   Validation
 } from "shared/lib/validation";
 export { validateCapabilities } from "shared/lib/validation";
@@ -37,9 +36,7 @@ export function validateTWUOpportunityStatus(
 ): Validation<TWUOpportunityStatus> {
   const parsed = parseTWUOpportunityStatus(raw);
   if (!parsed) {
-    return invalid([
-      `"${raw}" is not a valid SprintWithUs opportunity status.`
-    ]);
+    return invalid([`"${raw}" is not a valid TeamWithUs opportunity status.`]);
   }
   if (!isOneOf.includes(parsed)) {
     return invalid([`"${raw}" is not one of: ${isOneOf.join(", ")}`]);
@@ -55,12 +52,6 @@ export function validateCreateTWUOpportunityStatus(
     TWUOpportunityStatus.UnderReview,
     TWUOpportunityStatus.Published
   ]) as Validation<CreateTWUOpportunityStatus>;
-}
-
-export function validateFullTime(raw: any): Validation<boolean> {
-  return typeof raw === "boolean"
-    ? valid(raw)
-    : invalid(["You must provide a boolean value."]);
 }
 
 export function validateResourceQuestionQuestion(
@@ -134,30 +125,6 @@ export function validateResourceQuestion(
   }
 }
 
-export function validateStartDate(
-  raw: string,
-  assignmentDate: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(assignmentDate),
-    undefined,
-    setDateTo4PM
-  );
-}
-
-export function validateCompletionDate(
-  raw: string,
-  proposalDeadline: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(proposalDeadline),
-    undefined,
-    setDateTo4PM
-  );
-}
-
 export function validateResourceQuestions(
   raw: any
 ): ArrayValidation<
@@ -172,52 +139,8 @@ export function validateResourceQuestions(
   return validateArrayCustom(raw, validateResourceQuestion, {});
 }
 
-export function validateTitle(raw: string): Validation<string> {
-  return validateGenericString(raw, "Title", 1, 200);
-}
-
-export function validateTeaser(raw: string): Validation<string> {
-  return validateGenericString(raw, "Teaser", 0, 500);
-}
-
-export function validateRemoteOk(raw: any): Validation<boolean> {
-  return typeof raw === "boolean"
-    ? valid(raw)
-    : invalid(["Invalid remote option provided."]);
-}
-
-export function validateRemoteDesc(
-  raw: string,
-  remoteOk: boolean
-): Validation<string> {
-  return validateGenericString(
-    raw,
-    "Remote description",
-    remoteOk ? 1 : 0,
-    500
-  );
-}
-
-export function validateLocation(raw: string): Validation<string> {
-  return validateGenericString(raw, "Location", 1);
-}
-
 export function validateMaxBudget(raw: string | number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Maximum Budget");
-}
-
-export function validateMandatorySkills(
-  raw: string[]
-): ArrayValidation<string> {
-  if (!raw.length) {
-    return invalid([["Please select at least one skill."]]);
-  }
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Mandatory Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
-  );
 }
 
 export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
@@ -227,10 +150,6 @@ export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
     uniq(skills)
   );
-}
-
-export function validateDescription(raw: string): Validation<string> {
-  return validateGenericString(raw, "Description", 1, 10000);
 }
 
 export function validateProposalDeadline(
@@ -243,18 +162,6 @@ export function validateProposalDeadline(
     minDate = opportunity.proposalDeadline;
   }
   return validateDate(raw, setDateTo4PM(minDate), undefined, setDateTo4PM);
-}
-
-export function validateAssignmentDate(
-  raw: string,
-  proposalDeadline: Date
-): Validation<Date> {
-  return validateDate(
-    raw,
-    setDateTo4PM(proposalDeadline),
-    undefined,
-    setDateTo4PM
-  );
 }
 
 export function validateQuestionsWeight(
@@ -273,26 +180,27 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
   return validateNumber(raw, 0, 100, "price weight", "a");
 }
 
-export function validateNote(raw: string): Validation<string> {
-  return validateGenericString(raw, "Status Note", 0, 1000);
-}
 /**
- * Takes a string from the form and validates that its in an enumerated list
+ * Takes a string from the form and validates that its a parsable Team With Us
+ * service area.
  *
- * @param raw
+ * @param raw - string argument
  * @returns
  */
-export function validateServiceArea(raw: string): Validation<string> {
-  const service_area: Immutable.Set<string> = Set(
-    Object.values(TWUServiceArea)
-  );
-  return validateStringInArray(raw, service_area, "Service Area");
+export function validateServiceArea(raw: string): Validation<TWUServiceArea> {
+  const parsed = parseTWUServiceArea(raw);
+  if (!parsed) {
+    return invalid([
+      `"${raw}" is not a valid service area.`
+    ]);
+  }
+  return valid(parsed);
 }
 
 /**
  * Takes a number and validates that it's a percentage of full-time allocation
  *
- * @param raw
+ * @param raw - string argument
  * @returns
  */
 export function validateTargetAllocation(raw: number): Validation<number> {

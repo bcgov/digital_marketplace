@@ -16,6 +16,8 @@ import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 // import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
+import { map } from "lodash";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -160,6 +162,10 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     optionalSkills,
     assignmentDate,
     proposalDeadline,
+    startDate,
+    completionDate,
+    serviceArea,
+    targetAllocation,
     maxBudget,
     location
   } = opportunity;
@@ -167,25 +173,50 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     {
       name: "Assignment Date",
       children: formatDate(assignmentDate)
-    }
-  ];
-  const reportCards: ReportCard[] = [
-    {
-      icon: "alarm-clock",
-      name: "Proposals Due",
-      value: formatDate(proposalDeadline)
     },
     {
-      icon: "badge-dollar",
-      name: "Max. Budget",
-      value: formatAmount(maxBudget, "$")
+      name: "Proposed Start Date",
+      children: formatDate(startDate)
     },
     {
-      icon: "map-marker",
-      name: "Location",
-      value: location
+      name: "Proposed End Date",
+      children: formatDate(completionDate)
     }
   ];
+  const reportCards = map(
+    [
+      {
+        icon: "alarm-clock",
+        name: "Proposals Due",
+        value: formatDate(proposalDeadline)
+      },
+      {
+        icon: "badge-dollar",
+        name: "Max. Budget",
+        value: formatAmount(maxBudget, "$")
+      },
+      {
+        icon: "map-marker",
+        name: "Location",
+        value: location
+      },
+      {
+        icon: "laptop-code-outline",
+        name: "Service Area",
+        value: twuServiceAreaToTitleCase(serviceArea)
+      },
+      {
+        icon: "balance-scale",
+        name: "Target Resource Allocation",
+        value: targetAllocation.toString().concat("%")
+      }
+    ],
+    (rc: ReportCard): ReportCard => ({
+      ...rc,
+      className: "flex-grow-1 mr-4 mb-4"
+    })
+  );
+
   return (
     <div className="mt-5 pt-5 border-top">
       <Row>

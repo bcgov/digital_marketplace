@@ -73,6 +73,29 @@ export function parseTWUOpportunityStatus(
   }
 }
 
+/**
+ * User-defined type guard to narrow raw input to a TWUServiceArea.
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
+ *
+ * @param raw
+ * @returns
+ */
+function isTWUServiceArea(raw: string | TWUServiceArea): raw is TWUServiceArea {
+  return Object.values(TWUServiceArea).includes(raw as TWUServiceArea);
+}
+
+/**
+ * Parses a Team With Us service area from a raw string.
+ *
+ * @param raw
+ * @returns
+ */
+export function parseTWUServiceArea(
+  raw: string
+): TWUServiceArea | null {
+  return isTWUServiceArea(raw) ? raw : null;
+}
+
 export function isTWUOpportunityStatusInEvaluation(
   s: TWUOpportunityStatus
 ): boolean {
@@ -149,7 +172,7 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: string;
+  serviceArea: TWUServiceArea;
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
@@ -246,7 +269,7 @@ export interface CreateRequestBody {
   targetAllocation: number;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: string;
+  serviceArea: TWUServiceArea;
   description: string;
   questionsWeight: number;
   challengeWeight: number;

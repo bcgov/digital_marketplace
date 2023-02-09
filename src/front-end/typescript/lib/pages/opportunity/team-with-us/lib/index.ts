@@ -1,10 +1,12 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { startCase } from "lodash";
 import {
   isOpen,
   TWUOpportunity,
   TWUOpportunityEvent,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 
@@ -164,4 +166,16 @@ export function opportunityToHistoryItems({
     createdAt: s.createdAt,
     createdBy: s.createdBy || undefined
   }));
+}
+
+/**
+ * Formats a Team With Us service area to title case.
+ *
+ * @param s
+ * @returns
+ */
+export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
+  return startCase(
+    Object.keys(TWUServiceArea)[Object.values(TWUServiceArea).indexOf(s)]
+  );     
 }

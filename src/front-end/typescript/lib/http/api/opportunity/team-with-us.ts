@@ -79,27 +79,37 @@ interface RawTWUOpportunity
     Resource.TWUOpportunity,
     | "proposalDeadline"
     | "assignmentDate"
+    | "startDate"
+    | "completionDate"
     | "createdAt"
     | "updatedAt"
     | "publishedAt"
     | "addenda"
     | "history"
-    | "serviceArea"
     | "resourceQuestions"
     | "attachments"
   > {
   proposalDeadline: string;
   assignmentDate: string;
+  startDate: string;
+  completionDate: string;
   createdAt: string;
   updatedAt: string;
   publishedAt?: string;
   attachments: RawFileRecord[];
   addenda: RawAddendum[];
   history?: RawTWUOpportunityHistoryRecord[];
-  serviceArea: string;
   resourceQuestions: RawTWUResourceQuestion[];
 }
 
+/**
+ * Used for parsing/modifying JSON encoded values in a
+ * request/response scenario. For instance, where Dates are
+ * stored in the db as a timestamp and needs to be
+ * converted to a Date object for processing in the application
+ *
+ * @param raw - json object from db
+ */
 function rawTWUOpportunityToTWUOpportunity(
   raw: RawTWUOpportunity
 ): Resource.TWUOpportunity {
@@ -107,6 +117,8 @@ function rawTWUOpportunityToTWUOpportunity(
     ...raw,
     proposalDeadline: new Date(raw.proposalDeadline),
     assignmentDate: new Date(raw.assignmentDate),
+    startDate: new Date(raw.startDate),
+    completionDate: new Date(raw.completionDate),
     createdAt: new Date(raw.createdAt),
     updatedAt: new Date(raw.updatedAt),
     publishedAt:
