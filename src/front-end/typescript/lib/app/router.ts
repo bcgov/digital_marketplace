@@ -177,7 +177,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/create"

@@ -20,6 +20,7 @@ import {
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
   TWUOpportunity,
+  TWUOpportunitySlim,
   TWUOpportunityStatus,
   TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
@@ -70,6 +71,26 @@ type CreateRequestBody = Omit<
  * @see {@link resource}
  */
 const routeNamespace = "opportunities/team-with-us";
+
+const readMany: crud.ReadMany<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<TWUOpportunitySlim[] | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (code: number, body: TWUOpportunitySlim[] | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    const dbResult = await db.readManyTWUOpportunities(
+      connection,
+      request.session
+    );
+    if (isInvalid(dbResult)) {
+      return respond(503, [db.ERROR_MESSAGE]);
+    }
+    return respond(200, dbResult.value);
+  });
+};
 
 /**
  * Reads one TWU opportunity from the database.
@@ -454,6 +475,7 @@ const create: crud.Create<
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
+  readMany,
   create
 };
 

@@ -34,6 +34,7 @@ import { Col, Row, Spinner } from "reactstrap";
 import { compareDates, find, formatAmount, formatDateAtTime } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
+import * as TWUO from "shared/lib/resources/opportunity/team-with-us";
 import {
   isVendor,
   User,
@@ -41,10 +42,12 @@ import {
   UpdateValidationErrors as UserUpdateValidationErrors
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
+import { getListOppHelpers } from 'front-end/lib/interfaces/opportunities';
 
-type Opportunity =
+export type Opportunity =
   | ADT<"cwu", CWUO.CWUOpportunitySlim>
-  | ADT<"swu", SWUO.SWUOpportunitySlim>;
+  | ADT<"swu", SWUO.SWUOpportunitySlim>
+  | ADT<"twu", TWUO.TWUOpportunitySlim>;
 
 interface CategorizedOpportunities {
   unpublished: Opportunity[];
@@ -79,7 +82,8 @@ export type InnerMsg =
       "onInitResponse",
       [
         api.ResponseValidation<CWUO.CWUOpportunitySlim[], string[]>,
-        api.ResponseValidation<SWUO.SWUOpportunitySlim[], string[]>
+        api.ResponseValidation<SWUO.SWUOpportunitySlim[], string[]>,
+        api.ResponseValidation<TWUO.TWUOpportunitySlim[], string[]>
       ]
     >
   | ADT<"typeFilter", Select.Msg>
@@ -108,7 +112,8 @@ function truncateTitle(title: string): string {
 
 function categorizeOpportunities(
   cwu: CWUO.CWUOpportunitySlim[],
-  swu: SWUO.SWUOpportunitySlim[]
+  swu: SWUO.SWUOpportunitySlim[],
+  twu: TWUO.TWUOpportunitySlim[]
 ): CategorizedOpportunities {
   const opportunities: Opportunity[] = [
     ...cwu.map((o) =>
@@ -121,6 +126,12 @@ function categorizeOpportunities(
       adt("swu" as const, {
         ...o,
         title: truncateTitle(o.title || SWUO.DEFAULT_OPPORTUNITY_TITLE)
+      })
+    ),
+    ...twu.map((o) =>
+      adt("twu" as const, {
+        ...o,
+        title: truncateTitle(o.title || TWUO.DEFAULT_OPPORTUNITY_TITLE)
       })
     )
   ];
@@ -146,6 +157,15 @@ function categorizeOpportunities(
         } else if (SWUO.isOpen(o.value)) {
           acc.open.push(o);
         } else if (SWUO.isClosed(o.value)) {
+          acc.closed.push(o);
+        }
+        break;
+      case "twu":
+        if (TWUO.isUnpublished(o.value)) {
+          acc.unpublished.push(o);
+        } else if (TWUO.isOpen(o.value)) {
+          acc.open.push(o);
+        } else if (TWUO.isClosed(o.value)) {
           acc.closed.push(o);
         }
         break;
@@ -176,7 +196,7 @@ const init: component_.page.Init<
   Route
 > = ({ shared }) => {
   const viewerUser = shared.session?.user;
-  const opportunities = categorizeOpportunities([], []);
+  const opportunities = categorizeOpportunities([], [], []);
   const [typeFilterState, typeFilterCmds] = Select.init({
     errors: [],
     child: {
@@ -184,7 +204,8 @@ const init: component_.page.Init<
       id: "opportunity-filter-type",
       options: adt("options", [
         { label: "Code With Us", value: "cwu" },
-        { label: "Sprint With Us", value: "swu" }
+        { label: "Sprint With Us", value: "swu" },
+        { label: "Sprint With Us", value: "twu" }
       ])
     }
   });
@@ -234,11 +255,12 @@ const init: component_.page.Init<
       closedListOpen: false
     },
     [
-      component_.cmd.join(
+      component_.cmd.join3(
         api.opportunities.cwu.readMany((response) => response),
         api.opportunities.swu.readMany((response) => response),
-        (cwuResponse, swuResponse) =>
-          adt("onInitResponse", [cwuResponse, swuResponse] as const)
+        api.opportunities.twu.readMany((response) => response),
+        (cwuResponse, swuResponse, twuResponse) =>
+          adt("onInitResponse", [cwuResponse, swuResponse, twuResponse] as const)
       ),
       ...component_.cmd.mapMany(
         typeFilterCmds,
@@ -307,31 +329,37 @@ function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
     (oppStatus === "draft" &&
       [
         CWUO.CWUOpportunityStatus.Draft,
-        SWUO.SWUOpportunityStatus.Draft
+        SWUO.SWUOpportunityStatus.Draft,
+        TWUO.TWUOpportunityStatus.Draft
       ].includes(opp.value.status)) ||
     (oppStatus === "under_review" &&
       SWUO.SWUOpportunityStatus.UnderReview === opp.value.status) ||
     (oppStatus === "published" &&
       [
         CWUO.CWUOpportunityStatus.Published,
-        SWUO.SWUOpportunityStatus.Published
+        SWUO.SWUOpportunityStatus.Published,
+        TWUO.TWUOpportunityStatus.Published
       ].includes(opp.value.status)) ||
     (oppStatus === "suspended" &&
       [
         CWUO.CWUOpportunityStatus.Suspended,
-        SWUO.SWUOpportunityStatus.Suspended
+        SWUO.SWUOpportunityStatus.Suspended,
+        TWUO.TWUOpportunityStatus.Suspended
       ].includes(opp.value.status)) ||
     (oppStatus === "evaluation" &&
       [
         CWUO.CWUOpportunityStatus.Evaluation,
         SWUO.SWUOpportunityStatus.EvaluationCodeChallenge,
         SWUO.SWUOpportunityStatus.EvaluationTeamQuestions,
-        SWUO.SWUOpportunityStatus.EvaluationTeamScenario
+        SWUO.SWUOpportunityStatus.EvaluationTeamScenario,
+        TWUO.TWUOpportunityStatus.EvaluationChallenge,
+        TWUO.TWUOpportunityStatus.EvaluationResourceQuestions
       ].includes(opp.value.status)) ||
     (oppStatus === "awarded" &&
       [
         CWUO.CWUOpportunityStatus.Awarded,
-        SWUO.SWUOpportunityStatus.Awarded
+        SWUO.SWUOpportunityStatus.Awarded,
+        TWUO.TWUOpportunityStatus.Awarded
       ].includes(opp.value.status))
   );
 }
@@ -373,14 +401,16 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "onInitResponse": {
-      const [cwuResponse, swuResponse] = msg.value;
+      const [cwuResponse, swuResponse, twuResponse] = msg.value;
       let cwu: CWUO.CWUOpportunitySlim[] = [];
       let swu: SWUO.SWUOpportunitySlim[] = [];
-      if (api.isValid(cwuResponse) && api.isValid(swuResponse)) {
+      let twu: TWUO.TWUOpportunitySlim[] = [];
+      if (api.isValid(cwuResponse) && api.isValid(swuResponse) && api.isValid(twuResponse)) {
         cwu = cwuResponse.value;
         swu = swuResponse.value;
+        twu = twuResponse.value;
       }
-      const opportunities = categorizeOpportunities(cwu, swu);
+      const opportunities = categorizeOpportunities(cwu, swu, twu);
       return [
         state
           .set("opportunities", opportunities)
@@ -660,17 +690,11 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
   isWatchLoading,
   disabled
 }) => {
-  const isCWU = opportunity.tag === "cwu";
+  const listOppHelpers = getListOppHelpers(opportunity);
   const subscribed = opportunity.value.subscribed;
   const dest: Route = (() => {
-    const view: Route = adt(
-      isCWU ? "opportunityCWUView" : "opportunitySWUView",
-      { opportunityId: opportunity.value.id }
-    );
-    const edit: Route = adt(
-      isCWU ? "opportunityCWUEdit" : "opportunitySWUEdit",
-      { opportunityId: opportunity.value.id }
-    );
+    const view: Route = listOppHelpers.getOppViewRoute(opportunity.value.id);
+    const edit: Route = listOppHelpers.getOppEditRoute(opportunity.value.id);
     if (!viewerUser) {
       return view;
     }
@@ -687,10 +711,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
         }
     }
   })();
-  const isAcceptingProposals =
-    opportunity.tag === "cwu"
-      ? CWUO.isCWUOpportunityAcceptingProposals(opportunity.value)
-      : SWUO.isSWUOpportunityAcceptingProposals(opportunity.value);
+  const isAcceptingProposals = listOppHelpers.isOpportunityAcceptingProposals(opportunity.value);
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
       <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
@@ -728,9 +749,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
             small
             className="mr-3 mb-3"
             value={formatAmount(
-              opportunity.tag === "cwu"
-                ? opportunity.value.reward
-                : opportunity.value.totalMaxBudget,
+              listOppHelpers.getOppDollarAmount(opportunity.value),
               "$"
             )}
             name="badge-dollar-outline"
