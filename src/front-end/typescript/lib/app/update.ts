@@ -33,7 +33,7 @@ import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
-// import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
+import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
@@ -204,17 +204,17 @@ function initPage(
           return adt("pageOpportunityTWUCreate", value);
         }
       });
-    // case "opportunityTWUView":
-    //   return component.app.initPage({
-    //     ...defaultPageInitParams,
-    //     pageStatePath: ["pages", "opportunitySWUView"],
-    //     pageRouteParams: route.value,
-    //     pageInit: PageOpportunitySWUView.component.init,
-    //     pageGetMetadata: PageOpportunitySWUView.component.getMetadata,
-    //     mapPageMsg(value) {
-    //       return adt("pageOpportunitySWUView", value);
-    //     }
-    //   });
+    case "opportunityTWUView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "opportunitySWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunitySWUView.component.init,
+        pageGetMetadata: PageOpportunitySWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunitySWUView", value);
+        }
+      });
     case "opportunityTWUEdit":
       return component.app.initPage({
         ...defaultPageInitParams,
@@ -959,24 +959,24 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageGetMetadata: PageOpportunityTWUCreate.component.getMetadata,
         pageMsg: msg.value
       });
-    // case "pageOpportunityTWUView":
-    //   return component.app.updatePage<
-    //     State,
-    //     Msg,
-    //     PageOpportunityTWUView.State,
-    //     PageOpportunityTWUView.Msg,
-    //     Route
-    //   >({
-    //     ...defaultPageUpdateParams,
-    //     mapPageMsg: (value) => ({
-    //       tag: "pageOpportunityTWUView" as const,
-    //       value
-    //     }),
-    //     pageStatePath: ["pages", "opportunityTWUView"],
-    //     pageUpdate: PageOpportunityTWUView.component.update,
-    //     pageGetMetadata: PageOpportunityTWUView.component.getMetadata,
-    //     pageMsg: msg.value
-    //   });
+    case "pageOpportunityTWUView":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityTWUView.State,
+        PageOpportunityTWUView.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunityTWUView" as const,
+          value
+        }),
+        pageStatePath: ["pages", "opportunityTWUView"],
+        pageUpdate: PageOpportunityTWUView.component.update,
+        pageGetMetadata: PageOpportunityTWUView.component.getMetadata,
+        pageMsg: msg.value
+      });
     case "pageOpportunityTWUEdit":
       return component.app.updatePage({
         ...defaultPageUpdateParams,
