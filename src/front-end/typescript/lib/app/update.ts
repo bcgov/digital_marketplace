@@ -207,12 +207,12 @@ function initPage(
     case "opportunityTWUView":
       return component.app.initPage({
         ...defaultPageInitParams,
-        pageStatePath: ["pages", "opportunitySWUView"],
+        pageStatePath: ["pages", "opportunityTWUView"],
         pageRouteParams: route.value,
-        pageInit: PageOpportunitySWUView.component.init,
-        pageGetMetadata: PageOpportunitySWUView.component.getMetadata,
+        pageInit: PageOpportunityTWUView.component.init,
+        pageGetMetadata: PageOpportunityTWUView.component.getMetadata,
         mapPageMsg(value) {
-          return adt("pageOpportunitySWUView", value);
+          return adt("pageOpportunityTWUView", value);
         }
       });
     case "opportunityTWUEdit":
