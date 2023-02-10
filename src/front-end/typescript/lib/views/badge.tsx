@@ -7,6 +7,10 @@ import {
   swuOpportunityToPublicColor,
   swuOpportunityToPublicStatus
 } from "front-end/lib/pages/opportunity/sprint-with-us/lib";
+import {
+  twuOpportunityToPublicColor,
+  twuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/team-with-us/lib";
 import { ThemeColor } from "front-end/lib/types";
 import React from "react";
 import * as reactstrap from "reactstrap";
@@ -15,7 +19,6 @@ import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us"
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
 import { ADT } from "shared/lib/types";
-import { twuOpportunityToPublicColor, twuOpportunityToPublicStatus } from "../pages/opportunity/team-with-us/lib";
 
 export interface Props {
   text: string;
@@ -49,7 +52,7 @@ type Opportunity =
       "swu",
       Pick<SWUOpportunity, "status" | "createdBy" | "proposalDeadline">
     >
-    | ADT<
+  | ADT<
       "twu",
       Pick<TWUOpportunity, "status" | "createdBy" | "proposalDeadline">
     >;

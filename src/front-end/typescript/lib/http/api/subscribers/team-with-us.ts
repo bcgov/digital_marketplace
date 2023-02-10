@@ -3,6 +3,9 @@ import * as Resource from "shared/lib/resources/subscribers/team-with-us";
 
 const NAMESPACE = "subscribers/team-with-us";
 
+/**
+ *
+ */
 export const create: crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.TWUOpportunitySubscriber,
@@ -13,6 +16,9 @@ export const create: crud.CreateAction<
   (a: Resource.TWUOpportunitySubscriber) => a
 );
 
+/**
+ *
+ */
 export const delete_: crud.DeleteAction<
   Resource.TWUOpportunitySubscriber,
   Resource.DeleteValidationErrors,

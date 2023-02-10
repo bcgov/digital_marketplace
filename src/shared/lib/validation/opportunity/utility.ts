@@ -13,6 +13,8 @@ import { setDateTo4PM } from "shared/lib";
 import { uniq } from "lodash";
 
 /**
+ * @remarks
+ *
  * Use this file for (validation) functions that can be used across opportunities
  * instead of duplicating unnecessarily.
  */

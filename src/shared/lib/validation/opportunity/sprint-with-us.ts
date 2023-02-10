@@ -424,20 +424,6 @@ export function validateMinimumTeamMembers(
   );
 }
 
-export function validateMandatorySkills(
-  raw: string[]
-): ArrayValidation<string> {
-  if (!raw.length) {
-    return invalid([["Please select at least one skill."]]);
-  }
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Mandatory Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
-  );
-}
-
 export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Optional Skill", 1, 100)
