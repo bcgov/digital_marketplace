@@ -4,10 +4,11 @@
 //   makeStartLoading,
 //   makeStopLoading
 // } from "front-end/lib";
-// import { Route, SharedState } from "front-end/lib/app/types";
+import { makePageMetadata } from "front-end/lib";
+import { Route, SharedState } from "front-end/lib/app/types";
 // import { AddendaList } from "front-end/lib/components/addenda";
 // import { AttachmentList } from "front-end/lib/components/attachments";
-// import { component as component_ } from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 // import * as api from "front-end/lib/http/api";
 // import { OpportunityBadge } from "front-end/lib/views/badge";
 // import DateMetadata from "front-end/lib/views/date-metadata";
@@ -24,7 +25,7 @@
 // import ProgramType from "front-end/lib/views/program-type";
 // import Skills from "front-end/lib/views/skills";
 // import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
-// import React from "react";
+import React from "react";
 // import { Col, Container, Row } from "reactstrap";
 // import { CONTACT_EMAIL } from "shared/config";
 // import { formatAmount, formatDate, formatDateAtTime } from "shared/lib";
@@ -34,9 +35,11 @@
 //   DEFAULT_OPPORTUNITY_TITLE,
 //   isTWUOpportunityAcceptingProposals
 // } from "shared/lib/resources/opportunity/team-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 // // import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 // import { isVendor, User, UserType } from "shared/lib/resources/user";
 // import { adt, ADT, Id } from "shared/lib/types";
+import { ADT, Id } from "shared/lib/types";
 //
 // type InfoTab = "details" | "attachments" | "addenda";
 //
@@ -48,6 +51,9 @@
 //   activeInfoTab: InfoTab;
 //   routePath: string;
 // }
+export interface State {
+  opportunity: TWUOpportunity['id'] | null;
+}
 //
 // export type InnerMsg =
 //   | ADT<"noop">
@@ -63,11 +69,20 @@
 //   | ADT<"onToggleWatchResponse", boolean>
 //   | ADT<"setActiveInfoTab", InfoTab>;
 //
-// export type Msg = component_.page.Msg<InnerMsg, Route>;
+export type InnerMsg = ADT<"noop">;
+export type Msg = component_.page.Msg<InnerMsg, Route>;
 //
-// export interface RouteParams {
-//   opportunityId: Id;
-// }
+export interface RouteParams {
+  opportunityId: Id;
+}
+
+const init: component_.page.Init<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = () => [{opportunity: 'ya made it kid'}, []];
 //
 // const init: component_.page.Init<
 //   RouteParams,
@@ -788,3 +803,33 @@
 //     }
 //   }
 // };
+
+export const update: component_.page.Update<State, InnerMsg, Route> = ({
+  state
+}) => {
+  return [state, []];
+};
+
+export const view: component_.page.View<State, InnerMsg, Route> = ({
+  state
+}) => {
+  return <div>{state.opportunity}</div>;
+};
+
+export const component: component_.page.Component<
+  RouteParams,
+  SharedState,
+  State,
+  InnerMsg,
+  Route
+> = {
+  fullWidth: true,
+  init,
+  update,
+  view,
+  getMetadata: (state) => {
+    return makePageMetadata(
+      state.opportunity ?? 'mah'
+    );
+  },
+}

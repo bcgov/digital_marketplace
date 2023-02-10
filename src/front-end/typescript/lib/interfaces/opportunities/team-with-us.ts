@@ -4,8 +4,7 @@ import { ListOppHelpers } from "front-end/lib/interfaces/opportunities";
 
 export const twu: ListOppHelpers<TWUOpportunitySlim> = {
   getOppViewRoute(opportunityId) {
-    // TODO: replace with opportunityTWUView
-    return adt("notFound", {});
+    return adt("opportunityTWUView", { opportunityId });
   },
   getOppEditRoute(opportunityId) {
     return adt("opportunityTWUEdit", { opportunityId });

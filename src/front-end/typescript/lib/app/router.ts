@@ -177,7 +177,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/create"
@@ -267,6 +266,17 @@ const router: router_.Router<Route> = {
           value: {
             opportunityId: params.opportunityId || "",
             tab: TWUOpportunityEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId"),
+      makeRoute({ params }) {
+        return {
+          tag: "opportunityTWUView",
+          value: {
+            opportunityId: params.opportunityId || ""
           }
         };
       }
@@ -635,10 +645,10 @@ const router: router_.Router<Route> = {
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
-      // case "opportunityTWUView":
-      //   return prefixPath(
-      //     `/opportunities/team-with-us/${route.value.opportunityId}`
-      //   );
+      case "opportunityTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");
       case "opportunityCWUEdit":
