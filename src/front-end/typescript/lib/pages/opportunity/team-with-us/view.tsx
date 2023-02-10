@@ -24,7 +24,7 @@ import OpportunityInfo from "front-end/lib/views/opportunity-info";
 import ProgramType from "front-end/lib/views/program-type";
 import Skills from "front-end/lib/views/skills";
 import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
-import React from "react";
+import React, { Fragment } from "react";
 import { Col, Container, Row } from "reactstrap";
 import { CONTACT_EMAIL } from "shared/config";
 import { formatAmount, formatDate, formatDateAtTime } from "shared/lib";
@@ -37,6 +37,7 @@ import {
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
+import { lowerCase, startCase } from "lodash";
 
 type InfoTab = "details" | "attachments" | "addenda";
 
@@ -194,7 +195,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
         <Row>
           <Col xs="12">
             <DateMetadata
-              className="mb-5"
+              className="mb-2"
               dates={[
                 opp.publishedAt
                   ? {
@@ -279,7 +280,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="comment-dollar-outline"
+                  icon="calendar"
                   name="Proposal Deadline"
                   value={formatDate(opp.proposalDeadline)}
                 />
@@ -303,18 +304,18 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="map-marker-outline"
-                  name="Location"
-                  value={opp.location || EMPTY_STRING}
+                  icon="laptop-code-outline"
+                  name="Service Area"
+                  value={startCase(lowerCase(opp.serviceArea)) || EMPTY_STRING}
                 />
               </Col>
               <Col
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="laptop-outline"
-                  name="Remote OK?"
-                  value={opp.remoteOk ? "Yes" : "No"}
+                  icon="balance-scale"
+                  name="Target Resource Allocation"
+                  value={opp.targetAllocation.toString().concat("%")}
                 />
               </Col>
             </Row>
@@ -323,18 +324,18 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="award-outline"
-                  name="Assignment Date"
-                  value={formatDate(opp.assignmentDate)}
+                  icon="map-marker"
+                  name="Location"
+                  value={opp.location}
                 />
               </Col>
               <Col
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="user-hard-hat-outline"
-                  name="Work Start Date"
-                  value={formatDate(opp.startDate)}
+                  icon="map"
+                  name="Remote OK?"
+                  value={opp.remoteOk ? "Yes" : "No"}
                 />
               </Col>
             </Row>
@@ -378,6 +379,15 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
           following skills:
         </p>
         <Skills skills={opp.mandatorySkills} />
+        {opp.optionalSkills.length ? (
+          <Fragment>
+            <p className="mt-3 mb-2">
+              Additionally, possessing the following skills would be considered
+              a bonus:
+            </p>
+            <Skills skills={opp.optionalSkills} />
+          </Fragment>
+        ) : null}
       </Col>
       <Col xs="12" className="mt-5">
         <InfoDetailsHeading icon="info-circle-outline" text="Description" />
@@ -389,10 +399,7 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
       </Col>
       {opp.remoteOk && opp.remoteDesc ? (
         <Col xs="12" className="mt-5">
-          <InfoDetailsHeading
-            icon="laptop-outline"
-            text="Remote Work Options"
-          />
+          <InfoDetailsHeading icon="map" text="Remote Work Options" />
           <p className="mb-0" style={{ whiteSpace: "pre-line" }}>
             {opp.remoteDesc}
           </p>
@@ -402,6 +409,20 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
+// const InfoScope: component_.base.ComponentView<State, Msg> = ({
+//                                                                      state
+//                                                                    }) => {
+//   return (
+//     <Row>
+//       <Col xs="12">
+//         <h3 className="mb-0">Scope &amp; Contract</h3>
+//       </Col>
+//       <Col xs="12" className="mt-4">
+//         <Markdown source={state.scopeContent} openLinksInNewTabs />
+//       </Col>
+//     </Row>
+//   );
+// };
 const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
   state
 }) => {
@@ -485,6 +506,8 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
     switch (state.activeInfoTab) {
       case "details":
         return <InfoDetails {...props} />;
+      // case "scope":
+      //   return <InfoScope {...props} />;
       case "attachments":
         return <InfoAttachments {...props} />;
       case "addenda":
@@ -642,15 +665,72 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
+const Budget: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const maxBudget = opportunity.maxBudget;
+  return (
+    <Container>
+      <div className="mt-5 pt-5 border-top">
+        <Row>
+          <Col xs="12">
+            <h3 className="mb-4">Budget</h3>
+            <p className="mb-0">
+              The maximum available budget for the initial term of this
+              opportunity would be{" "}
+              {maxBudget ? formatAmount(maxBudget, "$") : EMPTY_STRING}{" "}
+            </p>
+          </Col>
+        </Row>
+      </div>
+    </Container>
+  );
+};
+
+const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  const opportunity = state.opportunity;
+  if (!opportunity) return null;
+  const proposal = opportunity.proposalDeadline;
+  const assignment = opportunity.assignmentDate;
+  const startDate = opportunity.startDate;
+  const completionDate = opportunity.completionDate;
+  return (
+    <Container>
+      <div className="mt-5 pt-5 border-top">
+        <Row>
+          <Col xs="12">
+            <h3 className="mb-4">Key Dates</h3>
+            <p className="mb-2">
+              <strong>Proposal Deadline</strong>{" "}
+              <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
+            </p>
+            <p className="mb-2">
+              <strong>Assignment Deadline</strong>{" "}
+              <span className="ml-3">{formatDate(assignment, false)}</span>
+            </p>
+            <p className="mb-2">
+              <strong>Proposed Start Date</strong>{" "}
+              <span className="ml-3">{formatDate(startDate, false)}</span>
+            </p>
+            <p className="mb-2">
+              <strong>Proposed End Date</strong>{" "}
+              <span className="ml-3">{formatDate(completionDate, false)}</span>
+            </p>
+          </Col>
+        </Row>
+      </div>
+    </Container>
+  );
+};
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
-  // const isDetails = props.state.activeInfoTab === "details";
+  const isDetails = props.state.activeInfoTab === "details";
   return (
     <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
       <div className="mb-5">
         <Header {...props} />
         <Info {...props} />
-        {/*{isDetails ? <AcceptanceCriteria {...props} /> : null}*/}
-        {/*{isDetails ? <EvaluationCriteria {...props} /> : null}*/}
+        {isDetails ? <Budget {...props} /> : null}
+        {isDetails ? <KeyDates {...props} /> : null}
       </div>
       <HowToApply {...props} />
     </div>
