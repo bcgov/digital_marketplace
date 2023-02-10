@@ -552,7 +552,7 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
 //             <h3 className="mb-4">Acceptance Criteria</h3>
 //             <p className="mb-4">
 //               This is a fixed-price opportunity governed by the terms of our
-//               lightweight procurement model, Code With Us. To be paid the fixed
+//               lightweight procurement model, Team With Us. To be paid the fixed
 //               price for this opportunity, you need to meet all of the following
 //               criteria:
 //             </p>
@@ -611,7 +611,7 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
           <Col xs="12" md="8">
             <h3 className="mb-4">How To Apply</h3>
             <p>
-              To submit a proposal for this Code With Us opportunity, you must
+              To submit a proposal for this Team With Us opportunity, you must
               have signed up for a Digital Marketplace vendor account.&nbsp;
               {!viewerUser ? (
                 <span>
