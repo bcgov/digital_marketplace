@@ -11,7 +11,7 @@ import { compact } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import {
-  // DEFAULT_OPPORTUNITY_TITLE,
+  DEFAULT_OPPORTUNITY_TITLE,
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
@@ -73,15 +73,12 @@ const EditTabHeader: component.base.View<Props> = ({
           <h3 className="mb-2">
             Team With Us:&nbsp;
             {
-              // TODO replace with link to view
-              opportunity.title
-              /* <Link
-              newTab
-              dest={routeDest(
-                adt("opportunityTWUView", { opportunityId: opportunity.id })
-              )}>
-              {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
-            </Link> */
+              <Link
+                dest={routeDest(
+                  adt("opportunityTWUView", { opportunityId: opportunity.id })
+                )}>
+                {opportunity.title || DEFAULT_OPPORTUNITY_TITLE}
+              </Link>
             }
           </h3>
           <DateMetadata dates={compact(dates)} />
