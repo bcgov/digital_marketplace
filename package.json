@@ -1,7 +1,12 @@
 {
   "name": "bcgov-digital-marketplace",
-  "version": "2.0.2",
+  "version": "3.1.1",
   "description": "Digital Marketplace",
+  "homepage": "https://marketplace.digital.gov.bc.ca",
+  "bugs": {
+    "url": "https://github.com/bcgov/digital_marketplace/issues/",
+    "email": "digitalmarketplace@gov.bc.ca"
+  },
   "main": "index.js",
   "scripts": {
     "cypress:run": "./node_modules/.bin/cypress run",
@@ -35,15 +40,55 @@
     "typedoc:start": "npx serve --config typedoc/serve.json typedoc",
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/open-source-licenses.txt",
-    "docs:db": "npx pg-doc --out docs/database.md --connection"
+    "docs:db": "npx pg-doc --out docs/database-schema.md --connection",
+    "learn-front-end:build": "npx grunt learn-front-end-build",
+    "learn-front-end:watch": "npx grunt learn-front-end-watch",
+    "learn-front-end:serve": "npx grunt learn-front-end-serve"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/bcgov/digital_marketplace"
   },
   "author": "Real Folk Inc.",
   "license": "Apache-2.0",
-  "homepage": "",
+  "contributors": [
+    {
+      "name": "Dhruv Dang",
+      "url": "https://github.com/dhruvio"
+    },
+    {
+      "name": "Brianna Cerkiewicz",
+      "url": "https://github.com/BCerki"
+    },
+    {
+      "name": "Andrew Sutherland",
+      "url": "https://github.com/sutherlanda"
+    },
+    {
+      "name": "Jesse Hughes",
+      "url": "https://github.com/scallyw4g"
+    },
+    {
+      "name": "Mike Vesprini",
+      "url": "https://github.com/mikevespi"
+    },
+    {
+      "name": "Brad Payne",
+      "url" : "https://github.com/bdolor"
+    },
+    {
+      "name": "Brian Kraus",
+      "url": "https://github.com/BryanGK"
+    },
+    {
+      "name": "thegentlemanphysicist",
+      "url": "https://github.com/thegentlemanphysicist"
+    },
+    {
+      "name": "Ian Fonberg",
+      "url": "https://github.com/IanFonzie"
+    }
+  ],
   "engines": {
     "node": ">=16.13.1"
   },

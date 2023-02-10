@@ -1,11 +1,12 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/button-inc/digital_marketplace/main.svg)](https://results.pre-commit.ci/latest/github/button-inc/digital_marketplace/main)
+
 # Digital Marketplace
 
 The Digital Marketplace is a web application that administers British Columbia's Code With Us and Sprint With Us procurement programs. It enables (1) public sector employees to create and publish procurement opportunities, and (2) vendors to submit proposals to these opportunities.
 
 This document describes this project's developer environment, technical architecture and deployment infrastructure.
 
-The file [`docs/onboarding-tips.md`](docs/onboarding-tips.md) contains a collection of helpful information about working with this custom framework. It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
+The file [`docs/onboarding/tips.md`](docs/onboarding/tips.md) contains a collection of helpful information about working with this [custom framework](docs/onboarding/custom-framework-overview.md). It is encouraged that the file be added to by anyone who uncovers something they feel would have been helpful to know.
 
 ## Table of Contents
 
@@ -98,7 +99,9 @@ General purpose scripts are stored in this folder. The scripts themselves are st
 ```
 npm run scripts:run -- <SCRIPT_NAME> [...args]
 ```
+
 ## Development Environment
+
 ### Set Up
 
 ### `.env` File
@@ -119,9 +122,9 @@ Please ensure the following packages have been installed:
 - SASS
 - Docker
 - Docker Compose 3.x
-- [pre-commit](docs/pre-commit.md)
+- [pre-commit](docs/local-development/pre-commit.md)
 
-Once installed, `cd` into this repository's root directory and proceed to install  dependencies (if running for the first time):
+Once installed, `cd` into this repository's root directory and proceed to install dependencies (if running for the first time):
 
 ```bash
 yarn
@@ -131,12 +134,14 @@ yarn
 
 If you don't have access the BC Government's keycloak and you want to be able to log in to the app, you'll need to
 set up a local instance of keycloak. To do this, update the following environment variables in the `.env` file:
+
 - `KEYCLOAK_CLIENT_ID="login"`
 - `KEYCLOAK_CLIENT_SECRET="abc-123"`
 - `KEYCLOAK_URL="http://localhost:8080"`
 - `KEYCLOAK_REALM="digitalmarketplace"`
 
 Additionally, add:
+
 - `KEYCLOAK_USER="admin"`
 - `KEYCLOAK_PASSWORD="password"`
 - `ID_PROVIDER="github"`
@@ -148,6 +153,7 @@ Additionally, add:
 - Authorization Callback URL: http://localhost:8080/auth/realms/digitalmarketplace/broker/github/endpoint # Keycloak endpoint, default URL http://localhost:8080
 
 Then:
+
 - Copy Client ID value and put into .env `ID_PROVIDER_CLIENT_ID`
 - Click to `Generate a new client secret` and copy value and put into .env `ID_PROVIDER_CLIENT_SECRET`
 
@@ -170,7 +176,8 @@ npm run migrations:latest # Run all database migrations.
 ```
 
 #### Admin user
-If this is the first time spinning up a local development environment, set up an [admin user](docs/admin-creation.md)
+
+If this is the first time spinning up a local development environment, set up an [admin user](docs/local-development/admin-creation.md)
 
 Then, visit the [URL](http://localhost:3000) logged to your terminal to view the now locally-running web application.
 
@@ -185,39 +192,42 @@ It is recommended that developers use the following scripts defined in `package.
 npm run <SCRIPT_NAME>
 ```
 
-| Script Name                             | Description                                                                                                                                                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cypress:run`                           | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                      |
-| `cypress:open`                          | Opens the interactive Cypress test runner. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.   |
-| `start`                                 | Runs the back-end server.                                                                                                                                                                                          |
-| `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                      |
-| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                    |
-| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                     |
-| `front-end:build`                       | Builds the front-end using grunt.                                                                                                                                                                                  |
-| `front-end:watch`                       | Builds the front-end using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                              |
-| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                    |
-| `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                       |
-| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                     |
-| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                      |
-| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                           |
-| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                            |
-| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                    |
-| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                     |
-| `shared:lint`                           | Lints the shared source code using eslint.                                                                                                                                                                         |
-| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                                                                       |
-| `migrations:lint`                       | Lints the migrations source code using eslint.                                                                                                                                                                     |
-| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below.                                                      |
-| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                                                                                |
-| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                                                                                   |
-| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                                                                                   |
-| `migrations:up`                         | Runs one migration `up`.                                                                                                                                                                                           |
-| `migrations:down`                       | Runs one migration `down`.                                                                                                                                                                                         |
-| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.                                                               |
-| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                              |
-| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                    |
-| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                           |
-| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                             |
-| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database.md` from the database specified by the connection url.                                                                                                    |
+| Script Name                             | Description                                                                                                                                                                                                      |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cypress:run`                           | Runs the Cypress tests. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database.                    |
+| `cypress:open`                          | Opens the interactive Cypress test runner. (You must first manually start the app for the tests to have something to run against.) NOTE: The test set up and clean up will wipe and recreate the local database. |
+| `start`                                 | Runs the back-end server.                                                                                                                                                                                        |
+| `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                    |
+| `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                  |
+| `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                   |
+| `front-end:build`                       | Builds the front-end source code using grunt.                                                                                                                                                                    |
+| `front-end:watch`                       | Builds the front-end source code using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                |
+| `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                  |
+| `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                     |
+| `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                   |
+| `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                    |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                         |
+| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                          |
+| `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                  |
+| `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                   |
+| `shared:lint`                           | Lints the shared source code using eslint.                                                                                                                                                                       |
+| `shared:typedoc`                        | Builds TypeDoc API documentation for the shared source code.                                                                                                                                                     |
+| `migrations:lint`                       | Lints the migrations source code using eslint.                                                                                                                                                                   |
+| `migrations:helper`                     | A helper script to run various migration commands using `knex`. It is not recommended to use this directly, rather use the migration scripts described below.                                                    |
+| `migrations:create -- <MIGRATION_NAME>` | Creates a migration file from a template in `src/migrations/tasks`.                                                                                                                                              |
+| `migrations:latest`                     | Runs all migrations forward using their exported `up` functions.                                                                                                                                                 |
+| `migrations:rollback`                   | Rolls all migrations back using their exported `down` functions.                                                                                                                                                 |
+| `migrations:up`                         | Runs one migration `up`.                                                                                                                                                                                         |
+| `migrations:down`                       | Runs one migration `down`.                                                                                                                                                                                       |
+| `scripts:run`                           | Runs a script. Usage: `npm run scripts:run -- <SCRIPT_NAME> [...args]`. Ensure the `--` is included to allow script arguments to be properly parsed.                                                             |
+| `typedoc:build`                         | Builds all TypeDoc API documentation.                                                                                                                                                                            |
+| `typedoc:start`                         | Serves TypeDoc documentation on a local server.                                                                                                                                                                  |
+| `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                         |
+| `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                           |
+| `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database-schema.md` from the database specified by the connection url.                                                                                           |
+| `learn-front-end:build`                 | Builds the learn-front-end project using grunt.                                                                                                                                                                  |
+| `learn-front-end:watch`                 | Builds the learn-front-end project using grunt, and rebuilds it whenever a learn-front-end, front-end or shared source file changes.                                                                             |
+| `learn-front-end:serve`                 | Serves the learn-front-end build files.                                                                                                                                                                          |
 
 ### Environment Variables
 
@@ -270,6 +280,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `SWAGGER_UI_PATH`                       | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`.                                                                                                                                     |
 | `TZ`                                    | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration.                                                                                                           |
 | `SHOW_TEST_INDICATOR`                   | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`. |
+| `LOG_DEBUG`                             | A boolean flag (set to `0` for `false`, `1` for `true`) to enable verbose, debug-level logging. Defaults to `false` when `ENV` is set to `production`, and `true` when `ENV` is set to `development`.                                    |
+| `LOG_MEM_USAGE`                         | A boolean flag (set to `0` for `false`, `1` for `true`) to enable debug-level logging of Node memory usage. Defaults to `false`.                                                                                                         |
 
 **Note on Postgres Connection**
 If the credentials for Patroni are provided, they will be used in place of the `POSTGRES_URL`, which acts as a fallback (as it is used for local dev).
@@ -307,7 +319,7 @@ The Development and Test environments are secured behind HTTP Basic Auth. Please
 ### Deployment Process
 
 **IMPORTANT**
-For information on Helm deployment, see [helm deploy docs](./docs/helm-deploy.md).
+For information on Helm deployment, see [helm deploy docs](./docs/build-deploy/helm-deploy.md).
 
 The "ccc866-tools" OpenShift project is used to trigger the deployment process for all environments.
 
@@ -317,7 +329,7 @@ To deploy to the Test environment, start a build for "app-digmkt-test", and Open
 
 To deploy to the Production environment, start a build for "app-digmkt-prod", and OpenShift will build HEAD from the `master` branch. You will need to manually deploy the build to the Production environment listed above once it completes by deploying the "app-digmkt-prod" deployment in the "ccc866-prod" project.
 
-For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [docs/openshift.md](./docs/openshift.md).
+For instructions on building images for each of the environments and setting up build and deployment configurations in OpenShift 4, please refer to the instructions in [docs/build-deploy/openshift.md](./docs/build-deploy/openshift.md).
 
 #### Running Database Migrations
 
@@ -336,7 +348,7 @@ A manual backup can be immediately performed by connecting to the backup contain
 
 Backup archives are stored in the same OpenShift project as the Digital Marketplace application, on a separate provisioned volume.
 
-You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](docs/backups.md).
+You can find instructions for building and deploying the Backup Container images to OpenShift 4 [here](docs/build-deploy/backups.md).
 
 #### Restoring from Backup
 
@@ -344,7 +356,7 @@ In the unfortunate event that you need to restore your data from a backup archiv
 
 ### High Availability Database Deployment
 
-The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](docs/backups.md).
+The Digital Marketplace is currently deployed to an OpenShift platform using a highly available PostgreSQL stateful set. The template used to deploy this set is based on Patroni (https://patroni.readthedocs.io/en/latest/). A deployment configuration has been provided in `openshift/templates/database` for deployment to OpenShift environments. Instructions for building and deploying can be viewed [here](docs/build-deploy/backups.md).
 
 Deployment as a highly available replicaset is recommended, but not required. A standalone PostgreSQL database deployment configuration has also been provided in `openshift/templates/database`.
 
