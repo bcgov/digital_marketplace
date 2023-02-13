@@ -1,4 +1,7 @@
-import { EMPTY_STRING } from "front-end/config";
+import {
+  EMPTY_STRING,
+  TWU_OPPORTUNITY_SCOPE_CONTENT_ID
+} from "front-end/config";
 import {
   makePageMetadata,
   makeStartLoading,
@@ -38,8 +41,9 @@ import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { lowerCase, startCase } from "lodash";
+import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "attachments" | "addenda";
+type InfoTab = "details" | "scope" | "attachments" | "addenda";
 
 export interface State {
   toggleWatchLoading: number;
@@ -48,6 +52,7 @@ export interface State {
   viewerUser: User | null;
   activeInfoTab: InfoTab;
   routePath: string;
+  scopeContent: string;
 }
 
 export type InnerMsg =
@@ -57,7 +62,8 @@ export type InnerMsg =
       [
         string,
         api.ResponseValidation<TWUOpportunity, string[]>,
-        TWUProposalSlim | null
+        TWUProposalSlim | null,
+        api.ResponseValidation<Content, string[]>
       ]
     >
   | ADT<"toggleWatch">
@@ -86,7 +92,9 @@ const init: component_.page.Init<
       opportunity: null,
       existingProposal: null,
       activeInfoTab: "details",
-      routePath
+      routePath,
+      scopeContent: ""
+      // isQualified: false
     },
     [
       api.counters.update(
@@ -94,7 +102,7 @@ const init: component_.page.Init<
         null,
         () => adt("noop")
       ) as component_.Cmd<Msg>,
-      component_.cmd.join(
+      component_.cmd.join3(
         api.opportunities.twu.readOne(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.twu.readExistingProposalForOpportunity(
@@ -102,11 +110,16 @@ const init: component_.page.Init<
               (response) => response
             )
           : component_.cmd.dispatch(null),
-        (opportunityResponse, proposalResponse) =>
+        api.content.readOne(
+          TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
+          (response) => response
+        ),
+        (opportunityResponse, proposalResponse, contentResponse) =>
           adt("onInitResponse", [
             routePath,
             opportunityResponse,
-            proposalResponse
+            proposalResponse,
+            contentResponse
           ]) as Msg
       )
     ]
@@ -122,7 +135,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "onInitResponse": {
-      const [routePath, opportunityResponse, proposalResponse] = msg.value;
+      const [
+        routePath,
+        opportunityResponse,
+        proposalResponse,
+        contentResponse
+      ] = msg.value;
       if (!api.isValid(opportunityResponse)) {
         return [
           state,
@@ -139,6 +157,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       }
       if (proposalResponse) {
         state = state.set("existingProposal", proposalResponse);
+      }
+      if (contentResponse && api.isValid(contentResponse)) {
+        state = state.set("scopeContent", contentResponse.value.body);
       }
       return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
     }
@@ -409,20 +430,18 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-// const InfoScope: component_.base.ComponentView<State, Msg> = ({
-//                                                                      state
-//                                                                    }) => {
-//   return (
-//     <Row>
-//       <Col xs="12">
-//         <h3 className="mb-0">Scope &amp; Contract</h3>
-//       </Col>
-//       <Col xs="12" className="mt-4">
-//         <Markdown source={state.scopeContent} openLinksInNewTabs />
-//       </Col>
-//     </Row>
-//   );
-// };
+const InfoScope: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  return (
+    <Row>
+      <Col xs="12">
+        <h3 className="mb-0">Scope &amp; Contract</h3>
+      </Col>
+      <Col xs="12" className="mt-4">
+        <Markdown source={state.scopeContent} openLinksInNewTabs />
+      </Col>
+    </Row>
+  );
+};
 const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
   state
 }) => {
@@ -480,6 +499,10 @@ const InfoTabs: component_.base.ComponentView<State, Msg> = ({
       text: "Details"
     },
     {
+      ...getTabInfo("scope"),
+      text: "Scope & Contract"
+    },
+    {
       ...getTabInfo("attachments"),
       text: "Attachments",
       count: opp.attachments.length
@@ -506,8 +529,8 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
     switch (state.activeInfoTab) {
       case "details":
         return <InfoDetails {...props} />;
-      // case "scope":
-      //   return <InfoScope {...props} />;
+      case "scope":
+        return <InfoScope {...props} />;
       case "attachments":
         return <InfoAttachments {...props} />;
       case "addenda":
