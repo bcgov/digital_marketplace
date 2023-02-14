@@ -449,7 +449,6 @@ export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
         return processForRole(result, session);
       })
     );
-    console.log(results);
     return valid(
       await Promise.all(
         results.map(
