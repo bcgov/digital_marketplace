@@ -27,7 +27,7 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { Content } from "shared/lib/resources/content";
 
-export const TITLE = "Ssprint With Us Terms & Conditions";
+export const TITLE = "Sprint With Us Terms & Conditions";
 
 export function acceptedSWUTermsText(
   organization: Organization,
