@@ -2,14 +2,14 @@ import {
   twuOpportunityStatusToPastTenseVerb,
   twuOpportunityStatusToPresentTenseVerb
 } from "front-end/lib/pages/opportunity/team-with-us/lib";
-// import Link, {
-//   iconLinkSymbol,
-//   rightPlacement,
-//   routeDest
-// } from "front-end/lib/views/link";
+import Link, {
+  iconLinkSymbol,
+  rightPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import React from "react";
 import { TWUOpportunityStatus } from "shared/lib/resources/opportunity/team-with-us";
-import { Id } from "shared/lib/types";
+import { adt, Id } from "shared/lib/types";
 
 export const statusChanged = {
   success: (s: TWUOpportunityStatus) => {
@@ -42,14 +42,12 @@ export const published = {
         <div>
           {body}
           <div className="mt-2">
-            <p>PLACEHOLDER FOR VIEW OPPORTUNITY</p>
-            {opportunityId}
-            {/* <Link
-                newTab
-                symbol_={rightPlacement(iconLinkSymbol("external-link"))}
-                dest={routeDest(adt("opportunityTWUView", { opportunityId }))}>
-                View opportunity
-              </Link> */}
+            <Link
+              newTab
+              symbol_={rightPlacement(iconLinkSymbol("external-link"))}
+              dest={routeDest(adt("opportunityTWUView", { opportunityId }))}>
+              View opportunity
+            </Link>
           </div>
         </div>
       )
