@@ -18,6 +18,7 @@ import { Connection, readOneSession } from "back-end/lib/db";
 import codeWithUsHook from "back-end/lib/hooks/code-with-us";
 import loggerHook from "back-end/lib/hooks/logger";
 import sprintWithUsHook from "back-end/lib/hooks/sprint-with-us";
+import teamWithUsHook from "back-end/lib/hooks/team-with-us";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import basicAuth from "back-end/lib/map-routes/basic-auth";
@@ -156,7 +157,11 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
     map((route: BasicRoute) => namespaceRoute("/api", route)),
-    addHooks([codeWithUsHook(connection), sprintWithUsHook(connection)])
+    addHooks([
+      codeWithUsHook(connection),
+      sprintWithUsHook(connection),
+      teamWithUsHook(connection)
+    ])
   ])(resources);
 
   // Collect all routes.
@@ -221,7 +226,8 @@ async function start() {
   // i.e. The status route effectively acts as an action triggered by a CRON job.
   const statusRouterWithHooks = addHooks([
     codeWithUsHook(connection),
-    sprintWithUsHook(connection)
+    sprintWithUsHook(connection),
+    teamWithUsHook(connection)
   ])(statusRouter as AppRouter);
   router = [...statusRouterWithHooks, ...router];
   // Bind the server to a port and listen for incoming connections.
