@@ -11,9 +11,12 @@ const logger = makeDomainLogger(consoleAdapter, "hooks", ENV);
 
 /**
  * Closes TWU opportunities, date dependant.
- * Called regularly, similar to cronjobs.
+ * Called on a regular schedule, similar to cronjobs.
  *
- * @see {createRouter} addHooks() - where all hooks are added
+ * @see {@link createRouter} in 'src/back-end/index.ts'
+ * and the function `addHooks()` in `createRouter` is
+ * where all hooks are added
+ *
  * @param connection
  */
 const createCrudHook: (
