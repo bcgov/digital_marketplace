@@ -25,8 +25,9 @@ import { Organization } from "shared/lib/resources/organization";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { Content } from "shared/lib/resources/content";
 
-export const TITLE = "Sprint With Us Terms & Conditions";
+export const TITLE = "Ssprint With Us Terms & Conditions";
 
 export function acceptedSWUTermsText(
   organization: Organization,
@@ -53,7 +54,10 @@ interface ValidState {
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg =
-  | ADT<"onInitResponse", [string, Organization | null, string | null]>
+  | ADT<
+      "onInitResponse",
+      [string, Organization | null, api.ResponseValidation<Content, string[]>]
+    >
   | ADT<"accept">
   | ADT<"onAcceptResponse", boolean>;
 
@@ -82,9 +86,10 @@ const init: component_.page.Init<
           api.organizations.readOne(routeParams.orgId, (response) =>
             api.isValid(response) ? response.value : null
           ) as component_.Cmd<Organization | null>,
-          api.content.readOne(SWU_QUALIFICATION_TERMS_ID, (response) =>
-            api.isValid(response) ? response.value : null
-          ) as component_.Cmd<string | null>,
+          api.content.readOne(
+            SWU_QUALIFICATION_TERMS_ID,
+            (response) => response
+          ),
           (organization, body) =>
             adt("onInitResponse", [routePath, organization, body]) as Msg
         )
@@ -139,11 +144,13 @@ const update: component_.base.Update<State, Msg> = updateValid(
               )
             ]
           ];
+        } else {
+          state = state.set("organization", organization);
+          if (body && api.isValid(body)) {
+            state = state.set("body", body.value.body);
+          }
+          return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
         }
-        return [
-          state.set("organization", organization).set("body", body),
-          [component_.cmd.dispatch(component_.page.readyMsg())]
-        ];
       }
       case "accept": {
         const organization = state.organization;
