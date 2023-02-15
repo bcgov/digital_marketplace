@@ -39,22 +39,17 @@ export function makeDebouncedDispatch<Msg>(
   dispatchMsg: Msg,
   duration: number
 ): () => Cmd<Msg> {
-  let timeout: NodeJS.Timeout | null = null;
+  let globalTimeout: NodeJS.Timeout | null = null;
   return () =>
     adt("async", async () => {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      let thisTimeoutHasLapsed = false;
+      let thisTimeout: NodeJS.Timeout | null = null;
       await new Promise<void>((resolve) => {
-        timeout = setTimeout(() => {
-          thisTimeoutHasLapsed = true;
+        thisTimeout = setTimeout(() => {
           resolve();
         }, duration);
-        if (!thisTimeoutHasLapsed) resolve();
+        globalTimeout = thisTimeout;
       });
-      return thisTimeoutHasLapsed ? dispatchMsg : noOpMsg;
+      return thisTimeout == globalTimeout ? dispatchMsg : noOpMsg;
     });
 }
 
