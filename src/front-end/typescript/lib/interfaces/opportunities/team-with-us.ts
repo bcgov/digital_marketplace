@@ -1,10 +1,22 @@
 import { adt } from "shared/lib/types";
 import {
+  DEFAULT_OPPORTUNITY_TITLE,
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity,
   TWUOpportunitySlim
 } from "shared/lib/resources/opportunity/team-with-us";
-import { OppHelpers } from "front-end/lib/interfaces/opportunities/types";
+import {
+  GetOppEditRoute,
+  OppHelpers
+} from "front-end/lib/interfaces/opportunities/types";
+import {
+  twuOpportunityStatusToColor,
+  twuOpportunityStatusToTitleCase
+} from "front-end/lib/pages/opportunity/team-with-us/lib";
+
+const getOppEditRoute: GetOppEditRoute = (opportunityId) => {
+  return adt("opportunityTWUEdit", { opportunityId });
+};
 
 const helpers: OppHelpers<TWUOpportunitySlim | TWUOpportunity> = {
   list: {
@@ -19,6 +31,18 @@ const helpers: OppHelpers<TWUOpportunitySlim | TWUOpportunity> = {
     },
     getOppDollarAmount(opportunity) {
       return opportunity.maxBudget;
+    }
+  },
+  dashboard: {
+    getDefaultTitle() {
+      return DEFAULT_OPPORTUNITY_TITLE;
+    },
+    getOppEditRoute,
+    getOppStatusColor(status) {
+      return twuOpportunityStatusToColor(status);
+    },
+    getOppStatusText(status) {
+      return twuOpportunityStatusToTitleCase(status);
     }
   }
 };

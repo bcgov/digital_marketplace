@@ -1,4 +1,5 @@
 import { Route } from "front-end/lib/app/types";
+import { ThemeColor } from "front-end/lib/types";
 import {
   CWUOpportunity,
   CWUOpportunitySlim
@@ -18,13 +19,23 @@ export type Opportunity =
   | ADT<"swu", SWUOpportunity | SWUOpportunitySlim>
   | ADT<"twu", TWUOpportunity | TWUOpportunitySlim>;
 
+export type GetOppEditRoute = (id: Id) => Route;
+
 type ListOppHelpers<Opp> = {
   getOppViewRoute(id: Id): Route;
-  getOppEditRoute(id: Id): Route;
+  getOppEditRoute: GetOppEditRoute;
   isOpportunityAcceptingProposals(opportunity: Opp): boolean;
   getOppDollarAmount(opportunity: Opp): number;
 };
 
+type DashboardOppHelpers<Opp extends Opportunity["value"]> = {
+  getDefaultTitle(): string;
+  getOppEditRoute: GetOppEditRoute;
+  getOppStatusColor(status: Opp["status"]): ThemeColor;
+  getOppStatusText(status: Opp["status"]): string;
+};
+
 export interface OppHelpers<Opp extends Opportunity["value"]> {
   list: ListOppHelpers<Opp>;
+  dashboard: DashboardOppHelpers<Opp>;
 }
