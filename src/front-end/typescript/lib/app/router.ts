@@ -177,7 +177,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/create"
@@ -272,6 +271,17 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId"),
+      makeRoute({ params }) {
+        return {
+          tag: "opportunityTWUView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
       path: prefixPath("/proposals"),
       makeRoute() {
         return {
@@ -343,7 +353,7 @@ const router: router_.Router<Route> = {
               affiliationId && response
                 ? { affiliationId, response }
                 : undefined,
-            ...('unsubscribe' in query && {unsubscribe: true})
+            ...("unsubscribe" in query && { unsubscribe: true })
           }
         };
       }
@@ -553,7 +563,7 @@ const router: router_.Router<Route> = {
           query.push(`invitationResponse=${route.value.invitation.response}`);
         }
         if (route.value.unsubscribe) {
-          query.push("unsubscribe")
+          query.push("unsubscribe");
         }
         let qs = "";
         if (query.length) {
@@ -635,10 +645,10 @@ const router: router_.Router<Route> = {
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
-      // case "opportunityTWUView":
-      //   return prefixPath(
-      //     `/opportunities/team-with-us/${route.value.opportunityId}`
-      //   );
+      case "opportunityTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");
       case "opportunityCWUEdit":

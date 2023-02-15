@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  RawTWUOpportunitySubscriber,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import { QueryBuilder } from "knex";
@@ -165,32 +170,32 @@ async function rawTWUOpportunityToTWUOpportunity(
   };
 }
 
-// async function rawTWUOpportunitySlimToTWUOpportunitySlim(
-//   connection: Connection,
-//   raw: RawTWUOpportunitySlim
-// ): Promise<TWUOpportunitySlim> {
-//   const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
-//   const createdBy =
-//     (createdById &&
-//       getValidValue(
-//         await readOneUserSlim(connection, createdById),
-//         undefined
-//       )) ||
-//     undefined;
-//   const updatedBy =
-//     (updatedById &&
-//       getValidValue(
-//         await readOneUserSlim(connection, updatedById),
-//         undefined
-//       )) ||
-//     undefined;
-//
-//   return {
-//     ...restOfRaw,
-//     createdBy,
-//     updatedBy
-//   };
-// }
+async function rawTWUOpportunitySlimToTWUOpportunitySlim(
+  connection: Connection,
+  raw: RawTWUOpportunitySlim
+): Promise<TWUOpportunitySlim> {
+  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const createdBy =
+    (createdById &&
+      getValidValue(
+        await readOneUserSlim(connection, createdById),
+        undefined
+      )) ||
+    undefined;
+  const updatedBy =
+    (updatedById &&
+      getValidValue(
+        await readOneUserSlim(connection, updatedById),
+        undefined
+      )) ||
+    undefined;
+
+  return {
+    ...restOfRaw,
+    createdBy,
+    updatedBy
+  };
+}
 
 async function rawTWUOpportunityAddendumToTWUOpportunityAddendum(
   connection: Connection,
@@ -294,6 +299,7 @@ export function generateTWUOpportunityQuery(
       "versions.teaser",
       "versions.remoteOk",
       "versions.location",
+      "versions.maxBudget",
       "versions.proposalDeadline",
       "statuses.status",
       "versions.serviceArea"
@@ -403,6 +409,57 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
   }
 );
 
+export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
+  async (connection, session) => {
+    let query = generateTWUOpportunityQuery(connection);
+
+    if (!session || session.user.type === UserType.Vendor) {
+      // Anonymous users and vendors can only see public opportunities
+      query = query.whereIn(
+        "statuses.status",
+        publicOpportunityStatuses as TWUOpportunityStatus[]
+      );
+    } else if (session.user.type === UserType.Government) {
+      // Gov basic users should only see private opportunities that they own, and public opportunities
+      query = query
+        .whereIn(
+          "statuses.status",
+          publicOpportunityStatuses as TWUOpportunityStatus[]
+        )
+        .orWhere(function () {
+          this.whereIn(
+            "statuses.status",
+            privateOpportunityStatuses as TWUOpportunityStatus[]
+          ).andWhere({ "opportunities.createdBy": session.user?.id });
+        });
+    }
+    // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+    // Process results to eliminate fields not viewable by the current role
+    const results = await Promise.all(
+      (
+        await query
+      ).map(async (result) => {
+        if (session) {
+          result.subscribed = await isSubscribed(
+            connection,
+            result.id,
+            session.user.id
+          );
+        }
+        return processForRole(result, session);
+      })
+    );
+    return valid(
+      await Promise.all(
+        results.map(
+          async (raw) =>
+            await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, raw)
+        )
+      )
+    );
+  }
+);
+
 async function createTWUOpportunityAttachments(
   connection: Connection,
   trx: Transaction,
@@ -442,34 +499,34 @@ function processForRole<T extends RawTWUOpportunity | RawTWUOpportunitySlim>(
   return result;
 }
 
-// export const readOneTWUOpportunitySlim = tryDb<
-//   [Id, Session],
-//   TWUOpportunitySlim | null
-// >(async (connection, id, session) => {
-//   let result = await generateTWUOpportunityQuery(connection)
-//     .where({ "opportunities.id": id })
-//     .first();
-//
-//   if (result) {
-//     result = processForRole(result, session);
-//   }
-//
-//   return result
-//     ? valid(await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, result))
-//     : valid(null);
-// });
+export const readOneTWUOpportunitySlim = tryDb<
+  [Id, Session],
+  TWUOpportunitySlim | null
+>(async (connection, id, session) => {
+  let result = await generateTWUOpportunityQuery(connection)
+    .where({ "opportunities.id": id })
+    .first();
 
-// async function isSubscribed(
-//   connection: Connection,
-//   oppId: Id,
-//   userId: Id
-// ): Promise<boolean> {
-//   return !!(await connection<RawTWUOpportunitySubscriber>(
-//     "twuOpportunitySubscribers"
-//   )
-//     .where({ opportunity: oppId, user: userId })
-//     .first());
-// }
+  if (result) {
+    result = processForRole(result, session);
+  }
+
+  return result
+    ? valid(await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, result))
+    : valid(null);
+});
+
+async function isSubscribed(
+  connection: Connection,
+  oppId: Id,
+  userId: Id
+): Promise<boolean> {
+  return !!(await connection<RawTWUOpportunitySubscriber>(
+    "twuOpportunitySubscribers"
+  )
+    .where({ opportunity: oppId, user: userId })
+    .first());
+}
 
 export const readOneTWUOpportunity = tryDb<
   [Id, Session],
@@ -861,59 +918,58 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
           now
         )) as RawTWUOpportunity[];
 
-      //   for (const lapsedOpportunity of lapsedOpportunities) {
-      //     // Set the opportunity to EVAL_RESOURCE_QUESTIONS status
-      //     await connection("twuOpportunityStatuses").transacting(trx).insert({
-      //       id: generateUuid(),
-      //       createdAt: now,
-      //       opportunity: lapsedOpportunity.id,
-      //       status: TWUOpportunityStatus.EvaluationResourceQuestions,
-      //       note: "This opportunity has closed."
-      //     });
+      for (const lapsedOpportunity of lapsedOpportunities) {
+        // Set the opportunity to EVAL_RESOURCE_QUESTIONS status
+        await connection("twuOpportunityStatuses").transacting(trx).insert({
+          id: generateUuid(),
+          createdAt: now,
+          opportunity: lapsedOpportunity.id,
+          status: TWUOpportunityStatus.EvaluationResourceQuestions
+          // note: "This opportunity has closed."
+        });
+        //     // Get a list of SUBMITTED proposals for this opportunity
+        //     const proposalIds =
+        //       (
+        //         await connection<{ id: Id }>("twuProposals as proposals")
+        //           .transacting(trx)
+        //           .join("twuProposalStatuses as statuses", function () {
+        //             this.on("proposals.id", "=", "statuses.proposal")
+        //               .andOnNotNull("statuses.status")
+        //               .andOn(
+        //                 "statuses.createdAt",
+        //                 "=",
+        //                 connection.raw(
+        //                   '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
+        //             statuses2.proposal = proposals.id and statuses2.status is not null)'
+        //                 )
+        //               );
+        //           })
+        //           .where({
+        //             "proposals.opportunity": lapsedOpportunity.id,
+        //             "statuses.status": TWUProposalStatus.Submitted
+        //           })
+        //           .select<Array<{ id: Id }>>("proposals.id")
+        //       )?.map((result) => result.id) || [];
 
-      //     // Get a list of SUBMITTED proposals for this opportunity
-      //     const proposalIds =
-      //       (
-      //         await connection<{ id: Id }>("twuProposals as proposals")
-      //           .transacting(trx)
-      //           .join("twuProposalStatuses as statuses", function () {
-      //             this.on("proposals.id", "=", "statuses.proposal")
-      //               .andOnNotNull("statuses.status")
-      //               .andOn(
-      //                 "statuses.createdAt",
-      //                 "=",
-      //                 connection.raw(
-      //                   '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
-      //             statuses2.proposal = proposals.id and statuses2.status is not null)'
-      //                 )
-      //               );
-      //           })
-      //           .where({
-      //             "proposals.opportunity": lapsedOpportunity.id,
-      //             "statuses.status": TWUProposalStatus.Submitted
-      //           })
-      //           .select<Array<{ id: Id }>>("proposals.id")
-      //       )?.map((result) => result.id) || [];
+        //     for (const [index, proposalId] of proposalIds.entries()) {
+        //       // Set the proposal to UNDER_REVIEW status
+        //       await connection("twuProposalStatuses").transacting(trx).insert({
+        //         id: generateUuid(),
+        //         createdAt: now,
+        //         proposal: proposalId,
+        //         status: TWUProposalStatus.UnderReviewResourceQuestions,
+        //         note: ""
+        //       });
 
-      //     for (const [index, proposalId] of proposalIds.entries()) {
-      //       // Set the proposal to UNDER_REVIEW status
-      //       await connection("twuProposalStatuses").transacting(trx).insert({
-      //         id: generateUuid(),
-      //         createdAt: now,
-      //         proposal: proposalId,
-      //         status: TWUProposalStatus.UnderReviewResourceQuestions,
-      //         note: ""
-      //       });
-
-      //       // And generate anonymized name
-      //       await connection("twuProposals")
-      //         .transacting(trx)
-      //         .where({ id: proposalId })
-      //         .update({
-      //           anonymousProponentName: `Proponent ${index + 1}`
-      //         });
-      //     }
-      //   }
+        //       // And generate anonymized name
+        //       await connection("twuProposals")
+        //         .transacting(trx)
+        //         .where({ id: proposalId })
+        //         .update({
+        //           anonymousProponentName: `Proponent ${index + 1}`
+        //         });
+        //     }
+      }
       // Generate notifications for each of the lapsed opportunities
       for (const rawOpportunity of lapsedOpportunities) {
         // We don't need attachments/addenda, but insert empty arrays so we can convert

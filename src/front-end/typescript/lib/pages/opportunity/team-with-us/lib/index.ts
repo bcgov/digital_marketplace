@@ -44,9 +44,9 @@ export function twuOpportunityStatusToTitleCase(
     case TWUOpportunityStatus.Published:
       return "Published";
     case TWUOpportunityStatus.EvaluationResourceQuestions:
-      return "Team Questions";
+      return "Resource Questions";
     case TWUOpportunityStatus.EvaluationChallenge:
-      return "Code Challenge";
+      return "Evaluation Challenge";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
     case TWUOpportunityStatus.Suspended:
@@ -177,5 +177,5 @@ export function opportunityToHistoryItems({
 export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
   return startCase(
     Object.keys(TWUServiceArea)[Object.values(TWUServiceArea).indexOf(s)]
-  );     
+  );
 }

@@ -486,7 +486,7 @@ const create: crud.Create<
       const validatedMinTeamMembers =
         opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
       const validatedMandatorySkills =
-        opportunityValidation.validateMandatorySkills(mandatorySkills);
+        genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
       const validatedDescription =
@@ -1075,7 +1075,7 @@ const update: crud.Update<
           const validatedMinTeamMembers =
             opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
           const validatedMandatorySkills =
-            opportunityValidation.validateMandatorySkills(mandatorySkills);
+            genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
           const validatedDescription =
@@ -1292,7 +1292,7 @@ const update: crud.Update<
               opportunityValidation.validateMinimumTeamMembers(
                 validatedSWUOpportunity.value.minTeamMembers
               ),
-              opportunityValidation.validateMandatorySkills(
+              genericValidation.validateMandatorySkills(
                 validatedSWUOpportunity.value.mandatorySkills
               ),
               opportunityValidation.validateOptionalSkills(
