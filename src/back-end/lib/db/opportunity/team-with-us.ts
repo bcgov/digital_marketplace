@@ -1,7 +1,7 @@
 import { generateUuid } from "back-end/lib";
 import {
   Connection,
-  RawSWUOpportunitySubscriber,
+  RawTWUOpportunitySubscriber,
   Transaction,
   tryDb
 } from "back-end/lib/db";
@@ -521,7 +521,7 @@ async function isSubscribed(
   oppId: Id,
   userId: Id
 ): Promise<boolean> {
-  return !!(await connection<RawSWUOpportunitySubscriber>(
+  return !!(await connection<RawTWUOpportunitySubscriber>(
     "twuOpportunitySubscribers"
   )
     .where({ opportunity: oppId, user: userId })

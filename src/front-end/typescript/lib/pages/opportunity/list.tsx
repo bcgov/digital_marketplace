@@ -42,7 +42,7 @@ import {
   UpdateValidationErrors as UserUpdateValidationErrors
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { getListOppHelpers } from 'front-end/lib/interfaces/opportunities';
+import { getListOppHelpers } from "front-end/lib/interfaces/opportunities";
 
 export type Opportunity =
   | ADT<"cwu", CWUO.CWUOpportunitySlim>
@@ -205,7 +205,7 @@ const init: component_.page.Init<
       options: adt("options", [
         { label: "Code With Us", value: "cwu" },
         { label: "Sprint With Us", value: "swu" },
-        { label: "Sprint With Us", value: "twu" }
+        { label: "Team With Us", value: "twu" }
       ])
     }
   });
@@ -260,7 +260,11 @@ const init: component_.page.Init<
         api.opportunities.swu.readMany((response) => response),
         api.opportunities.twu.readMany((response) => response),
         (cwuResponse, swuResponse, twuResponse) =>
-          adt("onInitResponse", [cwuResponse, swuResponse, twuResponse] as const)
+          adt("onInitResponse", [
+            cwuResponse,
+            swuResponse,
+            twuResponse
+          ] as const)
       ),
       ...component_.cmd.mapMany(
         typeFilterCmds,
@@ -405,7 +409,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       let cwu: CWUO.CWUOpportunitySlim[] = [];
       let swu: SWUO.SWUOpportunitySlim[] = [];
       let twu: TWUO.TWUOpportunitySlim[] = [];
-      if (api.isValid(cwuResponse) && api.isValid(swuResponse) && api.isValid(twuResponse)) {
+      if (
+        api.isValid(cwuResponse) &&
+        api.isValid(swuResponse) &&
+        api.isValid(twuResponse)
+      ) {
         cwu = cwuResponse.value;
         swu = swuResponse.value;
         twu = twuResponse.value;
@@ -711,7 +719,9 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
         }
     }
   })();
-  const isAcceptingProposals = listOppHelpers.isOpportunityAcceptingProposals(opportunity.value);
+  const isAcceptingProposals = listOppHelpers.isOpportunityAcceptingProposals(
+    opportunity.value
+  );
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
       <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
