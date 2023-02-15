@@ -205,7 +205,7 @@ const init: component_.page.Init<
       options: adt("options", [
         { label: "Code With Us", value: "cwu" },
         { label: "Sprint With Us", value: "swu" },
-        { label: "Sprint With Us", value: "twu" }
+        { label: "Team With Us", value: "twu" }
       ])
     }
   });
@@ -725,6 +725,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
   const isAcceptingProposals = oppHelpers(
     opportunity
   ).list.isOpportunityAcceptingProposals(opportunity.value);
+
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
       <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
