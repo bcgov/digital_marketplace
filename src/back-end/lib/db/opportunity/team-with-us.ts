@@ -499,34 +499,22 @@ function processForRole<T extends RawTWUOpportunity | RawTWUOpportunitySlim>(
   return result;
 }
 
-// export const readOneTWUOpportunitySlim = tryDb<
-//   [Id, Session],
-//   TWUOpportunitySlim | null
-// >(async (connection, id, session) => {
-//   let result = await generateTWUOpportunityQuery(connection)
-//     .where({ "opportunities.id": id })
-//     .first();
-//
-//   if (result) {
-//     result = processForRole(result, session);
-//   }
-//
-//   return result
-//     ? valid(await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, result))
-//     : valid(null);
-// });
+export const readOneTWUOpportunitySlim = tryDb<
+  [Id, Session],
+  TWUOpportunitySlim | null
+>(async (connection, id, session) => {
+  let result = await generateTWUOpportunityQuery(connection)
+    .where({ "opportunities.id": id })
+    .first();
 
-// async function isSubscribed(
-//   connection: Connection,
-//   oppId: Id,
-//   userId: Id
-// ): Promise<boolean> {
-//   return !!(await connection<RawTWUOpportunitySubscriber>(
-//     "twuOpportunitySubscribers"
-//   )
-//     .where({ opportunity: oppId, user: userId })
-//     .first());
-// }
+  if (result) {
+    result = processForRole(result, session);
+  }
+
+  return result
+    ? valid(await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, result))
+    : valid(null);
+});
 
 async function isSubscribed(
   connection: Connection,

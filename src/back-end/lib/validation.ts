@@ -51,7 +51,35 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import { isArray } from "util";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 
+export async function validateTWUOpportunityId(
+  connection: db.Connection,
+  opportunityId: Id,
+  session: Session
+): Promise<Validation<TWUOpportunity>> {
+  try {
+    const validatedId = validateUUID(opportunityId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneTWUOpportunity(
+      connection,
+      opportunityId,
+      session
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const opportunity = dbResult.value;
+    if (!opportunity) {
+      return invalid(["The specified Team With Us opportunity was not found."]);
+    }
+    return valid(opportunity);
+  } catch (exception) {
+    return invalid(["Please select a valid Team With Us opportunity."]);
+  }
+}
 export async function validateUserId(
   connection: db.Connection,
   userId: Id
