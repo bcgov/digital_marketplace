@@ -16,14 +16,6 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
-  cwuOpportunityStatusToColor,
-  cwuOpportunityStatusToTitleCase
-} from "front-end/lib/pages/opportunity/code-with-us/lib";
-import {
-  swuOpportunityStatusToColor,
-  swuOpportunityStatusToTitleCase
-} from "front-end/lib/pages/opportunity/sprint-with-us/lib";
-import {
   cwuProposalStatusToColor,
   cwuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/code-with-us/lib";
@@ -43,6 +35,7 @@ import { Col, Row } from "reactstrap";
 import { compareDates, formatDate } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
+import * as TWUO from "shared/lib/resources/opportunity/team-with-us";
 import {
   doesOrganizationMeetSWUQualification,
   OrganizationSlim
@@ -52,6 +45,7 @@ import * as SWUP from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor, User } from "shared/lib/resources/user";
 import { adt, ADT, Defined } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import oppHelpers from "../interfaces/opportunities";
 
 interface ValidState {
   table: {
@@ -75,7 +69,14 @@ type InitResponse =
       "vendor",
       [CWUP.CWUProposalSlim[], SWUP.SWUProposalSlim[], OrganizationSlim[]]
     >
-  | ADT<"publicSector", [CWUO.CWUOpportunitySlim[], SWUO.SWUOpportunitySlim[]]>;
+  | ADT<
+      "publicSector",
+      [
+        CWUO.CWUOpportunitySlim[],
+        SWUO.SWUOpportunitySlim[],
+        TWUO.TWUOpportunitySlim[]
+      ]
+    >;
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
@@ -147,36 +148,34 @@ function makeVendorBodyRows(
 function makePublicSectorBodyRows(
   cwu: CWUO.CWUOpportunitySlim[],
   swu: SWUO.SWUOpportunitySlim[],
+  twu: TWUO.TWUOpportunitySlim[],
   viewerUser: User
 ): Table.BodyRows {
   return [
     ...cwu.map((o) => adt("cwu" as const, o)),
-    ...swu.map((o) => adt("swu" as const, o))
+    ...swu.map((o) => adt("swu" as const, o)),
+    ...twu.map((o) => adt("twu" as const, o))
   ]
     .filter((o) => o.value.createdBy?.id === viewerUser.id)
     .sort((a, b) => compareDates(a.value.createdAt, b.value.createdAt) * -1)
     .map((p) => {
-      const defaultTitle =
-        p.tag === "cwu"
-          ? CWUO.DEFAULT_OPPORTUNITY_TITLE
-          : SWUO.DEFAULT_OPPORTUNITY_TITLE;
+      const defaultTitle = oppHelpers(p).dashboard.getDefaultTitle();
       return [
         {
           children: (
             <div>
               <Link
                 dest={routeDest(
-                  adt(
-                    p.tag === "cwu"
-                      ? "opportunityCWUEdit"
-                      : "opportunitySWUEdit",
-                    { opportunityId: p.value.id }
-                  )
+                  oppHelpers(p).dashboard.getOppEditRoute(p.value.id)
                 )}>
                 {p.value.title || defaultTitle}
               </Link>
               <div className="small text-secondary text-uppercase">
-                {p.tag === "cwu" ? "Code With Us" : "Sprint With Us"}
+                {p.tag === "cwu"
+                  ? "Code With Us"
+                  : p.tag === "swu"
+                  ? "Sprint With Us"
+                  : "Team With Us"}
               </div>
             </div>
           )
@@ -184,16 +183,8 @@ function makePublicSectorBodyRows(
         {
           children: (
             <Badge
-              color={
-                p.tag === "cwu"
-                  ? cwuOpportunityStatusToColor(p.value.status)
-                  : swuOpportunityStatusToColor(p.value.status)
-              }
-              text={
-                p.tag === "cwu"
-                  ? cwuOpportunityStatusToTitleCase(p.value.status)
-                  : swuOpportunityStatusToTitleCase(p.value.status)
-              }
+              color={oppHelpers(p).dashboard.getOppStatusColor(p.value.status)}
+              text={oppHelpers(p).dashboard.getOppStatusText(p.value.status)}
             />
           )
         },
@@ -275,17 +266,20 @@ const init: component_.page.Init<
                   adt("vendor", [cwu, swu, orgs] as const)
                 ) as Msg
             ) as component_.Cmd<Msg>)
-          : component_.cmd.join(
+          : component_.cmd.join3(
               api.opportunities.cwu.readMany((response) =>
                 api.getValidValue(response, [])
               ),
               api.opportunities.swu.readMany((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu) =>
+              api.opportunities.twu.readMany((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu, twu) =>
                 adt(
                   "onInitResponse",
-                  adt("publicSector", [cwu, swu] as const)
+                  adt("publicSector", [cwu, swu, twu] as const)
                 ) as Msg
             )
       ]
@@ -331,13 +325,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           }
           case "publicSector":
           default: {
-            const [cwuOpportunities, swuOpportunities] = msg.value.value;
+            const [cwuOpportunities, swuOpportunities, twuOpportunities] =
+              msg.value.value;
             return [
               state.setIn(
                 ["table", "bodyRows"],
                 makePublicSectorBodyRows(
                   cwuOpportunities,
                   swuOpportunities,
+                  twuOpportunities,
                   state.viewerUser
                 )
               ),

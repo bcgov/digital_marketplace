@@ -42,7 +42,7 @@ import {
   UpdateValidationErrors as UserUpdateValidationErrors
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import { getListOppHelpers } from "front-end/lib/interfaces/opportunities";
+import oppHelpers from "front-end/lib/interfaces/opportunities";
 
 export type Opportunity =
   | ADT<"cwu", CWUO.CWUOpportunitySlim>
@@ -698,11 +698,14 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
   isWatchLoading,
   disabled
 }) => {
-  const listOppHelpers = getListOppHelpers(opportunity);
   const subscribed = opportunity.value.subscribed;
   const dest: Route = (() => {
-    const view: Route = listOppHelpers.getOppViewRoute(opportunity.value.id);
-    const edit: Route = listOppHelpers.getOppEditRoute(opportunity.value.id);
+    const view: Route = oppHelpers(opportunity).list.getOppViewRoute(
+      opportunity.value.id
+    );
+    const edit: Route = oppHelpers(opportunity).list.getOppEditRoute(
+      opportunity.value.id
+    );
     if (!viewerUser) {
       return view;
     }
@@ -719,9 +722,10 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
         }
     }
   })();
-  const isAcceptingProposals = listOppHelpers.isOpportunityAcceptingProposals(
-    opportunity.value
-  );
+  const isAcceptingProposals = oppHelpers(
+    opportunity
+  ).list.isOpportunityAcceptingProposals(opportunity.value);
+
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
       <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
@@ -759,7 +763,9 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
             small
             className="mr-3 mb-3"
             value={formatAmount(
-              listOppHelpers.getOppDollarAmount(opportunity.value),
+              oppHelpers(opportunity).list.getOppDollarAmount(
+                opportunity.value
+              ),
               "$"
             )}
             name="badge-dollar-outline"

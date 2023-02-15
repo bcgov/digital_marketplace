@@ -1,21 +1,22 @@
-import { Route } from "front-end/lib/app/types";
-import { Id } from "shared/lib/types";
-import { cwu } from 'front-end/lib/interfaces/opportunities/code-with-us';
-import { swu } from 'front-end/lib/interfaces/opportunities/sprint-with-us';
-import { twu } from 'front-end/lib/interfaces/opportunities/team-with-us';
-import { Opportunity } from "front-end/lib/pages/opportunity/list";
+import cwu from "front-end/lib/interfaces/opportunities/code-with-us";
+import swu from "front-end/lib/interfaces/opportunities/sprint-with-us";
+import twu from "front-end/lib/interfaces/opportunities/team-with-us";
+import {
+  OppHelpers,
+  Opportunity
+} from "front-end/lib/interfaces/opportunities/types";
+import { ProgramType } from "front-end/lib/views/program-type";
 
-export type ListOppHelpers<Opp extends Opportunity['value']> = {
-  getOppViewRoute(id: Id): Route;
-  getOppEditRoute(id: Id): Route;
-  isOpportunityAcceptingProposals(opportunity: Opp): boolean;
-  getOppDollarAmount(opportunity: Opp): number
+function oppHelpers(
+  opportunity: Opportunity
+): OppHelpers<Opportunity["value"]> {
+  return (
+    {
+      cwu,
+      swu,
+      twu
+    } as Record<ProgramType, OppHelpers<Opportunity["value"]>>
+  )[opportunity.tag];
 }
 
-export function getListOppHelpers(opportunity: Opportunity): ListOppHelpers<Opportunity['value']> {
-  return {
-    cwu,
-    swu,
-    twu
-  }[opportunity.tag];
-}
+export default oppHelpers;
