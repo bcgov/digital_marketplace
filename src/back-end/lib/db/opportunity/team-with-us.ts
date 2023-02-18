@@ -50,10 +50,10 @@ interface CreateTWUOpportunityParams
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
 
-// interface UpdateTWUOpportunityParams
-//   extends Omit<CreateTWUOpportunityParams, "status"> {
-//   id: Id;
-// }
+interface UpdateTWUOpportunityParams
+  extends Omit<CreateTWUOpportunityParams, "status"> {
+  id: Id;
+}
 
 interface UpdateTWUOpportunityWithNoteParams {
   note: string;
@@ -347,20 +347,20 @@ export function generateTWUOpportunityQuery(
 //   }
 // }
 
-// export async function isTWUOpportunityAuthor(
-//   connection: Connection,
-//   user: User,
-//   id: Id
-// ): Promise<boolean> {
-//   try {
-//     const result = await connection<RawTWUOpportunity>("twuOpportunities")
-//       .select("*")
-//       .where({ id, createdBy: user.id });
-//     return !!result && result.length > 0;
-//   } catch (exception) {
-//     return false;
-//   }
-// }
+export async function isTWUOpportunityAuthor(
+  connection: Connection,
+  user: User,
+  id: Id
+): Promise<boolean> {
+  try {
+    const result = await connection<RawTWUOpportunity>("twuOpportunities")
+      .select("*")
+      .where({ id, createdBy: user.id });
+    return !!result && result.length > 0;
+  } catch (exception) {
+    return false;
+  }
+}
 
 export const readManyTWUAddendum = tryDb<[Id], Addendum[]>(
   async (connection, opportunityId) => {
@@ -762,125 +762,156 @@ export const createTWUOpportunity = tryDb<
   return valid(dbResult.value);
 });
 
-// export const updateTWUOpportunityVersion = tryDb<
-//   [UpdateTWUOpportunityParams, AuthenticatedSession],
-//   TWUOpportunity
-// >(async (connection, opportunity, session) => {
-//   const now = new Date();
-//   const { attachments, resourceQuestions, ...restOfOpportunity } = opportunity;
-//   const opportunityVersion = await connection.transaction(async (trx) => {
-//     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
-//       "twuOpportunityVersions"
-//     )
-//       .transacting(trx)
-//       .insert(
-//         {
-//           ...restOfOpportunity,
-//           opportunity: restOfOpportunity.id,
-//           id: generateUuid(),
-//           createdAt: now,
-//           createdBy: session.user.id
-//         },
-//         "*"
-//       );
-//
-//     if (!versionRecord) {
-//       throw new Error("unable to update opportunity");
-//     }
-//
-//     // Create attachments
-//     await createTWUOpportunityAttachments(
-//       connection,
-//       trx,
-//       versionRecord.id,
-//       attachments || []
-//     );
-//
-//     // Create resource questions
-//     for (const resourceQuestion of resourceQuestions) {
-//       await connection<RawResourceQuestion & { opportunityVersion: Id }>(
-//         "twuResourceQuestions"
-//       )
-//         .transacting(trx)
-//         .insert({
-//           ...resourceQuestion,
-//           createdAt: now,
-//           createdBy: session.user.id,
-//           opportunityVersion: versionRecord.id
-//         });
-//     }
-//
-//     // Add an 'edit' change record
-//     await connection<RawTWUOpportunityHistoryRecord & { opportunity: Id }>(
-//       "twuOpportunityStatuses"
-//     ).insert({
-//       id: generateUuid(),
-//       opportunity: restOfOpportunity.id,
-//       createdAt: now,
-//       createdBy: session.user.id,
-//       event: TWUOpportunityEvent.Edited,
-//       note: ""
-//     });
-//
-//     return versionRecord;
-//   });
-//   const dbResult = await readOneTWUOpportunity(
-//     connection,
-//     opportunityVersion.opportunity,
-//     session
-//   );
-//   if (isInvalid(dbResult) || !dbResult.value) {
-//     throw new Error("unable to update opportunity");
-//   }
-//   return valid(dbResult.value);
-// });
+export const updateTWUOpportunityVersion = tryDb<
+  [UpdateTWUOpportunityParams, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, opportunity, session) => {
+  const now = new Date();
+  const { attachments, resourceQuestions, ...restOfOpportunity } = opportunity;
+  const opportunityVersion = await connection.transaction(async (trx) => {
+    const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
+      "twuOpportunityVersions"
+    )
+      .transacting(trx)
+      .insert(
+        {
+          ...restOfOpportunity,
+          opportunity: restOfOpportunity.id,
+          id: generateUuid(),
+          createdAt: now,
+          createdBy: session.user.id
+        },
+        "*"
+      );
 
-// export const addTWUOpportunityAddendum = tryDb<
-//   [Id, string, AuthenticatedSession],
-//   TWUOpportunity
-// >(async (connection, id, addendumText, session) => {
-//   const now = new Date();
-//   await connection.transaction(async (trx) => {
-//     const [addendum] = await connection<
-//       RawTWUOpportunityAddendum & { opportunity: Id }
-//     >("twuOpportunityAddenda")
-//       .transacting(trx)
-//       .insert(
-//         {
-//           id: generateUuid(),
-//           opportunity: id,
-//           description: addendumText,
-//           createdBy: session.user.id,
-//           createdAt: now
-//         },
-//         "*"
-//       );
-//
-//     if (!addendum) {
-//       throw new Error("unable to add addendum");
-//     }
-//
-//     // Add a history record for the addendum addition
-//     await connection<RawTWUOpportunityHistoryRecord & { opportunity: Id }>(
-//       "twuOpportunityStatuses"
-//     )
-//       .transacting(trx)
-//       .insert({
-//         id: generateUuid(),
-//         opportunity: id,
-//         createdAt: now,
-//         createdBy: session.user.id,
-//         event: TWUOpportunityEvent.AddendumAdded,
-//         note: ""
-//       });
-//   });
-//
-//   const dbResult = await readOneTWUOpportunity(connection, id, session);
-//   if (isInvalid(dbResult) || !dbResult.value) {
-//     throw new Error("unable to add addendum");
-//   }
-//   return valid(dbResult.value);
-// });
+    if (!versionRecord) {
+      throw new Error("unable to update opportunity");
+    }
+
+    // Create attachments
+    await createTWUOpportunityAttachments(
+      connection,
+      trx,
+      versionRecord.id,
+      attachments || []
+    );
+
+    // Create resource questions
+    for (const resourceQuestion of resourceQuestions) {
+      await connection<RawResourceQuestion & { opportunityVersion: Id }>(
+        "twuResourceQuestions"
+      )
+        .transacting(trx)
+        .insert({
+          ...resourceQuestion,
+          createdAt: now,
+          createdBy: session.user.id,
+          opportunityVersion: versionRecord.id
+        });
+    }
+
+    // Add an 'edit' change record
+    await connection<RawTWUOpportunityHistoryRecord & { opportunity: Id }>(
+      "twuOpportunityStatuses"
+    ).insert({
+      id: generateUuid(),
+      opportunity: restOfOpportunity.id,
+      createdAt: now,
+      createdBy: session.user.id,
+      event: TWUOpportunityEvent.Edited
+      // note: ""
+    });
+
+    return versionRecord;
+  });
+  const dbResult = await readOneTWUOpportunity(
+    connection,
+    opportunityVersion.opportunity,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update opportunity");
+  }
+  return valid(dbResult.value);
+});
+
+export const updateTWUOpportunityStatus = tryDb<
+  [Id, TWUOpportunityStatus, string, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, id, status, note, session) => {
+  const now = new Date();
+  const [result] = await connection<
+    RawTWUOpportunityHistoryRecord & { opportunity: Id }
+  >("twuOpportunityStatuses").insert(
+    {
+      id: generateUuid(),
+      opportunity: id,
+      createdAt: now,
+      createdBy: session.user.id,
+      status
+      // note
+    },
+    "*"
+  );
+
+  if (!result) {
+    throw new Error("unable to update opportunity");
+  }
+
+  const dbResult = await readOneTWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update opportunity");
+  }
+
+  return valid(dbResult.value);
+});
+
+export const addTWUOpportunityAddendum = tryDb<
+  [Id, string, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, id, addendumText, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    const [addendum] = await connection<
+      RawTWUOpportunityAddendum & { opportunity: Id }
+    >("twuOpportunityAddenda")
+      .transacting(trx)
+      .insert(
+        {
+          id: generateUuid(),
+          opportunity: id,
+          description: addendumText,
+          createdBy: session.user.id,
+          createdAt: now
+        },
+        "*"
+      );
+
+    if (!addendum) {
+      throw new Error("unable to add addendum");
+    }
+
+    // Add a history record for the addendum addition
+    await connection<RawTWUOpportunityHistoryRecord & { opportunity: Id }>(
+      "twuOpportunityStatuses"
+    )
+      .transacting(trx)
+      .insert({
+        id: generateUuid(),
+        opportunity: id,
+        createdAt: now,
+        createdBy: session.user.id,
+        event: TWUOpportunityEvent.AddendumAdded,
+        note: ""
+      });
+  });
+
+  const dbResult = await readOneTWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add addendum");
+  }
+  return valid(dbResult.value);
+});
 
 // export const deleteTWUOpportunity = tryDb<[Id, Session], TWUOpportunity>(
 //   async (connection, id, session) => {
@@ -987,31 +1018,30 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
   );
 });
 
-// export const countScreenedInTWUChallenge = tryDb<[Id], number>(
-//   async (connection, opportunity) => {
-//     return valid(
-//       (
-//         await connection("twuProposals as proposals")
-//           .join("twuProposalStatuses as statuses", function () {
-//             this.on("proposals.id", "=", "statuses.proposal")
-//               .andOnNotNull("statuses.status")
-//               .andOn(
-//                 "statuses.createdAt",
-//                 "=",
-//                 connection.raw(
-//                   '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
-//             statuses2.proposal = proposals.id and statuses2.status is not null)'
-//                 )
-//               );
-//           })
-//           .where({
-//             "proposals.opportunity": opportunity,
-//             "statuses.status": TWUProposalStatus.UnderReviewChallenge
-//           })
-//       )?.length || 0
-//     );
-//   }
-// );
+export const countScreenedInTWUChallenge = tryDb<[Id], number>(async () => {
+  // async (connection, opportunity) => {
+  return valid(0);
+  // (
+  //   await connection("twuProposals as proposals")
+  //     .join("twuProposalStatuses as statuses", function () {
+  //       this.on("proposals.id", "=", "statuses.proposal")
+  //         .andOnNotNull("statuses.status")
+  //         .andOn(
+  //           "statuses.createdAt",
+  //           "=",
+  //           connection.raw(
+  //             '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
+  //       statuses2.proposal = proposals.id and statuses2.status is not null)'
+  //           )
+  //         );
+  //     })
+  //     .where({
+  //       "proposals.opportunity": opportunity,
+  //       "statuses.status": TWUProposalStatus.UnderReviewChallenge
+  //     })
+  // )?.length || 0
+  // );
+});
 
 export const readOneTWUOpportunityAuthor = tryDb<[Id], User | null>(
   async (connection, id) => {

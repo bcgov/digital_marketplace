@@ -5,6 +5,7 @@ import {
   isCWUOpportunityAuthor,
   isCWUProposalAuthor,
   isSWUOpportunityAuthor,
+  isTWUOpportunityAuthor,
   isUserOwnerOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
@@ -716,6 +717,28 @@ export function createTWUOpportunity(
     isAdmin(session) ||
     (isGovernment(session) && createStatus !== TWUOpportunityStatus.Published)
   );
+}
+
+export async function editTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
+
+export function publishTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
 }
 
 // Metrics.

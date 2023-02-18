@@ -90,9 +90,7 @@ function isTWUServiceArea(raw: string | TWUServiceArea): raw is TWUServiceArea {
  * @param raw
  * @returns
  */
-export function parseTWUServiceArea(
-  raw: string
-): TWUServiceArea | null {
+export function parseTWUServiceArea(raw: string): TWUServiceArea | null {
   return isTWUServiceArea(raw) ? raw : null;
 }
 
@@ -306,10 +304,12 @@ export type UpdateRequestBody =
   | ADT<"startChallenge", string>
   | ADT<"suspend", string>
   | ADT<"cancel", string>
-  | ADT<"addAddendum", string>
-  | ADT<"addNote", UpdateWithNoteRequestBody>;
+  | ADT<"addAddendum", string>;
 
-export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
+export type UpdateEditRequestBody = Omit<
+  CreateRequestBody,
+  "status" | "serviceArea"
+> & { serviceArea: string };
 
 export interface UpdateWithNoteRequestBody {
   note: string;

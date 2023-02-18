@@ -9,8 +9,8 @@ import {
   wrapRespond
 } from "back-end/lib/server";
 import {
-  validateAttachments
-  // validateTWUOpportunityId
+  validateAttachments,
+  validateTWUOpportunityId
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { addDays, getNumber, getString, getStringArray } from "shared/lib";
@@ -21,10 +21,13 @@ import {
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
+  isValidStatusChange,
   TWUOpportunity,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
-  TWUServiceArea
+  TWUServiceArea,
+  UpdateRequestBody,
+  UpdateValidationErrors
   // DeleteValidationErrors,
   // isValidStatusChange,
   // UpdateValidationErrors
@@ -35,16 +38,19 @@ import {
   getInvalidValue,
   getValidValue,
   isInvalid,
+  isValid,
   // isValid,
   // mapValid,
   valid,
-  validateUUID
+  validateUUID,
+  Validation
   // Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 // import {adt} from 'shared/lib/types';
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
+import { ADT, adt } from "shared/lib/types";
 
 interface ValidatedCreateRequestBody
   extends Omit<
@@ -66,6 +72,23 @@ interface ValidatedCreateRequestBody
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
 }
+
+interface ValidatedUpdateRequestBody {
+  session: AuthenticatedSession;
+  body:
+    | ADT<"edit", ValidatedUpdateEditRequestBody>
+    | ADT<"submitForReview", string>
+    | ADT<"publish", string>
+    | ADT<"startChallenge", string>
+    | ADT<"suspend", string>
+    | ADT<"cancel", string>
+    | ADT<"addAddendum", string>;
+}
+
+type ValidatedUpdateEditRequestBody = Omit<
+  ValidatedCreateRequestBody,
+  "status" | "session"
+>;
 
 type CreateRequestBody = Omit<
   SharedCreateRequestBody,
@@ -477,595 +500,690 @@ const create: crud.Create<
   };
 };
 
-// const update: crud.Update<
-//   Session,
-//   db.Connection,
-//   UpdateRequestBody,
-//   ValidatedUpdateRequestBody,
-//   UpdateValidationErrors
-// > = (connection: db.Connection) => {
-//   return {
-//     async parseRequestBody(request) {
-//       const body = request.body.tag === "json" ? request.body.value : {};
-//       const tag = get(body, "tag");
-//       const value: unknown = get(body, "value");
-//       switch (tag) {
-//         case "edit":
-//           return adt("edit", {
-//             title: getString(value, "title"),
-//             teaser: getString(value, "teaser"),
-//             remoteOk: get(value, "remoteOk"),
-//             remoteDesc: getString(value, "remoteDesc"),
-//             location: getString(value, "location"),
-//             reward: getNumber<number>(value, "reward"),
-//             skills: getStringArray(value, "skills"),
-//             description: getString(value, "description"),
-//             proposalDeadline: getString(value, "proposalDeadline"),
-//             assignmentDate: getString(value, "assignmentDate"),
-//             startDate: getString(value, "startDate"),
-//             completionDate: getString(value, "completionDate"),
-//             submissionInfo: getString(value, "submissionInfo"),
-//             acceptanceCriteria: getString(value, "acceptanceCriteria"),
-//             evaluationCriteria: getString(value, "evaluationCriteria"),
-//             attachments: getStringArray(value, "attachments")
-//           });
-//         case "publish":
-//           return adt("publish", getString(body, "value", ""));
-//         case "suspend":
-//           return adt("suspend", getString(body, "value", ""));
-//         case "cancel":
-//           return adt("cancel", getString(body, "value", ""));
-//         case "addAddendum":
-//           return adt("addAddendum", getString(body, "value", ""));
-//         case "addNote":
-//           return adt("addNote", {
-//             note: getString(value, "note"),
-//             attachments: getStringArray(value, "attachments")
-//           });
-//         default:
-//           return null;
-//       }
-//     },
-//     async validateRequestBody(request) {
-//       if (!request.body) {
-//         return invalid({ opportunity: adt("parseFailure" as const) });
-//       }
-//
-//       const validatedTWUOpportunity = await validateTWUOpportunityId(
-//         connection,
-//         request.params.id,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUOpportunity)) {
-//         return invalid({
-//           notFound: ["The specified opportunity does not exist."]
-//         });
-//       }
-//       const twuOpportunity = validatedTWUOpportunity.value;
-//
-//       if (
-//         !(await permissions.editTWUOpportunity(
-//           connection,
-//           request.session,
-//           request.params.id
-//         )) ||
-//         !permissions.isSignedIn(request.session)
-//       ) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//
-//       switch (request.body.tag) {
-//         case "edit": {
-//           const {
-//             title,
-//             teaser,
-//             remoteOk,
-//             remoteDesc,
-//             location,
-//             reward,
-//             skills,
-//             description,
-//             proposalDeadline,
-//             assignmentDate,
-//             startDate,
-//             completionDate,
-//             submissionInfo,
-//             acceptanceCriteria,
-//             evaluationCriteria,
-//             attachments
-//           } = request.body.value;
-//
-//           // TWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
-//           if (
-//             ![
-//               TWUOpportunityStatus.Draft,
-//               TWUOpportunityStatus.Published,
-//               TWUOpportunityStatus.Suspended
-//             ].includes(twuOpportunity.status)
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//
-//           // Attachments must be validated for both drafts and published opportunities.
-//           const validatedAttachments = await validateAttachments(
-//             connection,
-//             attachments
-//           );
-//           if (isInvalid<string[][]>(validatedAttachments)) {
-//             return invalid({
-//               opportunity: adt("edit" as const, {
-//                 attachments: validatedAttachments.value
-//               })
-//             });
-//           }
-//
-//           /**
-//            * If the existing proposal deadline is in the past,
-//            * updates should be validated against that deadline.
-//            * The exception to this rule is if the opportunity is
-//            * a draft, then the proposal deadline should be validated
-//            * against the current date.
-//            */
-//           const now = new Date();
-//           const validatedProposalDeadline =
-//             opportunityValidation.validateProposalDeadline(
-//               proposalDeadline,
-//               twuOpportunity
-//             );
-//           const validatedAssignmentDate =
-//             genericValidation.validateDateFormatMinMax(
-//               assignmentDate,
-//               getValidValue(validatedProposalDeadline, now)
-//             );
-//           const validatedStartDate = genericValidation.validateDateFormatMinMax(
-//             startDate,
-//             getValidValue(validatedAssignmentDate, now)
-//           );
-//           const validatedCompletionDate = mapValid(
-//             genericValidation.validateDateFormatMinMaxOrUndefined(
-//               completionDate,
-//               getValidValue(validatedStartDate, now)
-//             ),
-//             (v) => v || null
-//           );
-//
-//           // Do not validate other fields if the opportunity is a draft.
-//           if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
-//             const defaultDate = addDays(new Date(), 14);
-//             return valid({
-//               session: request.session,
-//               body: adt("edit" as const, {
-//                 ...request.body.value,
-//                 attachments: validatedAttachments.value,
-//                 // Coerce validated dates to default values.
-//                 proposalDeadline: getValidValue(
-//                   validatedProposalDeadline,
-//                   defaultDate
-//                 ),
-//                 assignmentDate: getValidValue(
-//                   validatedAssignmentDate,
-//                   defaultDate
-//                 ),
-//                 startDate: getValidValue(validatedStartDate, defaultDate),
-//                 completionDate: getValidValue(validatedCompletionDate, null)
-//               })
-//             });
-//           }
-//
-//           const validatedTitle = genericValidation.validateTitle(title);
-//           const validatedTeaser = genericValidation.validateTeaser(teaser);
-//           const validatedRemoteOk =
-//             genericValidation.validateRemoteOk(remoteOk);
-//           const validatedRemoteDesc = genericValidation.validateRemoteDesc(
-//             remoteDesc,
-//             getValidValue(validatedRemoteOk, false)
-//           );
-//           const validatedLocation =
-//             genericValidation.validateLocation(location);
-//           const validatedReward = opportunityValidation.validateReward(reward);
-//           const validatedSkills = opportunityValidation.validateSkills(skills);
-//           const validatedDescription =
-//             genericValidation.validateDescription(description);
-//           const validatedSubmissionInfo =
-//             opportunityValidation.validateSubmissionInfo(submissionInfo);
-//           const validatedAcceptanceCriteria =
-//             opportunityValidation.validateAcceptanceCriteria(
-//               acceptanceCriteria
-//             );
-//           const validatedEvaluationCriteria =
-//             opportunityValidation.validateEvaluationCriteria(
-//               evaluationCriteria
-//             );
-//
-//           if (
-//             allValid([
-//               validatedTitle,
-//               validatedTeaser,
-//               validatedRemoteOk,
-//               validatedRemoteDesc,
-//               validatedLocation,
-//               validatedReward,
-//               validatedSkills,
-//               validatedDescription,
-//               validatedProposalDeadline,
-//               validatedAssignmentDate,
-//               validatedStartDate,
-//               validatedCompletionDate,
-//               validatedSubmissionInfo,
-//               validatedAcceptanceCriteria,
-//               validatedEvaluationCriteria,
-//               validatedAttachments
-//             ])
-//           ) {
-//             return valid({
-//               session: request.session,
-//               body: adt("edit" as const, {
-//                 title: validatedTitle.value,
-//                 teaser: validatedTeaser.value,
-//                 remoteOk: validatedRemoteOk.value,
-//                 remoteDesc: validatedRemoteDesc.value,
-//                 location: validatedLocation.value,
-//                 reward: validatedReward.value,
-//                 skills: validatedSkills.value,
-//                 description: validatedDescription.value,
-//                 proposalDeadline: validatedProposalDeadline.value,
-//                 assignmentDate: validatedAssignmentDate.value,
-//                 startDate: validatedStartDate.value,
-//                 completionDate: validatedCompletionDate.value,
-//                 submissionInfo: validatedSubmissionInfo.value,
-//                 acceptanceCriteria: validatedAcceptanceCriteria.value,
-//                 evaluationCriteria: validatedEvaluationCriteria.value,
-//                 attachments: validatedAttachments.value
-//               })
-//             } as ValidatedUpdateRequestBody);
-//           } else {
-//             return invalid({
-//               opportunity: adt("edit" as const, {
-//                 title: getInvalidValue(validatedTitle, undefined),
-//                 teaser: getInvalidValue(validatedTeaser, undefined),
-//                 remoteOk: getInvalidValue(validatedRemoteOk, undefined),
-//                 remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
-//                 location: getInvalidValue(validatedLocation, undefined),
-//                 reward: getInvalidValue(validatedReward, undefined),
-//                 skills: getInvalidValue<string[][], undefined>(
-//                   validatedSkills,
-//                   undefined
-//                 ),
-//                 description: getInvalidValue(validatedDescription, undefined),
-//                 proposalDeadline: getInvalidValue(
-//                   validatedProposalDeadline,
-//                   undefined
-//                 ),
-//                 assignmentDate: getInvalidValue(
-//                   validatedAssignmentDate,
-//                   undefined
-//                 ),
-//                 startDate: getInvalidValue(validatedStartDate, undefined),
-//                 completionDate: getInvalidValue(
-//                   validatedCompletionDate,
-//                   undefined
-//                 ),
-//                 submissionInfo: getInvalidValue(
-//                   validatedSubmissionInfo,
-//                   undefined
-//                 ),
-//                 acceptanceCriteria: getInvalidValue(
-//                   validatedAcceptanceCriteria,
-//                   undefined
-//                 ),
-//                 evaluationCriteria: getInvalidValue(
-//                   validatedEvaluationCriteria,
-//                   undefined
-//                 )
-//               })
-//             });
-//           }
-//         }
-//         case "publish": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUOpportunity.value.status,
-//               TWUOpportunityStatus.Published
-//             )
-//           ) {
-//             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-//           }
-//           // Perform validation on draft to ensure it's ready for publishing
-//           if (
-//             !allValid([
-//               genericValidation.validateTitle(
-//                 validatedTWUOpportunity.value.title
-//               ),
-//               genericValidation.validateTeaser(
-//                 validatedTWUOpportunity.value.teaser
-//               ),
-//               genericValidation.validateRemoteOk(
-//                 validatedTWUOpportunity.value.remoteOk
-//               ),
-//               genericValidation.validateRemoteDesc(
-//                 validatedTWUOpportunity.value.remoteDesc,
-//                 validatedTWUOpportunity.value.remoteOk
-//               ),
-//               genericValidation.validateLocation(
-//                 validatedTWUOpportunity.value.location
-//               ),
-//               opportunityValidation.validateReward(
-//                 validatedTWUOpportunity.value.reward
-//               ),
-//               opportunityValidation.validateSkills(
-//                 validatedTWUOpportunity.value.skills
-//               ),
-//               genericValidation.validateDescription(
-//                 validatedTWUOpportunity.value.description
-//               ),
-//               opportunityValidation.validateSubmissionInfo(
-//                 validatedTWUOpportunity.value.submissionInfo
-//               ),
-//               opportunityValidation.validateAcceptanceCriteria(
-//                 validatedTWUOpportunity.value.acceptanceCriteria
-//               ),
-//               opportunityValidation.validateEvaluationCriteria(
-//                 validatedTWUOpportunity.value.evaluationCriteria
-//               )
-//             ])
-//           ) {
-//             return invalid({
-//               opportunity: adt("publish" as const, [
-//                 "This opportunity could not be published because it is incomplete. Please edit, complete and save the form below before trying to publish it again."
-//               ])
-//             });
-//           }
-//
-//           const validatedPublishNote = opportunityValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedPublishNote)) {
-//             return invalid({
-//               opportunity: adt("publish" as const, validatedPublishNote.value)
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("publish", validatedPublishNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "suspend": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUOpportunity.value.status,
-//               TWUOpportunityStatus.Suspended
-//             )
-//           ) {
-//             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-//           }
-//           const validatedSuspendNote = opportunityValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedSuspendNote)) {
-//             return invalid({
-//               opportunity: adt("suspend" as const, validatedSuspendNote.value)
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("suspend", validatedSuspendNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "cancel": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUOpportunity.value.status,
-//               TWUOpportunityStatus.Canceled
-//             )
-//           ) {
-//             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-//           }
-//           const validatedCancelNote = opportunityValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedCancelNote)) {
-//             return invalid({
-//               opportunity: adt("cancel" as const, validatedCancelNote.value)
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("cancel", validatedCancelNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "addAddendum": {
-//           if (
-//             validatedTWUOpportunity.value.status === TWUOpportunityStatus.Draft
-//           ) {
-//             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-//           }
-//           const validatedAddendumText =
-//             opportunityValidation.validateAddendumText(request.body.value);
-//           if (isInvalid(validatedAddendumText)) {
-//             return invalid({
-//               opportunity: adt(
-//                 "addAddendum" as const,
-//                 validatedAddendumText.value
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("addAddendum", validatedAddendumText.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//
-//         case "addNote": {
-//           const { note, attachments: noteAttachments } = request.body.value;
-//           const validatedNote = opportunityValidation.validateNote(note); //TODO changed to validateNote from validateHistoryNote as note-taking was removed from shared
-//           const validatedNoteAttachments = await validateAttachments(
-//             connection,
-//             noteAttachments
-//           );
-//           if (allValid([validatedNote, validatedNoteAttachments])) {
-//             return valid({
-//               session: request.session,
-//               body: adt("addNote", {
-//                 note: validatedNote.value,
-//                 attachments: validatedNoteAttachments.value
-//               })
-//             } as ValidatedUpdateRequestBody);
-//           } else {
-//             return invalid({
-//               opportunity: adt("addNote" as const, {
-//                 note: getInvalidValue(validatedNote, undefined),
-//                 attachments: getInvalidValue<string[][], undefined>(
-//                   validatedNoteAttachments,
-//                   undefined
-//                 )
-//               })
-//             });
-//           }
-//         }
-//         default:
-//           return invalid({ opportunity: adt("parseFailure" as const) });
-//       }
-//     },
-//     respond: wrapRespond({
-//       valid: async (request) => {
-//         let dbResult: Validation<TWUOpportunity, null>;
-//         const { session, body } = request.body;
-//         switch (body.tag) {
-//           case "edit":
-//             dbResult = await db.updateTWUOpportunityVersion(
-//               connection,
-//               { ...body.value, id: request.params.id },
-//               session
-//             );
-//             // Notify all subscribed users on the opportunity of the update (only if not draft)
-//             if (
-//               isValid(dbResult) &&
-//               dbResult.value.status !== TWUOpportunityStatus.Draft
-//             ) {
-//               twuOpportunityNotifications.handleTWUUpdated(
-//                 connection,
-//                 dbResult.value
-//               );
-//             }
-//             break;
-//           case "publish": {
-//             const existingOpportunity = getValidValue(
-//               await db.readOneTWUOpportunity(
-//                 connection,
-//                 request.params.id,
-//                 session
-//               ),
-//               null
-//             );
-//             dbResult = await db.updateTWUOpportunityStatus(
-//               connection,
-//               request.params.id,
-//               TWUOpportunityStatus.Published,
-//               body.value,
-//               session
-//             );
-//             // Notify subscribers of publication
-//             if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-//               twuOpportunityNotifications.handleTWUPublished(
-//                 connection,
-//                 dbResult.value,
-//                 existingOpportunity?.status === TWUOpportunityStatus.Suspended
-//               );
-//             }
-//             break;
-//           }
-//           case "startEvaluation":
-//             dbResult = await db.updateTWUOpportunityStatus(
-//               connection,
-//               request.params.id,
-//               TWUOpportunityStatus.Evaluation,
-//               body.value,
-//               session
-//             );
-//             break;
-//           case "suspend":
-//             dbResult = await db.updateTWUOpportunityStatus(
-//               connection,
-//               request.params.id,
-//               TWUOpportunityStatus.Suspended,
-//               body.value,
-//               session
-//             );
-//             // Notify subscribers of suspension
-//             if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-//               twuOpportunityNotifications.handleTWUSuspended(
-//                 connection,
-//                 dbResult.value
-//               );
-//             }
-//             break;
-//           case "cancel":
-//             dbResult = await db.updateTWUOpportunityStatus(
-//               connection,
-//               request.params.id,
-//               TWUOpportunityStatus.Canceled,
-//               body.value,
-//               session
-//             );
-//             // Notify subscribers of cancellation
-//             if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-//               twuOpportunityNotifications.handleTWUCancelled(
-//                 connection,
-//                 dbResult.value
-//               );
-//             }
-//             break;
-//           case "addAddendum":
-//             dbResult = await db.addTWUOpportunityAddendum(
-//               connection,
-//               request.params.id,
-//               body.value,
-//               session
-//             );
-//             // Notify all subscribed users on the opportunity of the update
-//             if (isValid(dbResult)) {
-//               twuOpportunityNotifications.handleTWUUpdated(
-//                 connection,
-//                 dbResult.value
-//               );
-//             }
-//             break;
-//           case "addNote":
-//             dbResult = await db.addTWUOpportunityNote(
-//               connection,
-//               request.params.id,
-//               body.value,
-//               session
-//             );
-//             break;
-//         }
-//         if (isInvalid(dbResult)) {
-//           return basicResponse(
-//             503,
-//             request.session,
-//             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-//           );
-//         }
-//         return basicResponse(
-//           200,
-//           request.session,
-//           makeJsonResponseBody(dbResult.value)
-//         );
-//       },
-//       invalid: async (request) => {
-//         return basicResponse(
-//           400,
-//           request.session,
-//           makeJsonResponseBody(request.body)
-//         );
-//       }
-//     })
-//   };
-// };
+const update: crud.Update<
+  Session,
+  db.Connection,
+  UpdateRequestBody,
+  ValidatedUpdateRequestBody,
+  UpdateValidationErrors
+> = (connection: db.Connection) => {
+  return {
+    async parseRequestBody(request) {
+      const body = request.body.tag === "json" ? request.body.value : {};
+      const tag: UpdateRequestBody["tag"] = get(body, "tag");
+      switch (tag) {
+        case "edit": {
+          const value: unknown = get(body, "value");
+          return adt("edit", {
+            title: getString(value, "title"),
+            teaser: getString(value, "teaser"),
+            remoteOk: get(value, "remoteOk"),
+            remoteDesc: getString(value, "remoteDesc"),
+            location: getString(value, "location"),
+            mandatorySkills: getStringArray(value, "mandatorySkills"),
+            optionalSkills: getStringArray(value, "optionalSkills"),
+            serviceArea: getString(value, "serviceArea"),
+            targetAllocation: getNumber<number>(value, "targetAllocation"),
+            description: getString(value, "description"),
+            proposalDeadline: getString(value, "proposalDeadline"),
+            assignmentDate: getString(value, "assignmentDate"),
+            startDate: getString(value, "startDate"),
+            completionDate: getString(value, "completionDate"),
+            maxBudget: getNumber<number>(value, "maxBudget"),
+            questionsWeight: getNumber<number>(value, "questionsWeight"),
+            challengeWeight: getNumber<number>(value, "challengeWeight"),
+            priceWeight: getNumber<number>(value, "priceWeight"),
+            attachments: getStringArray(value, "attachments"),
+            resourceQuestions: get(value, "resourceQuestions")
+          });
+        }
+        case "submitForReview":
+          return adt("submitForReview", getString(body, "value"));
+        case "publish":
+          return adt("publish", getString(body, "value", ""));
+        case "startChallenge":
+          return adt("startChallenge", getString(body, "value", ""));
+        case "suspend":
+          return adt("suspend", getString(body, "value", ""));
+        case "cancel":
+          return adt("cancel", getString(body, "value", ""));
+        case "addAddendum":
+          return adt("addAddendum", getString(body, "value", ""));
+      }
+    },
+    async validateRequestBody(request) {
+      if (!request.body) {
+        return invalid({ opportunity: adt("parseFailure" as const) });
+      }
+
+      const validatedTWUOpportunity = await validateTWUOpportunityId(
+        connection,
+        request.params.id,
+        request.session
+      );
+      if (isInvalid(validatedTWUOpportunity)) {
+        return invalid({
+          notFound: ["The specified opportunity does not exist."]
+        });
+      }
+      const twuOpportunity = validatedTWUOpportunity.value;
+
+      if (
+        !(await permissions.editTWUOpportunity(
+          connection,
+          request.session,
+          request.params.id
+        )) ||
+        !permissions.isSignedIn(request.session)
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+
+      switch (request.body.tag) {
+        case "edit": {
+          const {
+            title,
+            teaser,
+            remoteOk,
+            remoteDesc,
+            location,
+            mandatorySkills,
+            optionalSkills,
+            serviceArea,
+            targetAllocation,
+            description,
+            proposalDeadline,
+            assignmentDate,
+            startDate,
+            completionDate,
+            maxBudget,
+            questionsWeight,
+            challengeWeight,
+            priceWeight,
+            attachments,
+            resourceQuestions
+          } = request.body.value;
+          // TWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
+          if (
+            ![
+              TWUOpportunityStatus.Draft,
+              TWUOpportunityStatus.Published,
+              TWUOpportunityStatus.Suspended
+            ].includes(twuOpportunity.status)
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
+          // Attachments must be validated for both drafts and published opportunities.
+          const validatedAttachments = await validateAttachments(
+            connection,
+            attachments
+          );
+          if (isInvalid<string[][]>(validatedAttachments)) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                attachments: validatedAttachments.value
+              })
+            });
+          }
+
+          /**
+           * If the existing proposal deadline is in the past,
+           * updates should be validated against that deadline.
+           * The exception to this rule is if the opportunity is
+           * a draft, then the proposal deadline should be validated
+           * against the current date.
+           */
+          const now = new Date();
+          const validatedProposalDeadline =
+            opportunityValidation.validateProposalDeadline(
+              proposalDeadline,
+              twuOpportunity
+            );
+          const validatedAssignmentDate =
+            genericValidation.validateDateFormatMinMax(
+              assignmentDate,
+              getValidValue(validatedProposalDeadline, now)
+            );
+          const validatedStartDate = genericValidation.validateDateFormatMinMax(
+            startDate,
+            getValidValue(validatedAssignmentDate, now)
+          );
+          const validatedCompletionDate =
+            genericValidation.validateDateFormatMinMax(
+              completionDate,
+              getValidValue(validatedStartDate, now)
+            );
+
+          // Service areas are required for drafts
+          const validatedServiceArea =
+            opportunityValidation.validateServiceArea(serviceArea);
+
+          // Do not validate other fields if the opportunity is a draft.
+          if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
+            const defaultDate = addDays(new Date(), 14);
+            return valid({
+              session: request.session,
+              body: adt("edit" as const, {
+                ...request.body.value,
+                attachments: validatedAttachments.value,
+                // Coerce validated dates to default values.
+                proposalDeadline: getValidValue(
+                  validatedProposalDeadline,
+                  defaultDate
+                ),
+                assignmentDate: getValidValue(
+                  validatedAssignmentDate,
+                  defaultDate
+                ),
+                startDate: getValidValue(validatedStartDate, defaultDate),
+                completionDate: getValidValue(
+                  validatedCompletionDate,
+                  defaultDate
+                ),
+                serviceArea: getValidValue(
+                  validatedServiceArea,
+                  TWUServiceArea.Developer
+                )
+              })
+            });
+          }
+
+          const validatedTitle = genericValidation.validateTitle(title);
+          const validatedTeaser = genericValidation.validateTeaser(teaser);
+          const validatedRemoteOk =
+            genericValidation.validateRemoteOk(remoteOk);
+          const validatedRemoteDesc = genericValidation.validateRemoteDesc(
+            remoteDesc,
+            getValidValue(validatedRemoteOk, false)
+          );
+          const validatedLocation =
+            genericValidation.validateLocation(location);
+          const validatedMaxBudget =
+            opportunityValidation.validateMaxBudget(maxBudget);
+          const validatedMandatorySkills =
+            genericValidation.validateMandatorySkills(mandatorySkills);
+          const validatedOptionalSkills =
+            opportunityValidation.validateOptionalSkills(optionalSkills);
+          const validatedTargetAllocation =
+            opportunityValidation.validateTargetAllocation(targetAllocation);
+          const validatedDescription =
+            genericValidation.validateDescription(description);
+          const validatedQuestionsWeight =
+            opportunityValidation.validateQuestionsWeight(questionsWeight);
+          const validatedChallengeWeight =
+            opportunityValidation.validateChallengeWeight(challengeWeight);
+          const validatedPriceWeight =
+            opportunityValidation.validatePriceWeight(priceWeight);
+          const validatedResourceQuestions =
+            opportunityValidation.validateResourceQuestions(resourceQuestions);
+
+          if (
+            allValid([
+              validatedTitle,
+              validatedTeaser,
+              validatedRemoteOk,
+              validatedRemoteDesc,
+              validatedLocation,
+              validatedMaxBudget,
+              validatedMandatorySkills,
+              validatedOptionalSkills,
+              validatedServiceArea,
+              validatedTargetAllocation,
+              validatedDescription,
+              validatedQuestionsWeight,
+              validatedChallengeWeight,
+              validatedPriceWeight,
+              validatedResourceQuestions,
+              validatedProposalDeadline,
+              validatedAssignmentDate,
+              validatedStartDate,
+              validatedCompletionDate,
+              validatedAttachments
+            ])
+          ) {
+            return valid({
+              session: request.session,
+              body: adt("edit" as const, {
+                title: validatedTitle.value,
+                teaser: validatedTeaser.value,
+                remoteOk: validatedRemoteOk.value,
+                remoteDesc: validatedRemoteDesc.value,
+                location: validatedLocation.value,
+                maxBudget: validatedMaxBudget.value,
+                mandatorySkills: validatedMandatorySkills.value,
+                optionalSkills: validatedOptionalSkills.value,
+                serviceArea: validatedServiceArea.value,
+                targetAllocation: validatedTargetAllocation.value,
+                description: validatedDescription.value,
+                questionsWeight: validatedQuestionsWeight.value,
+                challengeWeight: validatedChallengeWeight.value,
+                priceWeight: validatedPriceWeight.value,
+                resourceQuestions: validatedResourceQuestions.value,
+                proposalDeadline: validatedProposalDeadline.value,
+                assignmentDate: validatedAssignmentDate.value,
+                startDate: validatedStartDate.value,
+                completionDate: validatedCompletionDate.value,
+                attachments: validatedAttachments.value
+              })
+            } as ValidatedUpdateRequestBody);
+          } else {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                title: getInvalidValue(validatedTitle, undefined),
+                teaser: getInvalidValue(validatedTeaser, undefined),
+                remoteOk: getInvalidValue(validatedRemoteOk, undefined),
+                remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
+                location: getInvalidValue(validatedLocation, undefined),
+                maxBudget: getInvalidValue(validatedMaxBudget, undefined),
+                mandatorySkills: getInvalidValue<string[][], undefined>(
+                  validatedMandatorySkills,
+                  undefined
+                ),
+                optionalSkills: getInvalidValue<string[][], undefined>(
+                  validatedOptionalSkills,
+                  undefined
+                ),
+                serviceArea: getInvalidValue(validatedServiceArea, undefined),
+                targetAllocation: getInvalidValue(
+                  validatedTargetAllocation,
+                  undefined
+                ),
+                description: getInvalidValue(validatedDescription, undefined),
+                questionsWeight: getInvalidValue(
+                  validatedQuestionsWeight,
+                  undefined
+                ),
+                challengeWeight: getInvalidValue(
+                  validatedChallengeWeight,
+                  undefined
+                ),
+                priceWeight: getInvalidValue(validatedPriceWeight, undefined),
+                resourceQuestions: getInvalidValue<
+                  CreateTWUResourceQuestionValidationErrors[],
+                  undefined
+                >(validatedResourceQuestions, undefined),
+                proposalDeadline: getInvalidValue(
+                  validatedProposalDeadline,
+                  undefined
+                ),
+                assignmentDate: getInvalidValue(
+                  validatedAssignmentDate,
+                  undefined
+                ),
+                startDate: getInvalidValue(validatedStartDate, undefined),
+                completionDate: getInvalidValue(
+                  validatedCompletionDate,
+                  undefined
+                )
+              })
+            });
+          }
+        }
+        case "submitForReview": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.Published
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Perform validation on draft to ensure it's ready for publishing
+          if (
+            !allValid([
+              genericValidation.validateTitle(
+                validatedTWUOpportunity.value.title
+              ),
+              genericValidation.validateTeaser(
+                validatedTWUOpportunity.value.teaser
+              ),
+              genericValidation.validateRemoteOk(
+                validatedTWUOpportunity.value.remoteOk
+              ),
+              genericValidation.validateRemoteDesc(
+                validatedTWUOpportunity.value.remoteDesc,
+                validatedTWUOpportunity.value.remoteOk
+              ),
+              genericValidation.validateLocation(
+                validatedTWUOpportunity.value.location
+              ),
+              opportunityValidation.validateMaxBudget(
+                validatedTWUOpportunity.value.maxBudget
+              ),
+              genericValidation.validateMandatorySkills(
+                validatedTWUOpportunity.value.mandatorySkills
+              ),
+              opportunityValidation.validateOptionalSkills(
+                validatedTWUOpportunity.value.optionalSkills
+              ),
+              opportunityValidation.validateTargetAllocation(
+                validatedTWUOpportunity.value.targetAllocation
+              ),
+              genericValidation.validateDescription(
+                validatedTWUOpportunity.value.description
+              ),
+              opportunityValidation.validateQuestionsWeight(
+                validatedTWUOpportunity.value.questionsWeight
+              ),
+              opportunityValidation.validateChallengeWeight(
+                validatedTWUOpportunity.value.challengeWeight
+              ),
+              opportunityValidation.validatePriceWeight(
+                validatedTWUOpportunity.value.priceWeight
+              ),
+              opportunityValidation.validateResourceQuestions(
+                validatedTWUOpportunity.value.resourceQuestions
+              )
+            ])
+          ) {
+            return invalid({
+              opportunity: adt("submitForReview" as const, [
+                "This opportunity could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to publish it again."
+              ])
+            });
+          }
+
+          const validatedSubmitNote = opportunityValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedSubmitNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitForReview" as const,
+                validatedSubmitNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitForReview", validatedSubmitNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "publish": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.Published
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Only admins can publish, so additional permissions check needed
+          if (!permissions.publishTWUOpportunity(request.session)) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Opportunity will have been fully validated during review process, so no need to repeat
+          const validatedPublishNote = opportunityValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedPublishNote)) {
+            return invalid({
+              opportunity: adt("publish" as const, validatedPublishNote.value)
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("publish", validatedPublishNote.value)
+          });
+        }
+        case "startChallenge": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.EvaluationChallenge
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Ensure there is at least one screened in proponent
+          const screenedInCProponentCount = getValidValue(
+            await db.countScreenedInTWUChallenge(
+              connection,
+              validatedTWUOpportunity.value.id
+            ),
+            0
+          );
+          if (!screenedInCProponentCount) {
+            return invalid({
+              permissions: [
+                "You must have at least one screened in proponent to start the Code Challenge."
+              ]
+            });
+          }
+          const validatedEvaluationChallengeNote =
+            opportunityValidation.validateNote(request.body.value);
+          if (isInvalid(validatedEvaluationChallengeNote)) {
+            return invalid({
+              opportunity: adt(
+                "startChallenge" as const,
+                validatedEvaluationChallengeNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("startChallenge", validatedEvaluationChallengeNote.value)
+          });
+        }
+        case "suspend": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.Suspended
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedSuspendNote = opportunityValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedSuspendNote)) {
+            return invalid({
+              opportunity: adt("suspend" as const, validatedSuspendNote.value)
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("suspend", validatedSuspendNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "cancel": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.Canceled
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedCancelNote = opportunityValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedCancelNote)) {
+            return invalid({
+              opportunity: adt("cancel" as const, validatedCancelNote.value)
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("cancel", validatedCancelNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "addAddendum": {
+          if (
+            validatedTWUOpportunity.value.status === TWUOpportunityStatus.Draft
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedAddendumText =
+            opportunityValidation.validateAddendumText(request.body.value);
+          if (isInvalid(validatedAddendumText)) {
+            return invalid({
+              opportunity: adt(
+                "addAddendum" as const,
+                validatedAddendumText.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("addAddendum", validatedAddendumText.value)
+          } as ValidatedUpdateRequestBody);
+        }
+
+        default:
+          return invalid({ opportunity: adt("parseFailure" as const) });
+      }
+    },
+    respond: wrapRespond({
+      valid: async (request) => {
+        let dbResult: Validation<TWUOpportunity, null>;
+        const { session, body } = request.body;
+        switch (body.tag) {
+          case "edit":
+            dbResult = await db.updateTWUOpportunityVersion(
+              connection,
+              { ...body.value, id: request.params.id },
+              session
+            );
+            // Notify all subscribed users on the opportunity of the update (only if not draft)
+            if (
+              isValid(dbResult) &&
+              dbResult.value.status !== TWUOpportunityStatus.Draft
+            ) {
+              twuOpportunityNotifications.handleTWUUpdated(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "submitForReview":
+            dbResult = await db.updateTWUOpportunityStatus(
+              connection,
+              request.params.id,
+              TWUOpportunityStatus.UnderReview,
+              body.value,
+              session
+            );
+            //Notify of submission
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUSubmittedForReview(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "publish": {
+            const existingOpportunity = getValidValue(
+              await db.readOneTWUOpportunity(
+                connection,
+                request.params.id,
+                session
+              ),
+              null
+            );
+            dbResult = await db.updateTWUOpportunityStatus(
+              connection,
+              request.params.id,
+              TWUOpportunityStatus.Published,
+              body.value,
+              session
+            );
+            // Notify all users with notifications on of the new opportunity
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUPublished(
+                connection,
+                dbResult.value,
+                existingOpportunity?.status === TWUOpportunityStatus.Suspended
+              );
+            }
+            break;
+          }
+          case "startChallenge":
+            dbResult = await db.updateTWUOpportunityStatus(
+              connection,
+              request.params.id,
+              TWUOpportunityStatus.EvaluationChallenge,
+              body.value,
+              session
+            );
+            break;
+          case "suspend":
+            dbResult = await db.updateTWUOpportunityStatus(
+              connection,
+              request.params.id,
+              TWUOpportunityStatus.Suspended,
+              body.value,
+              session
+            );
+            // Notify subscribers of suspension
+            if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
+              twuOpportunityNotifications.handleTWUSuspended(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "cancel":
+            dbResult = await db.updateTWUOpportunityStatus(
+              connection,
+              request.params.id,
+              TWUOpportunityStatus.Canceled,
+              body.value,
+              session
+            );
+            // Notify subscribers of cancellation
+            if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
+              twuOpportunityNotifications.handleTWUCancelled(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "addAddendum":
+            dbResult = await db.addTWUOpportunityAddendum(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            // Notify all subscribed users on the opportunity of the update
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUUpdated(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+        }
+        if (isInvalid(dbResult)) {
+          return basicResponse(
+            503,
+            request.session,
+            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+          );
+        }
+        return basicResponse(
+          200,
+          request.session,
+          makeJsonResponseBody(dbResult.value)
+        );
+      },
+      invalid: async (request) => {
+        return basicResponse(
+          400,
+          request.session,
+          makeJsonResponseBody(request.body)
+        );
+      }
+    })
+  };
+};
 
 // const delete_: crud.Delete<
 //   Session,
@@ -1138,8 +1256,8 @@ const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
   readMany,
-  create
-  // update,
+  create,
+  update
   // delete: _delete
 };
 

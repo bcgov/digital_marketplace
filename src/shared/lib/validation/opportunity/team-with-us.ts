@@ -190,9 +190,7 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 export function validateServiceArea(raw: string): Validation<TWUServiceArea> {
   const parsed = parseTWUServiceArea(raw);
   if (!parsed) {
-    return invalid([
-      `"${raw}" is not a valid service area.`
-    ]);
+    return invalid([`"${raw}" is not a valid service area.`]);
   }
   return valid(parsed);
 }
@@ -205,4 +203,8 @@ export function validateServiceArea(raw: string): Validation<TWUServiceArea> {
  */
 export function validateTargetAllocation(raw: number): Validation<number> {
   return validateNumber(raw, 1, 100, "Target Allocation");
+}
+
+export function validateNote(raw: string): Validation<string> {
+  return validateGenericString(raw, "Status Note", 0, 1000);
 }

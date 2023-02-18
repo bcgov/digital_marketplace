@@ -9,7 +9,7 @@ import { CONTACT_EMAIL } from "shared/config";
 import React from "react";
 import { Emails } from "back-end/lib/mailer";
 import { MAILER_BATCH_SIZE, MAILER_REPLY } from "back-end/config";
-import { lowerCase, startCase } from "lodash";
+import { lowerCase, startCase, unionBy } from "lodash";
 
 /**
  * Handles the logic for sending two different emails
@@ -99,6 +99,33 @@ export async function newTWUOpportunitySubmittedForReviewT(
       })
     }
   ];
+}
+
+export const updatedTWUOpportunity = makeSend(updatedTWUOpportunityT);
+
+export async function updatedTWUOpportunityT(
+  recipients: User[],
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Has Been Updated";
+  const description =
+    "The following Digital Marketplace opportunity has been updated:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      to: MAILER_REPLY,
+      bcc: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 /**
@@ -249,6 +276,106 @@ export async function handleTWUPublished(
   }
 }
 
+export async function handleTWUUpdated(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
+  const author =
+    (opportunity.createdBy &&
+      getValidValue(
+        await db.readOneUser(connection, opportunity.createdBy.id),
+        null
+      )) ||
+    null;
+  const subscribedUsers =
+    getValidValue(
+      await db.readManyTWUSubscribedUsers(connection, opportunity.id),
+      null
+    ) || [];
+  // const usersWithProposals =
+  //   getValidValue(
+  //     await db.readManyCWUProposalAuthors(connection, opportunity.id),
+  //     null
+  //   ) || [];
+  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+  const unionedUsers = unionBy(subscribedUsers, "id");
+  if (author) {
+    unionedUsers.push(author);
+  }
+  await updatedTWUOpportunity(unionedUsers, opportunity);
+}
+
+export async function handleTWUCancelled(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
+  const subscribedUsers =
+    getValidValue(
+      await db.readManyTWUSubscribedUsers(connection, opportunity.id),
+      null
+    ) || [];
+  // const usersWithProposals =
+  //   getValidValue(
+  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
+  //     null
+  //   ) || [];
+  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+  const unionedUsers = unionBy(subscribedUsers, "id");
+  await Promise.all(
+    unionedUsers.map(
+      async (user) => await cancelledTWUOpportunitySubscribed(user, opportunity)
+    )
+  );
+
+  // Notify authoring gov user of cancellation
+  const author =
+    opportunity.createdBy &&
+    getValidValue(
+      await db.readOneUser(connection, opportunity.createdBy.id),
+      null
+    );
+  if (author) {
+    await cancelledTWUOpportunityActioned(author, opportunity);
+  }
+}
+
+export async function handleTWUSuspended(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
+  const subscribedUsers =
+    getValidValue(
+      await db.readManyTWUSubscribedUsers(connection, opportunity.id),
+      null
+    ) || [];
+  // const usersWithProposals =
+  //   getValidValue(
+  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
+  //     null
+  //   ) || [];
+  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+  const unionedUsers = unionBy(subscribedUsers, "id");
+  await Promise.all(
+    unionedUsers.map(
+      async (user) => await suspendedTWUOpportunitySubscribed(user, opportunity)
+    )
+  );
+
+  // Notify authoring gov user of suspension
+  const author =
+    opportunity.createdBy &&
+    getValidValue(
+      await db.readOneUser(connection, opportunity.createdBy.id),
+      null
+    );
+  if (author) {
+    await suspendedTWUOpportunityActioned(author, opportunity);
+  }
+}
+
 /**
  * wrapper
  */
@@ -355,6 +482,130 @@ export async function successfulTWUPublicationT(
           </div>
         ),
         callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    }
+  ];
+}
+
+export const cancelledTWUOpportunitySubscribed = makeSend(
+  cancelledTWUOpportunitySubscribedT
+);
+
+export async function cancelledTWUOpportunitySubscribedT(
+  recipient: User,
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Has Been Cancelled";
+  const description =
+    "The following Digital Marketplace opportunity has been cancelled:";
+  return [
+    {
+      summary:
+        "TWU opportunity cancelled; sent to subscribed users and vendors with proposals.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              If you have any questions, please send an email to{" "}
+              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
+            </p>
+          </div>
+        )
+      })
+    }
+  ];
+}
+
+export const cancelledTWUOpportunityActioned = makeSend(
+  cancelledTWUOpportunityActionedT
+);
+
+export async function cancelledTWUOpportunityActionedT(
+  recipient: User,
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Has Been Cancelled";
+  const description =
+    "You have cancelled the following opportunity on the Digital Marketplace:";
+  return [
+    {
+      summary:
+        "TWU opportunity cancelled; sent to the administrator who actioned.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)]
+      })
+    }
+  ];
+}
+
+export const suspendedTWUOpportunitySubscribed = makeSend(
+  suspendedTWUOpportunitySubscribedT
+);
+
+export async function suspendedTWUOpportunitySubscribedT(
+  recipient: User,
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Has Been Suspended";
+  const description =
+    "The following Digital Marketplace opportunity has been suspended:";
+  return [
+    {
+      summary:
+        "TWU opportunity suspended; sent to subscribed users and vendors with proposals.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              If you have already submitted a proposal to this opportunity, you
+              may make changes to it while the opportunity is suspended.
+            </p>
+            <p>
+              If you have any questions, please send an email to{" "}
+              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
+            </p>
+          </div>
+        )
+      })
+    }
+  ];
+}
+
+export const suspendedTWUOpportunityActioned = makeSend(
+  suspendedTWUOpportunityActionedT
+);
+
+export async function suspendedTWUOpportunityActionedT(
+  recipient: User,
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Has Been Suspended";
+  const description =
+    "You have suspended the following opportunity on the Digital Marketplace:";
+  return [
+    {
+      summary:
+        "TWU opportunity suspended; sent to the administrator who actioned.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)]
       })
     }
   ];
