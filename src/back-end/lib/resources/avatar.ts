@@ -80,7 +80,7 @@ const create: crud.Create<
           await compressAvatarImage(validatedRequestBody.value.path);
           return valid({
             ...validatedRequestBody.value,
-            name
+            name: validatedFileName.value
           });
         } else {
           return invalid({
