@@ -13,6 +13,7 @@ import { Col, Row } from "reactstrap";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
+import { AddendaList } from "front-end/lib/components/addenda";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -97,6 +98,10 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   dispatch
 }) => {
   if (!state.opportunity || !state.addenda) return null;
+  /**
+   * Displays a list of Existing Addenda for convenience
+   */
+  const existingAddenda = state.opportunity.addenda;
   return (
     <div>
       <EditTabHeader
@@ -112,11 +117,20 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               information in the original opportunity.
             </p>
             <Addenda.view
+              state={state.addenda}
               dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                 adt("addenda" as const, msg)
               )}
-              state={state.addenda}
             />
+            {
+              // will show if existingAddenda in state is not yet set
+              // as is only the case immediately after publishing new addenda
+              !state.addenda.existingAddenda.length ? (
+                <AddendaList addenda={existingAddenda} />
+              ) : (
+                ""
+              )
+            }
           </Col>
         </Row>
       </div>
@@ -140,6 +154,13 @@ export const component: Tab.Component<State, InnerMsg> = {
     );
   },
 
+  /**
+   * Checks to see if state is Editing and then produces Publish and Cancel
+   * actions (via buttons), otherwise an 'Add Addendum' action/button.
+   *
+   * @param state - Immutable state
+   * @param dispatch - Msg
+   */
   getActions({ state, dispatch }) {
     if (!state.addenda) return component_.page.actions.none();
     return Addenda.getActions({

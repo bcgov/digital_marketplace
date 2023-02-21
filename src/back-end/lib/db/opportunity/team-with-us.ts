@@ -30,6 +30,8 @@ import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
 /**
+ * @remarks
+ *
  * Summary: This file holds SQL queries for interacting with data associated
  * with Team With Us Opportunities
  */
@@ -119,6 +121,14 @@ interface RawTWUOpportunityHistoryRecord
   event?: TWUOpportunityEvent;
 }
 
+/**
+ * Safety check. Prior to putting data in the db, receives a TWU
+ * opportunity from user input, ensures that values such as userId are
+ * accurate and valid.
+ *
+ * @param connection
+ * @param raw
+ */
 async function rawTWUOpportunityToTWUOpportunity(
   connection: Connection,
   raw: RawTWUOpportunity

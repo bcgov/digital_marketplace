@@ -244,6 +244,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+/**
+ * Displays a list of addenda
+ * @see {@link '/src/front-end/typescript/lib/pages/opportunity/team-with-us/edit/tab/addenda.tsx}
+ *
+ * @param addenda - Addendum[]
+ * @constructor
+ */
 export const AddendaList: component_.base.View<{ addenda: Addendum[] }> = ({
   addenda
 }) => {
