@@ -98,9 +98,8 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   dispatch
 }) => {
   if (!state.opportunity || !state.addenda) return null;
-  /**
-   * Displays a list of Existing Addenda for convenience
-   */
+  // a list of existing Addenda retrieved from state.opportunity,
+  // since state.addenda is not set until a new addenda is published
   const existingAddenda = state.opportunity.addenda;
   return (
     <div>
@@ -123,8 +122,10 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               )}
             />
             {
-              // will show if existingAddenda in state is not yet set
-              // as is only the case immediately after publishing new addenda
+              // if existingAddenda in state.addenda is set, as is only the case
+              // immediately after publishing new addenda, render nothing and
+              // let `Addenda.view` (above) display a list of existing addenda,
+              // otherwise this list will display
               !state.addenda.existingAddenda.length ? (
                 <AddendaList addenda={existingAddenda} />
               ) : (
