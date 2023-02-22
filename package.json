@@ -139,7 +139,7 @@
     "immutable": "^4.0.0-rc.12",
     "jest-diff": "^25.5.0",
     "keycloak-connect": "^8.0.0",
-    "knex": "0.19.5",
+    "knex": "2.4.0",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
     "module-alias": "^2.2.2",
