@@ -43,8 +43,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
+      const existingAddenda = opportunity.addenda;
       const [addendaState, addendaCmds] = Addenda.init({
-        existingAddenda: [],
+        existingAddenda: existingAddenda,
         publishNewAddendum(value) {
           return api.opportunities.cwu.update(
             opportunity.id,

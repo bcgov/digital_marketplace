@@ -1,6 +1,7 @@
 ## Instructions for Backup Container building and deployment - Digital Marketplace PostgreSQL and Patroni-PostgreSQL
 
 -----
+### Build (first time only)
 
 To build the backup-container image, run the following commands in the tools namespace:
 
@@ -12,6 +13,7 @@ oc tag backup-postgres:latest backup-postgres:prod
 ```
 
 -----
+### Deploy
 
 To deploy the backup-container image to each applications namespace <dev/test/prod>, run the following for each environment:
 

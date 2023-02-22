@@ -31,7 +31,8 @@ module.exports = {
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-empty-function": "off",
     "react/no-children-prop": "off",
-    "@typescript-eslint/ban-ts-comment": "warn"
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "mocha/no-setup-in-describe": "off"
   },
   overrides: [
     {
