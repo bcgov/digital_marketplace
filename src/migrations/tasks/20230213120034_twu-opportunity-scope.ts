@@ -3,7 +3,7 @@ import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import Knex from "knex";
 import { generateUuid } from "back-end/lib";
 
-const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 const slugs = ["team-with-us-opportunity-scope"];
 

@@ -2,7 +2,7 @@ import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import Knex from "knex";
 
-const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export enum TWUOpportunityStatus {
   Draft = "DRAFT",
@@ -17,7 +17,7 @@ export enum TWUOpportunityStatus {
 
 export enum TWUOpportunityEvent {
   Edited = "EDITED",
-  AddendumAdded = "ADDENDUM_ADDED",
+  AddendumAdded = "ADDENDUM_ADDED"
 }
 
 enum TWUServiceArea {
