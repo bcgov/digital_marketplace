@@ -4,7 +4,7 @@ import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import Knex from "knex";
 import { MembershipStatus } from "shared/lib/resources/affiliation";
 
-const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export async function up(connection: Knex): Promise<void> {
   // Add uuid as primary on affiliations, drop existing primary key

@@ -4,7 +4,7 @@ import Knex from "knex";
 import { GOV_IDP_SUFFIX, VENDOR_IDP_SUFFIX } from "shared/config";
 import { UserType } from "shared/lib/resources/user";
 
-const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export async function up(connection: Knex): Promise<void> {
   const results = await connection<{ id: string; idpUsername: string }>("users")
@@ -45,6 +45,7 @@ export async function up(connection: Knex): Promise<void> {
   logger.info("Completed updating users table.");
 }
 
+// eslint-disable-next-line
 export async function down(connection: Knex): Promise<void> {
   logger.info("Unable to reverse one-way migration of username modification.");
 }
