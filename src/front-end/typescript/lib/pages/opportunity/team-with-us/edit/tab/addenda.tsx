@@ -13,7 +13,6 @@ import { Col, Row } from "reactstrap";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
-import { AddendaList } from "front-end/lib/components/addenda";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -127,7 +126,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               // let `Addenda.view` (above) display a list of existing addenda,
               // otherwise this list will display
               !state.addenda.existingAddenda.length ? (
-                <AddendaList addenda={existingAddenda} />
+                <Addenda.AddendaList addenda={existingAddenda} />
               ) : (
                 ""
               )
