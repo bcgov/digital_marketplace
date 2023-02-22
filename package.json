@@ -133,7 +133,7 @@
     "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "find-up": "^5.0.0",
     "html-to-text": "^5.1.1",
     "immutable": "^4.0.0-rc.12",
