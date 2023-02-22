@@ -37,7 +37,7 @@ repos:
         files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
         types: [file]
   - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.3.0
+    rev: v1.4.0
     hooks:
       - id: detect-secrets
         args: ["--baseline", ".secrets.baseline"]
