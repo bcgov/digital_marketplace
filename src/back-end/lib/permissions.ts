@@ -57,10 +57,6 @@ export function isSignedIn(session: Session): session is AuthenticatedSession {
   return !!session;
 }
 
-export function isSignedOut(session: Session): boolean {
-  return !isSignedIn(session);
-}
-
 export function isOwnAccount(session: Session, id: string): boolean {
   return !!session && session.user.id === id;
 }

@@ -127,7 +127,8 @@ interface RawTWUOpportunityHistoryRecord
  * accurate and valid.
  *
  * @param connection
- * @param raw
+ * @param raw - raw user input
+ * @returns TWUOpportunity
  */
 async function rawTWUOpportunityToTWUOpportunity(
   connection: Connection,
@@ -180,6 +181,15 @@ async function rawTWUOpportunityToTWUOpportunity(
   };
 }
 
+/**
+ * Safety Check. Prior to putting data in the db, receives a so-called slim TWU
+ * opportunity from user input, ensures that values such as userId are
+ * accurate and valid.
+ *
+ * @param connection
+ * @param raw - raw user input
+ * @returns TWUOpportunitySlim
+ */
 async function rawTWUOpportunitySlimToTWUOpportunitySlim(
   connection: Connection,
   raw: RawTWUOpportunitySlim
@@ -207,6 +217,15 @@ async function rawTWUOpportunitySlimToTWUOpportunitySlim(
   };
 }
 
+/**
+ * Safety Check. Prior to putting data in the db, receives a TWU
+ * opportunity Addendum from user input, ensures that values such as userId are
+ * accurate and valid.
+ *
+ * @param connection
+ * @param raw - raw user input
+ * @returns Addendum
+ */
 async function rawTWUOpportunityAddendumToTWUOpportunityAddendum(
   connection: Connection,
   raw: RawTWUOpportunityAddendum
@@ -222,6 +241,15 @@ async function rawTWUOpportunityAddendumToTWUOpportunityAddendum(
   };
 }
 
+/**
+ * Safety Check. Prior to putting data in the db, receives a TWU
+ * resource question from user input, ensures that values such as userId are
+ * accurate and valid.
+ *
+ * @param connection
+ * @param raw - raw user input
+ * @returns TWUResourceQuestion
+ */
 async function rawResourceQuestionToResourceQuestion(
   connection: Connection,
   raw: RawResourceQuestion
@@ -242,6 +270,16 @@ async function rawResourceQuestionToResourceQuestion(
   };
 }
 
+/**
+ * Safety Check. Prior to putting data in the db, receives a TWU
+ * opportunity history record from user input, ensures that values such as
+ * userId are accurate and valid.
+ *
+ * @param connection - connection to the database
+ * @param _session - to ensure authenticated users
+ * @param raw - raw user input
+ * @returns TWUOpportunityHistoryRecord
+ */
 async function rawHistoryRecordToHistoryRecord(
   connection: Connection,
   _session: Session,
@@ -265,6 +303,15 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
+/**
+ * Retrieves the latest version of a TWU opportunity from the db. Will return
+ * either a query for the full record of a TWU opp, or a query that retrieves a
+ * slimmed down version of it
+ *
+ * @param connection
+ * @param full - boolean, either a full record or a slimmed down record
+ * @returns query
+ */
 export function generateTWUOpportunityQuery(
   connection: Connection,
   full = false
@@ -357,6 +404,16 @@ export function generateTWUOpportunityQuery(
 //   }
 // }
 
+/**
+ * Checks to see if an opportunity was created by a user for the purpose of
+ * permissions and what might be granted to them.
+ *
+ * @see {@link editTWUOpportunity} in '/src/back-end/lib/permissions.ts'
+ *
+ * @param connection
+ * @param user - the user
+ * @param id - the opportunity id
+ */
 export async function isTWUOpportunityAuthor(
   connection: Connection,
   user: User,
