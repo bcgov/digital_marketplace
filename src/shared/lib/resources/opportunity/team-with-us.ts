@@ -48,47 +48,57 @@ export interface TWUOpportunityHistoryRecord {
   note: string;
 }
 
+/**
+ * User-defined type guard to narrow raw input to a TWUOpportunityStatus.
+ *
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
+ *
+ * @param raw - a string value
+ * @returns boolean
+ */
+function isTWUOpportunityStatus(
+  raw: string | TWUOpportunityStatus
+): raw is TWUOpportunityStatus {
+  return Object.values(TWUOpportunityStatus).includes(
+    raw as TWUOpportunityStatus
+  );
+}
+
+/**
+ * Determines if a raw string is part of the enum TWUOpportunityStatus and returns
+ * the passed value or null.
+ *
+ * @see {@link TWUOpportunityStatus}
+ *
+ * @param raw - a string value
+ * @returns TWUOpportunityStatus | null
+ */
 export function parseTWUOpportunityStatus(
   raw: string
 ): TWUOpportunityStatus | null {
-  switch (raw) {
-    case TWUOpportunityStatus.Draft:
-      return TWUOpportunityStatus.Draft;
-    case TWUOpportunityStatus.UnderReview:
-      return TWUOpportunityStatus.UnderReview;
-    case TWUOpportunityStatus.Published:
-      return TWUOpportunityStatus.Published;
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
-      return TWUOpportunityStatus.EvaluationResourceQuestions;
-    case TWUOpportunityStatus.EvaluationChallenge:
-      return TWUOpportunityStatus.EvaluationChallenge;
-    case TWUOpportunityStatus.Awarded:
-      return TWUOpportunityStatus.Awarded;
-    case TWUOpportunityStatus.Suspended:
-      return TWUOpportunityStatus.Suspended;
-    case TWUOpportunityStatus.Canceled:
-      return TWUOpportunityStatus.Canceled;
-    default:
-      return null;
-  }
+  return isTWUOpportunityStatus(raw) ? raw : null;
 }
 
 /**
  * User-defined type guard to narrow raw input to a TWUServiceArea.
+ *
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
  *
- * @param raw
- * @returns
+ * @param raw - a string value
+ * @returns boolean
  */
 function isTWUServiceArea(raw: string | TWUServiceArea): raw is TWUServiceArea {
   return Object.values(TWUServiceArea).includes(raw as TWUServiceArea);
 }
 
 /**
- * Parses a Team With Us service area from a raw string.
+ * Determines if a raw string is part of the enum TWUServiceArea and returns
+ * the passed value or null.
  *
- * @param raw
- * @returns
+ * @see {@link TWUServiceArea}
+ *
+ * @param raw - a string value
+ * @returns TWUServiceArea | null
  */
 export function parseTWUServiceArea(raw: string): TWUServiceArea | null {
   return isTWUServiceArea(raw) ? raw : null;
