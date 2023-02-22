@@ -43,8 +43,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
+      const existingAddenda = opportunity.addenda;
       const [addendaState, addendaCmds] = Addenda.init({
-        existingAddenda: [],
+        existingAddenda: existingAddenda,
         publishNewAddendum(value) {
           return api.opportunities.twu.update(
             opportunity.id,
@@ -97,9 +98,6 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   dispatch
 }) => {
   if (!state.opportunity || !state.addenda) return null;
-  // a list of existing Addenda retrieved from state.opportunity,
-  // since state.addenda is not set until a new addenda is published
-  const existingAddenda = state.opportunity.addenda;
   return (
     <div>
       <EditTabHeader
@@ -120,17 +118,6 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
                 adt("addenda" as const, msg)
               )}
             />
-            {
-              // if existingAddenda in state.addenda is set, as is only the case
-              // immediately after publishing new addenda, render nothing and
-              // let `Addenda.view` (above) display a list of existing addenda,
-              // otherwise this list will display
-              !state.addenda.existingAddenda.length ? (
-                <Addenda.AddendaList addenda={existingAddenda} />
-              ) : (
-                ""
-              )
-            }
           </Col>
         </Row>
       </div>
