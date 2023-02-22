@@ -13,6 +13,7 @@ import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
+import { AddendaList } from "front-end/lib/components/addenda";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -97,6 +98,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   dispatch
 }) => {
   if (!state.opportunity || !state.addenda) return null;
+  const existingAddenda = state.opportunity.addenda;
   return (
     <div>
       <EditTabHeader
@@ -117,6 +119,17 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               )}
               state={state.addenda}
             />
+            {
+              // if existingAddenda in state is set, as is only the case
+              // immediately after publishing new addenda, render nothing and
+              // let Addenda.view display a list of existing addenda,
+              // otherwise this list will display
+              !state.addenda.existingAddenda.length ? (
+                <AddendaList addenda={existingAddenda} />
+              ) : (
+                ""
+              )
+            }
           </Col>
         </Row>
       </div>
