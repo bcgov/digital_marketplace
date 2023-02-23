@@ -980,29 +980,29 @@ export const addTWUOpportunityAddendum = tryDb<
   return valid(dbResult.value);
 });
 
-// export const deleteTWUOpportunity = tryDb<[Id, Session], TWUOpportunity>(
-//   async (connection, id, session) => {
-//     // Read the opportunity first, so we can respond with it after deleting
-//     const opportunity = getValidValue(
-//       await readOneTWUOpportunity(connection, id, session),
-//       undefined
-//     );
-//     if (!opportunity) {
-//       throw new Error("unable to delete opportunity");
-//     }
-//     // Delete root record - cascade relationships in database will cleanup versions/attachments/addenda automatically
-//     const [result] = await connection<RawTWUOpportunity>("twuOpportunities")
-//       .where({ id })
-//       .delete("*");
-//
-//     if (!result) {
-//       throw new Error("unable to delete opportunity");
-//     }
-//     result.addenda = [];
-//     result.attachments = [];
-//     return valid(opportunity);
-//   }
-// );
+export const deleteTWUOpportunity = tryDb<[Id, Session], TWUOpportunity>(
+  async (connection, id, session) => {
+    // Read the opportunity first, so we can respond with it after deleting
+    const opportunity = getValidValue(
+      await readOneTWUOpportunity(connection, id, session),
+      undefined
+    );
+    if (!opportunity) {
+      throw new Error("unable to delete opportunity");
+    }
+    // Delete root record - cascade relationships in database will cleanup versions/attachments/addenda automatically
+    const [result] = await connection<RawTWUOpportunity>("twuOpportunities")
+      .where({ id })
+      .delete("*");
+
+    if (!result) {
+      throw new Error("unable to delete opportunity");
+    }
+    result.addenda = [];
+    result.attachments = [];
+    return valid(opportunity);
+  }
+);
 
 export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
   const now = new Date();

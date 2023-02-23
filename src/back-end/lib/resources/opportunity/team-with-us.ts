@@ -27,10 +27,8 @@ import {
   TWUOpportunityStatus,
   TWUServiceArea,
   UpdateRequestBody,
-  UpdateValidationErrors
-  // DeleteValidationErrors,
-  // isValidStatusChange,
-  // UpdateValidationErrors
+  UpdateValidationErrors,
+  DeleteValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -39,17 +37,14 @@ import {
   getValidValue,
   isInvalid,
   isValid,
-  // isValid,
-  // mapValid,
   valid,
   validateUUID,
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
-// import {adt} from 'shared/lib/types';
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
-import { ADT, adt } from "shared/lib/types";
+import { ADT, adt, Id } from "shared/lib/types";
 
 interface ValidatedCreateRequestBody
   extends Omit<
@@ -96,6 +91,8 @@ type CreateRequestBody = Omit<
   status: string;
   serviceArea: string;
 };
+
+type ValidatedDeleteRequestBody = Id;
 
 /**
  * Defined for use in the router
@@ -1183,68 +1180,75 @@ const update: crud.Update<
     })
   };
 };
-
-// const delete_: crud.Delete<
-//   Session,
-//   db.Connection,
-//   ValidatedDeleteRequestBody,
-//   DeleteValidationErrors
-// > = (connection: db.Connection) => {
-//   return {
-//     async validateRequestBody(request) {
-//       if (
-//         !(await permissions.deleteTWUOpportunity(
-//           connection,
-//           request.session,
-//           request.params.id
-//         ))
-//       ) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//       const validatedTWUOpportunity = await validateTWUOpportunityId(
-//         connection,
-//         request.params.id,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUOpportunity)) {
-//         return invalid({ notFound: ["Opportunity not found."] });
-//       }
-//       if (validatedTWUOpportunity.value.status !== TWUOpportunityStatus.Draft) {
-//         return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-//       }
-//       return valid(validatedTWUOpportunity.value.id);
-//     },
-//     respond: wrapRespond({
-//       valid: async (request) => {
-//         const dbResult = await db.deleteTWUOpportunity(
-//           connection,
-//           request.body
-//         );
-//         if (isInvalid(dbResult)) {
-//           return basicResponse(
-//             503,
-//             request.session,
-//             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-//           );
-//         }
-//         return basicResponse(
-//           200,
-//           request.session,
-//           makeJsonResponseBody(dbResult.value)
-//         );
-//       },
-//       invalid: async (request) => {
-//         return basicResponse(
-//           400,
-//           request.session,
-//           makeJsonResponseBody(request.body)
-//         );
-//       }
-//     })
-//   };
-// };
+/**
+ * Deletes a TWU opportunity from the db. Conditions are that the opportunity
+ * must be in "Draft" status. Admins can delete any opportunity in "Draft" status
+ * and Government users can delete only their own.
+ *
+ * @param connection - a database connection
+ */
+const delete_: crud.Delete<
+  Session,
+  db.Connection,
+  ValidatedDeleteRequestBody,
+  DeleteValidationErrors
+> = (connection: db.Connection) => {
+  return {
+    async validateRequestBody(request) {
+      if (
+        !(await permissions.canDeleteTWUOpportunity(
+          connection,
+          request.session,
+          request.params.id
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+      const validatedTWUOpportunity = await validateTWUOpportunityId(
+        connection,
+        request.params.id,
+        request.session
+      );
+      if (isInvalid(validatedTWUOpportunity)) {
+        return invalid({ notFound: ["Opportunity not found."] });
+      }
+      if (validatedTWUOpportunity.value.status !== TWUOpportunityStatus.Draft) {
+        return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+      }
+      return valid(validatedTWUOpportunity.value.id);
+    },
+    respond: wrapRespond({
+      valid: async (request) => {
+        const dbResult = await db.deleteTWUOpportunity(
+          connection,
+          request.params.id,
+          request.session
+        );
+        if (isInvalid(dbResult)) {
+          return basicResponse(
+            503,
+            request.session,
+            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+          );
+        }
+        return basicResponse(
+          200,
+          request.session,
+          makeJsonResponseBody(dbResult.value)
+        );
+      },
+      invalid: async (request) => {
+        return basicResponse(
+          400,
+          request.session,
+          makeJsonResponseBody(request.body)
+        );
+      }
+    })
+  };
+};
 
 /**
  * Resources defined here are exported for use in the router
@@ -1256,8 +1260,8 @@ const resource: crud.BasicCrudResource<Session, db.Connection> = {
   readOne,
   readMany,
   create,
-  update
-  // delete: _delete
+  update,
+  delete: delete_
 };
 
 export default resource;
