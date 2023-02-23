@@ -601,10 +601,11 @@ const update: crud.Update<
             attachments,
             resourceQuestions
           } = request.body.value;
-          // TWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
+          // TWU Opportunities can only be edited if they are in DRAFT, UNDER REVIEW, PUBLISHED, or SUSPENDED
           if (
             ![
               TWUOpportunityStatus.Draft,
+              TWUOpportunityStatus.UnderReview,
               TWUOpportunityStatus.Published,
               TWUOpportunityStatus.Suspended
             ].includes(twuOpportunity.status)

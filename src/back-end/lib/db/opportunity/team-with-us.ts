@@ -885,8 +885,8 @@ export const updateTWUOpportunityVersion = tryDb<
       opportunity: restOfOpportunity.id,
       createdAt: now,
       createdBy: session.user.id,
-      event: TWUOpportunityEvent.Edited
-      // note: ""
+      event: TWUOpportunityEvent.Edited,
+      note: ""
     });
 
     return versionRecord;
@@ -915,8 +915,8 @@ export const updateTWUOpportunityStatus = tryDb<
       opportunity: id,
       createdAt: now,
       createdBy: session.user.id,
-      status
-      // note
+      status,
+      note
     },
     "*"
   );
@@ -1022,8 +1022,8 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
           id: generateUuid(),
           createdAt: now,
           opportunity: lapsedOpportunity.id,
-          status: TWUOpportunityStatus.EvaluationResourceQuestions
-          // note: "This opportunity has closed."
+          status: TWUOpportunityStatus.EvaluationResourceQuestions,
+          note: "This opportunity has closed."
         });
         //     // Get a list of SUBMITTED proposals for this opportunity
         //     const proposalIds =
