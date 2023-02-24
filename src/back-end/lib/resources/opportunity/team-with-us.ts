@@ -1052,7 +1052,10 @@ const update: crud.Update<
               { ...body.value, id: request.params.id },
               session
             );
-            // Notify all subscribed users on the opportunity of the update (only if not either draft or suspended)
+            /**
+             * Notify all subscribed users on the opportunity of the update
+             * (only if not draft or suspended status)
+             */
             if (
               isValid(dbResult) &&
               !Object.values(doNotNotify).includes(dbResult.value.status)
