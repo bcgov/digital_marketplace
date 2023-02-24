@@ -1156,8 +1156,14 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify all subscribed users on the opportunity of the update
-            if (isValid(dbResult)) {
+            /**
+             * Notify all subscribed users on the opportunity of the update
+             * unless it's been cancelled
+             */
+            if (
+              isValid(dbResult) &&
+              dbResult.value.status !== TWUOpportunityStatus.Canceled
+            ) {
               twuOpportunityNotifications.handleTWUUpdated(
                 connection,
                 dbResult.value

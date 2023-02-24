@@ -10,7 +10,10 @@ import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
 
@@ -142,14 +145,19 @@ export const component: Tab.Component<State, InnerMsg> = {
   },
 
   /**
-   * Checks to see if state is Editing and then produces Publish and Cancel
-   * actions (via buttons), otherwise an 'Add Addendum' action/button.
+   * Checks to see if state = isEditing and produces Publish and Cancel
+   * actions (via buttons), otherwise an 'Add Addendum' action/button. Produces
+   * nothing if the opportunity status is 'Canceled' or if addenda is not set.
    *
    * @param state - Immutable state
    * @param dispatch - Msg
    */
-  getActions({ state, dispatch }) {
-    if (!state.addenda) return component_.page.actions.none();
+  getActions: function ({ state, dispatch }) {
+    if (
+      !state.addenda ||
+      state.opportunity?.status === TWUOpportunityStatus.Canceled
+    )
+      return component_.page.actions.none();
     return Addenda.getActions({
       state: state.addenda,
       dispatch: component_.base.mapDispatch(dispatch, (msg) =>
