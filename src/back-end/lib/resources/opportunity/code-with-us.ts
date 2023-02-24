@@ -863,7 +863,8 @@ const update: crud.Update<
         const { session, body } = request.body;
         const doNotNotify = [
           CWUOpportunityStatus.Draft,
-          CWUOpportunityStatus.Suspended
+          CWUOpportunityStatus.Suspended,
+          CWUOpportunityStatus.Canceled
         ];
         switch (body.tag) {
           case "edit":
@@ -960,8 +961,14 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify all subscribed users on the opportunity of the update
-            if (isValid(dbResult)) {
+            /**
+             * Notify all subscribed users on the opportunity of the update
+             * unless it's been cancelled
+             */
+            if (
+              isValid(dbResult) &&
+              !Object.values(doNotNotify).includes(dbResult.value.status)
+            ) {
               cwuOpportunityNotifications.handleCWUUpdated(
                 connection,
                 dbResult.value
