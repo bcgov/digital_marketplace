@@ -1043,7 +1043,8 @@ const update: crud.Update<
         const { session, body } = request.body;
         const doNotNotify = [
           TWUOpportunityStatus.Draft,
-          TWUOpportunityStatus.Suspended
+          TWUOpportunityStatus.Suspended,
+          TWUOpportunityStatus.Canceled
         ];
         switch (body.tag) {
           case "edit":
@@ -1162,7 +1163,7 @@ const update: crud.Update<
              */
             if (
               isValid(dbResult) &&
-              dbResult.value.status !== TWUOpportunityStatus.Canceled
+              !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               twuOpportunityNotifications.handleTWUUpdated(
                 connection,
