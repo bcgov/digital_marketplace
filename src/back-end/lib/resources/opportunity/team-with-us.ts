@@ -21,14 +21,14 @@ import {
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors,
   CreateValidationErrors,
+  DeleteValidationErrors,
   isValidStatusChange,
   TWUOpportunity,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
   TWUServiceArea,
   UpdateRequestBody,
-  UpdateValidationErrors,
-  DeleteValidationErrors
+  UpdateValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -1041,6 +1041,10 @@ const update: crud.Update<
       valid: async (request) => {
         let dbResult: Validation<TWUOpportunity, null>;
         const { session, body } = request.body;
+        const doNotNotify = [
+          TWUOpportunityStatus.Draft,
+          TWUOpportunityStatus.Suspended
+        ];
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateTWUOpportunityVersion(
@@ -1048,10 +1052,10 @@ const update: crud.Update<
               { ...body.value, id: request.params.id },
               session
             );
-            // Notify all subscribed users on the opportunity of the update (only if not draft)
+            // Notify all subscribed users on the opportunity of the update (only if not either draft or suspended)
             if (
               isValid(dbResult) &&
-              dbResult.value.status !== TWUOpportunityStatus.Draft
+              !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               twuOpportunityNotifications.handleTWUUpdated(
                 connection,
