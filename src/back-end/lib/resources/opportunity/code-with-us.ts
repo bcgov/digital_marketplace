@@ -861,6 +861,10 @@ const update: crud.Update<
       valid: async (request) => {
         let dbResult: Validation<CWUOpportunity, null>;
         const { session, body } = request.body;
+        const doNotNotify = [
+          CWUOpportunityStatus.Draft,
+          CWUOpportunityStatus.Suspended
+        ];
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateCWUOpportunityVersion(
@@ -868,10 +872,11 @@ const update: crud.Update<
               { ...body.value, id: request.params.id },
               session
             );
-            // Notify all subscribed users on the opportunity of the update (only if not draft)
+            // Notify all subscribed users on the opportunity of the update
+            // (only if not either draft or suspended)
             if (
               isValid(dbResult) &&
-              dbResult.value.status !== CWUOpportunityStatus.Draft
+              !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               cwuOpportunityNotifications.handleCWUUpdated(
                 connection,
