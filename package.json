@@ -74,7 +74,7 @@
     },
     {
       "name": "Brad Payne",
-      "url" : "https://github.com/bdolor"
+      "url": "https://github.com/bdolor"
     },
     {
       "name": "Brian Kraus",
@@ -168,10 +168,14 @@
     "@commitlint/config-conventional": "^16.0.0",
     "@fsouza/prettierd": "^0.22.2",
     "@testing-library/react": "^12.1.2",
+    "@types/chai": "^4.3.4",
+    "@types/superagent": "^4.1.16",
+    "@types/supertest": "^2.0.12",
     "autoprefixer": "^9.4.4",
     "axios": "^0.24.0",
     "babel-jest": "^27.3.1",
     "bootstrap": "^4.6.1",
+    "chai": "^4.3.7",
     "cssnano": "^4.1.10",
     "cypress": "^9.2.0",
     "cypress-file-upload": "^5.0.8",
@@ -213,6 +217,8 @@
     "reactstrap": "^8.4.0",
     "require-dir": "^1.2.0",
     "serve": "^11.3.2",
+    "superagent": "^8.0.9",
+    "supertest": "^6.3.3",
     "typedoc": "^0.23.16",
     "typedoc-plugin-missing-exports": "^1.0.0"
   }
