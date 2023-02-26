@@ -4,7 +4,7 @@ import Knex from "knex";
 import { MembershipType } from "shared/lib/resources/affiliation";
 import { UserStatus, UserType } from "shared/lib/resources/user";
 
-const logger = makeDomainLogger(consoleAdapter, "migrations", "development");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export async function up(connection: Knex): Promise<void> {
   // Initialize tables
