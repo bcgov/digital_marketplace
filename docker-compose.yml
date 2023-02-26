@@ -30,6 +30,20 @@ services:
       POSTGRES_DB: digmkt
     command: ["postgres", "-c", "log_statement=all"]
 
+  test-db:
+    container_name: dm_test_db
+    image: postgres:12
+    volumes:
+      - dm-test-vol:/var/lib/postgresql/data
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: digmkt-test
+      POSTGRES_PASSWORD: digmkt-test
+      POSTGRES_DB: digmkt-test
+
 volumes:
   dm-vol:
+  dm-test-vol:
   cypress-vol:
