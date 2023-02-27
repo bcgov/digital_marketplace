@@ -2,7 +2,8 @@ import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 import * as OrganizationTab from "front-end/lib/pages/organization/edit/tab/organization";
-import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/qualification";
+import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
+import * as TWUQualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
 import * as TeamTab from "front-end/lib/pages/organization/edit/tab/team";
 import { routeDest } from "front-end/lib/views/link";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
@@ -57,6 +58,12 @@ export interface Tabs {
     QualificationTab.InnerMsg,
     InitResponse
   >;
+  "twu-qualification": TabbedPage.Tab<
+    Params,
+    TWUQualificationTab.State,
+    TWUQualificationTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -70,6 +77,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "organization":
     case "team":
     case "qualification":
+    case "twu-qualification":
       return raw;
     default:
       return null;
@@ -91,6 +99,12 @@ export function idToDefinition<K extends TabId>(
         component: QualificationTab.component,
         icon: "shield",
         title: "SWU Qualification"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "twu-qualification":
+      return {
+        component: TWUQualificationTab.component,
+        icon: "shield",
+        title: "TWU Qualification"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "organization":
     default:
@@ -124,7 +138,8 @@ export function makeSidebarState(
     items: [
       makeSidebarLink("organization", organization, activeTab),
       makeSidebarLink("team", organization, activeTab),
-      makeSidebarLink("qualification", organization, activeTab)
+      makeSidebarLink("qualification", organization, activeTab),
+      makeSidebarLink("twu-qualification", organization, activeTab)
     ]
   });
 }
