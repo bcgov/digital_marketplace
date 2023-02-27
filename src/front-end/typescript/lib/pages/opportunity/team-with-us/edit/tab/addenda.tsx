@@ -10,7 +10,10 @@ import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
 
@@ -43,8 +46,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
+      const existingAddenda = opportunity.addenda;
       const [addendaState, addendaCmds] = Addenda.init({
-        existingAddenda: [],
+        existingAddenda: existingAddenda,
         publishNewAddendum(value) {
           return api.opportunities.twu.update(
             opportunity.id,
@@ -112,10 +116,10 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               information in the original opportunity.
             </p>
             <Addenda.view
+              state={state.addenda}
               dispatch={component_.base.mapDispatch(dispatch, (msg) =>
                 adt("addenda" as const, msg)
               )}
-              state={state.addenda}
             />
           </Col>
         </Row>
@@ -140,8 +144,20 @@ export const component: Tab.Component<State, InnerMsg> = {
     );
   },
 
-  getActions({ state, dispatch }) {
-    if (!state.addenda) return component_.page.actions.none();
+  /**
+   * Checks to see if state = isEditing and produces Publish and Cancel
+   * actions (via buttons), otherwise an 'Add Addendum' action/button. Produces
+   * nothing if the opportunity status is 'Canceled' or if addenda is not set.
+   *
+   * @param state - Immutable state
+   * @param dispatch - Msg
+   */
+  getActions: function ({ state, dispatch }) {
+    if (
+      !state.addenda ||
+      state.opportunity?.status === TWUOpportunityStatus.Canceled
+    )
+      return component_.page.actions.none();
     return Addenda.getActions({
       state: state.addenda,
       dispatch: component_.base.mapDispatch(dispatch, (msg) =>

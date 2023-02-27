@@ -27,34 +27,35 @@ export function delayedDispatch<Msg>(delay: number, msg: Msg): Cmd<Msg> {
 }
 
 /**
- * This function creates a function that produces `Cmd`s to
- * dispatch the `dispatchMsg` argument on a debounced interval
- * specified by the `duration` (milliseconds) argument. Due to
- * the nature of debouncing, if a dispatch has been "cancelled,"
- * the `noOpMsg` argument is dispatched instead.
+ * Limits the rate at which a function can fire. Returns a function that will
+ * dispatch the `dispatchMsg` argument once, and only after the `duration`
+ * (debounced) interval has passed regardless of how many times it continues
+ * to be invoked. Should `makeDebouncedDispatch` be called multiple times during
+ * the duration/debounce period, or if a dispatch has been "cancelled", the
+ * `noOpMsg` argument is dispatched instead.
+ *
+ * @see {@link dispatchSearch} in 'src/front-end/typescript/lib/pages/opportunity/list.tsx'
+ *
+ * @param noOpMsg - Msg sent out during the duration period
+ * @param dispatchMsg - Msg triggered once after the duration period
+ * @param duration - delay, duration period in milliseconds
  */
-
 export function makeDebouncedDispatch<Msg>(
   noOpMsg: Msg,
   dispatchMsg: Msg,
   duration: number
 ): () => Cmd<Msg> {
-  let timeout: NodeJS.Timeout | null = null;
+  let globalTimeout: NodeJS.Timeout | null = null;
   return () =>
     adt("async", async () => {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
-      }
-      let thisTimeoutHasLapsed = false;
+      let thisTimeout: NodeJS.Timeout | null = null;
       await new Promise<void>((resolve) => {
-        timeout = setTimeout(() => {
-          thisTimeoutHasLapsed = true;
+        thisTimeout = setTimeout(() => {
           resolve();
         }, duration);
-        if (!thisTimeoutHasLapsed) resolve();
+        globalTimeout = thisTimeout;
       });
-      return thisTimeoutHasLapsed ? dispatchMsg : noOpMsg;
+      return thisTimeout == globalTimeout ? dispatchMsg : noOpMsg;
     });
 }
 

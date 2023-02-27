@@ -7,8 +7,10 @@ import { Organization } from "shared/lib/resources/organization";
 export enum TWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
-  UnderReview = "UNDER_REVIEW",
-  Evaluated = "EVALUATED",
+  UnderReviewResourceQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedResourcemQuestions = "EVALUATED_QUESTIONS",
+  UnderReviewChallenge = "UNDER_REVIEW_CHALLENGE",
+  EvaluatedChallenge = "EVALUATED_CHALLENGE",
   Awarded = "AWARDED",
   NotAwarded = "NOT_AWARDED",
   Disqualified = "DISQUALIFIED",

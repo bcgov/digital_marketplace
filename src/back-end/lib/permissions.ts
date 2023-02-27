@@ -5,6 +5,7 @@ import {
   isCWUOpportunityAuthor,
   isCWUProposalAuthor,
   isSWUOpportunityAuthor,
+  isTWUOpportunityAuthor,
   isUserOwnerOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
@@ -54,10 +55,6 @@ export const ERROR_MESSAGE =
 
 export function isSignedIn(session: Session): session is AuthenticatedSession {
   return !!session;
-}
-
-export function isSignedOut(session: Session): boolean {
-  return !isSignedIn(session);
 }
 
 export function isOwnAccount(session: Session, id: string): boolean {
@@ -718,6 +715,57 @@ export function createTWUOpportunity(
   );
 }
 
+export async function editTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
+
+export function publishTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+/**
+ * Checks for authentication and specific roles. Admins can delete any
+ * opportunity (true) and Government users can delete only their own (true).
+ * Returns false if either one of those two conditions are not met.
+ *
+ * @see {@link delete_} in 'src/back-end/lib/resources/opportunity/team-with-us.ts'
+ *
+ * @param connection
+ * @param session
+ * @param opportunityId
+ * @returns boolean
+ */
+export async function canDeleteTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {

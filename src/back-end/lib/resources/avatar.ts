@@ -9,7 +9,6 @@ import FileResource, {
   CreateRequestBody,
   ValidatedCreateRequestBody
 } from "back-end/lib/resources/file";
-import jimp from "jimp";
 import { CreateValidationErrors } from "shared/lib/resources/file";
 import { Session } from "shared/lib/resources/session";
 import {
@@ -19,19 +18,30 @@ import {
   valid
 } from "shared/lib/validation";
 import * as fileValidation from "shared/lib/validation/file";
+import sharp from "sharp";
 
-export async function compressFile(path: string) {
-  let image = await jimp.read(path);
-  if (
-    image.bitmap.width >= image.bitmap.height &&
-    image.bitmap.width > AVATAR_MAX_IMAGE_WIDTH
-  ) {
-    image = image.resize(AVATAR_MAX_IMAGE_WIDTH, jimp.AUTO);
-  } else if (image.bitmap.height > AVATAR_MAX_IMAGE_HEIGHT) {
-    image = image.resize(jimp.AUTO, AVATAR_MAX_IMAGE_HEIGHT);
+async function compressAvatarImage(path: string): Promise<void> {
+  try {
+    const image = await sharp(path);
+    const metadata = await image.metadata();
+    let sharpStream = sharp(path, { failOn: "none" });
+    if ((metadata.width ?? 0) > AVATAR_MAX_IMAGE_WIDTH) {
+      sharpStream = await sharpStream.clone().resize({
+        width: AVATAR_MAX_IMAGE_WIDTH
+      });
+    }
+
+    if ((metadata.height ?? 0) > AVATAR_MAX_IMAGE_HEIGHT) {
+      sharpStream = await sharpStream.clone().resize({
+        height: AVATAR_MAX_IMAGE_HEIGHT
+      });
+    }
+
+    const buffer = await sharpStream.toBuffer();
+    await sharp(buffer).toFile(path);
+  } catch (error) {
+    console.warn("Unable to compress image", error);
   }
-
-  image.write(path);
 }
 
 const routeNamespace = "avatars";
@@ -67,7 +77,7 @@ const create: crud.Create<
             });
           }
           // Compress avatar image files to max width/height
-          await compressFile(validatedRequestBody.value.path);
+          await compressAvatarImage(validatedRequestBody.value.path);
           return valid({
             ...validatedRequestBody.value,
             name: validatedFileName.value

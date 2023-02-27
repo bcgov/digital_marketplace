@@ -126,6 +126,11 @@
 │  ├─ repository: https://github.com/babel/babel
 │  ├─ publisher: The Babel Team
 │  ├─ url: https://babel.dev/team
+├─ @babel/helper-plugin-utils@7.20.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/babel/babel
+│  ├─ publisher: The Babel Team
+│  ├─ url: https://babel.dev/team
 ├─ @babel/helper-remap-async-to-generator@7.16.8
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel
@@ -298,6 +303,11 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-json-strings
 ├─ @babel/plugin-syntax-jsx@7.16.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/babel/babel
+│  ├─ publisher: The Babel Team
+│  ├─ url: https://babel.dev/team
+├─ @babel/plugin-syntax-jsx@7.18.6
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel
 │  ├─ publisher: The Babel Team
@@ -543,6 +553,11 @@
 │  ├─ repository: https://github.com/babel/babel
 │  ├─ publisher: The Babel Team
 │  ├─ url: https://babel.dev/team
+├─ @babel/runtime@7.20.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/babel/babel
+│  ├─ publisher: The Babel Team
+│  ├─ url: https://babel.dev/team
 ├─ @babel/template@7.16.7
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel
@@ -590,65 +605,53 @@
 │  ├─ publisher: Rob Wu
 │  ├─ email: rob@robwu.nl
 │  ├─ url: https://robwu.nl
-├─ @emotion/cache@10.0.29
+├─ @emotion/babel-plugin@11.10.5
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/cache
-├─ @emotion/cache@11.7.1
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/babel-plugin
+│  ├─ publisher: Kye Hohenberger
+├─ @emotion/cache@11.10.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/cache
-├─ @emotion/core@10.3.1
+├─ @emotion/hash@0.9.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/core
-│  ├─ publisher: mitchellhamilton
-│  ├─ email: mitchell@mitchellhamilton.me
-├─ @emotion/css@10.0.27
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/hash
+├─ @emotion/memoize@0.8.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/css
-├─ @emotion/hash@0.8.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/hash
-├─ @emotion/memoize@0.7.4
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/memoize
-├─ @emotion/memoize@0.7.5
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/memoize
-├─ @emotion/react@11.7.1
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/memoize
+├─ @emotion/react@11.10.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/react
-│  ├─ publisher: mitchellhamilton
-│  ├─ email: mitchell@mitchellhamilton.me
-├─ @emotion/serialize@0.11.16
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/serialize
-├─ @emotion/serialize@1.0.2
+│  ├─ publisher: Emotion Contributors
+├─ @emotion/serialize@1.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/serialize
-├─ @emotion/sheet@0.9.4
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/sheet
-├─ @emotion/sheet@1.1.0
+├─ @emotion/sheet@1.2.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/sheet
-├─ @emotion/stylis@0.8.5
+├─ @emotion/unitless@0.8.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/stylis
-├─ @emotion/unitless@0.7.5
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/unitless
+├─ @emotion/use-insertion-effect-with-fallbacks@1.0.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/unitless
-├─ @emotion/utils@0.11.3
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/use-insertion-effect-with-fallbacks
+├─ @emotion/utils@1.2.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/serialize
-├─ @emotion/utils@1.0.0
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/utils
+├─ @emotion/weak-memoize@0.3.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/utils
-├─ @emotion/weak-memoize@0.2.5
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/weak-memoize
-├─ @eslint/eslintrc@1.0.5
+│  ├─ repository: https://github.com/emotion-js/emotion/tree/main/packages/weak-memoize
+├─ @eslint/eslintrc@1.3.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/eslint/eslintrc
 │  ├─ publisher: Nicholas C. Zakas
+├─ @floating-ui/core@1.0.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/floating-ui/floating-ui
+│  ├─ publisher: atomiks
+├─ @floating-ui/dom@1.0.7
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/floating-ui/floating-ui
+│  ├─ publisher: atomiks
 ├─ @fortawesome/fontawesome-common-types@0.2.36
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/FortAwesome/Font-Awesome
@@ -670,15 +673,23 @@
 ├─ @fortawesome/react-fontawesome@0.1.16
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/FortAwesome/react-fontawesome
+├─ @fsouza/prettierd@0.22.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/fsouza/prettierd
+│  ├─ publisher: Francisco Souza
 ├─ @gar/promisify@1.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/wraithgar/gar-promisify
 │  ├─ publisher: Gar
 │  ├─ email: gar+npm@danger.computer
-├─ @humanwhocodes/config-array@0.9.2
+├─ @humanwhocodes/config-array@0.10.7
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/humanwhocodes/config-array
 │  ├─ publisher: Nicholas C. Zakas
+├─ @humanwhocodes/module-importer@1.0.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/humanwhocodes/module-importer
+│  ├─ publisher: Nicholas C. Zaks
 ├─ @humanwhocodes/object-schema@1.2.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/humanwhocodes/object-schema
@@ -731,71 +742,6 @@
 ├─ @jest/types@27.4.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/facebook/jest
-├─ @jimp/bmp@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/core@0.16.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/oliver-moran/jimp
-│  ├─ publisher: Oliver Moran
-│  ├─ email: oliver.moran@gmail.com
-├─ @jimp/custom@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/gif@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/jpeg@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-blit@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-blur@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-circle@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-color@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-contain@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-cover@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-crop@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-displace@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-dither@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-fisheye@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-flip@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-gaussian@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-invert@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-mask@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-normalize@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-print@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-resize@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-rotate@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-scale@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-shadow@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugin-threshold@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/plugins@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/png@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/tiff@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/types@0.16.1
-│  ├─ licenses: MIT
-├─ @jimp/utils@0.16.1
-│  ├─ licenses: MIT
 ├─ @jsdevtools/ono@7.1.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/JS-DevTools/ono
@@ -908,9 +854,6 @@
 ├─ @types/cors@2.8.12
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
-├─ @types/dotenv@8.2.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/motdotla/dotenv
 ├─ @types/express-serve-static-core@4.17.27
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
@@ -1008,9 +951,7 @@
 ├─ @types/react-dom@17.0.11
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
-├─ @types/react-select@5.0.1
-│  ├─ licenses: MIT
-├─ @types/react-transition-group@4.4.4
+├─ @types/react-transition-group@4.4.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 ├─ @types/react@17.0.38
@@ -1026,6 +967,9 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 ├─ @types/sha.js@2.4.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
+├─ @types/sharp@0.31.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/DefinitelyTyped/DefinitelyTyped
 ├─ @types/sinonjs__fake-timers@6.0.4
@@ -1149,6 +1093,9 @@
 ├─ acorn@8.7.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/acornjs/acorn
+├─ acorn@8.8.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/acornjs/acorn
 ├─ agent-base@6.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/TooTallNate/node-agent-base
@@ -1257,11 +1204,6 @@
 │  ├─ repository: https://github.com/jonschlinkert/ansi-wrap
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ any-base@1.1.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/HarasimowiczKamil/any-base
-│  ├─ publisher: Kamil Harasimowicz
-│  ├─ email: mifczu@gmail.com
 ├─ anymatch@2.0.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/micromatch/anymatch
@@ -1530,10 +1472,6 @@
 │  ├─ repository: https://github.com/airbnb/babel-plugin-dynamic-import-node
 │  ├─ publisher: Jordan Gensler
 │  ├─ email: jordan.gensler@airbnb.com
-├─ babel-plugin-emotion@10.2.2
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/emotion-js/emotion/tree/master/packages/babel-plugin-emotion
-│  ├─ publisher: Kye Hohenberger
 ├─ babel-plugin-istanbul@6.1.1
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/istanbuljs/babel-plugin-istanbul
@@ -1541,12 +1479,12 @@
 ├─ babel-plugin-jest-hoist@27.4.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/facebook/jest
-├─ babel-plugin-macros@2.8.0
+├─ babel-plugin-macros@3.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/kentcdodds/babel-plugin-macros
 │  ├─ publisher: Kent C. Dodds
-│  ├─ email: kent@doddsfamily.us
-│  ├─ url: http://kentcdodds.com/
+│  ├─ email: me@kentcdodds.com
+│  ├─ url: https://kentcdodds.com
 ├─ babel-plugin-polyfill-corejs2@0.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel-polyfills
@@ -1556,9 +1494,6 @@
 ├─ babel-plugin-polyfill-regenerator@0.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/babel/babel-polyfills
-├─ babel-plugin-syntax-jsx@6.18.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/babel/babel/tree/master/packages/babel-plugin-syntax-jsx
 ├─ babel-preset-current-node-syntax@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/nicolo-ribaudo/babel-preset-current-node-syntax
@@ -1598,9 +1533,9 @@
 │  ├─ repository: https://github.com/node-base/base
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ bcgov-digital-marketplace@2.0.2
+├─ bcgov-digital-marketplace@3.1.1
 │  ├─ licenses: Apache-2.0
-│  ├─ repository:
+│  ├─ repository: https://github.com/bcgov/digital_marketplace
 │  ├─ publisher: Real Folk Inc.
 ├─ bcrypt-pbkdf@1.0.2
 │  ├─ licenses: BSD-3-Clause
@@ -1622,6 +1557,12 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
+├─ bindings@1.5.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/TooTallNate/node-bindings
+│  ├─ publisher: Nathan Rajlich
+│  ├─ email: nathan@tootallnate.net
+│  ├─ url: http://tootallnate.net
 ├─ bl@1.2.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/rvagg/bl
@@ -1639,11 +1580,6 @@
 │  ├─ publisher: Petka Antonov
 │  ├─ email: petka_antonov@hotmail.com
 │  ├─ url: http://github.com/petkaantonov/
-├─ bmp-js@0.1.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/shaozilee/bmp-js
-│  ├─ publisher: shaozilee
-│  ├─ email: shaozilee@gmail.com
 ├─ bn.js@4.12.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/indutny/bn.js
@@ -1691,6 +1627,12 @@
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: https://sindresorhus.com
 ├─ brace-expansion@1.1.11
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/juliangruber/brace-expansion
+│  ├─ publisher: Julian Gruber
+│  ├─ email: mail@juliangruber.com
+│  ├─ url: http://juliangruber.com
+├─ brace-expansion@2.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/juliangruber/brace-expansion
 │  ├─ publisher: Julian Gruber
@@ -1799,12 +1741,6 @@
 │  ├─ repository: https://github.com/brianloveswords/buffer-crc32
 │  ├─ publisher: Brian J. Brennan
 │  ├─ email: brianloveswords@gmail.com
-├─ buffer-equal@0.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/substack/node-buffer-equal
-│  ├─ publisher: James Halliday
-│  ├─ email: mail@substack.net
-│  ├─ url: http://substack.net
 ├─ buffer-fill@1.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/LinusU/buffer-fill
@@ -2178,6 +2114,11 @@
 │  ├─ repository: https://github.com/Qix-/color-string
 │  ├─ publisher: Heather Arthur
 │  ├─ email: fayearthur@gmail.com
+├─ color-string@1.9.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Qix-/color-string
+│  ├─ publisher: Heather Arthur
+│  ├─ email: fayearthur@gmail.com
 ├─ color-support@1.1.3
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/color-support
@@ -2185,6 +2126,9 @@
 │  ├─ email: i@izs.me
 │  ├─ url: http://blog.izs.me/
 ├─ color@3.2.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Qix-/color
+├─ color@4.2.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/Qix-/color
 ├─ colorette@1.1.0
@@ -2384,6 +2328,12 @@
 │  ├─ publisher: Isaac Z. Schlueter
 │  ├─ email: i@izs.me
 │  ├─ url: http://blog.izs.me/
+├─ core_d@5.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/mantoni/core_d.js
+│  ├─ publisher: Maximilian Antoni
+│  ├─ email: mail@maxantoni.de
+│  ├─ url: http://maxantoni.de/
 ├─ cors@2.8.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/expressjs/cors
@@ -2395,7 +2345,7 @@
 │  ├─ repository: https://github.com/davidtheclark/cosmiconfig
 │  ├─ publisher: David Clark
 │  ├─ email: david.dave.clark@gmail.com
-├─ cosmiconfig@6.0.0
+├─ cosmiconfig@7.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/davidtheclark/cosmiconfig
 │  ├─ publisher: David Clark
@@ -2543,11 +2493,6 @@
 ├─ cssstyle@2.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jsdom/cssstyle
-├─ csstype@2.6.19
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/frenic/csstype
-│  ├─ publisher: Fredrik Nicol
-│  ├─ email: fredrik.nicol@gmail.com
 ├─ csstype@3.0.10
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/frenic/csstype
@@ -2659,6 +2604,12 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
+├─ decompress-response@6.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/sindresorhus/decompress-response
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: https://sindresorhus.com
 ├─ dedent@0.7.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/dmnd/dedent
@@ -2761,6 +2712,11 @@
 │  ├─ repository: https://github.com/lovell/detect-libc
 │  ├─ publisher: Lovell Fuller
 │  ├─ email: npm@lovell.info
+├─ detect-libc@2.0.1
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/lovell/detect-libc
+│  ├─ publisher: Lovell Fuller
+│  ├─ email: npm@lovell.info
 ├─ detect-newline@3.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/detect-newline
@@ -2838,11 +2794,6 @@
 │  ├─ repository: https://github.com/cheeriojs/dom-renderer
 │  ├─ publisher: Felix Boehm
 │  ├─ email: me@feedic.com
-├─ dom-walk@0.1.2
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Raynos/dom-walk
-│  ├─ publisher: Raynos
-│  ├─ email: raynos2@gmail.com
 ├─ domain-browser@1.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/bevry/domain-browser
@@ -2891,10 +2842,7 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-├─ dotenv@10.0.0
-│  ├─ licenses: BSD-2-Clause
-│  ├─ repository: https://github.com/motdotla/dotenv
-├─ dotenv@6.2.0
+├─ dotenv@16.0.2
 │  ├─ licenses: BSD-2-Clause
 │  ├─ repository: https://github.com/motdotla/dotenv
 ├─ duplexer2@0.1.4
@@ -3074,7 +3022,7 @@
 ├─ eslint-scope@5.1.1
 │  ├─ licenses: BSD-2-Clause
 │  ├─ repository: https://github.com/eslint/eslint-scope
-├─ eslint-scope@7.1.0
+├─ eslint-scope@7.1.1
 │  ├─ licenses: BSD-2-Clause
 │  ├─ repository: https://github.com/eslint/eslint-scope
 ├─ eslint-utils@3.0.0
@@ -3091,7 +3039,12 @@
 │  ├─ repository: https://github.com/eslint/eslint-visitor-keys
 │  ├─ publisher: Toru Nagashima
 │  ├─ url: https://github.com/mysticatea
-├─ eslint@8.6.0
+├─ eslint-visitor-keys@3.3.0
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/eslint/eslint-visitor-keys
+│  ├─ publisher: Toru Nagashima
+│  ├─ url: https://github.com/mysticatea
+├─ eslint@8.25.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/eslint/eslint
 │  ├─ publisher: Nicholas C. Zakas
@@ -3101,7 +3054,7 @@
 │  ├─ repository: https://github.com/standard-things/esm
 │  ├─ publisher: John-David Dalton
 │  ├─ email: john.david.dalton@gmail.com
-├─ espree@9.3.0
+├─ espree@9.4.0
 │  ├─ licenses: BSD-2-Clause
 │  ├─ repository: https://github.com/eslint/espree
 │  ├─ publisher: Nicholas C. Zakas
@@ -3182,11 +3135,6 @@
 │  ├─ publisher: Kevin Mårtensson
 │  ├─ email: kevinmartensson@gmail.com
 │  ├─ url: https://github.com/kevva
-├─ exif-parser@0.1.12
-│  ├─ licenses: MIT*
-│  ├─ repository: https://github.com/bwindels/exif-parser
-│  ├─ publisher: Bruno Windels
-│  ├─ email: bruno.windels@gmail.com
 ├─ exit@0.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/cowboy/node-exit
@@ -3322,12 +3270,12 @@
 │  ├─ publisher: Martin Geisler
 │  ├─ email: martin@geisler.net
 │  ├─ url: http://geisler.net/
-├─ file-type@9.0.0
+├─ file-uri-to-path@1.0.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/sindresorhus/file-type
-│  ├─ publisher: Sindre Sorhus
-│  ├─ email: sindresorhus@gmail.com
-│  ├─ url: sindresorhus.com
+│  ├─ repository: https://github.com/TooTallNate/file-uri-to-path
+│  ├─ publisher: Nathan Rajlich
+│  ├─ email: nathan@tootallnate.net
+│  ├─ url: http://n8.io/
 ├─ filelist@1.0.2
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/mde/filelist
@@ -3502,6 +3450,14 @@
 │  ├─ publisher: Isaac Z. Schlueter
 │  ├─ email: i@izs.me
 │  ├─ url: http://blog.izs.me/
+├─ fsevents@1.2.13
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/strongloop/fsevents
+│  ├─ publisher: Philipp Dunkel
+│  ├─ email: pip@pipobscure.com
+├─ fsevents@2.3.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/fsevents/fsevents
 ├─ function-bind@1.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/Raynos/function-bind
@@ -3611,10 +3567,6 @@
 │  ├─ repository: https://github.com/arekinath/node-getpass
 │  ├─ publisher: Alex Wilson
 │  ├─ email: alex.wilson@joyent.com
-├─ gifwrap@0.9.2
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/jtlapp/gifwrap
-│  ├─ publisher: Joseph T. Lapp
 ├─ github-from-package@0.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/substack/github-from-package
@@ -3678,18 +3630,13 @@
 │  ├─ repository: https://github.com/jonschlinkert/global-prefix
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ global@4.4.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Raynos/global
-│  ├─ publisher: Raynos
-│  ├─ email: raynos2@gmail.com
 ├─ globals@11.12.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/globals
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-├─ globals@13.12.0
+├─ globals@13.17.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/globals
 │  ├─ publisher: Sindre Sorhus
@@ -3712,6 +3659,10 @@
 ├─ graceful-fs@4.2.9
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/node-graceful-fs
+├─ grapheme-splitter@1.0.4
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/orling/grapheme-splitter
+│  ├─ publisher: Orlin Georgiev
 ├─ gray-matter@2.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/gray-matter
@@ -4096,10 +4047,6 @@
 │  ├─ repository: https://github.com/novemberborn/ignore-by-default
 │  ├─ publisher: Mark Wubben
 │  ├─ url: https://novemberborn.net/
-├─ ignore@4.0.6
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/kaelzhang/node-ignore
-│  ├─ publisher: kael
 ├─ ignore@5.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/kaelzhang/node-ignore
@@ -4107,10 +4054,6 @@
 ├─ iltorb@2.4.5
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/nstepien/iltorb
-├─ image-q@1.1.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/igor-bezkrovny/image-quantization
-│  ├─ publisher: Igor Bezkrovny
 ├─ immutable@4.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/immutable-js/immutable-js
@@ -4420,11 +4363,6 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-├─ is-function@1.0.2
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/grncdr/js-is-function
-│  ├─ publisher: Stephen Sugden
-│  ├─ email: me@stephensugden.com
 ├─ is-generator-fn@2.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/is-generator-fn
@@ -4795,21 +4733,11 @@
 ├─ jest@27.4.7
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/facebook/jest
-├─ jimp@0.16.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/oliver-moran/jimp
-│  ├─ publisher: Oliver Moran
-│  ├─ email: oliver.moran@gmail.com
 ├─ jose@1.28.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/panva/jose
 │  ├─ publisher: Filip Skokan
 │  ├─ email: panva.ip@gmail.com
-├─ jpeg-js@0.4.2
-│  ├─ licenses: BSD-3-Clause
-│  ├─ repository: https://github.com/eugeneware/jpeg-js
-│  ├─ publisher: Eugene Ware
-│  ├─ email: eugene@noblesamurai.com
 ├─ jquery@3.6.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jquery/jquery
@@ -4819,6 +4747,12 @@
 │  ├─ licenses: BSD-3-Clause
 │  ├─ repository: https://github.com/dankogai/js-base64
 │  ├─ publisher: Dan Kogai
+├─ js-sdsl@4.1.5
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/js-sdsl/js-sdsl
+│  ├─ publisher: ZLY201
+│  ├─ email: 951711127@qq.com
+│  ├─ url: https://github.com/js-sdsl/js-sdsl
 ├─ js-sha256@0.9.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/emn178/js-sha256
@@ -4912,7 +4846,7 @@
 │  ├─ repository: https://github.com/json5/json5
 │  ├─ publisher: Aseem Kishore
 │  ├─ email: aseem.kishore@gmail.com
-├─ jsonc-parser@3.0.0
+├─ jsonc-parser@3.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/microsoft/node-jsonc-parser
 │  ├─ publisher: Microsoft Corporation
@@ -5084,12 +5018,6 @@
 ├─ livereload-js@2.4.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/livereload/livereload-js
-├─ load-bmfont@1.4.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Jam3/load-bmfont
-│  ├─ publisher: Matt DesLauriers
-│  ├─ email: dave.des@gmail.com
-│  ├─ url: https://github.com/mattdesl
 ├─ load-grunt-tasks@4.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/load-grunt-tasks
@@ -5318,7 +5246,7 @@
 │  ├─ repository: https://github.com/jonschlinkert/markdown-toc
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ marked@3.0.8
+├─ marked@4.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/markedjs/marked
 │  ├─ publisher: Christopher Jeffrey
@@ -5349,7 +5277,7 @@
 │  ├─ repository: https://github.com/jshttp/media-typer
 │  ├─ publisher: Douglas Christopher Wilson
 │  ├─ email: doug@somethingdoug.com
-├─ memoize-one@5.2.1
+├─ memoize-one@6.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/alexreardon/memoize-one
 │  ├─ publisher: Alex Reardon
@@ -5428,11 +5356,12 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: https://sindresorhus.com
-├─ min-document@2.19.0
+├─ mimic-response@3.1.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Raynos/min-document
-│  ├─ publisher: Raynos
-│  ├─ email: raynos2@gmail.com
+│  ├─ repository: https://github.com/sindresorhus/mimic-response
+│  ├─ publisher: Sindre Sorhus
+│  ├─ email: sindresorhus@gmail.com
+│  ├─ url: https://sindresorhus.com
 ├─ min-indent@1.0.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/thejameskyle/min-indent
@@ -5448,6 +5377,18 @@
 │  ├─ publisher: Fedor Indutny
 │  ├─ email: fedor@indutny.com
 ├─ minimatch@3.0.4
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/minimatch
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me
+├─ minimatch@3.1.2
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/isaacs/minimatch
+│  ├─ publisher: Isaac Z. Schlueter
+│  ├─ email: i@izs.me
+│  ├─ url: http://blog.izs.me
+├─ minimatch@5.1.0
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/isaacs/minimatch
 │  ├─ publisher: Isaac Z. Schlueter
@@ -5576,6 +5517,11 @@
 │  ├─ repository: https://github.com/ai/nanoid
 │  ├─ publisher: Andrey Sitnik
 │  ├─ email: andrey@sitnik.ru
+├─ nanolru@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/s3ththompson/nanolru
+│  ├─ publisher: Seth Thompson
+│  ├─ email: s3th.thompson@gmail.com
 ├─ nanomatch@1.2.13
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/micromatch/nanomatch
@@ -5603,7 +5549,14 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/lgeiger/node-abi
 │  ├─ publisher: Lukas Geiger
+├─ node-abi@3.33.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/electron/node-abi
+│  ├─ publisher: Lukas Geiger
 ├─ node-addon-api@3.2.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/nodejs/node-addon-api
+├─ node-addon-api@5.1.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/nodejs/node-addon-api
 ├─ node-fetch@2.6.7
@@ -5853,11 +5806,6 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/panva/oidc-token-hash
 │  ├─ publisher: Filip Skokan
-├─ omggif@1.0.10
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/deanm/omggif
-│  ├─ publisher: Dean McNamee
-│  ├─ email: dean@gmail.com
 ├─ on-finished@2.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jshttp/on-finished
@@ -6048,24 +5996,6 @@
 ├─ parse-asn1@5.1.6
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/crypto-browserify/parse-asn1
-├─ parse-bmfont-ascii@1.0.6
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/mattdesl/parse-bmfont-ascii
-│  ├─ publisher: Matt DesLauriers
-│  ├─ email: dave.des@gmail.com
-│  ├─ url: https://github.com/mattdesl
-├─ parse-bmfont-binary@1.0.6
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Jam3/parse-bmfont-binary
-│  ├─ publisher: Matt DesLauriers
-│  ├─ email: dave.des@gmail.com
-│  ├─ url: https://github.com/mattdesl
-├─ parse-bmfont-xml@1.1.4
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/mattdesl/parse-bmfont-xml
-│  ├─ publisher: Matt DesLauriers
-│  ├─ email: dave.des@gmail.com
-│  ├─ url: https://github.com/mattdesl
 ├─ parse-entities@1.2.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/wooorm/parse-entities
@@ -6077,11 +6007,6 @@
 │  ├─ repository: https://github.com/jonschlinkert/parse-filepath
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ parse-headers@2.0.4
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/kesla/parse-headers
-│  ├─ publisher: David Björklund
-│  ├─ email: david.bjorklund@gmail.com
 ├─ parse-json@4.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/parse-json
@@ -6261,10 +6186,6 @@
 │  ├─ repository: https://github.com/hoegaarden/pgpass
 │  ├─ publisher: Hannes Hörl
 │  ├─ email: hannes.hoerl+pgpass@snowreporter.com
-├─ phin@2.9.3
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/ethanent/phin
-│  ├─ publisher: Ethan Davis
 ├─ picocolors@0.2.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/alexeyraspopov/picocolors
@@ -6290,10 +6211,6 @@
 │  ├─ publisher: Ari Porad
 │  ├─ email: ari@ariporad.com
 │  ├─ url: http://ariporad.com
-├─ pixelmatch@4.0.2
-│  ├─ licenses: ISC
-│  ├─ repository: https://github.com/mapbox/pixelmatch
-│  ├─ publisher: Vladimir Agafonkin
 ├─ pkg-dir@4.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/pkg-dir
@@ -6306,9 +6223,6 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-├─ pngjs@3.4.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/lukeapage/pngjs2
 ├─ popper.js@1.16.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/FezVrasta/popper.js
@@ -6530,6 +6444,11 @@
 │  ├─ repository: https://github.com/prebuild/prebuild-install
 │  ├─ publisher: Mathias Buus
 │  ├─ url: @mafintosh
+├─ prebuild-install@7.1.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/prebuild/prebuild-install
+│  ├─ publisher: Mathias Buus
+│  ├─ url: @mafintosh
 ├─ prelude-ls@1.1.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/gkz/prelude-ls
@@ -6546,6 +6465,10 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
+├─ prettier@2.7.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/prettier/prettier
+│  ├─ publisher: James Long
 ├─ pretty-bytes@4.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/sindresorhus/pretty-bytes
@@ -6576,11 +6499,6 @@
 │  ├─ repository: https://github.com/shtylman/node-process
 │  ├─ publisher: Roman Shtylman
 │  ├─ email: shtylman@gmail.com
-├─ progress@2.0.3
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/visionmedia/node-progress
-│  ├─ publisher: TJ Holowaychuk
-│  ├─ email: tj@vision-media.ca
 ├─ promise-inflight@1.0.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/iarna/promise-inflight
@@ -6771,10 +6689,6 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/FormidableLabs/react-fast-compare
 │  ├─ publisher: Chris Bolin
-├─ react-input-autosize@3.0.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/JedWatson/react-input-autosize
-│  ├─ publisher: Jed Watson
 ├─ react-is@16.13.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/facebook/react
@@ -6801,11 +6715,7 @@
 │  ├─ publisher: Travis Arnold
 │  ├─ email: travis@souporserious.com
 │  ├─ url: http://souporserious.com
-├─ react-select@3.2.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/JedWatson/react-select/tree/master/packages/react-select
-│  ├─ publisher: Jed Watson
-├─ react-select@5.2.1
+├─ react-select@5.6.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/JedWatson/react-select/tree/master/packages/react-select
 │  ├─ publisher: Jed Watson
@@ -6911,6 +6821,11 @@
 │  ├─ repository: https://github.com/mathiasbynens/regenerate
 │  ├─ publisher: Mathias Bynens
 │  ├─ url: https://mathiasbynens.be/
+├─ regenerator-runtime@0.13.11
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/facebook/regenerator/tree/main/packages/runtime
+│  ├─ publisher: Ben Newman
+│  ├─ email: bn@cs.stanford.edu
 ├─ regenerator-runtime@0.13.9
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/facebook/regenerator/tree/master/packages/runtime
@@ -7227,6 +7142,10 @@
 ├─ semver@7.3.5
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/npm/node-semver
+├─ semver@7.3.8
+│  ├─ licenses: ISC
+│  ├─ repository: https://github.com/npm/node-semver
+│  ├─ publisher: GitHub Inc.
 ├─ send@0.17.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/pillarjs/send
@@ -7275,6 +7194,11 @@
 │  ├─ publisher: Dominic Tarr
 │  ├─ email: dominic.tarr@gmail.com
 │  ├─ url: dominictarr.com
+├─ sharp@0.31.3
+│  ├─ licenses: Apache-2.0
+│  ├─ repository: https://github.com/lovell/sharp
+│  ├─ publisher: Lovell Fuller
+│  ├─ email: npm@lovell.info
 ├─ shasum-object@1.0.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/goto-bus-stop/shasum-object
@@ -7316,7 +7240,7 @@
 │  ├─ publisher: James Halliday
 │  ├─ email: mail@substack.net
 │  ├─ url: http://substack.net
-├─ shiki@0.9.15
+├─ shiki@0.11.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/octref/shiki
 │  ├─ publisher: Pine Wu
@@ -7343,6 +7267,12 @@
 │  ├─ publisher: Feross Aboukhadijeh
 │  ├─ email: feross@feross.org
 │  ├─ url: http://feross.org/
+├─ simple-get@4.0.1
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/feross/simple-get
+│  ├─ publisher: Feross Aboukhadijeh
+│  ├─ email: feross@feross.org
+│  ├─ url: https://feross.org
 ├─ simple-swizzle@0.2.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/qix-/node-simple-swizzle
@@ -7696,7 +7626,7 @@
 │  ├─ publisher: Ben Briggs
 │  ├─ email: beneb.info@gmail.com
 │  ├─ url: http://beneb.info
-├─ stylis@4.0.13
+├─ stylis@4.1.3
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/thysultan/stylis.js
 │  ├─ publisher: Sultan Tarimo
@@ -7760,7 +7690,7 @@
 ├─ swagger-ui-dist@4.1.3
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/swagger-api/swagger-ui
-│  └─ noticeFile: /home/howl/clients/bcgov/digital-marketplace/node_modules/swagger-ui-dist/NOTICE
+│  └─ noticeFile: /Users/bpayne/code/digital_marketplace/node_modules/swagger-ui-dist/NOTICE
 ├─ swagger-ui-express@4.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/scottie1984/swagger-ui-express
@@ -7879,10 +7809,6 @@
 │  ├─ publisher: J. Ryan Stinnett
 │  ├─ email: jryans@gmail.com
 │  ├─ url: http://convolv.es/
-├─ timm@1.7.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/guigrpa/timm
-│  ├─ publisher: Guillermo Grau Panea
 ├─ timsort@0.3.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mziccard/node-timsort
@@ -7892,12 +7818,6 @@
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/mklabs/tiny-lr
 │  ├─ publisher: mklabs
-├─ tinycolor2@1.4.2
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/bgrins/TinyColor
-│  ├─ publisher: Brian Grinstead
-│  ├─ email: briangrinstead@gmail.com
-│  ├─ url: http://briangrinstead.com
 ├─ tmp@0.2.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/raszi/node-tmp
@@ -8122,10 +8042,14 @@
 │  ├─ publisher: James Halliday
 │  ├─ email: mail@substack.net
 │  ├─ url: http://substack.net
-├─ typedoc@0.22.10
+├─ typedoc-plugin-missing-exports@1.0.0
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Gerrit0/typedoc-plugin-missing-exports
+│  ├─ publisher: Gerrit Birkeland
+├─ typedoc@0.23.17
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/TypeStrong/TypeDoc
-├─ typescript@3.8.2
+├─ typescript@4.9.3
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/Microsoft/TypeScript
 │  ├─ publisher: Microsoft Corp.
@@ -8346,16 +8270,14 @@
 ├─ url@0.11.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/defunctzombie/node-url
+├─ use-isomorphic-layout-effect@1.1.2
+│  ├─ licenses: MIT
+│  ├─ repository: https://github.com/Andarist/use-isomorphic-layout-effect
 ├─ use@3.1.1
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/jonschlinkert/use
 │  ├─ publisher: Jon Schlinkert
 │  ├─ url: https://github.com/jonschlinkert
-├─ utif@2.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/photopea/UTIF.js
-│  ├─ publisher: photopea
-│  ├─ url: https://github.com/photopea
 ├─ util-deprecate@1.0.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/TooTallNate/util-deprecate
@@ -8392,11 +8314,9 @@
 ├─ uuid@8.3.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/uuidjs/uuid
-├─ v8-compile-cache@2.3.0
+├─ uuid@9.0.0
 │  ├─ licenses: MIT
-│  ├─ repository: https://github.com/zertosh/v8-compile-cache
-│  ├─ publisher: Andres Suarez
-│  ├─ email: zertosh@gmail.com
+│  ├─ repository: https://github.com/uuidjs/uuid
 ├─ v8-to-istanbul@8.1.1
 │  ├─ licenses: ISC
 │  ├─ repository: https://github.com/istanbuljs/v8-to-istanbul
@@ -8457,11 +8377,11 @@
 │  ├─ publisher: James Halliday
 │  ├─ email: mail@substack.net
 │  ├─ url: http://substack.net
-├─ vscode-oniguruma@1.6.1
+├─ vscode-oniguruma@1.6.2
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/microsoft/vscode-oniguruma
 │  ├─ publisher: Microsoft Corporation
-├─ vscode-textmate@5.2.0
+├─ vscode-textmate@6.0.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/microsoft/vscode-textmate
 │  ├─ publisher: Microsoft Corporation
@@ -8638,34 +8558,12 @@
 │  ├─ publisher: Sindre Sorhus
 │  ├─ email: sindresorhus@gmail.com
 │  ├─ url: sindresorhus.com
-├─ xhr@2.6.0
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/naugtur/xhr
-│  ├─ publisher: Raynos
-│  ├─ email: raynos2@gmail.com
 ├─ xml-name-validator@3.0.0
 │  ├─ licenses: Apache-2.0
 │  ├─ repository: https://github.com/jsdom/xml-name-validator
 │  ├─ publisher: Domenic Denicola
 │  ├─ email: d@domenic.me
 │  ├─ url: https://domenic.me/
-├─ xml-parse-from-string@1.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Jam3/xml-parse-from-string
-│  ├─ publisher: Matt DesLauriers
-│  ├─ email: dave.des@gmail.com
-│  ├─ url: https://github.com/mattdesl
-├─ xml2js@0.4.23
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/Leonidas-from-XIV/node-xml2js
-│  ├─ publisher: Marek Kubica
-│  ├─ email: marek@xivilization.net
-│  ├─ url: https://xivilization.net
-├─ xmlbuilder@11.0.1
-│  ├─ licenses: MIT
-│  ├─ repository: https://github.com/oozcitak/xmlbuilder-js
-│  ├─ publisher: Ozgur Ozcitak
-│  ├─ email: oozcitak@gmail.com
 ├─ xmlchars@2.2.0
 │  ├─ licenses: MIT
 │  ├─ repository: https://github.com/lddubeau/xmlchars

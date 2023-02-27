@@ -2,7 +2,6 @@ import {
   BASIC_AUTH_PASSWORD_HASH,
   BASIC_AUTH_USERNAME,
   DB_MIGRATIONS_TABLE_NAME,
-  ENV,
   getConfigErrors,
   KNEX_DEBUG,
   PG_CONFIG,
@@ -92,7 +91,7 @@ type AppRouter = Router<
   Session
 >;
 
-const logger = makeDomainLogger(consoleAdapter, "back-end", ENV);
+const logger = makeDomainLogger(consoleAdapter, "back-end");
 
 export function connectToDatabase(
   connectionConfig: string | ConnectionConfig

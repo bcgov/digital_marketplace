@@ -146,6 +146,8 @@ objects:
           imagePullPolicy: Always
           imagePullSecrets: artifacts-default-rbehd
           name: postgresql
+          securityContext:
+            allowPrivilegeEscalation: true
           ports:
           - containerPort: 8008
             protocol: TCP

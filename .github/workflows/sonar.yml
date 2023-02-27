@@ -1,16 +1,14 @@
 name: Sonar
 on:
-  # Trigger analysis when pushing in development or pull requests, and when creating
-  # a pull request.
+  # Trigger analysis when a pull request is merged.
   pull_request:
-    types: [review_requested]
     branches:
       - development
       - master
 
 jobs:
   sonarcloud:
-    if: github.actor != 'dependabot[bot]'
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
