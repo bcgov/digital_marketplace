@@ -619,6 +619,15 @@ export function setErrors(
       .update("completionDate", (s) =>
         FormField.setErrors(s, errors.completionDate || [])
       )
+      .update("maxBudget", (s) =>
+        FormField.setErrors(s, errors.maxBudget || [])
+      )
+      .update("serviceArea", (s) =>
+        FormField.setErrors(s, errors.serviceArea || [])
+      )
+      .update("targetAllocation", (s) =>
+        FormField.setErrors(s, errors.targetAllocation || [])
+      )
       .update("mandatorySkills", (s) =>
         FormField.setErrors(s, flatten(errors.mandatorySkills || []))
       )
@@ -654,7 +663,9 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("assignmentDate", (s) => FormField.validate(s))
     .update("startDate", (s) => FormField.validate(s))
     .update("completionDate", (s) => FormField.validate(s))
+    .update("maxBudget", (s) => FormField.validate(s))
     .update("serviceArea", (s) => FormField.validate(s))
+    .update("targetAllocation", (s) => FormField.validate(s))
     .update("mandatorySkills", (s) => FormField.validate(s))
     .update("optionalSkills", (s) => FormField.validate(s))
     .update("description", (s) => FormField.validate(s))
@@ -688,7 +699,9 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
     FormField.isValid(state.completionDate) &&
     FormField.isValid(state.serviceArea) &&
     FormField.isValid(state.mandatorySkills) &&
-    FormField.isValid(state.optionalSkills)
+    FormField.isValid(state.optionalSkills) &&
+    FormField.isValid(state.maxBudget) &&
+    FormField.isValid(state.targetAllocation)
   );
 }
 
