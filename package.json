@@ -13,8 +13,6 @@
     "cypress:open": "./node_modules/.bin/cypress open",
     "build": "npm run back-end:build && npm run front-end:build",
     "start": "npm run back-end:start",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
     "front-end:lint": "npx eslint -c .eslintrc.js src/front-end && echo Lint Successful\n",
     "front-end:typecheck": "npx tsc --project src/front-end/typescript --noEmit && echo Typecheck Successful\n",
     "front-end:test": "jest",
@@ -45,6 +43,8 @@
     "learn-front-end:build": "npx grunt learn-front-end-build",
     "learn-front-end:watch": "npx grunt learn-front-end-watch",
     "learn-front-end:serve": "npx grunt learn-front-end-serve",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
     "integration-tests:helper": "yarn docker:up && POSTGRES_URL=postgresql://digmkt-test:digmkt-test@localhost:5433/digmkt-test yarn migrations:latest",
     "integration-tests:run": "yarn integration-tests:helper && jest --config tests/back-end/jest.config.ts"
   },
