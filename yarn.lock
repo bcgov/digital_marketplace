@@ -3563,7 +3563,7 @@ chownr@^2.0.0:
   resolved "https://registry.yarnpkg.com/chownr/-/chownr-2.0.0.tgz#15bfbe53d2eab4cf70f18a8cd68ebe5b3cb1dece"
   integrity sha512-bIomtDF5KGpdogkLd9VspvFzk9KfpyyGlS8YFVZl7TGPBHL5snIOnxeshwVgPteQ9b4Eydl+pVbIyE1DcvCWgQ==
 
-chromedriver@*, chromedriver@latest:
+chromedriver@latest:
   version "97.0.0"
   resolved "https://registry.yarnpkg.com/chromedriver/-/chromedriver-97.0.0.tgz#7005b1a15a6456558d0fc4d5b72c98c12d1b033d"
   integrity sha512-SZ9MW+/6/Ypz20CNdRKocsmRM2AJ/YwHaWpA1Np2QVPFUbhjhus6vBtqFD+l8M5qrktLWPQSjTwIsDckNfXIRg==
@@ -7990,23 +7990,14 @@ jwk-to-pem@^2.0.0:
     elliptic "^6.5.4"
     safe-buffer "^5.0.1"
 
-keycloak-connect@*:
-  version "16.1.0"
-  resolved "https://registry.yarnpkg.com/keycloak-connect/-/keycloak-connect-16.1.0.tgz#13590d16e50cac08204214ae3bc83648500d74a0"
-  integrity sha512-1Mjm5AAFpO+FghCOFQ99xM2PYJdPhpvCCpwtIOOOEiNKK31m4BpZz70FCC6xcfQDb9euY5Zetgx+3791uvxqXg==
+keycloak-connect@*, keycloak-connect@^21.0.1:
+  version "21.0.1"
+  resolved "https://registry.yarnpkg.com/keycloak-connect/-/keycloak-connect-21.0.1.tgz#22ba0bedd131a8ca8001a8501b87fbc502c95c51"
+  integrity sha512-jCLX1sYQpMb2TYK4H1gd2XOwMLXyzMd+ict+Z7295JtFs7GZ0kfBOT7St/RY/3xjen/zd2bHBlnuUBJVZZrciQ==
   dependencies:
     jwk-to-pem "^2.0.0"
   optionalDependencies:
     chromedriver latest
-
-keycloak-connect@^8.0.0:
-  version "8.0.2"
-  resolved "https://registry.yarnpkg.com/keycloak-connect/-/keycloak-connect-8.0.2.tgz#032d79908a8908e49c91cf0ca622bc1a981f00ac"
-  integrity sha512-8IANRvcdeiO46YZvXw6jKvhNcSh0evsP1wSl95dfB4LbVk1r09bQF/Rra3Ztw2s8pXkDLugkKzTFw9WLCUkpfg==
-  dependencies:
-    jwk-to-pem "^2.0.0"
-  optionalDependencies:
-    chromedriver "*"
 
 keycloak-js@^15.0.2:
   version "15.1.1"
