@@ -52,6 +52,7 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -375,6 +376,14 @@ function pageToViewPageProps(
         PageProposalSWUExportAll.component,
         (state) => state.pages.proposalSWUExportAll,
         (value) => ({ tag: "pageProposalSWUExportAll", value })
+      );
+
+    case "proposalTWUCreate":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUCreate.component,
+        (state) => state.pages.proposalTWUCreate,
+        (value) => ({ tag: "pageProposalTWUCreate", value })
       );
 
     case "proposalList":

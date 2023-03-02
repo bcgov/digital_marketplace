@@ -49,6 +49,7 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -335,6 +336,17 @@ function initPage(
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalSWUExportAll", value);
+        }
+      });
+    case "proposalTWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUCreate.component.init,
+        pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUCreate", value);
         }
       });
     case "proposalList":
@@ -1121,6 +1133,24 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "proposalSWUExportAll"],
         pageUpdate: PageProposalSWUExportAll.component.update,
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUCreate":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalTWUCreate.State,
+        PageProposalTWUCreate.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUCreate" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageUpdate: PageProposalTWUCreate.component.update,
+        pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageProposalList":

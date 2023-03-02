@@ -26,7 +26,7 @@ export function replaceState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
  * An array of route objects defined by an initial path, tag and value
  *
  * @typeParam Route - new routes below must be defined explicitly as an ADT in `type Route`
- * @see Route src/front-end/typescript/lib/app/types.ts
+ * @see {@link Route} in `src/front-end/typescript/lib/app/types.ts`
  */
 const router: router_.Router<Route> = {
   routes: [
@@ -266,6 +266,19 @@ const router: router_.Router<Route> = {
           value: {
             opportunityId: params.opportunityId || "",
             tab: TWUOpportunityEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/create"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUCreate",
+          value: {
+            opportunityId: params.opportunityId || ""
           }
         };
       }
@@ -648,6 +661,10 @@ const router: router_.Router<Route> = {
       case "opportunityTWUView":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
+      case "proposalTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
         );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");
