@@ -1,4 +1,6 @@
+import { TWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
 import {
+  getAlertsValid,
   getActionsValid,
   getMetadataValid,
   getModalValid,
@@ -28,8 +30,8 @@ import Link, {
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
 import React from "react";
 import {
-  TWUOpportunity,
-  isTWUOpportunityAcceptingProposals
+  isTWUOpportunityAcceptingProposals,
+  TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   CreateTWUProposalStatus,
@@ -37,26 +39,26 @@ import {
   TWUProposalSlim
 } from "shared/lib/resources/proposal/team-with-us";
 import { User, UserType } from "shared/lib/resources/user";
-import { adt, ADT } from "shared/lib/types";
+import { ADT, adt, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-import { AffiliationSlim } from "shared/lib/resources/affiliation";
+import { OrganizationSlim } from "shared/lib/resources/organization";
 
 type ModalId = "submit" | "cancel";
 
-export type State = Validation<Immutable<ValidState>, null>;
-
-export interface ValidState {
+interface ValidState {
   sessionUser: User;
   showModal: ModalId | null;
-  opportunity: TWUOpportunity | null;
-  form: Immutable<Form.State> | null;
   submitLoading: number;
   saveDraftLoading: number;
+  opportunity: TWUOpportunity | null;
+  form: Immutable<Form.State> | null;
   submitTerms: Immutable<SubmitProposalTerms.State>;
 }
 
+export type State = Validation<Immutable<ValidState>, null>;
+
 type InnerMsg =
-  | ADT<"onInitResponse", [TWUOpportunity, AffiliationSlim[]]>
+  | ADT<"onInitResponse", [TWUOpportunity, OrganizationSlim[], string]>
   | ADT<"hideModal">
   | ADT<"showModal", ModalId>
   | ADT<"form", Form.Msg>
@@ -70,7 +72,7 @@ type InnerMsg =
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface RouteParams {
-  opportunityId: string;
+  opportunityId: Id;
 }
 
 const init: component_.page.Init<
@@ -81,7 +83,7 @@ const init: component_.page.Init<
   Route
 > = isUserType({
   userType: [UserType.Vendor],
-  success({ routePath, shared, routeParams }) {
+  success({ routeParams, shared, routePath }) {
     const { opportunityId } = routeParams;
     const [submitTermsState, submitTermsCmds] = SubmitProposalTerms.init({
       proposal: {
@@ -116,19 +118,21 @@ const init: component_.page.Init<
           adt("submitTerms", msg)
         ),
         // Make necessary network requests
-        component_.cmd.join3(
+        component_.cmd.join4(
           api.proposals.twu.readExistingProposalForOpportunity(
             opportunityId,
             (response) => response
           ) as component_.Cmd<TWUProposalSlim | undefined>,
-          api.opportunities.twu.readOne(
-            opportunityId,
-            (response) => response
-          ) as component_.Cmd<api.ResponseValidation<TWUOpportunity, string[]>>,
-          api.affiliations.readMany((response) => response) as component_.Cmd<
-            api.ResponseValidation<AffiliationSlim[], string[]>
-          >,
-          (existingProposal, opportunityResponse, affiliationsResponse) => {
+          api.opportunities.twu.readOne(opportunityId, (response) =>
+            api.isValid(response) ? response.value : null
+          ) as component_.Cmd<TWUOpportunity | null>,
+          api.organizations.owned.readMany((response) =>
+            api.getValidValue(response, [])
+          ) as component_.Cmd<OrganizationSlim[]>,
+          api.content.readOne(TWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+            api.isValid(response) ? response.value.body : ""
+          ) as component_.Cmd<string>,
+          (existingProposal, opportunity, orgs, evalBody) => {
             // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
             if (existingProposal)
               return component_.global.replaceRouteMsg(
@@ -138,19 +142,17 @@ const init: component_.page.Init<
                 })
               );
             // Redirect to 404 page if there is a server error when fetching opportunity.
-            if (!api.isValid(opportunityResponse))
+            if (!opportunity || !evalBody)
               return component_.global.replaceRouteMsg(
                 adt("notFound" as const, { path: routePath })
               );
-            const opportunity = opportunityResponse.value as TWUOpportunity;
             // If the opportunity is not accepting proposals, redirect to opportunity page.
             if (!isTWUOpportunityAcceptingProposals(opportunity))
               return component_.global.replaceRouteMsg(
                 adt("opportunityTWUView" as const, { opportunityId })
               );
             // Otherwise, everything looks good, continue with initialization.
-            const affiliations = api.getValidValue(affiliationsResponse, []);
-            return adt("onInitResponse", [opportunity, affiliations] as const);
+            return adt("onInitResponse", [opportunity, orgs, evalBody]) as Msg;
           }
         )
       ] as component_.Cmd<Msg>[]
@@ -184,34 +186,30 @@ function hideModal(state: Immutable<ValidState>): Immutable<ValidState> {
     .update("submitTerms", (s) => SubmitProposalTerms.setAppCheckbox(s, false));
 }
 
-const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
+const update: component_.base.Update<State, Msg> = updateValid(
   ({ state, msg }) => {
     switch (msg.tag) {
       case "onInitResponse": {
-        const [opportunity, affiliations] = msg.value;
+        const [opportunity, organizations, evaluationContent] = msg.value;
         const [formState, formCmds] = Form.init({
           viewerUser: state.sessionUser,
           opportunity,
-          affiliations,
-          canRemoveExistingAttachments: true //moot
+          organizations,
+          evaluationContent
         });
         return [
           state
-            .set("form", immutable(formState))
-            .set("opportunity", opportunity),
+            .set("opportunity", opportunity)
+            .set("form", immutable(formState)),
           [
-            ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg)),
+            ...component_.cmd.mapMany(
+              formCmds,
+              (msg) => adt("form", msg) as Msg
+            ),
             component_.cmd.dispatch(component_.page.readyMsg())
-          ] as component_.Cmd<Msg>[]
+          ]
         ];
       }
-
-      case "showModal":
-        return [state.set("showModal", msg.value), []];
-
-      case "hideModal":
-        return [hideModal(state), []];
-
       case "saveDraft": {
         const form = state.form;
         if (!form) return [state, []];
@@ -238,14 +236,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const result = msg.value;
         switch (result.tag) {
           case "valid": {
-            const [newFormState, persistCmds, proposal] = result.value;
+            const [newFormState, proposal] = result.value;
             return [
               state.set("form", newFormState),
               [
-                ...component_.cmd.mapMany(
-                  persistCmds,
-                  (msg) => adt("form", msg) as Msg
-                ),
                 component_.cmd.dispatch(
                   component_.global.newRouteMsg(
                     adt("proposalTWUEdit" as const, {
@@ -332,13 +326,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const result = msg.value;
         switch (result.tag) {
           case "valid": {
-            const [newFormState, persistCmds, proposal] = result.value;
+            const [newFormState, proposal] = result.value;
             return [
               state.set("form", newFormState),
               [
-                ...component_.cmd.mapMany(persistCmds, (msg) =>
-                  adt("form", msg)
-                ),
                 component_.cmd.dispatch(
                   component_.global.newRouteMsg(
                     adt("proposalTWUEdit" as const, {
@@ -370,14 +361,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         }
       }
 
-      case "submitTerms":
-        return component_.base.updateChild({
-          state,
-          childStatePath: ["submitTerms"],
-          childUpdate: SubmitProposalTerms.update,
-          childMsg: msg.value,
-          mapChildMsg: (value) => adt("submitTerms", value)
-        });
+      case "showModal":
+        return [state.set("showModal", msg.value), []];
+
+      case "hideModal":
+        return [hideModal(state), []];
 
       case "form":
         return component_.base.updateChild({
@@ -386,6 +374,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childUpdate: Form.update,
           childMsg: msg.value,
           mapChildMsg: (value) => adt("form", value)
+        });
+
+      case "submitTerms":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["submitTerms"],
+          childUpdate: SubmitProposalTerms.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("submitTerms", value)
         });
 
       default:
@@ -398,16 +395,12 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
     const form = state.form;
     if (!form) return null;
-    const isSubmitLoading = state.submitLoading > 0;
-    const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isLoading = isSubmitLoading || isSaveDraftLoading;
     return (
       <Form.view
         state={form}
-        dispatch={component_.base.mapDispatch(dispatch, (value) =>
-          adt("form" as const, value)
+        dispatch={component_.base.mapDispatch(dispatch, (v) =>
+          adt("form" as const, v)
         )}
-        disabled={isLoading}
       />
     );
   }
@@ -428,7 +421,7 @@ export const component: component_.page.Component<
     size: "large",
     color: "c-sidebar-instructional-bg",
     view: makeInstructionalSidebar<ValidState, Msg>({
-      getTitle: () => "Create a Team With Us Proposal",
+      getTitle: () => "Create a Sprint With Us Proposal",
       getDescription: (state) => {
         const opportunity = state.opportunity;
         if (!opportunity) return null;
@@ -437,15 +430,17 @@ export const component: component_.page.Component<
             <Link
               newTab
               dest={routeDest(
-                adt("opportunityTWUView", { opportunityId: opportunity.id })
+                adt("opportunityTWUView", {
+                  opportunityId: opportunity.id
+                })
               )}
               className="mb-3">
               {opportunity.title}
             </Link>
             <p className="mb-0">
               Use the form provided to create your proposal for this{" "}
-              <em>Team With Us</em> opportunity. You can either save a draft of
-              your proposal to complete the form at a later time, or you can
+              <em>Sprint With Us</em> opportunity. You can either save a draft
+              of your proposal to complete the form at a later time, or you can
               complete the form now to submit your proposal immediately.
             </p>
           </div>
@@ -458,15 +453,53 @@ export const component: component_.page.Component<
             dest={routeDest(adt("contentView", "team-with-us-proposal-guide"))}>
             Read the guide
           </Link>{" "}
-          to learn how to create and manage a <em>Team With Us</em> proposal.
+          to learn how to create and manage a <em>Sprint With Us</em> proposal.
         </span>
       )
     })
   }),
 
-  getModal: getModalValid<ValidState, Msg>((state) => {
+  getAlerts: getAlertsValid<ValidState, Msg>((state) => {
+    return state.form
+      ? Form.getAlerts(state.form)
+      : component_.page.alerts.empty();
+  }),
+
+  getActions: getActionsValid(({ state, dispatch }) => {
+    const isSubmitLoading = state.submitLoading > 0;
+    const isSaveDraftLoading = state.saveDraftLoading > 0;
+    const isLoading = isSubmitLoading || isSaveDraftLoading;
+    const isValid = !!state.form && Form.isValid(state.form);
+    return component_.page.actions.links([
+      {
+        children: "Submit",
+        symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+        button: true,
+        loading: isSubmitLoading,
+        disabled: isLoading || !isValid,
+        color: "primary",
+        onClick: () => dispatch(adt("showModal", "submit" as const))
+      },
+      {
+        children: "Save Draft",
+        symbol_: leftPlacement(iconLinkSymbol("save")),
+        loading: isSaveDraftLoading,
+        disabled: isLoading,
+        button: true,
+        color: "success",
+        onClick: () => dispatch(adt("saveDraft"))
+      },
+      {
+        children: "Cancel",
+        color: "c-nav-fg-alt",
+        disabled: isLoading,
+        onClick: () => dispatch(adt("showModal", "cancel" as const))
+      }
+    ]);
+  }),
+
+  getModal: getModalValid((state) => {
     const opportunity = state.opportunity;
-    if (!opportunity) return component_.page.modal.hide();
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
       SubmitProposalTerms.getAppCheckbox(state.submitTerms);
@@ -537,45 +570,10 @@ export const component: component_.page.Component<
   }),
 
   getMetadata: getMetadataValid((state) => {
-    return makePageMetadata(
-      state.opportunity
-        ? `Create Team With Us Proposal — ${state.opportunity.title}`
-        : "Create Team With Us Proposal"
-    );
-  }, makePageMetadata("Create Team With Us Proposal")),
-
-  getActions: getActionsValid(({ state, dispatch }) => {
-    const form = state.form;
-    if (!form) return component_.page.actions.none();
-    const isSubmitLoading = state.submitLoading > 0;
-    const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isLoading = isSubmitLoading || isSaveDraftLoading;
-    const isValid = () => Form.isValid(form);
-    return component_.page.actions.links([
-      {
-        children: "Submit",
-        symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
-        button: true,
-        loading: isSubmitLoading,
-        disabled: isLoading || !isValid(),
-        color: "primary",
-        onClick: () => dispatch(adt("showModal", "submit" as const))
-      },
-      {
-        children: "Save Draft",
-        symbol_: leftPlacement(iconLinkSymbol("save")),
-        loading: isSaveDraftLoading,
-        disabled: isLoading,
-        button: true,
-        color: "success",
-        onClick: () => dispatch(adt("saveDraft"))
-      },
-      {
-        children: "Cancel",
-        color: "c-nav-fg-alt",
-        disabled: isLoading,
-        onClick: () => dispatch(adt("showModal", "cancel" as const))
-      }
-    ]);
-  })
+    return state.opportunity
+      ? makePageMetadata(
+          `Create Team With Us Proposal — ${state.opportunity.title}`
+        )
+      : makePageMetadata("Create Team With Us Proposal");
+  }, makePageMetadata("Create Team With Us Proposal"))
 };

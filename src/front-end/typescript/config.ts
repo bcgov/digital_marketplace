@@ -46,6 +46,9 @@ export const SWU_OPPORTUNITY_SCOPE_CONTENT_ID =
 export const TWU_OPPORTUNITY_SCOPE_CONTENT_ID =
   "team-with-us-opportunity-scope";
 
+export const TWU_PROPOSAL_EVALUATION_CONTENT_ID =
+  "team-with-us-proposal-evaluation";
+
 export const SWU_QUALIFICATION_TERMS_ID = "sprint-with-us-terms-and-conditions";
 
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;

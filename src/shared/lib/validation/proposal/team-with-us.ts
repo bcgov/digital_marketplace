@@ -1,22 +1,31 @@
+import { getNumber, getString } from "shared/lib";
 import {
-  // CreateIndividualProponentRequestBody,
-  // CreateIndividualProponentValidationErrors,
+  MAX_RESOURCE_QUESTION_WORD_LIMIT,
+  TWUResourceQuestion
+} from "shared/lib/resources/opportunity/team-with-us";
+import {
+  CreateTWUProposalStatus,
+  CreateTWUProposalResourceQuestionResponseBody,
+  CreateTWUProposalResourceQuestionResponseValidationErrors,
+  parseTWUProposalStatus,
   TWUProposalStatus,
-  parseTWUProposalStatus
+  UpdateResourceQuestionScoreBody,
+  UpdateResourceQuestionScoreValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
 import {
-  // allValid,
-  // getInvalidValue,
+  ArrayValidation,
+  getInvalidValue,
   invalid,
-  mapValid,
-  optional,
+  isInvalid,
   valid,
-  validateEmail,
+  validateArrayCustom,
   validateGenericString,
+  validateGenericStringWords,
+  validateNumber,
   validateNumberWithPrecision,
-  validatePhoneNumber,
   Validation
 } from "shared/lib/validation";
+import { isArray } from "util";
 
 export function validateTWUProposalStatus(
   raw: string,
@@ -24,7 +33,7 @@ export function validateTWUProposalStatus(
 ): Validation<TWUProposalStatus> {
   const parsed = parseTWUProposalStatus(raw);
   if (!parsed) {
-    return invalid([`"${raw}" is not a valid Team With Us proposal status.`]);
+    return invalid([`"${raw}" is not a valid SprintWithUs proposal status.`]);
   }
   if (!isOneOf.includes(parsed)) {
     return invalid([`"${raw}" is not one of: ${isOneOf.join(", ")}`]);
@@ -32,12 +41,103 @@ export function validateTWUProposalStatus(
   return valid(parsed);
 }
 
-export function validateProposalText(raw: string): Validation<string> {
-  return validateGenericString(raw, "Proposal Text", 1, 10000);
+export function validateCreateTWUProposalStatus(
+  raw: string
+): Validation<CreateTWUProposalStatus> {
+  return validateTWUProposalStatus(raw, [
+    TWUProposalStatus.Draft,
+    TWUProposalStatus.Submitted
+  ]) as Validation<CreateTWUProposalStatus>;
 }
 
-export function validateAdditionalComments(raw: string): Validation<string> {
-  return validateGenericString(raw, "Additional Comments", 0, 10000);
+export function validateTWUProposalResourceQuestionResponseResponse(
+  raw: string,
+  wordLimit = MAX_RESOURCE_QUESTION_WORD_LIMIT
+): Validation<string> {
+  return validateGenericStringWords(raw, "Response", 1, wordLimit);
+}
+
+export function validateTWUProposalResourceQuestionResponseOrder(
+  raw: number,
+  opportunityResourceQuestions: TWUResourceQuestion[]
+): Validation<number> {
+  return validateNumber(raw, 0, opportunityResourceQuestions.length, "Order");
+}
+
+export function validateTWUProposalResourceQuestionResponse(
+  raw: any,
+  opportunityResourceQuestions: TWUResourceQuestion[]
+): Validation<
+  CreateTWUProposalResourceQuestionResponseBody,
+  CreateTWUProposalResourceQuestionResponseValidationErrors
+> {
+  const validatedOrder = validateTWUProposalResourceQuestionResponseOrder(
+    getNumber(raw, "order"),
+    opportunityResourceQuestions
+  );
+  if (isInvalid(validatedOrder)) {
+    return invalid({
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+  const wordLimit =
+    opportunityResourceQuestions.find((q) => q.order === validatedOrder.value)
+      ?.wordLimit || null;
+  if (!wordLimit) {
+    return invalid({
+      order: ["No matching opportunity question."]
+    });
+  }
+  const validatedResponse = validateTWUProposalResourceQuestionResponseResponse(
+    getString(raw, "response"),
+    wordLimit
+  );
+  if (isInvalid(validatedResponse)) {
+    return invalid({
+      response: getInvalidValue(validatedResponse, undefined)
+    });
+  } else {
+    return valid({
+      response: validatedResponse.value,
+      order: validatedOrder.value
+    } as CreateTWUProposalResourceQuestionResponseBody);
+  }
+}
+
+export function validateTWUProposalResourceQuestionResponses(
+  raw: any,
+  opportunityResourceQuestions: TWUResourceQuestion[]
+): ArrayValidation<
+  CreateTWUProposalResourceQuestionResponseBody,
+  CreateTWUProposalResourceQuestionResponseValidationErrors
+> {
+  if (!isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of responses."] }
+    ]);
+  }
+  return validateArrayCustom(
+    raw,
+    (v) =>
+      validateTWUProposalResourceQuestionResponse(
+        v,
+        opportunityResourceQuestions
+      ),
+    {}
+  );
+}
+
+export function validateTWUProposalProposedCost(
+  implementationCost: number,
+  opportunityBudget: number
+): Validation<number> {
+  const totalProposedCost = implementationCost;
+  if (totalProposedCost > opportunityBudget) {
+    return invalid([
+      "The proposed cost exceeds the maximum budget for this opportunity."
+    ]);
+  }
+  return valid(totalProposedCost);
 }
 
 export function validateNote(raw: string): Validation<string> {
@@ -50,136 +150,91 @@ export function validateDisqualificationReason(
   return validateGenericString(raw, "Disqualification Reason", 1, 5000);
 }
 
-export function validateScore(raw: number): Validation<number> {
-  return validateNumberWithPrecision(raw, 0, 100, 2, "score", "a", false);
-}
+export function validateResourceQuestionScores(
+  raw: any,
+  opportunityResourceQuestions: TWUResourceQuestion[]
+): ArrayValidation<
+  UpdateResourceQuestionScoreBody,
+  UpdateResourceQuestionScoreValidationErrors
+> {
+  if (!isArray(raw)) {
+    return invalid([{ parseFailure: ["Please provide an array of scores."] }]);
+  }
+  if (raw.length !== opportunityResourceQuestions.length) {
+    return invalid([
+      {
+        parseFailure: [
+          "Please provide the correct number of team question scores."
+        ]
+      }
+    ]);
+  }
 
-export function validateIndividualProponentLegalName(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Legal Name", 1);
-}
-
-export function validateIndividualProponentEmail(
-  raw: string
-): Validation<string> {
-  return validateEmail(raw);
-}
-
-export function validateIndividualProponentPhone(
-  raw: string | undefined
-): Validation<string> {
-  return mapValid(
-    optional(raw, (v) => validatePhoneNumber(v)),
-    (w) => w || ""
+  return validateArrayCustom(
+    raw,
+    (v) => validateResourceQuestionScore(v, opportunityResourceQuestions),
+    {}
   );
 }
 
-export function validateIndividualProponentStreet1(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Street Address", 1);
+export function validateResourceQuestionScore(
+  raw: any,
+  opportunityResourceQuestions: TWUResourceQuestion[]
+): Validation<
+  UpdateResourceQuestionScoreBody,
+  UpdateResourceQuestionScoreValidationErrors
+> {
+  const validatedOrder = validateResourceQuestionScoreOrder(
+    getNumber(raw, "order"),
+    opportunityResourceQuestions.length
+  );
+  if (isInvalid(validatedOrder)) {
+    return invalid({
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+  const maxScore =
+    opportunityResourceQuestions.find((q) => q.order === validatedOrder.value)
+      ?.score || null;
+  if (!maxScore) {
+    return invalid({
+      order: ["No matching opportunity question."]
+    });
+  }
+  const validatedScore = validateResourceQuestionScoreScore(
+    getNumber(raw, "score", 0, false),
+    maxScore
+  );
+  if (isInvalid(validatedScore)) {
+    return invalid({
+      score: getInvalidValue(validatedScore, undefined)
+    });
+  } else {
+    return valid({
+      score: validatedScore.value,
+      order: validatedOrder.value
+    });
+  }
 }
 
-export function validateIndividualProponentStreet2(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Street Address", 0);
+export function validateResourceQuestionScoreOrder(
+  raw: number,
+  numOpportunityQuestions: number
+): Validation<number> {
+  return validateNumber(raw, 0, numOpportunityQuestions, "Order");
 }
 
-export function validateIndividualProponentCity(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "City", 1);
+export function validateResourceQuestionScoreScore(
+  raw: number,
+  maxScore: number
+): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, maxScore, 2, "Score");
 }
 
-export function validateIndividualProponentRegion(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Province/State", 1);
+export function validateCodeChallengeScore(raw: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, 100, 2, "Code Challenge Score");
 }
 
-export function validateIndividualProponentMailCode(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Postal/Zip Code", 1);
+export function validateTeamScenarioScore(raw: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, 100, 2, "Team Scenario Score");
 }
-
-export function validateIndividualProponentCountry(
-  raw: string
-): Validation<string> {
-  return validateGenericString(raw, "Country", 1);
-}
-
-// export function validateIndividualProponent(
-//   raw: any
-// ): Validation<
-//   CreateIndividualProponentRequestBody,
-//   CreateIndividualProponentValidationErrors
-// > {
-//   const validatedLegalName = validateIndividualProponentLegalName(
-//     getString(raw, "legalName")
-//   );
-//   const validatedEmail = validateIndividualProponentEmail(
-//     getString(raw, "email")
-//   );
-//   const validatedPhone = optional(
-//     getString(raw, "phone"),
-//     validateIndividualProponentPhone
-//   );
-//   const validatedStreet1 = validateIndividualProponentStreet1(
-//     getString(raw, "street1")
-//   );
-//   const validatedStreet2 = optional(
-//     getString(raw, "street2"),
-//     validateIndividualProponentStreet2
-//   );
-//   const validatedCity = validateIndividualProponentCity(getString(raw, "city"));
-//   const validatedRegion = validateIndividualProponentRegion(
-//     getString(raw, "region")
-//   );
-//   const validatedMailCode = validateIndividualProponentMailCode(
-//     getString(raw, "mailCode")
-//   );
-//   const validatedCountry = validateIndividualProponentCountry(
-//     getString(raw, "country")
-//   );
-//
-//   if (
-//     allValid([
-//       validatedLegalName,
-//       validatedEmail,
-//       validatedPhone,
-//       validatedStreet1,
-//       validatedStreet2,
-//       validatedCity,
-//       validatedRegion,
-//       validatedMailCode,
-//       validatedCountry
-//     ])
-//   ) {
-//     return valid({
-//       legalName: validatedLegalName.value,
-//       email: validatedEmail.value,
-//       phone: validatedPhone.value,
-//       street1: validatedStreet1.value,
-//       street2: validatedStreet2.value,
-//       city: validatedCity.value,
-//       region: validatedRegion.value,
-//       mailCode: validatedMailCode.value,
-//       country: validatedCountry.value
-//     } as CreateIndividualProponentRequestBody);
-//   } else {
-//     return invalid({
-//       legalName: getInvalidValue(validatedLegalName, undefined),
-//       email: getInvalidValue(validatedEmail, undefined),
-//       phone: getInvalidValue(validatedPhone, undefined),
-//       street1: getInvalidValue(validatedStreet1, undefined),
-//       street2: getInvalidValue(validatedStreet2, undefined),
-//       city: getInvalidValue(validatedCity, undefined),
-//       region: getInvalidValue(validatedRegion, undefined),
-//       mailCode: getInvalidValue(validatedMailCode, undefined),
-//       country: getInvalidValue(validatedCountry, undefined)
-//     });
-//   }
-// }

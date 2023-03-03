@@ -1,9 +1,11 @@
-import * as Attachments from "front-end/lib/components/attachments";
+import {
+  DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH,
+  EMPTY_STRING
+} from "front-end/config";
+import { fileBlobPath } from "front-end/lib";
 import * as FormField from "front-end/lib/components/form-field";
-import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
-import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import * as NumberField from "front-end/lib/components/form-field/number";
 import * as Select from "front-end/lib/components/form-field/select";
-import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
   immutable,
@@ -11,236 +13,140 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import Link, { routeDest } from "front-end/lib/views/link";
+import * as ResourceQuestions from "front-end/lib/pages/proposal/team-with-us/lib/components/resource-questions";
+import Accordion from "front-end/lib/views/accordion";
+import Link, {
+  imageLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
+import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
+import { find } from "lodash";
 import React from "react";
-import { Col, Row } from "reactstrap";
-import { compareStrings, getString } from "shared/lib";
+import { Alert, Col, Row } from "reactstrap";
+import { formatAmount } from "shared/lib";
 import {
-  AffiliationSlim,
-  MembershipType
-} from "shared/lib/resources/affiliation";
-import { FileUploadMetadata } from "shared/lib/resources/file";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+  isTWUOpportunityAcceptingProposals,
+  TWUOpportunity
+} from "shared/lib/resources/opportunity/team-with-us";
 import {
-  createBlankIndividualProponent,
-  CreateTWUProposalStatus,
-  UpdateValidationErrors,
-  CreateProponentRequestBody,
+  // doesOrganizationMeetTWUQualification,
+  OrganizationSlim
+} from "shared/lib/resources/organization";
+import {
   CreateRequestBody,
+  CreateTWUProposalResourceQuestionResponseBody,
+  CreateTWUProposalStatus,
   CreateValidationErrors,
   TWUProposal,
   UpdateEditValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
-import { isVendor, User } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import {
-  isValid as isValid_,
-  invalid,
-  valid,
-  Validation
-} from "shared/lib/validation";
+import { invalid, valid, Validation } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 
-type ProponentType = "individual" | "organization";
-
-const ProponentTypeRadioGroup = RadioGroup.makeComponent<ProponentType>();
-
-export type TabId = "Proponent" | "Proposal" | "Attachments";
+export type TabId =
+  | "Evaluation"
+  | "Organization"
+  | "Pricing"
+  | "Questions"
+  | "Review Proposal";
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
-const newAttachmentMetadata: FileUploadMetadata = [];
-
-export interface State {
-  opportunity: TWUOpportunity;
-  tabbedForm: Immutable<TabbedForm.State<TabId>>;
-  viewerUser: User;
-  // Proponent Tab
-  proponentType: Immutable<RadioGroup.State<ProponentType>>;
-  // Individual
-  legalName: Immutable<ShortText.State>;
-  email: Immutable<ShortText.State>;
-  phone: Immutable<ShortText.State>;
-  street1: Immutable<ShortText.State>;
-  street2: Immutable<ShortText.State>;
-  city: Immutable<ShortText.State>;
-  region: Immutable<ShortText.State>;
-  mailCode: Immutable<ShortText.State>;
-  country: Immutable<ShortText.State>;
-  // Organziation
-  organization: Immutable<Select.State>;
-  // Proposal Tab
-  showEvaluationCriteria: boolean;
-  proposalText: Immutable<RichMarkdownEditor.State>;
-  additionalComments: Immutable<RichMarkdownEditor.State>;
-  // Attachments tab
-  attachments: Immutable<Attachments.State>;
-}
-
-export type Msg =
-  | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
-  // Proponent Tab
-  | ADT<"proponentType", RadioGroup.Msg<ProponentType>>
-  // Individual Proponent
-  | ADT<"legalName", ShortText.Msg>
-  | ADT<"email", ShortText.Msg>
-  | ADT<"phone", ShortText.Msg>
-  | ADT<"street1", ShortText.Msg>
-  | ADT<"street2", ShortText.Msg>
-  | ADT<"city", ShortText.Msg>
-  | ADT<"region", ShortText.Msg>
-  | ADT<"mailCode", ShortText.Msg>
-  | ADT<"country", ShortText.Msg>
-  // Organization Proponent
-  | ADT<"organization", Select.Msg>
-  // Proposal Tab
-  | ADT<"toggleEvaluationCriteria">
-  | ADT<"proposalText", RichMarkdownEditor.Msg>
-  | ADT<"additionalComments", RichMarkdownEditor.Msg>
-  // Attachments tab
-  | ADT<"attachments", Attachments.Msg>;
-
 export interface Params {
-  opportunity: TWUOpportunity;
   viewerUser: User;
-  canRemoveExistingAttachments: boolean;
+  opportunity: TWUOpportunity;
+  organizations: OrganizationSlim[];
+  evaluationContent: string;
   proposal?: TWUProposal;
   activeTab?: TabId;
-  affiliations: AffiliationSlim[];
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-const DEFAULT_ACTIVE_TAB: TabId = "Proponent";
+export interface State
+  extends Pick<
+    Params,
+    "viewerUser" | "opportunity" | "evaluationContent" | "organizations"
+  > {
+  proposal: TWUProposal | null;
+  tabbedForm: Immutable<TabbedForm.State<TabId>>;
+  viewerUser: User;
+  // Team Tab
+  organization: Immutable<Select.State>;
+  // Pricing Tab
+  totalCost: Immutable<NumberField.State>;
+  // Questions Tab
+  resourceQuestions: Immutable<ResourceQuestions.State>;
+  // Review Proposal Tab
+  openReviewResourceQuestionResponseAccordions: Set<number>;
+}
 
-function getProponent(
-  proposal: TWUProposal | undefined,
-  proponentType: TWUProposal["proponent"]["tag"],
-  k: string,
-  fallback = ""
-): string {
-  if (proposal && proponentType === proposal.proponent.tag) {
-    return getString(proposal.proponent.value, k, fallback);
+export type Msg =
+  | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
+  // Organization Tab
+  | ADT<"organization", Select.Msg>
+  // Pricing Tab
+  | ADT<"totalCost", NumberField.Msg>
+  // Questions Tab
+  | ADT<"resourceQuestions", ResourceQuestions.Msg>
+  // Review Proposal Tab
+  | ADT<"toggleReviewInceptionPhaseAccordion">
+  | ADT<"toggleReviewPrototypePhaseAccordion">
+  | ADT<"toggleReviewImplementationPhaseAccordion">
+  | ADT<"toggleReviewResourceQuestionResponseAccordion", number>;
+
+const DEFAULT_ACTIVE_TAB: TabId = "Evaluation";
+
+function isSelectedOrgQualified(
+  orgId: Id,
+  opportunity: TWUOpportunity,
+  organizations: OrganizationSlim[]
+): [boolean, OrganizationSlim?] {
+  if (!isTWUOpportunityAcceptingProposals(opportunity)) {
+    return [true];
   }
-  return fallback;
+  const org = find(organizations, ({ id }) => id === orgId);
+  return [
+    // TODO: add TWU qualification check when ready
+    // !org || !doesOrganizationMeetTWUQualification(org) ? false : true,
+    true,
+    org
+  ];
 }
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,
-  canRemoveExistingAttachments,
   opportunity,
+  organizations,
+  evaluationContent,
   proposal,
-  affiliations,
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
-  const selectedOrganizationOption: Select.Option | null = (() => {
-    if (proposal?.proponent.tag !== "organization") {
-      return null;
-    }
-    return {
-      value: proposal.proponent.value.id,
-      label: proposal.proponent.value.legalName
-    };
-  })();
+  const organizationOptions = organizations
+    // TODO: add TWU qualification check when ready
+    // .filter((o) => doesOrganizationMeetTWUQualification(o))
+    .map(({ id, legalName }) => ({ label: legalName, value: id }));
+  const implementationCost = proposal?.proposedCost ? proposal.proposedCost : 0;
+  const selectedOrganizationOption = proposal?.organization
+    ? {
+        label: proposal.organization.legalName,
+        value: proposal.organization.id
+      }
+    : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
-    tabs: ["Proponent", "Proposal", "Attachments"],
+    tabs: [
+      "Evaluation",
+      "Organization",
+      "Pricing",
+      "Questions",
+      "Review Proposal"
+    ],
     activeTab
-  });
-  const [proponentTypeState, proponentTypeCmds] = ProponentTypeRadioGroup.init({
-    errors: [],
-    validate: (v) =>
-      v === null ? invalid(["Please select a proponent type."]) : valid(v),
-    child: {
-      id: "twu-proposal-proponent-type",
-      value: proposal?.proponent.tag || null,
-      options: [
-        { label: "Individual", value: "individual" },
-        { label: "Organization", value: "organization" }
-      ]
-    }
-  });
-  const [legalNameState, legalNameCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentLegalName,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "legalName"),
-      id: "twu-proposal-individual-legalName"
-    }
-  });
-  const [emailState, emailCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentEmail,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "email"),
-      id: "twu-proposal-individual-email"
-    }
-  });
-  const [phoneState, phoneCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentPhone,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "phone"),
-      id: "twu-proposal-individual-phone"
-    }
-  });
-  const [street1State, street1Cmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentStreet1,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "street1"),
-      id: "twu-proposal-individual-street1"
-    }
-  });
-  const [street2State, street2Cmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentStreet2,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "street2"),
-      id: "twu-proposal-individual-street2"
-    }
-  });
-  const [cityState, cityCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentCity,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "city"),
-      id: "twu-proposal-individual-city"
-    }
-  });
-  const [regionState, regionCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentRegion,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "region"),
-      id: "twu-proposal-individual-region"
-    }
-  });
-  const [mailCodeState, mailCodeCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentMailCode,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "mailCode"),
-      id: "twu-proposal-individual-mailCode"
-    }
-  });
-  const [countryState, countryCmds] = ShortText.init({
-    errors: [],
-    validate: proposalValidation.validateIndividualProponentCountry,
-    child: {
-      type: "text",
-      value: getProponent(proposal, "individual", "country"),
-      id: "twu-proposal-individual-country"
-    }
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -248,100 +154,207 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       if (!option) {
         return invalid(["Please select an organization."]);
       }
+      if (
+        !isSelectedOrgQualified(option.value, opportunity, organizations)[0]
+      ) {
+        return invalid([
+          "Please select an organization that is a Qualified Supplier."
+        ]);
+      }
       return valid(option);
     },
     child: {
       value: selectedOrganizationOption,
-      id: "twu-proposal-organization-id",
-      options: adt(
-        "options",
-        affiliations
-          .filter((a) => a.membershipType === MembershipType.Owner)
-          .sort((a, b) =>
-            compareStrings(a.organization.legalName, b.organization.legalName)
-          )
-          .map((a) => ({
-            value: a.organization.id,
-            label: a.organization.legalName
-          }))
-      )
+      id: "twu-proposal-organization",
+      options: adt("options", organizationOptions)
     }
   });
-  const [proposalTextState, proposalTextCmds] = RichMarkdownEditor.init({
+  const [totalCostState, totalCostCmds] = NumberField.init({
     errors: [],
-    validate: proposalValidation.validateProposalText,
+    validate: (v) => {
+      if (v === null) {
+        return valid(v);
+      }
+      return proposalValidation.validateTWUProposalProposedCost(
+        v,
+        opportunity.maxBudget
+      );
+    },
     child: {
-      value: proposal?.proposalText || "",
-      id: "twu-proposal-proposalText"
+      //TODO CHANGE ME
+      value: implementationCost || null,
+      id: "twu-proposal-total-cost",
+      min: 1
     }
   });
-  const [additionalCommentsState, additionalCommentsCmds] =
-    RichMarkdownEditor.init({
-      errors: [],
-      validate: proposalValidation.validateAdditionalComments,
-      child: {
-        value: proposal?.additionalComments || "",
-        id: "twu-proposal-additional-comments"
-      }
+  const [resourceQuestionsState, resourceQuestionsCmds] =
+    ResourceQuestions.init({
+      questions: opportunity.resourceQuestions,
+      responses: proposal?.resourceQuestionResponses || []
     });
-  const [attachmentsState, attachmentsCmds] = Attachments.init({
-    canRemoveExistingAttachments,
-    existingAttachments: proposal?.attachments || [],
-    newAttachmentMetadata
-  });
   return [
     {
-      opportunity,
+      proposal: proposal || null,
       viewerUser,
-      orgId: "",
-      showEvaluationCriteria: true,
+      evaluationContent,
+      opportunity,
+      organizations,
+      openReviewResourceQuestionResponseAccordions: new Set(
+        opportunity.resourceQuestions.map((q, i) => i)
+      ),
       tabbedForm: immutable(tabbedFormState),
-      proponentType: immutable(proponentTypeState),
-      legalName: immutable(legalNameState),
-      email: immutable(emailState),
-      phone: immutable(phoneState),
-      street1: immutable(street1State),
-      street2: immutable(street2State),
-      city: immutable(cityState),
-      region: immutable(regionState),
-      mailCode: immutable(mailCodeState),
-      country: immutable(countryState),
       organization: immutable(organizationState),
-      proposalText: immutable(proposalTextState),
-      additionalComments: immutable(additionalCommentsState),
-      attachments: immutable(attachmentsState)
+      totalCost: immutable(totalCostState),
+      resourceQuestions: immutable(resourceQuestionsState)
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
         adt("tabbedForm", msg)
       ),
-      ...component_.cmd.mapMany(proponentTypeCmds, (msg) =>
-        adt("proponentType", msg)
-      ),
-      ...component_.cmd.mapMany(legalNameCmds, (msg) => adt("legalName", msg)),
-      ...component_.cmd.mapMany(emailCmds, (msg) => adt("email", msg)),
-      ...component_.cmd.mapMany(phoneCmds, (msg) => adt("phone", msg)),
-      ...component_.cmd.mapMany(street1Cmds, (msg) => adt("street1", msg)),
-      ...component_.cmd.mapMany(street2Cmds, (msg) => adt("street2", msg)),
-      ...component_.cmd.mapMany(cityCmds, (msg) => adt("city", msg)),
-      ...component_.cmd.mapMany(regionCmds, (msg) => adt("region", msg)),
-      ...component_.cmd.mapMany(mailCodeCmds, (msg) => adt("mailCode", msg)),
-      ...component_.cmd.mapMany(countryCmds, (msg) => adt("country", msg)),
       ...component_.cmd.mapMany(organizationCmds, (msg) =>
         adt("organization", msg)
       ),
-      ...component_.cmd.mapMany(proposalTextCmds, (msg) =>
-        adt("proposalText", msg)
-      ),
-      ...component_.cmd.mapMany(additionalCommentsCmds, (msg) =>
-        adt("additionalComments", msg)
-      ),
-      ...component_.cmd.mapMany(attachmentsCmds, (msg) =>
-        adt("attachments", msg)
+      ...component_.cmd.mapMany(totalCostCmds, (msg) => adt("totalCost", msg)),
+      ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
+        adt("resourceQuestions", msg)
       )
     ] as component_.Cmd<Msg>[]
   ];
 };
+
+export type Errors = CreateValidationErrors | UpdateEditValidationErrors;
+
+export function setErrors(
+  state: Immutable<State>,
+  errors?: Errors
+): Immutable<State> {
+  return state
+    .update("organization", (s) =>
+      FormField.setErrors(s, errors?.organization || [])
+    )
+    .update("totalCost", (s) =>
+      FormField.setErrors(
+        s,
+        (errors && (errors as CreateValidationErrors).totalProposedCost) || []
+      )
+    )
+    .update("resourceQuestions", (s) =>
+      ResourceQuestions.setErrors(
+        s,
+        (errors &&
+          (errors as CreateValidationErrors).resourceQuestionResponses) ||
+          []
+      )
+    );
+}
+
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state
+    .update("organization", (s) => FormField.validate(s))
+    .update("totalCost", (s) => FormField.validate(s))
+    .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
+}
+
+export function isPricingTabValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.totalCost);
+}
+
+export function isOrganizationsTabValid(state: Immutable<State>): boolean {
+  return FormField.isValid(state.organization);
+}
+export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
+  return ResourceQuestions.isValid(state.resourceQuestions);
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  return (
+    isPricingTabValid(state) &&
+    isResourceQuestionsTabValid(state) &&
+    isOrganizationsTabValid(state)
+  );
+}
+
+export type Values = Omit<CreateRequestBody, "status">;
+
+export function getValues(state: Immutable<State>): Values {
+  const organization = FormField.getValue(state.organization);
+  return {
+    opportunity: state.opportunity.id,
+    organization: organization?.value,
+    resourceQuestionResponses: ResourceQuestions.getValues(
+      state.resourceQuestions
+    ),
+    attachments: []
+  };
+}
+
+export function getSelectedOrganization(
+  state: Immutable<State>
+): OrganizationSlim | null {
+  const value = FormField.getValue(state.organization);
+  return (value && find(state.organizations, { id: value.value })) || null;
+}
+
+export type PersistAction =
+  | ADT<"create", CreateTWUProposalStatus>
+  | ADT<"update", Id>;
+
+export type PersistResult = Validation<
+  [Immutable<State>, TWUProposal],
+  Immutable<State>
+>;
+
+export function persist(
+  state: Immutable<State>,
+  action: PersistAction
+): component_.Cmd<PersistResult> {
+  const formValues = getValues(state);
+  switch (action.tag) {
+    case "create":
+      return api.proposals.twu.create(
+        {
+          ...formValues,
+          opportunity: state.opportunity.id,
+          status: action.value
+        },
+        (response) => {
+          switch (response.tag) {
+            case "valid":
+              state = setErrors(state, {});
+              return valid([state, response.value]);
+            case "invalid":
+              return invalid(setErrors(state, response.value));
+            case "unhandled":
+              return invalid(state);
+          }
+        }
+      ) as component_.Cmd<PersistResult>;
+    case "update": {
+      return api.proposals.twu.update(
+        action.value,
+        adt("edit" as const, formValues),
+        (response) => {
+          switch (response.tag) {
+            case "valid":
+              state = setErrors(state, {});
+              return valid([state, response.value]);
+            case "invalid":
+              if (
+                response.value.proposal &&
+                response.value.proposal.tag === "edit"
+              ) {
+                return invalid(setErrors(state, response.value.proposal.value));
+              } else {
+                return invalid(state);
+              }
+            case "unhandled":
+              return invalid(state);
+          }
+        }
+      ) as component_.Cmd<PersistResult>;
+    }
+  }
+}
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -354,96 +367,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("tabbedForm", value)
       });
 
-    case "proponentType":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["proponentType"],
-        childUpdate: ProponentTypeRadioGroup.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("proponentType", value)
-      });
-
-    case "legalName":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["legalName"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("legalName", value)
-      });
-
-    case "email":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["email"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("email", value)
-      });
-
-    case "phone":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["phone"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("phone", value)
-      });
-
-    case "street1":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["street1"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("street1", value)
-      });
-
-    case "street2":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["street2"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("street2", value)
-      });
-
-    case "city":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["city"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("city", value)
-      });
-
-    case "region":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["region"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("region", value)
-      });
-
-    case "mailCode":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["mailCode"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("mailCode", value)
-      });
-
-    case "country":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["country"],
-        childUpdate: ShortText.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("country", value)
-      });
-
     case "organization":
       return component_.base.updateChild({
         state,
@@ -451,563 +374,211 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("organization", value)
+        // updateAfter: (state) => {
+        //   const orgId = FormField.getValue(state.organization)?.value;
+        //   if (
+        //     msg.value.value?.tag !== "onChange" ||
+        //     !orgId
+        //   ) {
+        //     return [state, []];
+        //   }
+        //   state = state.update("organization", (s) =>
+        //     FormField.setErrors(s, [])
+        //   );
+        //   return [
+        //     state,
+        //     [
+        //       // component_.cmd.map(
+        //       //   getAffiliations(orgId),
+        //       //   (as) => adt("onGetAffiliationsResponse", [orgId, as]) as Msg
+        //       // )
+        //     ]
+        //   ];
+        // }
       });
 
-    case "toggleEvaluationCriteria":
-      return [state.update("showEvaluationCriteria", (v) => !v), []];
-
-    case "proposalText":
+    case "totalCost":
       return component_.base.updateChild({
         state,
-        childStatePath: ["proposalText"],
-        childUpdate: RichMarkdownEditor.update,
+        childStatePath: ["totalCost"],
+        childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("proposalText", value)
+        mapChildMsg: (value) => adt("totalCost", value)
       });
 
-    case "additionalComments":
+    case "resourceQuestions":
       return component_.base.updateChild({
         state,
-        childStatePath: ["additionalComments"],
-        childUpdate: RichMarkdownEditor.update,
+        childStatePath: ["resourceQuestions"],
+        childUpdate: ResourceQuestions.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("additionalComments", value)
+        mapChildMsg: (value) => adt("resourceQuestions", value)
       });
 
-    case "attachments":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["attachments"],
-        childUpdate: Attachments.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("attachments", value)
-      });
+    case "toggleReviewResourceQuestionResponseAccordion":
+      return [
+        state.update("openReviewResourceQuestionResponseAccordions", (s) => {
+          if (s.has(msg.value)) {
+            s.delete(msg.value);
+          } else {
+            s.add(msg.value);
+          }
+          return s;
+        }),
+        []
+      ];
   }
 };
 
-function proponentFor(
-  proponentType: ProponentType,
-  state: State
-): CreateProponentRequestBody {
-  switch (proponentType) {
-    case "individual":
-      return adt("individual", {
-        legalName: FormField.getValue(state.legalName),
-        email: FormField.getValue(state.email),
-        phone: FormField.getValue(state.phone),
-        street1: FormField.getValue(state.street1),
-        street2: FormField.getValue(state.street2),
-        city: FormField.getValue(state.city),
-        region: FormField.getValue(state.region),
-        mailCode: FormField.getValue(state.mailCode),
-        country: FormField.getValue(state.country)
-      });
-    case "organization": {
-      const fieldValue = FormField.getValue(state.organization);
-      const orgId = fieldValue ? fieldValue.value : "";
-      if (orgId) {
-        return adt("organization", orgId);
-      } else {
-        return createBlankIndividualProponent();
-      }
-    }
-  }
-}
-
-type Values = Omit<CreateRequestBody, "opportunity" | "status">;
-
-function getValues(state: State): Values {
-  const proponentType = FormField.getValue(state.proponentType);
-  const proponent = proponentType
-    ? proponentFor(proponentType, state)
-    : createBlankIndividualProponent();
-  return {
-    proponent,
-    proposalText: FormField.getValue(state.proposalText),
-    additionalComments: FormField.getValue(state.additionalComments),
-    attachments: state.attachments.existingAttachments.map(({ id }) => id)
-  };
-}
-
-export function isProponentTabValid(state: State): boolean {
-  const proponentType = FormField.getValue(state.proponentType);
-  if (!proponentType) {
-    return false;
-  }
-  switch (proponentType) {
-    case "individual":
-      return (
-        FormField.isValid(state.legalName) &&
-        FormField.isValid(state.email) &&
-        FormField.isValid(state.phone) &&
-        FormField.isValid(state.street1) &&
-        FormField.isValid(state.street2) &&
-        FormField.isValid(state.city) &&
-        FormField.isValid(state.region) &&
-        FormField.isValid(state.mailCode) &&
-        FormField.isValid(state.country)
-      );
-    case "organization":
-      return FormField.isValid(state.organization);
-  }
-}
-
-export function isProposalTabValid(state: State): boolean {
-  return (
-    FormField.isValid(state.proposalText) &&
-    FormField.isValid(state.additionalComments)
-  );
-}
-
-export function isAttachmentsTabValid(state: State): boolean {
-  return Attachments.isValid(state.attachments);
-}
-
-export function isValid(state: State): boolean {
-  return (
-    isProponentTabValid(state) &&
-    isProposalTabValid(state) &&
-    isAttachmentsTabValid(state)
-  );
-}
-
-interface Errors extends CreateValidationErrors, UpdateEditValidationErrors {
-  proponentType?: string[];
-}
-
-function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
-  const individualProponentErrors =
-    errors && errors.proponent && errors.proponent.tag === "individual"
-      ? errors.proponent.value
-      : {};
-  const organizationErrors =
-    errors && errors.proponent && errors.proponent.tag === "organization"
-      ? errors.proponent.value
-      : [];
-  return state
-    .update("proposalText", (s) =>
-      FormField.setErrors(s, errors?.proposalText || [])
-    )
-    .update("additionalComments", (s) =>
-      FormField.setErrors(s, errors?.additionalComments || [])
-    )
-    .update("proponentType", (s) =>
-      FormField.setErrors(s, errors?.proponentType || [])
-    )
-    .update("legalName", (s) =>
-      FormField.setErrors(s, individualProponentErrors.legalName || [])
-    )
-    .update("email", (s) =>
-      FormField.setErrors(s, individualProponentErrors.email || [])
-    )
-    .update("phone", (s) =>
-      FormField.setErrors(s, individualProponentErrors.phone || [])
-    )
-    .update("street1", (s) =>
-      FormField.setErrors(s, individualProponentErrors.street1 || [])
-    )
-    .update("street2", (s) =>
-      FormField.setErrors(s, individualProponentErrors.street2 || [])
-    )
-    .update("city", (s) =>
-      FormField.setErrors(s, individualProponentErrors.city || [])
-    )
-    .update("region", (s) =>
-      FormField.setErrors(s, individualProponentErrors.region || [])
-    )
-    .update("mailCode", (s) =>
-      FormField.setErrors(s, individualProponentErrors.mailCode || [])
-    )
-    .update("country", (s) =>
-      FormField.setErrors(s, individualProponentErrors.country || [])
-    )
-    .update("organization", (s) => FormField.setErrors(s, organizationErrors));
-}
-
-export function validate(state: Immutable<State>): Immutable<State> {
-  return state
-    .update("proposalText", (s) => FormField.validate(s))
-    .update("additionalComments", (s) => FormField.validate(s))
-    .update("proponentType", (s) => FormField.validate(s))
-    .update("legalName", (s) => FormField.validate(s))
-    .update("email", (s) => FormField.validate(s))
-    .update("phone", (s) => FormField.validate(s))
-    .update("street1", (s) => FormField.validate(s))
-    .update("street2", (s) => FormField.validate(s))
-    .update("city", (s) => FormField.validate(s))
-    .update("region", (s) => FormField.validate(s))
-    .update("mailCode", (s) => FormField.validate(s))
-    .update("country", (s) => FormField.validate(s))
-    .update("organization", (s) => FormField.validate(s))
-    .update("attachments", (s) => Attachments.validate(s));
-}
-
-type PersistAction = ADT<"create", CreateTWUProposalStatus> | ADT<"update", Id>;
-
-export type PersistResult = Validation<
-  [Immutable<State>, component_.Cmd<Msg>[], TWUProposal],
-  Immutable<State>
->;
-
-export function persist(
-  state: Immutable<State>,
-  action: PersistAction
-): component_.Cmd<PersistResult> {
-  const values = getValues(state);
-  // Get new attachments to be uploaded.
-  const newAttachments = Attachments.getNewAttachments(state.attachments);
-  const existingAttachments = state.attachments.existingAttachments.map(
-    ({ id }) => id
-  );
-  // Cmd helpers
-  const uploadNewAttachmentsCmd = api.files.createMany(
-    newAttachments,
-    (response) => {
-      switch (response.tag) {
-        case "valid":
-          return valid([
-            ...existingAttachments,
-            ...response.value.map(({ id }) => id)
-          ]);
-        case "invalid":
-          return invalid(
-            state.update("attachments", (attachments) =>
-              Attachments.setNewAttachmentErrors(attachments, response.value)
-            )
-          );
-        case "unhandled":
-          return invalid(state);
-      }
-    }
-  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
-  const actionCmd = (
-    attachments: Id[]
-  ): component_.cmd.Cmd<
-    api.ResponseValidation<
-      TWUProposal,
-      //CreateValidationErrors
-      UpdateEditValidationErrors | CreateValidationErrors
-    >
-  > => {
-    switch (action.tag) {
-      case "create":
-        return api.proposals.twu.create(
-          {
-            ...values,
-            opportunity: state.opportunity.id,
-            attachments,
-            status: action.value
-          },
-          (response) => response
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<TWUProposal, CreateValidationErrors>
-        >;
-      case "update":
-        return api.proposals.twu.update(
-          action.value,
-          adt("edit" as const, {
-            ...values,
-            attachments
-          }),
-          (
-            response: api.ResponseValidation<
-              TWUProposal,
-              UpdateValidationErrors
-            >
-          ) => {
-            return api.mapInvalid(response, (errors) => {
-              if (errors.proposal && errors.proposal.tag === "edit") {
-                return errors.proposal.value;
-              } else {
-                return {};
-              }
-            });
-          }
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<TWUProposal, UpdateEditValidationErrors>
-        >;
-    }
-  };
-  // Upload new attachments if necessary.
-  const attachmentsCmd: component_.cmd.Cmd<Validation<Id[], Immutable<State>>> =
-    newAttachments.length
-      ? uploadNewAttachmentsCmd
-      : component_.cmd.dispatch(valid(existingAttachments));
-  return component_.cmd.andThen(attachmentsCmd, (attachmentsResult) => {
-    if (isValid_(attachmentsResult)) {
-      return component_.cmd.map(
-        actionCmd(attachmentsResult.value),
-        (actionResult) => {
-          switch (actionResult.tag) {
-            case "unhandled":
-              return invalid(state);
-            case "invalid":
-              return invalid(setErrors(state, actionResult.value));
-            case "valid": {
-              state = setErrors(state, {});
-              // Update the attachments component accordingly.
-              const [newAttachmentsState, newAttachmentsCmds] =
-                Attachments.init({
-                  existingAttachments: actionResult.value.attachments || [],
-                  newAttachmentMetadata
-                });
-              state = state.set("attachments", immutable(newAttachmentsState));
-              return valid([
-                state,
-                component_.cmd.mapMany(
-                  newAttachmentsCmds,
-                  (msg) => adt("attachments", msg) as Msg
-                ),
-                actionResult.value
-              ]);
-            }
-          }
-        }
-      );
-    } else {
-      return component_.cmd.dispatch(invalid(attachmentsResult.value));
-    }
-  });
-}
-
-const IndividualProponent: component_.base.View<Props> = ({
-  state,
-  dispatch,
-  disabled
-}) => {
+const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Legal Name"
-          help="Provide the first and last name of the individual that will complete the work as outlined in the opportunity’s acceptance criteria."
-          required
-          extraChildProps={{}}
-          label="Legal Name"
-          state={state.legalName}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("legalName" as const, value)
-          )}
-        />
+        <Markdown openLinksInNewTabs source={state.evaluationContent} />
       </Col>
-
       <Col xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="vendor@email.com"
-          required
-          extraChildProps={{}}
-          label="Email Address"
-          state={state.email}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("email" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Phone Number"
-          extraChildProps={{}}
-          label="Phone Number"
-          state={state.phone}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("phone" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Street Address"
-          required
-          extraChildProps={{}}
-          label="Street Address"
-          state={state.street1}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("street1" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Street Address"
-          extraChildProps={{}}
-          label="Street Address"
-          state={state.street2}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("street2" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col md="7" xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="City"
-          required
-          extraChildProps={{}}
-          label="City"
-          state={state.city}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("city" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col md="5" xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Province / State"
-          required
-          extraChildProps={{}}
-          label="Province / State"
-          state={state.region}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("region" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col md="5" xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Postal / ZIP Code"
-          required
-          extraChildProps={{}}
-          label="Postal / ZIP Code"
-          state={state.mailCode}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("mailCode" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col md="7" xs="12">
-        <ShortText.view
-          disabled={disabled}
-          placeholder="Country"
-          required
-          extraChildProps={{}}
-          label="Country"
-          state={state.country}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("country" as const, value)
-          )}
-        />
+        <h4 className="mt-5 mb-3">Scoring Table</h4>
+        <div className="table-responsive">
+          <table className="table-hover">
+            <thead>
+              <tr>
+                <th style={{ width: "100%" }}>Evaluation Criteria</th>
+                <th style={{ width: "0px" }}>Weightings</th>
+                <th className="text-nowrap" style={{ width: "0px" }}>
+                  Minimum Score
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Step 1: Questions</td>
+                <td>{state.opportunity.questionsWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 2: Shortlisting</td>
+                <td>{EMPTY_STRING}</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>Step 3: Challenge</td>
+                <td>{state.opportunity.challengeWeight}%</td>
+                <td>80%</td>
+              </tr>
+              <tr>
+                <td>Step 4: Price</td>
+                <td>{state.opportunity.priceWeight}%</td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+              <tr>
+                <td>
+                  <strong>TOTAL</strong>
+                </td>
+                <td>
+                  <strong>100%</strong>
+                </td>
+                <td>{EMPTY_STRING}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </Col>
     </Row>
   );
 };
 
-const OrganizationProponent: component_.base.View<Props> = ({
+const OrganizationView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
 }) => {
-  return (
-    <Row>
-      <Col xs="12">
-        <Select.view
-          disabled={disabled}
-          extraChildProps={{}}
-          label="Organization"
-          placeholder="Organization"
-          help={`Select the Organization that will complete the work as outlined in the opportunity's acceptance criteria.`}
-          hint={
-            isVendor(state.viewerUser) ? (
-              <span>
-                If the organization you are looking for is not listed in this
-                dropdown, please ensure that you have created the organization
-                in{" "}
-                <Link
-                  newTab
-                  dest={routeDest(
-                    adt("userProfile", {
-                      userId: state.viewerUser.id,
-                      tab: "organizations" as const
-                    })
-                  )}>
-                  your user profile
-                </Link>
-                . Also, please make sure that you have saved this proposal
-                beforehand to avoid losing any unsaved changes you might have
-                made.
-              </span>
-            ) : undefined
-          }
-          required
-          state={state.organization}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("organization" as const, value)
-          )}
-        />
-      </Col>
-    </Row>
-  );
-};
-
-const ProponentView: component_.base.View<Props> = (props) => {
-  const { state, dispatch, disabled } = props;
-  const proponentType = FormField.getValue(state.proponentType);
-  const activeView = (() => {
-    switch (proponentType) {
-      case "individual":
-        return <IndividualProponent {...props} />;
-      case "organization":
-        return <OrganizationProponent {...props} />;
-      default:
-        return null;
-    }
-  })();
-
   return (
     <div>
       <Row>
         <Col xs="12">
-          <p className="mb-4">
-            Will you be submitting a proposal for this opportunity as an
-            Individual or Organization?
-          </p>
-        </Col>
-        <Col xs="12">
-          <ProponentTypeRadioGroup.view
-            extraChildProps={{ inline: true }}
-            className="mb-0"
+          <Select.view
+            extraChildProps={{
+              loading: true
+            }}
             required
-            disabled={disabled}
-            state={state.proponentType}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("proponentType" as const, value)
+            className="mb-0"
+            label="Organization"
+            placeholder="Organization"
+            help="Select the Organization that will complete the work as outlined in the opportunity’s acceptance criteria."
+            hint={
+              state.viewerUser.type === UserType.Vendor ? (
+                <span>
+                  If the organization you are looking for is not listed in this
+                  dropdown, please ensure that you have created the organization
+                  in{" "}
+                  <Link
+                    newTab
+                    dest={routeDest(
+                      adt("userProfile", {
+                        userId: state.viewerUser.id,
+                        tab: "organizations" as const
+                      })
+                    )}>
+                    your user profile
+                  </Link>{" "}
+                  and it is qualified to apply for Team With Us opportunities.
+                  Also, please make sure that you have saved this proposal
+                  beforehand to avoid losing any unsaved changes you might have
+                  made.
+                </span>
+              ) : undefined
+            }
+            state={state.organization}
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
+              adt("organization" as const, v)
             )}
+            disabled={disabled}
           />
         </Col>
       </Row>
-
-      {activeView ? (
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <p className="mb-4">
-                Please provide the following details for the proponent that will
-                complete the work as outlined by the Acceptance Criteria of the
-                opportunity.
-              </p>
-            </Col>
-          </Row>
-          {activeView}
-        </div>
-      ) : null}
     </div>
   );
 };
 
-const ProposalView: component_.base.View<Props> = ({
+const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
+  const { maxBudget } = state.opportunity;
+  return (
+    <div>
+      <Row>
+        <Col xs="12" className="mb-4">
+          <p>
+            Propose an Hourly Rate for this opportunity using the fields
+            provided below. In order to submit your proposal for consideration,
+            you must:
+          </p>
+          <ul>
+            <li>Not exceed the total maximum budget for the opportunity.</li>
+          </ul>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs="12" md="6">
+          <NumberField.view
+            extraChildProps={{ prefix: "$" }}
+            label="Total Proposed Hourly Rate"
+            placeholder="Total Proposed Hourly Rate"
+            hint={`Maximum opportunity budget is ${formatAmount(
+              maxBudget,
+              "$"
+            )}`}
+            disabled
+            state={state.totalCost}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("totalCost" as const, value)
+            )}
+          />
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+const ResourceQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1016,38 +587,148 @@ const ProposalView: component_.base.View<Props> = ({
     <Row>
       <Col xs="12">
         <p className="mb-4">
-          Enter your proposal and any additional comments in the spaces provided
-          below. Be sure to address the Proposal Evaluation Criteria.
+          Provide a response to each of the team questions below. Please note
+          that responses that exceed the word limit will receive a score of
+          zero.
+        </p>
+        <Alert color="danger" fade={false} className="mb-5">
+          <strong>Important!</strong> Do not reference your organization{"'"}s
+          name, a team member{"'"}s name or specific company software in any of
+          your responses.
+        </Alert>
+      </Col>
+      <Col xs="12">
+        <ResourceQuestions.view
+          disabled={disabled}
+          state={state.resourceQuestions}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("resourceQuestions" as const, value)
+          )}
+        />
+      </Col>
+    </Row>
+  );
+};
+
+interface ReviewResourceQuestionResponseViewProps {
+  opportunity: TWUOpportunity;
+  response: CreateTWUProposalResourceQuestionResponseBody;
+  index: number;
+  isOpen: boolean;
+  className?: string;
+  toggleAccordion(): void;
+}
+
+function getQuestionTextByOrder(
+  opp: TWUOpportunity,
+  order: number
+): string | null {
+  for (const q of opp.resourceQuestions) {
+    if (q.order === order) {
+      return q.question;
+    }
+  }
+  return null;
+}
+
+const ReviewResourceQuestionResponseView: component_.base.View<
+  ReviewResourceQuestionResponseViewProps
+> = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
+  const questionText = getQuestionTextByOrder(opportunity, response.order);
+  if (!questionText) {
+    return null;
+  }
+  return (
+    <Accordion
+      className={className}
+      toggle={() => toggleAccordion()}
+      color="c-proposal-swu-form-team-question-response-heading"
+      title={`Question ${index + 1}`}
+      titleClassName="h3 mb-0"
+      chevronWidth={1.5}
+      chevronHeight={1.5}
+      open={isOpen}>
+      <p style={{ whiteSpace: "pre-line" }} className="mb-4">
+        {questionText}
+      </p>
+      <ProposalMarkdown
+        box
+        source={
+          response.response ||
+          "You have not yet entered a response for this question."
+        }
+      />
+    </Accordion>
+  );
+};
+
+const ReviewProposalView: component_.base.View<Props> = ({
+  state,
+  dispatch
+}) => {
+  // const members = Team.getAddedMembers(state.team);
+  const organization = getSelectedOrganization(state);
+  // const opportunity = state.opportunity;
+  return (
+    <Row>
+      <Col xs="12">
+        <p className="mb-0">
+          This is a summary of your proposal for this Team With Us opportunity.
+          Be sure to review all information for accuracy prior to submitting
+          your proposal.
         </p>
       </Col>
       <Col xs="12">
-        <RichMarkdownEditor.view
-          disabled={disabled}
-          required
-          extraChildProps={{
-            style: { height: "60vh", minHeight: "400px" }
-          }}
-          label="Proposal"
-          help="Provide your complete proposal here. Be sure to address the Proposal Evaluation Criteria as outlined on the opportunity. You can format your proposal with Markdown."
-          state={state.proposalText}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("proposalText" as const, value)
+        <div className="mt-5 pt-5 border-top">
+          <h2>Organization Info</h2>
+          {organization ? (
+            <div>
+              <p className="mb-4">
+                Please review your organization{"'"}s information to ensure it
+                is up-to-date by clicking on the link below.
+              </p>
+              <Link
+                newTab
+                symbol_={leftPlacement(
+                  imageLinkSymbol(
+                    organization.logoImageFile
+                      ? fileBlobPath(organization.logoImageFile)
+                      : DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH
+                  )
+                )}
+                symbolClassName="border"
+                dest={routeDest(adt("orgEdit", { orgId: organization.id }))}>
+                Review Organization: {organization.legalName}
+              </Link>
+            </div>
+          ) : (
+            "You have not yet selected an organization for this proposal."
           )}
-        />
+        </div>
       </Col>
       <Col xs="12">
-        <RichMarkdownEditor.view
-          disabled={disabled}
-          extraChildProps={{
-            style: { height: "300px" }
-          }}
-          label="Additional Comments"
-          help="Provide any additional information or comments that are relevant to your proposal submission. You can format your additional comments with Markdown."
-          state={state.additionalComments}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("additionalComments" as const, value)
+        <div className="mt-5 pt-5 border-top">
+          <h2 className="mb-4">Questions{"'"} Responses</h2>
+          {ResourceQuestions.getValues(state.resourceQuestions).map(
+            (r, i, rs) => (
+              <ReviewResourceQuestionResponseView
+                key={`twu-proposal-review-team-question-response-${i}`}
+                className={i < rs.length - 1 ? "mb-4" : ""}
+                opportunity={state.opportunity}
+                isOpen={state.openReviewResourceQuestionResponseAccordions.has(
+                  i
+                )}
+                toggleAccordion={() =>
+                  dispatch(
+                    adt("toggleReviewResourceQuestionResponseAccordion", i)
+                  )
+                }
+                index={i}
+                response={r}
+              />
+            )
           )}
-        />
+        </div>
       </Col>
     </Row>
   );
@@ -1057,42 +738,28 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
 }
 
-// @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const view: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
 }) => {
-  return (
-    <Row>
-      <Col xs="12">
-        <p>
-          Upload any supporting material for your proposal here. Attachments
-          must be smaller than 10MB.
-        </p>
-        <Attachments.view
-          dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-            adt("attachments" as const, msg)
-          )}
-          state={state.attachments}
-          disabled={disabled}
-          className="mt-4"
-        />
-      </Col>
-    </Row>
-  );
-};
-
-export const view: component_.base.View<Props> = (props) => {
-  const { state, dispatch } = props;
+  const props = {
+    state,
+    dispatch,
+    disabled: disabled
+  };
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
-      case "Proponent":
-        return <ProponentView {...props} />;
-      case "Proposal":
-        return <ProposalView {...props} />;
-      case "Attachments":
-        return <AttachmentsView {...props} />;
+      case "Evaluation":
+        return <EvaluationView {...props} />;
+      case "Pricing":
+        return <PricingView {...props} />;
+      case "Organization":
+        return <OrganizationView {...props} />;
+      case "Questions":
+        return <ResourceQuestionsView {...props} />;
+      case "Review Proposal":
+        return <ReviewProposalView {...props} />;
     }
   })();
   return (
@@ -1102,12 +769,16 @@ export const view: component_.base.View<Props> = (props) => {
       getTabLabel={(a) => a}
       isTabValid={(tab) => {
         switch (tab) {
-          case "Proponent":
-            return isProponentTabValid(state);
-          case "Proposal":
-            return isProposalTabValid(state);
-          case "Attachments":
-            return isAttachmentsTabValid(state);
+          case "Evaluation":
+            return true;
+          case "Pricing":
+            return isPricingTabValid(state);
+          case "Organization":
+            return isOrganizationsTabValid(state);
+          case "Questions":
+            return isResourceQuestionsTabValid(state);
+          case "Review Proposal":
+            return true;
         }
       }}
       state={state.tabbedForm}
@@ -1118,3 +789,73 @@ export const view: component_.base.View<Props> = (props) => {
     </TabbedFormComponent.view>
   );
 };
+
+export const component: component_.base.Component<Params, State, Msg> = {
+  init,
+  update,
+  view
+};
+
+export function getAlerts<Msg>(
+  state: Immutable<State>
+): component_.page.Alerts<Msg> {
+  const orgId = FormField.getValue(state.organization)?.value;
+  if (!orgId) {
+    return component_.page.alerts.empty();
+  }
+  const [isQualified, org] = isSelectedOrgQualified(
+    orgId,
+    state.opportunity,
+    state.organizations
+  );
+  const meetsCriteria = "meets the criteria to be a Qualified Supplier";
+  return {
+    warnings: (() => {
+      if (!isQualified && !org) {
+        return [
+          {
+            text: (
+              <span>
+                The organization you have selected has been archived. Please
+                select a different organization or{" "}
+                <Link newTab dest={routeDest(adt("orgCreate", null))}>
+                  create a new one
+                </Link>{" "}
+                and ensure it {meetsCriteria}.
+              </span>
+            )
+          }
+        ];
+      } else if (!isQualified && org) {
+        return [
+          {
+            text: (
+              <span>
+                The organization you have selected does not qualify to submit
+                proposals for Team With Us opportunties. Please select a
+                different organization or ensure it{" "}
+                {org ? (
+                  <Link
+                    newTab
+                    dest={routeDest(
+                      adt("orgEdit", {
+                        orgId: org.id,
+                        tab: "qualification" as const
+                      })
+                    )}>
+                    {meetsCriteria}
+                  </Link>
+                ) : (
+                  meetsCriteria
+                )}
+                .
+              </span>
+            )
+          }
+        ];
+      } else {
+        return [];
+      }
+    })()
+  };
+}
