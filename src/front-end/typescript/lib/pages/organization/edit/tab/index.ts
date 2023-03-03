@@ -3,7 +3,7 @@ import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 import * as OrganizationTab from "front-end/lib/pages/organization/edit/tab/organization";
 import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
-import * as TWUQualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
+import * as TWUQualificationTab from "front-end/lib/pages/organization/edit/tab/twu-qualification";
 import * as TeamTab from "front-end/lib/pages/organization/edit/tab/team";
 import { routeDest } from "front-end/lib/views/link";
 import { AffiliationMember } from "shared/lib/resources/affiliation";

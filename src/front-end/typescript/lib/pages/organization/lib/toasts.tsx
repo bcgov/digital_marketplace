@@ -157,3 +157,14 @@ export const rejectedOrganizationRequest = {
     body: `An error occurred while attempting to reject the request to join ${aff.organization.legalName}. Please try again later.`
   })
 };
+
+export const serviceAreasUpdated = {
+  success: {
+    title: "Service Areas Updated",
+    body: "Your service areas have been successfully updated."
+  },
+  error: {
+    title: "Unable to Service Areas",
+    body: "Your service areas could not be updated. Please try again later."
+  }
+};
