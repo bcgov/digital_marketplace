@@ -266,8 +266,6 @@ export function express<
     router,
     sessionIdToSession,
     sessionToSessionId,
-    host,
-    port,
     maxMultipartFilesSize,
     parseFileUploadMetadata
   }) => {
@@ -483,7 +481,7 @@ export function express<
     });
 
     // Listen for incoming connections.
-    app.listen(port, host);
+    //app.listen(port, host);
 
     return app;
   };

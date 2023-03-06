@@ -34,6 +34,7 @@ services:
     container_name: dm_test_db
     image: postgres:12
     volumes:
+      - ./sql/create_test_schema.sql:/docker-entrypoint-initdb.d/create_test_schema.sql
       - dm-test-vol:/var/lib/postgresql/data
     restart: always
     ports:
@@ -42,6 +43,7 @@ services:
       POSTGRES_USER: digmkt-test
       POSTGRES_PASSWORD: digmkt-test
       POSTGRES_DB: digmkt-test
+    command: ["postgres", "-c", "search_path=digmkt-test,digmkt-test"]
 
 volumes:
   dm-vol:

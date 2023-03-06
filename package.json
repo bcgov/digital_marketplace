@@ -43,10 +43,7 @@
     "learn-front-end:build": "npx grunt learn-front-end-build",
     "learn-front-end:watch": "npx grunt learn-front-end-watch",
     "learn-front-end:serve": "npx grunt learn-front-end-serve",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "integration-tests:helper": "yarn docker:up && POSTGRES_URL=postgresql://digmkt-test:digmkt-test@localhost:5433/digmkt-test yarn migrations:latest",
-    "integration-tests:run": "yarn integration-tests:helper && jest --config tests/back-end/jest.config.ts"
+    "integration-tests:run": "scripts/run-integration-tests.sh"
   },
   "repository": {
     "type": "git",
