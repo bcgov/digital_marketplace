@@ -1,8 +1,5 @@
 import { ThemeColor } from "front-end/lib/types";
-import {
-  TWUProposalEvent,
-  TWUProposalStatus
-} from "shared/lib/resources/proposal/team-with-us";
+import { TWUProposalStatus } from "shared/lib/resources/proposal/team-with-us";
 import { UserType } from "shared/lib/resources/user";
 
 export function twuProposalStatusToColor(
@@ -62,13 +59,6 @@ export function twuProposalStatusToTitleCase(
       return "Disqualified";
     case TWUProposalStatus.Withdrawn:
       return "Withdrawn";
-  }
-}
-
-export function twuProposalEventToTitleCase(e: TWUProposalEvent): string {
-  switch (e) {
-    case TWUProposalEvent.ScoreEntered:
-      return "Score Entered";
   }
 }
 

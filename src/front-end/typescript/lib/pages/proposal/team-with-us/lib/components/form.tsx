@@ -95,9 +95,6 @@ export type Msg =
   // Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Review Proposal Tab
-  | ADT<"toggleReviewInceptionPhaseAccordion">
-  | ADT<"toggleReviewPrototypePhaseAccordion">
-  | ADT<"toggleReviewImplementationPhaseAccordion">
   | ADT<"toggleReviewResourceQuestionResponseAccordion", number>;
 
 const DEFAULT_ACTIVE_TAB: TabId = "Evaluation";
@@ -356,6 +353,13 @@ export function persist(
   }
 }
 
+/**
+ *
+ * @see {@link Msg} One of the string values defined by type Msg
+ *
+ * @param state
+ * @param msg
+ */
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "tabbedForm":
@@ -374,27 +378,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("organization", value)
-        // updateAfter: (state) => {
-        //   const orgId = FormField.getValue(state.organization)?.value;
-        //   if (
-        //     msg.value.value?.tag !== "onChange" ||
-        //     !orgId
-        //   ) {
-        //     return [state, []];
-        //   }
-        //   state = state.update("organization", (s) =>
-        //     FormField.setErrors(s, [])
-        //   );
-        //   return [
-        //     state,
-        //     [
-        //       // component_.cmd.map(
-        //       //   getAffiliations(orgId),
-        //       //   (as) => adt("onGetAffiliationsResponse", [orgId, as]) as Msg
-        //       // )
-        //     ]
-        //   ];
-        // }
       });
 
     case "totalCost":
