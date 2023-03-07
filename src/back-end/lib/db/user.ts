@@ -13,7 +13,7 @@ import {
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 
-type CreateUserParams = Omit<Partial<User>, "avatarImageFile"> & {
+export type CreateUserParams = Omit<Partial<User>, "avatarImageFile"> & {
   createdAt?: Date;
   updatedAt?: Date;
   avatarImageFile?: Id;

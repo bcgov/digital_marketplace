@@ -283,6 +283,7 @@ export function express<
           expires: addDays(new Date(), 2) //Expire cookie if not re-used within 2 days.
         });
       const sessionId = sessionToSessionId(response.session);
+      console.log(sessionId);
       if (sessionId) {
         setSessionId(sessionId.toString());
       }
@@ -479,9 +480,6 @@ export function express<
         app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs));
       }
     });
-
-    // Listen for incoming connections.
-    //app.listen(port, host);
 
     return app;
   };

@@ -52,8 +52,6 @@ export const NODE_ENV: "development" | "test" | "production" = (() => {
 
 export const ENV = NODE_ENV;
 
-console.log(process.env.POSTGRES_URL);
-
 const logger = makeDomainLogger(consoleAdapter, "back-end:config");
 
 export const LOG_DEBUG =

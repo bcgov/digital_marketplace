@@ -10,4 +10,4 @@ docker compose up -d test-db
 
 yarn migrations:latest
 
-jest --detectOpenHandles --forceExit --silent --config tests/back-end/jest.config.ts
+jest --detectOpenHandles --forceExit --config tests/back-end/jest.config.ts
