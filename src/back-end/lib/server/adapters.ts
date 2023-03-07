@@ -283,7 +283,6 @@ export function express<
           expires: addDays(new Date(), 2) //Expire cookie if not re-used within 2 days.
         });
       const sessionId = sessionToSessionId(response.session);
-      console.log(sessionId);
       if (sessionId) {
         setSessionId(sessionId.toString());
       }
