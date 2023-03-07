@@ -2,21 +2,84 @@ import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import Knex from "knex";
 
-makeDomainLogger(consoleAdapter, "migrations");
+const logger = makeDomainLogger(consoleAdapter, "migrations");
 
-// enum TWUProposalStatus {
-//   Draft = "DRAFT",
-//   Submitted = "SUBMITTED",
-//   UnderReviewResourceQuestions = "UNDER_REVIEW_QUESTIONS",
-//   EvaluatedResourceQuestions = "EVALUATED_QUESTIONS",
-//   UnderReviewChallenge = "UNDER_REVIEW_CHALLENGE",
-//   EvaluatedChallenge = "EVALUATED_CHALLENGE",
-//   Awarded = "AWARDED",
-//   NotAwarded = "NOT_AWARDED",
-//   Disqualified = "DISQUALIFIED",
-//   Withdrawn = "WITHDRAWN"
-// }
+enum TWUProposalStatus {
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED",
+  UnderReviewResourceQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedResourceQuestions = "EVALUATED_QUESTIONS",
+  UnderReviewChallenge = "UNDER_REVIEW_CHALLENGE",
+  EvaluatedChallenge = "EVALUATED_CHALLENGE",
+  Awarded = "AWARDED",
+  NotAwarded = "NOT_AWARDED",
+  Disqualified = "DISQUALIFIED",
+  Withdrawn = "WITHDRAWN"
+}
 
-export async function up(connection: Knex): Promise<void> {} // eslint-disable-line
+export enum TWUProposalEvent {
+  QuestionsScoreEntered = "QUESTIONS_SCORE_ENTERED",
+  ChallengeScoreEntered = "CHALLENGE_SCORE_ENTERED",
+  PriceScoreEntered = "PRICE_SCORE_ENTERED"
+}
 
-export async function down(connection: Knex): Promise<void> {} // eslint-disable-line
+export async function up(connection: Knex): Promise<void> {
+  // Create TWUProposal table
+  await connection.schema.createTable("twuProposals", (table) => {
+    table.uuid("id").primary().unique().notNullable();
+    table.timestamp("createdAt").notNullable();
+    table.uuid("createdBy").references("id").inTable("users").notNullable();
+    table.timestamp("updatedAt").notNullable();
+    table.uuid("updatedBy").references("id").inTable("users").notNullable();
+    table.float("challengeScore");
+    table.float("priceScore");
+    table.uuid("opportunity").references("id").inTable("twuOpportunities");
+    table.uuid("organization").references("id").inTable("organizations");
+  });
+  logger.info("Created twuProposals table.");
+
+  // Create TWUProposalAttachment table
+  await connection.schema.createTable("twuProposalAttachments", (table) => {
+    table
+      .uuid("proposal")
+      .references("id")
+      .inTable("twuProposals")
+      .notNullable()
+      .onDelete("CASCADE");
+    table.uuid("file").references("id").inTable("files").notNullable();
+    table.primary(["proposal", "file"]);
+  });
+  logger.info("Created twuProposalAttachments table.");
+
+  // Create TWUProposalStatus table
+  await connection.schema.createTable("twuProposalStatuses", (table) => {
+    table.uuid("id").primary().unique().notNullable();
+    table.timestamp("createdAt").notNullable();
+    table.uuid("createdBy").references("id").inTable("users");
+    table
+      .uuid("proposal")
+      .references("id")
+      .inTable("twuProposals")
+      .notNullable()
+      .onDelete("CASCADE");
+    table.enu("status", Object.values(TWUProposalStatus)).notNullable();
+    table.enu("event", Object.values(TWUProposalEvent));
+    table.text("note");
+  });
+  await connection.schema.raw(`
+      ALTER TABLE "twuProposalStatuses"
+          ADD CONSTRAINT "eitherEventOrStatus" check (
+                  ("event" IS NOT NULL AND "status" IS NULL)
+                  OR
+                  ("event" IS NULL AND "status" IS NOT NULL)
+              )
+  `);
+
+  logger.info("Created twuProposalStatuses table.");
+}
+
+export async function down(connection: Knex): Promise<void> {
+  await connection.schema.dropTable("twuProposalStatuses");
+  await connection.schema.dropTable("twuProposalAttachments");
+  await connection.schema.dropTable("twuProposals");
+}
