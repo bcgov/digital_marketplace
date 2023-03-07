@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 docker.io/node:16.13 AS dm_app_build
+FROM --platform=linux/amd64 docker.io/node:16.19 AS dm_app_build
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY ./src $DIRPATH/src
@@ -19,7 +19,7 @@ RUN yarn install --frozen-lockfile && \
     rm -Rf $DIRPATH/tmp && \
     mkdir $DIRPATH/__tmp
 
-FROM --platform=linux/amd64 docker.io/node:16.13
+FROM --platform=linux/amd64 docker.io/node:16.19
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY --from=dm_app_build --chown=node $DIRPATH ./
