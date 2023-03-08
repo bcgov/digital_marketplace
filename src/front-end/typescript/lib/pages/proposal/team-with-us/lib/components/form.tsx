@@ -79,7 +79,7 @@ export interface State
   // Team Tab
   organization: Immutable<Select.State>;
   // Pricing Tab
-  totalCost: Immutable<NumberField.State>;
+  proposedCost: Immutable<NumberField.State>;
   // Questions Tab
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Review Proposal Tab
@@ -91,7 +91,7 @@ export type Msg =
   // Organization Tab
   | ADT<"organization", Select.Msg>
   // Pricing Tab
-  | ADT<"totalCost", NumberField.Msg>
+  | ADT<"proposedCost", NumberField.Msg>
   // Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Review Proposal Tab
@@ -128,7 +128,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     // TODO: add TWU qualification check when ready
     // .filter((o) => doesOrganizationMeetTWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  const implementationCost = proposal?.proposedCost ? proposal.proposedCost : 0;
+  const proposedCost = proposal?.proposedCost ? proposal.proposedCost : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -166,21 +166,23 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: adt("options", organizationOptions)
     }
   });
-  const [totalCostState, totalCostCmds] = NumberField.init({
+  const [proposedCostState, proposedCostCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
       if (v === null) {
-        return valid(v);
+        return invalid([`Please enter a valid proposed cost.`]);
       }
       return proposalValidation.validateTWUProposalProposedCost(
         v,
-        opportunity.maxBudget
+        opportunity.maxBudget,
+        opportunity.targetAllocation,
+        opportunity.assignmentDate,
+        opportunity.completionDate
       );
     },
     child: {
-      //TODO CHANGE ME
-      value: implementationCost || null,
-      id: "twu-proposal-total-cost",
+      value: proposedCost || null,
+      id: "twu-proposal-cost",
       min: 1
     }
   });
@@ -201,7 +203,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       tabbedForm: immutable(tabbedFormState),
       organization: immutable(organizationState),
-      totalCost: immutable(totalCostState),
+      proposedCost: immutable(proposedCostState),
       resourceQuestions: immutable(resourceQuestionsState)
     },
     [
@@ -211,7 +213,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(organizationCmds, (msg) =>
         adt("organization", msg)
       ),
-      ...component_.cmd.mapMany(totalCostCmds, (msg) => adt("totalCost", msg)),
+      ...component_.cmd.mapMany(proposedCostCmds, (msg) =>
+        adt("proposedCost", msg)
+      ),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
       )
@@ -229,7 +233,7 @@ export function setErrors(
     .update("organization", (s) =>
       FormField.setErrors(s, errors?.organization || [])
     )
-    .update("totalCost", (s) =>
+    .update("proposedCost", (s) =>
       FormField.setErrors(
         s,
         (errors && (errors as CreateValidationErrors).totalProposedCost) || []
@@ -248,12 +252,12 @@ export function setErrors(
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("organization", (s) => FormField.validate(s))
-    .update("totalCost", (s) => FormField.validate(s))
+    .update("proposedCost", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
 }
 
 export function isPricingTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.totalCost);
+  return FormField.isValid(state.proposedCost);
 }
 
 export function isOrganizationsTabValid(state: Immutable<State>): boolean {
@@ -380,13 +384,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("organization", value)
       });
 
-    case "totalCost":
+    case "proposedCost":
       return component_.base.updateChild({
         state,
-        childStatePath: ["totalCost"],
+        childStatePath: ["proposedCost"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("totalCost", value)
+        mapChildMsg: (value) => adt("proposedCost", value)
       });
 
     case "resourceQuestions":
@@ -543,16 +547,16 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
         <Col xs="12" md="6">
           <NumberField.view
             extraChildProps={{ prefix: "$" }}
-            label="Total Proposed Hourly Rate"
-            placeholder="Total Proposed Hourly Rate"
+            label="Proposed Hourly Rate"
+            placeholder="Proposed Hourly Rate"
             hint={`Maximum opportunity budget is ${formatAmount(
               maxBudget,
               "$"
             )}`}
             disabled
-            state={state.totalCost}
+            state={state.proposedCost}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("totalCost" as const, value)
+              adt("proposedCost" as const, value)
             )}
           />
         </Col>

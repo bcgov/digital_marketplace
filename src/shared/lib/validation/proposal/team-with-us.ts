@@ -1,4 +1,4 @@
-import { getNumber, getString } from "shared/lib";
+import { determineBusinessDays, getNumber, getString } from "shared/lib";
 import {
   MAX_RESOURCE_QUESTION_WORD_LIMIT,
   TWUResourceQuestion
@@ -25,7 +25,6 @@ import {
   validateNumberWithPrecision,
   Validation
 } from "shared/lib/validation";
-import { isArray } from "util";
 
 export function validateTWUProposalStatus(
   raw: string,
@@ -111,7 +110,7 @@ export function validateTWUProposalResourceQuestionResponses(
   CreateTWUProposalResourceQuestionResponseBody,
   CreateTWUProposalResourceQuestionResponseValidationErrors
 > {
-  if (!isArray(raw)) {
+  if (!Array.isArray(raw)) {
     return invalid([
       { parseFailure: ["Please provide an array of responses."] }
     ]);
@@ -128,16 +127,23 @@ export function validateTWUProposalResourceQuestionResponses(
 }
 
 export function validateTWUProposalProposedCost(
-  implementationCost: number,
-  opportunityBudget: number
+  hourlyRate: number,
+  opportunityBudget: number,
+  allocation: number,
+  startDate: Date,
+  endDate: Date
 ): Validation<number> {
-  const totalProposedCost = implementationCost;
-  if (totalProposedCost > opportunityBudget) {
+  const dailyWorkHours = 8 * (allocation / 100);
+  const dailyCost = hourlyRate * dailyWorkHours;
+  const numberOfDays = determineBusinessDays(startDate, endDate);
+  const totalAmount = numberOfDays * dailyCost;
+
+  if (totalAmount > opportunityBudget) {
     return invalid([
       "The proposed cost exceeds the maximum budget for this opportunity."
     ]);
   }
-  return valid(totalProposedCost);
+  return valid(totalAmount);
 }
 
 export function validateNote(raw: string): Validation<string> {
@@ -157,7 +163,7 @@ export function validateResourceQuestionScores(
   UpdateResourceQuestionScoreBody,
   UpdateResourceQuestionScoreValidationErrors
 > {
-  if (!isArray(raw)) {
+  if (!Array.isArray(raw)) {
     return invalid([{ parseFailure: ["Please provide an array of scores."] }]);
   }
   if (raw.length !== opportunityResourceQuestions.length) {
