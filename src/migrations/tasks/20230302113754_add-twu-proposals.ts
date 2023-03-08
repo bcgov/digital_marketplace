@@ -35,6 +35,7 @@ export async function up(connection: Knex): Promise<void> {
     table.float("priceScore");
     table.uuid("opportunity").references("id").inTable("twuOpportunities");
     table.uuid("organization").references("id").inTable("organizations");
+    table.text("anonymousProponentName").defaultTo("").notNullable();
   });
   logger.info("Created twuProposals table.");
 
