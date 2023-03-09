@@ -36,7 +36,7 @@ export async function up(connection: Knex): Promise<void> {
     table.uuid("opportunity").references("id").inTable("twuOpportunities");
     table.uuid("organization").references("id").inTable("organizations");
     table.text("anonymousProponentName").defaultTo("").notNullable();
-    table.integer("proposedCost").notNullable();
+    table.integer("hourlyRate").notNullable();
   });
   logger.info("Created twuProposals table.");
 
@@ -78,10 +78,39 @@ export async function up(connection: Knex): Promise<void> {
   `);
 
   logger.info("Created twuProposalStatuses table.");
+
+  await connection.schema.createTable("twuProposalMember", (table) => {
+    table.uuid("member").references("id").inTable("users").notNullable();
+    table
+      .uuid("proposal")
+      .references("id")
+      .inTable("twuProposals")
+      .notNullable();
+    table.primary(["member", "proposal"]);
+  });
+
+  logger.info("Created twuProposalMember table.");
+
+  await connection.schema.createTable(
+    "twuResourceQuestionResponses",
+    (table) => {
+      table
+        .uuid("proposal")
+        .references("id")
+        .inTable("twuProposals")
+        .notNullable()
+        .onDelete("CASCADE");
+      table.integer("order").notNullable();
+      table.string("response", 5000);
+    }
+  );
+  logger.info("Created twuResourceQuestionResponses table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.dropTable("twuProposalStatuses");
   await connection.schema.dropTable("twuProposalAttachments");
   await connection.schema.dropTable("twuProposals");
+  await connection.schema.dropTable("twuProposalMember");
+  await connection.schema.dropTable("twuProposalResourceQuestionResponses");
 }
