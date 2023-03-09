@@ -32,7 +32,7 @@ export function validateTWUProposalStatus(
 ): Validation<TWUProposalStatus> {
   const parsed = parseTWUProposalStatus(raw);
   if (!parsed) {
-    return invalid([`"${raw}" is not a valid SprintWithUs proposal status.`]);
+    return invalid([`"${raw}" is not a valid Team With Us proposal status.`]);
   }
   if (!isOneOf.includes(parsed)) {
     return invalid([`"${raw}" is not one of: ${isOneOf.join(", ")}`]);

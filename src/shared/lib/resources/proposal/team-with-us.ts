@@ -145,14 +145,6 @@ export interface TWUProposal {
   anonymousProponentName: string;
 }
 
-export interface TWUProposalReference {
-  name: string;
-  company: string;
-  phone: string;
-  email: string;
-  order: number;
-}
-
 export interface TWUProposalResourceQuestionResponse {
   response: string;
   order: number;
@@ -177,8 +169,6 @@ export type CreateTWUProposalStatus =
   | TWUProposalStatus.Draft
   | TWUProposalStatus.Submitted;
 
-export type CreateTWUProposalReferenceBody = TWUProposalReference;
-
 export type CreateTWUProposalResourceQuestionResponseBody =
   TWUProposalResourceQuestionResponse;
 
@@ -188,11 +178,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   resourceQuestionResponses: CreateTWUProposalResourceQuestionResponseBody[];
   status: CreateTWUProposalStatus;
-}
-
-export interface CreateTWUProposalReferenceValidationErrors
-  extends ErrorTypeFrom<CreateTWUProposalReferenceBody> {
-  parseFailure?: string[];
+  proposedCost: number;
 }
 
 export interface CreateTWUProposalResourceQuestionResponseValidationErrors

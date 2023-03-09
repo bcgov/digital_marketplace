@@ -279,13 +279,15 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
+  const proposedCost = FormField.getValue(state.proposedCost);
   return {
+    attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
+    proposedCost: proposedCost || 0,
     resourceQuestionResponses: ResourceQuestions.getValues(
       state.resourceQuestions
-    ),
-    attachments: []
+    )
   };
 }
 
