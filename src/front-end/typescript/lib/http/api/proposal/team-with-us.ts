@@ -118,6 +118,8 @@ export function readMany<Msg>(
 }
 
 /**
+ * Takes raw user input from a proposal form, prepares it to make a request while
+ * modifying date fields to the current date.
  *
  * @param raw
  */

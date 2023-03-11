@@ -462,6 +462,10 @@ export const readOwnTWUProposals = tryDb<
   );
 });
 
+/**
+ * Used as confirmation that the person creating a proposal is not the same
+ * person as who created the opportunity. Returns `valid(null)` on success.
+ */
 export const readOneTWUProposalByOpportunityAndAuthor = tryDb<
   [Id, Session],
   Id | null

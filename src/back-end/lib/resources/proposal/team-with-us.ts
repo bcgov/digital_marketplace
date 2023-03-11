@@ -6,14 +6,14 @@ import {
   basicResponse,
   JsonResponseBody,
   makeJsonResponseBody,
-  // nullRequestBodyHandler,
+  nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
 import {
   validateAttachments,
   validateOrganizationId,
-  validateTWUOpportunityId
-  // validateTWUProposalId,
+  validateTWUOpportunityId,
+  validateTWUProposalId
   // validateTWUProposalOrganization,
   // validateTWUProposalTeam,
   // validateTWUProposalTeamMembers
@@ -32,7 +32,7 @@ import {
   // DeleteValidationErrors,
   // isValidStatusChange,
   TWUProposal,
-  // TWUProposalSlim,
+  TWUProposalSlim,
   TWUProposalStatus
   // UpdateEditValidationErrors,
   // UpdateRequestBody as SharedUpdateRequestBody,
@@ -54,7 +54,6 @@ import {
   // Validation
 } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
-import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
 
 interface ValidatedCreateRequestBody
   extends Omit<SharedCreateRequestBody, "attachments"> {
@@ -94,95 +93,103 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
 
 const routeNamespace = "proposals/team-with-us";
 
-// const readMany: crud.ReadMany<Session, db.Connection> = (
-//   connection: db.Connection
-// ) => {
-//   return nullRequestBodyHandler<
-//     JsonResponseBody<TWUProposalSlim[] | string[]>,
-//     Session
-//   >(async (request) => {
-//     const respond = (code: number, body: TWUProposalSlim[] | string[]) =>
-//       basicResponse(code, request.session, makeJsonResponseBody(body));
-//     if (request.query.opportunity) {
-//       const validatedTWUOpportunity = await validateTWUOpportunityId(
-//         connection,
-//         request.query.opportunity,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUOpportunity)) {
-//         return respond(404, ["Team With Us opportunity not found."]);
-//       }
-//
-//       if (
-//         !permissions.isSignedIn(request.session) ||
-//         !(await permissions.readManyTWUProposals(
-//           connection,
-//           request.session,
-//           validatedTWUOpportunity.value
-//         ))
-//       ) {
-//         return respond(401, [permissions.ERROR_MESSAGE]);
-//       }
-//       const dbResult = await db.readManyTWUProposals(
-//         connection,
-//         request.session,
-//         request.query.opportunity
-//       );
-//       if (isInvalid(dbResult)) {
-//         return respond(503, [db.ERROR_MESSAGE]);
-//       }
-//       return respond(200, dbResult.value);
-//     } else {
-//       if (
-//         !permissions.isSignedIn(request.session) ||
-//         !permissions.readOwnCWUProposals(request.session)
-//       ) {
-//         return respond(401, [permissions.ERROR_MESSAGE]);
-//       }
-//       const dbResult = await db.readOwnTWUProposals(
-//         connection,
-//         request.session
-//       );
-//       if (isInvalid(dbResult)) {
-//         return respond(503, [db.ERROR_MESSAGE]);
-//       }
-//       return respond(200, dbResult.value);
-//     }
-//   });
-// };
+const readMany: crud.ReadMany<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<TWUProposalSlim[] | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (code: number, body: TWUProposalSlim[] | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (request.query.opportunity) {
+      const validatedTWUOpportunity = await validateTWUOpportunityId(
+        connection,
+        request.query.opportunity,
+        request.session
+      );
+      if (isInvalid(validatedTWUOpportunity)) {
+        return respond(404, ["Team With Us opportunity not found."]);
+      }
 
-// const readOne: crud.ReadOne<Session, db.Connection> = (
-//   connection: db.Connection
-// ) => {
-//   return nullRequestBodyHandler<
-//     JsonResponseBody<TWUProposal | string[]>,
-//     Session
-//   >(async (request) => {
-//     const respond = (code: number, body: TWUProposal | string[]) =>
-//       basicResponse(code, request.session, makeJsonResponseBody(body));
-//     if (!permissions.isSignedIn(request.session)) {
-//       return respond(401, [permissions.ERROR_MESSAGE]);
-//     }
-//     const validatedTWUProposal = await validateTWUProposalId(
-//       connection,
-//       request.params.id,
-//       request.session
-//     );
-//     if (isInvalid(validatedTWUProposal)) {
-//       return respond(404, ["Proposal not found."]);
-//     }
-//     if (
-//       !(await permissions.readOneTWUProposal(
-//         connection,
-//         request.session,
-//         validatedTWUProposal.value
-//       ))
-//     ) {
-//       return respond(401, [permissions.ERROR_MESSAGE]);
-//     }
-//     return respond(200, validatedTWUProposal.value);
-//   });
-// };
+      if (
+        // TODO - add TWU permissions when ready
+        !permissions.isSignedIn(request.session)
+        // || !(await permissions.readManyTWUProposals(
+        //   connection,
+        //   request.session,
+        //   validatedTWUOpportunity.value
+        // ))
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult = await db.readManyTWUProposals(
+        connection,
+        request.session,
+        request.query.opportunity
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else {
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.readOwnCWUProposals(request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult = await db.readOwnTWUProposals(
+        connection,
+        request.session
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    }
+  });
+};
+
+/**
+ * Parses and validates the response, ensures authentication, that
+ * the proposal exists in the db and the response is free from errors.
+ *
+ * @param connection
+ * @returns Response - with appropriate code (401,404, 200) and response body
+ */
+const readOne: crud.ReadOne<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<TWUProposal | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (code: number, body: TWUProposal | string[]) =>
+      basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.isSignedIn(request.session)) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    const validatedTWUProposal = await validateTWUProposalId(
+      connection,
+      request.params.id,
+      request.session
+    );
+    if (isInvalid(validatedTWUProposal)) {
+      return respond(404, ["Proposal not found."]);
+    }
+    if (
+      !(await permissions.readOneTWUProposal(
+        connection,
+        request.session,
+        validatedTWUProposal.value
+      ))
+    ) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    return respond(200, validatedTWUProposal.value);
+  });
+};
 
 /**
  * Creates a new Team With Us Proposal.
@@ -284,6 +291,7 @@ const create: crud.Create<
 
       /**
        * Check for existing proposal on this opportunity, authored by this user
+       * If the person is not the author, dbResult will be valid(null)
        */
       const dbResult = await db.readOneTWUProposalByOpportunityAndAuthor(
         connection,
@@ -301,7 +309,7 @@ const create: crud.Create<
         });
       }
 
-      // Attachments must be validated for both drafts and published opportunities.
+      // Attachments must be validated for both drafts AND published opportunities.
       const validatedAttachments = await validateAttachments(
         connection,
         attachments
@@ -314,17 +322,18 @@ const create: crud.Create<
 
       /**
        * Checks that the number provided is between a min/max value
-       * returns an adt('valid', <number>)
+       * returns and sets a value that is either adt('valid', <number>)
        * or adt('invalid', 'please enter value greater/less than x')
        */
-      const validatedHourlyRate = validateTWUHourlyRate(hourlyRate);
+      const validatedHourlyRate =
+        proposalValidation.validateTWUHourlyRate(hourlyRate);
       if (isInvalid(validatedHourlyRate)) {
         return invalid({
           hourlyRate: validatedHourlyRate.value
         });
       }
 
-      // Only validate other fields if not in draft
+      // Only validate the following fields if proposal is in DRAFT
       if (validatedStatus.value === TWUProposalStatus.Draft) {
         return valid({
           resourceQuestionResponses: resourceQuestionResponses
@@ -373,6 +382,7 @@ const create: crud.Create<
        * Validate that the set of proposed capabilities across team members
        * satisfies the opportunity required capabilities
        */
+      // TODO - add a TWU team when ready
       // const validatedProposalTeam = await validateTWUProposalTeam(
       //   connection,
       //   validatedTWUOpportunity.value
@@ -1225,8 +1235,8 @@ const create: crud.Create<
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
-  // readMany,
-  // readOne,
+  readMany,
+  readOne,
   create
   // update,
   // delete: delete_
