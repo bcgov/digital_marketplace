@@ -11,6 +11,7 @@ import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/v
 import * as TWUProposalViewTab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import * as TWUProposalEditTab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
 import { getString } from "shared/lib";
 import { adt } from "shared/lib/types";
@@ -72,7 +73,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/create"
@@ -291,6 +291,21 @@ const router: router_.Router<Route> = {
           tag: "proposalTWUCreate",
           value: {
             opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalEditTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -681,6 +696,12 @@ const router: router_.Router<Route> = {
       case "proposalTWUCreate":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "proposalTWUView":
         return prefixPath(

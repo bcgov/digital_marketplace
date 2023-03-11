@@ -25,7 +25,7 @@ import {
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-// import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
+import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: TWUOpportunity | null;
@@ -45,8 +45,8 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
     [
       string,
       Tab.TabId,
-      api.ResponseValidation<TWUOpportunity, string[]>
-      // api.ResponseValidation<TWUProposalSlim[], string[]>
+      api.ResponseValidation<TWUOpportunity, string[]>,
+      api.ResponseValidation<TWUProposalSlim[], string[]>
     ]
   >
 >;
@@ -97,16 +97,18 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               routeParams.opportunityId,
               (response) => response
             ),
-            // Tab.shouldLoadProposalsForTab(tabId)
-            //   ? api.proposals.twu.readMany(routeParams.opportunityId)(
-            //       (response) => response
-            //     )
-            //   : component_.cmd.dispatch(valid([])),
-
-            //TODO: add proposals as a parameter value when proposals is ready
-            component_.cmd.dispatch(valid([])),
-            (opportunity) =>
-              adt("onInitResponse", [routePath, tabId, opportunity]) as Msg
+            Tab.shouldLoadProposalsForTab(tabId)
+              ? api.proposals.twu.readMany(routeParams.opportunityId)(
+                  (response) => response
+                )
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals) =>
+              adt("onInitResponse", [
+                routePath,
+                tabId,
+                opportunity,
+                proposals
+              ]) as Msg
           )
         ]
       ];
@@ -146,8 +148,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              // const [routePath, tabId, opportunityResponse, proposalsResponse] =
-              const [routePath, tabId, opportunityResponse] = msg.value;
+              const [routePath, tabId, opportunityResponse, proposalsResponse] =
+                msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -165,7 +167,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 ];
               }
               const opportunity = opportunityResponse.value;
-              // const proposals = api.getValidValue(proposalsResponse, []);
+              const proposals = api.getValidValue(proposalsResponse, []);
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
@@ -183,7 +185,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                   ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
-                      tabComponent.onInitResponse([opportunity]),
+                      tabComponent.onInitResponse([opportunity, proposals]),
                       (msg) => adt("tab", msg)
                     ) as Msg
                   )

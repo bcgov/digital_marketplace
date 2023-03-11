@@ -803,13 +803,13 @@ export const component: component_.page.Component<
               children: "View Proposal",
               symbol_: leftPlacement(iconLinkSymbol("comment-dollar")),
               button: true,
-              color: "primary"
-              // dest: routeDest(
-              //   adt("proposalTWUEdit", {
-              //     opportunityId: state.opportunity.id,
-              //     proposalId: state.existingProposal.id
-              //   })
-              // )
+              color: "primary",
+              dest: routeDest(
+                adt("proposalTWUEdit", {
+                  opportunityId: state.opportunity.id,
+                  proposalId: state.existingProposal.id
+                })
+              )
             }
           ]);
         } else if (isAcceptingProposals) {

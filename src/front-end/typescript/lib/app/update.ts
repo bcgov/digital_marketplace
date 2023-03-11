@@ -51,6 +51,7 @@ import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-w
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
+import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -348,6 +349,17 @@ function initPage(
         pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalTWUCreate", value);
+        }
+      });
+    case "proposalTWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUEdit"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUEdit.component.init,
+        pageGetMetadata: PageProposalTWUEdit.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUEdit", value);
         }
       });
     case "proposalTWUView":
@@ -1163,6 +1175,24 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "proposalTWUCreate"],
         pageUpdate: PageProposalTWUCreate.component.update,
         pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUEdit":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalTWUEdit.State,
+        PageProposalTWUEdit.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUEdit" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageUpdate: PageProposalTWUEdit.component.update,
+        pageGetMetadata: PageProposalTWUEdit.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageProposalTWUView":

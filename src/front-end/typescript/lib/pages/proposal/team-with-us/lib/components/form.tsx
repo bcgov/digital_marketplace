@@ -785,6 +785,25 @@ export const component: component_.base.Component<Params, State, Msg> = {
   view
 };
 
+// export const getModal: component_.page.GetModal<State, Msg> = (state) => {
+//   const teamModal = component_.page.modal.map(
+//     Team.getModal(state.team),
+//     (msg) => adt("team", msg) as Msg
+//   );
+//   if (teamModal && teamModal.tag === "show") {
+//     return teamModal;
+//   }
+//   if (!state.showModal) {
+//     return component_.page.modal.hide();
+//   }
+//   switch (state.showModal.tag) {
+//     case "viewTeamMember":
+//       return makeViewTeamMemberModal({
+//         member: state.showModal.value,
+//         onCloseMsg: adt("hideModal")
+//       });
+//   }
+// };
 export function getAlerts<Msg>(
   state: Immutable<State>
 ): component_.page.Alerts<Msg> {
