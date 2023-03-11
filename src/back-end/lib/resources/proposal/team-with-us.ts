@@ -54,6 +54,7 @@ import {
   // Validation
 } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
+import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
 
 interface ValidatedCreateRequestBody
   extends Omit<SharedCreateRequestBody, "attachments"> {
@@ -183,6 +184,21 @@ const routeNamespace = "proposals/team-with-us";
 //   });
 // };
 
+/**
+ * Creates a new Team With Us Proposal.
+ *
+ * @remarks
+ *
+ * Handles both the request and response. Sequence is to parse
+ * the request, validate fields, create the proposal and
+ * generate the response. It also triggers notifications (email)
+ * in certain conditions, such as if the status of the opportunity
+ * changes to publish.
+ *
+ *
+ * @param connection - database connection
+ * @returns - a response body that is valid or invalid
+ */
 const create: crud.Create<
   Session,
   db.Connection,
@@ -199,7 +215,8 @@ const create: crud.Create<
         organization: getString(body, "organization", undefined),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestionResponses: get(body, "resourceQuestionResponses")
+        resourceQuestionResponses: get(body, "resourceQuestionResponses"),
+        hourlyRate: getNumber(body, "hourlyRate")
       };
     },
     async validateRequestBody(request) {
@@ -208,18 +225,25 @@ const create: crud.Create<
         organization,
         attachments,
         status,
-        resourceQuestionResponses
+        resourceQuestionResponses,
+        hourlyRate
       } = request.body;
 
       if (
-        !permissions.isSignedIn(request.session) ||
-        !(await permissions.createTWUProposal(connection, request.session))
+        !permissions.isSignedIn(request.session)
+        // TODO create permissions tables for TWU
+        // || !(await permissions.createTWUProposal(connection, request.session))
       ) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
         });
       }
 
+      /**
+       * Takes orgId in the request body, queries the db to check if organization
+       * exists, sets variable as either adt('valid', value)
+       * or adt('invalid', {['some message']})
+       */
       const validatedOrganization = await optionalAsync(organization, (v) =>
         validateOrganizationId(connection, v, request.session)
       );
@@ -229,6 +253,11 @@ const create: crud.Create<
         });
       }
 
+      /**
+       * Takes status in the request body, checks if it's either 'Draft' or
+       * 'Submitted', sets variable as either adt('valid', value),
+       * or adt('invalid', {['some message']})
+       */
       const validatedStatus =
         proposalValidation.validateCreateTWUProposalStatus(status);
       if (isInvalid(validatedStatus)) {
@@ -237,6 +266,11 @@ const create: crud.Create<
         });
       }
 
+      /**
+       * Takes opportunity in the request body, queries the db to check if
+       * the opportunityID exists, sets variable as either adt('valid', value)
+       * or adt('invalid', {['some message']})
+       */
       const validatedTWUOpportunity = await validateTWUOpportunityId(
         connection,
         opportunity,
@@ -248,7 +282,9 @@ const create: crud.Create<
         });
       }
 
-      // Check for existing proposal on this opportunity, authored by this user
+      /**
+       * Check for existing proposal on this opportunity, authored by this user
+       */
       const dbResult = await db.readOneTWUProposalByOpportunityAndAuthor(
         connection,
         opportunity,
@@ -276,6 +312,18 @@ const create: crud.Create<
         });
       }
 
+      /**
+       * Checks that the number provided is between a min/max value
+       * returns an adt('valid', <number>)
+       * or adt('invalid', 'please enter value greater/less than x')
+       */
+      const validatedHourlyRate = validateTWUHourlyRate(hourlyRate);
+      if (isInvalid(validatedHourlyRate)) {
+        return invalid({
+          hourlyRate: validatedHourlyRate.value
+        });
+      }
+
       // Only validate other fields if not in draft
       if (validatedStatus.value === TWUProposalStatus.Draft) {
         return valid({
@@ -289,7 +337,8 @@ const create: crud.Create<
           opportunity: validatedTWUOpportunity.value.id,
           organization: organization || undefined,
           status: validatedStatus.value,
-          attachments: validatedAttachments.value
+          attachments: validatedAttachments.value,
+          hourlyRate: validatedHourlyRate.value
         });
       }
 
@@ -301,38 +350,39 @@ const create: crud.Create<
       }
 
       // Prior to submitting, re-check permissions
-      if (
-        !(await permissions.submitTWUProposal(
-          connection,
-          request.session,
-          validatedOrganization.value
-        ))
-      ) {
-        return invalid({
-          permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
+      // TODO implement permission check when TWU qualified is ready
+      // if (
+      //   !(await permissions.submitTWUProposal(
+      //     connection,
+      //     request.session,
+      //     validatedOrganization.value
+      //   ))
+      // ) {
+      //   return invalid({
+      //     permissions: [permissions.ERROR_MESSAGE]
+      //   });
+      // }
 
       const validatedResourceQuestionResponses =
         proposalValidation.validateTWUProposalResourceQuestionResponses(
           resourceQuestionResponses,
           validatedTWUOpportunity.value.resourceQuestions
         );
-      // Validate that the total proposed cost does not exceed the max budget of the opportunity
-      // TODO create a function that measures proposed cost (function of hourly rate, max budget and time allocation)
-      const validatedTotalProposedCost =
-        validatedTWUOpportunity.value.maxBudget;
-      // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
-      const validatedProposalTeam = await validateTWUProposalTeam(
-        connection,
-        validatedTWUOpportunity.value
-      );
+
+      /**
+       * Validate that the set of proposed capabilities across team members
+       * satisfies the opportunity required capabilities
+       */
+      // const validatedProposalTeam = await validateTWUProposalTeam(
+      //   connection,
+      //   validatedTWUOpportunity.value
+      // );
 
       if (
         allValid([
           validatedResourceQuestionResponses,
-          validatedTotalProposedCost,
-          validatedProposalTeam
+          validatedHourlyRate
+          // validatedProposalTeam
         ])
       ) {
         return valid({
@@ -341,19 +391,16 @@ const create: crud.Create<
           organization: (validatedOrganization.value as OrganizationSlim).id,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          resourceQuestionResponses: validatedResourceQuestionResponses.value
+          resourceQuestionResponses: validatedResourceQuestionResponses.value,
+          hourlyRate: validatedHourlyRate.value
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
           resourceQuestionResponses: getInvalidValue<
             CreateTWUResourceQuestionValidationErrors[],
             undefined
-          >(validatedResourceQuestionResponses, undefined),
-          totalProposedCost: getInvalidValue(
-            validatedTotalProposedCost,
-            undefined
-          ),
-          team: getInvalidValue(validatedProposalTeam, undefined)
+          >(validatedResourceQuestionResponses, undefined)
+          // team: getInvalidValue(validatedProposalTeam, undefined)
         });
       }
     },
@@ -379,11 +426,11 @@ const create: crud.Create<
         }
         // Notify of submitted proposal if applicable
         if (dbResult.value.status === TWUProposalStatus.Submitted) {
-          twuProposalNotifications.handleTWUProposalSubmitted(
-            connection,
-            dbResult.value.id,
-            request.body.session
-          );
+          // twuProposalNotifications.handleTWUProposalSubmitted(
+          //   connection,
+          //   dbResult.value.id,
+          //   request.body.session
+          // );
         }
         return basicResponse(
           201,

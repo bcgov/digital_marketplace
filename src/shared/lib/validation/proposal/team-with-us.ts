@@ -129,13 +129,16 @@ export function validateTWUProposalResourceQuestionResponses(
 export function validateTWUProposalProposedCost(
   hourlyRate: number,
   opportunityBudget: number,
-  allocation: number,
-  startDate: Date,
-  endDate: Date
+  opportunityAllocation: number,
+  opportunityStartDate: Date,
+  opportunityEndDate: Date
 ): Validation<number> {
-  const dailyWorkHours = 8 * (allocation / 100);
+  const dailyWorkHours = 8 * (opportunityAllocation / 100);
   const dailyCost = hourlyRate * dailyWorkHours;
-  const numberOfDays = determineBusinessDays(startDate, endDate);
+  const numberOfDays = determineBusinessDays(
+    opportunityStartDate,
+    opportunityEndDate
+  );
   const totalAmount = numberOfDays * dailyCost;
 
   if (totalAmount > opportunityBudget) {
@@ -146,6 +149,16 @@ export function validateTWUProposalProposedCost(
   return valid(totalAmount);
 }
 
+/**
+ * Checks to see that the number passed is a number between a min/max value
+ *
+ * @param raw - hourly rate for vendor
+ */
+export function validateTWUHourlyRate(
+  raw: number | string
+): Validation<number> {
+  return validateNumber(raw, 1, undefined, "Hourly Rate", "an");
+}
 export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, "Note", 0, 5000);
 }

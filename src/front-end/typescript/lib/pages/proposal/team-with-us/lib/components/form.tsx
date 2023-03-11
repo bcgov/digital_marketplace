@@ -79,7 +79,7 @@ export interface State
   // Team Tab
   organization: Immutable<Select.State>;
   // Pricing Tab
-  proposedCost: Immutable<NumberField.State>;
+  hourlyRate: Immutable<NumberField.State>;
   // Questions Tab
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Review Proposal Tab
@@ -91,7 +91,7 @@ export type Msg =
   // Organization Tab
   | ADT<"organization", Select.Msg>
   // Pricing Tab
-  | ADT<"proposedCost", NumberField.Msg>
+  | ADT<"hourlyRate", NumberField.Msg>
   // Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Review Proposal Tab
@@ -128,7 +128,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     // TODO: add TWU qualification check when ready
     // .filter((o) => doesOrganizationMeetTWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  const proposedCost = proposal?.proposedCost ? proposal.proposedCost : 0;
+  const hourlyRate = proposal?.hourlyRate ? proposal.hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -166,11 +166,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: adt("options", organizationOptions)
     }
   });
-  const [proposedCostState, proposedCostCmds] = NumberField.init({
+  const [hourlyRateState, hourlyRateCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
       if (v === null) {
-        return invalid([`Please enter a valid proposed cost.`]);
+        return invalid([`Please enter a valid hourly rate.`]);
       }
       return proposalValidation.validateTWUProposalProposedCost(
         v,
@@ -181,7 +181,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       );
     },
     child: {
-      value: proposedCost || null,
+      value: hourlyRate || null,
       id: "twu-proposal-cost",
       min: 1
     }
@@ -203,7 +203,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       tabbedForm: immutable(tabbedFormState),
       organization: immutable(organizationState),
-      proposedCost: immutable(proposedCostState),
+      hourlyRate: immutable(hourlyRateState),
       resourceQuestions: immutable(resourceQuestionsState)
     },
     [
@@ -213,8 +213,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(organizationCmds, (msg) =>
         adt("organization", msg)
       ),
-      ...component_.cmd.mapMany(proposedCostCmds, (msg) =>
-        adt("proposedCost", msg)
+      ...component_.cmd.mapMany(hourlyRateCmds, (msg) =>
+        adt("hourlyRate", msg)
       ),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
@@ -233,10 +233,10 @@ export function setErrors(
     .update("organization", (s) =>
       FormField.setErrors(s, errors?.organization || [])
     )
-    .update("proposedCost", (s) =>
+    .update("hourlyRate", (s) =>
       FormField.setErrors(
         s,
-        (errors && (errors as CreateValidationErrors).totalProposedCost) || []
+        (errors && (errors as CreateValidationErrors).hourlyRate) || []
       )
     )
     .update("resourceQuestions", (s) =>
@@ -252,12 +252,12 @@ export function setErrors(
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("organization", (s) => FormField.validate(s))
-    .update("proposedCost", (s) => FormField.validate(s))
+    .update("hourlyRate", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
 }
 
 export function isPricingTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.proposedCost);
+  return FormField.isValid(state.hourlyRate);
 }
 
 export function isOrganizationsTabValid(state: Immutable<State>): boolean {
@@ -279,12 +279,12 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
-  const proposedCost = FormField.getValue(state.proposedCost);
+  const hourlyRate = FormField.getValue(state.hourlyRate);
   return {
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
-    proposedCost: proposedCost || 0,
+    hourlyRate: hourlyRate || 0,
     resourceQuestionResponses: ResourceQuestions.getValues(
       state.resourceQuestions
     )
@@ -361,7 +361,7 @@ export function persist(
 
 /**
  *
- * @see {@link Msg} One of the string values defined by type Msg
+ * @see {@link Msg} - string values defined by type Msg
  *
  * @param state
  * @param msg
@@ -386,13 +386,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("organization", value)
       });
 
-    case "proposedCost":
+    case "hourlyRate":
       return component_.base.updateChild({
         state,
-        childStatePath: ["proposedCost"],
+        childStatePath: ["hourlyRate"],
         childUpdate: NumberField.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("proposedCost", value)
+        mapChildMsg: (value) => adt("hourlyRate", value)
       });
 
     case "resourceQuestions":
@@ -556,9 +556,9 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
               "$"
             )}`}
             disabled
-            state={state.proposedCost}
+            state={state.hourlyRate}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("proposedCost" as const, value)
+              adt("hourlyRate" as const, value)
             )}
           />
         </Col>

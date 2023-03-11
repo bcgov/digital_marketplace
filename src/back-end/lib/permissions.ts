@@ -6,6 +6,7 @@ import {
   isCWUProposalAuthor,
   isSWUOpportunityAuthor,
   isTWUOpportunityAuthor,
+  isTWUProposalAuthor,
   isUserOwnerOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
@@ -27,6 +28,7 @@ import {
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateTWUOpportunityStatus,
+  doesTWUOpportunityStatusAllowGovToViewProposals,
   TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
@@ -49,6 +51,11 @@ import {
   Session
 } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
+import {
+  isTWUProposalStatusVisibleToGovernment,
+  TWUProposal,
+  TWUProposalStatus
+} from "shared/lib/resources/proposal/team-with-us";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
@@ -733,6 +740,85 @@ export async function editTWUOpportunity(
   );
 }
 
+export async function readOneTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposal: TWUProposal
+): Promise<boolean> {
+  if (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        proposal.opportunity.id
+      )))
+  ) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft/published
+    // And proposal is not in draft/submitted
+    return (
+      isSignedIn(session) &&
+      doesTWUOpportunityStatusAllowGovToViewProposals(
+        proposal.opportunity.status
+      ) &&
+      isTWUProposalStatusVisibleToGovernment(
+        proposal.status,
+        session.user.type as UserType.Government | UserType.Admin
+      )
+    );
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return (
+      (session &&
+        (await isTWUProposalAuthor(connection, session.user, proposal.id))) ||
+      false
+    );
+  }
+  return false;
+}
+
+export async function readTWUProposalHistory(
+  connection: Connection,
+  session: Session,
+  opportunityId: string,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+    false
+  );
+}
+
+export async function readTWUProposalScore(
+  connection: Connection,
+  session: Session,
+  opportunityId: string,
+  proposalId: string,
+  proposalStatus: TWUProposalStatus
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (proposalStatus === TWUProposalStatus.Awarded ||
+        proposalStatus === TWUProposalStatus.NotAwarded)) ||
+    false
+  );
+}
 export function publishTWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }

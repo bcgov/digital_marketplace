@@ -140,7 +140,7 @@ export interface TWUProposal {
   challengeScore?: number;
   priceScore?: number;
   totalScore?: number;
-  proposedCost: number;
+  hourlyRate: number;
   rank?: number;
   anonymousProponentName: string;
 }
@@ -178,7 +178,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   resourceQuestionResponses: CreateTWUProposalResourceQuestionResponseBody[];
   status: CreateTWUProposalStatus;
-  proposedCost: number;
+  hourlyRate: number;
 }
 
 export interface CreateTWUProposalResourceQuestionResponseValidationErrors
@@ -192,7 +192,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   organization?: string[];
   opportunity?: string[];
   status?: string[];
-  totalProposedCost?: string[];
+  hourlyRate?: string[];
 }
 
 // Update.
