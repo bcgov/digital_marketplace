@@ -41,7 +41,8 @@ export type DeleteAction<ValidResponse, InvalidResponse, Msg> = (
 ) => component.cmd.Cmd<Msg>;
 
 /**
- * Ensuring the http request is formatted in the correct way, prior to sending to the back-end
+ * Ensuring the http request is formatted in the correct way,
+ * prior to sending to the back-end
  *
  * @param path
  * @param transformResponse

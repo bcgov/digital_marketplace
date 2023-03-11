@@ -10,7 +10,7 @@ import {
 import { compareDates } from "shared/lib";
 
 /**
- *
+ * reflects the path for the CRUD request being made
  */
 const NAMESPACE = "proposals/team-with-us";
 
@@ -21,12 +21,44 @@ export const create: crud.CreateAction<
   unknown
 > = crud.makeCreateAction(NAMESPACE, rawTWUProposalToTWUProposal);
 
+export function readOne<Msg>(
+  opportunityId: Id
+): crud.ReadOneAction<Resource.TWUProposal, string[], Msg> {
+  return crud.makeReadOneAction(
+    NAMESPACE,
+    rawTWUProposalToTWUProposal,
+    `opportunity=${window.encodeURIComponent(opportunityId)}`
+  );
+}
+
+/**
+ *
+ * @param opportunityId
+ */
+export function readMany<Msg>(
+  opportunityId?: Id
+): crud.ReadManyAction<Resource.TWUProposalSlim, string[], Msg> {
+  return crud.makeReadManyAction(
+    NAMESPACE,
+    rawTWUProposalSlimToTWUProposalSlim,
+    opportunityId !== undefined
+      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
+      : ""
+  );
+}
+
 export const update: crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.TWUProposal,
   Resource.UpdateValidationErrors,
   unknown
 > = crud.makeUpdateAction(NAMESPACE, rawTWUProposalToTWUProposal);
+
+export const delete_: crud.DeleteAction<
+  Resource.TWUProposal,
+  Resource.DeleteValidationErrors,
+  unknown
+> = crud.makeDeleteAction(NAMESPACE, rawTWUProposalToTWUProposal);
 
 interface RawTWUProposal
   extends Omit<
@@ -99,22 +131,6 @@ export function readExistingProposalForOpportunity<Msg>(
         : handleResponse(undefined);
     }
   ) as component.Cmd<Msg>;
-}
-
-/**
- *
- * @param opportunityId
- */
-export function readMany<Msg>(
-  opportunityId?: Id
-): crud.ReadManyAction<Resource.TWUProposalSlim, string[], Msg> {
-  return crud.makeReadManyAction(
-    NAMESPACE,
-    rawTWUProposalSlimToTWUProposalSlim,
-    opportunityId !== undefined
-      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
-      : ""
-  );
 }
 
 /**

@@ -8,6 +8,7 @@ import * as TWUOpportunityEditTab from "front-end/lib/pages/opportunity/team-wit
 import * as OrganizationEditTab from "front-end/lib/pages/organization/edit/tab";
 import * as CWUProposalEditTab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/view/tab";
+import * as TWUProposalViewTab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
@@ -271,6 +272,17 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId"),
+      makeRoute({ params }) {
+        return {
+          tag: "opportunityTWUView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
       path: prefixPath(
         "/opportunities/team-with-us/:opportunityId/proposals/create"
       ),
@@ -284,12 +296,16 @@ const router: router_.Router<Route> = {
       }
     },
     {
-      path: prefixPath("/opportunities/team-with-us/:opportunityId"),
-      makeRoute({ params }) {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId"
+      ),
+      makeRoute({ params, query }) {
         return {
-          tag: "opportunityTWUView",
+          tag: "proposalTWUView",
           value: {
-            opportunityId: params.opportunityId || ""
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -665,6 +681,12 @@ const router: router_.Router<Route> = {
       case "proposalTWUCreate":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");
