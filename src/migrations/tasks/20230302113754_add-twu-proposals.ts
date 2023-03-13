@@ -1,8 +1,14 @@
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import Knex from "knex";
+import { generateUuid } from "back-end/lib";
 
 const logger = makeDomainLogger(consoleAdapter, "migrations");
+
+const slugs = [
+  "team-with-us-proposal-evaluation",
+  "team-with-us-terms-and-conditions"
+];
 
 enum TWUProposalStatus {
   Draft = "DRAFT",
@@ -21,6 +27,24 @@ export enum TWUProposalEvent {
   QuestionsScoreEntered = "QUESTIONS_SCORE_ENTERED",
   ChallengeScoreEntered = "CHALLENGE_SCORE_ENTERED",
   PriceScoreEntered = "PRICE_SCORE_ENTERED"
+}
+
+async function insertFixedContent(connection: Knex, slug: string) {
+  const now = new Date();
+  const body = "Initial version";
+  const id = generateUuid();
+  await connection("content").insert({ id, createdAt: now, slug, fixed: true });
+  await connection("contentVersions").insert({
+    id: 1,
+    title: slug,
+    body,
+    createdAt: now,
+    contentId: id
+  });
+}
+
+async function deleteFixedContent(connection: Knex, slug: string) {
+  await connection("content").where({ slug }).delete();
 }
 
 export async function up(connection: Knex): Promise<void> {
@@ -105,12 +129,23 @@ export async function up(connection: Knex): Promise<void> {
     }
   );
   logger.info("Created twuResourceQuestionResponses table.");
+
+  // Add stub content initial values
+  await Promise.all(
+    slugs.map(async (slug) => await insertFixedContent(connection, slug))
+  );
+  logger.info("Completed adding content slug to content table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.dropTable("twuProposalStatuses");
   await connection.schema.dropTable("twuProposalAttachments");
-  await connection.schema.dropTable("twuProposals");
   await connection.schema.dropTable("twuProposalMember");
-  await connection.schema.dropTable("twuProposalResourceQuestionResponses");
+  await connection.schema.dropTable("twuResourceQuestionResponses");
+  await connection.schema.dropTable("twuProposals");
+
+  await Promise.all(
+    slugs.map(async (slug) => await deleteFixedContent(connection, slug))
+  );
+  logger.info("Completed reverting content table.");
 }

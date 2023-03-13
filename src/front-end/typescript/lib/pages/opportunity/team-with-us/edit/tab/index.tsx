@@ -7,7 +7,7 @@ import * as HistoryTab from "front-end/lib/pages/opportunity/team-with-us/edit/t
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/summary";
-// import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/team-questions";
+// import * as ResourceQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/team-questions";
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToTWUOpportunity,
@@ -68,8 +68,8 @@ export interface Tabs {
   >;
   //   resourceQuestions: TabbedPage.Tab<
   //     Params,
-  //     TeamQuestionsTab.State,
-  //     TeamQuestionsTab.InnerMsg,
+  //     ResourceQuestionsTab.State,
+  //     ResourceQuestionsTab.InnerMsg,
   //     InitResponse
   //   >;
   history: TabbedPage.Tab<
@@ -104,9 +104,9 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "opportunity":
     case "addenda":
     case "history":
+    case "proposals":
       // case "resourceQuestions":
       // case "challenge":
-      // case "proposals":
       return raw;
     default:
       return null;
@@ -131,7 +131,7 @@ export function idToDefinition<K extends TabId>(
       } as TabbedPage.TabDefinition<Tabs, K>;
     // case "resourceQuestions":
     //   return {
-    //     component: TeamQuestionsTab.component,
+    //     component: ResourceQuestionsTab.component,
     //     icon: "comments-alt",
     //     title: "Team Questions"
     //   } as TabbedPage.TabDefinition<Tabs, K>;
@@ -194,7 +194,7 @@ export function makeSidebarState(
             : []),
           makeSidebarLink("history", opportunity.id, activeTab),
           adt("heading", "Opportunity Evaluation"),
-          // //   makeSidebarLink("proposals", opportunity.id, activeTab),
+          makeSidebarLink("proposals", opportunity.id, activeTab),
           //   makeSidebarLink("resourceQuestions", opportunity.id, activeTab),
           //   makeSidebarLink("challenge", opportunity.id, activeTab),
           adt("heading", "Need Help?"),

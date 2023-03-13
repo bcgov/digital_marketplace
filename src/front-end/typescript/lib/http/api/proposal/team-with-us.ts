@@ -116,6 +116,10 @@ interface RawTWUProposalSlim
 }
 
 /**
+ * Proposals have a relationship to opportunities. Can be used when a vendor views
+ * an opportunity, and relevant, previously saved proposals are returned.
+ *
+ * opportunity
  *
  * @param opportunityId
  * @param handleResponse

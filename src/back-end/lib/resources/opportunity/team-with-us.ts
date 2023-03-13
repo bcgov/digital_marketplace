@@ -948,7 +948,7 @@ const update: crud.Update<
           if (!screenedInCProponentCount) {
             return invalid({
               permissions: [
-                "You must have at least one screened in proponent to start the Code Challenge."
+                "You must have at least one screened in proponent to start the Challenge."
               ]
             });
           }
