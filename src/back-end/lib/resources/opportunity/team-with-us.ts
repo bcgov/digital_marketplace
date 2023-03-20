@@ -10,7 +10,8 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
-  validateTWUOpportunityId
+  validateTWUOpportunityId,
+  validateServiceArea
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { addDays, getNumber, getString, getStringArray } from "shared/lib";
@@ -26,7 +27,6 @@ import {
   TWUOpportunity,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
-  TWUServiceArea,
   UpdateRequestBody,
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
@@ -61,10 +61,12 @@ interface ValidatedCreateRequestBody
     | "subscribed"
     | "resourceQuestions"
     | "challengeEndDate"
+    | "serviceArea"
   > {
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
+  serviceArea: number;
 }
 
 interface ValidatedUpdateRequestBody {
@@ -81,8 +83,8 @@ interface ValidatedUpdateRequestBody {
 
 type ValidatedUpdateEditRequestBody = Omit<
   ValidatedCreateRequestBody,
-  "status" | "session"
->;
+  "status" | "session" | "serviceArea"
+> & { serviceArea: number };
 
 type CreateRequestBody = Omit<
   SharedCreateRequestBody,
@@ -263,6 +265,17 @@ const create: crud.Create<
         });
       }
 
+      // Service areas are required for drafts
+      const validatedServiceArea = await validateServiceArea(
+        connection,
+        serviceArea
+      );
+      if (isInvalid(validatedServiceArea)) {
+        return invalid({
+          serviceArea: validatedServiceArea.value
+        });
+      }
+
       const now = new Date();
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
@@ -281,9 +294,6 @@ const create: crud.Create<
           completionDate,
           getValidValue(validatedStartDate, now)
         );
-      // Service areas are required for drafts
-      const validatedServiceArea =
-        opportunityValidation.validateServiceArea(serviceArea);
 
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
@@ -310,10 +320,7 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          serviceArea: getValidValue(
-            validatedServiceArea,
-            TWUServiceArea.Developer
-          )
+          serviceArea: validatedServiceArea.value
         });
       }
 
@@ -366,7 +373,8 @@ const create: crud.Create<
           validatedStartDate,
           validatedCompletionDate,
           validatedAttachments,
-          validatedStatus
+          validatedStatus,
+          validatedServiceArea
         ])
       ) {
         // Ensure that score weights total 100%
@@ -421,7 +429,6 @@ const create: crud.Create<
             validatedOptionalSkills,
             undefined
           ),
-          serviceArea: getInvalidValue(validatedServiceArea, undefined),
           targetAllocation: getInvalidValue(
             validatedTargetAllocation,
             undefined
@@ -628,6 +635,19 @@ const update: crud.Update<
             });
           }
 
+          // Service areas are required for drafts
+          const validatedServiceArea = await validateServiceArea(
+            connection,
+            serviceArea
+          );
+          if (isInvalid(validatedServiceArea)) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                serviceArea: validatedServiceArea.value
+              })
+            });
+          }
+
           /**
            * If the existing proposal deadline is in the past,
            * updates should be validated against that deadline.
@@ -656,10 +676,6 @@ const update: crud.Update<
               getValidValue(validatedStartDate, now)
             );
 
-          // Service areas are required for drafts
-          const validatedServiceArea =
-            opportunityValidation.validateServiceArea(serviceArea);
-
           // Do not validate other fields if the opportunity is a draft.
           if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
             const defaultDate = addDays(new Date(), 14);
@@ -682,10 +698,7 @@ const update: crud.Update<
                   validatedCompletionDate,
                   defaultDate
                 ),
-                serviceArea: getValidValue(
-                  validatedServiceArea,
-                  TWUServiceArea.Developer
-                )
+                serviceArea: validatedServiceArea.value
               })
             });
           }
@@ -785,7 +798,6 @@ const update: crud.Update<
                   validatedOptionalSkills,
                   undefined
                 ),
-                serviceArea: getInvalidValue(validatedServiceArea, undefined),
                 targetAllocation: getInvalidValue(
                   validatedTargetAllocation,
                   undefined
