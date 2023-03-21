@@ -9,9 +9,7 @@ import {
   MAX_RESOURCE_QUESTIONS,
   parseTWUOpportunityStatus,
   TWUOpportunity,
-  TWUOpportunityStatus,
-  TWUServiceArea,
-  parseTWUServiceArea
+  TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -178,21 +176,6 @@ export function validateChallengeWeight(
 
 export function validatePriceWeight(raw: string | number): Validation<number> {
   return validateNumber(raw, 0, 100, "price weight", "a");
-}
-
-/**
- * Takes a string from the form and validates that its a parsable Team With Us
- * service area.
- *
- * @param raw - string argument
- * @returns
- */
-export function validateServiceArea(raw: string): Validation<TWUServiceArea> {
-  const parsed = parseTWUServiceArea(raw);
-  if (!parsed) {
-    return invalid([`"${raw}" is not a valid service area.`]);
-  }
-  return valid(parsed);
 }
 
 /**

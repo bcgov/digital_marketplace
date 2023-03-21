@@ -51,7 +51,10 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import { isArray } from "util";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  parseTWUServiceArea,
+  TWUOpportunity
+} from "shared/lib/resources/opportunity/team-with-us";
 
 export async function validateTWUOpportunityId(
   connection: db.Connection,
@@ -80,6 +83,41 @@ export async function validateTWUOpportunityId(
     return invalid(["Please select a valid Team With Us opportunity."]);
   }
 }
+
+/**
+ * Takes a string from a validates it is a valid Team With Us service area in the database.
+ *
+ * @param raw - string argument
+ * @param connection - Knex connection wrapper
+ * @returns
+ */
+export async function validateServiceArea(
+  connection: db.Connection,
+  raw: string
+): Promise<Validation<number>> {
+  const parsed = parseTWUServiceArea(raw);
+  if (!parsed) {
+    return invalid([`"${raw}" is not a valid service area.`]);
+  }
+  try {
+    const dbResult = await db.readOneServiceAreaByServiceArea(
+      connection,
+      parsed
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const serviceArea = dbResult.value;
+    if (serviceArea) {
+      return valid(serviceArea);
+    } else {
+      return invalid(["The specified service area was not found."]);
+    }
+  } catch (e) {
+    return invalid(["Please specify a valid service area."]);
+  }
+}
+
 export async function validateUserId(
   connection: db.Connection,
   userId: Id
