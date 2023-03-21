@@ -4,26 +4,31 @@ import Knex from "knex";
 
 const logger = makeDomainLogger(consoleAdapter, "migrations");
 
-enum TWUServiceArea {
-  Developer = "DEVELOPER",
-  DataSpecialist = "DATA_SPECIALIST",
-  ScrumMaster = "SCRUM_MASTER",
-  DevopsSpecialist = "DEVOPS_SPECIALIST"
-}
+const TWUServiceArea = {
+  DEVELOPER: "Developer",
+  DATA_SPECIALIST: "Data Specialist",
+  SCRUM_MASTER: "Scrum Master",
+  DEVOPS_SPECIALIST: "DevOps Specialist"
+};
 
 export async function up(connection: Knex): Promise<void> {
   // Service Areas
   await connection.schema.createTable("serviceAreas", (table) => {
     table.increments("id").primary().unique().notNullable();
-    table.enu("serviceArea", Object.values(TWUServiceArea)).notNullable();
+    table.string("serviceArea").notNullable();
     table.string("name").notNullable();
   });
-  Object.keys(TWUServiceArea).forEach(async (key) => {
+  await connection.schema.raw(`
+    ALTER TABLE "serviceAreas"
+    ADD CONSTRAINT "service_area_screaming_snake_case" check ("serviceArea" ~ '[A-Z0-9]+(?:_[A-Z0-9]+)*');
+  `);
+
+  for (const [serviceArea, name] of Object.entries(TWUServiceArea)) {
     await connection("serviceAreas").insert({
-      serviceArea: TWUServiceArea[key as keyof typeof TWUServiceArea],
-      name: key
+      serviceArea,
+      name
     });
-  });
+  }
   logger.info("Created serviceAreas table");
 
   // Organization Service Areas
@@ -31,7 +36,11 @@ export async function up(connection: Knex): Promise<void> {
     "twuOrganizationServiceAreas",
     (table) => {
       table.integer("serviceArea").references("id").inTable("serviceAreas");
-      table.uuid("organization").references("id").inTable("organizations");
+      table
+        .uuid("organization")
+        .references("id")
+        .inTable("organizations")
+        .onDelete("CASCADE");
       table.primary(["serviceArea", "organization"]);
     }
   );
@@ -43,7 +52,8 @@ export async function up(connection: Knex): Promise<void> {
     table
       .uuid("opportunityVersion")
       .references("id")
-      .inTable("twuOpportunityVersions");
+      .inTable("twuOpportunityVersions")
+      .onDelete("CASCADE");
     table.integer("targetAllocation").notNullable();
     table.specificType("mandatorySkills", "text ARRAY").notNullable();
     table.specificType("optionalSkills", "text ARRAY").notNullable();
@@ -63,10 +73,7 @@ export async function up(connection: Knex): Promise<void> {
 
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.alterTable("twuOpportunityVersions", (table) => {
-    table
-      .enu("serviceArea", Object.values(TWUServiceArea))
-      .defaultTo(TWUServiceArea.Developer)
-      .notNullable();
+    table.string("serviceArea").defaultTo("DEVELOPER").notNullable();
     table.integer("targetAllocation").defaultTo(100).notNullable();
     table
       .specificType("mandatorySkills", "text ARRAY")
@@ -77,6 +84,11 @@ export async function down(connection: Knex): Promise<void> {
       .defaultTo("{}")
       .notNullable();
   });
+  await connection.schema.raw(`
+    ALTER TABLE "twuOpportunityVersions"
+    ADD CONSTRAINT "service_area_screaming_snake_case" check ("serviceArea" ~ '[A-Z0-9]+(?:_[A-Z0-9]+)*');
+  `);
+
   // Populate a twuOpportunityVersion with any related resource's details.
   await connection.raw(`
     UPDATE
