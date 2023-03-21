@@ -60,7 +60,6 @@ export async function up(connection: Knex): Promise<void> {
     table.uuid("opportunity").references("id").inTable("twuOpportunities");
     table.uuid("organization").references("id").inTable("organizations");
     table.text("anonymousProponentName").defaultTo("").notNullable();
-    table.integer("hourlyRate").notNullable();
   });
   logger.info("Created twuProposals table.");
 
@@ -110,6 +109,7 @@ export async function up(connection: Knex): Promise<void> {
       .references("id")
       .inTable("twuProposals")
       .notNullable();
+    table.float("hourlyRate");
     table.primary(["member", "proposal"]);
   });
 

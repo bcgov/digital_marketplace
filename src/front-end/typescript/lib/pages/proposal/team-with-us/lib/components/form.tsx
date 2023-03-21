@@ -172,13 +172,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       if (v === null) {
         return invalid([`Please enter a valid hourly rate.`]);
       }
-      return proposalValidation.validateTWUProposalProposedCost(
-        v,
-        opportunity.maxBudget,
-        opportunity.targetAllocation,
-        opportunity.assignmentDate,
-        opportunity.completionDate
-      );
+      return proposalValidation.validateTWUHourlyRate(v);
     },
     child: {
       value: hourlyRate || null,
@@ -487,7 +481,7 @@ const OrganizationView: component_.base.View<Props> = ({
         <Col xs="12">
           <Select.view
             extraChildProps={{
-              loading: true
+              loading: false
             }}
             required
             className="mb-0"
@@ -555,7 +549,6 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
               maxBudget,
               "$"
             )}`}
-            disabled
             state={state.hourlyRate}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("hourlyRate" as const, value)
