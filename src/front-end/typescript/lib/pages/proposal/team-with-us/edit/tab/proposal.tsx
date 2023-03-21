@@ -750,9 +750,9 @@ export const component: Tab.Component<State, Msg> = {
   //         title: "Review Terms and Conditions",
   //         body: (dispatch) => (
   //           <SubmitProposalTerms.view
-  //             opportunityType="Sprint With Us"
+  //             opportunityType="Team With Us"
   //             action="submitting"
-  //             termsTitle="Sprint With Us Terms & Conditions"
+  //             termsTitle="Team With Us Terms & Conditions"
   //             termsRoute={adt(
   //               "contentView",
   //               "team-with-us-terms-and-conditions"
@@ -789,9 +789,9 @@ export const component: Tab.Component<State, Msg> = {
   //         title: "Review Terms and Conditions",
   //         body: (dispatch) => (
   //           <SubmitProposalTerms.view
-  //             opportunityType="Sprint With Us"
+  //             opportunityType="Team With Us"
   //             action="submitting changes to"
-  //             termsTitle="Sprint With Us Terms & Conditions"
+  //             termsTitle="Team With Us Terms & Conditions"
   //             termsRoute={adt(
   //               "contentView",
   //               "team-with-us-terms-and-conditions"
@@ -822,9 +822,10 @@ export const component: Tab.Component<State, Msg> = {
   //       });
   //     case "withdrawBeforeDeadline":
   //       return component_.page.modal.show({
-  //         title: "Withdraw Sprint With Us Proposal?",
+  //         title: "Withdraw Team With Us Proposal?",
   //         body: () =>
-  //           "Are you sure you want to withdraw your Sprint With Us proposal? You will still be able to resubmit your proposal prior to the opportunity's proposal deadline.",
+  //           "Are you sure you want to withdraw your Team With Us proposal? You will still be able to resubmit your
+  //           proposal prior to the opportunity's proposal deadline.",
   //         onCloseMsg: adt("hideModal") as Msg,
   //         actions: [
   //           {
@@ -843,9 +844,10 @@ export const component: Tab.Component<State, Msg> = {
   //       });
   //     case "withdrawAfterDeadline":
   //       return component_.page.modal.show({
-  //         title: "Withdraw Sprint With Us Proposal?",
+  //         title: "Withdraw Team With Us Proposal?",
   //         body: () =>
-  //           "Are you sure you want to withdraw your Sprint With Us proposal? You will no longer be considered for this opportunity.",
+  //           "Are you sure you want to withdraw your Team With Us proposal? You will no longer be considered for this
+  //           opportunity.",
   //         onCloseMsg: adt("hideModal") as Msg,
   //         actions: [
   //           {
@@ -864,9 +866,10 @@ export const component: Tab.Component<State, Msg> = {
   //       });
   //     case "delete":
   //       return component_.page.modal.show({
-  //         title: "Delete Sprint With Us Proposal?",
+  //         title: "Delete Team With Us Proposal?",
   //         body: () =>
-  //           "Are you sure you want to delete your Sprint With Us proposal? You will not be able to recover the proposal once it has been deleted.",
+  //           "Are you sure you want to delete your Team With Us proposal? You will not be able to recover the
+  //           proposal once it has been deleted.",
   //         onCloseMsg: adt("hideModal") as Msg,
   //         actions: [
   //           {

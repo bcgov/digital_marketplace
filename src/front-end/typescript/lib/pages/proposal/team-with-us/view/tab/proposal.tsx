@@ -368,7 +368,7 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           ) : (
             <div className="pt-5 border-top">
               This proposal{"'"}s details will be available once the opportunity
-              reaches the Code Challenge.
+              reaches the Interview/Challenge.
             </div>
           )}
         </Col>

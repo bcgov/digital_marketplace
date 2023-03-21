@@ -211,7 +211,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
           state.proposal?.anonymousProponentName ||
           DEFAULT_TWU_PROPOSAL_TITLE
       }),
-      makePageMetadata("Edit Sprint With Us Proposal")
+      makePageMetadata("Edit Team With Us Proposal")
     )
   };
 }

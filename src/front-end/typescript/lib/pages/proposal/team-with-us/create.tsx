@@ -421,7 +421,7 @@ export const component: component_.page.Component<
     size: "large",
     color: "c-sidebar-instructional-bg",
     view: makeInstructionalSidebar<ValidState, Msg>({
-      getTitle: () => "Create a Sprint With Us Proposal",
+      getTitle: () => "Create a Team With Us Proposal",
       getDescription: (state) => {
         const opportunity = state.opportunity;
         if (!opportunity) return null;
@@ -439,8 +439,8 @@ export const component: component_.page.Component<
             </Link>
             <p className="mb-0">
               Use the form provided to create your proposal for this{" "}
-              <em>Sprint With Us</em> opportunity. You can either save a draft
-              of your proposal to complete the form at a later time, or you can
+              <em>Team With Us</em> opportunity. You can either save a draft of
+              your proposal to complete the form at a later time, or you can
               complete the form now to submit your proposal immediately.
             </p>
           </div>
@@ -453,7 +453,7 @@ export const component: component_.page.Component<
             dest={routeDest(adt("contentView", "team-with-us-proposal-guide"))}>
             Read the guide
           </Link>{" "}
-          to learn how to create and manage a <em>Sprint With Us</em> proposal.
+          to learn how to create and manage a <em>Team With Us</em> proposal.
         </span>
       )
     })

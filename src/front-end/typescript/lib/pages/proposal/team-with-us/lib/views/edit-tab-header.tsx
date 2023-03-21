@@ -93,7 +93,7 @@ const ViewTabHeader: component.base.View<Props> = ({
     <div>
       <Row>
         <Col xs="12">
-          <h3 className="mb-5">Sprint With Us: Vendor Proposal</h3>
+          <h3 className="mb-5">Team With Us: Vendor Proposal</h3>
         </Col>
       </Row>
       <Row>
