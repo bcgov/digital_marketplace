@@ -359,11 +359,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       if (!option) {
         return invalid(["Please select a Service Area."]);
       }
-
-      return mapValid(
-        opportunityValidation.validateServiceArea(option.value),
-        (serviceArea) => ({ label: option.label, value: serviceArea })
-      );
+      return valid(option);
     },
     child: {
       value: serviceArea,

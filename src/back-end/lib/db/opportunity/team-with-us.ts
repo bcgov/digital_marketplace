@@ -47,9 +47,11 @@ interface CreateTWUOpportunityParams
     | "id"
     | "addenda"
     | "resourceQuestions"
+    | "serviceArea"
   > {
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
+  serviceArea: number;
 }
 
 interface UpdateTWUOpportunityParams
@@ -72,6 +74,16 @@ interface TWUOpportunityVersionRecord
   extends Omit<TWUOpportunity, "status" | "createdBy"> {
   createdBy: Id;
   opportunity: Id;
+}
+
+interface TWUResourceRecord
+  extends Pick<
+    TWUOpportunity,
+    "targetAllocation" | "optionalSkills" | "mandatorySkills"
+  > {
+  id: Id;
+  opportunityVersion: Id;
+  serviceArea: number;
 }
 
 interface TWUOpportunityStatusRecord {
@@ -341,6 +353,12 @@ export function generateTWUOpportunityQuery(
         )
       );
     })
+    .join("twuResources as tr", function () {
+      this.on("tr.opportunityVersion", "=", "versions.id");
+    })
+    .join("serviceAreas as sa", function () {
+      this.on("tr.serviceArea", "=", "sa.id");
+    })
     .select<RawTWUOpportunitySlim[]>(
       "opportunities.id",
       "opportunities.createdAt",
@@ -359,16 +377,16 @@ export function generateTWUOpportunityQuery(
       "versions.maxBudget",
       "versions.proposalDeadline",
       "statuses.status",
-      "versions.serviceArea"
+      "sa.serviceArea"
     );
 
   if (full) {
     query.select<RawTWUOpportunity[]>(
       "versions.remoteDesc",
       "versions.maxBudget",
-      "versions.targetAllocation",
-      "versions.mandatorySkills",
-      "versions.optionalSkills",
+      "tr.targetAllocation",
+      "tr.mandatorySkills",
+      "tr.optionalSkills",
       "versions.description",
       "versions.assignmentDate",
       "versions.questionsWeight",
@@ -754,8 +772,16 @@ export const createTWUOpportunity = tryDb<
     }
 
     // Create initial opportunity version
-    const { attachments, status, resourceQuestions, ...restOfOpportunity } =
-      opportunity;
+    const {
+      attachments,
+      status,
+      resourceQuestions,
+      targetAllocation,
+      mandatorySkills,
+      optionalSkills,
+      serviceArea,
+      ...restOfOpportunity
+    } = opportunity;
     const [opportunityVersionRecord] =
       await connection<TWUOpportunityVersionRecord>("twuOpportunityVersions")
         .transacting(trx)
@@ -772,6 +798,26 @@ export const createTWUOpportunity = tryDb<
 
     if (!opportunityVersionRecord) {
       throw new Error("unable to create opportunity version");
+    }
+
+    const [twuResourceRecord] = await connection<TWUResourceRecord>(
+      "twuResources"
+    )
+      .transacting(trx)
+      .insert(
+        {
+          id: generateUuid(),
+          opportunityVersion: opportunityVersionRecord.id,
+          serviceArea,
+          targetAllocation,
+          mandatorySkills,
+          optionalSkills
+        },
+        "*"
+      );
+
+    if (!twuResourceRecord) {
+      throw new Error("unable to create resource");
     }
 
     // Create initial opportunity status
@@ -834,7 +880,15 @@ export const updateTWUOpportunityVersion = tryDb<
   TWUOpportunity
 >(async (connection, opportunity, session) => {
   const now = new Date();
-  const { attachments, resourceQuestions, ...restOfOpportunity } = opportunity;
+  const {
+    attachments,
+    resourceQuestions,
+    targetAllocation,
+    mandatorySkills,
+    optionalSkills,
+    serviceArea,
+    ...restOfOpportunity
+  } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
       "twuOpportunityVersions"
@@ -853,6 +907,26 @@ export const updateTWUOpportunityVersion = tryDb<
 
     if (!versionRecord) {
       throw new Error("unable to update opportunity");
+    }
+
+    const [twuResourceRecord] = await connection<TWUResourceRecord>(
+      "twuResources"
+    )
+      .transacting(trx)
+      .insert(
+        {
+          id: generateUuid(),
+          opportunityVersion: versionRecord.id,
+          serviceArea,
+          targetAllocation,
+          mandatorySkills,
+          optionalSkills
+        },
+        "*"
+      );
+
+    if (!twuResourceRecord) {
+      throw new Error("unable to update resource");
     }
 
     // Create attachments
