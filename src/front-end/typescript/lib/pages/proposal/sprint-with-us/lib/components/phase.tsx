@@ -291,10 +291,13 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
 
 export type Errors = CreateSWUProposalPhaseValidationErrors;
 
-// No need to set errors as the fields themselves can't result in errors.
+/**
+ * No need to set errors as the fields themselves can't result in errors.
+ * TODO - find a better solution than disabling eslint
+ */
 export function setErrors(
-  state: Immutable<State>
-  // errors?: Errors
+  state: Immutable<State>,
+  errors?: Errors // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Immutable<State> {
   return state;
 }
