@@ -108,7 +108,8 @@ export async function up(connection: Knex): Promise<void> {
       .uuid("proposal")
       .references("id")
       .inTable("twuProposals")
-      .notNullable();
+      .notNullable()
+      .onDelete("CASCADE");
     table.float("hourlyRate");
     table.primary(["member", "proposal"]);
   });

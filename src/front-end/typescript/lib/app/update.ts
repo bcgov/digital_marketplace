@@ -1190,7 +1190,7 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
           tag: "pageProposalTWUEdit" as const,
           value
         }),
-        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageStatePath: ["pages", "proposalTWUEdit"],
         pageUpdate: PageProposalTWUEdit.component.update,
         pageGetMetadata: PageProposalTWUEdit.component.getMetadata,
         pageMsg: msg.value

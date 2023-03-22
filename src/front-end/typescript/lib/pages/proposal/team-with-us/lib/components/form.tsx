@@ -2,7 +2,7 @@ import {
   DEFAULT_ORGANIZATION_LOGO_IMAGE_PATH,
   EMPTY_STRING
 } from "front-end/config";
-import { fileBlobPath } from "front-end/lib";
+import { fileBlobPath, makeStartLoading, makeStopLoading } from "front-end/lib";
 import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as Select from "front-end/lib/components/form-field/select";
@@ -45,6 +45,10 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
+import { AffiliationMember } from "shared/lib/resources/affiliation";
+import * as Implementation from "front-end/lib/pages/proposal/team-with-us/lib/components/implementation";
+import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
+import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
 
 export type TabId =
   | "Evaluation"
@@ -68,16 +72,21 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
+type ModalId = ADT<"viewTeamMember", Implementation.Member>;
+
 export interface State
   extends Pick<
     Params,
     "viewerUser" | "opportunity" | "evaluationContent" | "organizations"
   > {
   proposal: TWUProposal | null;
+  showModal: ModalId | null;
+  getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
   // Team Tab
   organization: Immutable<Select.State>;
+  team: Immutable<Team.State>;
   // Pricing Tab
   hourlyRate: Immutable<NumberField.State>;
   // Questions Tab
@@ -87,9 +96,14 @@ export interface State
 }
 
 export type Msg =
+  | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
-  // Organization Tab
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">
+  // Team Tab
   | ADT<"organization", Select.Msg>
+  | ADT<"onGetAffiliationsResponse", [Id, AffiliationMember[]]>
+  | ADT<"team", Team.Msg>
   // Pricing Tab
   | ADT<"hourlyRate", NumberField.Msg>
   // Questions Tab
@@ -98,6 +112,15 @@ export type Msg =
   | ADT<"toggleReviewResourceQuestionResponseAccordion", number>;
 
 const DEFAULT_ACTIVE_TAB: TabId = "Evaluation";
+
+function getAffiliations(orgId?: Id): component_.Cmd<AffiliationMember[]> {
+  if (!orgId) {
+    return component_.cmd.dispatch([]);
+  }
+  return api.affiliations.readManyForOrganization(orgId)((response) =>
+    api.getValidValue(response, [])
+  ) as component_.Cmd<AffiliationMember[]>;
+}
 
 function isSelectedOrgQualified(
   orgId: Id,
@@ -166,6 +189,14 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: adt("options", organizationOptions)
     }
   });
+
+  const [teamState, teamCmds] = Team.init({
+    opportunity,
+    orgId: proposal?.organization?.id,
+    affiliations: [], // Re-initialize with affiliations once loaded.
+    proposal
+  });
+
   const [hourlyRateState, hourlyRateCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
@@ -188,6 +219,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   return [
     {
       proposal: proposal || null,
+      showModal: null,
+      getAffiliationsLoading: 0,
       viewerUser,
       evaluationContent,
       opportunity,
@@ -197,6 +230,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       tabbedForm: immutable(tabbedFormState),
       organization: immutable(organizationState),
+      team: immutable(teamState),
       hourlyRate: immutable(hourlyRateState),
       resourceQuestions: immutable(resourceQuestionsState)
     },
@@ -207,11 +241,16 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(organizationCmds, (msg) =>
         adt("organization", msg)
       ),
+      ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
       ...component_.cmd.mapMany(hourlyRateCmds, (msg) =>
         adt("hourlyRate", msg)
       ),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
+      ),
+      component_.cmd.map(
+        getAffiliations(proposal?.organization?.id),
+        (as) => adt("onInitResponse", as) as Msg
       )
     ] as component_.Cmd<Msg>[]
   ];
@@ -223,29 +262,37 @@ export function setErrors(
   state: Immutable<State>,
   errors?: Errors
 ): Immutable<State> {
-  return state
-    .update("organization", (s) =>
-      FormField.setErrors(s, errors?.organization || [])
-    )
-    .update("hourlyRate", (s) =>
-      FormField.setErrors(
-        s,
-        (errors && (errors as CreateValidationErrors).hourlyRate) || []
+  return (
+    state
+      .update("organization", (s) =>
+        FormField.setErrors(s, errors?.organization || [])
       )
-    )
-    .update("resourceQuestions", (s) =>
-      ResourceQuestions.setErrors(
-        s,
-        (errors &&
-          (errors as CreateValidationErrors).resourceQuestionResponses) ||
-          []
+      // .update( "team", (s) =>
+      //   Team.setErrors(s, {
+      //     team.errors?team
+      //   })
+      // )
+      .update("hourlyRate", (s) =>
+        FormField.setErrors(
+          s,
+          (errors && (errors as CreateValidationErrors).hourlyRate) || []
+        )
       )
-    );
+      .update("resourceQuestions", (s) =>
+        ResourceQuestions.setErrors(
+          s,
+          (errors &&
+            (errors as CreateValidationErrors).resourceQuestionResponses) ||
+            []
+        )
+      )
+  );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("organization", (s) => FormField.validate(s))
+    .update("team", (s) => Team.validate(s))
     .update("hourlyRate", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
 }
@@ -255,7 +302,7 @@ export function isPricingTabValid(state: Immutable<State>): boolean {
 }
 
 export function isOrganizationsTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.organization);
+  return FormField.isValid(state.organization) && Team.isValid(state.team);
 }
 export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
   return ResourceQuestions.isValid(state.resourceQuestions);
@@ -269,16 +316,19 @@ export function isValid(state: Immutable<State>): boolean {
   );
 }
 
+export function isLoading(state: Immutable<State>): boolean {
+  return state.getAffiliationsLoading > 0;
+}
+
 export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
-  const hourlyRate = FormField.getValue(state.hourlyRate);
   return {
+    team: [], // TODO populate this with state values
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
-    hourlyRate: hourlyRate || 0,
     resourceQuestionResponses: ResourceQuestions.getValues(
       state.resourceQuestions
     )
@@ -353,6 +403,14 @@ export function persist(
   }
 }
 
+const startGetAffiliationsLoading = makeStartLoading<State>(
+  "getAffiliationsLoading"
+);
+
+const stopGetAffiliationsLoading = makeStopLoading<State>(
+  "getAffiliationsLoading"
+);
+
 /**
  *
  * @see {@link Msg} - string values defined by type Msg
@@ -362,6 +420,20 @@ export function persist(
  */
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const affiliations = msg.value;
+      const [teamState, teamCmds] = Team.init({
+        opportunity: state.opportunity,
+        orgId: state.proposal?.organization?.id || undefined,
+        affiliations,
+        proposal: state.proposal || undefined
+      });
+      return [
+        state.set("team", immutable(teamState)),
+        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
+      ];
+    }
+
     case "tabbedForm":
       return component_.base.updateChild({
         state,
@@ -371,13 +443,59 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("tabbedForm", value)
       });
 
+    case "showModal":
+      return [state.set("showModal", msg.value), []];
+
+    case "hideModal":
+      return [state.set("showModal", null), []];
+
     case "organization":
       return component_.base.updateChild({
         state,
         childStatePath: ["organization"],
         childUpdate: Select.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("organization", value)
+        mapChildMsg: (value) => adt("organization", value),
+        updateAfter: (state) => {
+          const orgId = FormField.getValue(state.organization)?.value;
+          if (
+            msg.value.value?.tag !== "onChange" ||
+            !orgId ||
+            orgId === state.team.orgId
+          ) {
+            return [state, []];
+          }
+          state = startGetAffiliationsLoading(state);
+          state = state.update("organization", (s) =>
+            FormField.setErrors(s, [])
+          );
+          return [
+            state,
+            [
+              component_.cmd.map(
+                getAffiliations(orgId),
+                (as) => adt("onGetAffiliationsResponse", [orgId, as]) as Msg
+              )
+            ]
+          ];
+        }
+      });
+
+    case "onGetAffiliationsResponse": {
+      const [orgId, affiliations] = msg.value;
+      state = state.update("team", (t) =>
+        Team.setAffiliations(t, affiliations, orgId)
+      );
+      return [stopGetAffiliationsLoading(state), []];
+    }
+
+    case "team":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["team"],
+        childUpdate: Team.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("team", value)
       });
 
     case "hourlyRate":
@@ -475,13 +593,72 @@ const OrganizationView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
+  const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
   return (
+    // <div>
+    //   <Row>
+    //     <Col xs="12">
+    //       <Select.view
+    //         extraChildProps={{
+    //           loading: isGetAffiliationsLoading
+    //         }}
+    //         required
+    //         className="mb-0"
+    //         label="Organization"
+    //         placeholder="Organization"
+    //         help="Select the Organization that will complete the work as outlined in the opportunity’s acceptance criteria."
+    //         hint={
+    //           state.viewerUser.type === UserType.Vendor ? (
+    //             <span>
+    //               If the organization you are looking for is not listed in this
+    //               dropdown, please ensure that you have created the organization
+    //               in{" "}
+    //               <Link
+    //                 newTab
+    //                 dest={routeDest(
+    //                   adt("userProfile", {
+    //                     userId: state.viewerUser.id,
+    //                     tab: "organizations" as const
+    //                   })
+    //                 )}>
+    //                 your user profile
+    //               </Link>{" "}
+    //               and it is qualified to apply for Team With Us opportunities.
+    //               Also, please make sure that you have saved this proposal
+    //               beforehand to avoid losing any unsaved changes you might have
+    //               made.
+    //             </span>
+    //           ) : undefined
+    //         }
+    //         state={state.organization}
+    //         dispatch={component_.base.mapDispatch(dispatch, (v) =>
+    //           adt("organization" as const, v)
+    //         )}
+    //         disabled={disabled}
+    //       />
+    //     </Col>
+    //   </Row>
+    // </div>
     <div>
       <Row>
         <Col xs="12">
+          <p>
+            Select your organization and team members for each phase of this
+            Team With Us opportunity. In order to submit your proposal for
+            consideration, you must:
+          </p>
+          <ul className="mb-5">
+            <li>Select at most, one member for this opportunity; and</li>
+            <li>
+              Ensure the member{"'"}s capabilities satisfy the required service
+              area for the implementation.
+            </li>
+          </ul>
+        </Col>
+        <Col xs="12">
           <Select.view
             extraChildProps={{
-              loading: false
+              loading: isGetAffiliationsLoading
             }}
             required
             className="mb-0"
@@ -518,11 +695,103 @@ const OrganizationView: component_.base.View<Props> = ({
             disabled={disabled}
           />
         </Col>
+        {FormField.getValue(state.organization) ? (
+          <Col xs="12">
+            <div className="mt-5 pt-5 border-top">
+              <Team.view
+                disabled={disabled}
+                state={state.team}
+                dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                  adt("team" as const, value)
+                )}
+              />
+            </div>
+          </Col>
+        ) : null}
       </Row>
     </div>
   );
 };
-
+// const TeamView: component_.base.View<Props> = ({
+//                                                  state,
+//                                                  dispatch,
+//                                                  disabled
+//                                                }) => {
+//   const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
+//   return (
+//     <div>
+//       <Row>
+//         <Col xs="12">
+//           <p>
+//             Select your organization and team members for each phase of this
+//             Team With Us opportunity. In order to submit your proposal for
+//             consideration, you must:
+//           </p>
+//           <ul className="mb-5">
+//             <li>Select at most, one member for this opportunity; and</li>
+//             <li>
+//               Ensure the member{"'"}s capabilities satisfy
+//               the required service area for the implementation.
+//             </li>
+//           </ul>
+//         </Col>
+//         <Col xs="12">
+//           <Select.view
+//             extraChildProps={{
+//               loading: isGetAffiliationsLoading
+//             }}
+//             required
+//             className="mb-0"
+//             label="Organization"
+//             placeholder="Organization"
+//             help="Select the Organization that will complete the work as outlined in the opportunity’s acceptance criteria."
+//             hint={
+//               state.viewerUser.type === UserType.Vendor ? (
+//                 <span>
+//                   If the organization you are looking for is not listed in this
+//                   dropdown, please ensure that you have created the organization
+//                   in{" "}
+//                   <Link
+//                     newTab
+//                     dest={routeDest(
+//                       adt("userProfile", {
+//                         userId: state.viewerUser.id,
+//                         tab: "organizations" as const
+//                       })
+//                     )}>
+//                     your user profile
+//                   </Link>{" "}
+//                   and it is qualified to apply for Team With Us opportunities.
+//                   Also, please make sure that you have saved this proposal
+//                   beforehand to avoid losing any unsaved changes you might have
+//                   made.
+//                 </span>
+//               ) : undefined
+//             }
+//             state={state.organization}
+//             dispatch={component_.base.mapDispatch(dispatch, (v) =>
+//               adt("organization" as const, v)
+//             )}
+//             disabled={disabled}
+//           />
+//         </Col>
+//         {FormField.getValue(state.organization) ? (
+//           <Col xs="12">
+//             <div className="mt-5 pt-5 border-top">
+//               <Team.view
+//                 disabled={disabled}
+//                 state={state.team}
+//                 dispatch={component_.base.mapDispatch(dispatch, (value) =>
+//                   adt("team" as const, value)
+//                 )}
+//               />
+//             </div>
+//           </Col>
+//         ) : null}
+//       </Row>
+//     </div>
+//   );
+// };
 const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
   const { maxBudget } = state.opportunity;
   return (
@@ -778,25 +1047,25 @@ export const component: component_.base.Component<Params, State, Msg> = {
   view
 };
 
-// export const getModal: component_.page.GetModal<State, Msg> = (state) => {
-//   const teamModal = component_.page.modal.map(
-//     Team.getModal(state.team),
-//     (msg) => adt("team", msg) as Msg
-//   );
-//   if (teamModal && teamModal.tag === "show") {
-//     return teamModal;
-//   }
-//   if (!state.showModal) {
-//     return component_.page.modal.hide();
-//   }
-//   switch (state.showModal.tag) {
-//     case "viewTeamMember":
-//       return makeViewTeamMemberModal({
-//         member: state.showModal.value,
-//         onCloseMsg: adt("hideModal")
-//       });
-//   }
-// };
+export const getModal: component_.page.GetModal<State, Msg> = (state) => {
+  const teamModal = component_.page.modal.map(
+    Team.getModal(state.team),
+    (msg) => adt("team", msg) as Msg
+  );
+  if (teamModal && teamModal.tag === "show") {
+    return teamModal;
+  }
+  if (!state.showModal) {
+    return component_.page.modal.hide();
+  }
+  switch (state.showModal.tag) {
+    case "viewTeamMember":
+      return makeViewTeamMemberModal({
+        member: state.showModal.value,
+        onCloseMsg: adt("hideModal")
+      });
+  }
+};
 export function getAlerts<Msg>(
   state: Immutable<State>
 ): component_.page.Alerts<Msg> {

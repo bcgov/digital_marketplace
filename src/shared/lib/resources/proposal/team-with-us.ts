@@ -178,7 +178,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   resourceQuestionResponses: CreateTWUProposalResourceQuestionResponseBody[];
   status: CreateTWUProposalStatus;
-  hourlyRate: number;
+  team: TWUProposalTeamMember[];
 }
 
 export interface CreateTWUProposalResourceQuestionResponseValidationErrors
@@ -186,6 +186,43 @@ export interface CreateTWUProposalResourceQuestionResponseValidationErrors
   parseFailure?: string[];
 }
 
+export interface TWUOpportunityProposal
+  extends Pick<
+    TWUOpportunity,
+    | "startDate"
+    | "completionDate"
+    | "maxBudget"
+    | "serviceArea"
+    | "mandatorySkills"
+    | "targetAllocation"
+    | "createdAt"
+    | "createdBy"
+  > {
+  proposalMembers: TWUProposalTeamMember[];
+}
+export interface CreateTWUProposalImplementationValidationErrors {
+  members?: CreateTWUProposalTeamMemberValidationErrors[];
+}
+
+export interface CreateTWUProposalImplementationBody {
+  members: CreateTWUProposalTeamMemberBody[];
+}
+
+export interface CreateTWUProposalTeamMemberBody {
+  member: Id;
+}
+
+export interface CreateTWUProposalTeamMemberValidationErrors
+  extends ErrorTypeFrom<CreateTWUProposalTeamMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
+
+export interface TWUProposalTeamMember {
+  member: UserSlim;
+  pending: boolean;
+  idpUsername: string;
+}
 export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
   resourceQuestionResponses?: CreateTWUProposalResourceQuestionResponseValidationErrors[];
@@ -193,6 +230,8 @@ export interface CreateValidationErrors extends BodyWithErrors {
   opportunity?: string[];
   status?: string[];
   hourlyRate?: string[];
+  team?: string[];
+  implementation: CreateTWUProposalImplementationValidationErrors;
 }
 
 // Update.

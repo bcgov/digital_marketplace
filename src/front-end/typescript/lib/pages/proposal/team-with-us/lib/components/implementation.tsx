@@ -11,8 +11,6 @@ import {
 } from "front-end/lib/pages/organization/lib/views/team-member";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import { ThemeColor } from "front-end/lib/types";
-import Accordion from "front-end/lib/views/accordion";
-import Capabilities, { Capability } from "front-end/lib/views/capabilities";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, {
   iconLinkSymbol,
@@ -21,35 +19,30 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row } from "reactstrap";
+import { Col, Row } from "reactstrap";
 import { compareStrings, find, formatDate } from "shared/lib";
 import {
   AffiliationMember,
-  memberIsPending,
-  membersHaveCapability
+  memberIsPending
 } from "shared/lib/resources/affiliation";
-import { SWUOpportunityPhase } from "shared/lib/resources/opportunity/sprint-with-us";
-import {
-  CreateSWUProposalPhaseBody,
-  CreateSWUProposalPhaseValidationErrors,
-  SWUProposalPhase,
-  SWUProposalTeamMember
-} from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT, Id } from "shared/lib/types";
+import {
+  CreateTWUProposalImplementationBody,
+  CreateTWUProposalImplementationValidationErrors,
+  TWUOpportunityProposal,
+  TWUProposalTeamMember
+} from "shared/lib/resources/proposal/team-with-us";
 
 export interface Params {
   orgId?: Id;
   affiliations: AffiliationMember[];
-  opportunityPhase?: SWUOpportunityPhase;
-  proposalPhase?: SWUProposalPhase;
-  isAccordionOpen: boolean;
+  opportunity?: TWUOpportunityProposal;
 }
 
 type ModalId = ADT<"addTeamMembers"> | ADT<"viewTeamMember", Member>;
 
 export interface Member extends AffiliationMember {
   index: number;
-  scrumMaster: boolean;
   added: boolean;
   toBeAdded: boolean;
 }
@@ -60,29 +53,27 @@ export interface State extends Omit<Params, "affiliations" | "orgId"> {
   showModal: ModalId | null;
   members: Member[];
   membersTable: Immutable<Table.State>;
-  capabilities: Capability[];
 }
 
 export type Msg =
-  | ADT<"toggleAccordion">
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"toggleAffiliationToBeAdded", number>
   | ADT<"addTeamMembers">
-  | ADT<"setScrumMaster", Id>
   | ADT<"removeTeamMember", Id>
   | ADT<"membersTable", Table.Msg>;
 
-export function setIsAccordionOpen(
-  state: Immutable<State>,
-  isAccordionOpen: boolean
-): Immutable<State> {
-  return state.set("isAccordionOpen", isAccordionOpen);
-}
-
+/**
+ * Compares two tuples of users, existing users and users affiliated with an
+ * organization.
+ *
+ * @param affiliations
+ * @param existingMembers
+ * @returns - one tuple of members
+ */
 function affiliationsToMembers(
   affiliations: AffiliationMember[],
-  existingMembers: SWUProposalTeamMember[]
+  existingMembers: TWUProposalTeamMember[]
 ): Member[] {
   return affiliations
     .map((a, index) => {
@@ -93,7 +84,6 @@ function affiliationsToMembers(
       return {
         ...a,
         index,
-        scrumMaster: existingTeamMember?.scrumMaster || false,
         added: !!existingTeamMember,
         toBeAdded: false
       };
@@ -101,56 +91,13 @@ function affiliationsToMembers(
     .sort((a, b) => compareStrings(a.user.name, b.user.name));
 }
 
-export function determineCapabilities(
-  members: Member[],
-  opportunityPhase?: SWUOpportunityPhase
-): Capability[] {
-  return opportunityPhase
-    ? opportunityPhase.requiredCapabilities.map((c) => ({
-        ...c,
-        checked: membersHaveCapability(members, c.capability)
-      }))
-    : [];
-}
-
 /**
- * Sets the state with added members and members from the opportunity phase
- * already saved in state, while determining if the members have capabilities
- * checked.
+ * Sets the state for 'members' and 'orgId'
  *
  * @param state
+ * @param affiliations
+ * @param orgId
  */
-function resetCapabilities(state: Immutable<State>): Immutable<State> {
-  return state.set(
-    "capabilities",
-    determineCapabilities(getAddedMembers(state), state.opportunityPhase)
-  );
-}
-
-function enforceScrumMaster(state: Immutable<State>): Immutable<State> {
-  let hasScrumMaster = false;
-  for (const m of state.members) {
-    hasScrumMaster = m.added && m.scrumMaster;
-  }
-  if (!hasScrumMaster) {
-    return state.update("members", (ms) => {
-      for (const m of ms) {
-        if (m.added && !hasScrumMaster) {
-          m.scrumMaster = true;
-          hasScrumMaster = true;
-        } else {
-          m.scrumMaster = false;
-        }
-      }
-      return ms;
-    });
-  }
-  return state.set(
-    "capabilities",
-    determineCapabilities(getAddedMembers(state), state.opportunityPhase)
-  );
-}
-
 export function setAffiliations(
   state: Immutable<State>,
   affiliations: AffiliationMember[],
@@ -159,21 +106,24 @@ export function setAffiliations(
   state = state
     .set(
       "members",
-      affiliationsToMembers(affiliations, state.proposalPhase?.members || [])
+      affiliationsToMembers(
+        affiliations,
+        state.opportunity?.proposalMembers || []
+      )
     )
     .set("orgId", orgId);
-  return resetCapabilities(state);
+  return state;
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { opportunityPhase, proposalPhase } = params;
+  const { opportunity } = params;
   const { affiliations, orgId, ...paramsForState } = params;
   const members = affiliationsToMembers(
     affiliations,
-    proposalPhase?.members || []
+    opportunity?.proposalMembers || []
   );
   const [membersTableState, membersTableCmds] = Table.init({
-    idNamespace: `swu-proposal-phase-members-${Math.random()}`
+    idNamespace: `twu-proposal-implementation-members-${Math.random()}`
   });
   return [
     {
@@ -182,10 +132,6 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
       orgId: orgId || null,
       showModal: null,
       members,
-      capabilities: determineCapabilities(
-        filterAddedMembers(members, true),
-        opportunityPhase
-      ),
       membersTable: immutable(membersTableState)
     },
     component_.cmd.mapMany(
@@ -197,9 +143,6 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "toggleAccordion":
-      return [state.update("isAccordionOpen", (v) => !v), []];
-
     case "showModal":
       return [state.set("showModal", msg.value), []];
 
@@ -226,20 +169,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           toBeAdded: false
         }))
       );
-      state = enforceScrumMaster(state);
-      return [resetCapabilities(state), []];
+      return [state, []];
     }
-
-    case "setScrumMaster":
-      return [
-        state.update("members", (ms) =>
-          ms.map((m) => ({
-            ...m,
-            scrumMaster: m.user.id === msg.value
-          }))
-        ),
-        []
-      ];
 
     case "removeTeamMember":
       state = state.update("members", (ms) =>
@@ -247,13 +178,11 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           const shouldRemove = m.user.id === msg.value;
           return {
             ...m,
-            added: shouldRemove ? false : m.added,
-            scrumMaster: shouldRemove ? false : m.scrumMaster
+            added: shouldRemove ? false : m.added
           };
         })
       );
-      state = enforceScrumMaster(state);
-      return [resetCapabilities(state), []];
+      return [state, []];
 
     case "membersTable":
       return component_.base.updateChild({
@@ -266,12 +195,11 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export type Values = Pick<CreateSWUProposalPhaseBody, "members">;
+export type Values = CreateTWUProposalImplementationBody;
 
 export function getValues(state: Immutable<State>): Values {
   return {
-    members: getAddedMembers(state).map(({ user, scrumMaster }) => ({
-      scrumMaster,
+    members: getAddedMembers(state).map(({ user }) => ({
       member: user.id
     }))
   };
@@ -289,7 +217,7 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
   return filterAddedMembers(state.members, false);
 }
 
-export type Errors = CreateSWUProposalPhaseValidationErrors;
+export type Errors = CreateTWUProposalImplementationValidationErrors;
 
 // No need to set errors as the fields themselves can't result in errors.
 export function setErrors(
@@ -304,15 +232,6 @@ export function validate(state: Immutable<State>): Immutable<State> {
   return state;
 }
 
-function areAllCapabilitiesChecked(capabilities: Capability[]): boolean {
-  for (const c of capabilities) {
-    if (!c.checked) {
-      return false;
-    }
-  }
-  return true;
-}
-
 function areAllMembersConfirmed(members: Member[]): boolean {
   for (const m of members) {
     if (memberIsPending(m)) {
@@ -324,11 +243,7 @@ function areAllMembersConfirmed(members: Member[]): boolean {
 
 export function isValid(state: Immutable<State>): boolean {
   const addedMembers = getAddedMembers(state);
-  return (
-    !!addedMembers.length &&
-    areAllMembersConfirmed(addedMembers) &&
-    areAllCapabilitiesChecked(state.capabilities)
-  );
+  return !!addedMembers.length && areAllMembersConfirmed(addedMembers);
 }
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
@@ -340,8 +255,8 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
 }
 
 const Dates: component_.base.View<Props> = ({ state }) => {
-  const opportunityPhase = state.opportunityPhase;
-  if (!opportunityPhase) {
+  const opportunity = state.opportunity;
+  if (!opportunity) {
     return null;
   }
   return (
@@ -350,8 +265,8 @@ const Dates: component_.base.View<Props> = ({ state }) => {
         <Icon name="calendar" width={0.9} height={0.9} className="mr-1" />
         <span className="font-weight-bold mr-2">Phase Dates</span>
         <span>
-          {formatDate(opportunityPhase.startDate)} to{" "}
-          {formatDate(opportunityPhase.completionDate)}
+          {formatDate(opportunity.startDate)} to{" "}
+          {formatDate(opportunity.completionDate)}
         </span>
       </Col>
     </Row>
@@ -393,7 +308,7 @@ interface MemberTableBodyRowsParams
 function membersTableBodyRows(
   params: MemberTableBodyRowsParams
 ): Table.BodyRows {
-  const { addedMembers, idNamespace, dispatch, disabled } = params;
+  const { addedMembers, dispatch, disabled } = params;
   return addedMembers.map((m) => [
     {
       children: (
@@ -407,22 +322,6 @@ function membersTableBodyRows(
           </Link>
           {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
         </div>
-      )
-    },
-    {
-      className: "text-center align-middle",
-      children: (
-        <CustomInput
-          id={`${idNamespace}-phase-scrum-master-${m.id}`}
-          checked={m.scrumMaster}
-          disabled={disabled}
-          type="radio"
-          onChange={(e) => {
-            if (e.currentTarget.checked) {
-              dispatch(adt("setScrumMaster", m.user.id));
-            }
-          }}
-        />
       )
     },
     {
@@ -491,46 +390,13 @@ const TeamMembers: component_.base.View<Props> = ({
   );
 };
 
-const CapabilitiesView: component_.base.View<Props> = ({ state }) => {
-  return (
-    <Row>
-      <Col xs="12">
-        <h4>Required Capabilities</h4>
-        <p className="mb-4">
-          This list will automatically update to reflect the combined
-          capabilities of your selected team (includes pending team members). To
-          satisfy this phase{"'"}s requirements, your team must collectively
-          possess all capabilities listed here.
-        </p>
-      </Col>
-      <Col xs="12">
-        <Capabilities grid capabilities={state.capabilities} />
-      </Col>
-    </Row>
-  );
-};
-
 export const view: component_.base.View<Props> = (props) => {
-  const { state, title, icon, iconColor, dispatch, className } = props;
+  const { state } = props;
   return (
-    <Accordion
-      className={className}
-      toggle={() => dispatch(adt("toggleAccordion"))}
-      color="info"
-      title={title}
-      titleClassName="h3 mb-0"
-      icon={icon}
-      iconWidth={2}
-      iconHeight={2}
-      iconClassName="mr-3"
-      iconColor={iconColor}
-      chevronWidth={1.5}
-      chevronHeight={1.5}
-      open={state.isAccordionOpen}>
+    <Row className="mt-5" {...state}>
       <Dates {...props} />
       <TeamMembers {...props} />
-      <CapabilitiesView {...props} />
-    </Accordion>
+    </Row>
   );
 };
 
@@ -574,7 +440,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
                   {nonAddedMembers.map((m, i) => {
                     return (
                       <div
-                        key={`swu-proposal-phase-affiliation-${i}`}
+                        key={`twu-proposal-phase-affiliation-${i}`}
                         className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
                         <Link
                           onClick={() =>
