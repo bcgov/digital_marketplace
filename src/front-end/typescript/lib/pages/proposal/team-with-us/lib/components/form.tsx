@@ -651,7 +651,6 @@ const OrganizationView: component_.base.View<Props> = ({
             )}
             disabled={disabled}
           />
-          x
         </Col>
         {FormField.getValue(state.organization) ? (
           <Col xs="12">

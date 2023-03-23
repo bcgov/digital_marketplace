@@ -149,8 +149,9 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
       Implementation.getModal(state.teamImplementation),
       (msg) => adt("teamImplementation", msg) as Msg
     );
-  const activeModal = [implementationModal()].filter(
-    (modal) => modal && modal.tag === "show"
-  );
-  return activeModal[0] ?? implementationModal();
+  return implementationModal();
+  // const activeModal = [implementationModal()].filter(
+  //   (modal) => modal && modal.tag === "show"
+  // );
+  // return activeModal[0] ?? implementationModal();
 };

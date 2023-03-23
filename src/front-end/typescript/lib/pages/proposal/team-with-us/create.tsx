@@ -3,13 +3,13 @@ import {
   getAlertsValid,
   getActionsValid,
   getMetadataValid,
-  // getModalValid,
   makePageMetadata,
   makeStartLoading,
   makeStopLoading,
   sidebarValid,
   updateValid,
-  viewValid
+  viewValid,
+  getModalValid
 } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -497,77 +497,85 @@ export const component: component_.page.Component<
     ]);
   }),
 
-  // getModal: getModalValid((state) => {
-  //   // const opportunity = state.opportunity;
-  //   const hasAcceptedTerms =
-  //     SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
-  //     SubmitProposalTerms.getAppCheckbox(state.submitTerms);
-  //   switch (state.showModal) {
-  //     case "submit":
-  //       return component_.page.modal.show({
-  //         title: "Review Terms and Conditions",
-  //         body: (dispatch) => (
-  //           <SubmitProposalTerms.view
-  //             opportunityType="Team With Us"
-  //             action="submitting"
-  //             termsTitle="Team With Us Terms & Conditions"
-  //             termsRoute={adt(
-  //               "contentView",
-  //               "team-with-us-terms-and-conditions"
-  //             )}
-  //             state={state.submitTerms}
-  //             dispatch={component_.base.mapDispatch(
-  //               dispatch,
-  //               (msg) => adt("submitTerms", msg) as Msg
-  //             )}
-  //           />
-  //         ),
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Submit Proposal",
-  //             icon: "paper-plane",
-  //             color: "primary",
-  //             msg: adt("submit"),
-  //             button: true,
-  //             disabled: !hasAcceptedTerms
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case "cancel":
-  //       break;
-  //       // return component_.page.modal.show({
-  //       //   title: "Cancel New Team With Us Proposal?",
-  //       //   body: () =>
-  //       //     "Are you sure you want to cancel? Any information you may have entered will be lost if you do so.",
-  //       //   onCloseMsg: adt("hideModal") as Msg,
-  //       //   actions: [
-  //       //     {
-  //       //       text: "Yes, I want to cancel",
-  //       //       color: "danger",
-  //       //       msg: component_.global.newRouteMsg(
-  //       //         adt("opportunityTWUView" as const, {
-  //       //           opportunityId: opportunity?.id
-  //       //         })
-  //       //       ),
-  //       //       button: true
-  //       //     },
-  //       //     {
-  //       //       text: "Go Back",
-  //       //       color: "secondary",
-  //       //       msg: adt("hideModal")
-  //       //     }
-  //       //   ]
-  //       // });
-  //     case null:
-  //       return component_.page.modal.hide();
-  //   }
-  // }),
+  getModal: getModalValid((state) => {
+    const form = state.form;
+    const opportunity = state.opportunity;
+    if (!form || !opportunity) return component_.page.modal.hide();
+    const formModal = component_.page.modal.map(
+      Form.getModal(form),
+      (msg) => adt("form", msg) as Msg
+    );
+    if (formModal.tag !== "hide") {
+      return formModal;
+    }
+    const hasAcceptedTerms =
+      SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
+      SubmitProposalTerms.getAppCheckbox(state.submitTerms);
+    switch (state.showModal) {
+      case "submit":
+        return component_.page.modal.show({
+          title: "Review Terms and Conditions",
+          body: (dispatch) => (
+            <SubmitProposalTerms.view
+              opportunityType="Team With Us"
+              action="submitting"
+              termsTitle="Team With Us Terms & Conditions"
+              termsRoute={adt(
+                "contentView",
+                "team-with-us-terms-and-conditions"
+              )}
+              state={state.submitTerms}
+              dispatch={component_.base.mapDispatch(
+                dispatch,
+                (msg) => adt("submitTerms", msg) as Msg
+              )}
+            />
+          ),
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Proposal",
+              icon: "paper-plane",
+              color: "primary",
+              msg: adt("submit"),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "cancel":
+        return component_.page.modal.show({
+          title: "Cancel New Team With Us Proposal?",
+          body: () =>
+            "Are you sure you want to cancel? Any information you may have entered will be lost if you do so.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Yes, I want to cancel",
+              color: "danger",
+              msg: component_.global.newRouteMsg(
+                adt("opportunityTWUView" as const, {
+                  opportunityId: opportunity.id
+                })
+              ),
+              button: true
+            },
+            {
+              text: "Go Back",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case null:
+        return component_.page.modal.hide();
+    }
+  }),
 
   getMetadata: getMetadataValid((state) => {
     return state.opportunity
