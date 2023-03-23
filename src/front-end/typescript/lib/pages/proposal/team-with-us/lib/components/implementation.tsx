@@ -11,7 +11,7 @@ import {
 } from "front-end/lib/pages/organization/lib/views/team-member";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import { ThemeColor } from "front-end/lib/types";
-import Icon, { AvailableIcons } from "front-end/lib/views/icon";
+import { AvailableIcons } from "front-end/lib/views/icon";
 import Link, {
   iconLinkSymbol,
   imageLinkSymbol,
@@ -20,7 +20,7 @@ import Link, {
 } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { compareStrings, find, formatDate } from "shared/lib";
+import { compareStrings, find } from "shared/lib";
 import {
   AffiliationMember,
   memberIsPending
@@ -29,14 +29,14 @@ import { adt, ADT, Id } from "shared/lib/types";
 import {
   CreateTWUTeamProposalBody,
   CreateTWUTeamProposalBodyValidationErrors,
-  TWUOpportunityProposal,
+  TWUTeamImplementation,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
 
 export interface Params {
   orgId?: Id;
   affiliations: AffiliationMember[];
-  opportunity?: TWUOpportunityProposal;
+  teamImplementation?: TWUTeamImplementation;
 }
 
 type ModalId = ADT<"addTeamMembers"> | ADT<"viewTeamMember", Member>;
@@ -108,7 +108,7 @@ export function setAffiliations(
       "members",
       affiliationsToMembers(
         affiliations,
-        state.opportunity?.proposalMembers || []
+        state.teamImplementation?.members || []
       )
     )
     .set("orgId", orgId);
@@ -116,11 +116,11 @@ export function setAffiliations(
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { opportunity } = params;
+  const { teamImplementation } = params;
   const { affiliations, orgId, ...paramsForState } = params;
   const members = affiliationsToMembers(
     affiliations,
-    opportunity?.proposalMembers || []
+    teamImplementation?.members || []
   );
   const [membersTableState, membersTableCmds] = Table.init({
     idNamespace: `twu-proposal-implementation-members-${Math.random()}`
@@ -262,25 +262,6 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   className?: string;
 }
 
-const Dates: component_.base.View<Props> = ({ state }) => {
-  const opportunity = state.opportunity;
-  if (!opportunity) {
-    return null;
-  }
-  return (
-    <Row className="mb-4">
-      <Col xs="12" className="d-flex flex-nowrap align-items-center">
-        <Icon name="calendar" width={0.9} height={0.9} className="mr-1" />
-        <span className="font-weight-bold mr-2">Phase Dates</span>
-        <span>
-          {formatDate(opportunity.startDate)} to{" "}
-          {formatDate(opportunity.completionDate)}
-        </span>
-      </Col>
-    </Row>
-  );
-};
-
 function membersTableHeadCells(): Table.HeadCells {
   return [
     {
@@ -289,13 +270,6 @@ function membersTableHeadCells(): Table.HeadCells {
       style: {
         width: "100%",
         minWidth: "240px"
-      }
-    },
-    {
-      children: "Scrum Master",
-      className: "text-center text-nowrap",
-      style: {
-        width: "0px"
       }
     },
     {
@@ -358,8 +332,9 @@ const TeamMembers: component_.base.View<Props> = ({
       <Col xs="12">
         <h4>Team Members</h4>
         <p className="mb-0">
-          To satisfy this phase{"'"}s requirements, your team must only consist
-          of confirmed (non-pending) members of the selected organization.
+          To satisfy this opportunity{"'"}s requirements, your team must only
+          consist of confirmed (non-pending) members of the selected
+          organization.
         </p>
         {disabled ? null : (
           <Link
@@ -402,7 +377,6 @@ export const view: component_.base.View<Props> = (props) => {
   const { state } = props;
   return (
     <Row className="mt-5" {...state}>
-      <Dates {...props} />
       <TeamMembers {...props} />
     </Row>
   );
@@ -485,7 +459,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
               ) : (
                 <strong>
                   This organization does not have any additional team members
-                  that can be added to this phase.
+                  that can be added to this opportunity.
                 </strong>
               )}
             </div>

@@ -186,19 +186,8 @@ export interface CreateTWUProposalResourceQuestionResponseValidationErrors
   parseFailure?: string[];
 }
 
-export interface TWUOpportunityProposal
-  extends Pick<
-    TWUOpportunity,
-    | "startDate"
-    | "completionDate"
-    | "maxBudget"
-    | "serviceArea"
-    | "mandatorySkills"
-    | "targetAllocation"
-    | "createdAt"
-    | "createdBy"
-  > {
-  proposalMembers: TWUProposalTeamMember[];
+export interface TWUTeamImplementation {
+  members: TWUProposalTeamMember[];
 }
 
 /**

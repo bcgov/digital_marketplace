@@ -22,10 +22,10 @@ export interface Params {
 
 export interface State extends Omit<Params, "orgId"> {
   orgId: Id | null;
-  teamMembers: Immutable<Implementation.State>;
+  teamImplementation: Immutable<Implementation.State>;
 }
 
-export type Msg = ADT<"teamMembers", Implementation.Msg>;
+export type Msg = ADT<"teamImplementation", Implementation.Msg>;
 
 export function setAffiliations(
   state: Immutable<State>,
@@ -34,29 +34,31 @@ export function setAffiliations(
 ): Immutable<State> {
   return state
     .set("orgId", orgId)
-    .update("teamMembers", (s) =>
+    .update("teamImplementation", (s) =>
       Implementation.setAffiliations(s, affiliations, orgId)
     );
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
   const { orgId, affiliations, opportunity, proposal } = params;
-  const [teamMembersState, teamMembersCmds] = Implementation.init({
-    orgId,
-    affiliations
-  });
+  const [teamImplementationState, teamImplementationCmds] = Implementation.init(
+    {
+      orgId,
+      affiliations
+    }
+  );
   return [
     {
       affiliations,
       opportunity,
       proposal,
       orgId: orgId || null,
-      teamMembers: immutable(teamMembersState)
+      teamImplementation: immutable(teamImplementationState)
     },
     [
       ...component_.cmd.mapMany(
-        teamMembersCmds,
-        (msg) => adt("teamMembers", msg) as Msg
+        teamImplementationCmds,
+        (msg) => adt("teamImplementation", msg) as Msg
       )
     ]
   ];
@@ -64,33 +66,33 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "teamMembers":
+    case "teamImplementation":
       return component_.base.updateChild({
         state,
-        childStatePath: ["teamMembers"],
+        childStatePath: ["teamImplementation"],
         childUpdate: Implementation.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("teamMembers", value)
+        mapChildMsg: (value) => adt("teamImplementation", value)
       });
   }
 };
 
 export interface Values {
-  teamMembers: Implementation.Values;
+  teamImplementation: Implementation.Values;
 }
 
 export function getValues(state: Immutable<State>): Values {
-  const teamMembers = Implementation.getValues(state.teamMembers);
-  return { teamMembers };
+  const teamImplementation = Implementation.getValues(state.teamImplementation);
+  return { teamImplementation: teamImplementation };
 }
 
 interface MemberValues {
-  teamMembers: Implementation.Member[];
+  teamImplementation: Implementation.Member[];
 }
 
 export function getAddedMembers(state: Immutable<State>): MemberValues {
   return {
-    teamMembers: Implementation.getAddedMembers(state.teamMembers)
+    teamImplementation: Implementation.getAddedMembers(state.teamImplementation)
   };
 }
 
@@ -100,17 +102,17 @@ export function setErrors(
   state: Immutable<State>,
   errors: Errors
 ): Immutable<State> {
-  return state.update("teamMembers", (s) =>
+  return state.update("teamImplementation", (s) =>
     Implementation.setErrors(s, errors.team)
   );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
-  return state.update("teamMembers", (s) => Implementation.validate(s));
+  return state.update("teamImplementation", (s) => Implementation.validate(s));
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return Implementation.isValid(state.teamMembers);
+  return Implementation.isValid(state.teamImplementation);
 }
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
@@ -122,13 +124,15 @@ export const view: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
-  const isImplementationValid = Implementation.isValid(state.teamMembers);
+  const isImplementationValid = Implementation.isValid(
+    state.teamImplementation
+  );
   return (
     <div>
       <Implementation.view
-        state={state.teamMembers}
+        state={state.teamImplementation}
         dispatch={component_.base.mapDispatch(dispatch, (value) =>
-          adt("teamMembers" as const, value)
+          adt("teamImplementation" as const, value)
         )}
         icon={isImplementationValid ? "cogs" : "exclamation-circle"}
         iconColor={isImplementationValid ? undefined : "warning"}
@@ -142,8 +146,8 @@ export const view: component_.base.View<Props> = ({
 export const getModal: component_.page.GetModal<State, Msg> = (state) => {
   const implementationModal = () =>
     component_.page.modal.map(
-      Implementation.getModal(state.teamMembers),
-      (msg) => adt("teamMembers", msg) as Msg
+      Implementation.getModal(state.teamImplementation),
+      (msg) => adt("teamImplementation", msg) as Msg
     );
   const activeModal = [implementationModal()].filter(
     (modal) => modal && modal.tag === "show"
