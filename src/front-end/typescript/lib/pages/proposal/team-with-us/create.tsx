@@ -428,7 +428,6 @@ export const component: component_.page.Component<
         return (
           <div className="d-flex flex-column nowrap">
             <Link
-              newTab
               dest={routeDest(
                 adt("opportunityTWUView", {
                   opportunityId: opportunity.id

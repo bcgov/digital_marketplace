@@ -126,7 +126,7 @@ export function makeSidebarState(
         icon: "external-link-alt",
         text: "Read Guide",
         active: false,
-        newTab: true,
+        newTab: false,
         dest: routeDest(adt("contentView", "team-with-us-proposal-guide"))
       })
     ]

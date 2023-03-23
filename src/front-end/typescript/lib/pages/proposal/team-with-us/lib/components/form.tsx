@@ -151,7 +151,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     // TODO: add TWU qualification check when ready
     // .filter((o) => doesOrganizationMeetTWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  const hourlyRate = proposal?.hourlyRate ? proposal.hourlyRate : 0;
+  // const hourlyRate = proposal?.team?.hourlyRate ? proposal.team.
+  const hourlyRate = 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -272,12 +273,12 @@ export function setErrors(
       //     team.errors?team
       //   })
       // )
-      .update("hourlyRate", (s) =>
-        FormField.setErrors(
-          s,
-          (errors && (errors as CreateValidationErrors).hourlyRate) || []
-        )
-      )
+      // .update("hourlyRate", (s) =>
+      //   FormField.setErrors(
+      //     s,
+      //     (errors && (errors as CreateValidationErrors).hourlyRate) || []
+      //   )
+      // )
       .update("resourceQuestions", (s) =>
         ResourceQuestions.setErrors(
           s,
@@ -614,7 +615,6 @@ const OrganizationView: component_.base.View<Props> = ({
     //               dropdown, please ensure that you have created the organization
     //               in{" "}
     //               <Link
-    //                 newTab
     //                 dest={routeDest(
     //                   adt("userProfile", {
     //                     userId: state.viewerUser.id,
@@ -752,7 +752,6 @@ const OrganizationView: component_.base.View<Props> = ({
 //                   dropdown, please ensure that you have created the organization
 //                   in{" "}
 //                   <Link
-//                     newTab
 //                     dest={routeDest(
 //                       adt("userProfile", {
 //                         userId: state.viewerUser.id,
@@ -1088,7 +1087,7 @@ export function getAlerts<Msg>(
               <span>
                 The organization you have selected has been archived. Please
                 select a different organization or{" "}
-                <Link newTab dest={routeDest(adt("orgCreate", null))}>
+                <Link dest={routeDest(adt("orgCreate", null))}>
                   create a new one
                 </Link>{" "}
                 and ensure it {meetsCriteria}.
@@ -1106,7 +1105,6 @@ export function getAlerts<Msg>(
                 different organization or ensure it{" "}
                 {org ? (
                   <Link
-                    newTab
                     dest={routeDest(
                       adt("orgEdit", {
                         orgId: org.id,

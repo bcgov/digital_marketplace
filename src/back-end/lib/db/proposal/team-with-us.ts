@@ -47,7 +47,8 @@ import {
   // TWUProposalTeamMember,
   TWUProposalResourceQuestionResponse,
   UpdateEditRequestBody,
-  UpdateResourceQuestionScoreBody
+  UpdateResourceQuestionScoreBody,
+  TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -165,7 +166,7 @@ async function rawTWUProposalToTWUProposal(
   raw: RawTWUProposal
 ): Promise<TWUProposal> {
   /**
-   *   If the user is gov/admin and the opportunity status is anything before
+   *   If the user is gov/admin and the opportunity status is anything prior to
    *   EvaluationChallenge, keep the proposal anonymous
    */
   const { opportunity: opportunityId } = raw;
@@ -188,7 +189,7 @@ async function rawTWUProposalToTWUProposal(
       status: raw.status,
       submittedAt: raw.submittedAt,
       opportunity,
-      hourlyRate: raw.hourlyRate,
+      team: raw.team,
       resourceQuestionResponses: raw.resourceQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
       anonymousProponentName: raw.anonymousProponentName
@@ -240,7 +241,8 @@ async function rawTWUProposalSlimToTWUProposalSlim(
   raw: RawTWUProposalSlim,
   session: Session
 ): Promise<TWUProposalSlim> {
-  // If the user if gov/admin and the opportunity status is anything before EvaluationChallenge, keep the proposal anonymous
+  // If the user is gov/admin and the opportunity status is anything before EvaluationChallenge, keep the proposal
+  // anonymous
   const { opportunity: opportunityId } = raw;
   const opportunity = getValidValue(
     await readOneTWUOpportunitySlim(connection, opportunityId, session),
@@ -257,7 +259,7 @@ async function rawTWUProposalSlimToTWUProposalSlim(
     return {
       challengeScore: 0,
       createdBy: undefined,
-      hourlyRate: 0,
+      team: raw.team || undefined,
       organization: undefined,
       priceScore: 0,
       rank: 0,
@@ -601,6 +603,7 @@ export const createTWUProposal = tryDb<
     const {
       attachments,
       resourceQuestionResponses,
+      team,
       status,
       ...restOfProposal
     } = proposal;
@@ -662,8 +665,43 @@ export const createTWUProposal = tryDb<
         });
     }
 
+    // Create team members
+    await createTWUProposalTeamMembers(trx, proposalRootRecord.id, team);
+
     return proposalRootRecord.id;
   });
+
+  /**
+   * Creates an entry in a link table 'twuProposalMembers' when an existing member
+   * is added to a TWU Proposal.
+   *
+   * @param trx
+   * @param proposalId
+   * @param teamMembers
+   */
+  async function createTWUProposalTeamMembers(
+    trx: Transaction,
+    proposalId: Id,
+    teamMembers: TWUProposalTeamMember[]
+  ) {
+    // delete existing and recreate
+    await trx("twuProposalMember").where({ proposal: proposalId }).delete();
+    for (const teamMember of teamMembers) {
+      const [teamMemberResult] = await trx("twuProposalMember").insert(
+        {
+          proposal: proposalId,
+          member: teamMember.member.id,
+          hourlyRate: teamMember.hourlyRate
+        },
+        "*"
+      );
+      if (!teamMemberResult) {
+        throw new Error(
+          "unable to insert team members into the db for a TWU proposal"
+        );
+      }
+    }
+  }
 
   const dbResult = await readOneTWUProposal(connection, proposalId, session);
   if (isInvalid(dbResult) || !dbResult.value) {

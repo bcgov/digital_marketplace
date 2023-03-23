@@ -12,6 +12,7 @@ import {
 import {
   validateAttachments,
   validateOrganizationId,
+  validateTWUTeamProposal,
   validateTWUOpportunityId,
   validateTWUProposalId
   // validateTWUProposalOrganization,
@@ -84,7 +85,13 @@ interface ValidatedCreateRequestBody
 //   proposal: Id;
 //   session: AuthenticatedSession;
 // }
-
+/**
+ * @typeParam CreateRequestBody - All the information that comes in the request
+ * body when a vendor is creating a Team with Us Proposal. SharedCreateRequestBody
+ * is an alias defined in this file for CreateRequestBody defined in the 'shared'
+ * folder. It is renamed 'CreateRequestBody' here, though redefines 'status' as a
+ * string instead of an enum of statuses.
+ */
 type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
@@ -223,7 +230,7 @@ const create: crud.Create<
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         resourceQuestionResponses: get(body, "resourceQuestionResponses"),
-        hourlyRate: getNumber(body, "hourlyRate")
+        team: get(body, "team")
       };
     },
     async validateRequestBody(request) {
@@ -233,12 +240,12 @@ const create: crud.Create<
         attachments,
         status,
         resourceQuestionResponses,
-        hourlyRate
+        team
       } = request.body;
 
       if (
         !permissions.isSignedIn(request.session)
-        // TODO create permissions tables for TWU
+        // TODO implement permissions for TWU once created
         // || !(await permissions.createTWUProposal(connection, request.session))
       ) {
         return invalid({
@@ -325,13 +332,13 @@ const create: crud.Create<
        * returns and sets a value that is either adt('valid', <number>)
        * or adt('invalid', 'please enter value greater/less than x')
        */
-      const validatedHourlyRate =
-        proposalValidation.validateTWUHourlyRate(hourlyRate);
-      if (isInvalid(validatedHourlyRate)) {
-        return invalid({
-          hourlyRate: validatedHourlyRate.value
-        });
-      }
+      // const validatedHourlyRate =
+      //   proposalValidation.validateTWUHourlyRate(hourlyRate);
+      // if (isInvalid(validatedHourlyRate)) {
+      //   return invalid({
+      //     hourlyRate: validatedHourlyRate.value
+      //   });
+      // }
 
       // Only validate the following fields if proposal is in DRAFT
       if (validatedStatus.value === TWUProposalStatus.Draft) {
@@ -347,7 +354,14 @@ const create: crud.Create<
           organization: organization || undefined,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          hourlyRate: validatedHourlyRate.value
+          team: team
+          // TODO: implement a lightweight, draft validation function
+          // team: team
+          //   ? team.map((members) => ({
+          //     member: getString(members, "idpUsername"),
+          //     hourlyRate: getNumber<number>(members, "hourlyRate")
+          //   }))
+          //   : []
         });
       }
 
@@ -378,6 +392,11 @@ const create: crud.Create<
           validatedTWUOpportunity.value.resourceQuestions
         );
 
+      const validatedTeamMembers = await validateTWUTeamProposal(
+        connection,
+        team,
+        validatedOrganization.value.id
+      );
       /**
        * Validate that the set of proposed capabilities across team members
        * satisfies the opportunity required capabilities
@@ -389,11 +408,7 @@ const create: crud.Create<
       // );
 
       if (
-        allValid([
-          validatedResourceQuestionResponses,
-          validatedHourlyRate
-          // validatedProposalTeam
-        ])
+        allValid([validatedResourceQuestionResponses, validatedTeamMembers])
       ) {
         return valid({
           session: request.session,
@@ -402,15 +417,15 @@ const create: crud.Create<
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
           resourceQuestionResponses: validatedResourceQuestionResponses.value,
-          hourlyRate: validatedHourlyRate.value
+          team: validatedTeamMembers.value // TODO - needs to include hourlyRate
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
           resourceQuestionResponses: getInvalidValue<
             CreateTWUResourceQuestionValidationErrors[],
             undefined
-          >(validatedResourceQuestionResponses, undefined)
-          // team: getInvalidValue(validatedProposalTeam, undefined)
+          >(validatedResourceQuestionResponses, undefined),
+          team: getInvalidValue(validatedTeamMembers, undefined)
         });
       }
     },

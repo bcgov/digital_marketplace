@@ -94,14 +94,14 @@ export function getAddedMembers(state: Immutable<State>): MemberValues {
   };
 }
 
-export type Errors = Pick<CreateValidationErrors, "implementation">;
+export type Errors = Pick<CreateValidationErrors, "team">;
 
 export function setErrors(
   state: Immutable<State>,
   errors: Errors
 ): Immutable<State> {
   return state.update("teamMembers", (s) =>
-    Implementation.setErrors(s, errors.implementation)
+    Implementation.setErrors(s, errors.team)
   );
 }
 

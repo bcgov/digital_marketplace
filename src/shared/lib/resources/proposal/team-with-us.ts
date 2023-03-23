@@ -140,7 +140,7 @@ export interface TWUProposal {
   challengeScore?: number;
   priceScore?: number;
   totalScore?: number;
-  hourlyRate: number;
+  team: TWUProposalTeamMember[];
   rank?: number;
   anonymousProponentName: string;
 }
@@ -200,28 +200,42 @@ export interface TWUOpportunityProposal
   > {
   proposalMembers: TWUProposalTeamMember[];
 }
-export interface CreateTWUProposalImplementationValidationErrors {
-  members?: CreateTWUProposalTeamMemberValidationErrors[];
+
+/**
+ *
+ */
+export interface CreateTWUTeamProposalBodyValidationErrors {
+  members?: CreateTWUTeamProposalMemberBodyValidationErrors[];
 }
 
-export interface CreateTWUProposalImplementationBody {
-  members: CreateTWUProposalTeamMemberBody[];
+/**
+ * Ensures there is an array of members submitted along with the
+ * TWU proposal
+ */
+export interface CreateTWUTeamProposalBody {
+  members: CreateTWUTeamProposalMemberBody[];
 }
 
-export interface CreateTWUProposalTeamMemberBody {
+/**
+ * Ensures that every member submitted as part of the TWU proposal also comes
+ * with an hourly rate.
+ */
+export interface CreateTWUTeamProposalMemberBody {
   member: Id;
 }
 
-export interface CreateTWUProposalTeamMemberValidationErrors
-  extends ErrorTypeFrom<CreateTWUProposalTeamMemberBody> {
+export interface CreateTWUTeamProposalMemberBodyValidationErrors
+  extends ErrorTypeFrom<CreateTWUTeamProposalMemberBody> {
   parseFailure?: string[];
   members?: string[];
+  hourlyRate?: string[];
 }
 
 export interface TWUProposalTeamMember {
   member: UserSlim;
   pending: boolean;
   idpUsername: string;
+  hourlyRate: number;
 }
 export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
@@ -229,9 +243,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   organization?: string[];
   opportunity?: string[];
   status?: string[];
-  hourlyRate?: string[];
-  team?: string[];
-  implementation: CreateTWUProposalImplementationValidationErrors;
+  team?: CreateTWUTeamProposalBodyValidationErrors;
 }
 
 // Update.

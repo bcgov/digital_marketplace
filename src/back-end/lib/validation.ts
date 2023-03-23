@@ -55,8 +55,63 @@ import {
   parseTWUServiceArea,
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
-import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
+import {
+  CreateTWUTeamProposalBody,
+  CreateTWUTeamProposalBodyValidationErrors,
+  CreateTWUTeamProposalMemberBody,
+  CreateTWUTeamProposalMemberBodyValidationErrors,
+  TWUProposal
+} from "shared/lib/resources/proposal/team-with-us";
+import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
 
+/**
+ * TWU - Team With Us Validation
+ */
+
+/**
+ * Checks to see if the proposalId passed matches the expected regex pattern of
+ * a UUID for proposals, that the request is coming from an authenticated user
+ * and that the proposal exists in the db
+ *
+ * @param connection
+ * @param proposalId
+ * @param session
+ */
+export async function validateTWUProposalId(
+  connection: db.Connection,
+  proposalId: Id,
+  session: AuthenticatedSession
+): Promise<Validation<TWUProposal>> {
+  try {
+    const validatedId = validateUUID(proposalId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneTWUProposal(
+      connection,
+      proposalId,
+      session
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const proposal = dbResult.value;
+    if (!proposal) {
+      return invalid(["The specified proposal was not found."]);
+    }
+    return valid(proposal);
+  } catch (exception) {
+    return invalid(["Please select a valid proposal."]);
+  }
+}
+
+/**
+ * Checks that a TWU OpportunityId reflects something that lives in the db
+ *
+ * @param connection
+ * @param opportunityId
+ * @param session
+ */
 export async function validateTWUOpportunityId(
   connection: db.Connection,
   opportunityId: Id,
@@ -116,6 +171,158 @@ export async function validateServiceArea(
     }
   } catch (e) {
     return invalid(["Please specify a valid service area."]);
+  }
+}
+
+/**
+ * Checks to see if a TWU proposal has members that are affiliated with the
+ * organization in the proposal
+ *
+ * @param connection
+ * @param raw
+ * @param opportunity
+ * @param organization
+ */
+export async function validateTWUTeamProposal(
+  connection: db.Connection,
+  raw: any,
+  organization: Id
+): Promise<
+  Validation<
+    CreateTWUTeamProposalBody | undefined,
+    CreateTWUTeamProposalBodyValidationErrors
+  >
+> {
+  if (!raw) {
+    return valid(undefined);
+  }
+
+  /**
+   * Checks to see that the member is a part of the organization
+   */
+  const validatedMembers = await validateTWUProposalTeamMembers(
+    connection,
+    get(raw, "members"),
+    organization
+  );
+
+  /**
+   * Checks for an hourly rate that has a minimum value
+   */
+  const validatedHourlyRate = validateTWUHourlyRate(
+    getNumber<number>(raw, "hourlyRate")
+  );
+
+  if (allValid([validatedMembers, validatedHourlyRate])) {
+    return valid({
+      members: validatedMembers.value
+    } as CreateTWUTeamProposalBody);
+  } else {
+    return invalid<CreateTWUTeamProposalBodyValidationErrors>({
+      members: getInvalidValue<
+        CreateTWUTeamProposalMemberBodyValidationErrors[],
+        undefined
+      >(validatedMembers, undefined)
+    });
+  }
+}
+
+/**
+ * Checks to see if there is at least one member, and no more than
+ * one member in an array of members.
+ *
+ * @remarks - the number of members is expected to change from one to many in
+ * future iterations of TWU
+ *
+ * @param connection
+ * @param raw - Member as member id
+ * @param organization
+ */
+export async function validateTWUProposalTeamMembers(
+  connection: db.Connection,
+  raw: any,
+  organization: Id
+): Promise<
+  ArrayValidation<
+    CreateTWUTeamProposalMemberBody,
+    CreateTWUTeamProposalMemberBodyValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of selected team members."] }
+    ]);
+  }
+  if (!raw.length) {
+    return invalid([{ members: ["Please select at least one team member."] }]);
+  }
+  const validatedMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateTWUTeamMember(connection, v, organization),
+    {}
+  );
+
+  // TODO - Constraint can be removed once more than one resource can be added to a TWU proposal
+  if (
+    getValidValue(validatedMembers, []).filter((member) => member).length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single resource for a TWU proposal."]
+      }
+    ]);
+  }
+  return validatedMembers;
+}
+
+/**
+ * Ensures that a Team Member is affiliated with the organization
+ * and that their hourly rate is a number with a minimum value
+ *
+ * {@link validateTWUProposalTeamMembers}
+ *
+ * @param connection
+ * @param raw
+ * @param organization
+ *
+ * @returns - an adt('valid', value), or adt('invalid', <some message>)
+ */
+export async function validateTWUTeamMember(
+  connection: db.Connection,
+  raw: any,
+  organization: Id
+): Promise<
+  Validation<
+    CreateTWUTeamProposalMemberBody,
+    CreateTWUTeamProposalMemberBodyValidationErrors
+  >
+> {
+  /**
+   * Ensure that the member is affiliated with the organization
+   */
+  const validatedMember = await validateMember(
+    connection,
+    getString(raw, "member"),
+    organization
+  );
+
+  /**
+   * Ensure that the hourlyRate is a number with a minimum value
+   */
+  const validatedHourlyRate = await validateTWUHourlyRate(
+    getNumber(raw, "hourlyRate")
+  );
+  // TODO - make sure this type casting is accurate WRT the interface
+  if (allValid([validatedMember])) {
+    return valid({
+      member: (validatedMember.value as User).id,
+      hourlyRate: validatedHourlyRate.value
+    } as CreateTWUTeamProposalMemberBody);
+  } else {
+    return invalid({
+      member: getInvalidValue(validatedMember, undefined),
+      hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+    });
   }
 }
 
@@ -234,6 +441,9 @@ export function validateFilePath(path: string): Validation<string> {
   return validateGenericString(path, "File path");
 }
 
+/**
+ * CWU - Code With Us Validation
+ */
 export async function validateCWUOpportunityId(
   connection: db.Connection,
   opportunityId: Id,
@@ -290,6 +500,9 @@ export async function validateCWUProposalId(
   }
 }
 
+/**
+ * SWU - Sprint With Us Validation
+ */
 export async function validateSWUProposalId(
   connection: db.Connection,
   proposalId: Id,
@@ -447,6 +660,14 @@ export async function validateTeamMember(
   }
 }
 
+/**
+ * Checks to see if there is at least one member in an array of members, and
+ * that they are a ScrumMaster and that only one member is a Scrum Master.
+ *
+ * @param connection
+ * @param raw - Member as member id and boolean value as scrumMaster true/false
+ * @param organization
+ */
 export async function validateSWUProposalTeamMembers(
   connection: db.Connection,
   raw: any,
@@ -596,33 +817,5 @@ export async function validateContentId(
     return valid(content);
   } catch (exception) {
     return invalid(["Please select a valid content id."]);
-  }
-}
-
-export async function validateTWUProposalId(
-  connection: db.Connection,
-  proposalId: Id,
-  session: AuthenticatedSession
-): Promise<Validation<TWUProposal>> {
-  try {
-    const validatedId = validateUUID(proposalId);
-    if (isInvalid(validatedId)) {
-      return validatedId;
-    }
-    const dbResult = await db.readOneTWUProposal(
-      connection,
-      proposalId,
-      session
-    );
-    if (isInvalid(dbResult)) {
-      return invalid([db.ERROR_MESSAGE]);
-    }
-    const proposal = dbResult.value;
-    if (!proposal) {
-      return invalid(["The specified proposal was not found."]);
-    }
-    return valid(proposal);
-  } catch (exception) {
-    return invalid(["Please select a valid proposal."]);
   }
 }

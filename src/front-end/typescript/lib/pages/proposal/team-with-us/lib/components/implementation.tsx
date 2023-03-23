@@ -27,8 +27,8 @@ import {
 } from "shared/lib/resources/affiliation";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
-  CreateTWUProposalImplementationBody,
-  CreateTWUProposalImplementationValidationErrors,
+  CreateTWUTeamProposalBody,
+  CreateTWUTeamProposalBodyValidationErrors,
   TWUOpportunityProposal,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
@@ -195,8 +195,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export type Values = CreateTWUProposalImplementationBody;
+export type Values = CreateTWUTeamProposalBody;
 
+/**
+ * Gets the user id of each member that's added to a proposal
+ *
+ * @param state
+ */
 export function getValues(state: Immutable<State>): Values {
   return {
     members: getAddedMembers(state).map(({ user }) => ({
@@ -217,7 +222,7 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
   return filterAddedMembers(state.members, false);
 }
 
-export type Errors = CreateTWUProposalImplementationValidationErrors;
+export type Errors = CreateTWUTeamProposalBodyValidationErrors;
 
 /**
  * No need to set errors as the fields themselves can't result in errors.
