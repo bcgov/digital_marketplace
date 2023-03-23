@@ -348,7 +348,7 @@ const TeamMembers: component_.base.View<Props> = ({
               dispatch(adt("showModal", adt("addTeamMembers")) as Msg)
             }
             symbol_={leftPlacement(iconLinkSymbol("user-plus"))}>
-            Add Team Member(s)
+            Add Team Member
           </Link>
         )}
       </Col>
@@ -396,7 +396,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
     case "addTeamMembers": {
       const nonAddedMembers = getNonAddedMembers(state);
       return component_.page.modal.show({
-        title: "Add Team Member(s)",
+        title: "Add Team Member",
         onCloseMsg: adt("hideModal") as Msg,
         body: (dispatch) => {
           if (!state.orgId) {
@@ -467,7 +467,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
         },
         actions: [
           {
-            text: "Add Team Member(s)",
+            text: "Add Team Member",
             disabled: !nonAddedMembers.reduce(
               (acc, { toBeAdded }) => acc || toBeAdded,
               false as boolean
