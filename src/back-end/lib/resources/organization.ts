@@ -11,7 +11,8 @@ import {
 } from "back-end/lib/server";
 import {
   validateFileRecord,
-  validateOrganizationId
+  validateOrganizationId,
+  validateServiceAreas
 } from "back-end/lib/validation";
 import { get } from "lodash";
 import { getString } from "shared/lib";
@@ -52,7 +53,10 @@ export interface ValidatedCreateRequestBody {
 
 export interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
-  body: ADT<"updateProfile", UpdateProfileRequestBody> | ADT<"acceptSWUTerms">;
+  body:
+    | ADT<"updateProfile", UpdateProfileRequestBody>
+    | ADT<"acceptSWUTerms">
+    | ADT<"qualifyServiceAreas", number[]>;
 }
 
 export interface DeleteValidatedReqBody {
@@ -345,6 +349,12 @@ const update: crud.Update<
           });
         case "acceptSWUTerms":
           return adt("acceptSWUTerms");
+        case "qualifyServiceAreas":
+          if (Array.isArray(value)) {
+            return adt("qualifyServiceAreas", value);
+          } else {
+            return null;
+          }
         default:
           return null;
       }
@@ -502,6 +512,40 @@ const update: crud.Update<
             });
           }
           return invalid({ organization: adt("parseFailure" as const) });
+        case "qualifyServiceAreas": {
+          if (isInvalid(validatedOrganization)) {
+            return invalid({ organization: adt("parseFailure" as const) });
+          }
+
+          // Only Admins can qualify an organization's service areas
+          if (!permissions.isAdmin(request.session)) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
+          const validatedServiceAreas = await validateServiceAreas(
+            connection,
+            request.body.value
+          );
+          if (isInvalid<string[][]>(validatedServiceAreas)) {
+            return invalid({
+              organization: adt(
+                "qualifyServiceAreas" as const,
+                getInvalidValue(validatedServiceAreas, []) as string[][]
+              )
+            });
+          }
+
+          return valid({
+            session: request.session,
+            body: adt(
+              "qualifyServiceAreas" as const,
+              validatedServiceAreas.value
+            )
+          });
+          break;
+        }
         default:
           return invalid({ organization: adt("parseFailure" as const) });
       }
@@ -524,6 +568,15 @@ const update: crud.Update<
               { acceptedSWUTerms: new Date(), id: request.params.id },
               session
             );
+            break;
+          case "qualifyServiceAreas":
+            dbResult = await db.qualifyOrganizationServiceAreas(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
         }
         if (isInvalid(dbResult)) {
           return basicResponse(

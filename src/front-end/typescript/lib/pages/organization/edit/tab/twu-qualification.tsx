@@ -1,9 +1,16 @@
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
-import { component as component_ } from "front-end/lib/framework";
-// import * as api from "front-end/lib/http/api";
+import {
+  component as component_,
+  Immutable,
+  immutable
+} from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
+import * as FormField from "front-end/lib/components/form-field";
 import * as toasts from "front-end/lib/pages/organization/lib/toasts";
+import * as Checkbox from "front-end/lib/components/form-field/checkbox";
+import * as OrgResource from "shared/lib/resources/organization";
 import EditTabHeader from "front-end/lib/pages/organization/lib/views/edit-tab-header";
 import {
   acceptedSWUTermsText,
@@ -17,39 +24,99 @@ import Link, {
 } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
+import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 import { doesOrganizationMeetSWUQualificationNumTeamMembers } from "shared/lib/resources/organization";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { mapValid, valid, Validation } from "shared/lib/validation";
+import { kebabCase } from "lodash";
+import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
+
+interface AvailableServiceArea {
+  serviceArea: TWUServiceArea;
+  name: string;
+}
+
+const ALL_SERVICE_AREAS: AvailableServiceArea[] = [
+  { serviceArea: TWUServiceArea.Developer, name: "Developer" },
+  { serviceArea: TWUServiceArea.DataSpecialist, name: "Data Specialist" },
+  { serviceArea: TWUServiceArea.ScrumMaster, name: "Scrum Master" },
+  { serviceArea: TWUServiceArea.DevopsSpecialist, name: "DevOps Specialist" }
+];
+
+interface ServiceArea extends AvailableServiceArea {
+  checkbox: Immutable<Checkbox.State>;
+}
 
 export interface State extends Tab.Params {
   isEditing: boolean;
   editingLoading: number;
   saveChangesLoading: number;
   showSaveChangesModal: boolean;
+  qualifiedServiceAreas: ServiceArea[];
 }
 
 export type InnerMsg =
-  // | ADT<"orgForm", OrgForm.Msg>
   | ADT<"startEditing">
-  | ADT<"onStartEditingResponse">
+  | ADT<"onStartEditingResponse", OrgResource.Organization>
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
-  | ADT<"onSaveChangesResponse", Validation<string[]>>
-  | ADT<"hideSaveChangesModal">;
+  | ADT<
+      "onSaveChangesResponse",
+      api.ResponseValidation<
+        OrgResource.Organization,
+        OrgResource.UpdateValidationErrors
+      >
+    >
+  | ADT<"hideSaveChangesModal">
+  | ADT<"onSelectServiceArea", [number, Checkbox.Msg]>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
+function resetQualifiedServiceAreas(
+  organizationServiceAreas: TWUServiceAreaRecord[]
+) {
+  return ALL_SERVICE_AREAS.reduce<[ServiceArea[], component_.Cmd<Msg>[]]>(
+    ([serviceAreas, serviceAreasCmds], serviceArea, index) => {
+      const [checkboxState, checkboxCmds] = Checkbox.init({
+        errors: [],
+        child: {
+          value: !!organizationServiceAreas.find(
+            (orgSa) => serviceArea.serviceArea === orgSa.serviceArea
+          ),
+          id: `twu-service-area-qualified-${kebabCase(serviceArea.serviceArea)}`
+        }
+      });
+      return [
+        [
+          ...serviceAreas,
+          { ...serviceArea, checkbox: immutable(checkboxState) }
+        ],
+        [
+          ...serviceAreasCmds,
+          ...component_.cmd.mapMany(
+            checkboxCmds,
+            (msg) => adt("onSelectServiceArea", [index, msg]) as Msg
+          )
+        ]
+      ];
+    },
+    [[], []]
+  );
+}
+
 const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+  const [qualifiedServiceAreas, qualifiedServiceAreasCmds] =
+    resetQualifiedServiceAreas(params.organization.serviceAreas);
   return [
     {
       ...params,
       isEditing: false,
       editingLoading: 0,
       saveChangesLoading: 0,
-      showSaveChangesModal: false
+      showSaveChangesModal: false,
+      qualifiedServiceAreas: qualifiedServiceAreas
     },
-    []
+    qualifiedServiceAreasCmds
   ];
 };
 
@@ -61,7 +128,6 @@ const stopSaveChangesLoading = makeStopLoading<State>("saveChangesLoading");
 const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "saveChanges": {
-      // const organization = state.organization;
       if (!state.showSaveChangesModal) {
         return [state.set("showSaveChangesModal", true), []];
       } else {
@@ -73,25 +139,19 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         [
-          // component_.cmd.map(
-          //   OrgForm.persist(
-          //     adt("update", {
-          //       state: state.orgForm,
-          //       orgId: organization.id,
-          //       extraBody: {
-          //         logoImageFile:
-          //           organization.logoImageFile && organization.logoImageFile.id
-          //       }
-          //     })
-          //   ),
-          //   (response) => adt("onSaveChangesResponse", response) as Msg
-          // )
-          component_.cmd.dispatch(
+          api.organizations.update(
+            state.organization.id,
+            // TODO: Use serviceArea IDs when loading service areas from the backend
             adt(
-              "onSaveChangesResponse",
-              mapValid(valid(["thing"]), () => "thing")
-            ) as Msg
-          )
+              "qualifyServiceAreas",
+              state.qualifiedServiceAreas
+                .filter((serviceArea) =>
+                  FormField.getValue(serviceArea.checkbox)
+                )
+                .map(({ serviceArea }) => serviceArea)
+            ),
+            (response) => adt("onSaveChangesResponse", response) as Msg
+          ) as component_.Cmd<Msg>
         ]
       ];
     }
@@ -100,16 +160,10 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const result = msg.value;
       switch (result.tag) {
         case "valid": {
-          // const [formState, formCmds, organization] = result.value;
+          const organization = result.value;
           return [
-            state.set("isEditing", false),
-            // .set("organization", organization)
-            // .set("orgForm", formState),
+            state.set("isEditing", false).set("organization", organization),
             [
-              // ...component_.cmd.mapMany(
-              //   formCmds,
-              //   (msg) => adt("orgForm", msg) as Msg
-              // ),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.serviceAreasUpdated.success)
@@ -119,11 +173,13 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
         }
         case "invalid":
-        default:
+        default: {
+          const [qualifiedServiceAreas, qualifiedServiceAreasCmds] =
+            resetQualifiedServiceAreas(state.organization.serviceAreas);
           return [
-            state,
-            // state.set("orgForm", result.value),
+            state.set("qualifiedServiceAreas", qualifiedServiceAreas),
             [
+              ...qualifiedServiceAreasCmds,
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("error", toasts.serviceAreasUpdated.error)
@@ -131,44 +187,61 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               )
             ]
           ];
+        }
       }
     }
     case "startEditing":
       return [
         startEditingLoading(state),
-
-        // api.organizations.readOne(state.organization.id, (response) =>
-        //   adt(
-        //     "onStartEditingResponse",
-        //     api.isValid(response) ? response.value : null
-        //   )
-        // ) as component_.Cmd<Msg>
-        [component_.cmd.dispatch(adt("onStartEditingResponse"))]
+        // Refresh Organization to avoid stale data, i.e. user left tab open.
+        [
+          api.organizations.readOne(state.organization.id, (response) =>
+            adt(
+              "onStartEditingResponse",
+              api.isValid(response) ? response.value : null
+            )
+          ) as component_.Cmd<Msg>
+        ]
       ];
     case "onStartEditingResponse": {
       state = stopEditingLoading(state);
-      // const organization = msg.value;
-      // if (!organization) return [state, []];
-      // const [formState, formCmds] = resetOrgForm(organization);
+      const organization = msg.value;
+      if (!organization) return [state, []];
+      const [qualifiedServiceAreas, qualifiedServiceAreasCmds] =
+        resetQualifiedServiceAreas(organization.serviceAreas);
       return [
-        state.set("isEditing", true),
-        // .set("organization", organization)
-        // .set("orgForm", immutable(formState)),
-        // component_.cmd.mapMany(formCmds, (msg) => adt("orgForm", msg) as Msg)
-        []
+        state
+          .set("isEditing", true)
+          .set("organization", organization)
+          .set("qualifiedServiceAreas", qualifiedServiceAreas),
+        qualifiedServiceAreasCmds
       ];
     }
     case "cancelEditing": {
-      // const [formState, formCmds] = resetOrgForm(state.organization);
+      const [qualifiedServiceAreas, qualifiedServiceAreasCmds] =
+        resetQualifiedServiceAreas(state.organization.serviceAreas);
       return [
-        // state.set("isEditing", false).set("orgForm", immutable(formState)),
-        state.set("isEditing", false),
-        // component_.cmd.mapMany(formCmds, (msg) => adt("orgForm", msg) as Msg)
-        []
+        state
+          .set("isEditing", false)
+          .set("qualifiedServiceAreas", qualifiedServiceAreas),
+        qualifiedServiceAreasCmds
       ];
     }
     case "hideSaveChangesModal":
       return [state.set("showSaveChangesModal", false), []];
+    case "onSelectServiceArea":
+      return component_.base.updateChild({
+        state,
+        childStatePath: [
+          "qualifiedServiceAreas",
+          String(msg.value[0]),
+          "checkbox"
+        ],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value[1],
+        mapChildMsg: (value) =>
+          adt("onSelectServiceArea", [msg.value[0], value]) as Msg
+      });
     default:
       return [state, []];
   }
@@ -202,7 +275,13 @@ const Requirement: component_.base.View<RequirementProps> = ({
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
+const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const isEditingLoading = state.editingLoading > 0;
+  const isSaveChangesLoading = state.saveChangesLoading > 0;
+  const isLoading = isEditingLoading || isSaveChangesLoading;
   return (
     <div>
       <EditTabHeader
@@ -237,6 +316,26 @@ const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
           />
         </Col>
       </Row>
+      <div className="mt-5 pt-5 border-top">
+        <Row>
+          <Col xs="12">
+            <h3>Service Areas</h3>
+            {state.qualifiedServiceAreas.map((serviceArea, i) => (
+              <Checkbox.view
+                key={kebabCase(serviceArea.serviceArea)}
+                extraChildProps={{ inlineLabel: serviceArea.name }}
+                disabled={isLoading || !state.isEditing}
+                state={serviceArea.checkbox}
+                className="mb-0"
+                dispatch={component_.base.mapDispatch(
+                  dispatch,
+                  (msg) => adt("onSelectServiceArea", [i, msg]) as Msg
+                )}
+              />
+            ))}
+          </Col>
+        </Row>
+      </div>
       <div className="mt-5 pt-5 border-top">
         <Row>
           <Col xs="12">

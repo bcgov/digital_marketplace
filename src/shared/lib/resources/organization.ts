@@ -1,5 +1,6 @@
 import { FileRecord } from "shared/lib/resources/file";
 import { UserSlim } from "shared/lib/resources/user";
+import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
 import {
   ADT,
   BodyWithErrors,
@@ -7,6 +8,7 @@ import {
   ReadManyResponseBodyBase
 } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation/index";
+import { TWUServiceArea } from "./opportunity/team-with-us";
 
 export { ReadManyResponseValidationErrors } from "shared/lib/types";
 
@@ -39,6 +41,7 @@ export interface Organization extends OrganizationAdmin {
   active: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  serviceAreas: TWUServiceAreaRecord[];
 }
 
 export interface OrganizationSlim extends OrganizationAdmin {
@@ -60,6 +63,7 @@ export interface CreateRequestBody
     | "acceptedSWUTerms"
     | "possessAllCapabilities"
     | "numTeamMembers"
+    | "serviceAreas"
   > {
   logoImageFile?: Id;
 }
@@ -69,7 +73,8 @@ export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> &
 
 export type UpdateRequestBody =
   | ADT<"updateProfile", UpdateProfileRequestBody>
-  | ADT<"acceptSWUTerms">;
+  | ADT<"acceptSWUTerms">
+  | ADT<"qualifyServiceAreas", TWUServiceArea[]>;
 
 export type UpdateProfileRequestBody = CreateRequestBody;
 
@@ -79,6 +84,7 @@ export type UpdateProfileValidationErrors =
 type UpdateADTErrors =
   | ADT<"updateProfile", UpdateProfileValidationErrors>
   | ADT<"acceptSWUTerms", string[]>
+  | ADT<"qualifyServiceAreas", string[][]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {

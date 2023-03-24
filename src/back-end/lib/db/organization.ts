@@ -165,7 +165,17 @@ function generateOrganizationQuery(connection: Connection) {
           organization: connection.ref("organizations.id"),
           membershipStatus: MembershipStatus.Active
         })
-        .as("numTeamMembers")
+        .as("numTeamMembers"),
+      connection.raw(`(
+        SELECT
+          coalesce(
+            json_agg(sa),
+            '[]' :: json
+          ) AS "serviceAreas"
+        FROM
+          "twuOrganizationServiceAreas" tosa
+          JOIN "serviceAreas" sa ON tosa."serviceArea" = sa.id
+      )`)
     );
 }
 
@@ -501,3 +511,49 @@ export const readOneOrganizationOwner = tryDb<[Id], User | null>(
     return valid(result ? await rawUserToUser(connection, result) : null);
   }
 );
+
+export const qualifyOrganizationServiceAreas = tryDb<
+  [Id, number[], Session],
+  Organization
+>(async (connection, organization, serviceAreas, session) => {
+  await connection.transaction(async (trx) => {
+    const [oldServiceAreasResult] = await connection<{
+      organization: Id;
+      serviceArea: number;
+    }>("twuOrganizationServiceAreas")
+      .transacting(trx)
+      .where({ "twuOrganizationServiceAreas.organization": organization })
+      .delete("*");
+    if (!oldServiceAreasResult) {
+      throw new Error("unable to delete existing service areas");
+    }
+
+    for (const serviceArea of serviceAreas) {
+      const [newServiceAreasResult] = await connection(
+        "twuOrganizationServiceAreas"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            organization,
+            serviceArea
+          },
+          "*"
+        );
+      if (!newServiceAreasResult) {
+        throw new Error("Unable to add service area");
+      }
+    }
+  });
+
+  const dbResult = await readOneOrganization(
+    connection,
+    organization,
+    true,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update organization");
+  }
+  return valid(dbResult.value);
+});
