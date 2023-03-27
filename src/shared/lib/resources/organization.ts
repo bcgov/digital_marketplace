@@ -116,3 +116,9 @@ export function doesOrganizationMeetSWUQualification(
     !!organization.possessAllCapabilities
   );
 }
+
+export function hasOrganizationCompletedBCBidRFQ(
+  organization: Organization
+): boolean {
+  return organization.serviceAreas.length > 0;
+}

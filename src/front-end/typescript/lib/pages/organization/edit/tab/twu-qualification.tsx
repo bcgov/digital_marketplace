@@ -22,10 +22,9 @@ import Link, {
   leftPlacement,
   routeDest
 } from "front-end/lib/views/link";
-import React from "react";
+import React, { ReactElement } from "react";
 import { Col, Row } from "reactstrap";
 import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
-import { doesOrganizationMeetSWUQualificationNumTeamMembers } from "shared/lib/resources/organization";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { kebabCase } from "lodash";
@@ -249,7 +248,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 
 interface RequirementProps {
   name: string | component_.base.ViewElement;
-  description: string;
+  description: string | ReactElement;
   checked: boolean;
   className?: string;
 }
@@ -292,22 +291,21 @@ const view: component_.base.ComponentView<State, Msg> = ({
         <Col xs="12">
           <h3>Requirements</h3>
           <p className="mb-4">
-            To qualify to submit proposals for Sprint With Us opportunities,
-            your organization must meet the following requirements:
+            To qualify to submit proposals for Team With Us opportunities, your
+            organization must meet the following requirements:
           </p>
           <Requirement
             className="mb-4"
-            name="At least two team members."
-            description='Add team members from the "Team" tab to begin the process of satisfying this requirement.'
-            checked={doesOrganizationMeetSWUQualificationNumTeamMembers(
+            name={
+              <>
+                To qualify for one or more Service Areas, you must complete the
+                RFQ through BC Bid.
+              </>
+            }
+            description="You can view the RFQ documents by navigating to the BC Bid link above."
+            checked={OrgResource.hasOrganizationCompletedBCBidRFQ(
               state.organization
             )}
-          />
-          <Requirement
-            className="mb-4"
-            name="Team members collectively possess all capabilities."
-            description="Your team members can choose their capabilities on their user profiles."
-            checked={!!state.organization.possessAllCapabilities}
           />
           <Requirement
             name={`Agreed to ${SWU_TERMS_TITLE}.`}

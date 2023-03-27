@@ -517,16 +517,13 @@ export const qualifyOrganizationServiceAreas = tryDb<
   Organization
 >(async (connection, organization, serviceAreas, session) => {
   await connection.transaction(async (trx) => {
-    const [oldServiceAreasResult] = await connection<{
+    await connection<{
       organization: Id;
       serviceArea: number;
     }>("twuOrganizationServiceAreas")
       .transacting(trx)
       .where({ "twuOrganizationServiceAreas.organization": organization })
       .delete("*");
-    if (!oldServiceAreasResult) {
-      throw new Error("unable to delete existing service areas");
-    }
 
     for (const serviceArea of serviceAreas) {
       const [newServiceAreasResult] = await connection(
