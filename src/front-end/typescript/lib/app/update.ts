@@ -38,6 +38,7 @@ import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -126,6 +127,18 @@ function initPage(
         pageGetMetadata: PageOrgSWUTerms.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageOrgSWUTerms", value);
+        }
+      });
+
+    case "orgTWUTerms":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "orgTWUTerms"],
+        pageRouteParams: route.value,
+        pageInit: PageOrgTWUTerms.component.init,
+        pageGetMetadata: PageOrgTWUTerms.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOrgTWUTerms", value);
         }
       });
 
@@ -883,6 +896,22 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "orgSWUTerms"],
         pageUpdate: PageOrgSWUTerms.component.update,
         pageGetMetadata: PageOrgSWUTerms.component.getMetadata,
+        pageMsg: msg.value
+      });
+
+    case "pageOrgTWUTerms":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOrgTWUTerms.State,
+        PageOrgTWUTerms.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageOrgTWUTerms", value),
+        pageStatePath: ["pages", "orgTWUTerms"],
+        pageUpdate: PageOrgTWUTerms.component.update,
+        pageGetMetadata: PageOrgTWUTerms.component.getMetadata,
         pageMsg: msg.value
       });
 

@@ -17,6 +17,7 @@ export { ReadManyResponseValidationErrors } from "shared/lib/types";
 export interface OrganizationAdmin {
   owner?: UserSlim;
   acceptedSWUTerms?: Date | null;
+  acceptedTWUTerms?: Date | null;
   possessAllCapabilities?: boolean;
   numTeamMembers?: number;
 }
@@ -61,6 +62,7 @@ export interface CreateRequestBody
     | "active"
     | "owner"
     | "acceptedSWUTerms"
+    | "acceptedTWUTerms"
     | "possessAllCapabilities"
     | "numTeamMembers"
     | "serviceAreas"
@@ -74,6 +76,7 @@ export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> &
 export type UpdateRequestBody =
   | ADT<"updateProfile", UpdateProfileRequestBody>
   | ADT<"acceptSWUTerms">
+  | ADT<"acceptTWUTerms">
   | ADT<"qualifyServiceAreas", TWUServiceArea[]>;
 
 export type UpdateProfileRequestBody = CreateRequestBody;
@@ -84,6 +87,7 @@ export type UpdateProfileValidationErrors =
 type UpdateADTErrors =
   | ADT<"updateProfile", UpdateProfileValidationErrors>
   | ADT<"acceptSWUTerms", string[]>
+  | ADT<"acceptTWUTerms", string[]>
   | ADT<"qualifyServiceAreas", string[][]>
   | ADT<"parseFailure">;
 

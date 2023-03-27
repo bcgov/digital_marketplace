@@ -56,6 +56,7 @@ export interface ValidatedUpdateRequestBody {
   body:
     | ADT<"updateProfile", UpdateProfileRequestBody>
     | ADT<"acceptSWUTerms">
+    | ADT<"acceptTWUTerms">
     | ADT<"qualifyServiceAreas", number[]>;
 }
 
@@ -349,6 +350,8 @@ const update: crud.Update<
           });
         case "acceptSWUTerms":
           return adt("acceptSWUTerms");
+        case "acceptTWUTerms":
+          return adt("acceptTWUTerms");
         case "qualifyServiceAreas":
           if (Array.isArray(value)) {
             return adt("qualifyServiceAreas", value);
@@ -499,7 +502,7 @@ const update: crud.Update<
         }
         case "acceptSWUTerms":
           if (isValid(validatedOrganization)) {
-            if (validatedOrganization.value.acceptedSWUTerms) {
+            if (validatedOrganization.value.acceptedTWUTerms) {
               return invalid({
                 organization: adt("acceptSWUTerms" as const, [
                   "The SWU Terms have already been accepted for this organization."
@@ -509,6 +512,21 @@ const update: crud.Update<
             return valid({
               session: request.session,
               body: adt("acceptSWUTerms" as const)
+            });
+          }
+          return invalid({ organization: adt("parseFailure" as const) });
+        case "acceptTWUTerms":
+          if (isValid(validatedOrganization)) {
+            if (validatedOrganization.value.acceptedTWUTerms) {
+              return invalid({
+                organization: adt("acceptTWUTerms" as const, [
+                  "The TWU Terms have already been accepted for this organization."
+                ])
+              });
+            }
+            return valid({
+              session: request.session,
+              body: adt("acceptTWUTerms" as const)
             });
           }
           return invalid({ organization: adt("parseFailure" as const) });
@@ -565,7 +583,14 @@ const update: crud.Update<
           case "acceptSWUTerms":
             dbResult = await db.updateOrganization(
               connection,
-              { acceptedSWUTerms: new Date(), id: request.params.id },
+              { acceptedTWUTerms: new Date(), id: request.params.id },
+              session
+            );
+            break;
+          case "acceptTWUTerms":
+            dbResult = await db.updateOrganization(
+              connection,
+              { acceptedTWUTerms: new Date(), id: request.params.id },
               session
             );
             break;

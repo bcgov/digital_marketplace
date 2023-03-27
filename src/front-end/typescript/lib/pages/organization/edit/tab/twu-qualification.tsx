@@ -13,9 +13,9 @@ import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import * as OrgResource from "shared/lib/resources/organization";
 import EditTabHeader from "front-end/lib/pages/organization/lib/views/edit-tab-header";
 import {
-  acceptedSWUTermsText,
-  TITLE as SWU_TERMS_TITLE
-} from "front-end/lib/pages/organization/sprint-with-us-terms";
+  acceptedTWUTermsText,
+  TITLE as TWU_TERMS_TITLE
+} from "front-end/lib/pages/organization/team-with-us-terms";
 import Icon from "front-end/lib/views/icon";
 import Link, {
   iconLinkSymbol,
@@ -308,9 +308,9 @@ const view: component_.base.ComponentView<State, Msg> = ({
             )}
           />
           <Requirement
-            name={`Agreed to ${SWU_TERMS_TITLE}.`}
-            description={`You can view the ${SWU_TERMS_TITLE} below.`}
-            checked={!!state.organization.acceptedSWUTerms}
+            name={`Agreed to ${TWU_TERMS_TITLE}.`}
+            description={`You can view the ${TWU_TERMS_TITLE} below.`}
+            checked={!!state.organization.acceptedTWUTerms}
           />
         </Col>
       </Row>
@@ -339,16 +339,16 @@ const view: component_.base.ComponentView<State, Msg> = ({
           <Col xs="12">
             <h3>Terms & Conditions</h3>
             <p className="mb-4">
-              {acceptedSWUTermsText(
+              {acceptedTWUTermsText(
                 state.organization,
-                `View the ${SWU_TERMS_TITLE} by clicking the button below.`
+                `View the ${TWU_TERMS_TITLE} by clicking the button below.`
               )}
             </p>
             <Link
               button
               color="primary"
               dest={routeDest(
-                adt("orgSWUTerms", { orgId: state.organization.id })
+                adt("orgTWUTerms", { orgId: state.organization.id })
               )}>
               View Terms & Conditions
             </Link>

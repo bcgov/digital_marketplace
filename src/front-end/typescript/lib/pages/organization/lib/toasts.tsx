@@ -1,4 +1,5 @@
 import { TITLE as SWU_TERMS_TITLE } from "front-end/lib/pages/organization/sprint-with-us-terms";
+import { TITLE as TWU_TERMS_TITLE } from "front-end/lib/pages/organization/team-with-us-terms";
 import React from "react";
 import {
   AffiliationMember,
@@ -122,6 +123,17 @@ export const acceptedSWUTerms = {
   error: (organization: Organization) => ({
     title: "Unable to Accept Terms & Conditions",
     body: `An error occurred while attempting to accept the ${SWU_TERMS_TITLE} for ${organization.legalName}. Please try again later.`
+  })
+};
+
+export const acceptedTWUTerms = {
+  success: (organization: Organization) => ({
+    title: "Accepted Terms & Conditions",
+    body: `Successfully accepted the ${TWU_TERMS_TITLE} for ${organization.legalName}.`
+  }),
+  error: (organization: Organization) => ({
+    title: "Unable to Accept Terms & Conditions",
+    body: `An error occurred while attempting to accept the ${TWU_TERMS_TITLE} for ${organization.legalName}. Please try again later.`
   })
 };
 
