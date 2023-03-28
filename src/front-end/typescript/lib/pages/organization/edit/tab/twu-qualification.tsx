@@ -25,7 +25,7 @@ import Link, {
 import React, { ReactElement } from "react";
 import { Col, Row } from "reactstrap";
 import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
-import { isAdmin } from "shared/lib/resources/user";
+import { isAdmin, isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { kebabCase } from "lodash";
 import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
@@ -431,5 +431,45 @@ export const component: Tab.Component<State, Msg> = {
       }
     }
     return component_.page.actions.links([]);
-  }
+  },
+  getAlerts: (state) => ({
+    info: (() => {
+      if (!state.twuQualified) {
+        if (isVendor(state.viewerUser)) {
+          return [
+            {
+              text: (
+                <div>
+                  This organization is not qualified to apply for{" "}
+                  <em>Team With Us</em> opportunities. You must{" "}
+                  <Link
+                    dest={routeDest(
+                      adt("orgEdit", {
+                        orgId: state.organization.id,
+                        tab: "twu-qualification" as const
+                      })
+                    )}>
+                    apply to become a Qualified Supplier
+                  </Link>
+                  .
+                </div>
+              )
+            }
+          ];
+        } else if (isAdmin(state.viewerUser)) {
+          return [
+            {
+              text: (
+                <div>
+                  This organization is not qualified to apply for{" "}
+                  <em>Team With Us</em> opportunities.
+                </div>
+              )
+            }
+          ];
+        }
+      }
+      return [];
+    })()
+  })
 };

@@ -31,6 +31,7 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 export interface Params {
   organization: Organization;
   swuQualified: boolean;
+  twuQualified: boolean;
   affiliations: AffiliationMember[];
   viewerUser: User;
 }

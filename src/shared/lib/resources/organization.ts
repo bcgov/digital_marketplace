@@ -126,3 +126,12 @@ export function hasOrganizationCompletedBCBidRFQ(
 ): boolean {
   return organization.serviceAreas.length > 0;
 }
+
+export function doesOrganizationMeetTWUQualification(
+  organization: Organization
+): boolean {
+  return (
+    hasOrganizationCompletedBCBidRFQ(organization) &&
+    !!organization.acceptedTWUTerms
+  );
+}

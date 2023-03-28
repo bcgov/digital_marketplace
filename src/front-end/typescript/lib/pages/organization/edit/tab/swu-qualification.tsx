@@ -11,6 +11,7 @@ import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { doesOrganizationMeetSWUQualificationNumTeamMembers } from "shared/lib/resources/organization";
+import { isAdmin, isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 
 export type State = Tab.Params;
@@ -121,5 +122,45 @@ export const component: Tab.Component<State, Msg> = {
   view,
   onInitResponse() {
     return component_.page.readyMsg();
-  }
+  },
+  getAlerts: (state) => ({
+    info: (() => {
+      if (!state.swuQualified) {
+        if (isVendor(state.viewerUser)) {
+          return [
+            {
+              text: (
+                <div>
+                  This organization is not qualified to apply for{" "}
+                  <em>Sprint With Us</em> opportunities. You must{" "}
+                  <Link
+                    dest={routeDest(
+                      adt("orgEdit", {
+                        orgId: state.organization.id,
+                        tab: "qualification" as const
+                      })
+                    )}>
+                    apply to become a Qualified Supplier
+                  </Link>
+                  .
+                </div>
+              )
+            }
+          ];
+        } else if (isAdmin(state.viewerUser)) {
+          return [
+            {
+              text: (
+                <div>
+                  This organization is not qualified to apply for{" "}
+                  <em>Sprint With Us</em> opportunities.
+                </div>
+              )
+            }
+          ];
+        }
+      }
+      return [];
+    })()
+  })
 };
