@@ -194,7 +194,7 @@ const update: component_.base.Update<State, Msg> = updateValid(
               component_.global.newRouteMsg(
                 adt("orgEdit", {
                   orgId: organization.id,
-                  tab: "qualification"
+                  tab: "swu-qualification"
                 }) as Route
               )
             )
@@ -235,7 +235,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
                 dest={routeDest(
                   adt("orgEdit", {
                     orgId: organization.id,
-                    tab: "qualification"
+                    tab: "swu-qualification"
                   }) as Route
                 )}>
                 Cancel

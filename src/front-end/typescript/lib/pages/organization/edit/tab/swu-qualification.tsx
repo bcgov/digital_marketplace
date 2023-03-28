@@ -137,7 +137,7 @@ export const component: Tab.Component<State, Msg> = {
                     dest={routeDest(
                       adt("orgEdit", {
                         orgId: state.organization.id,
-                        tab: "qualification" as const
+                        tab: "swu-qualification" as const
                       })
                     )}>
                     apply to become a Qualified Supplier
