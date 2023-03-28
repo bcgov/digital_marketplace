@@ -161,7 +161,13 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         case "valid": {
           const organization = result.value;
           return [
-            state.set("isEditing", false).set("organization", organization),
+            state
+              .set("isEditing", false)
+              .set("organization", organization)
+              .set(
+                "twuQualified",
+                OrgResource.doesOrganizationMeetTWUQualification(organization)
+              ),
             [
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
