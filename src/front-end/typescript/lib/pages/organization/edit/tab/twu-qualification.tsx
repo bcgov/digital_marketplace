@@ -448,17 +448,8 @@ export const component: Tab.Component<State, Msg> = {
               text: (
                 <div>
                   This organization is not qualified to apply for{" "}
-                  <em>Team With Us</em> opportunities. You must{" "}
-                  <Link
-                    dest={routeDest(
-                      adt("orgEdit", {
-                        orgId: state.organization.id,
-                        tab: "twu-qualification" as const
-                      })
-                    )}>
-                    apply to become a Qualified Supplier
-                  </Link>
-                  .
+                  <em>Team With Us</em> opportunities. You must apply to become
+                  a Qualified Supplier.
                 </div>
               )
             }
