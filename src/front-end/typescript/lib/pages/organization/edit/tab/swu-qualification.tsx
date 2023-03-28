@@ -62,6 +62,7 @@ const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
       <EditTabHeader
         legalName={state.organization.legalName}
         swuQualified={state.swuQualified}
+        twuQualified={state.twuQualified}
       />
       <Row className="mt-5">
         <Col xs="12">
