@@ -4,7 +4,8 @@ import {
   makePageMetadata,
   prefixPath,
   updateValid,
-  viewValid
+  viewValid,
+  intersperse
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -38,6 +39,7 @@ import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
 import * as TWUO from "shared/lib/resources/opportunity/team-with-us";
 import {
   doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   OrganizationSlim
 } from "shared/lib/resources/organization";
 import * as CWUP from "shared/lib/resources/proposal/code-with-us";
@@ -59,7 +61,8 @@ interface ValidState {
     state: Immutable<Table.State>;
   };
   viewerUser: User;
-  isQualified?: boolean;
+  isSWUQualified?: boolean;
+  isTWUQualified?: boolean;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -231,7 +234,8 @@ const init: component_.page.Init<
     return [
       valid(
         immutable({
-          isQualified: false,
+          isSWUQualified: false,
+          isTWUQualified: false,
           viewerUser,
           table: {
             title,
@@ -305,13 +309,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         switch (msg.value.tag) {
           case "vendor": {
             const [cwuProposals, swuProposals, organizations] = msg.value.value;
-            const isQualified = organizations.reduce(
+            const isSWUQualified = organizations.reduce(
               (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
+              false as boolean
+            );
+            const isTWUQualified = organizations.reduce(
+              (acc, o) => acc || doesOrganizationMeetTWUQualification(o),
               false as boolean
             );
             return [
               state
-                .set("isQualified", isQualified)
+                .set("isSWUQualified", isSWUQualified)
+                .set("isTWUQualified", isTWUQualified)
                 .setIn(
                   ["table", "bodyRows"],
                   makeVendorBodyRows(
@@ -479,9 +488,37 @@ export const component: component_.page.Component<
   },
 
   getAlerts: getAlertsValid((state) => {
+    const qualifiyingPrograms = [
+      ...(state.isSWUQualified
+        ? []
+        : [
+            {
+              name: "Sprint With Us",
+              qualificationLink: (
+                <Link key="swu" dest={routeDest(adt("learnMoreSWU", null))}>
+                  Qualified Sprint With Us Supplier
+                </Link>
+              )
+            }
+          ]),
+      ...(state.isTWUQualified
+        ? []
+        : [
+            {
+              name: "Team With Us",
+              qualificationLink: (
+                <Link key="twu" dest={routeDest(adt("learnMoreTWU", null))}>
+                  Qualified Team With Us Supplier
+                </Link>
+              )
+            }
+          ])
+    ];
     return {
       info:
-        isVendor(state.viewerUser) && !state.isQualified && state.table
+        isVendor(state.viewerUser) &&
+        !(state.isSWUQualified && state.isTWUQualified) &&
+        state.table
           ? [
               {
                 text: (
@@ -491,10 +528,17 @@ export const component: component_.page.Component<
                       create an organization
                     </Link>{" "}
                     and be a{" "}
-                    <Link dest={routeDest(adt("learnMoreSWU", null))}>
-                      Qualified Supplier
-                    </Link>{" "}
-                    in order to submit proposals to Sprint With Us
+                    {intersperse(
+                      qualifiyingPrograms,
+                      ({ qualificationLink }) => qualificationLink,
+                      " or "
+                    )}{" "}
+                    in order to submit proposals to{" "}
+                    {intersperse(
+                      qualifiyingPrograms,
+                      ({ name }) => name,
+                      " or "
+                    )}{" "}
                     opportunities.
                   </span>
                 )

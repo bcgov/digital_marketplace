@@ -33,7 +33,11 @@ interface UpdateOrganizationParams
   extends Partial<
     Omit<
       Organization,
-      "logoImageFile" | "owner" | "possessAllCapabilities" | "numTeamMembers"
+      | "logoImageFile"
+      | "owner"
+      | "possessAllCapabilities"
+      | "possessOneServiceArea"
+      | "numTeamMembers"
     >
   > {
   logoImageFile?: Id;
@@ -95,6 +99,7 @@ async function rawOrganizationSlimToOrganizationSlim(
     acceptedTWUTerms,
     acceptedSWUTerms,
     possessAllCapabilities,
+    possessOneServiceArea,
     numTeamMembers,
     active
   } = raw;
@@ -117,6 +122,7 @@ async function rawOrganizationSlimToOrganizationSlim(
     acceptedTWUTerms,
     acceptedSWUTerms,
     possessAllCapabilities,
+    possessOneServiceArea,
     active,
     numTeamMembers:
       numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10)
@@ -209,7 +215,8 @@ export const readOneOrganizationSlim = tryDb<
     acceptedTWUTerms,
     acceptedSWUTerms,
     numTeamMembers,
-    active
+    active,
+    serviceAreas
   } = result;
   // If no session, or user is not an admin/government or owning vendor, do not include RFQ data
   if (!session || (isVendor(session) && owner !== session.user?.id)) {
@@ -233,6 +240,7 @@ export const readOneOrganizationSlim = tryDb<
           connection,
           result
         ),
+        possessOneServiceArea: serviceAreas.length > 0,
         acceptedTWUTerms,
         acceptedSWUTerms,
         numTeamMembers
@@ -269,6 +277,7 @@ export const readOneOrganization = tryDb<
         connection,
         result
       );
+      result.possessOneServiceArea = result.serviceAreas.length > 0;
     }
   }
   return valid(
@@ -347,7 +356,8 @@ export const readManyOrganizations = tryDb<
         numTeamMembers,
         acceptedTWUTerms,
         acceptedSWUTerms,
-        active
+        active,
+        serviceAreas
       } = raw;
       if (!isAdmin(session) && raw.owner !== session?.user.id) {
         return await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -368,6 +378,7 @@ export const readManyOrganizations = tryDb<
             connection,
             raw
           ),
+          possessOneServiceArea: serviceAreas.length > 0,
           acceptedTWUTerms,
           acceptedSWUTerms
         });
@@ -403,7 +414,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
             numTeamMembers,
             acceptedTWUTerms,
             acceptedSWUTerms,
-            active
+            active,
+            serviceAreas
           } = raw;
           return await rawOrganizationSlimToOrganizationSlim(connection, {
             id,
@@ -416,6 +428,7 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
               connection,
               raw
             ),
+            possessOneServiceArea: serviceAreas.length > 0,
             acceptedTWUTerms,
             acceptedSWUTerms
           });

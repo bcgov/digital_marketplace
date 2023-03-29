@@ -310,9 +310,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
               </>
             }
             description="You can view the RFQ documents by navigating to the BC Bid link above."
-            checked={OrgResource.hasOrganizationCompletedBCBidRFQ(
-              state.organization
-            )}
+            checked={!!state.organization.possessOneServiceArea}
           />
           <Requirement
             name={`Agreed to ${TWU_TERMS_TITLE}.`}
@@ -402,7 +400,6 @@ export const component: Tab.Component<State, Msg> = {
     const isEditingLoading = state.editingLoading > 0;
     const isSaveChangesLoading = state.saveChangesLoading > 0;
     const isLoading = isEditingLoading || isSaveChangesLoading;
-    // const isValid = OrgForm.isValid(state.orgForm);
     if (isAdmin(state.viewerUser)) {
       if (!state.isEditing) {
         return component_.page.actions.links([
@@ -420,7 +417,6 @@ export const component: Tab.Component<State, Msg> = {
         return component_.page.actions.links([
           {
             children: "Save Changes",
-            // disabled: !isValid || isLoading,
             disabled: isLoading,
             onClick: () => dispatch(adt("saveChanges")),
             button: true,

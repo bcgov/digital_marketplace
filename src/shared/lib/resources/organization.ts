@@ -19,6 +19,7 @@ export interface OrganizationAdmin {
   acceptedSWUTerms?: Date | null;
   acceptedTWUTerms?: Date | null;
   possessAllCapabilities?: boolean;
+  possessOneServiceArea?: boolean;
   numTeamMembers?: number;
 }
 
@@ -64,6 +65,7 @@ export interface CreateRequestBody
     | "acceptedSWUTerms"
     | "acceptedTWUTerms"
     | "possessAllCapabilities"
+    | "possessOneServiceArea"
     | "numTeamMembers"
     | "serviceAreas"
   > {
@@ -121,17 +123,10 @@ export function doesOrganizationMeetSWUQualification(
   );
 }
 
-export function hasOrganizationCompletedBCBidRFQ(
-  organization: Organization
-): boolean {
-  return organization.serviceAreas.length > 0;
-}
-
 export function doesOrganizationMeetTWUQualification(
-  organization: Organization
+  organization: Organization | OrganizationSlim
 ): boolean {
   return (
-    hasOrganizationCompletedBCBidRFQ(organization) &&
-    !!organization.acceptedTWUTerms
+    !!organization.possessOneServiceArea && !!organization.acceptedTWUTerms
   );
 }
