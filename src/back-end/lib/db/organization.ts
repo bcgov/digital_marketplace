@@ -92,7 +92,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     legalName,
     logoImageFile,
     owner: ownerId,
-    acceptedTWUTerms: acceptedSWUTerms,
+    acceptedTWUTerms,
+    acceptedSWUTerms,
     possessAllCapabilities,
     numTeamMembers,
     active
@@ -113,7 +114,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     legalName,
     logoImageFile: fetchedLogoImageFile,
     owner: owner || undefined,
-    acceptedTWUTerms: acceptedSWUTerms,
+    acceptedTWUTerms,
+    acceptedSWUTerms,
     possessAllCapabilities,
     active,
     numTeamMembers:
@@ -204,7 +206,8 @@ export const readOneOrganizationSlim = tryDb<
     legalName,
     logoImageFile,
     owner,
-    acceptedTWUTerms: acceptedSWUTerms,
+    acceptedTWUTerms,
+    acceptedSWUTerms,
     numTeamMembers,
     active
   } = result;
@@ -230,7 +233,8 @@ export const readOneOrganizationSlim = tryDb<
           connection,
           result
         ),
-        acceptedTWUTerms: acceptedSWUTerms,
+        acceptedTWUTerms,
+        acceptedSWUTerms,
         numTeamMembers
       })
     );
@@ -259,6 +263,7 @@ export const readOneOrganization = tryDb<
       delete result.owner;
       delete result.numTeamMembers;
       delete result.acceptedTWUTerms;
+      delete result.acceptedSWUTerms;
     } else {
       result.possessAllCapabilities = await doesOrganizationMeetAllCapabilities(
         connection,
@@ -340,7 +345,8 @@ export const readManyOrganizations = tryDb<
         logoImageFile,
         owner,
         numTeamMembers,
-        acceptedTWUTerms: acceptedSWUTerms,
+        acceptedTWUTerms,
+        acceptedSWUTerms,
         active
       } = raw;
       if (!isAdmin(session) && raw.owner !== session?.user.id) {
@@ -362,7 +368,8 @@ export const readManyOrganizations = tryDb<
             connection,
             raw
           ),
-          acceptedTWUTerms: acceptedSWUTerms
+          acceptedTWUTerms,
+          acceptedSWUTerms
         });
       }
     })
@@ -394,7 +401,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
             logoImageFile,
             owner,
             numTeamMembers,
-            acceptedTWUTerms: acceptedSWUTerms,
+            acceptedTWUTerms,
+            acceptedSWUTerms,
             active
           } = raw;
           return await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -408,7 +416,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
               connection,
               raw
             ),
-            acceptedTWUTerms: acceptedSWUTerms
+            acceptedTWUTerms,
+            acceptedSWUTerms
           });
         })
       )

@@ -502,7 +502,7 @@ const update: crud.Update<
         }
         case "acceptSWUTerms":
           if (isValid(validatedOrganization)) {
-            if (validatedOrganization.value.acceptedTWUTerms) {
+            if (validatedOrganization.value.acceptedSWUTerms) {
               return invalid({
                 organization: adt("acceptSWUTerms" as const, [
                   "The SWU Terms have already been accepted for this organization."
@@ -583,7 +583,7 @@ const update: crud.Update<
           case "acceptSWUTerms":
             dbResult = await db.updateOrganization(
               connection,
-              { acceptedTWUTerms: new Date(), id: request.params.id },
+              { acceptedSWUTerms: new Date(), id: request.params.id },
               session
             );
             break;
