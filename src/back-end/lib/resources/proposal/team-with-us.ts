@@ -12,7 +12,7 @@ import {
 import {
   validateAttachments,
   validateOrganizationId,
-  validateTWUTeamProposal,
+  validateTWUProposalTeam,
   validateTWUOpportunityId,
   validateTWUProposalId
   // validateTWUProposalOrganization,
@@ -29,6 +29,7 @@ import {
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   CreateRequestBody as SharedCreateRequestBody,
+  CreateTWUTeamMemberBodyValidationErrors,
   CreateValidationErrors,
   // DeleteValidationErrors,
   // isValidStatusChange,
@@ -224,13 +225,17 @@ const create: crud.Create<
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
+      const team = get(body, "team");
       return {
         opportunity: getString(body, "opportunity"),
         organization: getString(body, "organization", undefined),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         resourceQuestionResponses: get(body, "resourceQuestionResponses"),
-        team: get(body, "team")
+        team: (Array.isArray(team) ? team : []).map((member) => ({
+          member: getString(member, "member"),
+          hourlyRate: getNumber(member, "hourlyRate")
+        }))
       };
     },
     async validateRequestBody(request) {
@@ -354,14 +359,7 @@ const create: crud.Create<
           organization: organization || undefined,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          team: team
-          // TODO: implement a lightweight, draft validation function
-          // team: team
-          //   ? team.map((members) => ({
-          //     member: getString(members, "idpUsername"),
-          //     hourlyRate: getNumber<number>(members, "hourlyRate")
-          //   }))
-          //   : []
+          team
         });
       }
 
@@ -392,20 +390,15 @@ const create: crud.Create<
           validatedTWUOpportunity.value.resourceQuestions
         );
 
-      const validatedTeamMembers = await validateTWUTeamProposal(
-        connection,
-        team,
-        validatedOrganization.value.id
-      );
       /**
        * Validate that the set of proposed capabilities across team members
        * satisfies the opportunity required capabilities
        */
-      // TODO - add a TWU team when ready
-      // const validatedProposalTeam = await validateTWUProposalTeam(
-      //   connection,
-      //   validatedTWUOpportunity.value
-      // );
+      const validatedTeamMembers = await validateTWUProposalTeam(
+        connection,
+        team,
+        validatedOrganization.value.id
+      );
 
       if (
         allValid([validatedResourceQuestionResponses, validatedTeamMembers])
@@ -417,7 +410,7 @@ const create: crud.Create<
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
           resourceQuestionResponses: validatedResourceQuestionResponses.value,
-          team: validatedTeamMembers.value // TODO - needs to include hourlyRate
+          team: validatedTeamMembers.value
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
@@ -425,7 +418,10 @@ const create: crud.Create<
             CreateTWUResourceQuestionValidationErrors[],
             undefined
           >(validatedResourceQuestionResponses, undefined),
-          team: getInvalidValue(validatedTeamMembers, undefined)
+          team: getInvalidValue<
+            CreateTWUTeamMemberBodyValidationErrors[],
+            undefined
+          >(validatedTeamMembers, undefined)
         });
       }
     },

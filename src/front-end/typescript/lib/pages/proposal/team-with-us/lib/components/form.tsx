@@ -46,7 +46,6 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
-import * as Implementation from "front-end/lib/pages/proposal/team-with-us/lib/components/implementation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
 
@@ -72,7 +71,7 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-type ModalId = ADT<"viewTeamMember", Implementation.Member>;
+type ModalId = ADT<"viewTeamMember", Team.Member>;
 
 export interface State
   extends Pick<
@@ -192,10 +191,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
 
   const [teamState, teamCmds] = Team.init({
-    opportunity,
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposal
+    proposalTeam: proposal?.team || []
   });
 
   const [hourlyRateState, hourlyRateCmds] = NumberField.init({
@@ -325,8 +323,10 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
+  const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
+  const team = Team.getValues(state.team);
   return {
-    team: [], // TODO populate this with state values
+    team: team.map((member) => ({ ...member, hourlyRate })),
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
@@ -424,10 +424,9 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "onInitResponse": {
       const affiliations = msg.value;
       const [teamState, teamCmds] = Team.init({
-        opportunity: state.opportunity,
-        orgId: state.proposal?.organization?.id || undefined,
+        orgId: state.proposal?.organization?.id,
         affiliations,
-        proposal: state.proposal || undefined
+        proposalTeam: state.proposal?.team || []
       });
       return [
         state.set("team", immutable(teamState)),
@@ -795,9 +794,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
 }) => {
-  // const members = Team.getAddedMembers(state.team);
   const organization = getSelectedOrganization(state);
-  // const opportunity = state.opportunity;
   return (
     <Row>
       <Col xs="12">

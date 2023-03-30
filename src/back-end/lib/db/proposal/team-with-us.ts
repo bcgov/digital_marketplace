@@ -48,7 +48,7 @@ import {
   TWUProposalResourceQuestionResponse,
   UpdateEditRequestBody,
   UpdateResourceQuestionScoreBody,
-  TWUProposalTeamMember
+  CreateTWUTeamMemberBody
 } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -682,7 +682,7 @@ export const createTWUProposal = tryDb<
   async function createTWUProposalTeamMembers(
     trx: Transaction,
     proposalId: Id,
-    teamMembers: TWUProposalTeamMember[]
+    teamMembers: CreateTWUTeamMemberBody[]
   ) {
     // delete existing and recreate
     await trx("twuProposalMember").where({ proposal: proposalId }).delete();
@@ -690,7 +690,7 @@ export const createTWUProposal = tryDb<
       const [teamMemberResult] = await trx("twuProposalMember").insert(
         {
           proposal: proposalId,
-          member: teamMember.member.id,
+          member: teamMember.member,
           hourlyRate: teamMember.hourlyRate
         },
         "*"

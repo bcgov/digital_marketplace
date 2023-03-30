@@ -178,7 +178,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   resourceQuestionResponses: CreateTWUProposalResourceQuestionResponseBody[];
   status: CreateTWUProposalStatus;
-  team: TWUProposalTeamMember[];
+  team: CreateTWUTeamMemberBody[];
 }
 
 export interface CreateTWUProposalResourceQuestionResponseValidationErrors
@@ -186,39 +186,16 @@ export interface CreateTWUProposalResourceQuestionResponseValidationErrors
   parseFailure?: string[];
 }
 
-export interface TWUTeamImplementation {
-  members: TWUProposalTeamMember[];
-}
-
 /**
- *
+ * Defines a team member when creating a proposal.
  */
-export interface CreateTWUTeamProposalBodyValidationErrors {
-  members?: CreateTWUTeamProposalMemberBodyValidationErrors[];
-}
-
-/**
- * Ensures there is an array of members submitted along with the
- * TWU proposal
- */
-export interface CreateTWUTeamProposalBody {
-  members: CreateTWUTeamProposalMemberBody[];
-}
-
-/**
- * Ensures that every member submitted as part of the TWU proposal also comes
- * with an hourly rate.
- */
-export interface CreateTWUTeamProposalMemberBody {
+export interface CreateTWUTeamMemberBody {
   member: Id;
+  hourlyRate: number;
 }
 
-export interface CreateTWUTeamProposalMemberBodyValidationErrors
-  extends ErrorTypeFrom<CreateTWUTeamProposalMemberBody> {
-  parseFailure?: string[];
-  members?: string[];
-  hourlyRate?: string[];
-}
+export type CreateTWUTeamMemberBodyValidationErrors =
+  ErrorTypeFrom<CreateTWUTeamMemberBody>;
 
 export interface TWUProposalTeamMember {
   member: UserSlim;
@@ -226,13 +203,14 @@ export interface TWUProposalTeamMember {
   idpUsername: string;
   hourlyRate: number;
 }
+
 export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
   resourceQuestionResponses?: CreateTWUProposalResourceQuestionResponseValidationErrors[];
   organization?: string[];
   opportunity?: string[];
   status?: string[];
-  team?: CreateTWUTeamProposalBodyValidationErrors;
+  team?: CreateTWUTeamMemberBodyValidationErrors[];
 }
 
 // Update.

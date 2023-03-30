@@ -1,122 +1,307 @@
+import { Route } from "front-end/lib/app/types";
+import * as Table from "front-end/lib/components/table";
 import {
   immutable,
   Immutable,
   component as component_
 } from "front-end/lib/framework";
-import * as Implementation from "front-end/lib/pages/proposal/team-with-us/lib/components/implementation";
-import React from "react";
-import { AffiliationMember } from "shared/lib/resources/affiliation";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  CreateValidationErrors,
-  TWUProposal
-} from "shared/lib/resources/proposal/team-with-us";
+  makeViewTeamMemberModal,
+  PendingBadge
+} from "front-end/lib/pages/organization/lib/views/team-member";
+import { userAvatarPath } from "front-end/lib/pages/user/lib";
+import Link, {
+  iconLinkSymbol,
+  imageLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
+import React from "react";
+import { Col, Row } from "reactstrap";
+import { compareStrings, find } from "shared/lib";
+import {
+  AffiliationMember,
+  memberIsPending
+} from "shared/lib/resources/affiliation";
 import { adt, ADT, Id } from "shared/lib/types";
+import {
+  CreateTWUTeamMemberBody,
+  CreateTWUTeamMemberBodyValidationErrors,
+  TWUProposalTeamMember
+} from "shared/lib/resources/proposal/team-with-us";
 
 export interface Params {
   orgId?: Id;
   affiliations: AffiliationMember[];
-  opportunity: TWUOpportunity;
-  proposal?: TWUProposal;
+  proposalTeam: TWUProposalTeamMember[];
 }
 
-export interface State extends Omit<Params, "orgId"> {
+type ModalId = ADT<"addTeamMembers"> | ADT<"viewTeamMember", Member>;
+
+export interface Member extends AffiliationMember {
+  index: number;
+  added: boolean;
+  toBeAdded: boolean;
+}
+
+export interface State extends Omit<Params, "affiliations" | "orgId"> {
+  idNamespace: string;
   orgId: Id | null;
-  teamImplementation: Immutable<Implementation.State>;
+  showModal: ModalId | null;
+  members: Member[];
+  membersTable: Immutable<Table.State>;
 }
 
-export type Msg = ADT<"teamImplementation", Implementation.Msg>;
+export type Msg =
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">
+  | ADT<"toggleAffiliationToBeAdded", number>
+  | ADT<"addTeamMembers">
+  | ADT<"removeTeamMember", Id>
+  | ADT<"membersTable", Table.Msg>;
 
+/**
+ * Compares two tuples of users, existing users and users affiliated with an
+ * organization.
+ *
+ * @param affiliations
+ * @param existingMembers
+ * @returns - one tuple of members
+ */
+function affiliationsToMembers(
+  affiliations: AffiliationMember[],
+  existingMembers: TWUProposalTeamMember[]
+): Member[] {
+  return affiliations
+    .map((a, index) => {
+      const existingTeamMember = find(
+        existingMembers,
+        ({ member }) => member.id === a.user.id
+      );
+      return {
+        ...a,
+        index,
+        added: !!existingTeamMember,
+        toBeAdded: false
+      };
+    })
+    .sort((a, b) => compareStrings(a.user.name, b.user.name));
+}
+
+/**
+ * Sets the state for 'members' and 'orgId'
+ *
+ * @param state
+ * @param affiliations
+ * @param orgId
+ */
 export function setAffiliations(
   state: Immutable<State>,
   affiliations: AffiliationMember[],
   orgId: Id
 ): Immutable<State> {
-  return state
-    .set("orgId", orgId)
-    .update("teamImplementation", (s) =>
-      Implementation.setAffiliations(s, affiliations, orgId)
-    );
+  state = state
+    .set("members", affiliationsToMembers(affiliations, state.proposalTeam))
+    .set("orgId", orgId);
+  return state;
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { orgId, affiliations, opportunity, proposal } = params;
-  const [teamImplementationState, teamImplementationCmds] = Implementation.init(
-    {
-      orgId,
-      affiliations
-    }
-  );
+  const { proposalTeam } = params;
+  const { affiliations, orgId, ...paramsForState } = params;
+  const members = affiliationsToMembers(affiliations, proposalTeam);
+  const [membersTableState, membersTableCmds] = Table.init({
+    idNamespace: `twu-proposal-implementation-members-${Math.random()}`
+  });
   return [
     {
-      affiliations,
-      opportunity,
-      proposal,
+      ...paramsForState,
+      idNamespace: String(Math.random()),
       orgId: orgId || null,
-      teamImplementation: immutable(teamImplementationState)
+      showModal: null,
+      members,
+      membersTable: immutable(membersTableState)
     },
-    [
-      ...component_.cmd.mapMany(
-        teamImplementationCmds,
-        (msg) => adt("teamImplementation", msg) as Msg
-      )
-    ]
+    component_.cmd.mapMany(
+      membersTableCmds,
+      (msg) => adt("membersTable", msg) as Msg
+    )
   ];
 };
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "teamImplementation":
+    case "showModal":
+      return [state.set("showModal", msg.value), []];
+
+    case "hideModal":
+      return [state.set("showModal", null), []];
+
+    case "toggleAffiliationToBeAdded":
+      return [
+        state.update("members", (ms) =>
+          ms.map((a) => {
+            return a.index === msg.value
+              ? { ...a, toBeAdded: !a.toBeAdded }
+              : a;
+          })
+        ),
+        []
+      ];
+
+    case "addTeamMembers": {
+      state = state.set("showModal", null).update("members", (ms) =>
+        ms.map((a) => ({
+          ...a,
+          added: a.added || a.toBeAdded,
+          toBeAdded: false
+        }))
+      );
+      return [state, []];
+    }
+
+    case "removeTeamMember":
+      state = state.update("members", (ms) =>
+        ms.map((m) => {
+          const shouldRemove = m.user.id === msg.value;
+          return {
+            ...m,
+            added: shouldRemove ? false : m.added
+          };
+        })
+      );
+      return [state, []];
+
+    case "membersTable":
       return component_.base.updateChild({
         state,
-        childStatePath: ["teamImplementation"],
-        childUpdate: Implementation.update,
+        childStatePath: ["membersTable"],
+        childUpdate: Table.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("teamImplementation", value)
+        mapChildMsg: (value) => ({ tag: "membersTable", value })
       });
   }
 };
 
-export interface Values {
-  teamImplementation: Implementation.Values;
-}
+export type Values = CreateTWUTeamMemberBody[];
 
+/**
+ * Gets the user id of each member that's added to a proposal
+ *
+ * @param state
+ */
 export function getValues(state: Immutable<State>): Values {
-  const teamImplementation = Implementation.getValues(state.teamImplementation);
-  return { teamImplementation: teamImplementation };
+  return getAddedMembers(state).map(({ user }) => ({
+    member: user.id,
+    hourlyRate: 0 //FIXME: Set correct hourly rate once we support per-member hourly rates.
+  }));
 }
 
-interface MemberValues {
-  teamImplementation: Implementation.Member[];
+function filterAddedMembers(members: Member[], isAdded: boolean): Member[] {
+  return members.filter(({ added }) => isAdded === added);
 }
 
-export function getAddedMembers(state: Immutable<State>): MemberValues {
-  return {
-    teamImplementation: Implementation.getAddedMembers(state.teamImplementation)
-  };
+export function getAddedMembers(state: Immutable<State>): Member[] {
+  return filterAddedMembers(state.members, true);
 }
 
-export type Errors = Pick<CreateValidationErrors, "team">;
+export function getNonAddedMembers(state: Immutable<State>): Member[] {
+  return filterAddedMembers(state.members, false);
+}
 
+export type Errors = CreateTWUTeamMemberBodyValidationErrors[];
+
+/**
+ * No need to set errors as the fields themselves can't result in errors.
+ * TODO - find a better solution than disabling eslint
+ */
 export function setErrors(
   state: Immutable<State>,
-  errors: Errors
+  errors?: Errors // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Immutable<State> {
-  return state.update("teamImplementation", (s) =>
-    Implementation.setErrors(s, errors.team)
-  );
+  return state;
 }
 
+// Nothing to visibly validate for this component.
 export function validate(state: Immutable<State>): Immutable<State> {
-  return state.update("teamImplementation", (s) => Implementation.validate(s));
+  return state;
+}
+
+function areAllMembersConfirmed(members: Member[]): boolean {
+  for (const m of members) {
+    if (memberIsPending(m)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return Implementation.isValid(state.teamImplementation);
+  const addedMembers = getAddedMembers(state);
+  return !!addedMembers.length && areAllMembersConfirmed(addedMembers);
 }
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+}
+
+function membersTableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: "Team Member",
+      className: "text-nowrap",
+      style: {
+        width: "100%",
+        minWidth: "240px"
+      }
+    },
+    {
+      children: null,
+      style: {
+        width: "0px"
+      }
+    }
+  ];
+}
+
+interface MemberTableBodyRowsParams
+  extends Pick<Props, "dispatch" | "disabled"> {
+  idNamespace: string;
+  addedMembers: Member[];
+}
+
+function membersTableBodyRows(
+  params: MemberTableBodyRowsParams
+): Table.BodyRows {
+  const { addedMembers, dispatch, disabled } = params;
+  return addedMembers.map((m) => [
+    {
+      children: (
+        <div className="d-flex align-items-center flex-nowrap">
+          <Link
+            onClick={() =>
+              dispatch(adt("showModal", adt("viewTeamMember" as const, m)))
+            }
+            symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
+            {m.user.name}
+          </Link>
+          {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
+        </div>
+      )
+    },
+    {
+      children: disabled ? null : (
+        <Link
+          button
+          size="sm"
+          symbol_={leftPlacement(iconLinkSymbol("user-times"))}
+          onClick={() => dispatch(adt("removeTeamMember", m.user.id))}
+          color="danger">
+          Remove
+        </Link>
+      )
+    }
+  ]);
 }
 
 export const view: component_.base.View<Props> = ({
@@ -124,34 +309,155 @@ export const view: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
-  const isImplementationValid = Implementation.isValid(
-    state.teamImplementation
-  );
+  const addedMembers = getAddedMembers(state);
   return (
-    <div>
-      <Implementation.view
-        state={state.teamImplementation}
-        dispatch={component_.base.mapDispatch(dispatch, (value) =>
-          adt("teamImplementation" as const, value)
+    <Row className="mb-5">
+      <Col xs="12">
+        <h4>Team Members</h4>
+        <p className="mb-0">
+          To satisfy this opportunity{"'"}s requirements, your team must only
+          consist of confirmed (non-pending) members of the selected
+          organization.
+        </p>
+        {disabled ? null : (
+          <Link
+            button
+            outline
+            color="primary"
+            size="sm"
+            disabled={disabled}
+            className="mt-3"
+            onClick={() =>
+              dispatch(adt("showModal", adt("addTeamMembers")) as Msg)
+            }
+            symbol_={leftPlacement(iconLinkSymbol("user-plus"))}>
+            Add Team Member
+          </Link>
         )}
-        icon={isImplementationValid ? "cogs" : "exclamation-circle"}
-        iconColor={isImplementationValid ? undefined : "warning"}
-        title={"Resource"}
-        disabled={disabled}
-      />
-    </div>
+      </Col>
+      {addedMembers.length ? (
+        <Col xs="12" className="mt-4">
+          <Table.view
+            headCells={membersTableHeadCells()}
+            bodyRows={membersTableBodyRows({
+              addedMembers,
+              dispatch,
+              disabled,
+              idNamespace: state.idNamespace
+            })}
+            state={state.membersTable}
+            dispatch={component_.base.mapDispatch(dispatch, (v) =>
+              adt("membersTable" as const, v)
+            )}
+          />
+        </Col>
+      ) : null}
+    </Row>
   );
 };
 
 export const getModal: component_.page.GetModal<State, Msg> = (state) => {
-  const implementationModal = () =>
-    component_.page.modal.map(
-      Implementation.getModal(state.teamImplementation),
-      (msg) => adt("teamImplementation", msg) as Msg
-    );
-  return implementationModal();
-  // const activeModal = [implementationModal()].filter(
-  //   (modal) => modal && modal.tag === "show"
-  // );
-  // return activeModal[0] ?? implementationModal();
+  if (!state.showModal) {
+    return component_.page.modal.hide();
+  }
+  switch (state.showModal.tag) {
+    case "viewTeamMember":
+      return makeViewTeamMemberModal({
+        member: state.showModal.value,
+        onCloseMsg: adt("hideModal") as Msg
+      });
+
+    case "addTeamMembers": {
+      const nonAddedMembers = getNonAddedMembers(state);
+      return component_.page.modal.show({
+        title: "Add Team Member",
+        onCloseMsg: adt("hideModal") as Msg,
+        body: (dispatch) => {
+          if (!state.orgId) {
+            return null;
+          }
+          return (
+            <div>
+              <p>
+                Select the team member(s) that you want to propose to be part of
+                your team for this opportunity. If you do not see the team
+                member that you want to add, you must send them a{" "}
+                <Link
+                  newTab
+                  dest={routeDest(
+                    adt("orgEdit", { orgId: state.orgId, tab: "team" }) as Route
+                  )}>
+                  request to join your organization
+                </Link>
+                .
+              </p>
+              {nonAddedMembers.length ? (
+                <div className="border-top border-left">
+                  {nonAddedMembers.map((m, i) => {
+                    return (
+                      <div
+                        key={`twu-proposal-phase-affiliation-${i}`}
+                        className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
+                        <Link
+                          onClick={() =>
+                            dispatch(adt("toggleAffiliationToBeAdded", m.index))
+                          }
+                          symbol_={leftPlacement(
+                            iconLinkSymbol(
+                              m.toBeAdded ? "check-circle" : "circle"
+                            )
+                          )}
+                          symbolClassName={
+                            m.toBeAdded ? "text-success" : "text-body"
+                          }
+                          className="text-nowrap flex-nowrap"
+                          color="body">
+                          <img
+                            className="rounded-circle border mr-2"
+                            style={{
+                              width: "1.75rem",
+                              height: "1.75rem",
+                              objectFit: "cover"
+                            }}
+                            src={userAvatarPath(m.user)}
+                          />
+                          {m.user.name}
+                        </Link>
+                        {memberIsPending(m) ? (
+                          <PendingBadge className="ml-3" />
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <strong>
+                  This organization does not have any additional team members
+                  that can be added to this opportunity.
+                </strong>
+              )}
+            </div>
+          );
+        },
+        actions: [
+          {
+            text: "Add Team Member",
+            disabled: !nonAddedMembers.reduce(
+              (acc, { toBeAdded }) => acc || toBeAdded,
+              false as boolean
+            ),
+            button: true,
+            color: "primary",
+            icon: "user-plus",
+            msg: adt("addTeamMembers")
+          },
+          {
+            text: "Cancel",
+            color: "secondary",
+            msg: adt("hideModal")
+          }
+        ]
+      });
+    }
+  }
 };

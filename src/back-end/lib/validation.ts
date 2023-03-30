@@ -50,16 +50,13 @@ import {
   validateSWUProposalTeamCapabilities,
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
-import { isArray } from "util";
 import {
   parseTWUServiceArea,
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  CreateTWUTeamProposalBody,
-  CreateTWUTeamProposalBodyValidationErrors,
-  CreateTWUTeamProposalMemberBody,
-  CreateTWUTeamProposalMemberBodyValidationErrors,
+  CreateTWUTeamMemberBody,
+  CreateTWUTeamMemberBodyValidationErrors,
   TWUProposal
 } from "shared/lib/resources/proposal/team-with-us";
 import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
@@ -175,155 +172,51 @@ export async function validateServiceArea(
 }
 
 /**
- * Checks to see if a TWU proposal has members that are affiliated with the
+ * Checks to see if a TWU proposal's members are affiliated with the
  * organization in the proposal
  *
  * @param connection
  * @param raw
- * @param opportunity
  * @param organization
  */
-export async function validateTWUTeamProposal(
+export function validateTWUProposalTeam(
   connection: db.Connection,
-  raw: any,
-  organization: Id
-): Promise<
-  Validation<
-    CreateTWUTeamProposalBody | undefined,
-    CreateTWUTeamProposalBodyValidationErrors
-  >
-> {
-  if (!raw) {
-    return valid(undefined);
-  }
-
-  /**
-   * Checks to see that the member is a part of the organization
-   */
-  const validatedMembers = await validateTWUProposalTeamMembers(
-    connection,
-    get(raw, "members"),
-    organization
-  );
-
-  /**
-   * Checks for an hourly rate that has a minimum value
-   */
-  const validatedHourlyRate = validateTWUHourlyRate(
-    getNumber<number>(raw, "hourlyRate")
-  );
-
-  if (allValid([validatedMembers, validatedHourlyRate])) {
-    return valid({
-      members: validatedMembers.value
-    } as CreateTWUTeamProposalBody);
-  } else {
-    return invalid<CreateTWUTeamProposalBodyValidationErrors>({
-      members: getInvalidValue<
-        CreateTWUTeamProposalMemberBodyValidationErrors[],
-        undefined
-      >(validatedMembers, undefined)
-    });
-  }
-}
-
-/**
- * Checks to see if there is at least one member, and no more than
- * one member in an array of members.
- *
- * @remarks - the number of members is expected to change from one to many in
- * future iterations of TWU
- *
- * @param connection
- * @param raw - Member as member id
- * @param organization
- */
-export async function validateTWUProposalTeamMembers(
-  connection: db.Connection,
-  raw: any,
+  raw: any[],
   organization: Id
 ): Promise<
   ArrayValidation<
-    CreateTWUTeamProposalMemberBody,
-    CreateTWUTeamProposalMemberBodyValidationErrors
+    CreateTWUTeamMemberBody,
+    CreateTWUTeamMemberBodyValidationErrors
   >
 > {
-  if (!Array.isArray(raw)) {
-    return invalid([
-      { parseFailure: ["Please provide an array of selected team members."] }
-    ]);
-  }
-  if (!raw.length) {
-    return invalid([{ members: ["Please select at least one team member."] }]);
-  }
-  const validatedMembers = await validateArrayCustomAsync(
+  return validateArrayCustomAsync(
     raw,
-    async (v) => await validateTWUTeamMember(connection, v, organization),
+    async (rawMember) => {
+      const validatedMember = await validateMember(
+        connection,
+        getString(rawMember, "member"),
+        organization
+      );
+      const validatedHourlyRate = validateTWUHourlyRate(
+        getNumber<number>(rawMember, "hourlyRate")
+      );
+      if (isValid(validatedMember) && isValid(validatedHourlyRate)) {
+        return valid({
+          member: validatedMember.value.id,
+          hourlyRate: validatedHourlyRate.value
+        });
+      } else {
+        return invalid({
+          member: getInvalidValue(validatedMember, undefined),
+          hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+        }) as Validation<
+          CreateTWUTeamMemberBody,
+          CreateTWUTeamMemberBodyValidationErrors
+        >;
+      }
+    },
     {}
   );
-
-  // TODO - Constraint can be removed once more than one resource can be added to a TWU proposal
-  if (
-    getValidValue(validatedMembers, []).filter((member) => member).length > 1
-  ) {
-    return invalid([
-      {
-        members: ["You may only specify a single resource for a TWU proposal."]
-      }
-    ]);
-  }
-  return validatedMembers;
-}
-
-/**
- * Ensures that a Team Member is affiliated with the organization
- * and that their hourly rate is a number with a minimum value
- *
- * {@link validateTWUProposalTeamMembers}
- *
- * @param connection
- * @param raw
- * @param organization
- *
- * @returns - an adt('valid', value), or adt('invalid', <some message>)
- */
-export async function validateTWUTeamMember(
-  connection: db.Connection,
-  raw: any,
-  organization: Id
-): Promise<
-  Validation<
-    CreateTWUTeamProposalMemberBody,
-    CreateTWUTeamProposalMemberBodyValidationErrors
-  >
-> {
-  /**
-   * Ensure that the member is affiliated with the organization
-   */
-  const validatedMember = await validateMember(
-    connection,
-    getString(raw, "member"),
-    organization
-  );
-
-  /**
-   * Ensure that the hourlyRate is a number with a minimum value
-   */
-  const validatedHourlyRate = await validateTWUHourlyRate(
-    getNumber(raw, "hourlyRate")
-  );
-  // TODO - make sure this type casting is accurate WRT the interface
-  if (allValid([validatedMember])) {
-    return valid({
-      member: (validatedMember.value as User).id,
-      hourlyRate: validatedHourlyRate.value
-    } as CreateTWUTeamProposalMemberBody);
-  } else {
-    return invalid({
-      member: getInvalidValue(validatedMember, undefined),
-      hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
-    });
-  }
 }
 
 export async function validateUserId(
@@ -678,7 +571,7 @@ export async function validateSWUProposalTeamMembers(
     CreateSWUProposalTeamMemberValidationErrors
   >
 > {
-  if (!isArray(raw)) {
+  if (!Array.isArray(raw)) {
     return invalid([
       { parseFailure: ["Please provide an array of selected team members."] }
     ]);
