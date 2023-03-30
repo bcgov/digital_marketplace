@@ -488,7 +488,7 @@ export const component: component_.page.Component<
   },
 
   getAlerts: getAlertsValid((state) => {
-    const qualifiyingPrograms = [
+    const programsToQualify = [
       ...(state.isSWUQualified
         ? []
         : [
@@ -517,7 +517,7 @@ export const component: component_.page.Component<
     return {
       info:
         isVendor(state.viewerUser) &&
-        !(state.isSWUQualified && state.isTWUQualified) &&
+        programsToQualify.length > 0 &&
         state.table
           ? [
               {
@@ -529,16 +529,12 @@ export const component: component_.page.Component<
                     </Link>{" "}
                     and be a{" "}
                     {intersperse(
-                      qualifiyingPrograms,
+                      programsToQualify,
                       ({ qualificationLink }) => qualificationLink,
                       " or "
                     )}{" "}
                     in order to submit proposals to{" "}
-                    {intersperse(
-                      qualifiyingPrograms,
-                      ({ name }) => name,
-                      " or "
-                    )}{" "}
+                    {intersperse(programsToQualify, ({ name }) => name, " or ")}{" "}
                     opportunities.
                   </span>
                 )
