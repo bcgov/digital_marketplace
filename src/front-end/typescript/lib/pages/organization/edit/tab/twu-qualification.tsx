@@ -18,6 +18,7 @@ import {
 } from "front-end/lib/pages/organization/team-with-us-terms";
 import Icon from "front-end/lib/views/icon";
 import Link, {
+  externalDest,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -29,6 +30,7 @@ import { isAdmin, isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { kebabCase } from "lodash";
 import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
+import { TWU_BC_BID_URL } from "front-end/config";
 
 interface AvailableServiceArea {
   serviceArea: TWUServiceArea;
@@ -306,7 +308,11 @@ const view: component_.base.ComponentView<State, Msg> = ({
             name={
               <>
                 To qualify for one or more Service Areas, you must complete the
-                RFQ through BC Bid.
+                RFQ through{" "}
+                <Link dest={externalDest(TWU_BC_BID_URL)} newTab>
+                  BC Bid
+                </Link>
+                .
               </>
             }
             description="You can view the RFQ documents by navigating to the BC Bid link above."
