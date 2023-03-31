@@ -24,7 +24,7 @@ import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
 import { find } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { formatAmount } from "shared/lib";
+import { formatAmount, formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity
@@ -790,6 +790,23 @@ const ReviewResourceQuestionResponseView: component_.base.View<
   );
 };
 
+interface ContractDateProps {
+  label: string;
+  date: Date;
+}
+
+const ContractDate: component_.base.View<ContractDateProps> = ({
+  label,
+  date
+}) => (
+  <Col xs="12" md="6">
+    <p className="font-weight-bold d-flex flex-nowrap align-items-end mb-1">
+      {label}
+    </p>
+    {formatDate(date)}
+  </Col>
+);
+
 const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
@@ -832,6 +849,19 @@ const ReviewProposalView: component_.base.View<Props> = ({
           )}
         </div>
       </Col>
+      <Col xs="12">
+        <div className="mt-5 pt-5 border-top">
+          <h2 className="mb-4">Contract Dates</h2>
+        </div>
+      </Col>
+      <ContractDate
+        label="Contract Start Date"
+        date={state.opportunity.startDate}
+      />
+      <ContractDate
+        label="Contract End Date"
+        date={state.opportunity.completionDate}
+      />
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>
