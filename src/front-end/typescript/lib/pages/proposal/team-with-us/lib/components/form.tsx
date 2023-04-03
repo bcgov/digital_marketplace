@@ -48,6 +48,7 @@ import * as proposalValidation from "shared/lib/validation/proposal/team-with-us
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
+import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
 export type TabId =
   | "Evaluation"
@@ -326,7 +327,7 @@ export function getValues(state: Immutable<State>): Values {
   const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
   const team = Team.getValues(state.team);
   return {
-    team: team.map((member) => ({ ...member, hourlyRate })),
+    team: team.map((member) => ({ member: member.id, hourlyRate })),
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
@@ -799,12 +800,12 @@ const ContractDate: component_.base.View<ContractDateProps> = ({
   label,
   date
 }) => (
-  <Col xs="12" md="6">
-    <p className="font-weight-bold d-flex flex-nowrap align-items-end mb-1">
+  <>
+    <p className="font-weight-bold d-flex flex-nowrap text-nowrap align-items-end mb-1">
       {label}
     </p>
     {formatDate(date)}
-  </Col>
+  </>
 );
 
 const ReviewProposalView: component_.base.View<Props> = ({
@@ -812,6 +813,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
   dispatch
 }) => {
   const organization = getSelectedOrganization(state);
+  const team = Team.getValues(state.team);
   return (
     <Row>
       <Col xs="12">
@@ -849,19 +851,70 @@ const ReviewProposalView: component_.base.View<Props> = ({
           )}
         </div>
       </Col>
-      <Col xs="12">
+      <Col>
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Contract Dates</h2>
         </div>
+        <Row style={{ rowGap: "0.5rem" }}>
+          <Col xs="12" sm="6">
+            <ContractDate
+              label="Contract Start Date"
+              date={state.opportunity.startDate}
+            />
+          </Col>
+          <Col xs="12" sm="6">
+            <ContractDate
+              label="Contract End Date"
+              date={state.opportunity.completionDate}
+            />
+          </Col>
+        </Row>
       </Col>
-      <ContractDate
-        label="Contract Start Date"
-        date={state.opportunity.startDate}
-      />
-      <ContractDate
-        label="Contract End Date"
-        date={state.opportunity.completionDate}
-      />
+      <Col xs="12">
+        <div className="mt-5 pt-5 border-top">
+          <h2 className="mb-4">Resource and Pricing</h2>
+        </div>
+      </Col>
+      {team.length > 0 ? (
+        team.map((member) => (
+          <Col key={member.id}>
+            <Row style={{ rowGap: "0.5rem" }}>
+              <Col xs="12" sm="6">
+                <div
+                  className="d-flex text-nowrap flex-nowrap align-items-center"
+                  color="body">
+                  <img
+                    className="rounded-circle border mr-2"
+                    style={{
+                      width: "1.75rem",
+                      height: "1.75rem",
+                      objectFit: "cover"
+                    }}
+                    src={userAvatarPath(member)}
+                  />
+                  {member.name}
+                </div>
+              </Col>
+              <Col xs="12" sm="6">
+                <NumberField.view
+                  disabled
+                  extraChildProps={{ prefix: "$" }}
+                  label="Hourly Rate"
+                  placeholder="Hourly Rate"
+                  state={state.hourlyRate}
+                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                    adt("hourlyRate" as const, value)
+                  )}
+                />
+              </Col>
+            </Row>
+          </Col>
+        ))
+      ) : (
+        <Col xs="12">
+          You have not yet selected a resource for this proposal.
+        </Col>
+      )}
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>

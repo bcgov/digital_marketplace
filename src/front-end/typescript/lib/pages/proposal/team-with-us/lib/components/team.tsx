@@ -25,7 +25,6 @@ import {
 } from "shared/lib/resources/affiliation";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
-  CreateTWUTeamMemberBody,
   CreateTWUTeamMemberBodyValidationErrors,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
@@ -183,7 +182,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-export type Values = CreateTWUTeamMemberBody[];
+export type Values = AffiliationMember["user"][];
 
 /**
  * Gets the user id of each member that's added to a proposal
@@ -191,10 +190,7 @@ export type Values = CreateTWUTeamMemberBody[];
  * @param state
  */
 export function getValues(state: Immutable<State>): Values {
-  return getAddedMembers(state).map(({ user }) => ({
-    member: user.id,
-    hourlyRate: 0 //FIXME: Set correct hourly rate once we support per-member hourly rates.
-  }));
+  return getAddedMembers(state).map(({ user }) => user);
 }
 
 function filterAddedMembers(members: Member[], isAdded: boolean): Member[] {
@@ -213,12 +209,8 @@ export type Errors = CreateTWUTeamMemberBodyValidationErrors[];
 
 /**
  * No need to set errors as the fields themselves can't result in errors.
- * TODO - find a better solution than disabling eslint
  */
-export function setErrors(
-  state: Immutable<State>,
-  errors?: Errors // eslint-disable-line @typescript-eslint/no-unused-vars
-): Immutable<State> {
+export function setErrors(state: Immutable<State>): Immutable<State> {
   return state;
 }
 
