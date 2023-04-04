@@ -150,7 +150,8 @@ export function validateTWUProposalProposedCost(
 }
 
 /**
- * Checks to see that the number passed is a number between a min/max value
+ * Checks to see that the number passed is a number between a min/max value.
+ * Currently, there is no max for a vendor's hourly rate.
  *
  * @param raw - hourly rate for vendor
  */

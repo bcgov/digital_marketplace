@@ -305,10 +305,10 @@ export const view: component_.base.View<Props> = ({
   return (
     <Row className="mb-5">
       <Col xs="12">
-        <h4>Team Members</h4>
+        <h4>Team Member</h4>
         <p className="mb-0">
-          To satisfy this opportunity{"'"}s requirements, your team must only
-          consist of confirmed (non-pending) members of the selected
+          To satisfy this opportunity{"'"}s requirements, your team member must
+          only consist of confirmed (non-pending) members of the selected
           organization.
         </p>
         {disabled ? null : (
@@ -371,7 +371,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
           return (
             <div>
               <p>
-                Select the team member(s) that you want to propose to be part of
+                Select the team member that you want to propose to be part of
                 your team for this opportunity. If you do not see the team
                 member that you want to add, you must send them a{" "}
                 <Link

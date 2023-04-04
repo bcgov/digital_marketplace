@@ -151,8 +151,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     // TODO: add TWU qualification check when ready
     // .filter((o) => doesOrganizationMeetTWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  // const hourlyRate = proposal?.team?.hourlyRate ? proposal.team.
-  const hourlyRate = 0;
+  // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
+  const hourlyRate = proposal?.team[0].hourlyRate
+    ? proposal.team[0].hourlyRate
+    : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -677,13 +679,9 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
       <Row>
         <Col xs="12" className="mb-4">
           <p>
-            Propose an Hourly Rate for this opportunity using the fields
-            provided below. In order to submit your proposal for consideration,
-            you must:
+            Please provide the hourly rate you are proposing for this
+            opportunity.
           </p>
-          <ul>
-            <li>Not exceed the total maximum budget for the opportunity.</li>
-          </ul>
         </Col>
       </Row>
       <Row>
