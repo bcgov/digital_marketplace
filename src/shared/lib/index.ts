@@ -206,12 +206,41 @@ export function isDateInTheFuture(date: Date): boolean {
   return compareDates(date, new Date()) === 1;
 }
 
+/**
+ * Calculates the number of (days,years,minutes,etc) between two dates.
+ *
+ * @example diffDate(endDate, startDate, 'days')
+ * @see {@link https://momentjs.com/docs/#/displaying/difference/}
+ *
+ * @param a - endDate
+ * @param b - startDate
+ * @param unit - years, quarters, months, weeks, days, seconds, etc
+ */
 export function diffDates(
   a: Date,
   b: Date,
   unit: moment.unitOfTime.Diff
 ): number {
   return normalizeDateTimezone(a).diff(normalizeDateTimezone(b), unit, true);
+}
+
+/**
+ * Calculates the number of business days between two dates.
+ *
+ * @param startDate
+ * @param endDate
+ */
+export function determineBusinessDays(startDate: Date, endDate: Date): number {
+  const day = normalizeDateTimezone(startDate);
+  let businessDays = 0;
+
+  while (day.isSameOrBefore(endDate, "day")) {
+    if (day.day() !== 0 && day.day() !== 6) {
+      businessDays++;
+    }
+    day.add(1, "day");
+  }
+  return businessDays;
 }
 
 export function addDays(date: Date, days: number): Date {
@@ -282,7 +311,7 @@ export function countWords(raw: string): number {
 
 /**
  * Creates an array derived from a range of numbers with
- * the provided length. 
+ * the provided length.
  *
  * @param length - length of the element array
  * @param offset - offset from the start
@@ -292,10 +321,10 @@ export function countWords(raw: string): number {
  */
 export function arrayFromRange<Element = number>(
   length: number,
-  {offset = 0, step = 1, cb = (number: number) => number as Element} = {}
+  { offset = 0, step = 1, cb = (number: number) => number as Element } = {}
 ): Element[] {
-  return Array.from({length}, (_, i) => {
+  return Array.from({ length }, (_, i) => {
     const number = (i + offset) * step;
     return cb(number);
-  })
+  });
 }

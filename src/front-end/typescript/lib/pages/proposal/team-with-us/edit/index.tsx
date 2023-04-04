@@ -12,23 +12,23 @@ import { isUserType } from "front-end/lib/access-control";
 import { SharedState, Route } from "front-end/lib/app/types";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import {
-  immutable,
   Immutable,
+  immutable,
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
+import * as Tab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import {
-  DEFAULT_OPPORTUNITY_TITLE,
-  TWUOpportunity
-} from "shared/lib/resources/opportunity/team-with-us";
-import { UserType } from "shared/lib/resources/user";
+  DEFAULT_TWU_PROPOSAL_TITLE,
+  TWUProposal
+} from "shared/lib/resources/proposal/team-with-us";
+import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
-  opportunity: TWUOpportunity | null;
+  proposal: TWUProposal | null;
 }
 
 export type State_<K extends Tab.TabId> = Validation<
@@ -40,15 +40,7 @@ export type State = State_<Tab.TabId>;
 
 export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
   K,
-  ADT<
-    "onInitResponse",
-    [
-      string,
-      Tab.TabId,
-      api.ResponseValidation<TWUOpportunity, string[]>,
-      api.ResponseValidation<TWUProposalSlim[], string[]>
-    ]
-  >
+  ADT<"onInitResponse", [User, RouteParams, TWUProposal, TWUOpportunity]>
 >;
 
 export type InnerMsg = InnerMsg_<Tab.TabId>;
@@ -59,6 +51,7 @@ export type Msg = Msg_<Tab.TabId>;
 
 export interface RouteParams {
   opportunityId: Id;
+  proposalId: Id;
   tab?: Tab.TabId;
 }
 
@@ -70,46 +63,38 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
   Route
 > {
   return isUserType({
-    userType: [UserType.Government, UserType.Admin],
+    userType: [UserType.Vendor],
     success({ routePath, routeParams, shared }) {
-      const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
-      const tabComponent = Tab.idToDefinition(tabId).component;
-      const [tabState, tabCmds] = tabComponent.init({
-        viewerUser: shared.sessionUser
-      });
+      const { opportunityId, proposalId } = routeParams;
       return [
         valid(
           immutable({
-            opportunity: null,
-            tab: [tabId, immutable(tabState)],
-            sidebar: sidebarState
+            proposal: null,
+            tab: null,
+            sidebar: null
           })
         ) as State_<K>,
         [
-          ...component_.cmd.mapMany(
-            sidebarCmds,
-            (msg) => adt("sidebar", msg) as Msg
-          ),
-          ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
           component_.cmd.join(
-            api.opportunities.twu.readOne(
-              routeParams.opportunityId,
-              (response) => response
-            ),
-            Tab.shouldLoadProposalsForTab(tabId)
-              ? api.proposals.twu.readMany(routeParams.opportunityId)(
-                  (response) => response
-                )
-              : component_.cmd.dispatch(valid([])),
-            (opportunity, proposals) =>
-              adt("onInitResponse", [
-                routePath,
-                tabId,
-                opportunity,
-                proposals
-              ]) as Msg
-          )
+            api.proposals.twu.readOne(opportunityId)(proposalId, (response) =>
+              api.isValid(response) ? response.value : null
+            ) as component_.Cmd<TWUProposal | null>,
+            api.opportunities.twu.readOne(opportunityId, (response) =>
+              api.isValid(response) ? response.value : null
+            ) as component_.Cmd<TWUOpportunity | null>,
+            (proposal, opportunity) => {
+              if (!proposal || !opportunity)
+                return component_.global.replaceRouteMsg(
+                  adt("notFound" as const, { path: routePath })
+                );
+              return adt("onInitResponse", [
+                shared.sessionUser,
+                routeParams,
+                proposal,
+                opportunity
+              ]);
+            }
+          ) as component_.Cmd<Msg>
         ]
       ];
     },
@@ -126,6 +111,20 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
       ];
     }
   });
+}
+
+function getProposal<K extends Tab.TabId>(
+  state: Immutable<ValidState<K>>
+): TWUProposal | null {
+  const tab = state.tab;
+  if (!tab) return state.proposal;
+  if (tab[0] === "proposal") {
+    return tab[1].proposal;
+  } else if (tab[0] === "scoresheet") {
+    return tab[1].proposal;
+  } else {
+    return state.proposal;
+  }
 }
 
 function makeComponent<K extends Tab.TabId>(): component_.page.Component<
@@ -148,44 +147,43 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [routePath, tabId, opportunityResponse, proposalsResponse] =
+              const [viewerUser, routeParams, proposal, opportunity] =
                 msg.value;
-              // If the opportunity request failed, then show the "Not Found" page.
-              // The back-end will return a 404 if the viewer is a Government
-              // user and is not the owner.
-              // We default invalid proposal responses to an empty list.
-              if (!api.isValid(opportunityResponse)) {
-                return [
-                  state,
-                  [
-                    component_.cmd.dispatch(
-                      component_.global.replaceRouteMsg(
-                        adt("notFound" as const, { path: routePath })
-                      )
-                    )
-                  ]
-                ];
-              }
-              const opportunity = opportunityResponse.value;
-              const proposals = api.getValidValue(proposalsResponse, []);
-              // Re-initialize sidebar.
+              // Set up the visible tab state.
+              const tabId = routeParams.tab || "proposal";
+              // Initialize the sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
-                opportunity
+                proposal
               );
+              // Initialize the tab.
               const tabComponent = Tab.idToDefinition(tabId).component;
+              const [tabState, tabCmds] = tabComponent.init({
+                viewerUser,
+                proposal,
+                opportunity
+              });
+              // Everything checks out, return valid state.
               return [
                 state
-                  .set("opportunity", opportunity)
-                  .set("sidebar", immutable(sidebarState)),
+                  .set("tab", [
+                    tabId as K,
+                    immutable<Tab.Tabs[K]["state"]>(tabState)
+                  ])
+                  .set("sidebar", immutable(sidebarState))
+                  .set("proposal", proposal),
                 [
                   ...component_.cmd.mapMany(
                     sidebarCmds,
                     (msg) => adt("sidebar", msg) as Msg
                   ),
+                  ...component_.cmd.mapMany(
+                    tabCmds,
+                    (msg) => adt("tab", msg) as Msg
+                  ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
-                      tabComponent.onInitResponse([opportunity, proposals]),
+                      tabComponent.onInitResponse(null),
                       (msg) => adt("tab", msg)
                     ) as Msg
                   )
@@ -209,9 +207,11 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
       TabbedPage.makeGetParentMetadata({
         idToDefinition,
         getTitleSuffix: (state) =>
-          state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
+          getProposal(state)?.organization?.legalName ||
+          state.proposal?.anonymousProponentName ||
+          DEFAULT_TWU_PROPOSAL_TITLE
       }),
-      makePageMetadata("Edit Team With Us Opportunity")
+      makePageMetadata("Edit Team With Us Proposal")
     )
   };
 }

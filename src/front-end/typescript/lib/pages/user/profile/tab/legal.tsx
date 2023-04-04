@@ -161,7 +161,6 @@ const view: component_.base.ComponentView<State, Msg> = ({
             <h3>Terms & Conditions</h3>
             <div className="mt-3">
               <Link
-                newTab
                 dest={routeDest(adt("contentView", APP_TERMS_CONTENT_ID))}
                 symbol_={
                   hasAcceptedLatest
@@ -181,7 +180,6 @@ const view: component_.base.ComponentView<State, Msg> = ({
                 <TermsSubtext>
                   The <i>{COPY.appTermsTitle}</i> have been updated. Please{" "}
                   <Link
-                    newTab
                     dest={routeDest(adt("contentView", APP_TERMS_CONTENT_ID))}>
                     review the latest version
                   </Link>{" "}
@@ -198,7 +196,6 @@ const view: component_.base.ComponentView<State, Msg> = ({
             </div>
             <div className="mt-3">
               <Link
-                newTab
                 dest={routeDest(
                   adt("contentView", "code-with-us-terms-and-conditions")
                 )}>
@@ -207,11 +204,18 @@ const view: component_.base.ComponentView<State, Msg> = ({
             </div>
             <div className="mt-3">
               <Link
-                newTab
                 dest={routeDest(
                   adt("contentView", "sprint-with-us-terms-and-conditions")
                 )}>
                 Sprint With Us Terms & Conditions
+              </Link>
+            </div>
+            <div className="mt-3">
+              <Link
+                dest={routeDest(
+                  adt("contentView", "team-with-us-terms-and-conditions")
+                )}>
+                Team With Us Terms & Conditions
               </Link>
             </div>
           </div>

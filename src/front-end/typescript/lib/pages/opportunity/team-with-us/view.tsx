@@ -561,63 +561,6 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
   );
 };
 
-// const AcceptanceCriteria: component_.base.ComponentView<State, Msg> = ({
-//                                                                          state
-//                                                                        }) => {
-//   if (!state.opportunity?.acceptanceCriteria) {
-//     return null;
-//   }
-//   return (
-//     <Container>
-//       <div className="mt-5 pt-5 border-top">
-//         <Row>
-//           <Col xs="12">
-//             <h3 className="mb-4">Acceptance Criteria</h3>
-//             <p className="mb-4">
-//               This is a fixed-price opportunity governed by the terms of our
-//               lightweight procurement model, Team With Us. To be paid the fixed
-//               price for this opportunity, you need to meet all of the following
-//               criteria:
-//             </p>
-//             <Markdown
-//               source={state.opportunity.acceptanceCriteria}
-//               smallerHeadings
-//               openLinksInNewTabs
-//             />
-//           </Col>
-//         </Row>
-//       </div>
-//     </Container>
-//   );
-// };
-
-// const EvaluationCriteria: component_.base.ComponentView<State, Msg> = ({
-//                                                                          state
-//                                                                        }) => {
-//   if (!state.opportunity?.evaluationCriteria) {
-//     return null;
-//   }
-//   return (
-//     <Container>
-//       <div className="mt-5 pt-5 border-top">
-//         <Row>
-//           <Col xs="12">
-//             <h3 className="mb-4">Proposal Evaluation Criteria</h3>
-//             <p className="mb-4">
-//               Your proposal will be scored using the following criteria:
-//             </p>
-//             <Markdown
-//               source={state.opportunity.evaluationCriteria}
-//               smallerHeadings
-//               openLinksInNewTabs
-//             />
-//           </Col>
-//         </Row>
-//       </div>
-//     </Container>
-//   );
-// };
-
 const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
   if (!state.opportunity) return null;
   const viewerUser = state.viewerUser;
@@ -662,11 +605,11 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
                 className="mt-4"
                 button
                 color="primary"
-                // dest={routeDest(
-                //   adt("proposalTWUCreate", {
-                //     opportunityId: state.opportunity.id
-                //   })
-                // )}
+                dest={routeDest(
+                  adt("proposalTWUCreate", {
+                    opportunityId: state.opportunity.id
+                  })
+                )}
                 symbol_={leftPlacement(iconLinkSymbol("comment-dollar"))}>
                 Start Proposal
               </Link>
@@ -860,13 +803,13 @@ export const component: component_.page.Component<
               children: "View Proposal",
               symbol_: leftPlacement(iconLinkSymbol("comment-dollar")),
               button: true,
-              color: "primary"
-              // dest: routeDest(
-              //   adt("proposalTWUEdit", {
-              //     opportunityId: state.opportunity.id,
-              //     proposalId: state.existingProposal.id
-              //   })
-              // )
+              color: "primary",
+              dest: routeDest(
+                adt("proposalTWUEdit", {
+                  opportunityId: state.opportunity.id,
+                  proposalId: state.existingProposal.id
+                })
+              )
             }
           ]);
         } else if (isAcceptingProposals) {
@@ -876,12 +819,12 @@ export const component: component_.page.Component<
               children: "Start Proposal",
               symbol_: leftPlacement(iconLinkSymbol("comment-dollar")),
               button: true,
-              color: "primary"
-              // dest: routeDest(
-              //   adt("proposalTWUCreate", {
-              //     opportunityId: state.opportunity.id
-              //   })
-              // )
+              color: "primary",
+              dest: routeDest(
+                adt("proposalTWUCreate", {
+                  opportunityId: state.opportunity.id
+                })
+              )
             }
           ]);
         } else {

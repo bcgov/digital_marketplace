@@ -8,8 +8,10 @@ import * as TWUOpportunityEditTab from "front-end/lib/pages/opportunity/team-wit
 import * as OrganizationEditTab from "front-end/lib/pages/organization/edit/tab";
 import * as CWUProposalEditTab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/view/tab";
+import * as TWUProposalViewTab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import * as TWUProposalEditTab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
 import { getString } from "shared/lib";
 import { adt } from "shared/lib/types";
@@ -26,7 +28,7 @@ export function replaceState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
  * An array of route objects defined by an initial path, tag and value
  *
  * @typeParam Route - new routes below must be defined explicitly as an ADT in `type Route`
- * @see Route src/front-end/typescript/lib/app/types.ts
+ * @see {@link Route} in `src/front-end/typescript/lib/app/types.ts`
  */
 const router: router_.Router<Route> = {
   routes: [
@@ -71,7 +73,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/create"
@@ -277,6 +278,49 @@ const router: router_.Router<Route> = {
           tag: "opportunityTWUView",
           value: {
             opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/create"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUCreate",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUView",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
       }
@@ -648,6 +692,22 @@ const router: router_.Router<Route> = {
       case "opportunityTWUView":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
+      case "proposalTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "proposalTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");

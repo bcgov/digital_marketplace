@@ -89,7 +89,7 @@ export function getAppCheckbox(state: Immutable<State>): Checkbox.Value {
 }
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
-  opportunityType: "Sprint With Us" | "Code With Us";
+  opportunityType: "Sprint With Us" | "Code With Us" | "Team With Us";
   action: "submitting" | "submitting changes to";
   termsTitle: string;
   termsRoute: Route;

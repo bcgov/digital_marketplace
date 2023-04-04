@@ -52,6 +52,9 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
+import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -375,6 +378,30 @@ function pageToViewPageProps(
         PageProposalSWUExportAll.component,
         (state) => state.pages.proposalSWUExportAll,
         (value) => ({ tag: "pageProposalSWUExportAll", value })
+      );
+
+    case "proposalTWUCreate":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUCreate.component,
+        (state) => state.pages.proposalTWUCreate,
+        (value) => ({ tag: "pageProposalTWUCreate", value })
+      );
+
+    case "proposalTWUEdit":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUEdit.component,
+        (state) => state.pages.proposalTWUEdit,
+        (value) => ({ tag: "pageProposalTWUEdit", value })
+      );
+
+    case "proposalTWUView":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUView.component,
+        (state) => state.pages.proposalTWUView,
+        (value) => ({ tag: "pageProposalTWUView", value })
       );
 
     case "proposalList":
