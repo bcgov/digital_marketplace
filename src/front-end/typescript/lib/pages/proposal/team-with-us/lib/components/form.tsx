@@ -152,9 +152,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     // .filter((o) => doesOrganizationMeetTWUQualification(o))
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
-  const hourlyRate = proposal?.team[0].hourlyRate
-    ? proposal.team[0].hourlyRate
-    : 0;
+  const hourlyRate = proposal?.team ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
