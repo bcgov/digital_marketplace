@@ -32,9 +32,17 @@ export function getString(
 }
 
 export function getStringArray(obj: any, keyPath: string | string[]): string[] {
+  return getStringArrayWithFallback(obj, keyPath, []);
+}
+
+export function getStringArrayWithFallback<Fallback>(
+  obj: any,
+  keyPath: string | string[],
+  fallback: Fallback
+): string[] | Fallback {
   const value: any[] = get(obj, keyPath, []);
   if (!isArray(value)) {
-    return [];
+    return fallback;
   }
   return value.map((v) => (v === undefined || value === null ? "" : String(v)));
 }
