@@ -1573,6 +1573,11 @@ const update: crud.Update<
       valid: async (request) => {
         let dbResult: Validation<SWUOpportunity, null>;
         const { session, body } = request.body;
+        const doNotNotify = [
+          SWUOpportunityStatus.Draft,
+          SWUOpportunityStatus.Suspended,
+          SWUOpportunityStatus.Canceled
+        ];
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateSWUOpportunityVersion(
@@ -1580,10 +1585,13 @@ const update: crud.Update<
               { ...body.value, id: request.params.id },
               session
             );
-            // Notify all subscribed users on the opportunity of the update (only if not draft status)
+            /**
+             * Notify all subscribed users on the opportunity of the update
+             * (only if not draft or suspended status)
+             */
             if (
               isValid(dbResult) &&
-              dbResult.value.status !== SWUOpportunityStatus.Draft
+              !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               swuOpportunityNotifications.handleSWUUpdated(
                 connection,
@@ -1690,8 +1698,14 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify all subscribed users on the opportunity of the addendum
-            if (isValid(dbResult)) {
+            /**
+             * Notify all subscribed users on the opportunity of the update
+             * unless it's been cancelled
+             */
+            if (
+              isValid(dbResult) &&
+              !Object.values(doNotNotify).includes(dbResult.value.status)
+            ) {
               swuOpportunityNotifications.handleSWUUpdated(
                 connection,
                 dbResult.value

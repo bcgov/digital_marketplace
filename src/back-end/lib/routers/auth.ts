@@ -61,9 +61,9 @@ interface KeyCloakTokenRequestData {
   redirect_uri: string;
 }
 
-async function makeRouter(
+function makeRouter(
   connection: Connection
-): Promise<Router<any, any, any, any, TextResponseBody, any, any>> {
+): Router<any, any, any, any, TextResponseBody, any, any> {
   // @ts-ignore
   const router: Router<any, any, any, any, TextResponseBody, any, any> = [
     {
@@ -86,7 +86,9 @@ async function makeRouter(
 
           // If redirectOnSuccess specified, include that as query parameter for callback
           if (redirectOnSuccess) {
-            authQuery.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(redirectOnSuccess)}`;
+            authQuery.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(
+              redirectOnSuccess
+            )}`;
           }
 
           if (provider === VENDOR_IDP_SUFFIX || provider === GOV_IDP_SUFFIX) {
@@ -136,7 +138,9 @@ async function makeRouter(
 
           // If redirectOnSuccess was provided on callback, this must also be provided on token request (redirect_uri must match for each request)
           if (redirectOnSuccess) {
-            data.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(redirectOnSuccess)}`;
+            data.redirect_uri += `?redirectOnSuccess=${encodeURIComponent(
+              redirectOnSuccess
+            )}`;
           }
 
           const headers = {
