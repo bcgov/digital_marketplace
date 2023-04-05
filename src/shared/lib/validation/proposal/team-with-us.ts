@@ -126,6 +126,17 @@ export function validateTWUProposalResourceQuestionResponses(
   );
 }
 
+/**
+ * Determines if the hourly rate given will exceed the maximum budget allowed.
+ * Assumes an eight-hour day, but allows for partial allocation of that day.
+ * Assumes a 5-day work week.
+ *
+ * @param hourlyRate
+ * @param opportunityBudget
+ * @param opportunityAllocation
+ * @param opportunityStartDate
+ * @param opportunityEndDate
+ */
 export function validateTWUProposalProposedCost(
   hourlyRate: number,
   opportunityBudget: number,
@@ -251,10 +262,6 @@ export function validateResourceQuestionScoreScore(
   return validateNumberWithPrecision(raw, 0, maxScore, 2, "Score");
 }
 
-export function validateCodeChallengeScore(raw: number): Validation<number> {
-  return validateNumberWithPrecision(raw, 0, 100, 2, "Code Challenge Score");
-}
-
-export function validateTeamScenarioScore(raw: number): Validation<number> {
-  return validateNumberWithPrecision(raw, 0, 100, 2, "Team Scenario Score");
+export function validateChallengeScore(raw: number): Validation<number> {
+  return validateNumberWithPrecision(raw, 0, 100, 2, "Challenge Score");
 }

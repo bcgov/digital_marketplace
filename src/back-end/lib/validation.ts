@@ -675,7 +675,7 @@ export async function validateSWUProposalTeam(
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }
 
-export async function validateSWUProposalOrganization(
+export async function validateProposalOrganization(
   connection: db.Connection,
   organization: Id | undefined,
   session: Session

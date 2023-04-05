@@ -14,7 +14,7 @@ import {
   validateOrganizationId,
   validateSWUOpportunityId,
   validateSWUProposalId,
-  validateSWUProposalOrganization,
+  validateProposalOrganization,
   validateSWUProposalPhase,
   validateSWUProposalTeam,
   validateSWUProposalTeamMembers
@@ -606,7 +606,7 @@ const update: crud.Update<
             attachments
           } = request.body.value;
 
-          const validatedOrganization = await validateSWUProposalOrganization(
+          const validatedOrganization = await validateProposalOrganization(
             connection,
             organization,
             request.session

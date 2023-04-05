@@ -29,6 +29,7 @@ import {
 import {
   CreateTWUOpportunityStatus,
   doesTWUOpportunityStatusAllowGovToViewProposals,
+  TWUOpportunity,
   TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
@@ -736,6 +737,50 @@ export async function editTWUOpportunity(
         session.user,
         opportunityId
       ))) ||
+    false
+  );
+}
+
+/**
+ * Admins and proposal authors can edit Proposals, so long as they are in a
+ * certain state
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ * @param opportunity
+ */
+export async function editTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await hasAcceptedPreviousTerms(connection, session))) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunity.id
+      )) &&
+      doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) ||
+    false
+  );
+}
+
+export async function submitTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await hasAcceptedCurrentTerms(connection, session))) ||
     false
   );
 }
