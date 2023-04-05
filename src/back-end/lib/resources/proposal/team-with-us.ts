@@ -143,7 +143,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
     } else {
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.readOwnCWUProposals(request.session)
+        !permissions.readOwnProposals(request.session)
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -332,19 +332,6 @@ const create: crud.Create<
         });
       }
 
-      /**
-       * Checks that the number provided is between a min/max value
-       * returns and sets a value that is either adt('valid', <number>)
-       * or adt('invalid', 'please enter value greater/less than x')
-       */
-      // const validatedHourlyRate =
-      //   proposalValidation.validateTWUHourlyRate(hourlyRate);
-      // if (isInvalid(validatedHourlyRate)) {
-      //   return invalid({
-      //     hourlyRate: validatedHourlyRate.value
-      //   });
-      // }
-
       // Only validate the following fields if proposal is in DRAFT
       if (validatedStatus.value === TWUProposalStatus.Draft) {
         return valid({
@@ -359,7 +346,12 @@ const create: crud.Create<
           organization: organization || undefined,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          team
+          team: team
+            ? team.map((t) => ({
+                member: getString(t, "member"),
+                hourlyRate: getNumber(t, "hourlyRate")
+              }))
+            : []
         });
       }
 

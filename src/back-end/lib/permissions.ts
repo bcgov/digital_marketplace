@@ -347,7 +347,7 @@ export async function readManyCWUProposals(
   return false;
 }
 
-export function readOwnCWUProposals(session: Session): boolean {
+export function readOwnProposals(session: Session): boolean {
   return isVendor(session);
 }
 

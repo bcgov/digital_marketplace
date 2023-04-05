@@ -139,7 +139,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
     } else {
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.readOwnCWUProposals(request.session)
+        !permissions.readOwnProposals(request.session)
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
