@@ -74,27 +74,29 @@ const init: component_.page.Init<
       ) as State,
       [
         component_.cmd.join(
-          api.opportunities.swu.readOne(opportunityId, (response) =>
-            api.isValid(response) ? response.value : null
-          ) as component_.Cmd<SWUOpportunity | null>,
+          api.opportunities.swu.readOne<SWUOpportunity | null>()(
+            opportunityId,
+            (response) => (api.isValid(response) ? response.value : null)
+          ),
           component_.cmd.andThen(
-            api.proposals.swu.readMany(opportunityId)((response) =>
-              api.getValidValue(response, [])
-            ) as component_.Cmd<SWUProposalSlim[]>,
+            api.proposals.swu.readMany<SWUProposalSlim[]>(opportunityId)(
+              (response) => api.getValidValue(response, [])
+            ),
             (slimProposals) => {
               return component_.cmd.map(
                 component_.cmd.sequence(
-                  slimProposals.map(
-                    ({ id }) =>
-                      api.proposals.swu.readOne(opportunityId)(id, (a) =>
-                        api.isValid(a) ? a.value : null
-                      ) as component_.Cmd<SWUProposal | null>
+                  slimProposals.map(({ id }) =>
+                    api.proposals.swu.readOne(opportunityId)(id, (a) =>
+                      api.isValid(a) ? a.value : null
+                    )
                   )
                 ),
                 (proposals) => {
                   return proposals.reduce((acc, proposal) => {
-                    return proposal ? [...acc, proposal] : acc;
-                  }, [] as SWUProposal[]);
+                    return proposal
+                      ? [...(acc as SWUProposal[]), proposal]
+                      : acc;
+                  }, []);
                 }
               );
             }

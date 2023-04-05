@@ -100,9 +100,9 @@ const init: component_.base.Init<Tab.Params, State, Msg> = ({
         affiliatedTableCmds,
         (msg) => adt("affiliatedTable", msg) as Msg
       ),
-      api.affiliations.readMany((response) =>
-        adt("onInitResponse", [invitation, response])
-      ) as component_.Cmd<Msg>
+      api.affiliations.readMany<Msg>()(
+        (response) => adt("onInitResponse", [invitation, response]) as Msg
+      )
     ]
   ];
 };
@@ -171,12 +171,14 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("deleteAffiliationLoading", msg.value.id)
           .set("showModal", null),
         [
-          api.affiliations.delete_(msg.value.id, (response) =>
-            adt("onDeleteAffiliationResponse", [
-              msg.value,
-              api.isValid(response)
-            ])
-          ) as component_.Cmd<Msg>
+          api.affiliations.delete_<Msg>()(
+            msg.value.id,
+            (response) =>
+              adt("onDeleteAffiliationResponse", [
+                msg.value,
+                api.isValid(response)
+              ]) as Msg
+          )
         ]
       ];
     case "onDeleteAffiliationResponse": {
@@ -216,12 +218,15 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("approveAffiliationLoading", msg.value.id)
           .set("showModal", null),
         [
-          api.affiliations.update(msg.value.id, null, (response) =>
-            adt("onApproveAffiliationResponse", [
-              msg.value,
-              api.isValid(response)
-            ])
-          ) as component_.Cmd<Msg>
+          api.affiliations.update<Msg>()(
+            msg.value.id,
+            null,
+            (response) =>
+              adt("onApproveAffiliationResponse", [
+                msg.value,
+                api.isValid(response)
+              ]) as Msg
+          )
         ]
       ];
     case "onApproveAffiliationResponse": {
@@ -267,12 +272,14 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("rejectAffiliationLoading", msg.value.id)
           .set("showModal", null),
         [
-          api.affiliations.delete_(msg.value.id, (response) =>
-            adt("onRejectAffiliationResponse", [
-              msg.value,
-              api.isValid(response)
-            ])
-          ) as component_.Cmd<Msg>
+          api.affiliations.delete_<Msg>()(
+            msg.value.id,
+            (response) =>
+              adt("onRejectAffiliationResponse", [
+                msg.value,
+                api.isValid(response)
+              ]) as Msg
+          )
         ]
       ];
     case "onRejectAffiliationResponse": {

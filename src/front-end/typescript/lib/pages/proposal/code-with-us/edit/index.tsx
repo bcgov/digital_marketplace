@@ -102,15 +102,13 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
           component_.cmd.join3(
-            api.proposals.cwu.readOne(opportunityId)(
-              proposalId,
-              (response) => response
-            ),
-            api.opportunities.cwu.readOne(
-              opportunityId,
-              (response) => response
-            ),
-            api.affiliations.readMany((response) => response),
+            api.proposals.cwu.readOne<
+              api.ResponseValidation<CWUProposal, string[]>
+            >(opportunityId)(proposalId, (response) => response),
+            api.opportunities.cwu.readOne<
+              api.ResponseValidation<CWUOpportunity, string[]>
+            >()(opportunityId, (response) => response),
+            api.affiliations.readMany()((response) => response),
             (proposalResponse, opportunityResponse, affiliationsResponse) =>
               adt("onInitResponse", [
                 routePath,
@@ -118,8 +116,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 proposalResponse,
                 opportunityResponse,
                 affiliationsResponse
-              ])
-          ) as component_.Cmd<Msg>
+              ]) as Msg
+          )
         ]
       ];
     },

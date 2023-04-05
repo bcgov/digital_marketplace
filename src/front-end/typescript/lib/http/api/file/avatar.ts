@@ -7,9 +7,11 @@ import {
 
 const NAMESPACE = "avatars";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   CreateFileRequestBody,
   Resource.FileRecord,
   Resource.CreateValidationErrors,
-  unknown
-> = makeCreateAction(NAMESPACE);
+  Msg
+> {
+  return makeCreateAction(NAMESPACE);
+}

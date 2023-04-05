@@ -59,17 +59,20 @@ const init: component_.page.Init<
         })
       ) as State,
       [
-        api.proposals.cwu.readOne(opportunityId)(proposalId, (response) => {
-          switch (response.tag) {
-            case "valid":
-              return adt("onInitResponse", response.value);
-            case "invalid":
-            case "unhandled":
-              return component_.global.replaceRouteMsg(
-                adt("notFound" as const, { path: routePath })
-              );
+        api.proposals.cwu.readOne<Msg>(opportunityId)(
+          proposalId,
+          (response) => {
+            switch (response.tag) {
+              case "valid":
+                return adt("onInitResponse", response.value);
+              case "invalid":
+              case "unhandled":
+                return component_.global.replaceRouteMsg(
+                  adt("notFound" as const, { path: routePath })
+                );
+            }
           }
-        }) as component_.Cmd<Msg>
+        )
       ]
     ];
   },

@@ -284,7 +284,7 @@ const init: component_.page.Init<
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
         vendor
-          ? (component_.cmd.join4(
+          ? component_.cmd.join4(
               api.proposals.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
@@ -294,7 +294,7 @@ const init: component_.page.Init<
               api.proposals.twu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              api.organizations.owned.readMany((response) =>
+              api.organizations.owned.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
               (cwu, swu, twu, orgs) =>
@@ -302,21 +302,21 @@ const init: component_.page.Init<
                   "onInitResponse",
                   adt("vendor", [cwu, swu, twu, orgs] as const)
                 ) as Msg
-            ) as component_.Cmd<Msg>)
+            )
           : component_.cmd.join3(
-              api.opportunities.cwu.readMany((response) =>
+              api.opportunities.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              api.opportunities.swu.readMany((response) =>
+              api.opportunities.swu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              api.opportunities.twu.readMany((response) =>
+              api.opportunities.twu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
               (cwu, swu, twu) =>
                 adt(
                   "onInitResponse",
-                  adt("publicSector", [cwu, swu, twu] as const)
+                  adt("publicSector", [cwu, swu, twu]) as InitResponse
                 ) as Msg
             )
       ]

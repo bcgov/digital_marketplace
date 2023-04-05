@@ -3,8 +3,18 @@ import * as Resource from "shared/lib/resources/session";
 
 const NAMESPACE = "sessions";
 
-export const readOne: crud.ReadOneAction<Resource.Session, string[], unknown> =
-  crud.makeReadOneAction(NAMESPACE, (a: Resource.Session) => a);
+export function readOne<Msg>(): crud.ReadOneAction<
+  Resource.Session,
+  string[],
+  Msg
+> {
+  return crud.makeReadOneAction(NAMESPACE, (a: Resource.Session) => a);
+}
 
-export const delete_: crud.DeleteAction<Resource.Session, string[], unknown> =
-  crud.makeDeleteAction(NAMESPACE, (a: Resource.Session) => a);
+export function delete_<Msg>(): crud.DeleteAction<
+  Resource.Session,
+  string[],
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, (a: Resource.Session) => a);
+}

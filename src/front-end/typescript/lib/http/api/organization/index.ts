@@ -13,12 +13,14 @@ export * as owned from "front-end/lib/http/api/organization/owned";
 
 const NAMESPACE = "organizations";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.Organization,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawOrganizationToOrganization);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawOrganizationToOrganization);
+}
 
 export function readMany<Msg>(
   page: number,
@@ -45,21 +47,27 @@ export function readMany<Msg>(
   });
 }
 
-export const readOne: crud.ReadOneAction<
+export function readOne<Msg>(): crud.ReadOneAction<
   Resource.Organization,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeReadOneAction(NAMESPACE, rawOrganizationToOrganization);
+  Msg
+> {
+  return crud.makeReadOneAction(NAMESPACE, rawOrganizationToOrganization);
+}
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.Organization,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawOrganizationToOrganization);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawOrganizationToOrganization);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.Organization,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawOrganizationToOrganization);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawOrganizationToOrganization);
+}

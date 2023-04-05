@@ -77,12 +77,12 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
         ) as State_<K>,
         [
           component_.cmd.join(
-            api.organizations.readOne(orgId, (response) =>
+            api.organizations.readOne()(orgId, (response) =>
               api.isValid(response) ? response.value : null
-            ) as component_.Cmd<Organization | null>,
+            ),
             api.affiliations.readManyForOrganization(orgId)((response) =>
               api.isValid(response) ? response.value : null
-            ) as component_.Cmd<AffiliationMember[] | null>,
+            ),
             (organization, affiliations) => {
               if (!organization || !affiliations)
                 return component_.global.replaceRouteMsg(

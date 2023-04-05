@@ -117,9 +117,9 @@ function getAffiliations(orgId?: Id): component_.Cmd<AffiliationMember[]> {
   if (!orgId) {
     return component_.cmd.dispatch([]);
   }
-  return api.affiliations.readManyForOrganization(orgId)((response) =>
-    api.getValidValue(response, [])
-  ) as component_.Cmd<AffiliationMember[]>;
+  return api.affiliations.readManyForOrganization<AffiliationMember[]>(orgId)(
+    (response) => api.getValidValue(response, [])
+  );
 }
 
 function isSelectedOrgQualified(
@@ -354,7 +354,7 @@ export function persist(
   const formValues = getValues(state);
   switch (action.tag) {
     case "create":
-      return api.proposals.twu.create(
+      return api.proposals.twu.create<PersistResult>()(
         {
           ...formValues,
           opportunity: state.opportunity.id,
@@ -371,9 +371,9 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     case "update": {
-      return api.proposals.twu.update(
+      return api.proposals.twu.update<PersistResult>()(
         action.value,
         adt("edit" as const, formValues),
         (response) => {
@@ -394,7 +394,7 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     }
   }
 }

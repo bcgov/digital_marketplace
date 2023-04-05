@@ -97,20 +97,20 @@ const init: component_.page.Init<
       // isQualified: false
     },
     [
-      api.counters.update(
+      api.counters.update<Msg>()(
         getTWUOpportunityViewsCounterName(opportunityId),
         null,
         () => adt("noop")
-      ) as component_.Cmd<Msg>,
+      ),
       component_.cmd.join3(
-        api.opportunities.twu.readOne(opportunityId, (response) => response),
+        api.opportunities.twu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.twu.readExistingProposalForOpportunity(
               opportunityId,
               (response) => response
             )
           : component_.cmd.dispatch(null),
-        api.content.readOne(
+        api.content.readOne()(
           TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
           (response) => response
         ),
@@ -172,12 +172,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startToggleWatchLoading(state),
         [
           state.opportunity.subscribed
-            ? (api.subscribers.twu.delete_(id, (response) =>
+            ? api.subscribers.twu.delete_<Msg>()(id, (response) =>
                 adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
-            : (api.subscribers.twu.create({ opportunity: id }, (response) =>
-                adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
+            : api.subscribers.twu.create<Msg>()(
+                { opportunity: id },
+                (response) =>
+                  adt("onToggleWatchResponse", api.isValid(response))
+              )
         ]
       ];
     }

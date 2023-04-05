@@ -579,26 +579,25 @@ export function persist(
     ({ id }) => id
   );
   // Cmd helpers
-  const uploadNewAttachmentsCmd = api.files.createMany(
-    newAttachments,
-    (response) => {
-      switch (response.tag) {
-        case "valid":
-          return valid([
-            ...existingAttachments,
-            ...response.value.map(({ id }) => id)
-          ]);
-        case "invalid":
-          return invalid(
-            state.update("attachments", (attachments) =>
-              Attachments.setNewAttachmentErrors(attachments, response.value)
-            )
-          );
-        case "unhandled":
-          return invalid(state);
-      }
+  const uploadNewAttachmentsCmd = api.files.createMany<
+    Validation<Id[], Immutable<State>>
+  >()(newAttachments, (response) => {
+    switch (response.tag) {
+      case "valid":
+        return valid([
+          ...existingAttachments,
+          ...response.value.map(({ id }) => id)
+        ]);
+      case "invalid":
+        return invalid(
+          state.update("attachments", (attachments) =>
+            Attachments.setNewAttachmentErrors(attachments, response.value)
+          )
+        );
+      case "unhandled":
+        return invalid(state);
     }
-  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  });
   const actionCmd = (
     attachments: Id[]
   ): component_.cmd.Cmd<
@@ -609,7 +608,9 @@ export function persist(
   > => {
     switch (action.tag) {
       case "create":
-        return api.opportunities.cwu.create(
+        return api.opportunities.cwu.create<
+          api.ResponseValidation<CWUOpportunity, CreateValidationErrors>
+        >()(
           {
             ...values,
             remoteOk,
@@ -617,12 +618,12 @@ export function persist(
             status: action.value
           },
           (response) => response
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<CWUOpportunity, CreateValidationErrors>
-        >;
+        );
       case "update":
         if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
-          return api.opportunities.cwu.update(
+          return api.opportunities.cwu.update<
+            api.ResponseValidation<CWUOpportunity, UpdateEditValidationErrors>
+          >()(
             state.opportunity.id,
             adt("edit" as const, {
               ...values,
@@ -643,9 +644,7 @@ export function persist(
                 }
               });
             }
-          ) as component_.cmd.Cmd<
-            api.ResponseValidation<CWUOpportunity, UpdateEditValidationErrors>
-          >;
+          );
         } else if (state.opportunity) {
           return component_.cmd.dispatch(valid(state.opportunity));
         } else {

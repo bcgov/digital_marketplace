@@ -23,10 +23,12 @@ import { formatAmount, formatDateAtTime } from "shared/lib";
 import { isSWUOpportunityAcceptingProposals } from "shared/lib/resources/opportunity/sprint-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
+  DeleteValidationErrors,
   SWUProposal,
   swuProposalNumTeamMembers,
   SWUProposalStatus,
-  swuProposalTotalProposedCost
+  swuProposalTotalProposedCost,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -84,15 +86,24 @@ export type InnerMsg =
   | ADT<"onSaveChangesAndSubmitPersistResponse", Form.PersistResult>
   | ADT<
       "onSaveChangesAndSubmitSubmitResponse",
-      api.ResponseValidation<SWUProposal, string[]>
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
     >
   | ADT<"submit">
   | ADT<"onSubmitAcceptTermsResponse", boolean>
-  | ADT<"onSubmitSubmitResponse", api.ResponseValidation<SWUProposal, string[]>>
+  | ADT<
+      "onSubmitSubmitResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >
   | ADT<"withdraw">
-  | ADT<"onWithdrawResponse", api.ResponseValidation<SWUProposal, string[]>>
+  | ADT<
+      "onWithdrawResponse",
+      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+    >
   | ADT<"delete">
-  | ADT<"onDeleteResponse", api.ResponseValidation<SWUProposal, string[]>>;
+  | ADT<
+      "onDeleteResponse",
+      api.ResponseValidation<SWUProposal, DeleteValidationErrors>
+    >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -144,12 +155,12 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ),
       ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
       component_.cmd.join(
-        api.organizations.owned.readMany((response) =>
+        api.organizations.owned.readMany()((response) =>
           api.getValidValue(response, [])
-        ) as component_.Cmd<OrganizationSlim[]>,
-        api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+        ),
+        api.content.readOne()(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
           api.isValid(response) ? response.value.body : ""
-        ) as component_.Cmd<string>,
+        ),
         (organizations, evalContent) =>
           adt("onInitResponse", [organizations, evalContent]) as Msg
       )
@@ -255,10 +266,10 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startStartEditingLoading(state),
         [
-          api.proposals.swu.readOne(proposal.opportunity.id)(
+          api.proposals.swu.readOne<Msg>(proposal.opportunity.id)(
             proposal.id,
             (response) => adt("onStartEditingResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -289,12 +300,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesLoading(state),
         [
           !isSave && isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSaveChangesAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAcceptTermsResponse", true)
               )
@@ -387,7 +398,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesAndSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
@@ -395,7 +406,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                     "onSaveChangesAndSubmitAcceptTermsResponse",
                     api.isValid(response)
                   )
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAndSubmitAcceptTermsResponse", true)
               )
@@ -451,11 +462,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         newState,
         [
           ...cmds,
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             newProposal.id,
             adt("submit", ""),
             (response) => adt("onSaveChangesAndSubmitSubmitResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -497,12 +508,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSubmitAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(adt("onSubmitAcceptTermsResponse", true))
         ]
       ];
@@ -516,11 +527,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         ? [
             state,
             [
-              api.proposals.swu.update(
+              api.proposals.swu.update<Msg>()(
                 proposal.id,
                 adt("submit", ""),
                 (response) => adt("onSubmitSubmitResponse", response)
-              ) as component_.Cmd<Msg>
+              )
             ]
           ]
         : [
@@ -570,11 +581,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startWithdrawLoading(state),
         [
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             proposal.id,
             adt("withdraw", ""),
             (response) => adt("onWithdrawResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -620,9 +631,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startDeleteLoading(state),
         [
-          api.proposals.swu.delete_(proposal.id, (response) =>
+          api.proposals.swu.delete_<Msg>()(proposal.id, (response) =>
             adt("onDeleteResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

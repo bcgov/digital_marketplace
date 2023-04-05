@@ -14,12 +14,14 @@ import { compareDates } from "shared/lib";
  */
 const NAMESPACE = "proposals/team-with-us";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.TWUProposal,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawTWUProposalToTWUProposal);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawTWUProposalToTWUProposal);
+}
 
 export function readOne<Msg>(
   opportunityId: Id
@@ -47,18 +49,22 @@ export function readMany<Msg>(
   );
 }
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.TWUProposal,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawTWUProposalToTWUProposal);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawTWUProposalToTWUProposal);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.TWUProposal,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawTWUProposalToTWUProposal);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawTWUProposalToTWUProposal);
+}
 
 interface RawTWUProposal
   extends Omit<

@@ -137,12 +137,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startStartEditingFormLoading(state),
         [
-          api.users.readOne(state.profileUser.id, (response) =>
+          api.users.readOne<Msg>()(state.profileUser.id, (response) =>
             adt(
               "onStartEditingResponse",
               api.isValid(response) ? response.value : null
             )
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     case "onStartEditingResponse": {
@@ -229,13 +229,13 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         state,
         [
           isActive
-            ? (api.users.delete_(state.profileUser.id, (response) =>
+            ? api.users.delete_<Msg>()(state.profileUser.id, (response) =>
                 adt(
                   "onToggleAccountActivationResponse",
                   api.isValid(response) ? response.value : null
                 )
-              ) as component_.Cmd<Msg>)
-            : (api.users.update(
+              )
+            : api.users.update<Msg>()(
                 state.profileUser.id,
                 adt("reactivateUser"),
                 (response) =>
@@ -243,7 +243,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                     "onToggleAccountActivationResponse",
                     api.isValid(response) ? response.value : null
                   )
-              ) as component_.Cmd<Msg>)
+              )
         ]
       ];
     }
@@ -315,7 +315,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           return [
             startSavePermissionsLoading(state),
             [
-              api.users.update(
+              api.users.update<Msg>()(
                 state.profileUser.id,
                 adt(
                   "updateAdminPermissions",
@@ -323,7 +323,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 ),
                 (response) =>
                   adt("onToggleAdmin", api.getValidValue(response, null))
-              ) as component_.Cmd<Msg>
+              )
             ]
           ];
         }

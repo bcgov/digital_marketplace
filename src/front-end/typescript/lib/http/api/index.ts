@@ -1,3 +1,5 @@
+//TODO document intended usage, type casting and example
+
 export {
   getValidValue,
   getInvalidValue,

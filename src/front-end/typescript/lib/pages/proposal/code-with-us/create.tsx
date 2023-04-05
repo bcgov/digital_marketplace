@@ -121,13 +121,12 @@ const init: component_.page.Init<
             opportunityId,
             (response) => response
           ) as component_.Cmd<CWUProposalSlim | undefined>,
-          api.opportunities.cwu.readOne(
-            opportunityId,
-            (response) => response
-          ) as component_.Cmd<api.ResponseValidation<CWUOpportunity, string[]>>,
-          api.affiliations.readMany((response) => response) as component_.Cmd<
+          api.opportunities.cwu.readOne<
+            api.ResponseValidation<CWUOpportunity, string[]>
+          >()(opportunityId, (response) => response),
+          api.affiliations.readMany<
             api.ResponseValidation<AffiliationSlim[], string[]>
-          >,
+          >()((response) => response),
           (existingProposal, opportunityResponse, affiliationsResponse) => {
             // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
             if (existingProposal)
@@ -284,12 +283,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         return [
           startSubmitLoading(state),
           [
-            api.users.update(
+            api.users.update<Msg>()(
               state.sessionUser.id,
               adt("acceptTerms"),
               (response) =>
                 adt("onSubmitAcceptTermsResponse", api.isValid(response))
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }
