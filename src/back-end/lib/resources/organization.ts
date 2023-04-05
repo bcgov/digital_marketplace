@@ -28,6 +28,7 @@ import {
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors
 } from "shared/lib/resources/organization";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt } from "shared/lib/types";
 import {
@@ -64,7 +65,7 @@ export interface ValidatedUpdateRequestBody {
     | ADT<"updateProfile", UpdateProfileRequestBody>
     | ADT<"acceptSWUTerms">
     | ADT<"acceptTWUTerms">
-    | ADT<"qualifyServiceAreas", number[]>;
+    | ADT<"qualifyServiceAreas", ServiceAreaId[]>;
 }
 
 export interface DeleteValidatedReqBody {

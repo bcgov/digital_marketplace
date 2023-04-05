@@ -1063,7 +1063,7 @@ export function getAlerts<Msg>(
                     dest={routeDest(
                       adt("orgEdit", {
                         orgId: org.id,
-                        tab: "qualification" as const
+                        tab: "twuQualification" as const
                       })
                     )}>
                     {meetsCriteria}

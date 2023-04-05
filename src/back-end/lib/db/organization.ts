@@ -20,6 +20,7 @@ import {
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 import { Session } from "shared/lib/resources/session";
 import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
@@ -535,13 +536,13 @@ export const readOneOrganizationOwner = tryDb<[Id], User | null>(
 );
 
 export const qualifyOrganizationServiceAreas = tryDb<
-  [Id, number[], Session],
+  [Id, ServiceAreaId[], Session],
   Organization
 >(async (connection, organization, serviceAreas, session) => {
   await connection.transaction(async (trx) => {
     await connection<{
       organization: Id;
-      serviceArea: number;
+      serviceArea: ServiceAreaId;
     }>("twuOrganizationServiceAreas")
       .transacting(trx)
       .where({ "twuOrganizationServiceAreas.organization": organization })
