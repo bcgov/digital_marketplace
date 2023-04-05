@@ -53,13 +53,13 @@ export interface Tabs {
     InitResponse
   >;
   team: TabbedPage.Tab<Params, TeamTab.State, TeamTab.InnerMsg, InitResponse>;
-  "swu-qualification": TabbedPage.Tab<
+  swuQualification: TabbedPage.Tab<
     Params,
     QualificationTab.State,
     QualificationTab.InnerMsg,
     InitResponse
   >;
-  "twu-qualification": TabbedPage.Tab<
+  twuQualification: TabbedPage.Tab<
     Params,
     TWUQualificationTab.State,
     TWUQualificationTab.InnerMsg,
@@ -77,8 +77,8 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
     case "organization":
     case "team":
-    case "swu-qualification":
-    case "twu-qualification":
+    case "swuQualification":
+    case "twuQualification":
       return raw;
     default:
       return null;
@@ -95,13 +95,13 @@ export function idToDefinition<K extends TabId>(
         icon: "users",
         title: "Team"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case "swu-qualification":
+    case "swuQualification":
       return {
         component: QualificationTab.component,
         icon: "shield",
         title: "SWU Qualification"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case "twu-qualification":
+    case "twuQualification":
       return {
         component: TWUQualificationTab.component,
         icon: "shield",
@@ -139,8 +139,8 @@ export function makeSidebarState(
     items: [
       makeSidebarLink("organization", organization, activeTab),
       makeSidebarLink("team", organization, activeTab),
-      makeSidebarLink("swu-qualification", organization, activeTab),
-      makeSidebarLink("twu-qualification", organization, activeTab)
+      makeSidebarLink("swuQualification", organization, activeTab),
+      makeSidebarLink("twuQualification", organization, activeTab)
     ]
   });
 }

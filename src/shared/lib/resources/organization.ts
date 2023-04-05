@@ -1,6 +1,6 @@
 import { FileRecord } from "shared/lib/resources/file";
 import { UserSlim } from "shared/lib/resources/user";
-import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
+import { TWUServiceAreaRecord } from "shared/lib/resources/service-area";
 import {
   ADT,
   BodyWithErrors,
@@ -8,7 +8,7 @@ import {
   ReadManyResponseBodyBase
 } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation/index";
-import { TWUServiceArea } from "./opportunity/team-with-us";
+import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 
 export { ReadManyResponseValidationErrors } from "shared/lib/types";
 

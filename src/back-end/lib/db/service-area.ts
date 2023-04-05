@@ -1,6 +1,6 @@
 import { tryDb } from "back-end/lib/db";
 import { valid } from "shared/lib/http";
-import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
+import { TWUServiceAreaRecord } from "shared/lib/resources/service-area";
 import { Id } from "shared/lib/types";
 
 export const readOneServiceAreaByServiceArea = tryDb<[Id], number | null>(

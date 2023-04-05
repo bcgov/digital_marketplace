@@ -5,7 +5,7 @@ import {
   prefixPath,
   updateValid,
   viewValid,
-  intersperse
+  Intersperse
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -309,13 +309,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         switch (msg.value.tag) {
           case "vendor": {
             const [cwuProposals, swuProposals, organizations] = msg.value.value;
-            const isSWUQualified = organizations.reduce(
-              (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
-              false as boolean
+            const isSWUQualified = organizations.some(
+              doesOrganizationMeetSWUQualification
             );
-            const isTWUQualified = organizations.reduce(
-              (acc, o) => acc || doesOrganizationMeetTWUQualification(o),
-              false as boolean
+            const isTWUQualified = organizations.some(
+              doesOrganizationMeetTWUQualification
             );
             return [
               state
@@ -495,7 +493,7 @@ export const component: component_.page.Component<
             {
               name: "Sprint With Us",
               qualificationLink: (
-                <Link key="swu" dest={routeDest(adt("learnMoreSWU", null))}>
+                <Link dest={routeDest(adt("learnMoreSWU", null))}>
                   Qualified Sprint With Us Supplier
                 </Link>
               )
@@ -507,7 +505,7 @@ export const component: component_.page.Component<
             {
               name: "Team With Us",
               qualificationLink: (
-                <Link key="twu" dest={routeDest(adt("learnMoreTWU", null))}>
+                <Link dest={routeDest(adt("learnMoreTWU", null))}>
                   Qualified Team With Us Supplier
                 </Link>
               )
@@ -528,13 +526,17 @@ export const component: component_.page.Component<
                       create an organization
                     </Link>{" "}
                     and be a{" "}
-                    {intersperse(
-                      programsToQualify,
-                      ({ qualificationLink }) => qualificationLink,
-                      " or "
-                    )}{" "}
+                    <Intersperse
+                      collection={programsToQualify.map(
+                        ({ qualificationLink }) => qualificationLink
+                      )}
+                      separator={<> or </>}
+                    />{" "}
                     in order to submit proposals to{" "}
-                    {intersperse(programsToQualify, ({ name }) => name, " or ")}{" "}
+                    <Intersperse
+                      collection={programsToQualify.map(({ name }) => name)}
+                      separator={<> or </>}
+                    />{" "}
                     opportunities.
                   </span>
                 )

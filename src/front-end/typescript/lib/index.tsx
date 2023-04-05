@@ -1,9 +1,9 @@
 import { PATH_PREFIX } from "front-end/config";
 import { component, Immutable } from "front-end/lib/framework";
-import { map } from "lodash";
-import { ReactElement } from "react";
+import React from "react";
+import { Fragment, ReactElement } from "react";
 import { COPY } from "shared/config";
-import { prefix } from "shared/lib";
+import { intersperse, prefix } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   UserType,
@@ -180,21 +180,17 @@ export function fileBlobPath(file: Pick<FileRecord, "id">) {
   return prefixPath(`api/files/${file.id}?type=blob`);
 }
 
-/**
- * Intersperse React elements with a separator.
- *
- * @param collection
- * @param fn - callback to transform iteratee to a React element
- * @param separator - element placed between collection members
- * @returns List of React elements
- */
-export function intersperse<A>(
-  collection: A[],
-  fn: (a: A) => string | ReactElement,
-  separator: string | ReactElement
-) {
-  return map(collection, (val: A, index: number) => [
-    ...(index > 0 ? [separator] : []),
-    fn(val)
-  ]);
-}
+type IntersperseProps = <A>(props: {
+  collection: A[];
+  separator: ReactElement;
+}) => ReactElement;
+
+export const Intersperse: IntersperseProps = ({ collection, separator }) => {
+  return (
+    <Fragment
+      children={intersperse(collection, separator).map((child, i) => (
+        <Fragment key={`${i}`}>{child}</Fragment>
+      ))}
+    />
+  );
+};

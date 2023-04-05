@@ -25,24 +25,14 @@ import Link, {
 } from "front-end/lib/views/link";
 import React, { ReactElement } from "react";
 import { Col, Row } from "reactstrap";
-import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { kebabCase } from "lodash";
-import { TWUServiceAreaRecord } from "shared/lib/resources/serviceArea";
+import { TWUServiceAreaRecord } from "shared/lib/resources/service-area";
 import { TWU_BC_BID_URL } from "front-end/config";
+import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 
-interface AvailableServiceArea {
-  serviceArea: TWUServiceArea;
-  name: string;
-}
-
-const ALL_SERVICE_AREAS: AvailableServiceArea[] = [
-  { serviceArea: TWUServiceArea.Developer, name: "Developer" },
-  { serviceArea: TWUServiceArea.DataSpecialist, name: "Data Specialist" },
-  { serviceArea: TWUServiceArea.ScrumMaster, name: "Scrum Master" },
-  { serviceArea: TWUServiceArea.DevopsSpecialist, name: "DevOps Specialist" }
-];
+type AvailableServiceArea = typeof ALL_SERVICE_AREAS[number];
 
 interface ServiceArea extends AvailableServiceArea {
   checkbox: Immutable<Checkbox.State>;

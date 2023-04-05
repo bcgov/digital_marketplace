@@ -15,7 +15,8 @@ import {
   validateServiceAreas
 } from "back-end/lib/validation";
 import { get } from "lodash";
-import { getString } from "shared/lib";
+import { getString, getStringArrayWithFallback } from "shared/lib";
+import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 import {
   CreateRequestBody,
   CreateValidationErrors,
@@ -44,7 +45,13 @@ import {
 } from "shared/lib/validation";
 import * as orgValidation from "shared/lib/validation/organization";
 
-type UpdateRequestBody = SharedUpdateRequestBody | null;
+type UpdateRequestBody =
+  | Exclude<
+      SharedUpdateRequestBody,
+      ADT<"qualifyServiceAreas", TWUServiceArea[]>
+    >
+  | ADT<"qualifyServiceAreas", string[]>
+  | null;
 
 export interface ValidatedCreateRequestBody {
   session: AuthenticatedSession;
@@ -352,12 +359,10 @@ const update: crud.Update<
           return adt("acceptSWUTerms");
         case "acceptTWUTerms":
           return adt("acceptTWUTerms");
-        case "qualifyServiceAreas":
-          if (Array.isArray(value)) {
-            return adt("qualifyServiceAreas", value);
-          } else {
-            return null;
-          }
+        case "qualifyServiceAreas": {
+          const serviceAreas = getStringArrayWithFallback(body, "value", null);
+          return serviceAreas && adt("qualifyServiceAreas", serviceAreas);
+        }
         default:
           return null;
       }

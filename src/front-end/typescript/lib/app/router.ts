@@ -382,12 +382,9 @@ const router: router_.Router<Route> = {
     {
       path: prefixPath("/organizations/:id/team-with-us-terms-and-conditions"),
       makeRoute({ params }) {
-        return {
-          tag: "orgTWUTerms",
-          value: {
-            orgId: params.id || ""
-          }
-        };
+        return adt("orgTWUTerms", {
+          orgId: params.id || ""
+        });
       }
     },
     {
