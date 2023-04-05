@@ -852,6 +852,26 @@ export async function canDeleteTWUOpportunity(
     false
   );
 }
+
+/**
+ * Only authors of the proposal can delete the proposal
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ */
+export async function deleteTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+    false
+  );
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {

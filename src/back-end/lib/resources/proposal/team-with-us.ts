@@ -31,7 +31,7 @@ import {
   CreateRequestBody as SharedCreateRequestBody,
   CreateTWUTeamMemberBodyValidationErrors,
   CreateValidationErrors,
-  // DeleteValidationErrors,
+  DeleteValidationErrors,
   // isValidStatusChange,
   TWUProposal,
   TWUProposalSlim,
@@ -43,7 +43,11 @@ import {
   // UpdateValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-// import { ADT, adt, Id } from "shared/lib/types";
+import {
+  // ADT,
+  // adt,
+  Id
+} from "shared/lib/types";
 import {
   allValid,
   getInvalidValue,
@@ -82,10 +86,10 @@ interface ValidatedCreateRequestBody
 //   "opportunity" | "status" | "session"
 // >;
 
-// interface ValidatedDeleteRequestBody {
-//   proposal: Id;
-//   session: AuthenticatedSession;
-// }
+interface ValidatedDeleteRequestBody {
+  proposal: Id;
+  session: AuthenticatedSession;
+}
 /**
  * @typeParam CreateRequestBody - All the information that comes in the request
  * body when a vendor is creating a Team with Us Proposal. SharedCreateRequestBody
@@ -1167,82 +1171,82 @@ const create: crud.Create<
 //   };
 // };
 
-// const delete_: crud.Delete<
-//   Session,
-//   db.Connection,
-//   ValidatedDeleteRequestBody,
-//   DeleteValidationErrors
-// > = (connection: db.Connection) => {
-//   return {
-//     async validateRequestBody(request) {
-//       if (
-//         !permissions.isSignedIn(request.session) ||
-//         !(await permissions.deleteTWUProposal(
-//           connection,
-//           request.session,
-//           request.params.id
-//         ))
-//       ) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//       const validatedTWUProposal = await validateTWUProposalId(
-//         connection,
-//         request.params.id,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUProposal)) {
-//         return invalid({
-//           notFound: ["The specified proposal was not found."]
-//         });
-//       }
-//       if (validatedTWUProposal.value.status !== TWUProposalStatus.Draft) {
-//         return invalid({ status: ["Only draft proposals can be deleted."] });
-//       }
-//       return valid({
-//         proposal: validatedTWUProposal.value.id,
-//         session: request.session
-//       });
-//     },
-//     respond: wrapRespond({
-//       valid: async (request) => {
-//         const dbResult = await db.deleteTWUProposal(
-//           connection,
-//           request.body.proposal,
-//           request.body.session
-//         );
-//         if (isInvalid(dbResult)) {
-//           return basicResponse(
-//             503,
-//             request.session,
-//             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-//           );
-//         }
-//         return basicResponse(
-//           200,
-//           request.session,
-//           makeJsonResponseBody(dbResult.value)
-//         );
-//       },
-//       invalid: async (request) => {
-//         return basicResponse(
-//           400,
-//           request.session,
-//           makeJsonResponseBody(request.body)
-//         );
-//       }
-//     })
-//   };
-// };
+const delete_: crud.Delete<
+  Session,
+  db.Connection,
+  ValidatedDeleteRequestBody,
+  DeleteValidationErrors
+> = (connection: db.Connection) => {
+  return {
+    async validateRequestBody(request) {
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.deleteTWUProposal(
+          connection,
+          request.session,
+          request.params.id
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+      const validatedTWUProposal = await validateTWUProposalId(
+        connection,
+        request.params.id,
+        request.session
+      );
+      if (isInvalid(validatedTWUProposal)) {
+        return invalid({
+          notFound: ["The specified proposal was not found."]
+        });
+      }
+      if (validatedTWUProposal.value.status !== TWUProposalStatus.Draft) {
+        return invalid({ status: ["Only draft proposals can be deleted."] });
+      }
+      return valid({
+        proposal: validatedTWUProposal.value.id,
+        session: request.session
+      });
+    },
+    respond: wrapRespond({
+      valid: async (request) => {
+        const dbResult = await db.deleteTWUProposal(
+          connection,
+          request.body.proposal,
+          request.body.session
+        );
+        if (isInvalid(dbResult)) {
+          return basicResponse(
+            503,
+            request.session,
+            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+          );
+        }
+        return basicResponse(
+          200,
+          request.session,
+          makeJsonResponseBody(dbResult.value)
+        );
+      },
+      invalid: async (request) => {
+        return basicResponse(
+          400,
+          request.session,
+          makeJsonResponseBody(request.body)
+        );
+      }
+    })
+  };
+};
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readMany,
   readOne,
-  create
+  create,
   // update,
-  // delete: delete_
+  delete: delete_
 };
 
 export default resource;
