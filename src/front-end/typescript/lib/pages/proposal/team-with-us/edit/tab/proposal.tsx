@@ -35,6 +35,14 @@ import { isVendor } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { isInvalid } from "shared/lib/validation";
 
+/**
+ * @remarks
+ *
+ * This reflects the page, or 'tab' that a Vendor can see when publishing a
+ * proposal, in response to a TWU opportunity. URI would look something like:
+ * `opportunities/team-with-us/<opp-uuid>/proposals/<proposal-uuid>/edit`
+ */
+
 type ModalId =
   | "submit"
   | "submitChanges"
@@ -697,6 +705,12 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
+/**
+ * Displays the content of the proposal form filled out by the Vendor
+ *
+ * @see {@link Form.view} `src/front-end/typescript/lib/pages/proposal/team-with-us/lib/components/form.tsx'
+ * @param props
+ */
 const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   return (
