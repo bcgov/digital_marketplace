@@ -41,6 +41,7 @@ import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -212,6 +213,14 @@ function pageToViewPageProps(
         PageOrgSWUTerms.component,
         (state) => state.pages.orgSWUTerms,
         (value) => ({ tag: "pageOrgSWUTerms", value })
+      );
+
+    case "orgTWUTerms":
+      return makeViewPageProps(
+        props,
+        PageOrgTWUTerms.component,
+        (state) => state.pages.orgTWUTerms,
+        (value) => ({ tag: "pageOrgTWUTerms", value })
       );
 
     case "orgCreate":

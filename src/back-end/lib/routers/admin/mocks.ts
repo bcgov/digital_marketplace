@@ -272,7 +272,8 @@ export const organization: Organization = {
   contactTitle: "Contact Title",
   contactPhone: "Contact Phone",
   websiteUrl: "Website",
-  active: true
+  active: true,
+  serviceAreas: []
 };
 
 export const organizatonSlim: OrganizationSlim = {

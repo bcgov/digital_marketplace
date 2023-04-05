@@ -68,7 +68,7 @@ export type Msg =
 export interface Values
   extends Omit<
     Required<CreateRequestBody>,
-    "logoImageFile" | "deactivatedOn" | "deactivatedBy"
+    "logoImageFile" | "deactivatedOn" | "deactivatedBy" | "serviceAreas"
   > {
   newLogoImage?: File;
 }

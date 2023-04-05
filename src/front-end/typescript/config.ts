@@ -53,6 +53,8 @@ export const TWU_PROPOSAL_EVALUATION_CONTENT_ID =
 
 export const SWU_QUALIFICATION_TERMS_ID = "sprint-with-us-terms-and-conditions";
 
+export const TWU_QUALIFICATION_TERMS_ID = "team-with-us-terms-and-conditions";
+
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
 export const MANDATORY_WEIGHTED_CRITERIA_URL =
@@ -60,3 +62,6 @@ export const MANDATORY_WEIGHTED_CRITERIA_URL =
 
 export const CWU_PAYMENT_OPTIONS_URL =
   "https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment";
+
+export const TWU_BC_BID_URL =
+  "https://new.bcbid.gov.bc.ca/page.aspx/en/bpm/process_manage_extranet/9703";
