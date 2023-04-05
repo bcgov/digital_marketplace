@@ -185,15 +185,13 @@ interface IntersperseProps {
   separator: ReactElement | string;
 }
 
-export function Intersperse({
+export const Intersperse: component.base.View<IntersperseProps> = ({
   collection,
   separator
-}: IntersperseProps): ReactElement {
-  return (
-    <Fragment
-      children={intersperse(collection, separator).map((child, i) => (
-        <Fragment key={`${i}`}>{child}</Fragment>
-      ))}
-    />
-  );
-}
+}) => (
+  <Fragment
+    children={intersperse(collection, separator).map((child, i) => (
+      <Fragment key={`${i}`}>{child}</Fragment>
+    ))}
+  />
+);
