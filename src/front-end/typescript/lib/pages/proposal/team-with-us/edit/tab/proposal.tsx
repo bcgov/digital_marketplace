@@ -745,165 +745,165 @@ export const component: Tab.Component<State, Msg> = {
     return Form.getAlerts(state.form);
   },
 
-  // getModal: (state) => {
-  //   const formModal = component_.page.modal.map(
-  //     Form.getModal(state.form),
-  //     (msg) => adt("form", msg) as Msg
-  //   );
-  //   if (formModal.tag !== "hide") {
-  //     return formModal;
-  //   }
-  //   const hasAcceptedTerms =
-  //     SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
-  //     SubmitProposalTerms.getAppCheckbox(state.submitTerms);
-  //
-  //   switch (state.showModal) {
-  //     case "submit":
-  //     case "saveChangesAndSubmit":
-  //       return component_.page.modal.show({
-  //         title: "Review Terms and Conditions",
-  //         body: (dispatch) => (
-  //           <SubmitProposalTerms.view
-  //             opportunityType="Team With Us"
-  //             action="submitting"
-  //             termsTitle="Team With Us Terms & Conditions"
-  //             termsRoute={adt(
-  //               "contentView",
-  //               "team-with-us-terms-and-conditions"
-  //             )}
-  //             state={state.submitTerms}
-  //             dispatch={component_.base.mapDispatch(
-  //               dispatch,
-  //               (msg) => adt("submitTerms", msg) as Msg
-  //             )}
-  //           />
-  //         ),
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Submit Proposal",
-  //             icon: "paper-plane",
-  //             color: "primary",
-  //             msg:
-  //               state.showModal === "submit"
-  //                 ? adt("submit")
-  //                 : adt("saveChangesAndSubmit"),
-  //             button: true,
-  //             disabled: !hasAcceptedTerms
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case "submitChanges":
-  //       return component_.page.modal.show({
-  //         title: "Review Terms and Conditions",
-  //         body: (dispatch) => (
-  //           <SubmitProposalTerms.view
-  //             opportunityType="Team With Us"
-  //             action="submitting changes to"
-  //             termsTitle="Team With Us Terms & Conditions"
-  //             termsRoute={adt(
-  //               "contentView",
-  //               "team-with-us-terms-and-conditions"
-  //             )}
-  //             state={state.submitTerms}
-  //             dispatch={component_.base.mapDispatch(
-  //               dispatch,
-  //               (msg) => adt("submitTerms", msg) as Msg
-  //             )}
-  //           />
-  //         ),
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Submit Changes",
-  //             icon: "paper-plane",
-  //             color: "primary",
-  //             msg: adt("saveChanges"),
-  //             button: true,
-  //             disabled: !hasAcceptedTerms
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case "withdrawBeforeDeadline":
-  //       return component_.page.modal.show({
-  //         title: "Withdraw Team With Us Proposal?",
-  //         body: () =>
-  //           "Are you sure you want to withdraw your Team With Us proposal? You will still be able to resubmit your
-  //           proposal prior to the opportunity's proposal deadline.",
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Withdraw Proposal",
-  //             icon: "ban",
-  //             color: "danger",
-  //             msg: adt("withdraw"),
-  //             button: true
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case "withdrawAfterDeadline":
-  //       return component_.page.modal.show({
-  //         title: "Withdraw Team With Us Proposal?",
-  //         body: () =>
-  //           "Are you sure you want to withdraw your Team With Us proposal? You will no longer be considered for this
-  //           opportunity.",
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Withdraw Proposal",
-  //             icon: "ban",
-  //             color: "danger",
-  //             msg: adt("withdraw"),
-  //             button: true
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case "delete":
-  //       return component_.page.modal.show({
-  //         title: "Delete Team With Us Proposal?",
-  //         body: () =>
-  //           "Are you sure you want to delete your Team With Us proposal? You will not be able to recover the
-  //           proposal once it has been deleted.",
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Delete Proposal",
-  //             icon: "trash",
-  //             color: "danger",
-  //             msg: adt("delete"),
-  //             button: true
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             msg: adt("hideModal")
-  //           }
-  //         ]
-  //       });
-  //     case null:
-  //       return component_.page.modal.hide();
-  //   }
-  // },
+  getModal: (state) => {
+    const formModal = component_.page.modal.map(
+      Form.getModal(state.form),
+      (msg) => adt("form", msg) as Msg
+    );
+    if (formModal.tag !== "hide") {
+      return formModal;
+    }
+    const hasAcceptedTerms =
+      SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
+      SubmitProposalTerms.getAppCheckbox(state.submitTerms);
+
+    switch (state.showModal) {
+      case "submit":
+      case "saveChangesAndSubmit":
+        return component_.page.modal.show({
+          title: "Review Terms and Conditions",
+          body: (dispatch) => (
+            <SubmitProposalTerms.view
+              opportunityType="Team With Us"
+              action="submitting"
+              termsTitle="Team With Us Terms & Conditions"
+              termsRoute={adt(
+                "contentView",
+                "team-with-us-terms-and-conditions"
+              )}
+              state={state.submitTerms}
+              dispatch={component_.base.mapDispatch(
+                dispatch,
+                (msg) => adt("submitTerms", msg) as Msg
+              )}
+            />
+          ),
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Proposal",
+              icon: "paper-plane",
+              color: "primary",
+              msg:
+                state.showModal === "submit"
+                  ? adt("submit")
+                  : adt("saveChangesAndSubmit"),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "submitChanges":
+        return component_.page.modal.show({
+          title: "Review Terms and Conditions",
+          body: (dispatch) => (
+            <SubmitProposalTerms.view
+              opportunityType="Team With Us"
+              action="submitting changes to"
+              termsTitle="Team With Us Terms & Conditions"
+              termsRoute={adt(
+                "contentView",
+                "team-with-us-terms-and-conditions"
+              )}
+              state={state.submitTerms}
+              dispatch={component_.base.mapDispatch(
+                dispatch,
+                (msg) => adt("submitTerms", msg) as Msg
+              )}
+            />
+          ),
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Changes",
+              icon: "paper-plane",
+              color: "primary",
+              msg: adt("saveChanges"),
+              button: true,
+              disabled: !hasAcceptedTerms
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "withdrawBeforeDeadline":
+        return component_.page.modal.show({
+          title: "Withdraw Team With Us Proposal?",
+          body: () =>
+            "Are you sure you want to withdraw your Team With Us proposal? You will still be able to resubmit your" +
+            " proposal prior to the opportunity's proposal deadline.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Withdraw Proposal",
+              icon: "ban",
+              color: "danger",
+              msg: adt("withdraw"),
+              button: true
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "withdrawAfterDeadline":
+        return component_.page.modal.show({
+          title: "Withdraw Team With Us Proposal?",
+          body: () =>
+            "Are you sure you want to withdraw your Team With Us proposal? You will no longer be considered for this" +
+            " opportunity.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Withdraw Proposal",
+              icon: "ban",
+              color: "danger",
+              msg: adt("withdraw"),
+              button: true
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "delete":
+        return component_.page.modal.show({
+          title: "Delete Team With Us Proposal?",
+          body: () =>
+            "Are you sure you want to delete your Team With Us proposal? You will not be able to recover the" +
+            " proposal once it has been deleted.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Delete Proposal",
+              icon: "trash",
+              color: "danger",
+              msg: adt("delete"),
+              button: true
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case null:
+        return component_.page.modal.hide();
+    }
+  },
 
   getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
