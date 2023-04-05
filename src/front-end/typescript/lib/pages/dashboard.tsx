@@ -530,12 +530,12 @@ export const component: component_.page.Component<
                       collection={programsToQualify.map(
                         ({ qualificationLink }) => qualificationLink
                       )}
-                      separator={<> or </>}
+                      separator={" or "}
                     />{" "}
                     in order to submit proposals to{" "}
                     <Intersperse
                       collection={programsToQualify.map(({ name }) => name)}
-                      separator={<> or </>}
+                      separator={" or "}
                     />{" "}
                     opportunities.
                   </span>

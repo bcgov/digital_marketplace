@@ -344,10 +344,10 @@ export function arrayFromRange<Element = number>(
  * @param separator - element placed between collection members
  * @returns list of interspersed elements
  */
-export function intersperse<A, B>(collection: A[], separator: B): Array<A | B> {
+export function intersperse<A>(collection: A[], separator: A): A[] {
   return reduce(
     collection,
-    (acc: Array<A | B>, val: A, index: number) => [
+    (acc: A[], val: A, index: number) => [
       ...acc,
       ...(index > 0 ? [separator] : []),
       val

@@ -180,12 +180,15 @@ export function fileBlobPath(file: Pick<FileRecord, "id">) {
   return prefixPath(`api/files/${file.id}?type=blob`);
 }
 
-type IntersperseProps = <A>(props: {
-  collection: A[];
-  separator: ReactElement;
-}) => ReactElement;
+interface IntersperseProps {
+  collection: Array<ReactElement | string>;
+  separator: ReactElement | string;
+}
 
-export const Intersperse: IntersperseProps = ({ collection, separator }) => {
+export function Intersperse({
+  collection,
+  separator
+}: IntersperseProps): ReactElement {
   return (
     <Fragment
       children={intersperse(collection, separator).map((child, i) => (
@@ -193,4 +196,4 @@ export const Intersperse: IntersperseProps = ({ collection, separator }) => {
       ))}
     />
   );
-};
+}
