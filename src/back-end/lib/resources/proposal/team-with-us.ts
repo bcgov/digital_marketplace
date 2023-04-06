@@ -37,7 +37,7 @@ import {
   TWUProposalStatus,
   UpdateResourceQuestionScoreBody,
   UpdateEditValidationErrors,
-  UpdateRequestBody,
+  UpdateRequestBody as SharedUpdateRequestBody,
   UpdateResourceQuestionScoreValidationErrors,
   UpdateValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
@@ -96,7 +96,7 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
 
-// type UpdateRequestBody = SharedUpdateRequestBody | null;
+type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "proposals/team-with-us";
 
@@ -478,7 +478,12 @@ const update: crud.Update<
           return adt("edit", {
             organization: getString(value, "organization"),
             resourceQuestionResponses: get(value, "resourceQuestionResponses"),
-            attachments: getStringArray(value, "attachments")
+            attachments: getStringArray(value, "attachments"),
+            team: get(value, "team")
+            // team: (Array.isArray(team) ? team : []).map((member) => ({
+            //   member: getString(member, "member"),
+            //   hourlyRate: getNumber(member, "hourlyRate")
+            // }))
           });
         case "submit":
           return adt("submit", getString(body, "value", ""));
@@ -556,7 +561,7 @@ const update: crud.Update<
 
       switch (request.body.tag) {
         case "edit": {
-          const { organization, resourceQuestionResponses, attachments } =
+          const { organization, resourceQuestionResponses, attachments, team } =
             request.body.value;
 
           const validatedOrganization = await validateProposalOrganization(
@@ -614,7 +619,13 @@ const update: crud.Update<
                   : [],
                 session: request.session,
                 attachments: validatedAttachments.value,
-                organization: organization || undefined
+                organization: organization || undefined,
+                team: team
+                  ? team.map((t) => ({
+                      member: getString(t, "member"),
+                      hourlyRate: getNumber<number>(t, "hourlyRate")
+                    }))
+                  : []
               })
             });
           }
@@ -654,7 +665,8 @@ const update: crud.Update<
                 organization: validatedOrganization.value.id,
                 resourceQuestionResponses:
                   validatedResourceQuestionResponses.value,
-                attachments: validatedAttachments.value
+                attachments: validatedAttachments.value,
+                team: validatedProposalTeam.value
               })
             } as ValidatedUpdateRequestBody);
           } else {
@@ -690,15 +702,12 @@ const update: crud.Update<
               proposalValidation.validateTWUProposalResourceQuestionResponses(
                 validatedTWUProposal.value.resourceQuestionResponses,
                 twuOpportunity.resourceQuestions
-              ),
-              // proposalValidation.validateTWUProposalProposedCost(
-              //   twuOpportunity.maxBudget
-              // ),
-              await validateTWUProposalTeam(
-                connection,
-                validatedTWUProposal.value.team,
-                request.id
               )
+              // await validateTWUProposalTeam(
+              //   connection,
+              //   validatedTWUProposal.value.team,
+              //   request.id
+              // )
             ])
           ) {
             return invalid({
