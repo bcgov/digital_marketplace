@@ -175,7 +175,8 @@ function generateOrganizationQuery(connection: Connection) {
           membershipStatus: MembershipStatus.Active
         })
         .as("numTeamMembers"),
-      connection.raw(`(
+      connection.raw(
+        `(
         SELECT
           coalesce(
             json_agg(sa),
@@ -184,7 +185,11 @@ function generateOrganizationQuery(connection: Connection) {
         FROM
           "twuOrganizationServiceAreas" tosa
           JOIN "serviceAreas" sa ON tosa."serviceArea" = sa.id
-      )`)
+        WHERE
+          tosa.organization = ?
+      )`,
+        connection.ref("organizations.id")
+      )
     );
 }
 
