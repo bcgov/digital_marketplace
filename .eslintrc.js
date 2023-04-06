@@ -11,7 +11,6 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:mocha/recommended",
     "plugin:cypress/recommended"
     // "prettier",
   ],
@@ -23,7 +22,7 @@ module.exports = {
     ecmaVersion: 13,
     sourceType: "module"
   },
-  plugins: ["react", "@typescript-eslint", "mocha", "cypress"],
+  plugins: ["react", "@typescript-eslint", "cypress"],
   rules: {
     // TODO remove rule overrides that affect code quality
     "@typescript-eslint/no-explicit-any": "off",
@@ -31,8 +30,7 @@ module.exports = {
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/no-empty-function": "off",
     "react/no-children-prop": "off",
-    "@typescript-eslint/ban-ts-comment": "warn",
-    "mocha/no-setup-in-describe": "off"
+    "@typescript-eslint/ban-ts-comment": "warn"
   },
   overrides: [
     {

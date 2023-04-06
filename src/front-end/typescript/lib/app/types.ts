@@ -31,6 +31,7 @@ import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -82,6 +83,7 @@ export type Route =
   | ADT<"orgList", PageOrgList.RouteParams>
   | ADT<"orgEdit", PageOrgEdit.RouteParams>
   | ADT<"orgSWUTerms", PageOrgSWUTerms.RouteParams>
+  | ADT<"orgTWUTerms", PageOrgTWUTerms.RouteParams>
   | ADT<"proposalSWUCreate", PageProposalSWUCreate.RouteParams>
   | ADT<"proposalSWUEdit", PageProposalSWUEdit.RouteParams>
   | ADT<"proposalSWUView", PageProposalSWUView.RouteParams>
@@ -173,6 +175,7 @@ export interface State {
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
     orgSWUTerms?: Immutable<PageOrgSWUTerms.State>;
+    orgTWUTerms?: Immutable<PageOrgTWUTerms.State>;
     proposalSWUCreate?: Immutable<PageProposalSWUCreate.State>;
     proposalSWUEdit?: Immutable<PageProposalSWUEdit.State>;
     proposalSWUView?: Immutable<PageProposalSWUView.State>;
@@ -238,6 +241,7 @@ export type InnerMsg =
   | ADT<"pageOrgList", PageOrgList.Msg>
   | ADT<"pageOrgEdit", PageOrgEdit.Msg>
   | ADT<"pageOrgSWUTerms", PageOrgSWUTerms.Msg>
+  | ADT<"pageOrgTWUTerms", PageOrgTWUTerms.Msg>
   | ADT<"pageProposalSWUCreate", PageProposalSWUCreate.Msg>
   | ADT<"pageProposalSWUEdit", PageProposalSWUEdit.Msg>
   | ADT<"pageProposalSWUView", PageProposalSWUView.Msg>

@@ -276,6 +276,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
       <EditTabHeader
         legalName={state.organization.legalName}
         swuQualified={state.swuQualified}
+        twuQualified={state.twuQualified}
       />
       <Row className="mt-5">
         <Col xs="12">

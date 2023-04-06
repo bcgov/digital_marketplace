@@ -1,5 +1,5 @@
 import { count } from "@wordpress/wordcount";
-import { get, isArray, isBoolean, repeat } from "lodash";
+import { get, isArray, isBoolean, reduce, repeat } from "lodash";
 import moment, { isDate, Moment } from "moment-timezone";
 import { TIMEZONE } from "shared/config";
 import { Comparison } from "shared/lib/types";
@@ -32,9 +32,17 @@ export function getString(
 }
 
 export function getStringArray(obj: any, keyPath: string | string[]): string[] {
+  return getStringArrayWithFallback(obj, keyPath, []);
+}
+
+export function getStringArrayWithFallback<Fallback>(
+  obj: any,
+  keyPath: string | string[],
+  fallback: Fallback
+): string[] | Fallback {
   const value: any[] = get(obj, keyPath, []);
   if (!isArray(value)) {
-    return [];
+    return fallback;
   }
   return value.map((v) => (v === undefined || value === null ? "" : String(v)));
 }
@@ -327,4 +335,23 @@ export function arrayFromRange<Element = number>(
     const number = (i + offset) * step;
     return cb(number);
   });
+}
+
+/**
+ * Intersperse array elements with a separator.
+ *
+ * @param collection
+ * @param separator - element placed between collection members
+ * @returns list of interspersed elements
+ */
+export function intersperse<A>(collection: A[], separator: A): A[] {
+  return reduce(
+    collection,
+    (acc: A[], val: A, index: number) => [
+      ...acc,
+      ...(index > 0 ? [separator] : []),
+      val
+    ],
+    []
+  );
 }

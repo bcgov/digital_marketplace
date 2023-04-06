@@ -60,6 +60,8 @@ import {
   SupportedRequestBodies,
   SupportedResponseBodies
 } from "back-end/lib/types";
+import { Application } from "express";
+import { Server } from "http";
 import Knex, { ConnectionConfig } from "knex";
 import { concat, flatten, flow, map } from "lodash/fp";
 import { flipCurried } from "shared/lib";
@@ -123,7 +125,7 @@ const flippedConcat = flipCurried(concat);
  *
  * @returns a {@link AppRouter} constructed from the Digital Marketplace resources.
  */
-export async function createRouter(connection: Connection): Promise<AppRouter> {
+export function createRouter(connection: Connection): AppRouter {
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
     affiliationResource,
@@ -172,7 +174,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     // API routes.
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
-    flippedConcat(await authRouter(connection)),
+    flippedConcat(authRouter(connection)),
     // Admin router
     flippedConcat(
       adminRouter().map((route) => namespaceRoute("/admin", route))
@@ -196,7 +198,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
   return allRoutes;
 }
 
-export async function createDowntimeRouter(): Promise<AppRouter> {
+export function createDowntimeRouter(): AppRouter {
   return flow([
     // Front-end router.
     flippedConcat(frontEndRouter("downtime.html")),
@@ -205,7 +207,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start() {
+export async function initApplication() {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !PG_CONFIG) {
@@ -215,14 +217,13 @@ async function start() {
   // Connect to Postgres.
   const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
-  connection.raw("SELECT 1").then(() => {
-    console.log("PostgreSQL connected");
-  });
+  await connection.raw("SELECT 1");
+  console.log("PostgreSQL connected");
 
   // Create the router.
-  let router: AppRouter = await (SCHEDULED_DOWNTIME
-    ? createDowntimeRouter
-    : createRouter)(connection);
+  let router: AppRouter = (
+    SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter
+  )(connection);
   // Add the status router.
   // This should not be behind basic auth.
   // Also, run the CWU and SWU hooks with the status router.
@@ -244,7 +245,7 @@ async function start() {
     FileUploadMetadata | null
   > = express();
 
-  adapter({
+  const app = adapter({
     router,
     sessionIdToSession: async (id) => {
       //Do not touch the database:
@@ -274,13 +275,35 @@ async function start() {
       return parseFilePermissions(raw);
     }
   });
-  logger.info("server started", {
-    host: SERVER_HOST,
-    port: String(SERVER_PORT)
-  });
+
+  return app;
 }
 
-start().catch((error) => {
-  logger.error("app startup failed", makeErrorResponseBody(error).value);
-  process.exit(1);
-});
+let server: Server;
+export let app: Application;
+
+export async function startServer() {
+  try {
+    app = await initApplication();
+    server = app.listen(SERVER_PORT, SERVER_HOST);
+    logger.info("server started", {
+      host: SERVER_HOST,
+      port: String(SERVER_PORT)
+    });
+  } catch (error) {
+    logger.error(
+      "app startup failed",
+      makeErrorResponseBody(error as Error).value
+    );
+    process.exit(1);
+  }
+}
+
+export async function stopServer() {
+  if (!server) {
+    console.error("Server is not started");
+    process.exit(1);
+  }
+
+  await server.close();
+}

@@ -5,3 +5,5 @@ export interface TWUServiceAreaRecord {
   serviceArea: TWUServiceArea;
   name: string;
 }
+
+export type ServiceAreaId = TWUServiceAreaRecord["id"];

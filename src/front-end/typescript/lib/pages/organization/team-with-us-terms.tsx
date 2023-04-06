@@ -1,4 +1,4 @@
-import { SWU_QUALIFICATION_TERMS_ID } from "front-end/config";
+import { TWU_QUALIFICATION_TERMS_ID } from "front-end/config";
 import {
   getAlertsValid,
   makePageMetadata,
@@ -27,16 +27,16 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { Content } from "shared/lib/resources/content";
 
-export const TITLE = "Sprint With Us Terms & Conditions";
+export const TITLE = "Team With Us Terms & Conditions";
 
-export function acceptedSWUTermsText(
+export function acceptedTWUTermsText(
   organization: Organization,
   ifNotAcceptedText: string
 ) {
-  return organization.acceptedSWUTerms
+  return organization.acceptedTWUTerms
     ? `${organization.legalName} agreed to the ${TITLE} on ${formatDate(
-        organization.acceptedSWUTerms
-      )} at ${formatTime(organization.acceptedSWUTerms)}.`
+        organization.acceptedTWUTerms
+      )} at ${formatTime(organization.acceptedTWUTerms)}.`
     : ifNotAcceptedText;
 }
 
@@ -87,7 +87,7 @@ const init: component_.page.Init<
             api.isValid(response) ? response.value : null
           ) as component_.Cmd<Organization | null>,
           api.content.readOne(
-            SWU_QUALIFICATION_TERMS_ID,
+            TWU_QUALIFICATION_TERMS_ID,
             (response) => response
           ),
           (organization, body) =>
@@ -160,7 +160,7 @@ const update: component_.base.Update<State, Msg> = updateValid(
           [
             api.organizations.update(
               organization.id,
-              adt("acceptSWUTerms"),
+              adt("acceptTWUTerms"),
               (response) => adt("onAcceptResponse", api.isValid(response))
             ) as component_.Cmd<Msg>
           ]
@@ -176,7 +176,7 @@ const update: component_.base.Update<State, Msg> = updateValid(
             [
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
-                  adt("error", toasts.acceptedSWUTerms.error(organization))
+                  adt("error", toasts.acceptedTWUTerms.error(organization))
                 )
               )
             ]
@@ -187,14 +187,14 @@ const update: component_.base.Update<State, Msg> = updateValid(
           [
             component_.cmd.dispatch(
               component_.global.showToastMsg(
-                adt("success", toasts.acceptedSWUTerms.success(organization))
+                adt("success", toasts.acceptedTWUTerms.success(organization))
               )
             ),
             component_.cmd.dispatch(
               component_.global.newRouteMsg(
                 adt("orgEdit", {
                   orgId: organization.id,
-                  tab: "swuQualification"
+                  tab: "twuQualification"
                 }) as Route
               )
             )
@@ -211,7 +211,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
     const organization = state.organization;
     if (!organization) return null;
-    const { acceptedSWUTerms } = organization;
+    const { acceptedTWUTerms } = organization;
     return (
       <Row>
         <Col xs="12">
@@ -219,9 +219,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           <Markdown
             source={state.body}
             openLinksInNewTabs
-            className={acceptedSWUTerms ? "" : "mb-5"}
+            className={acceptedTWUTerms ? "" : "mb-5"}
           />
-          {acceptedSWUTerms || isAdmin(state.viewerUser) ? null : (
+          {acceptedTWUTerms || isAdmin(state.viewerUser) ? null : (
             <div className="d-flex flex-nowrap flex-row-reverse">
               <Link
                 button
@@ -235,7 +235,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
                 dest={routeDest(
                   adt("orgEdit", {
                     orgId: organization.id,
-                    tab: "swuQualification"
+                    tab: "twuQualification"
                   }) as Route
                 )}>
                 Cancel
@@ -264,7 +264,7 @@ export const component: component_.page.Component<
   getAlerts: getAlertsValid((state) => {
     const organization = state.organization;
     if (!organization) return component_.page.alerts.empty();
-    const acceptedText = acceptedSWUTermsText(organization, "");
+    const acceptedText = acceptedTWUTermsText(organization, "");
     return {
       info: acceptedText ? [{ text: acceptedText }] : []
     };

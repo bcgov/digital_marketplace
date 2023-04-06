@@ -380,6 +380,14 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/organizations/:id/team-with-us-terms-and-conditions"),
+      makeRoute({ params }) {
+        return adt("orgTWUTerms", {
+          orgId: params.id || ""
+        });
+      }
+    },
+    {
       path: prefixPath("/users/:id"),
       makeRoute({ params, query }) {
         const affiliationId =
@@ -634,6 +642,10 @@ const router: router_.Router<Route> = {
       case "orgSWUTerms":
         return prefixPath(
           `/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`
+        );
+      case "orgTWUTerms":
+        return prefixPath(
+          `/organizations/${route.value.orgId}/team-with-us-terms-and-conditions`
         );
       case "orgCreate":
         return prefixPath("/organizations/create");

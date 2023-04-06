@@ -20,6 +20,7 @@ import {
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 import { Session } from "shared/lib/resources/session";
 import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
@@ -33,7 +34,11 @@ interface UpdateOrganizationParams
   extends Partial<
     Omit<
       Organization,
-      "logoImageFile" | "owner" | "possessAllCapabilities" | "numTeamMembers"
+      | "logoImageFile"
+      | "owner"
+      | "possessAllCapabilities"
+      | "possessOneServiceArea"
+      | "numTeamMembers"
     >
   > {
   logoImageFile?: Id;
@@ -92,8 +97,10 @@ async function rawOrganizationSlimToOrganizationSlim(
     legalName,
     logoImageFile,
     owner: ownerId,
+    acceptedTWUTerms,
     acceptedSWUTerms,
     possessAllCapabilities,
+    possessOneServiceArea,
     numTeamMembers,
     active
   } = raw;
@@ -113,8 +120,10 @@ async function rawOrganizationSlimToOrganizationSlim(
     legalName,
     logoImageFile: fetchedLogoImageFile,
     owner: owner || undefined,
+    acceptedTWUTerms,
     acceptedSWUTerms,
     possessAllCapabilities,
+    possessOneServiceArea,
     active,
     numTeamMembers:
       numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10)
@@ -165,7 +174,22 @@ function generateOrganizationQuery(connection: Connection) {
           organization: connection.ref("organizations.id"),
           membershipStatus: MembershipStatus.Active
         })
-        .as("numTeamMembers")
+        .as("numTeamMembers"),
+      connection.raw(
+        `(
+        SELECT
+          coalesce(
+            json_agg(sa),
+            '[]' :: json
+          ) AS "serviceAreas"
+        FROM
+          "twuOrganizationServiceAreas" tosa
+          JOIN "serviceAreas" sa ON tosa."serviceArea" = sa.id
+        WHERE
+          tosa.organization = ?
+      )`,
+        connection.ref("organizations.id")
+      )
     );
 }
 
@@ -194,9 +218,11 @@ export const readOneOrganizationSlim = tryDb<
     legalName,
     logoImageFile,
     owner,
+    acceptedTWUTerms,
     acceptedSWUTerms,
     numTeamMembers,
-    active
+    active,
+    serviceAreas
   } = result;
   // If no session, or user is not an admin/government or owning vendor, do not include RFQ data
   if (!session || (isVendor(session) && owner !== session.user?.id)) {
@@ -220,6 +246,8 @@ export const readOneOrganizationSlim = tryDb<
           connection,
           result
         ),
+        possessOneServiceArea: serviceAreas.length > 0,
+        acceptedTWUTerms,
         acceptedSWUTerms,
         numTeamMembers
       })
@@ -248,12 +276,14 @@ export const readOneOrganization = tryDb<
     if (!session || (isVendor(session) && result.owner !== session.user?.id)) {
       delete result.owner;
       delete result.numTeamMembers;
+      delete result.acceptedTWUTerms;
       delete result.acceptedSWUTerms;
     } else {
       result.possessAllCapabilities = await doesOrganizationMeetAllCapabilities(
         connection,
         result
       );
+      result.possessOneServiceArea = result.serviceAreas.length > 0;
     }
   }
   return valid(
@@ -330,8 +360,10 @@ export const readManyOrganizations = tryDb<
         logoImageFile,
         owner,
         numTeamMembers,
+        acceptedTWUTerms,
         acceptedSWUTerms,
-        active
+        active,
+        serviceAreas
       } = raw;
       if (!isAdmin(session) && raw.owner !== session?.user.id) {
         return await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -352,6 +384,8 @@ export const readManyOrganizations = tryDb<
             connection,
             raw
           ),
+          possessOneServiceArea: serviceAreas.length > 0,
+          acceptedTWUTerms,
           acceptedSWUTerms
         });
       }
@@ -384,8 +418,10 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
             logoImageFile,
             owner,
             numTeamMembers,
+            acceptedTWUTerms,
             acceptedSWUTerms,
-            active
+            active,
+            serviceAreas
           } = raw;
           return await rawOrganizationSlimToOrganizationSlim(connection, {
             id,
@@ -398,6 +434,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
               connection,
               raw
             ),
+            possessOneServiceArea: serviceAreas.length > 0,
+            acceptedTWUTerms,
             acceptedSWUTerms
           });
         })
@@ -501,3 +539,46 @@ export const readOneOrganizationOwner = tryDb<[Id], User | null>(
     return valid(result ? await rawUserToUser(connection, result) : null);
   }
 );
+
+export const qualifyOrganizationServiceAreas = tryDb<
+  [Id, ServiceAreaId[], Session],
+  Organization
+>(async (connection, organization, serviceAreas, session) => {
+  await connection.transaction(async (trx) => {
+    await connection<{
+      organization: Id;
+      serviceArea: ServiceAreaId;
+    }>("twuOrganizationServiceAreas")
+      .transacting(trx)
+      .where({ "twuOrganizationServiceAreas.organization": organization })
+      .delete("*");
+
+    for (const serviceArea of serviceAreas) {
+      const [newServiceAreasResult] = await connection(
+        "twuOrganizationServiceAreas"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            organization,
+            serviceArea
+          },
+          "*"
+        );
+      if (!newServiceAreasResult) {
+        throw new Error("Unable to add service area");
+      }
+    }
+  });
+
+  const dbResult = await readOneOrganization(
+    connection,
+    organization,
+    true,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update organization");
+  }
+  return valid(dbResult.value);
+});

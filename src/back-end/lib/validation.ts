@@ -60,6 +60,7 @@ import {
   TWUProposal
 } from "shared/lib/resources/proposal/team-with-us";
 import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 
 /**
  * TWU - Team With Us Validation
@@ -147,7 +148,7 @@ export async function validateTWUOpportunityId(
 export async function validateServiceArea(
   connection: db.Connection,
   raw: string
-): Promise<Validation<number>> {
+): Promise<Validation<ServiceAreaId>> {
   const parsed = parseTWUServiceArea(raw);
   if (!parsed) {
     return invalid([`"${raw}" is not a valid service area.`]);
@@ -169,6 +170,20 @@ export async function validateServiceArea(
   } catch (e) {
     return invalid(["Please specify a valid service area."]);
   }
+}
+
+/**
+ * Validates a list of service areas in the db.
+ *
+ * @param raw - string array argument
+ * @param connection - Knex connection wrapper
+ * @returns
+ */
+export function validateServiceAreas(
+  connection: db.Connection,
+  raw: string[]
+): Promise<ArrayValidation<ServiceAreaId>> {
+  return validateArrayAsync(raw, (v) => validateServiceArea(connection, v));
 }
 
 /**
