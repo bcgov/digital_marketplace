@@ -345,12 +345,10 @@ const create: crud.Create<
           organization: organization || undefined,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          team: team
-            ? team.map((t) => ({
-                member: getString(t, "member"),
-                hourlyRate: getNumber(t, "hourlyRate")
-              }))
-            : []
+          team: team.map((t) => ({
+            member: getString(t, "member"),
+            hourlyRate: getNumber(t, "hourlyRate")
+          }))
         });
       }
 

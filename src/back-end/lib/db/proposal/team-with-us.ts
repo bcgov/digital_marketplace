@@ -525,7 +525,7 @@ export const readManyProposalResourceQuestionResponses = tryDb<
 /**
  * Fetches members from the db, associated with a Proposal
  */
-export const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
+const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
   async (connection, proposalId) => {
     const query = connection<RawProposalTeamMember>("twuProposalMember").where({
       proposal: proposalId
