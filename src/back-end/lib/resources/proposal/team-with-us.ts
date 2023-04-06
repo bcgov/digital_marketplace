@@ -480,10 +480,6 @@ const update: crud.Update<
             resourceQuestionResponses: get(value, "resourceQuestionResponses"),
             attachments: getStringArray(value, "attachments"),
             team: get(value, "team")
-            // team: (Array.isArray(team) ? team : []).map((member) => ({
-            //   member: getString(member, "member"),
-            //   hourlyRate: getNumber(member, "hourlyRate")
-            // }))
           });
         case "submit":
           return adt("submit", getString(body, "value", ""));
@@ -646,10 +642,10 @@ const update: crud.Update<
               twuOpportunity.resourceQuestions
             );
 
-          // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
+          // Validate team members
           const validatedProposalTeam = await validateTWUProposalTeam(
             connection,
-            validatedTWUProposal.value.team,
+            team,
             validatedOrganization.value.id
           );
 
