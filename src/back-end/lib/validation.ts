@@ -190,9 +190,9 @@ export function validateServiceAreas(
  * Checks to see if a TWU proposal's members are affiliated with the
  * organization in the proposal
  *
- * @param connection
- * @param raw
- * @param organization
+ * @param connection - database connection
+ * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
+ * @param organization - organization id
  */
 export function validateTWUProposalTeam(
   connection: db.Connection,
@@ -690,7 +690,7 @@ export async function validateSWUProposalTeam(
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }
 
-export async function validateSWUProposalOrganization(
+export async function validateProposalOrganization(
   connection: db.Connection,
   organization: Id | undefined,
   session: Session

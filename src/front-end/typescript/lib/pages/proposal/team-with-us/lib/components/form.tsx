@@ -52,7 +52,7 @@ import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
 export type TabId =
   | "Evaluation"
-  | "Organization"
+  | "Resource"
   | "Pricing"
   | "Questions"
   | "Review Proposal";
@@ -160,13 +160,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       }
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
-    tabs: [
-      "Evaluation",
-      "Organization",
-      "Pricing",
-      "Questions",
-      "Review Proposal"
-    ],
+    tabs: ["Evaluation", "Resource", "Pricing", "Questions", "Review Proposal"],
     activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
@@ -553,7 +547,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
             </thead>
             <tbody>
               <tr>
-                <td>Step 1: Questions</td>
+                <td>Step 1: Resource Questions</td>
                 <td>{state.opportunity.questionsWeight}%</td>
                 <td>{EMPTY_STRING}</td>
               </tr>
@@ -563,7 +557,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
                 <td>{EMPTY_STRING}</td>
               </tr>
               <tr>
-                <td>Step 3: Challenge</td>
+                <td>Step 3: Interview/Challenge</td>
                 <td>{state.opportunity.challengeWeight}%</td>
                 <td>80%</td>
               </tr>
@@ -686,8 +680,8 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
         <Col xs="12" md="6">
           <NumberField.view
             extraChildProps={{ prefix: "$" }}
-            label="Proposed Hourly Rate"
-            placeholder="Proposed Hourly Rate"
+            label="Hourly Rate"
+            placeholder="Hourly Rate"
             hint={`Maximum opportunity budget is ${formatAmount(
               maxBudget,
               "$"
@@ -959,7 +953,7 @@ export const view: component_.base.View<Props> = ({
         return <EvaluationView {...props} />;
       case "Pricing":
         return <PricingView {...props} />;
-      case "Organization":
+      case "Resource":
         return <OrganizationView {...props} />;
       case "Questions":
         return <ResourceQuestionsView {...props} />;
@@ -978,7 +972,7 @@ export const view: component_.base.View<Props> = ({
             return true;
           case "Pricing":
             return isPricingTabValid(state);
-          case "Organization":
+          case "Resource":
             return isOrganizationsTabValid(state);
           case "Questions":
             return isResourceQuestionsTabValid(state);

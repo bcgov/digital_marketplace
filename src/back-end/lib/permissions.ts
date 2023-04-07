@@ -29,6 +29,7 @@ import {
 import {
   CreateTWUOpportunityStatus,
   doesTWUOpportunityStatusAllowGovToViewProposals,
+  TWUOpportunity,
   TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
@@ -347,7 +348,7 @@ export async function readManyCWUProposals(
   return false;
 }
 
-export function readOwnCWUProposals(session: Session): boolean {
+export function readOwnProposals(session: Session): boolean {
   return isVendor(session);
 }
 
@@ -740,6 +741,50 @@ export async function editTWUOpportunity(
   );
 }
 
+/**
+ * Admins and proposal authors can edit Proposals, so long as they are in a
+ * certain state
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ * @param opportunity
+ */
+export async function editTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await hasAcceptedPreviousTerms(connection, session))) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunity.id
+      )) &&
+      doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) ||
+    false
+  );
+}
+
+export async function submitTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await hasAcceptedCurrentTerms(connection, session))) ||
+    false
+  );
+}
+
 export async function readOneTWUProposal(
   connection: Connection,
   session: Session,
@@ -852,6 +897,26 @@ export async function canDeleteTWUOpportunity(
     false
   );
 }
+
+/**
+ * Only authors of the proposal can delete the proposal
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ */
+export async function deleteTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+    false
+  );
+}
+
 // Metrics.
 
 export function readAllCounters(session: Session): boolean {

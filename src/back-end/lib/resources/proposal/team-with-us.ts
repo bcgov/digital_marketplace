@@ -14,46 +14,45 @@ import {
   validateOrganizationId,
   validateTWUProposalTeam,
   validateTWUOpportunityId,
-  validateTWUProposalId
-  // validateTWUProposalOrganization,
-  // validateTWUProposalTeam,
+  validateTWUProposalId,
+  validateProposalOrganization
   // validateTWUProposalTeamMembers
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
-  CreateTWUResourceQuestionValidationErrors
-  // TWUOpportunityStatus
+  CreateTWUResourceQuestionValidationErrors,
+  TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   CreateRequestBody as SharedCreateRequestBody,
   CreateTWUTeamMemberBodyValidationErrors,
   CreateValidationErrors,
-  // DeleteValidationErrors,
-  // isValidStatusChange,
+  DeleteValidationErrors,
+  isValidStatusChange,
   TWUProposal,
   TWUProposalSlim,
-  TWUProposalStatus
-  // UpdateEditValidationErrors,
-  // UpdateRequestBody as SharedUpdateRequestBody,
-  // UpdateResourceQuestionScoreBody,
-  // UpdateResourceQuestionScoreValidationErrors,
-  // UpdateValidationErrors
+  TWUProposalStatus,
+  UpdateResourceQuestionScoreBody,
+  UpdateEditValidationErrors,
+  UpdateRequestBody as SharedUpdateRequestBody,
+  UpdateResourceQuestionScoreValidationErrors,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-// import { ADT, adt, Id } from "shared/lib/types";
+import { ADT, adt, Id } from "shared/lib/types";
 import {
   allValid,
   getInvalidValue,
-  // getValidValue,
+  getValidValue,
   invalid,
   isInvalid,
-  // isValid,
+  isValid,
   optionalAsync,
-  valid
-  // Validation
+  valid,
+  Validation
 } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 
@@ -63,29 +62,29 @@ interface ValidatedCreateRequestBody
   attachments: FileRecord[];
 }
 
-// interface ValidatedUpdateRequestBody {
-//   session: AuthenticatedSession;
-//   body:
-//     | ADT<"edit", ValidatedUpdateEditRequestBody>
-//     | ADT<"submit", string>
-//     | ADT<"scoreQuestions", UpdateResourceQuestionScoreBody[]>
-//     | ADT<"screenInToChallenge", string>
-//     | ADT<"screenOutFromChallenge", string>
-//     | ADT<"scoreChallenge", number>
-//     | ADT<"award", string>
-//     | ADT<"disqualify", string>
-//     | ADT<"withdraw", string>;
-// }
+interface ValidatedUpdateRequestBody {
+  session: AuthenticatedSession;
+  body:
+    | ADT<"edit", ValidatedUpdateEditRequestBody>
+    | ADT<"submit", string>
+    | ADT<"scoreQuestions", UpdateResourceQuestionScoreBody[]>
+    | ADT<"screenInToChallenge", string>
+    | ADT<"screenOutFromChallenge", string>
+    | ADT<"scoreChallenge", number>
+    | ADT<"award", string>
+    | ADT<"disqualify", string>
+    | ADT<"withdraw", string>;
+}
 
-// type ValidatedUpdateEditRequestBody = Omit<
-//   ValidatedCreateRequestBody,
-//   "opportunity" | "status" | "session"
-// >;
+type ValidatedUpdateEditRequestBody = Omit<
+  ValidatedCreateRequestBody,
+  "opportunity" | "status" | "session"
+>;
 
-// interface ValidatedDeleteRequestBody {
-//   proposal: Id;
-//   session: AuthenticatedSession;
-// }
+interface ValidatedDeleteRequestBody {
+  proposal: Id;
+  session: AuthenticatedSession;
+}
 /**
  * @typeParam CreateRequestBody - All the information that comes in the request
  * body when a vendor is creating a Team with Us Proposal. SharedCreateRequestBody
@@ -97,7 +96,7 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
 
-// type UpdateRequestBody = SharedUpdateRequestBody | null;
+type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "proposals/team-with-us";
 
@@ -143,7 +142,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
     } else {
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.readOwnCWUProposals(request.session)
+        !permissions.readOwnProposals(request.session)
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -332,19 +331,6 @@ const create: crud.Create<
         });
       }
 
-      /**
-       * Checks that the number provided is between a min/max value
-       * returns and sets a value that is either adt('valid', <number>)
-       * or adt('invalid', 'please enter value greater/less than x')
-       */
-      // const validatedHourlyRate =
-      //   proposalValidation.validateTWUHourlyRate(hourlyRate);
-      // if (isInvalid(validatedHourlyRate)) {
-      //   return invalid({
-      //     hourlyRate: validatedHourlyRate.value
-      //   });
-      // }
-
       // Only validate the following fields if proposal is in DRAFT
       if (validatedStatus.value === TWUProposalStatus.Draft) {
         return valid({
@@ -359,7 +345,10 @@ const create: crud.Create<
           organization: organization || undefined,
           status: validatedStatus.value,
           attachments: validatedAttachments.value,
-          team
+          team: team.map((t) => ({
+            member: getString(t, "member"),
+            hourlyRate: getNumber(t, "hourlyRate")
+          }))
         });
       }
 
@@ -470,787 +459,786 @@ const create: crud.Create<
   };
 };
 
-// const update: crud.Update<
-//   Session,
-//   db.Connection,
-//   UpdateRequestBody,
-//   ValidatedUpdateRequestBody,
-//   UpdateValidationErrors
-// > = (connection: db.Connection) => {
-//   return {
-//     async parseRequestBody(request) {
-//       const body = request.body.tag === "json" ? request.body.value : {};
-//       const tag = get(body, "tag");
-//       const value: unknown = get(body, "value");
-//       switch (tag) {
-//         case "edit":
-//           return adt("edit", {
-//             organization: getString(value, "organization"),
-//             resourceQuestionResponses: get(value, "resourceQuestionResponses"),
-//             attachments: getStringArray(value, "attachments")
-//           });
-//         case "submit":
-//           return adt("submit", getString(body, "value", ""));
-//         case "scoreQuestions":
-//           return adt("scoreQuestions", value as UpdateResourceQuestionScoreBody[]);
-//         case "screenInToChallenge":
-//           return adt("screenInToChallenge", getString(body, "value"));
-//         case "screenOutFromChallenge":
-//           return adt("screenOutFromChallenge", getString(body, "value"));
-//         case "scoreChallenge":
-//           return adt(
-//             "scoreChallenge",
-//             getNumber<number>(body, "value", -1, false)
-//           );
-//         case "award":
-//           return adt("award", getString(body, "value", ""));
-//         case "disqualify":
-//           return adt("disqualify", getString(body, "value", ""));
-//         case "withdraw":
-//           return adt("withdraw", getString(body, "value", ""));
-//         default:
-//           return null;
-//       }
-//     },
-//     async validateRequestBody(request) {
-//       if (!request.body) {
-//         return invalid({ proposal: adt("parseFailure" as const) });
-//       }
-//       if (!permissions.isSignedIn(request.session)) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//       const validatedTWUProposal = await validateTWUProposalId(
-//         connection,
-//         request.params.id,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUProposal)) {
-//         return invalid({
-//           notFound: getInvalidValue(validatedTWUProposal, undefined)
-//         });
-//       }
-//
-//       // Retrieve the full opportunity to validate the proposal against
-//       const twuOpportunity = getValidValue(
-//         await db.readOneTWUOpportunity(
-//           connection,
-//           validatedTWUProposal.value.opportunity.id,
-//           request.session
-//         ),
-//         undefined
-//       );
-//       if (!twuOpportunity) {
-//         return invalid({
-//           database: [db.ERROR_MESSAGE]
-//         });
-//       }
-//
-//       if (
-//         !(await permissions.editTWUProposal(
-//           connection,
-//           request.session,
-//           request.params.id,
-//           twuOpportunity
-//         ))
-//       ) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//
-//       switch (request.body.tag) {
-//         case "edit": {
-//           const {
-//             organization,
-//             resourceQuestionResponses,
-//             attachments
-//           } = request.body.value;
-//
-//           const validatedOrganization = await validateTWUProposalOrganization(
-//             connection,
-//             organization,
-//             request.session
-//           );
-//           if (isInvalid(validatedOrganization)) {
-//             return invalid({
-//               proposal: adt("edit" as const, {
-//                 organization: getInvalidValue(validatedOrganization, undefined)
-//               })
-//             });
-//           }
-//
-//           // Organization can only changed for DRAFT or WITHDRAWN proposals
-//           if (
-//             ![TWUProposalStatus.Draft, TWUProposalStatus.Withdrawn].includes(
-//               validatedTWUProposal.value.status
-//             ) &&
-//             organization !== validatedTWUProposal.value.organization?.id
-//           ) {
-//             return invalid({
-//               proposal: adt("edit" as const, {
-//                 organization: [
-//                   "Organization cannot be changed once the proposal has been submitted"
-//                 ]
-//               })
-//             });
-//           }
-//
-//           // Attachments must be validated for both drafts and published opportunities
-//           const validatedAttachments = await validateAttachments(
-//             connection,
-//             attachments
-//           );
-//           if (isInvalid<string[][]>(validatedAttachments)) {
-//             return invalid({
-//               proposal: adt("edit" as const, {
-//                 attachments: validatedAttachments.value
-//               })
-//             });
-//           }
-//
-//           // Do not validate other fields if the proposal is a draft.
-//           if (validatedTWUProposal.value.status === TWUProposalStatus.Draft) {
-//             return valid({
-//               session: request.session,
-//               body: adt("edit" as const, {
-//                 resourceQuestionResponses: resourceQuestionResponses
-//                   ? resourceQuestionResponses.map((q) => ({
-//                     response: getString(q, "response"),
-//                     order: getNumber<number>(q, "order")
-//                   }))
-//                   : [],
-//                 session: request.session,
-//                 attachments: validatedAttachments.value,
-//                 organization: organization || undefined
-//               })
-//             });
-//           }
-//
-//           if (!validatedOrganization.value) {
-//             return invalid({
-//               proposal: adt("edit" as const, {
-//                 organization: [
-//                   "An organization must be specified prior to submitting."
-//                 ]
-//               })
-//             });
-//           }
-//
-//           const validatedResourceQuestionResponses =
-//             proposalValidation.validateTWUProposalResourceQuestionResponses(
-//               resourceQuestionResponses,
-//               twuOpportunity.resourceQuestions
-//             );
-//
-//           // Validate that the total proposed cost does not exceed the max budget of the opportunity
-//           // TODO fix, or create the calculation
-//           const validatedTotalProposedCost = twuOpportunity.maxBudget
-//           // Validate that the set of proposed capabilities across team members satisfies the opportunity required capabilities
-//           const validatedProposalTeam = await validateTWUProposalTeam(
-//             connection,
-//             twuOpportunity
-//           );
-//
-//           if (
-//             allValid([
-//               validatedResourceQuestionResponses,
-//               validatedTotalProposedCost,
-//               validatedProposalTeam
-//             ])
-//           ) {
-//             return valid({
-//               session: request.session,
-//               body: adt("edit" as const, {
-//                 organization: validatedOrganization.value.id,
-//                 resourceQuestionResponses: validatedResourceQuestionResponses.value,
-//                 attachments: validatedAttachments.value
-//               })
-//             } as ValidatedUpdateRequestBody);
-//           } else {
-//             return invalid({
-//               proposal: adt(
-//                 "edit" as const,
-//                 {
-//                   resourceQuestionResponses: getInvalidValue<
-//                     CreateTWUResourceQuestionValidationErrors[],
-//                     undefined
-//                   >(validatedResourceQuestionResponses, undefined)
-//                 } as UpdateEditValidationErrors
-//               )
-//             });
-//           }
-//         }
-//         case "submit": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.Submitted,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // Validate draft proposal here to make sure it has everything
-//           if (
-//             !allValid([
-//               proposalValidation.validateTWUProposalResourceQuestionResponses(
-//                 validatedTWUProposal.value.resourceQuestionResponses,
-//                 twuOpportunity.resourceQuestions
-//               ),
-//               // proposalValidation.validateTWUProposalProposedCost(
-//               //   twuOpportunity.maxBudget
-//               // ),
-//               await validateTWUProposalTeam(
-//                 connection,
-//                 twuOpportunity
-//               )
-//             ])
-//           ) {
-//             return invalid({
-//               proposal: adt("submit" as const, [
-//                 "This proposal could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to submit it again."
-//               ])
-//             });
-//           }
-//
-//           // Prior to submitting, re-check permissions and ensure organization is still TWU qualified
-//           const proposalOrganization =
-//             validatedTWUProposal.value.organization &&
-//             getValidValue(
-//               await db.readOneOrganization(
-//                 connection,
-//                 validatedTWUProposal.value.organization.id,
-//                 false,
-//                 request.session
-//               ),
-//               null
-//             );
-//           if (
-//             !proposalOrganization ||
-//             !(await permissions.submitTWUProposal(
-//               connection,
-//               request.session,
-//               proposalOrganization
-//             ))
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//
-//           const validatedSubmissionNote = proposalValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedSubmissionNote)) {
-//             return invalid({
-//               proposal: adt("submit" as const, validatedSubmissionNote.value)
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("submit" as const, validatedSubmissionNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "scoreQuestions": {
-//           if (
-//             ![
-//               TWUProposalStatus.UnderReviewResourceQuestions,
-//               TWUProposalStatus.EvaluatedResourceQuestions
-//             ].includes(validatedTWUProposal.value.status)
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // The opportunity must be in team questions stage
-//           if (
-//             twuOpportunity.status !==
-//             TWUOpportunityStatus.EvaluationResourceQuestions
-//           ) {
-//             return invalid({
-//               permissions: [
-//                 "The opportunity is not in the correct stage of evaluation to perform that action."
-//               ]
-//             });
-//           }
-//           const validatedQuestionsScore =
-//             proposalValidation.validateResourceQuestionScores(
-//               request.body.value,
-//               twuOpportunity.resourceQuestions
-//             );
-//           if (
-//             isInvalid<UpdateResourceQuestionScoreValidationErrors[]>(
-//               validatedQuestionsScore
-//             )
-//           ) {
-//             return invalid({
-//               proposal: adt(
-//                 "scoreQuestions" as const,
-//                 getInvalidValue(validatedQuestionsScore, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("scoreQuestions" as const, validatedQuestionsScore.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "screenInToChallenge": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.UnderReviewChallenge,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // The opportunity must be in team question stage still
-//           if (
-//             twuOpportunity.status !==
-//             TWUOpportunityStatus.EvaluationResourceQuestions
-//           ) {
-//             return invalid({
-//               permissions: [
-//                 "The opportunity is not in the correct stage of evaluation to perform that action."
-//               ]
-//             });
-//           }
-//           const validatedScreenInCCNote = proposalValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedScreenInCCNote)) {
-//             return invalid({
-//               proposal: adt(
-//                 "screenInToChallenge" as const,
-//                 getInvalidValue(validatedScreenInCCNote, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt(
-//               "screenInToChallenge" as const,
-//               validatedScreenInCCNote.value
-//             )
-//           });
-//         }
-//         case "screenOutFromChallenge": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.EvaluatedResourceQuestions,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // The opportunity must be in the team questions or code challenge stage
-//           if (
-//             ![
-//               TWUOpportunityStatus.EvaluationResourceQuestions,
-//               TWUOpportunityStatus.EvaluationChallenge
-//             ].includes(twuOpportunity.status)
-//           ) {
-//             return invalid({
-//               permissions: [
-//                 "The opportunity is not in the correct stage of evaluation to perform that action."
-//               ]
-//             });
-//           }
-//           const validatedScreenOutCCNote = proposalValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedScreenOutCCNote)) {
-//             return invalid({
-//               proposal: adt(
-//                 "screenOutFromChallenge" as const,
-//                 getInvalidValue(validatedScreenOutCCNote, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt(
-//               "screenOutFromChallenge" as const,
-//               validatedScreenOutCCNote.value
-//             )
-//           });
-//         }
-//         case "scoreChallenge": {
-//           if (
-//             ![
-//               TWUProposalStatus.UnderReviewChallenge,
-//               TWUProposalStatus.EvaluatedChallenge
-//             ].includes(validatedTWUProposal.value.status)
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // The opportunity must be in code challenge stage
-//           if (
-//             twuOpportunity.status !==
-//             TWUOpportunityStatus.EvaluationChallenge
-//           ) {
-//             return invalid({
-//               permissions: [
-//                 "The opportunity is not in the correct stage of evaluation to perform that action."
-//               ]
-//             });
-//           }
-//           const validatedChallengeScore =
-//             proposalValidation.validateChallengeScore(request.body.value);
-//           if (isInvalid(validatedChallengeScore)) {
-//             return invalid({
-//               proposal: adt(
-//                 "scoreChallenge" as const,
-//                 getInvalidValue(validatedChallengeScore, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt(
-//               "scoreChallenge" as const,
-//               validatedChallengeScore.value
-//             )
-//           } as ValidatedUpdateRequestBody);
-//         }
-//
-//         case "award": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.Awarded,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           // The opportunity must be in team scenario stage
-//           if (
-//             twuOpportunity.status !==
-//             TWUOpportunityStatus.EvaluationChallenge
-//           ) {
-//             return invalid({
-//               permissions: [
-//                 "The opportunity is not in the correct stage of evaluation to perform that action."
-//               ]
-//             });
-//           }
-//           const validatedAwardNote = proposalValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedAwardNote)) {
-//             return invalid({
-//               proposal: adt(
-//                 "award" as const,
-//                 getInvalidValue(validatedAwardNote, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("award" as const, validatedAwardNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "disqualify": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.Disqualified,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           const validatedDisqualifyNote =
-//             proposalValidation.validateDisqualificationReason(
-//               request.body.value
-//             );
-//           if (isInvalid(validatedDisqualifyNote)) {
-//             return invalid({
-//               proposal: adt(
-//                 "disqualify" as const,
-//                 getInvalidValue(validatedDisqualifyNote, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("disqualify" as const, validatedDisqualifyNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         case "withdraw": {
-//           if (
-//             !isValidStatusChange(
-//               validatedTWUProposal.value.status,
-//               TWUProposalStatus.Withdrawn,
-//               request.session.user.type,
-//               twuOpportunity.proposalDeadline
-//             )
-//           ) {
-//             return invalid({
-//               permissions: [permissions.ERROR_MESSAGE]
-//             });
-//           }
-//           const validatedWithdrawnNote = proposalValidation.validateNote(
-//             request.body.value
-//           );
-//           if (isInvalid(validatedWithdrawnNote)) {
-//             return invalid({
-//               proposal: adt(
-//                 "withdraw" as const,
-//                 getInvalidValue(validatedWithdrawnNote, [])
-//               )
-//             });
-//           }
-//           return valid({
-//             session: request.session,
-//             body: adt("withdraw" as const, validatedWithdrawnNote.value)
-//           } as ValidatedUpdateRequestBody);
-//         }
-//         default:
-//           return invalid({ proposal: adt("parseFailure" as const) });
-//       }
-//     },
-//     respond: wrapRespond<
-//       ValidatedUpdateRequestBody,
-//       UpdateValidationErrors,
-//       JsonResponseBody<TWUProposal>,
-//       JsonResponseBody<UpdateValidationErrors>,
-//       Session
-//     >({
-//       valid: async (request) => {
-//         let dbResult: Validation<TWUProposal, null>;
-//         const { session, body } = request.body;
-//         switch (body.tag) {
-//           case "edit":
-//             dbResult = await db.updateTWUProposal(
-//               connection,
-//               { ...body.value, id: request.params.id },
-//               session
-//             );
-//             break;
-//           case "submit":
-//             dbResult = await db.updateTWUProposalStatus(
-//               connection,
-//               request.params.id,
-//               TWUProposalStatus.Submitted,
-//               body.value,
-//               session
-//             );
-//             // Notify of submission
-//             if (isValid(dbResult)) {
-//               twuProposalNotifications.handleTWUProposalSubmitted(
-//                 connection,
-//                 request.params.id,
-//                 request.body.session
-//               );
-//             }
-//             break;
-//           case "scoreQuestions":
-//             dbResult = await db.updateTWUProposalResourceQuestionScores(
-//               connection,
-//               request.params.id,
-//               body.value,
-//               session
-//             );
-//             break;
-//           case "screenInToChallenge":
-//             dbResult = await db.updateTWUProposalStatus(
-//               connection,
-//               request.params.id,
-//               TWUProposalStatus.UnderReviewChallenge,
-//               body.value,
-//               session
-//             );
-//             break;
-//           case "screenOutFromChallenge":
-//             dbResult = await db.updateTWUProposalStatus(
-//               connection,
-//               request.params.id,
-//               TWUProposalStatus.EvaluatedResourceQuestions,
-//               body.value,
-//               session
-//             );
-//             break;
-//           case "scoreChallenge":
-//             dbResult = await db.updateTWUProposalChallengeScore(
-//               connection,
-//               request.params.id,
-//               body.value,
-//               session
-//             );
-//             break;
-//           case "award":
-//             dbResult = await db.awardTWUProposal(
-//               connection,
-//               request.params.id,
-//               body.value,
-//               session
-//             );
-//             // Notify of award (also notifies unsuccessful proponents)
-//             if (isValid(dbResult)) {
-//               twuProposalNotifications.handleTWUProposalAwarded(
-//                 connection,
-//                 request.params.id,
-//                 request.body.session
-//               );
-//             }
-//             break;
-//           case "disqualify":
-//             dbResult = await db.updateTWUProposalStatus(
-//               connection,
-//               request.params.id,
-//               TWUProposalStatus.Disqualified,
-//               body.value,
-//               session
-//             );
-//             // Notify of disqualification
-//             if (isValid(dbResult)) {
-//               twuProposalNotifications.handleTWUProposalDisqualified(
-//                 connection,
-//                 request.params.id,
-//                 request.body.session
-//               );
-//             }
-//             break;
-//           case "withdraw":
-//             dbResult = await db.updateTWUProposalStatus(
-//               connection,
-//               request.params.id,
-//               TWUProposalStatus.Withdrawn,
-//               body.value,
-//               session
-//             );
-//             if (isValid(dbResult)) {
-//               twuProposalNotifications.handleTWUProposalWithdrawn(
-//                 connection,
-//                 request.params.id,
-//                 request.body.session
-//               );
-//             }
-//             break;
-//         }
-//         if (isInvalid(dbResult)) {
-//           return basicResponse(
-//             503,
-//             request.session,
-//             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-//           );
-//         }
-//         return basicResponse(
-//           200,
-//           request.session,
-//           makeJsonResponseBody(dbResult.value)
-//         );
-//       },
-//       invalid: async (request) => {
-//         return basicResponse(
-//           400,
-//           request.session,
-//           makeJsonResponseBody(request.body)
-//         );
-//       }
-//     })
-//   };
-// };
+const update: crud.Update<
+  Session,
+  db.Connection,
+  UpdateRequestBody,
+  ValidatedUpdateRequestBody,
+  UpdateValidationErrors
+> = (connection: db.Connection) => {
+  return {
+    async parseRequestBody(request) {
+      const body = request.body.tag === "json" ? request.body.value : {};
+      const tag = get(body, "tag");
+      const value: unknown = get(body, "value");
+      switch (tag) {
+        case "edit":
+          return adt("edit", {
+            organization: getString(value, "organization"),
+            resourceQuestionResponses: get(value, "resourceQuestionResponses"),
+            attachments: getStringArray(value, "attachments"),
+            team: get(value, "team")
+          });
+        case "submit":
+          return adt("submit", getString(body, "value", ""));
+        case "scoreQuestions":
+          return adt(
+            "scoreQuestions",
+            value as UpdateResourceQuestionScoreBody[]
+          );
+        case "screenInToChallenge":
+          return adt("screenInToChallenge", getString(body, "value"));
+        case "screenOutFromChallenge":
+          return adt("screenOutFromChallenge", getString(body, "value"));
+        case "scoreChallenge":
+          return adt(
+            "scoreChallenge",
+            getNumber<number>(body, "value", -1, false)
+          );
+        case "award":
+          return adt("award", getString(body, "value", ""));
+        case "disqualify":
+          return adt("disqualify", getString(body, "value", ""));
+        case "withdraw":
+          return adt("withdraw", getString(body, "value", ""));
+        default:
+          return null;
+      }
+    },
+    async validateRequestBody(request) {
+      if (!request.body) {
+        return invalid({ proposal: adt("parseFailure" as const) });
+      }
+      if (!permissions.isSignedIn(request.session)) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+      const validatedTWUProposal = await validateTWUProposalId(
+        connection,
+        request.params.id,
+        request.session
+      );
+      if (isInvalid(validatedTWUProposal)) {
+        return invalid({
+          notFound: getInvalidValue(validatedTWUProposal, undefined)
+        });
+      }
 
-// const delete_: crud.Delete<
-//   Session,
-//   db.Connection,
-//   ValidatedDeleteRequestBody,
-//   DeleteValidationErrors
-// > = (connection: db.Connection) => {
-//   return {
-//     async validateRequestBody(request) {
-//       if (
-//         !permissions.isSignedIn(request.session) ||
-//         !(await permissions.deleteTWUProposal(
-//           connection,
-//           request.session,
-//           request.params.id
-//         ))
-//       ) {
-//         return invalid({
-//           permissions: [permissions.ERROR_MESSAGE]
-//         });
-//       }
-//       const validatedTWUProposal = await validateTWUProposalId(
-//         connection,
-//         request.params.id,
-//         request.session
-//       );
-//       if (isInvalid(validatedTWUProposal)) {
-//         return invalid({
-//           notFound: ["The specified proposal was not found."]
-//         });
-//       }
-//       if (validatedTWUProposal.value.status !== TWUProposalStatus.Draft) {
-//         return invalid({ status: ["Only draft proposals can be deleted."] });
-//       }
-//       return valid({
-//         proposal: validatedTWUProposal.value.id,
-//         session: request.session
-//       });
-//     },
-//     respond: wrapRespond({
-//       valid: async (request) => {
-//         const dbResult = await db.deleteTWUProposal(
-//           connection,
-//           request.body.proposal,
-//           request.body.session
-//         );
-//         if (isInvalid(dbResult)) {
-//           return basicResponse(
-//             503,
-//             request.session,
-//             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-//           );
-//         }
-//         return basicResponse(
-//           200,
-//           request.session,
-//           makeJsonResponseBody(dbResult.value)
-//         );
-//       },
-//       invalid: async (request) => {
-//         return basicResponse(
-//           400,
-//           request.session,
-//           makeJsonResponseBody(request.body)
-//         );
-//       }
-//     })
-//   };
-// };
+      // Retrieve the full opportunity to validate the proposal against
+      const twuOpportunity = getValidValue(
+        await db.readOneTWUOpportunity(
+          connection,
+          validatedTWUProposal.value.opportunity.id,
+          request.session
+        ),
+        undefined
+      );
+      if (!twuOpportunity) {
+        return invalid({
+          database: [db.ERROR_MESSAGE]
+        });
+      }
+
+      if (
+        !(await permissions.editTWUProposal(
+          connection,
+          request.session,
+          request.params.id,
+          twuOpportunity
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+
+      switch (request.body.tag) {
+        case "edit": {
+          const { organization, resourceQuestionResponses, attachments, team } =
+            request.body.value;
+
+          const validatedOrganization = await validateProposalOrganization(
+            connection,
+            organization,
+            request.session
+          );
+          if (isInvalid(validatedOrganization)) {
+            return invalid({
+              proposal: adt("edit" as const, {
+                organization: getInvalidValue(validatedOrganization, undefined)
+              })
+            });
+          }
+
+          // Organization can only be changed for DRAFT or WITHDRAWN proposals
+          if (
+            ![TWUProposalStatus.Draft, TWUProposalStatus.Withdrawn].includes(
+              validatedTWUProposal.value.status
+            ) &&
+            organization !== validatedTWUProposal.value.organization?.id
+          ) {
+            return invalid({
+              proposal: adt("edit" as const, {
+                organization: [
+                  "Organization cannot be changed once the proposal has been submitted"
+                ]
+              })
+            });
+          }
+
+          // Attachments must be validated for both drafts and published opportunities
+          const validatedAttachments = await validateAttachments(
+            connection,
+            attachments
+          );
+          if (isInvalid<string[][]>(validatedAttachments)) {
+            return invalid({
+              proposal: adt("edit" as const, {
+                attachments: validatedAttachments.value
+              })
+            });
+          }
+
+          // Do not validate other fields if the proposal is a draft.
+          if (validatedTWUProposal.value.status === TWUProposalStatus.Draft) {
+            return valid({
+              session: request.session,
+              body: adt("edit" as const, {
+                resourceQuestionResponses: resourceQuestionResponses
+                  ? resourceQuestionResponses.map((q) => ({
+                      response: getString(q, "response"),
+                      order: getNumber<number>(q, "order")
+                    }))
+                  : [],
+                session: request.session,
+                attachments: validatedAttachments.value,
+                organization: organization || undefined,
+                team: team
+                  ? team.map((t) => ({
+                      member: getString(t, "member"),
+                      hourlyRate: getNumber<number>(t, "hourlyRate")
+                    }))
+                  : []
+              })
+            });
+          }
+
+          if (!validatedOrganization.value) {
+            return invalid({
+              proposal: adt("edit" as const, {
+                organization: [
+                  "An organization must be specified prior to submitting."
+                ]
+              })
+            });
+          }
+
+          const validatedResourceQuestionResponses =
+            proposalValidation.validateTWUProposalResourceQuestionResponses(
+              resourceQuestionResponses,
+              twuOpportunity.resourceQuestions
+            );
+
+          // Validate team members
+          const validatedProposalTeam = await validateTWUProposalTeam(
+            connection,
+            team,
+            validatedOrganization.value.id
+          );
+
+          if (
+            allValid([
+              validatedResourceQuestionResponses,
+              validatedProposalTeam
+            ])
+          ) {
+            return valid({
+              session: request.session,
+              body: adt("edit" as const, {
+                organization: validatedOrganization.value.id,
+                resourceQuestionResponses:
+                  validatedResourceQuestionResponses.value,
+                attachments: validatedAttachments.value,
+                team: validatedProposalTeam.value
+              })
+            } as ValidatedUpdateRequestBody);
+          } else {
+            return invalid({
+              proposal: adt(
+                "edit" as const,
+                {
+                  resourceQuestionResponses: getInvalidValue<
+                    CreateTWUResourceQuestionValidationErrors[],
+                    undefined
+                  >(validatedResourceQuestionResponses, undefined)
+                } as UpdateEditValidationErrors
+              )
+            });
+          }
+        }
+        case "submit": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.Submitted,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // Validate draft proposal here to make sure it has everything
+          if (
+            !allValid([
+              proposalValidation.validateTWUProposalResourceQuestionResponses(
+                validatedTWUProposal.value.resourceQuestionResponses,
+                twuOpportunity.resourceQuestions
+              )
+              // await validateTWUProposalTeam(
+              //   connection,
+              //   validatedTWUProposal.value.team,
+              //   request.id
+              // )
+            ])
+          ) {
+            return invalid({
+              proposal: adt("submit" as const, [
+                "This proposal could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to submit it again."
+              ])
+            });
+          }
+
+          // Prior to submitting, re-check permissions and ensure organization is still TWU qualified
+          const proposalOrganization =
+            validatedTWUProposal.value.organization &&
+            getValidValue(
+              await db.readOneOrganization(
+                connection,
+                validatedTWUProposal.value.organization.id,
+                false,
+                request.session
+              ),
+              null
+            );
+          if (
+            !proposalOrganization ||
+            !(await permissions.submitTWUProposal(
+              connection,
+              request.session,
+              request.params.id
+            ))
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
+          const validatedSubmissionNote = proposalValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              proposal: adt("submit" as const, validatedSubmissionNote.value)
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submit" as const, validatedSubmissionNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "scoreQuestions": {
+          if (
+            ![
+              TWUProposalStatus.UnderReviewResourceQuestions,
+              TWUProposalStatus.EvaluatedResourceQuestions
+            ].includes(validatedTWUProposal.value.status)
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // The opportunity must be in team questions stage
+          if (
+            twuOpportunity.status !==
+            TWUOpportunityStatus.EvaluationResourceQuestions
+          ) {
+            return invalid({
+              permissions: [
+                "The opportunity is not in the correct stage of evaluation to perform that action."
+              ]
+            });
+          }
+          const validatedQuestionsScore =
+            proposalValidation.validateResourceQuestionScores(
+              request.body.value,
+              twuOpportunity.resourceQuestions
+            );
+          if (
+            isInvalid<UpdateResourceQuestionScoreValidationErrors[]>(
+              validatedQuestionsScore
+            )
+          ) {
+            return invalid({
+              proposal: adt(
+                "scoreQuestions" as const,
+                getInvalidValue(validatedQuestionsScore, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("scoreQuestions" as const, validatedQuestionsScore.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "screenInToChallenge": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.UnderReviewChallenge,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // The opportunity must be in team question stage still
+          if (
+            twuOpportunity.status !==
+            TWUOpportunityStatus.EvaluationResourceQuestions
+          ) {
+            return invalid({
+              permissions: [
+                "The opportunity is not in the correct stage of evaluation to perform that action."
+              ]
+            });
+          }
+          const validatedScreenInCCNote = proposalValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedScreenInCCNote)) {
+            return invalid({
+              proposal: adt(
+                "screenInToChallenge" as const,
+                getInvalidValue(validatedScreenInCCNote, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "screenInToChallenge" as const,
+              validatedScreenInCCNote.value
+            )
+          });
+        }
+        case "screenOutFromChallenge": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.EvaluatedResourceQuestions,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // The opportunity must be in the team questions or code challenge stage
+          if (
+            ![
+              TWUOpportunityStatus.EvaluationResourceQuestions,
+              TWUOpportunityStatus.EvaluationChallenge
+            ].includes(twuOpportunity.status)
+          ) {
+            return invalid({
+              permissions: [
+                "The opportunity is not in the correct stage of evaluation to perform that action."
+              ]
+            });
+          }
+          const validatedScreenOutCCNote = proposalValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedScreenOutCCNote)) {
+            return invalid({
+              proposal: adt(
+                "screenOutFromChallenge" as const,
+                getInvalidValue(validatedScreenOutCCNote, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "screenOutFromChallenge" as const,
+              validatedScreenOutCCNote.value
+            )
+          });
+        }
+        case "scoreChallenge": {
+          if (
+            ![
+              TWUProposalStatus.UnderReviewChallenge,
+              TWUProposalStatus.EvaluatedChallenge
+            ].includes(validatedTWUProposal.value.status)
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // The opportunity must be in code challenge stage
+          if (
+            twuOpportunity.status !== TWUOpportunityStatus.EvaluationChallenge
+          ) {
+            return invalid({
+              permissions: [
+                "The opportunity is not in the correct stage of evaluation to perform that action."
+              ]
+            });
+          }
+          const validatedChallengeScore =
+            proposalValidation.validateChallengeScore(request.body.value);
+          if (isInvalid(validatedChallengeScore)) {
+            return invalid({
+              proposal: adt(
+                "scoreChallenge" as const,
+                getInvalidValue(validatedChallengeScore, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("scoreChallenge" as const, validatedChallengeScore.value)
+          } as ValidatedUpdateRequestBody);
+        }
+
+        case "award": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.Awarded,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          // The opportunity must be in team scenario stage
+          if (
+            twuOpportunity.status !== TWUOpportunityStatus.EvaluationChallenge
+          ) {
+            return invalid({
+              permissions: [
+                "The opportunity is not in the correct stage of evaluation to perform that action."
+              ]
+            });
+          }
+          const validatedAwardNote = proposalValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedAwardNote)) {
+            return invalid({
+              proposal: adt(
+                "award" as const,
+                getInvalidValue(validatedAwardNote, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("award" as const, validatedAwardNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "disqualify": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.Disqualified,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          const validatedDisqualifyNote =
+            proposalValidation.validateDisqualificationReason(
+              request.body.value
+            );
+          if (isInvalid(validatedDisqualifyNote)) {
+            return invalid({
+              proposal: adt(
+                "disqualify" as const,
+                getInvalidValue(validatedDisqualifyNote, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("disqualify" as const, validatedDisqualifyNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        case "withdraw": {
+          if (
+            !isValidStatusChange(
+              validatedTWUProposal.value.status,
+              TWUProposalStatus.Withdrawn,
+              request.session.user.type,
+              twuOpportunity.proposalDeadline
+            )
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+          const validatedWithdrawnNote = proposalValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedWithdrawnNote)) {
+            return invalid({
+              proposal: adt(
+                "withdraw" as const,
+                getInvalidValue(validatedWithdrawnNote, [])
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("withdraw" as const, validatedWithdrawnNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
+        default:
+          return invalid({ proposal: adt("parseFailure" as const) });
+      }
+    },
+    respond: wrapRespond<
+      ValidatedUpdateRequestBody,
+      UpdateValidationErrors,
+      JsonResponseBody<TWUProposal>,
+      JsonResponseBody<UpdateValidationErrors>,
+      Session
+    >({
+      valid: async (request) => {
+        let dbResult: Validation<TWUProposal, null>;
+        const { session, body } = request.body;
+        switch (body.tag) {
+          case "edit":
+            dbResult = await db.updateTWUProposal(
+              connection,
+              { ...body.value, id: request.params.id },
+              session
+            );
+            break;
+          case "submit":
+            dbResult = await db.updateTWUProposalStatus(
+              connection,
+              request.params.id,
+              TWUProposalStatus.Submitted,
+              body.value,
+              session
+            );
+            // Notify of submission
+            if (isValid(dbResult)) {
+              // twuProposalNotifications.handleTWUProposalSubmitted(
+              //   connection,
+              //   request.params.id,
+              //   request.body.session
+              // );
+            }
+            break;
+          case "scoreQuestions":
+            dbResult = await db.updateTWUProposalResourceQuestionScores(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "screenInToChallenge":
+            dbResult = await db.updateTWUProposalStatus(
+              connection,
+              request.params.id,
+              TWUProposalStatus.UnderReviewChallenge,
+              body.value,
+              session
+            );
+            break;
+          case "screenOutFromChallenge":
+            dbResult = await db.updateTWUProposalStatus(
+              connection,
+              request.params.id,
+              TWUProposalStatus.EvaluatedResourceQuestions,
+              body.value,
+              session
+            );
+            break;
+          case "scoreChallenge":
+            dbResult = await db.updateTWUProposalChallengeScore(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "award":
+            dbResult = await db.awardTWUProposal(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            // Notify of award (also notifies unsuccessful proponents)
+            if (isValid(dbResult)) {
+              // twuProposalNotifications.handleTWUProposalAwarded(
+              //   connection,
+              //   request.params.id,
+              //   request.body.session
+              // );
+            }
+            break;
+          case "disqualify":
+            dbResult = await db.updateTWUProposalStatus(
+              connection,
+              request.params.id,
+              TWUProposalStatus.Disqualified,
+              body.value,
+              session
+            );
+            // Notify of disqualification
+            if (isValid(dbResult)) {
+              // twuProposalNotifications.handleTWUProposalDisqualified(
+              //   connection,
+              //   request.params.id,
+              //   request.body.session
+              // );
+            }
+            break;
+          case "withdraw":
+            dbResult = await db.updateTWUProposalStatus(
+              connection,
+              request.params.id,
+              TWUProposalStatus.Withdrawn,
+              body.value,
+              session
+            );
+            if (isValid(dbResult)) {
+              // twuProposalNotifications.handleTWUProposalWithdrawn(
+              //   connection,
+              //   request.params.id,
+              //   request.body.session
+              // );
+            }
+            break;
+        }
+        if (isInvalid(dbResult)) {
+          return basicResponse(
+            503,
+            request.session,
+            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+          );
+        }
+        return basicResponse(
+          200,
+          request.session,
+          makeJsonResponseBody(dbResult.value)
+        );
+      },
+      invalid: async (request) => {
+        return basicResponse(
+          400,
+          request.session,
+          makeJsonResponseBody(request.body)
+        );
+      }
+    })
+  };
+};
+
+const delete_: crud.Delete<
+  Session,
+  db.Connection,
+  ValidatedDeleteRequestBody,
+  DeleteValidationErrors
+> = (connection: db.Connection) => {
+  return {
+    async validateRequestBody(request) {
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.deleteTWUProposal(
+          connection,
+          request.session,
+          request.params.id
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+      const validatedTWUProposal = await validateTWUProposalId(
+        connection,
+        request.params.id,
+        request.session
+      );
+      if (isInvalid(validatedTWUProposal)) {
+        return invalid({
+          notFound: ["The specified proposal was not found."]
+        });
+      }
+      if (validatedTWUProposal.value.status !== TWUProposalStatus.Draft) {
+        return invalid({ status: ["Only draft proposals can be deleted."] });
+      }
+      return valid({
+        proposal: validatedTWUProposal.value.id,
+        session: request.session
+      });
+    },
+    respond: wrapRespond({
+      valid: async (request) => {
+        const dbResult = await db.deleteTWUProposal(
+          connection,
+          request.body.proposal,
+          request.body.session
+        );
+        if (isInvalid(dbResult)) {
+          return basicResponse(
+            503,
+            request.session,
+            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+          );
+        }
+        return basicResponse(
+          200,
+          request.session,
+          makeJsonResponseBody(dbResult.value)
+        );
+      },
+      invalid: async (request) => {
+        return basicResponse(
+          400,
+          request.session,
+          makeJsonResponseBody(request.body)
+        );
+      }
+    })
+  };
+};
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readMany,
   readOne,
-  create
-  // update,
-  // delete: delete_
+  create,
+  update,
+  delete: delete_
 };
 
 export default resource;
