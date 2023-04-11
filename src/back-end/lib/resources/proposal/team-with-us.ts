@@ -1,6 +1,6 @@
 import * as crud from "back-end/lib/crud";
 import * as db from "back-end/lib/db";
-// import * as twuProposalNotifications from "back-end/lib/mailer/notifications/proposal/team-with-us";
+import * as twuProposalNotifications from "back-end/lib/mailer/notifications/proposal/team-with-us";
 import * as permissions from "back-end/lib/permissions";
 import {
   basicResponse,
@@ -449,11 +449,11 @@ const create: crud.Create<
         }
         // Notify of submitted proposal if applicable
         if (dbResult.value.status === TWUProposalStatus.Submitted) {
-          // twuProposalNotifications.handleTWUProposalSubmitted(
-          //   connection,
-          //   dbResult.value.id,
-          //   request.body.session
-          // );
+          twuProposalNotifications.handleTWUProposalSubmitted(
+            connection,
+            dbResult.value.id,
+            request.body.session
+          );
         }
         return basicResponse(
           201,
@@ -1100,11 +1100,11 @@ const update: crud.Update<
             );
             // Notify of submission
             if (isValid(dbResult)) {
-              // twuProposalNotifications.handleTWUProposalSubmitted(
-              //   connection,
-              //   request.params.id,
-              //   request.body.session
-              // );
+              twuProposalNotifications.handleTWUProposalSubmitted(
+                connection,
+                request.params.id,
+                request.body.session
+              );
             }
             break;
           case "scoreQuestions":
@@ -1150,11 +1150,11 @@ const update: crud.Update<
             );
             // Notify of award (also notifies unsuccessful proponents)
             if (isValid(dbResult)) {
-              // twuProposalNotifications.handleTWUProposalAwarded(
-              //   connection,
-              //   request.params.id,
-              //   request.body.session
-              // );
+              twuProposalNotifications.handleTWUProposalAwarded(
+                connection,
+                request.params.id,
+                request.body.session
+              );
             }
             break;
           case "disqualify":
@@ -1167,11 +1167,11 @@ const update: crud.Update<
             );
             // Notify of disqualification
             if (isValid(dbResult)) {
-              // twuProposalNotifications.handleTWUProposalDisqualified(
-              //   connection,
-              //   request.params.id,
-              //   request.body.session
-              // );
+              twuProposalNotifications.handleTWUProposalDisqualified(
+                connection,
+                request.params.id,
+                request.body.session
+              );
             }
             break;
           case "withdraw":
@@ -1183,11 +1183,11 @@ const update: crud.Update<
               session
             );
             if (isValid(dbResult)) {
-              // twuProposalNotifications.handleTWUProposalWithdrawn(
-              //   connection,
-              //   request.params.id,
-              //   request.body.session
-              // );
+              twuProposalNotifications.handleTWUProposalWithdrawn(
+                connection,
+                request.params.id,
+                request.body.session
+              );
             }
             break;
         }
