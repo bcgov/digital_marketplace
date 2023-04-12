@@ -255,6 +255,13 @@ const makeCardData = (
   ];
 };
 
+/**
+ * Displays a terse message in one of two scenarios; the opportunity has NOT closed
+ * or no proposals were submitted.
+ *
+ * @param state
+ * @constructor
+ */
 const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
@@ -515,7 +522,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             ) : (
               <NotAvailable {...props} />
             )}
-            <Scoresheet {...props} />
           </Col>
         </Row>
       </div>

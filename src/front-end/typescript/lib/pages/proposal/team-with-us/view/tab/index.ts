@@ -4,7 +4,7 @@ import { component } from "front-end/lib/framework";
 // import * as ChallengeTab from "front-end/lib/pages/proposal/team-with-us/view/tab/code-challenge";
 // import * as HistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab/proposal";
-// import * as ResourceQuestionsTab from "front-end/lib/pages/proposal/team-with-us/view/tab/team-questions";
+import * as ResourceQuestionsTab from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
 import { routeDest } from "front-end/lib/views/link";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
@@ -50,12 +50,12 @@ export interface Tabs {
     ProposalTab.InnerMsg,
     InitResponse
   >;
-  // resourceQuestions: TabbedPage.Tab<
-  //   Params,
-  //   ResourceQuestionsTab.State,
-  //   ResourceQuestionsTab.InnerMsg,
-  //   InitResponse
-  // >;
+  resourceQuestions: TabbedPage.Tab<
+    Params,
+    ResourceQuestionsTab.State,
+    ResourceQuestionsTab.InnerMsg,
+    InitResponse
+  >;
   // challenge: TabbedPage.Tab<
   //   Params,
   //   ChallengeTab.State,
@@ -79,7 +79,7 @@ export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
     case "proposal":
-      // case "resourceQuestions":
+    case "resourceQuestions":
       // case "challenge":
       // case "history":
       return raw;
@@ -92,12 +92,12 @@ export function idToDefinition<K extends TabId>(
   id: K
 ): TabbedPage.TabDefinition<Tabs, K> {
   switch (id) {
-    // case "resourceQuestions":
-    //   return {
-    //     component: ResourceQuestionsTab.component,
-    //     icon: "comments-alt",
-    //     title: "Resource Questions"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "resourceQuestions":
+      return {
+        component: ResourceQuestionsTab.component,
+        icon: "comments-alt",
+        title: "Resource Questions"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     // case "challenge":
     //   return {
     //     component: ChallengeTab.component,
@@ -169,7 +169,7 @@ export function makeSidebarState(
       adt("heading", "Vendor Proposal"),
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
-      // makeSidebarLink("resourceQuestions", proposal, activeTab),
+      makeSidebarLink("resourceQuestions", proposal, activeTab),
       // makeSidebarLink("challenge", proposal, activeTab),
       adt("heading", "Management")
       // makeSidebarLink("history", proposal, activeTab)

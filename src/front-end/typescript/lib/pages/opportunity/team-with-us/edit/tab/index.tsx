@@ -7,7 +7,7 @@ import * as HistoryTab from "front-end/lib/pages/opportunity/team-with-us/edit/t
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/summary";
-// import * as ResourceQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/team-questions";
+import * as ResourceQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/resource-questions";
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToTWUOpportunity,
@@ -66,12 +66,12 @@ export interface Tabs {
     AddendaTab.InnerMsg,
     InitResponse
   >;
-  //   resourceQuestions: TabbedPage.Tab<
-  //     Params,
-  //     ResourceQuestionsTab.State,
-  //     ResourceQuestionsTab.InnerMsg,
-  //     InitResponse
-  //   >;
+  resourceQuestions: TabbedPage.Tab<
+    Params,
+    ResourceQuestionsTab.State,
+    ResourceQuestionsTab.InnerMsg,
+    InitResponse
+  >;
   history: TabbedPage.Tab<
     Params,
     HistoryTab.State,
@@ -105,7 +105,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "addenda":
     case "history":
     case "proposals":
-      // case "resourceQuestions":
+    case "resourceQuestions":
       // case "challenge":
       return raw;
     default:
@@ -129,12 +129,12 @@ export function idToDefinition<K extends TabId>(
         icon: "file-plus",
         title: "Addenda"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    // case "resourceQuestions":
-    //   return {
-    //     component: ResourceQuestionsTab.component,
-    //     icon: "comments-alt",
-    //     title: "Team Questions"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "resourceQuestions":
+      return {
+        component: ResourceQuestionsTab.component,
+        icon: "comments-alt",
+        title: "Resource Questions"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     // case "challenge":
     //   return {
     //     component: ChallengeTab.component,
@@ -195,7 +195,7 @@ export function makeSidebarState(
           makeSidebarLink("history", opportunity.id, activeTab),
           adt("heading", "Opportunity Evaluation"),
           makeSidebarLink("proposals", opportunity.id, activeTab),
-          //   makeSidebarLink("resourceQuestions", opportunity.id, activeTab),
+          makeSidebarLink("resourceQuestions", opportunity.id, activeTab),
           //   makeSidebarLink("challenge", opportunity.id, activeTab),
           adt("heading", "Need Help?"),
           adt("link", {
@@ -214,6 +214,6 @@ export function makeSidebarState(
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
   // const proposalTabs: TabId[] = ["proposals", "resourceQuestions", "challenge"];
-  const proposalTabs: TabId[] = ["proposals"];
+  const proposalTabs: TabId[] = ["proposals", "resourceQuestions"];
   return proposalTabs.includes(tabId);
 }
