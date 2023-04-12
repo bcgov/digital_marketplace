@@ -13,7 +13,7 @@ import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
-// import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
+import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
@@ -138,10 +138,9 @@ const SuccessfulProponent: component_.page.View<State, InnerMsg, Route> = ({
             name="Winning Score"
             value={`${
               successfulProponent.totalScore
-                ? `${successfulProponent.totalScore
-                    .toFixed
-                    //NUM_SCORE_DECIMALS
-                    ()}%`
+                ? `${successfulProponent.totalScore.toFixed(
+                    NUM_SCORE_DECIMALS
+                  )}%`
                 : EMPTY_STRING
             }`}
           />

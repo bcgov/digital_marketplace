@@ -102,6 +102,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       );
       const canViewProposals =
         canViewTWUOpportunityProposals(opportunity) && !!proposals.length;
+
       return [
         state
           .set("opportunity", opportunity)
@@ -210,7 +211,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 };
 
 /**
- * Displays three 'Cards' at the top of the Proposal tab which summarizes
+ * Displays three 'Cards' at the top of the Proposal tab (opportunity page) which summarizes
  * the number of proposals, the winning score and average score
  *
  * @param opportunity
