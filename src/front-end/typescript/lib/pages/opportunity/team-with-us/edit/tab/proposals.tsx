@@ -40,10 +40,10 @@ import {
   TWUProposalSlim,
   getTWUProponentName,
   UpdateValidationErrors,
-  TWUProposal
+  TWUProposal,
+  NUM_SCORE_DECIMALS
 } from "shared/lib/resources/proposal/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
-import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/sprint-with-us";
 
 type ModalId = ADT<"award", Id>;
 
@@ -430,7 +430,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       style: { width: "0px" }
     },
     {
-      children: "RQ",
+      children: "Q",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
@@ -461,7 +461,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
+const Scoresheet: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
@@ -511,10 +511,11 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           </Col>
           <Col xs="12">
             {state.canViewProposals ? (
-              <EvaluationTable {...props} />
+              <Scoresheet {...props} />
             ) : (
               <NotAvailable {...props} />
             )}
+            <Scoresheet {...props} />
           </Col>
         </Row>
       </div>

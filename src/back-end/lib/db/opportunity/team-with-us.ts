@@ -2,6 +2,7 @@ import { generateUuid } from "back-end/lib";
 import {
   Connection,
   RawTWUOpportunitySubscriber,
+  readSubmittedTWUProposalCount,
   Transaction,
   tryDb
 } from "back-end/lib/db";
@@ -725,13 +726,10 @@ export const readOneTWUOpportunity = tryDb<
           )?.length || 0;
 
         // Retrieve number of submitted proposals (exclude draft/withdrawn)
-        // const numProposals = getValidValue(
-        //   await readSubmittedTWUProposalCount(connection, result.id),
-        //   0
-        // );
-
-        // TODO - delete line below, uncomment code block above
-        const numProposals = 0;
+        const numProposals = getValidValue(
+          await readSubmittedTWUProposalCount(connection, result.id),
+          0
+        );
 
         result.reporting = {
           numViews,
