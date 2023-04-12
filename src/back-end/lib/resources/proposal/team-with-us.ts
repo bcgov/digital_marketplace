@@ -392,9 +392,7 @@ const create: crud.Create<
       const validatedOrganizationServiceAreas =
         proposalValidation.validateTWUProposalOrganizationServiceAreas(
           validatedTWUOpportunity.value,
-          validatedOrganization.value.serviceAreas.map(
-            ({ serviceArea }) => serviceArea
-          )
+          validatedOrganization.value
         );
 
       if (
@@ -670,9 +668,7 @@ const update: crud.Update<
           const validatedOrganizationServiceAreas =
             proposalValidation.validateTWUProposalOrganizationServiceAreas(
               twuOpportunity,
-              validatedOrganization.value.serviceAreas.map(
-                ({ serviceArea }) => serviceArea
-              )
+              validatedOrganization.value
             );
 
           if (
@@ -724,19 +720,6 @@ const update: crud.Update<
             });
           }
 
-          const validatedOrganization = await validateProposalOrganization(
-            connection,
-            validatedTWUProposal.value.organization?.id,
-            request.session
-          );
-          if (isInvalid(validatedOrganization)) {
-            return invalid({
-              proposal: adt("edit" as const, {
-                organization: getInvalidValue(validatedOrganization, undefined)
-              })
-            });
-          }
-
           // Validate draft proposal here to make sure it has everything
           if (
             !allValid([
@@ -751,11 +734,7 @@ const update: crud.Update<
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(
                 twuOpportunity,
-                validatedOrganization.value
-                  ? validatedOrganization.value.serviceAreas.map(
-                      ({ serviceArea }) => serviceArea
-                    )
-                  : []
+                validatedTWUProposal.value.organization
               )
             ])
           ) {
