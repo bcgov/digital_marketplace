@@ -51,7 +51,8 @@ export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, InnerMsg>;
 
 export type Msg = Msg_<Tab.TabId>;
 
-export interface RouteParams extends Pick<Tab.Params, "invitation" | "unsubscribe"> {
+export interface RouteParams
+  extends Pick<Tab.Params, "invitation" | "unsubscribe"> {
   userId: Id;
   tab?: Tab.TabId;
 }
@@ -76,12 +77,13 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          api.users.readOne(routeParams.userId === VIEWER_USER_ROUTE_PARAM
-            ? viewerUser.id
-            : routeParams.userId,
-          (response) =>
-            adt("onInitResponse", [routePath, routeParams, response])
-          ) as component_.Cmd<Msg>
+          api.users.readOne<Msg>()(
+            routeParams.userId === VIEWER_USER_ROUTE_PARAM
+              ? viewerUser.id
+              : routeParams.userId,
+            (response) =>
+              adt("onInitResponse", [routePath, routeParams, response]) as Msg
+          )
         ]
       ];
     },

@@ -13,9 +13,11 @@ export function readMany<Msg>(
   );
 }
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.Counter,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, (a: Resource.Counter) => a);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, (a: Resource.Counter) => a);
+}

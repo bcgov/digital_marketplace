@@ -6,24 +6,28 @@ const NAMESPACE = "subscribers/team-with-us";
 /**
  *
  */
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.TWUOpportunitySubscriber,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(
-  NAMESPACE,
-  (a: Resource.TWUOpportunitySubscriber) => a
-);
+  Msg
+> {
+  return crud.makeCreateAction(
+    NAMESPACE,
+    (a: Resource.TWUOpportunitySubscriber) => a
+  );
+}
 
 /**
  *
  */
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.TWUOpportunitySubscriber,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(
-  NAMESPACE,
-  (a: Resource.TWUOpportunitySubscriber) => a
-);
+  Msg
+> {
+  return crud.makeDeleteAction(
+    NAMESPACE,
+    (a: Resource.TWUOpportunitySubscriber) => a
+  );
+}

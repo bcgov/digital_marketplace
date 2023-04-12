@@ -76,12 +76,14 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
         ) as State_<K>,
         [
           component_.cmd.join(
-            api.proposals.twu.readOne(opportunityId)(proposalId, (response) =>
-              api.isValid(response) ? response.value : null
-            ) as component_.Cmd<TWUProposal | null>,
-            api.opportunities.twu.readOne(opportunityId, (response) =>
-              api.isValid(response) ? response.value : null
-            ) as component_.Cmd<TWUOpportunity | null>,
+            api.proposals.twu.readOne<TWUProposal | null>(opportunityId)(
+              proposalId,
+              (response) => (api.isValid(response) ? response.value : null)
+            ),
+            api.opportunities.twu.readOne<TWUOpportunity | null>()(
+              opportunityId,
+              (response) => (api.isValid(response) ? response.value : null)
+            ),
             (proposal, opportunity) => {
               if (!proposal || !opportunity)
                 return component_.global.replaceRouteMsg(
@@ -92,9 +94,9 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routeParams,
                 proposal,
                 opportunity
-              ]);
+              ]) as Msg;
             }
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     },

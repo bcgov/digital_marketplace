@@ -117,9 +117,9 @@ export const init: component_.page.Init<
         })
       ),
       [
-        api.content.readOne(routeParams, (response) =>
+        api.content.readOne<Msg>()(routeParams, (response) =>
           adt("onInitResponse", response)
-        ) as component_.Cmd<Msg>
+        )
       ]
     ];
   },
@@ -217,9 +217,9 @@ export const update: component_.page.Update<State, InnerMsg, Route> =
         return [
           startStartEditingLoading(state),
           [
-            api.content.readOne(content.slug, (response) =>
+            api.content.readOne<Msg>()(content.slug, (response) =>
               adt("onStartEditingResponse", response)
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }
@@ -259,9 +259,9 @@ export const update: component_.page.Update<State, InnerMsg, Route> =
         return [
           startSaveLoading(state).set("showModal", null),
           [
-            api.content.update(content.id, values, (response) =>
+            api.content.update<Msg>()(content.id, values, (response) =>
               adt("onSaveResponse", response)
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }
@@ -324,9 +324,10 @@ export const update: component_.page.Update<State, InnerMsg, Route> =
         return [
           startNotifyNewUsersLoading(state).set("showModal", null),
           [
-            api.emailNotifications.create(adt("updateTerms"), (response) =>
-              adt("onNotifyNewTermsResponse", response)
-            ) as component_.Cmd<Msg>
+            api.emailNotifications.create<Msg>()(
+              adt("updateTerms"),
+              (response) => adt("onNotifyNewTermsResponse", response)
+            )
           ]
         ];
       case "onNotifyNewTermsResponse": {
@@ -362,9 +363,9 @@ export const update: component_.page.Update<State, InnerMsg, Route> =
         return [
           startDeleteLoading(state).set("showModal", null),
           [
-            api.content.delete_(content.id, (response) =>
+            api.content.delete_<Msg>()(content.id, (response) =>
               adt("onDeleteResponse", response)
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }

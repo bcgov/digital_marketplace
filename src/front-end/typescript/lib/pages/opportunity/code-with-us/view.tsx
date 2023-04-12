@@ -88,13 +88,13 @@ const init: component_.page.Init<
       routePath
     },
     [
-      api.counters.update(
+      api.counters.update<Msg>()(
         getCWUOpportunityViewsCounterName(opportunityId),
         null,
         () => adt("noop")
-      ) as component_.Cmd<Msg>,
+      ),
       component_.cmd.join(
-        api.opportunities.cwu.readOne(opportunityId, (response) => response),
+        api.opportunities.cwu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.cwu.readExistingProposalForOpportunity(
               opportunityId,
@@ -150,12 +150,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startToggleWatchLoading(state),
         [
           state.opportunity.subscribed
-            ? (api.subscribers.cwu.delete_(id, (response) =>
+            ? api.subscribers.cwu.delete_<Msg>()(id, (response) =>
                 adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
-            : (api.subscribers.cwu.create({ opportunity: id }, (response) =>
-                adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
+            : api.subscribers.cwu.create<Msg>()(
+                { opportunity: id },
+                (response) =>
+                  adt("onToggleWatchResponse", api.isValid(response))
+              )
         ]
       ];
     }

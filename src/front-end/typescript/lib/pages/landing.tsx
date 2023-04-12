@@ -48,11 +48,7 @@ const init: component_.page.Init<
       totalCount: 0,
       totalAwarded: 0
     },
-    [
-      api.metrics.readMany((response) =>
-        adt("onInitResponse", response)
-      ) as component_.Cmd<Msg>
-    ]
+    [api.metrics.readMany<Msg>()((response) => adt("onInitResponse", response))]
   ];
 };
 

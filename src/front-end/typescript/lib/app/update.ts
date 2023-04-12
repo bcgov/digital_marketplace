@@ -667,9 +667,9 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("incomingRoute", msg.value),
         [
-          api.sessions.readOne(CURRENT_SESSION_ID, (response) =>
+          api.sessions.readOne<Msg>()(CURRENT_SESSION_ID, (response) =>
             adt("onSessionResponseDuringTransition", response)
-          ) as component.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -734,9 +734,9 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
             // Refresh the front-end's view of the current session again if the user has been signed out.
             ...(incomingRoute.route.tag === "signOut"
               ? [
-                  api.sessions.readOne(CURRENT_SESSION_ID, (response) =>
+                  api.sessions.readOne<Msg>()(CURRENT_SESSION_ID, (response) =>
                     adt("onSessionResponse", response)
-                  ) as component.Cmd<Msg>
+                  )
                 ]
               : [])
           ]

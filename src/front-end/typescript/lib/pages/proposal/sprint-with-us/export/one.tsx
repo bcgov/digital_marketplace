@@ -64,14 +64,12 @@ const init: component_.page.Init<
       ) as State,
       [
         component_.cmd.join(
-          api.proposals.swu.readOne(opportunityId)(
-            proposalId,
-            (response) => response
-          ) as component_.Cmd<api.ResponseValidation<SWUProposal, string[]>>,
-          api.opportunities.swu.readOne(
-            opportunityId,
-            (response) => response
-          ) as component_.Cmd<api.ResponseValidation<SWUOpportunity, string[]>>,
+          api.proposals.swu.readOne<
+            api.ResponseValidation<SWUProposal, string[]>
+          >(opportunityId)(proposalId, (response) => response),
+          api.opportunities.swu.readOne<
+            api.ResponseValidation<SWUOpportunity, string[]>
+          >()(opportunityId, (response) => response),
           (proposalResponse, opportunityResponse) => {
             if (
               !api.isValid(proposalResponse) ||
@@ -84,10 +82,10 @@ const init: component_.page.Init<
               return adt("onInitResponse", [
                 proposalResponse.value,
                 opportunityResponse.value
-              ]);
+              ]) as Msg;
             }
           }
-        ) as component_.Cmd<Msg>
+        )
       ]
     ];
   },

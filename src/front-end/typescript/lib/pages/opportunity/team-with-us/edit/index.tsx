@@ -93,7 +93,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
           component_.cmd.join(
-            api.opportunities.twu.readOne(
+            api.opportunities.twu.readOne()(
               routeParams.opportunityId,
               (response) => response
             ),

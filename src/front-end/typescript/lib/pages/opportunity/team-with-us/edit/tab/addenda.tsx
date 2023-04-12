@@ -50,7 +50,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const [addendaState, addendaCmds] = Addenda.init({
         existingAddenda: existingAddenda,
         publishNewAddendum(value) {
-          return api.opportunities.twu.update(
+          return api.opportunities.twu.update<Addenda.PublishNewAddendumResponse>()(
             opportunity.id,
             adt("addAddendum", value),
             (response) => {
@@ -67,7 +67,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   ]);
               }
             }
-          ) as component_.Cmd<Addenda.PublishNewAddendumResponse>;
+          );
         }
       });
       return [

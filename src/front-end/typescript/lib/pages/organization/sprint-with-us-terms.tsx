@@ -83,10 +83,10 @@ const init: component_.page.Init<
       ),
       [
         component_.cmd.join(
-          api.organizations.readOne(routeParams.orgId, (response) =>
+          api.organizations.readOne()(routeParams.orgId, (response) =>
             api.isValid(response) ? response.value : null
-          ) as component_.Cmd<Organization | null>,
-          api.content.readOne(
+          ),
+          api.content.readOne()(
             SWU_QUALIFICATION_TERMS_ID,
             (response) => response
           ),
@@ -158,11 +158,11 @@ const update: component_.base.Update<State, Msg> = updateValid(
         return [
           startAcceptLoading(state),
           [
-            api.organizations.update(
+            api.organizations.update<Msg>()(
               organization.id,
               adt("acceptSWUTerms"),
               (response) => adt("onAcceptResponse", api.isValid(response))
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }

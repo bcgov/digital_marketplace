@@ -114,25 +114,27 @@ const init: component_.page.Init<
         })
       ),
       [
-        ...component_.cmd.mapMany(submitTermsCmds, (msg) =>
-          adt("submitTerms", msg)
+        ...component_.cmd.mapMany(
+          submitTermsCmds,
+          (msg) => adt("submitTerms", msg) as Msg
         ),
         // Make necessary network requests
         component_.cmd.join4(
-          api.proposals.twu.readExistingProposalForOpportunity(
+          api.proposals.twu.readExistingProposalForOpportunity<
+            TWUProposalSlim | undefined
+          >(opportunityId, (response) => response),
+          api.opportunities.twu.readOne<TWUOpportunity | null>()(
             opportunityId,
-            (response) => response
-          ) as component_.Cmd<TWUProposalSlim | undefined>,
-          api.opportunities.twu.readOne(opportunityId, (response) =>
-            api.isValid(response) ? response.value : null
-          ) as component_.Cmd<TWUOpportunity | null>,
-          api.organizations.owned.readMany((response) =>
+            (response) => (api.isValid(response) ? response.value : null)
+          ),
+          api.organizations.owned.readMany<OrganizationSlim[]>()((response) =>
             api.getValidValue(response, [])
-          ) as component_.Cmd<OrganizationSlim[]>,
-          api.content.readOne(TWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
-            api.isValid(response) ? response.value.body : ""
-          ) as component_.Cmd<string>,
-          (existingProposal, opportunity, orgs, evalBody) => {
+          ),
+          api.content.readOne<string>()(
+            TWU_PROPOSAL_EVALUATION_CONTENT_ID,
+            (response) => (api.isValid(response) ? response.value.body : "")
+          ),
+          (existingProposal, opportunity, orgs, evalBody): Msg => {
             // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
             if (existingProposal)
               return component_.global.replaceRouteMsg(
@@ -152,10 +154,14 @@ const init: component_.page.Init<
                 adt("opportunityTWUView" as const, { opportunityId })
               );
             // Otherwise, everything looks good, continue with initialization.
-            return adt("onInitResponse", [opportunity, orgs, evalBody]) as Msg;
+            return adt("onInitResponse" as const, [
+              opportunity,
+              orgs,
+              evalBody
+            ]) as Msg;
           }
         )
-      ] as component_.Cmd<Msg>[]
+      ]
     ];
   },
   fail({ routePath }) {
@@ -278,12 +284,12 @@ const update: component_.base.Update<State, Msg> = updateValid(
         return [
           startSubmitLoading(state),
           [
-            api.users.update(
+            api.users.update<Msg>()(
               state.sessionUser.id,
               adt("acceptTerms"),
               (response) =>
                 adt("onSubmitAcceptTermsResponse", api.isValid(response))
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }

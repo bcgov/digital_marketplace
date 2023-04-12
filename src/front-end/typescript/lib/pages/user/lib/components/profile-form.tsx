@@ -333,17 +333,21 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
   // Accept terms.
   const acceptTermsCmd: component_.Cmd<Validation<null, Immutable<State>>> =
     acceptedTerms
-      ? (api.users.update(userId, adt("acceptTerms"), (response) => {
-          if (!api.isValid(response)) {
-            return invalid(state);
+      ? api.users.update<Validation<null, Immutable<State>>>()(
+          userId,
+          adt("acceptTerms"),
+          (response) => {
+            if (!api.isValid(response)) {
+              return invalid(state);
+            }
+            return valid(null);
           }
-          return valid(null);
-        }) as component_.Cmd<Validation<null, Immutable<State>>>)
+        )
       : component_.cmd.dispatch(valid(null));
   // Modify notification subscription.
   const notificationsOnCmd: component_.Cmd<Validation<null, Immutable<State>>> =
     notificationsOn !== undefined
-      ? (api.users.update(
+      ? api.users.update<Validation<null, Immutable<State>>>()(
           userId,
           adt("updateNotifications", notificationsOn),
           (response) => {
@@ -352,13 +356,13 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
             }
             return valid(null);
           }
-        ) as component_.Cmd<Validation<null, Immutable<State>>>)
+        )
       : component_.cmd.dispatch(valid(null));
   // Update avatar image.
   const uploadAvatarImageCmd: component_.Cmd<
     Validation<Id | undefined, Immutable<State>>
   > = values.newAvatarImage
-    ? (api.files.avatars.create(
+    ? api.files.avatars.create<Validation<Id, Immutable<State>>>()(
         {
           name: values.newAvatarImage.name,
           file: values.newAvatarImage,
@@ -374,7 +378,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
           }
           return valid(response.value.id);
         }
-      ) as component_.Cmd<Validation<Id, Immutable<State>>>)
+      )
     : component_.cmd.dispatch(valid(existingAvatarImageFile));
   // Combine the above Cmds.
   const combinedPreparationCmds = component_.cmd.andThen(
@@ -398,7 +402,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
     (uploadAvatarImageResult) => {
       if (isInvalid(uploadAvatarImageResult))
         return component_.cmd.dispatch(uploadAvatarImageResult);
-      return api.users.update(
+      return api.users.update<PersistResult>()(
         userId,
         adt("updateProfile", {
           name: values.name,
@@ -426,7 +430,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
             }
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     }
   );
 }

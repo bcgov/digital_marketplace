@@ -16,7 +16,7 @@ import { adt, ADT } from "shared/lib/types";
 import { User, UpdateValidationErrors } from "shared/lib/resources/user";
 
 export interface State extends Tab.Params {
-  showModal: boolean,
+  showModal: boolean;
   newOpportunitiesLoading: number;
   newOpportunities: Immutable<Checkbox.State>;
 }
@@ -51,7 +51,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = ({
       profileUser,
       viewerUser,
       newOpportunitiesLoading: 0,
-      newOpportunities: immutable(newOpportunitiesState),
+      newOpportunities: immutable(newOpportunitiesState)
     },
     component_.cmd.mapMany(newOpportunitiesCmds, (msg) =>
       adt("newOpportunities", msg)
@@ -89,20 +89,24 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         newState,
         [
           ...cmds,
-          component_.cmd.dispatch(adt("updateNotifications", FormField.getValue(newState.newOpportunities)))
+          component_.cmd.dispatch(
+            adt(
+              "updateNotifications",
+              FormField.getValue(newState.newOpportunities)
+            )
+          )
         ]
       ];
     }
     case "updateNotifications": {
       return [
-        startNewOpportunitiesLoading(state)
-          .set("showModal", false),
+        startNewOpportunitiesLoading(state).set("showModal", false),
         [
-          api.users.update(
+          api.users.update<Msg>()(
             state.profileUser.id,
             adt("updateNotifications", msg.value),
             (response) => adt("onUpdateNotificationsResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -194,7 +198,9 @@ export const component: Tab.Component<State, Msg> = {
     return component_.page.modal.show({
       title: "Unsubscribe?",
       body: () =>
-        `Are you sure you want to unsubscribe? ${state.profileUser.email ?? 'You'} will no longer receive notifications about new opportunities.`,
+        `Are you sure you want to unsubscribe? ${
+          state.profileUser.email ?? "You"
+        } will no longer receive notifications about new opportunities.`,
       onCloseMsg: adt("hideModal") as Msg,
       actions: [
         {

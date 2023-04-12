@@ -256,9 +256,9 @@ const init: component_.page.Init<
     },
     [
       component_.cmd.join3(
-        api.opportunities.cwu.readMany((response) => response),
-        api.opportunities.swu.readMany((response) => response),
-        api.opportunities.twu.readMany((response) => response),
+        api.opportunities.cwu.readMany()((response) => response),
+        api.opportunities.swu.readMany()((response) => response),
+        api.opportunities.twu.readMany()((response) => response),
         (cwuResponse, swuResponse, twuResponse) =>
           adt("onInitResponse", [
             cwuResponse,
@@ -487,11 +487,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startToggleNotificationsLoading(state),
         [
-          api.users.update(
+          api.users.update<Msg>()(
             state.viewerUser.id,
             adt("updateNotifications", !state.viewerUser.notificationsOn),
             (response) => adt("onToggleNotificationsResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     case "onToggleNotificationsResponse": {
@@ -515,17 +515,19 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const program = opportunity.tag;
       const makeOnToggleWatchResponse = (
         response: api.ResponseValidation<unknown, unknown>
-      ) => adt("onToggleWatchResponse", [category, id, api.isValid(response)]);
+      ) =>
+        adt("onToggleWatchResponse", [
+          category,
+          id,
+          api.isValid(response)
+        ]) as Msg;
       const requestCmd = opportunity.value.subscribed
-        ? api.subscribers[program].delete_(id, makeOnToggleWatchResponse)
-        : api.subscribers[program].create(
+        ? api.subscribers[program].delete_<Msg>()(id, makeOnToggleWatchResponse)
+        : api.subscribers[program].create<Msg>()(
             { opportunity: id },
             makeOnToggleWatchResponse
           );
-      return [
-        state.set("toggleWatchLoading", msg.value),
-        [requestCmd as component_.Cmd<Msg>]
-      ];
+      return [state.set("toggleWatchLoading", msg.value), [requestCmd]];
     }
     case "onToggleWatchResponse": {
       const [category, id, isResponseValid] = msg.value;

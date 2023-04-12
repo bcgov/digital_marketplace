@@ -3,9 +3,11 @@ import * as Resource from "shared/lib/resources/email-notifications";
 
 const NAMESPACE = "emailNotifications";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   null,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, (a: null) => a);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, (a: null) => a);
+}

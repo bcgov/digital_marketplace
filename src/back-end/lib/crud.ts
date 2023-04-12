@@ -443,11 +443,11 @@ function makeDeleteRoute<
 }
 
 /**
- * Takes a {@link Resource} as an argument, and returns a function that can be passed a {@typeParam Connection} to create a new router
+ * Takes a {@link Resource} as an argument, and returns a function that can be passed a {@link Connection} to create a new router
  * based on the CRUD operations defined in the provided {@link Resource}.
  *
  * @param resource - The resource used as the basis for the resulting router.
- * @returns A function that accepts a {@typeParam Connection} and returns a {@link Router} supported the specified {@link Resource}
+ * @returns A function that accepts a {@link Connection} and returns a {@link Router} supported the specified {@link Resource}
  */
 export function makeRouter<
   SupportedRequestBodies,

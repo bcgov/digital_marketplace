@@ -4,8 +4,13 @@ import { rawOrganizationSlimToOrganizationSlim } from "front-end/lib/http/api/or
 
 const NAMESPACE = "ownedOrganizations";
 
-export const readMany: crud.ReadManyAction<
+export function readMany<Msg>(): crud.ReadManyAction<
   Resource.OrganizationSlim,
   string[],
-  unknown
-> = crud.makeReadManyAction(NAMESPACE, rawOrganizationSlimToOrganizationSlim);
+  Msg
+> {
+  return crud.makeReadManyAction(
+    NAMESPACE,
+    rawOrganizationSlimToOrganizationSlim
+  );
+}

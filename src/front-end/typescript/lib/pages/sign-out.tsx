@@ -31,9 +31,10 @@ const init: component_.page.Init<
   return [
     { message: "Signing out..." },
     [
-      api.sessions.delete_(CURRENT_SESSION_ID, (response) =>
-        adt("onInitResponse", response)
-      ) as component_.Cmd<Msg>
+      api.sessions.delete_<InnerMsg>()(
+        CURRENT_SESSION_ID,
+        (response) => adt("onInitResponse", response) as InnerMsg
+      )
     ]
   ];
 };
