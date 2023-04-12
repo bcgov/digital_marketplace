@@ -145,26 +145,25 @@ export function makeSidebarState(
   proposal: TWUProposal
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
-    // backLink: {
-    //   text: "Back to Opportunity",
-    //   route: adt("opportunityTWUEdit", {
-    //     opportunityId: proposal.opportunity.id,
-    //     tab: (() => {
-    //       switch (activeTab) {
-    //         // case "challenge":
-    //         //   return "challenge" as const;
-    //         // case "resourceQuestions":
-    //         //   return "resourceQuestions" as const;
-    //         case "proposal":
-    //           // TODO - remove break
-    //           break;
-    //         // case "history":
-    //         default:
-    //           return "proposals" as const;
-    //       }
-    //     })()
-    //   })
-    // },
+    backLink: {
+      text: "Back to Opportunity",
+      route: adt("opportunityTWUEdit", {
+        opportunityId: proposal.opportunity.id,
+        tab: (() => {
+          switch (activeTab) {
+            // case "challenge":
+            //   return "challenge" as const;
+            case "resourceQuestions":
+              return "resourceQuestions" as const;
+            case "proposal":
+              return "proposals" as const;
+            // case "history":
+            default:
+              return "proposals" as const;
+          }
+        })()
+      })
+    },
     items: [
       adt("heading", "Vendor Proposal"),
       makeSidebarLink("proposal", proposal, activeTab),
