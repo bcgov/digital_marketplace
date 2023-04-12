@@ -42,8 +42,8 @@ import {
   UpdateValidationErrors,
   TWUProposal
 } from "shared/lib/resources/proposal/team-with-us";
-import { isAdmin } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
+import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/sprint-with-us";
 
 type ModalId = ADT<"award", Id>;
 
@@ -107,10 +107,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          // Determine whether the "Award" button should be shown at all.
-          // Can be awarded if...
-          // - Opportunity has the appropriate status; and
-          // - At least one proposal can be awarded.
+          /**
+           * Determine whether the "Award" button should be shown at all.
+           * Can be awarded if...
+           * - Opportunity has the appropriate status; and
+           * - At least one proposal can be awarded.
+           */
           .set(
             "canProposalsBeAwarded",
             canTWUOpportunityBeAwarded(opportunity) &&
@@ -207,6 +209,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
+/**
+ * Displays three 'Cards' at the top of the Proposal tab which summarizes
+ * the number of proposals, the winning score and average score
+ *
+ * @param opportunity
+ * @param proposals
+ */
 const makeCardData = (
   opportunity: TWUOpportunity,
   proposals: TWUProposalSlim[]
@@ -261,16 +270,18 @@ const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
 };
 
 const ContextMenuCell: component_.base.View<{
+  disabled: boolean;
   loading: boolean;
   proposal: TWUProposalSlim;
   dispatch: component_.base.Dispatch<Msg>;
-}> = ({ loading, proposal, dispatch }) => {
+}> = ({ disabled, loading, proposal, dispatch }) => {
   return (
     <Link
       button
       symbol_={leftPlacement(iconLinkSymbol("award"))}
       color="primary"
       size="sm"
+      disabled={disabled || loading}
       loading={loading}
       onClick={() =>
         dispatch(adt("showModal", adt("award" as const, proposal.id)))
@@ -284,18 +295,17 @@ interface ProponentCellProps {
   proposal: TWUProposalSlim;
   opportunity: TWUOpportunity;
   disabled: boolean;
-  linkToProfile: boolean;
 }
 
 const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
   disabled
-  // linkToProfile
 }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
-    opportunityId: opportunity.id
+    opportunityId: opportunity.id,
+    tab: "proposal" as const
   };
   return (
     <div>
@@ -304,20 +314,16 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
         dest={routeDest(adt("proposalTWUView", proposalRouteParams))}>
         {getTWUProponentName(proposal)}
       </Link>
-      <div className="small text-secondary text-uppercase">
-        {/*{linkToProfile ? (*/}
-        {/*  <Link*/}
-        {/*    disabled={disabled}*/}
-        {/*    color="secondary"*/}
-        {/*    dest={routeDest(*/}
-        {/*      adt("userProfile", { userId: proposal.createdBy.id })*/}
-        {/*    )}>*/}
-        {/*    {proposal.createdBy.name}*/}
-        {/*  </Link>*/}
-        {/*) : (*/}
-        {/*  proposal.createdBy.name*/}
-        {/*)}*/}
-      </div>
+      {(() => {
+        if (!proposal.organization) {
+          return null;
+        }
+        return (
+          <div className="small text-secondary text-uppercase">
+            {proposal.anonymousProponentName}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -328,16 +334,18 @@ function evaluationTableBodyRows(
 ): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
+  const isAwardLoading = !!state.awardLoading;
+  const isLoading = isAwardLoading;
   return state.proposals.map((p) => {
+    const isProposalLoading = state.awardLoading === p.id;
     return [
       {
-        className: "text-nowrap",
+        className: "text-wrap",
         children: (
           <ProponentCell
             proposal={p}
             opportunity={opportunity}
-            linkToProfile={isAdmin(state.viewerUser)}
-            disabled={!!state.awardLoading}
+            disabled={isLoading}
           />
         )
       },
@@ -351,19 +359,57 @@ function evaluationTableBodyRows(
       },
       {
         className: "text-center",
-        children: <div>{/*{p.score ? `${p.score}%` : EMPTY_STRING}*/}</div>
+        children: (
+          <div>
+            {p.questionsScore
+              ? `${p.questionsScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.challengeScore
+              ? `${p.challengeScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.priceScore
+              ? `${p.priceScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.totalScore
+              ? `${p.totalScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
       },
       ...(state.canProposalsBeAwarded
         ? [
             {
-              showOnHover: true,
-              children: canTWUProposalBeAwarded(p) ? (
+              showOnHover: !isProposalLoading,
+              className: "text-right text-nowrap",
+              children: (
                 <ContextMenuCell
                   dispatch={dispatch}
                   proposal={p}
-                  loading={state.awardLoading === p.id}
+                  disabled={isLoading}
+                  loading={isProposalLoading}
                 />
-              ) : null
+              )
             }
           ]
         : [])
@@ -384,7 +430,22 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       style: { width: "0px" }
     },
     {
-      children: "Score",
+      children: "RQ",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "C",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "Price",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "Total",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
