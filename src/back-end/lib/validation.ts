@@ -222,7 +222,10 @@ export function validateTWUProposalTeam(
         });
       } else {
         return invalid({
-          member: getInvalidValue(validatedMember, undefined),
+          member: getInvalidValue<string[], undefined>(
+            validatedMember,
+            undefined
+          ),
           hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
         }) as Validation<
           CreateTWUTeamMemberBody,
