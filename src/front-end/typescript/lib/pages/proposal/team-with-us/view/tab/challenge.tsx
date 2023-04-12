@@ -21,17 +21,15 @@
 // import React from "react";
 // import { Col, Row } from "reactstrap";
 // import {
-//   canTWUOpportunityBeScreenedInToTeamScenario,
-//   hasTWUOpportunityPassedChallenge,
-//   hasTWUOpportunityPassedTeamScenario
+//  hasTWUOpportunityPassedChallenge,
 // } from "shared/lib/resources/opportunity/team-with-us";
 // import {
 //   isTWUProposalInChallenge,
 //   NUM_SCORE_DECIMALS,
 //   TWUProposal,
 //   TWUProposalStatus,
-//   twuProposalTeamMembers,
-//   UpdateValidationErrors
+//   UpdateValidationErrors,
+//   // twuProposalTeamMembers
 // } from "shared/lib/resources/proposal/team-with-us";
 // import { gitHubProfileLink } from "shared/lib/resources/user";
 // import { adt, ADT } from "shared/lib/types";

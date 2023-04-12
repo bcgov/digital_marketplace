@@ -1,5 +1,8 @@
 import { ThemeColor } from "front-end/lib/types";
-import { TWUProposalStatus } from "shared/lib/resources/proposal/team-with-us";
+import {
+  TWUProposalStatus,
+  TWUProposalEvent
+} from "shared/lib/resources/proposal/team-with-us";
 import { UserType } from "shared/lib/resources/user";
 
 export function twuProposalStatusToColor(
@@ -62,6 +65,16 @@ export function twuProposalStatusToTitleCase(
   }
 }
 
+export function twuProposalEventToTitleCase(e: TWUProposalEvent): string {
+  switch (e) {
+    case TWUProposalEvent.QuestionsScoreEntered:
+      return "Team Questions Score Entered";
+    case TWUProposalEvent.ChallengeScoreEntered:
+      return "Challenge Score Entered";
+    case TWUProposalEvent.PriceScoreEntered:
+      return "Price Score Entered";
+  }
+}
 export function twuProposalStatusToPresentTenseVerb(
   s: TWUProposalStatus
 ): string {
