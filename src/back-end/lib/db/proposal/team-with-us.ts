@@ -161,15 +161,21 @@ async function rawProposalTeamMemberToProposalTeamMember(
   };
 }
 
+/**
+ * Will take a Proposal object, created from db query and massages it into
+ * one of two responses, depending on the status of the Opportunity.
+ *
+ * @see {@link readOneTWUProposal}
+ *
+ * @param connection
+ * @param session
+ * @param raw - RawTWUProposal
+ */
 async function rawTWUProposalToTWUProposal(
   connection: Connection,
   session: Session,
   raw: RawTWUProposal
 ): Promise<TWUProposal> {
-  /**
-   *   If the user is gov/admin and the opportunity status is anything prior to
-   *   EvaluationChallenge, keep the proposal anonymous
-   */
   const { opportunity: opportunityId } = raw;
   const opportunity = getValidValue(
     await readOneTWUOpportunitySlim(connection, opportunityId, session),
@@ -178,11 +184,14 @@ async function rawTWUProposalToTWUProposal(
   if (!opportunity) {
     throw new Error("unable to process proposal");
   }
+  /**
+   *   If the user is gov/admin and the opportunity status is anything prior to
+   *   EvaluationChallenge, keep the proposal anonymous
+   */
   if (
     session?.user.type !== UserType.Vendor &&
     !doesTWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)
   ) {
-    // Return anonymous proposal only
     return {
       id: raw.id,
       createdAt: raw.createdAt,
@@ -193,7 +202,8 @@ async function rawTWUProposalToTWUProposal(
       team: raw.team,
       resourceQuestionResponses: raw.resourceQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
-      anonymousProponentName: raw.anonymousProponentName
+      anonymousProponentName: raw.anonymousProponentName,
+      attachments: []
     };
   }
 
@@ -237,13 +247,21 @@ async function rawTWUProposalToTWUProposal(
   };
 }
 
+/**
+ * Similar to `rawTWUProposalTOTWUProposal` but does not include
+ * "history" | "attachments" | "resourceQuestionResponses"
+ *
+ * @see {@link rawTWUProposalToTWUProposal}
+ *
+ * @param connection
+ * @param raw
+ * @param session
+ */
 async function rawTWUProposalSlimToTWUProposalSlim(
   connection: Connection,
   raw: RawTWUProposalSlim,
   session: Session
 ): Promise<TWUProposalSlim> {
-  // If the user is gov/admin and the opportunity status is anything before EvaluationChallenge, keep the proposal
-  // anonymous
   const { opportunity: opportunityId } = raw;
   const opportunity = getValidValue(
     await readOneTWUOpportunitySlim(connection, opportunityId, session),
@@ -252,11 +270,14 @@ async function rawTWUProposalSlimToTWUProposalSlim(
   if (!opportunity) {
     throw new Error("unable to process proposal");
   }
+  /**
+   * If the user is gov/admin and the opportunity status is anything before
+   * EvaluationChallenge, keep the proposal anonymous
+   */
   if (
     session?.user.type !== UserType.Vendor &&
     !doesTWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)
   ) {
-    // Return anonymous proposal only, meaning the opportunity status is anything before Evaluation
     return {
       challengeScore: 0,
       createdBy: undefined,
@@ -542,6 +563,9 @@ const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
   }
 );
 
+/**
+ * Retrieves one database record for a TWU Proposal
+ */
 export const readOneTWUProposal = tryDb<
   [Id, AuthenticatedSession],
   TWUProposal | null
@@ -550,6 +574,13 @@ export const readOneTWUProposal = tryDb<
     .where({ "proposals.id": id })
     .first<RawTWUProposal>();
 
+  /**
+   * @privateRemarks
+   *
+   * As of 04/2023 TWU Proposals do NOT have attachments, however discussions
+   * about the potential for a future use case warrants leaving this in
+   * (even if empty)
+   */
   if (result) {
     // Fetch attachments
     result.attachments = (
@@ -1550,7 +1581,7 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
 
 /**
  * This function checks whether the user can read the file
- * via its association to BOTH the TWU opportunity or proposal.
+ * via its association to the TWU opportunity or proposal.
  */
 export async function hasTWUAttachmentPermission(
   connection: Connection,

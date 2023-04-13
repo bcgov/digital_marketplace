@@ -402,7 +402,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
                 {
                   icon: "star-full",
                   iconColor: "c-report-card-icon-highlight",
-                  name: "Team Questions Score",
+                  name: "Resource Questions Score",
                   value: `${String(
                     state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS)
                   )}%`
@@ -417,7 +417,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
           <Col xs="12">
             {show ? (
               <div>
-                <h3 className="mb-4">Team Questions{"'"} Responses</h3>
+                <h3 className="mb-4">Resource Questions{"'"} Responses</h3>
                 {state.proposal.resourceQuestionResponses.map((r, i, rs) => (
                   <ResourceQuestionResponseView
                     key={`twu-proposal-team-question-response-${i}`}
@@ -431,7 +431,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
                 ))}
               </div>
             ) : (
-              "This proposal's team questions will be available once the opportunity closes."
+              "This proposal's resource questions will be available once the opportunity closes."
             )}
           </Col>
         </Row>
