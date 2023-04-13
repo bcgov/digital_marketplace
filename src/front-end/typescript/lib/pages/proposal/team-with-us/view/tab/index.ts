@@ -2,7 +2,7 @@ import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 // import * as ChallengeTab from "front-end/lib/pages/proposal/team-with-us/view/tab/code-challenge";
-// import * as HistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
+import * as HistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab/proposal";
 import * as ResourceQuestionsTab from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
 import { routeDest } from "front-end/lib/views/link";
@@ -62,12 +62,12 @@ export interface Tabs {
   //   ChallengeTab.InnerMsg,
   //   InitResponse
   // >;
-  // history: TabbedPage.Tab<
-  //   Params,
-  //   HistoryTab.State,
-  //   HistoryTab.InnerMsg,
-  //   InitResponse
-  // >;
+  history: TabbedPage.Tab<
+    Params,
+    HistoryTab.State,
+    HistoryTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -80,8 +80,8 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
     case "proposal":
     case "resourceQuestions":
+    case "history":
       // case "challenge":
-      // case "history":
       return raw;
     default:
       return null;
@@ -104,12 +104,12 @@ export function idToDefinition<K extends TabId>(
     //     icon: "code",
     //     title: "Challenge"
     //   } as TabbedPage.TabDefinition<Tabs, K>;
-    // case "history":
-    //   return {
-    //     component: HistoryTab.component,
-    //     icon: "history",
-    //     title: "Proposal History"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "history":
+      return {
+        component: HistoryTab.component,
+        icon: "history",
+        title: "Proposal History"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "proposal":
     default:
       return {
@@ -157,7 +157,7 @@ export function makeSidebarState(
               return "resourceQuestions" as const;
             case "proposal":
               return "proposals" as const;
-            // case "history":
+            case "history":
             default:
               return "proposals" as const;
           }
@@ -170,8 +170,8 @@ export function makeSidebarState(
       adt("heading", "Vendor Evaluation"),
       makeSidebarLink("resourceQuestions", proposal, activeTab),
       // makeSidebarLink("challenge", proposal, activeTab),
-      adt("heading", "Management")
-      // makeSidebarLink("history", proposal, activeTab)
+      adt("heading", "Management"),
+      makeSidebarLink("history", proposal, activeTab)
     ]
   });
 }
