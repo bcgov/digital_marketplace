@@ -720,6 +720,20 @@ const update: crud.Update<
             });
           }
 
+          const validatedOrganization = await validateProposalOrganization(
+            connection,
+            validatedTWUProposal.value.organization?.id,
+            request.session
+          );
+          const organization = getValidValue(validatedOrganization, undefined);
+          if (!organization) {
+            return invalid({
+              proposal: adt("submit" as const, [
+                "An organization must be specified prior to submitting."
+              ])
+            });
+          }
+
           // Validate draft proposal here to make sure it has everything
           if (
             !allValid([
@@ -729,12 +743,17 @@ const update: crud.Update<
               ),
               await validateTWUProposalTeam(
                 connection,
-                validatedTWUProposal.value.team,
-                request.id
+                validatedTWUProposal.value.team.map(
+                  ({ member, hourlyRate }) => ({
+                    member: member.id,
+                    hourlyRate
+                  })
+                ),
+                organization.id
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(
                 twuOpportunity,
-                validatedTWUProposal.value.organization
+                organization
               )
             ])
           ) {
