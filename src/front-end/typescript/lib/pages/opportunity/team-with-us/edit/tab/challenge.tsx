@@ -392,7 +392,7 @@ const WaitForChallenge: component_.base.ComponentView<State, Msg> = () => {
   return (
     <div>
       Participants will be displayed here once this opportunity has reached the
-      Code Challenge.
+      Interview/Challenge.
     </div>
   );
 };
@@ -549,7 +549,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       style: { width: "0px" }
     },
     {
-      children: "Code Challenge",
+      children: "Challenge",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
@@ -599,7 +599,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           <Col
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
-            <h4 className="mb-0">Code Challenge Participants</h4>
+            <h4 className="mb-0">Interview/Challenge Participants</h4>
           </Col>
           <Col xs="12">
             {state.canViewProposals && state.proposals.length ? (
@@ -637,7 +637,7 @@ export const component: Tab.Component<State, Msg> = {
     const isLoading = isCompleteChallengeLoading || isScreenToFromLoading;
     return component_.page.actions.links([
       {
-        children: "Complete Code Challenge",
+        children: "Complete Interview/Challenge",
         symbol_: leftPlacement(iconLinkSymbol("code-outline")),
         color: "primary",
         button: true,
@@ -669,11 +669,11 @@ export const component: Tab.Component<State, Msg> = {
     switch (state.showModal.tag) {
       case "completeChallenge":
         return component_.page.modal.show({
-          title: "Complete Code Challenge?",
+          title: "Complete Interview/Challenge?",
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Complete Code Challenge",
+              text: "Complete Interview/Challenge",
               icon: "code-outline",
               color: "primary",
               button: true,
@@ -686,7 +686,8 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () =>
-            "Are you sure you want to complete the evaluation of this opportunity's Code Challenge? You will no longer be able to screen proponents in or out of the Team Scenario."
+            "Are you sure you want to complete the evaluation of this opportunity's Interview/Challenge? You will no" +
+            " longer be able to screen proponents in or out."
         });
     }
   }
