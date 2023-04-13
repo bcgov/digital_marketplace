@@ -2,7 +2,8 @@ import { determineBusinessDays, getNumber, getString } from "shared/lib";
 import {
   MAX_RESOURCE_QUESTION_WORD_LIMIT,
   TWUOpportunity,
-  TWUResourceQuestion
+  TWUResourceQuestion,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   Organization,
@@ -176,7 +177,7 @@ export function validateTWUProposalProposedCost(
 export function validateTWUProposalOrganizationServiceAreas(
   opportunity: TWUOpportunity,
   organization?: Organization | OrganizationSlim
-): Validation<string[]> {
+): ArrayValidation<TWUServiceArea, string> {
   if (
     organization &&
     doesOrganizationProvideServiceArea(organization, opportunity.serviceArea)
