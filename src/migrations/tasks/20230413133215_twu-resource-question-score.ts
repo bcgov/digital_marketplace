@@ -12,6 +12,13 @@ export async function up(connection: Knex): Promise<void> {
     }
   );
   logger.info("Completed modifying twuResourceQuestionResponses table.");
+
+  await connection.schema.raw(`
+  ALTER TABLE "twuProposalStatuses" ALTER COLUMN "status" DROP NOT NULL;`);
+
+  logger.info(
+    "Altered restrictive not null on status column in twuProposalStatus"
+  );
 }
 
 export async function down(connection: Knex): Promise<void> {

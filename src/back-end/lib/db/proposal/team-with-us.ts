@@ -905,7 +905,6 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
     await connection.transaction(async (trx) => {
       // Update updatedAt/By on proposal root record
       const numberUpdated = await connection<{
-        questionsScore: number;
         updatedAt: Date;
         updatedBy: Id;
       }>("twuProposals")
@@ -936,7 +935,7 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
           );
 
         if (!result) {
-          throw new Error("unable to update team question scores");
+          throw new Error("unable to update resource question scores");
         }
       }
 
@@ -954,7 +953,7 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
             createdAt: now,
             createdBy: session.user.id,
             event: TWUProposalEvent.QuestionsScoreEntered,
-            note: `Team question scores were entered. ${scores
+            note: `Resource question scores were entered. ${scores
               .map((s, i) => `Q${i + 1}: ${s.score}`)
               .join("; ")}.`
           },
@@ -962,7 +961,7 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
         );
 
       if (!result) {
-        throw new Error("unable to update team question scores");
+        throw new Error("unable to update resource question scores");
       }
 
       // Change the status to EvaluatedResourceQuestions
@@ -983,7 +982,7 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
         );
 
       if (!statusRecord) {
-        throw new Error("unable to update team questions score");
+        throw new Error("unable to update resource questions score");
       }
 
       const dbResult = await readOneTWUProposal(trx, result.proposal, session);
