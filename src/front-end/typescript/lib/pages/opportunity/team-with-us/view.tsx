@@ -187,18 +187,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       // Assume lowest level of qualification and qualify upwards
       const qualification = organizations.reduce(
         (qualification: Qualification, organization) => {
-          if (
-            doesOrganizationProvideServiceArea(
-              organization,
-              opportunity.serviceArea
-            )
-          ) {
-            return "qualifiedCorrectServiceArea";
-          } else if (
-            doesOrganizationMeetTWUQualification(organization) &&
-            qualification !== "qualifiedCorrectServiceArea"
-          ) {
-            return "qualifiedIncorrectServiceArea";
+          if (doesOrganizationMeetTWUQualification(organization)) {
+            if (
+              doesOrganizationProvideServiceArea(
+                organization,
+                opportunity.serviceArea
+              )
+            ) {
+              return "qualifiedCorrectServiceArea";
+            } else if (qualification !== "qualifiedCorrectServiceArea") {
+              return "qualifiedIncorrectServiceArea";
+            }
           }
           return qualification;
         },
