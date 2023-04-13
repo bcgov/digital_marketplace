@@ -2,7 +2,7 @@ import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 import * as AddendaTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/addenda";
-// import * as ChallengeTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/code-challenge";
+import * as ChallengeTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/challenge";
 import * as HistoryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/proposals";
@@ -78,12 +78,12 @@ export interface Tabs {
     HistoryTab.InnerMsg,
     InitResponse
   >;
-  //   challenge: TabbedPage.Tab<
-  //     Params,
-  //     ChallengeTab.State,
-  //     ChallengeTab.InnerMsg,
-  //     InitResponse
-  //   >;
+  challenge: TabbedPage.Tab<
+    Params,
+    ChallengeTab.State,
+    ChallengeTab.InnerMsg,
+    InitResponse
+  >;
   proposals: TabbedPage.Tab<
     Params,
     ProposalsTab.State,
@@ -106,7 +106,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "history":
     case "proposals":
     case "resourceQuestions":
-      // case "challenge":
+    case "challenge":
       return raw;
     default:
       return null;
@@ -135,12 +135,12 @@ export function idToDefinition<K extends TabId>(
         icon: "comments-alt",
         title: "Resource Questions"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    // case "challenge":
-    //   return {
-    //     component: ChallengeTab.component,
-    //     icon: "code",
-    //     title: "Code Challenge"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "challenge":
+      return {
+        component: ChallengeTab.component,
+        icon: "code",
+        title: "Challenge"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "proposals":
       return {
         component: ProposalsTab.component,
@@ -196,7 +196,7 @@ export function makeSidebarState(
           adt("heading", "Opportunity Evaluation"),
           makeSidebarLink("proposals", opportunity.id, activeTab),
           makeSidebarLink("resourceQuestions", opportunity.id, activeTab),
-          //   makeSidebarLink("challenge", opportunity.id, activeTab),
+          makeSidebarLink("challenge", opportunity.id, activeTab),
           adt("heading", "Need Help?"),
           adt("link", {
             icon: "external-link-alt",
@@ -213,7 +213,6 @@ export function makeSidebarState(
 }
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
-  // const proposalTabs: TabId[] = ["proposals", "resourceQuestions", "challenge"];
-  const proposalTabs: TabId[] = ["proposals", "resourceQuestions"];
+  const proposalTabs: TabId[] = ["proposals", "resourceQuestions", "challenge"];
   return proposalTabs.includes(tabId);
 }

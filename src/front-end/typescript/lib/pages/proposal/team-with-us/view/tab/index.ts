@@ -1,7 +1,7 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
-// import * as ChallengeTab from "front-end/lib/pages/proposal/team-with-us/view/tab/code-challenge";
+import * as ChallengeTab from "front-end/lib/pages/proposal/team-with-us/view/tab/challenge";
 import * as HistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab/proposal";
 import * as ResourceQuestionsTab from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
@@ -56,12 +56,12 @@ export interface Tabs {
     ResourceQuestionsTab.InnerMsg,
     InitResponse
   >;
-  // challenge: TabbedPage.Tab<
-  //   Params,
-  //   ChallengeTab.State,
-  //   ChallengeTab.InnerMsg,
-  //   InitResponse
-  // >;
+  challenge: TabbedPage.Tab<
+    Params,
+    ChallengeTab.State,
+    ChallengeTab.InnerMsg,
+    InitResponse
+  >;
   history: TabbedPage.Tab<
     Params,
     HistoryTab.State,
@@ -81,7 +81,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "proposal":
     case "resourceQuestions":
     case "history":
-      // case "challenge":
+    case "challenge":
       return raw;
     default:
       return null;
@@ -98,12 +98,12 @@ export function idToDefinition<K extends TabId>(
         icon: "comments-alt",
         title: "Resource Questions"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    // case "challenge":
-    //   return {
-    //     component: ChallengeTab.component,
-    //     icon: "code",
-    //     title: "Challenge"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "challenge":
+      return {
+        component: ChallengeTab.component,
+        icon: "code",
+        title: "Challenge"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "history":
       return {
         component: HistoryTab.component,
@@ -151,8 +151,8 @@ export function makeSidebarState(
         opportunityId: proposal.opportunity.id,
         tab: (() => {
           switch (activeTab) {
-            // case "challenge":
-            //   return "challenge" as const;
+            case "challenge":
+              return "challenge" as const;
             case "resourceQuestions":
               return "resourceQuestions" as const;
             case "proposal":
@@ -169,7 +169,7 @@ export function makeSidebarState(
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
       makeSidebarLink("resourceQuestions", proposal, activeTab),
-      // makeSidebarLink("challenge", proposal, activeTab),
+      makeSidebarLink("challenge", proposal, activeTab),
       adt("heading", "Management"),
       makeSidebarLink("history", proposal, activeTab)
     ]

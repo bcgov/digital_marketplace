@@ -478,3 +478,33 @@ export function getTWUProponentName(
 ): string {
   return p.organization?.legalName || p.anonymousProponentName || "Proponent";
 }
+
+// type TWUProposalTeamMembersAcc = [Set<string>, TWUProposalTeamMember[]];
+// export function twuProposalTeamMembers(
+//   proposal: TWUProposal,
+//   sort = false
+// ): TWUProposalTeamMember[] {
+//   const compute = (members: TWUProposalTeamMember[]) =>
+//     members.reduce(
+//       (acc, m) => {
+//         const [set, members] = acc;
+//         if (set.has(m.member.id)) {
+//           return acc;
+//         } else {
+//           return [
+//             set.add(m.member.id),
+//             [...members, m]
+//           ] as TWUProposalTeamMembersAcc;
+//         }
+//       },
+//       [new Set(), []] as TWUProposalTeamMembersAcc
+//     );
+//   const members = compute([
+//     ...(proposal.team)
+//   ]);
+//   if (sort) {
+//     return members.sort((a, b) => compareStrings(a.member.name, b.member.name));
+//   } else {
+//     return members;
+//   }
+// }
