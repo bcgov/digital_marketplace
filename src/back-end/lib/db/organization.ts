@@ -102,7 +102,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     possessAllCapabilities,
     possessOneServiceArea,
     numTeamMembers,
-    active
+    active,
+    serviceAreas
   } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
@@ -126,7 +127,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     possessOneServiceArea,
     active,
     numTeamMembers:
-      numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10)
+      numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10),
+    serviceAreas
   };
 }
 
@@ -231,7 +233,8 @@ export const readOneOrganizationSlim = tryDb<
         id,
         legalName,
         logoImageFile,
-        active
+        active,
+        serviceAreas
       })
     );
   } else {
@@ -249,7 +252,8 @@ export const readOneOrganizationSlim = tryDb<
         possessOneServiceArea: serviceAreas.length > 0,
         acceptedTWUTerms,
         acceptedSWUTerms,
-        numTeamMembers
+        numTeamMembers,
+        serviceAreas
       })
     );
   }
@@ -370,7 +374,8 @@ export const readManyOrganizations = tryDb<
           id,
           legalName,
           logoImageFile,
-          active
+          active,
+          serviceAreas
         });
       } else {
         return await rawOrganizationSlimToOrganizationSlim(connection, {
@@ -386,7 +391,8 @@ export const readManyOrganizations = tryDb<
           ),
           possessOneServiceArea: serviceAreas.length > 0,
           acceptedTWUTerms,
-          acceptedSWUTerms
+          acceptedSWUTerms,
+          serviceAreas
         });
       }
     })
@@ -436,7 +442,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
             ),
             possessOneServiceArea: serviceAreas.length > 0,
             acceptedTWUTerms,
-            acceptedSWUTerms
+            acceptedSWUTerms,
+            serviceAreas
           });
         })
       )
