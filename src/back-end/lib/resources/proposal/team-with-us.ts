@@ -119,13 +119,12 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       }
 
       if (
-        // TODO - add TWU permissions when ready
-        !permissions.isSignedIn(request.session)
-        // || !(await permissions.readManyTWUProposals(
-        //   connection,
-        //   request.session,
-        //   validatedTWUOpportunity.value
-        // ))
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.readManyTWUProposals(
+          connection,
+          request.session,
+          validatedTWUOpportunity.value
+        ))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
