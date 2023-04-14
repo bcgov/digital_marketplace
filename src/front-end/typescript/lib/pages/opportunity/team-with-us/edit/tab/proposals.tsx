@@ -547,7 +547,7 @@ export const component: Tab.Component<State, Msg> = {
     switch (state.showModal.tag) {
       case "award":
         return component_.page.modal.show({
-          title: "Award Code With Us Opportunity?",
+          title: "Award Team With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
             {
