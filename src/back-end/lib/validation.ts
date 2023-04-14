@@ -196,7 +196,7 @@ export function validateServiceAreas(
  */
 export function validateTWUProposalTeam(
   connection: db.Connection,
-  raw: any[],
+  raw: CreateTWUTeamMemberBody[],
   organization: Id
 ): Promise<
   ArrayValidation<
