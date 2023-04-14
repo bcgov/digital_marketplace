@@ -30,7 +30,6 @@ import {
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  // doesOrganizationMeetTWUQualification,
   OrganizationSlim,
   doesOrganizationMeetTWUQualification,
   doesOrganizationProvideServiceArea
