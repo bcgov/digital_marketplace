@@ -31,7 +31,9 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   // doesOrganizationMeetTWUQualification,
-  OrganizationSlim
+  OrganizationSlim,
+  doesOrganizationMeetTWUQualification,
+  doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
   CreateRequestBody,
@@ -148,8 +150,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const organizationOptions = organizations
-    // TODO: add TWU qualification check when ready
-    // .filter((o) => doesOrganizationMeetTWUQualification(o))
+    .filter(
+      (o) =>
+        doesOrganizationMeetTWUQualification(o) &&
+        doesOrganizationProvideServiceArea(o, opportunity.serviceArea)
+    )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
   const hourlyRate = proposal?.team.length ? proposal.team[0].hourlyRate : 0;
