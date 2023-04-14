@@ -15,7 +15,7 @@ import {
   validateTWUProposalTeam,
   validateTWUOpportunityId,
   validateTWUProposalId,
-  validateProposalOrganization
+  validateDraftProposalOrganization
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
@@ -571,7 +571,7 @@ const update: crud.Update<
           const { organization, resourceQuestionResponses, attachments, team } =
             request.body.value;
 
-          const validatedOrganization = await validateProposalOrganization(
+          const validatedOrganization = await validateDraftProposalOrganization(
             connection,
             organization,
             request.session
@@ -719,17 +719,17 @@ const update: crud.Update<
             });
           }
 
-          const validatedOrganization = await validateProposalOrganization(
+          const validatedOrganization = await validateOrganizationId(
             connection,
-            validatedTWUProposal.value.organization?.id,
+            validatedTWUProposal.value.organization?.id ?? "",
             request.session
           );
-          const organization = getValidValue(validatedOrganization, undefined);
-          if (!organization) {
+          if (isInvalid(validatedOrganization)) {
             return invalid({
-              proposal: adt("submit" as const, [
-                "An organization must be specified prior to submitting."
-              ])
+              proposal: adt(
+                "submit" as const,
+                getInvalidValue(validatedOrganization, [])
+              )
             });
           }
 
@@ -748,11 +748,11 @@ const update: crud.Update<
                     hourlyRate
                   })
                 ),
-                organization.id
+                validatedOrganization.value.id
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(
                 twuOpportunity,
-                organization
+                validatedOrganization.value
               )
             ])
           ) {
