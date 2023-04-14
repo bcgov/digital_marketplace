@@ -15,7 +15,7 @@ import {
   validateTWUProposalTeam,
   validateTWUOpportunityId,
   validateTWUProposalId,
-  validateProposalOrganization
+  validateDraftProposalOrganization
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
@@ -119,13 +119,12 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       }
 
       if (
-        // TODO - add TWU permissions when ready
-        !permissions.isSignedIn(request.session)
-        // || !(await permissions.readManyTWUProposals(
-        //   connection,
-        //   request.session,
-        //   validatedTWUOpportunity.value
-        // ))
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.readManyTWUProposals(
+          connection,
+          request.session,
+          validatedTWUOpportunity.value
+        ))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -572,7 +571,7 @@ const update: crud.Update<
           const { organization, resourceQuestionResponses, attachments, team } =
             request.body.value;
 
-          const validatedOrganization = await validateProposalOrganization(
+          const validatedOrganization = await validateDraftProposalOrganization(
             connection,
             organization,
             request.session
@@ -720,6 +719,20 @@ const update: crud.Update<
             });
           }
 
+          const validatedOrganization = await validateOrganizationId(
+            connection,
+            validatedTWUProposal.value.organization?.id ?? "",
+            request.session
+          );
+          if (isInvalid(validatedOrganization)) {
+            return invalid({
+              proposal: adt(
+                "submit" as const,
+                getInvalidValue(validatedOrganization, [])
+              )
+            });
+          }
+
           // Validate draft proposal here to make sure it has everything
           if (
             !allValid([
@@ -729,12 +742,17 @@ const update: crud.Update<
               ),
               await validateTWUProposalTeam(
                 connection,
-                validatedTWUProposal.value.team,
-                request.id
+                validatedTWUProposal.value.team.map(
+                  ({ member, hourlyRate }) => ({
+                    member: member.id,
+                    hourlyRate
+                  })
+                ),
+                validatedOrganization.value.id
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(
                 twuOpportunity,
-                validatedTWUProposal.value.organization
+                validatedOrganization.value
               )
             ])
           ) {

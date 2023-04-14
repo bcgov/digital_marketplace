@@ -812,6 +812,25 @@ export async function readOneTWUProposal(
   return false;
 }
 
+export async function readManyTWUProposals(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  if (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(connection, session.user, opportunity.id)))
+  ) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft or published
+    return doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return true;
+  }
+  return false;
+}
+
 export async function readTWUProposalHistory(
   connection: Connection,
   session: Session,

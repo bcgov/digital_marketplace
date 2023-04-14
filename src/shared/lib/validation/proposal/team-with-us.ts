@@ -7,7 +7,6 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   Organization,
-  OrganizationSlim,
   doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
@@ -176,7 +175,7 @@ export function validateTWUProposalProposedCost(
  */
 export function validateTWUProposalOrganizationServiceAreas(
   opportunity: TWUOpportunity,
-  organization?: Organization | OrganizationSlim
+  organization?: Organization
 ): ArrayValidation<TWUServiceArea, string> {
   if (
     organization &&
