@@ -1,4 +1,4 @@
-// import { EMPTY_STRING } from "front-end/config";
+import { EMPTY_STRING } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
@@ -12,9 +12,8 @@ import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/team-with-us/lib/views/view-tab-header";
 import * as Tab from "front-end/lib/pages/proposal/team-with-us/view/tab";
-import {
-  // externalDest,
-  // Link,
+import Link, {
+  externalDest,
   iconLinkSymbol,
   leftPlacement
 } from "front-end/lib/views/link";
@@ -27,10 +26,10 @@ import {
   NUM_SCORE_DECIMALS,
   TWUProposal,
   TWUProposalStatus,
-  UpdateValidationErrors
-  // twuProposalTeamMembers
+  UpdateValidationErrors,
+  twuProposalTeamMembers
 } from "shared/lib/resources/proposal/team-with-us";
-// import { gitHubProfileLink } from "shared/lib/resources/user";
+import { gitHubProfileLink } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
 import { validateChallengeScore } from "shared/lib/validation/proposal/team-with-us";
@@ -52,10 +51,6 @@ export type InnerMsg =
       "onSubmitScoreResponse",
       api.ResponseValidation<TWUProposal, UpdateValidationErrors>
     >
-  | ADT<"screenIn">
-  | ADT<"onScreenInResponse", TWUProposal | null>
-  | ADT<"screenOut">
-  | ADT<"onScreenOutResponse", TWUProposal | null>
   | ADT<"scoreMsg", NumberField.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
@@ -97,7 +92,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
 };
 
 // const startScreenToFromLoading = makeStartLoading<State>("screenToFromLoading");
-const stopScreenToFromLoading = makeStopLoading<State>("screenToFromLoading");
+// const stopScreenToFromLoading = makeStopLoading<State>("screenToFromLoading");
 const startEnterScoreLoading = makeStartLoading<State>("enterScoreLoading");
 const stopEnterScoreLoading = makeStopLoading<State>("enterScoreLoading");
 
@@ -183,82 +178,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
       }
     }
-    // case "screenIn":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.twu.update(
-    //         state.proposal.id,
-    //         adt("screenInToTeamScenario", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenInResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       ) as component_.Cmd<Msg>
-    //     ]
-    //   ];
-    case "onScreenInResponse": {
-      state = stopScreenToFromLoading(state);
-      const proposal = msg.value;
-      if (proposal) {
-        const [scoreState, scoreCmds] = initScore(proposal);
-        return [
-          state.set("score", immutable(scoreState)).set("proposal", proposal),
-          [
-            ...component_.cmd.mapMany(
-              scoreCmds,
-              (msg) => adt("scoreMsg", msg) as Msg
-            ),
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt("success", toasts.screenedIn.success)
-              )
-            )
-          ]
-        ];
-      } else {
-        return [state, []];
-      }
-    }
-    // case "screenOut":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.twu.update(
-    //         state.proposal.id,
-    //         adt("screenOutFromTeamScenario", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenOutResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       ) as component_.Cmd<Msg>
-    //     ]
-    //   ];
-    case "onScreenOutResponse": {
-      state = stopScreenToFromLoading(state);
-      const proposal = msg.value;
-      if (proposal) {
-        const [scoreState, scoreCmds] = initScore(proposal);
-        return [
-          state.set("score", immutable(scoreState)).set("proposal", proposal),
-          [
-            ...component_.cmd.mapMany(
-              scoreCmds,
-              (msg) => adt("scoreMsg", msg) as Msg
-            ),
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt("success", toasts.screenedOut.success)
-              )
-            )
-          ]
-        ];
-      } else {
-        return [state, []];
-      }
-    }
     case "scoreMsg":
       return component_.base.updateChild({
         state,
@@ -272,49 +191,49 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-// const Participants: component_.base.View<Pick<State, "proposal">> = ({
-//                                                                        proposal
-//                                                                      }) => {
-//   const participants = twuProposalTeamMembers(proposal, true);
-//   return (
-//     <div>
-//       <h4 className="mb-4">Participants</h4>
-//       <div className="table-responsive">
-//         <table className="table-hover">
-//           <thead>
-//           <tr>
-//             <th style={{ width: "100%" }}>Name</th>
-//             <th className="text-nowrap" style={{ width: "0px" }}>
-//               GitHub Profile
-//             </th>
-//           </tr>
-//           </thead>
-//           <tbody>
-//           {participants.map((p, i) => {
-//             const username = p.idpUsername;
-//             return (
-//               <tr key={`participant-${i}`}>
-//                 <td>{p.member.name}</td>
-//                 <td className="text-nowrap">
-//                   {username ? (
-//                     <Link
-//                       dest={externalDest(gitHubProfileLink(username))}
-//                       newTab>
-//                       {username}
-//                     </Link>
-//                   ) : (
-//                     EMPTY_STRING
-//                   )}
-//                 </td>
-//               </tr>
-//             );
-//           })}
-//           </tbody>
-//         </table>
-//       </div>
-//     </div>
-//   );
-// };
+const Participants: component_.base.View<Pick<State, "proposal">> = ({
+  proposal
+}) => {
+  const participants = twuProposalTeamMembers(proposal, true);
+  return (
+    <div>
+      <h4 className="mb-4">Participants</h4>
+      <div className="table-responsive">
+        <table className="table-hover">
+          <thead>
+            <tr>
+              <th style={{ width: "100%" }}>Name</th>
+              <th className="text-nowrap" style={{ width: "0px" }}>
+                GitHub Profile
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {participants.map((p, i) => {
+              const username = p.idpUsername;
+              return (
+                <tr key={`participant-${i}`}>
+                  <td>{p.member.name}</td>
+                  <td className="text-nowrap">
+                    {username ? (
+                      <Link
+                        dest={externalDest(gitHubProfileLink(username))}
+                        newTab>
+                        {username}
+                      </Link>
+                    ) : (
+                      EMPTY_STRING
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 const view: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   return (
@@ -343,11 +262,11 @@ const view: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
         <Col xs="12">
           <div className="pt-5 border-top">
             {hasTWUOpportunityPassedChallenge(state.opportunity) &&
-            isTWUProposalInChallenge(state.proposal)
-              ? // TODO enable with real list of participants
-                // <Participants proposal={state.proposal} />
-                "PARTICIPANTS PLACEHOLDER"
-              : "If this proposal is screened into the Challenge, it can be scored once the opportunity has reached the Challenge too."}
+            isTWUProposalInChallenge(state.proposal) ? (
+              <Participants proposal={state.proposal} />
+            ) : (
+              "If this proposal is screened into the Challenge, it can be scored once the opportunity has reached the Challenge too."
+            )}
           </div>
         </Col>
       </Row>
@@ -436,19 +355,6 @@ export const component: Tab.Component<State, Msg> = {
         ]);
       case TWUProposalStatus.EvaluatedChallenge:
         return component_.page.actions.links([
-          // ...(canTWUOpportunityBeScreenedInToTeamScenario(state.opportunity)
-          //   ? [
-          //     {
-          //       children: "Screen In",
-          //       symbol_: leftPlacement(iconLinkSymbol("stars")),
-          //       loading: isScreenToFromLoading,
-          //       disabled: isScreenToFromLoading,
-          //       button: true,
-          //       color: "primary" as const,
-          //       onClick: () => dispatch(adt("screenIn" as const))
-          //     }
-          //   ]
-          //   : []),
           {
             children: "Edit Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
@@ -458,21 +364,6 @@ export const component: Tab.Component<State, Msg> = {
             onClick: () => dispatch(adt("showModal", "enterScore" as const))
           }
         ]) as component_.page.Actions;
-      // case TWUProposalStatus.UnderReviewChallenge:
-      //   if (hasTWUOpportunityPassedChallenge(state.opportunity)) {
-      //     return component_.page.actions.none();
-      //   }
-      //   return component_.page.actions.links([
-      //     {
-      //       children: "Screen Out",
-      //       symbol_: leftPlacement(iconLinkSymbol("ban")),
-      //       loading: isScreenToFromLoading,
-      //       disabled: isScreenToFromLoading,
-      //       button: true,
-      //       color: "danger",
-      //       onClick: () => dispatch(adt("screenOut" as const))
-      //     }
-      //   ]);
       default:
         return component_.page.actions.none();
     }
