@@ -19,7 +19,6 @@ import Link, {
   iconLinkSymbol,
   leftPlacement,
   rightPlacement,
-  // rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import {

@@ -21,7 +21,6 @@ import Link, {
   leftPlacement,
   rightPlacement,
   routeDest
-  // routeDest
 } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
