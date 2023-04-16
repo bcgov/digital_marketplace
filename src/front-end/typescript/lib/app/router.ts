@@ -271,6 +271,22 @@ const router: router_.Router<Route> = {
         };
       }
     },
+    // This route needs to be matched before `proposalTWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/export"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUExportAll",
+          value: {
+            opportunityId: params.opportunityId || "",
+            anonymous: query.anonymous === "true"
+          }
+        };
+      }
+    },
     {
       path: prefixPath("/opportunities/team-with-us/:opportunityId"),
       makeRoute({ params }) {
