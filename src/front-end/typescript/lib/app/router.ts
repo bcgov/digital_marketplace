@@ -705,6 +705,18 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}`
         );
+      case "proposalTWUExportOne":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
+        );
+      case "proposalTWUExportAll":
+        return prefixPath(
+          `/opportunities/team-with-us/${
+            route.value.opportunityId
+          }/proposals/export/${
+            route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ""
+          }`
+        );
       case "proposalTWUCreate":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
