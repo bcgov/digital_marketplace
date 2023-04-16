@@ -326,6 +326,20 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/export"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUExportOne",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
       path: prefixPath("/proposals"),
       makeRoute() {
         return {
