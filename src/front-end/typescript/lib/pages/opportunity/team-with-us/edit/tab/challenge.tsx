@@ -370,7 +370,7 @@ const makeCardData = (
     {
       icon: "star-full",
       iconColor: "c-report-card-icon-highlight",
-      name: "Top C Score",
+      name: "Top In/Ch Score",
       value:
         isComplete && highestScore
           ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%`
@@ -379,7 +379,7 @@ const makeCardData = (
     {
       icon: "star-half",
       iconColor: "c-report-card-icon-highlight",
-      name: "Avg. C Score",
+      name: "Avg. In/Ch Score",
       value:
         isComplete && averageScore
           ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%`

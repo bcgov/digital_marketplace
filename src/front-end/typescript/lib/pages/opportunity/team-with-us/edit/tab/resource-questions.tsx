@@ -367,7 +367,7 @@ const makeCardData = (
     {
       icon: "star-full",
       iconColor: "c-report-card-icon-highlight",
-      name: "Top TQ Score",
+      name: "Top RQ Score",
       value:
         isComplete && highestScore
           ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%`
@@ -376,7 +376,7 @@ const makeCardData = (
     {
       icon: "star-half",
       iconColor: "c-report-card-icon-highlight",
-      name: "Avg. TQ Score",
+      name: "Avg. RQ Score",
       value:
         isComplete && averageScore
           ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%`

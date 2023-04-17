@@ -102,7 +102,7 @@ export function idToDefinition<K extends TabId>(
       return {
         component: ChallengeTab.component,
         icon: "code",
-        title: "Challenge"
+        title: "Interview/Challenge"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "history":
       return {
