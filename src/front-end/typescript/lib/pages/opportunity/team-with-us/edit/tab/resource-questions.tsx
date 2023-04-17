@@ -20,7 +20,7 @@ import Badge from "front-end/lib/views/badge";
 import Link, {
   iconLinkSymbol,
   leftPlacement,
-  // rightPlacement,
+  rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import ReportCardList, {
@@ -603,21 +603,21 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
             <h4 className="mb-0">Proponents</h4>
-            {/*{state.canViewProposals ? (*/}
-            {/*  <Link*/}
-            {/*    newTab*/}
-            {/*    color="info"*/}
-            {/*    className="mt-3 mt-md-0"*/}
-            {/*    symbol_={rightPlacement(iconLinkSymbol("file-export"))}*/}
-            {/*    dest={routeDest(*/}
-            {/*      adt("proposalTWUExportAll", {*/}
-            {/*        opportunityId: opportunity.id,*/}
-            {/*        anonymous: true*/}
-            {/*      })*/}
-            {/*    )}>*/}
-            {/*    Export All Anonymized Resource Questions*/}
-            {/*  </Link>*/}
-            {/*) : null}*/}
+            {state.canViewProposals ? (
+              <Link
+                newTab
+                color="info"
+                className="mt-3 mt-md-0"
+                symbol_={rightPlacement(iconLinkSymbol("file-export"))}
+                dest={routeDest(
+                  adt("proposalTWUExportAll", {
+                    opportunityId: opportunity.id,
+                    anonymous: true
+                  })
+                )}>
+                Export All Anonymized Resource Questions
+              </Link>
+            ) : null}
           </Col>
           <Col xs="12">
             {state.canViewProposals && state.proposals.length ? (
