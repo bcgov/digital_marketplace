@@ -113,11 +113,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startEnterScoreLoading(state),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             state.proposal.id,
             adt("scoreChallenge", score),
             (response) => adt("onSubmitScoreResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

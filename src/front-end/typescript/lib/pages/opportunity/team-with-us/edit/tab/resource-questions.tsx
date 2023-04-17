@@ -151,11 +151,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startCompleteResourceQuestionsLoading(state),
         [
-          api.opportunities.twu.update(
+          api.opportunities.twu.update<Msg>()(
             opportunity.id,
             adt("startChallenge", ""),
             (response) => adt("onCompleteResourceQuestions", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -211,11 +211,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("screenToFromLoading", msg.value),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             msg.value,
             adt("screenInToChallenge", ""),
             (response) => adt("onScreenInToChallengeResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -236,7 +236,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 )
               ),
               component_.cmd.join(
-                api.opportunities.twu.readOne(opportunity.id, (response) =>
+                api.opportunities.twu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.twu.readMany(opportunity.id)((response) =>
@@ -268,11 +268,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("screenToFromLoading", msg.value),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             msg.value,
             adt("screenOutFromChallenge", ""),
             (response) => adt("onScreenOutFromChallengeResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -293,7 +293,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 )
               ),
               component_.cmd.join(
-                api.opportunities.twu.readOne(opportunity.id, (response) =>
+                api.opportunities.twu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.twu.readMany(opportunity.id)((response) =>

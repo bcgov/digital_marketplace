@@ -30,8 +30,9 @@ import {
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  // doesOrganizationMeetTWUQualification,
-  OrganizationSlim
+  OrganizationSlim,
+  doesOrganizationMeetTWUQualification,
+  doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
   CreateRequestBody,
@@ -117,9 +118,9 @@ function getAffiliations(orgId?: Id): component_.Cmd<AffiliationMember[]> {
   if (!orgId) {
     return component_.cmd.dispatch([]);
   }
-  return api.affiliations.readManyForOrganization(orgId)((response) =>
-    api.getValidValue(response, [])
-  ) as component_.Cmd<AffiliationMember[]>;
+  return api.affiliations.readManyForOrganization<AffiliationMember[]>(orgId)(
+    (response) => api.getValidValue(response, [])
+  );
 }
 
 function isSelectedOrgQualified(
@@ -148,11 +149,14 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const organizationOptions = organizations
-    // TODO: add TWU qualification check when ready
-    // .filter((o) => doesOrganizationMeetTWUQualification(o))
+    .filter(
+      (o) =>
+        doesOrganizationMeetTWUQualification(o) &&
+        doesOrganizationProvideServiceArea(o, opportunity.serviceArea)
+    )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
-  const hourlyRate = proposal?.team[0] ? proposal.team[0].hourlyRate : 0;
+  const hourlyRate = proposal?.team.length ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -354,7 +358,7 @@ export function persist(
   const formValues = getValues(state);
   switch (action.tag) {
     case "create":
-      return api.proposals.twu.create(
+      return api.proposals.twu.create<PersistResult>()(
         {
           ...formValues,
           opportunity: state.opportunity.id,
@@ -371,9 +375,9 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     case "update": {
-      return api.proposals.twu.update(
+      return api.proposals.twu.update<PersistResult>()(
         action.value,
         adt("edit" as const, formValues),
         (response) => {
@@ -394,7 +398,7 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     }
   }
 }

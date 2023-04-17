@@ -132,11 +132,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("awardLoading", msg.value),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             msg.value,
             adt("award", ""),
             (response) => adt("onAwardResponse", response) as Msg
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -160,7 +160,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 )
               ),
               component_.cmd.join(
-                api.opportunities.twu.readOne(opportunity.id, (response) =>
+                api.opportunities.twu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.twu.readMany(opportunity.id)((response) =>
@@ -169,7 +169,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 (newOpp, newProposals) =>
                   adt("onInitResponse", [newOpp, newProposals]) as Msg
               )
-            ] as component_.Cmd<Msg>[]
+            ]
           ];
         case "invalid":
         case "unhandled":

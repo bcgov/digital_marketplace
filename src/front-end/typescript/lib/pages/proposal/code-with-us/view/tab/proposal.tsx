@@ -222,11 +222,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startScoreLoading(state),
         [
-          api.proposals.cwu.update(
+          api.proposals.cwu.update<Msg>()(
             proposal.id,
             adt("score", score),
             (response) => adt("onSubmitScoreResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -308,11 +308,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startDisqualifyLoading(state),
         [
-          api.proposals.cwu.update(
+          api.proposals.cwu.update<Msg>()(
             proposal.id,
             adt("disqualify", reason),
             (response) => adt("onDisqualifyResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -391,9 +391,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startAwardLoading(state).set("showModal", null),
         [
-          api.proposals.cwu.update(proposal.id, adt("award", ""), (response) =>
-            adt("onAwardResponse", response)
-          ) as component_.Cmd<Msg>
+          api.proposals.cwu.update<Msg>()(
+            proposal.id,
+            adt("award", ""),
+            (response) => adt("onAwardResponse", response)
+          )
         ]
       ];
     }

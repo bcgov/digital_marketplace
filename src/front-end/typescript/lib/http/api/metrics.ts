@@ -3,8 +3,13 @@ import * as Resource from "shared/lib/resources/metrics";
 
 const NAMESPACE = "metrics";
 
-export const readMany: crud.ReadManyAction<
+export function readMany<Msg>(): crud.ReadManyAction<
   Resource.OpportunityMetrics,
   string[],
-  unknown
-> = crud.makeReadManyAction(NAMESPACE, (a: Resource.OpportunityMetrics) => a);
+  Msg
+> {
+  return crud.makeReadManyAction(
+    NAMESPACE,
+    (a: Resource.OpportunityMetrics) => a
+  );
+}

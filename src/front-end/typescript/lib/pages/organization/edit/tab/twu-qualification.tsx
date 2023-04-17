@@ -130,7 +130,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         [
-          api.organizations.update(
+          api.organizations.update()(
             state.organization.id,
             // TODO: Use serviceArea IDs when loading service areas from the backend
             adt(
@@ -192,7 +192,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startEditingLoading(state),
         // Refresh Organization to avoid stale data, i.e. user left tab open.
         [
-          api.organizations.readOne(state.organization.id, (response) =>
+          api.organizations.readOne()(state.organization.id, (response) =>
             adt(
               "onStartEditingResponse",
               api.isValid(response) ? response.value : null

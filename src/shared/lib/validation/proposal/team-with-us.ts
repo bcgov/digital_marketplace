@@ -1,8 +1,14 @@
 import { determineBusinessDays, getNumber, getString } from "shared/lib";
 import {
   MAX_RESOURCE_QUESTION_WORD_LIMIT,
-  TWUResourceQuestion
+  TWUOpportunity,
+  TWUResourceQuestion,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  Organization,
+  doesOrganizationProvideServiceArea
+} from "shared/lib/resources/organization";
 import {
   CreateTWUProposalStatus,
   CreateTWUProposalResourceQuestionResponseBody,
@@ -158,6 +164,31 @@ export function validateTWUProposalProposedCost(
     ]);
   }
   return valid(totalAmount);
+}
+
+/**
+ * Validates that an organization provides an opportunity's service area.
+ *
+ * @param opportunity
+ * @param organizationServiceAreas
+ * @returns
+ */
+export function validateTWUProposalOrganizationServiceAreas(
+  opportunity: TWUOpportunity,
+  organization?: Organization
+): ArrayValidation<TWUServiceArea, string> {
+  if (
+    organization &&
+    doesOrganizationProvideServiceArea(organization, opportunity.serviceArea)
+  ) {
+    return valid(
+      organization.serviceAreas.map(({ serviceArea }) => serviceArea)
+    );
+  } else {
+    return invalid([
+      "The selected organization does not satisfy this opportunity's service area."
+    ]);
+  }
 }
 
 /**

@@ -279,7 +279,8 @@ export const organization: Organization = {
 export const organizatonSlim: OrganizationSlim = {
   id,
   legalName: "Organization Legal Name",
-  active: true
+  active: true,
+  serviceAreas: []
 };
 
 export const swuProposalTeamQuestionResponse: SWUProposalTeamQuestionResponse =

@@ -708,7 +708,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
   const uploadLogoImageCmd: component_.Cmd<
     Validation<Id | undefined, Immutable<State>>
   > = newLogoImage
-    ? (api.files.avatars.create(
+    ? api.files.avatars.create<Validation<Id, Immutable<State>>>()(
         {
           name: newLogoImage.name,
           file: newLogoImage,
@@ -724,7 +724,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
           }
           return valid(response.value.id);
         }
-      ) as component_.Cmd<Validation<Id, Immutable<State>>>)
+      )
     : component_.cmd.dispatch(valid(existingLogoImageFile));
   // Complete the flow by updating the organization.
   return component_.cmd.andThen(uploadLogoImageCmd, (uploadLogoImageResult) => {
@@ -733,7 +733,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
     const logoImageFile = uploadLogoImageResult.value;
     switch (params.tag) {
       case "create":
-        return api.organizations.create(
+        return api.organizations.create<PersistResult>()(
           {
             ...values,
             logoImageFile
@@ -751,9 +751,9 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
                 return invalid(state);
             }
           }
-        ) as component_.Cmd<PersistResult>;
+        );
       case "update": {
-        return api.organizations.update(
+        return api.organizations.update<PersistResult>()(
           params.value.orgId,
           adt("updateProfile", {
             ...params.value.extraBody,
@@ -778,7 +778,7 @@ export function persist(params: PersistParams): component_.Cmd<PersistResult> {
                 return invalid(state);
             }
           }
-        ) as component_.Cmd<PersistResult>;
+        );
       }
     }
   });

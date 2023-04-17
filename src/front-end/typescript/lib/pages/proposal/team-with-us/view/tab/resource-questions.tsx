@@ -176,11 +176,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startEnterScoreLoading(state),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             state.proposal.id,
             adt("scoreQuestions", scores),
             (response) => adt("onSubmitScoreResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -247,7 +247,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startScreenToFromLoading(state).set("showModal", null),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             state.proposal.id,
             adt("screenInToChallenge", ""),
             (response) =>
@@ -255,7 +255,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 "onScreenInResponse",
                 api.isValid(response) ? response.value : null
               )
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     case "onScreenInResponse": {
@@ -285,7 +285,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startScreenToFromLoading(state).set("showModal", null),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             state.proposal.id,
             adt("screenOutFromChallenge", ""),
             (response) =>
@@ -293,7 +293,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 "onScreenOutResponse",
                 api.isValid(response) ? response.value : null
               )
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     case "onScreenOutResponse": {

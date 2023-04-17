@@ -21,6 +21,7 @@ export interface OrganizationAdmin {
   possessAllCapabilities?: boolean;
   possessOneServiceArea?: boolean;
   numTeamMembers?: number;
+  serviceAreas: TWUServiceAreaRecord[];
 }
 
 export interface Organization extends OrganizationAdmin {
@@ -43,7 +44,6 @@ export interface Organization extends OrganizationAdmin {
   active: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
-  serviceAreas: TWUServiceAreaRecord[];
 }
 
 export interface OrganizationSlim extends OrganizationAdmin {
@@ -128,5 +128,14 @@ export function doesOrganizationMeetTWUQualification(
 ): boolean {
   return (
     !!organization.possessOneServiceArea && !!organization.acceptedTWUTerms
+  );
+}
+
+export function doesOrganizationProvideServiceArea(
+  organization: Organization | OrganizationSlim,
+  serviceArea: TWUServiceArea
+): boolean {
+  return organization.serviceAreas.some(
+    (orgServiceArea) => orgServiceArea.serviceArea === serviceArea
   );
 }

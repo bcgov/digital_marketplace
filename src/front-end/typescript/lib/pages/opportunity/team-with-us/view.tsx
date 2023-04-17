@@ -42,8 +42,18 @@ import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { lowerCase, startCase } from "lodash";
 import { Content } from "shared/lib/resources/content";
+import {
+  OrganizationSlim,
+  doesOrganizationMeetTWUQualification,
+  doesOrganizationProvideServiceArea
+} from "shared/lib/resources/organization";
 
 type InfoTab = "details" | "scope" | "attachments" | "addenda";
+
+type Qualification =
+  | "notQualified"
+  | "qualifiedCorrectServiceArea"
+  | "qualifiedIncorrectServiceArea";
 
 export interface State {
   toggleWatchLoading: number;
@@ -53,6 +63,7 @@ export interface State {
   activeInfoTab: InfoTab;
   routePath: string;
   scopeContent: string;
+  qualification: Qualification;
 }
 
 export type InnerMsg =
@@ -63,7 +74,8 @@ export type InnerMsg =
         string,
         api.ResponseValidation<TWUOpportunity, string[]>,
         TWUProposalSlim | null,
-        api.ResponseValidation<Content, string[]>
+        api.ResponseValidation<Content, string[]>,
+        api.ResponseValidation<OrganizationSlim[], string[]>
       ]
     >
   | ADT<"toggleWatch">
@@ -93,33 +105,40 @@ const init: component_.page.Init<
       existingProposal: null,
       activeInfoTab: "details",
       routePath,
-      scopeContent: ""
-      // isQualified: false
+      scopeContent: "",
+      qualification: "notQualified"
     },
     [
-      api.counters.update(
+      api.counters.update<Msg>()(
         getTWUOpportunityViewsCounterName(opportunityId),
         null,
         () => adt("noop")
-      ) as component_.Cmd<Msg>,
-      component_.cmd.join3(
-        api.opportunities.twu.readOne(opportunityId, (response) => response),
+      ),
+      component_.cmd.join4(
+        api.opportunities.twu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.twu.readExistingProposalForOpportunity(
               opportunityId,
               (response) => response
             )
           : component_.cmd.dispatch(null),
-        api.content.readOne(
+        api.content.readOne()(
           TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
           (response) => response
         ),
-        (opportunityResponse, proposalResponse, contentResponse) =>
+        api.organizations.owned.readMany()((response) => response),
+        (
+          opportunityResponse,
+          proposalResponse,
+          contentResponse,
+          organizationsResponse
+        ) =>
           adt("onInitResponse", [
             routePath,
             opportunityResponse,
             proposalResponse,
-            contentResponse
+            contentResponse,
+            organizationsResponse
           ]) as Msg
       )
     ]
@@ -139,7 +158,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         routePath,
         opportunityResponse,
         proposalResponse,
-        contentResponse
+        contentResponse,
+        organizationsResponse
       ] = msg.value;
       if (!api.isValid(opportunityResponse)) {
         return [
@@ -152,15 +172,38 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             )
           ]
         ];
-      } else {
-        state = state.set("opportunity", opportunityResponse.value);
       }
+      const opportunity = opportunityResponse.value;
+      state = state.set("opportunity", opportunity);
+
       if (proposalResponse) {
         state = state.set("existingProposal", proposalResponse);
       }
       if (contentResponse && api.isValid(contentResponse)) {
         state = state.set("scopeContent", contentResponse.value.body);
       }
+      const organizations = api.getValidValue(organizationsResponse, []);
+
+      // Assume lowest level of qualification and qualify upwards
+      const qualification = organizations.reduce(
+        (qualification: Qualification, organization) => {
+          if (doesOrganizationMeetTWUQualification(organization)) {
+            if (
+              doesOrganizationProvideServiceArea(
+                organization,
+                opportunity.serviceArea
+              )
+            ) {
+              return "qualifiedCorrectServiceArea";
+            } else if (qualification !== "qualifiedCorrectServiceArea") {
+              return "qualifiedIncorrectServiceArea";
+            }
+          }
+          return qualification;
+        },
+        "notQualified"
+      );
+      state = state.set("qualification", qualification);
       return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
     }
     case "setActiveInfoTab":
@@ -172,12 +215,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startToggleWatchLoading(state),
         [
           state.opportunity.subscribed
-            ? (api.subscribers.twu.delete_(id, (response) =>
+            ? api.subscribers.twu.delete_<Msg>()(id, (response) =>
                 adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
-            : (api.subscribers.twu.create({ opportunity: id }, (response) =>
-                adt("onToggleWatchResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
+            : api.subscribers.twu.create<Msg>()(
+                { opportunity: id },
+                (response) =>
+                  adt("onToggleWatchResponse", api.isValid(response))
+              )
         ]
       ];
     }
@@ -578,7 +623,11 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             <h3 className="mb-4">How To Apply</h3>
             <p>
               To submit a proposal for this Team With Us opportunity, you must
-              have signed up for a Digital Marketplace vendor account.&nbsp;
+              have signed up for a Digital Marketplace vendor account and be a{" "}
+              <Link dest={routeDest(adt("learnMoreTWU", null))}>
+                Qualified Supplier
+              </Link>
+              .&nbsp;
               {!viewerUser ? (
                 <span>
                   If you already have a vendor account, please{" "}
@@ -599,7 +648,8 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             {viewerUser &&
             isVendor(viewerUser) &&
             !state.existingProposal &&
-            isTWUOpportunityAcceptingProposals(state.opportunity) ? (
+            isTWUOpportunityAcceptingProposals(state.opportunity) &&
+            state.qualification === "qualifiedCorrectServiceArea" ? (
               <Link
                 disabled={state.toggleWatchLoading > 0}
                 className="mt-4"
@@ -722,18 +772,18 @@ export const component: component_.page.Component<
   },
 
   getAlerts: (state) => {
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.alerts.empty();
     const viewerUser = state.viewerUser;
     const existingProposal = state.existingProposal;
-    const successfulProponentName =
-      state.opportunity?.successfulProponent?.name;
+    const successfulProponentName = opportunity.successfulProponent?.name;
+    const vendor = !!viewerUser && isVendor(viewerUser);
+    const isAcceptingProposals =
+      isTWUOpportunityAcceptingProposals(opportunity);
     return {
       info: (() => {
         const alerts: component_.page.alerts.Alert<Msg>[] = [];
-        if (
-          viewerUser &&
-          isVendor(viewerUser) &&
-          existingProposal?.submittedAt
-        ) {
+        if (vendor && existingProposal?.submittedAt) {
           alerts.push({
             text: `You submitted a proposal to this opportunity on ${formatDateAtTime(
               existingProposal.submittedAt,
@@ -745,6 +795,63 @@ export const component: component_.page.Component<
           alerts.push({
             text: `This opportunity was awarded to ${successfulProponentName}.`
           });
+        } else if (isAcceptingProposals && !viewerUser) {
+          alerts.push({
+            text: (
+              <span>
+                You must be{" "}
+                <Link
+                  dest={routeDest(
+                    adt("signIn", { redirectOnSuccess: state.routePath })
+                  )}>
+                  signed in
+                </Link>{" "}
+                and a{" "}
+                <Link dest={routeDest(adt("learnMoreTWU", null))}>
+                  Qualified Supplier
+                </Link>{" "}
+                in order to submit a proposal to this opportunity.
+              </span>
+            )
+          });
+        } else if (
+          isAcceptingProposals &&
+          vendor &&
+          state.qualification !== "qualifiedCorrectServiceArea" &&
+          !existingProposal?.submittedAt &&
+          isAcceptingProposals
+        ) {
+          switch (state.qualification) {
+            case "notQualified": {
+              alerts.push({
+                text: (
+                  <span>
+                    You must be a{" "}
+                    <Link dest={routeDest(adt("learnMoreTWU", null))}>
+                      Qualified Supplier
+                    </Link>{" "}
+                    in order to submit a proposal to this opportunity.
+                  </span>
+                )
+              });
+              break;
+            }
+            case "qualifiedIncorrectServiceArea": {
+              alerts.push({
+                text: (
+                  <span>
+                    You must be a{" "}
+                    <Link dest={routeDest(adt("learnMoreTWU", null))}>
+                      Qualified Supplier
+                    </Link>{" "}
+                    for this Service Area in order to submit a proposal to this
+                    opportunity.
+                  </span>
+                )
+              });
+              break;
+            }
+          }
         }
         return alerts;
       })()
@@ -812,7 +919,10 @@ export const component: component_.page.Component<
               )
             }
           ]);
-        } else if (isAcceptingProposals) {
+        } else if (
+          isAcceptingProposals &&
+          state.qualification === "qualifiedCorrectServiceArea"
+        ) {
           return component_.page.actions.links([
             {
               disabled: isToggleWatchLoading,

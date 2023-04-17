@@ -15,8 +15,7 @@ import {
   validateTWUProposalTeam,
   validateTWUOpportunityId,
   validateTWUProposalId,
-  validateProposalOrganization
-  // validateTWUProposalTeamMembers
+  validateDraftProposalOrganization
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
@@ -120,13 +119,12 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       }
 
       if (
-        // TODO - add TWU permissions when ready
-        !permissions.isSignedIn(request.session)
-        // || !(await permissions.readManyTWUProposals(
-        //   connection,
-        //   request.session,
-        //   validatedTWUOpportunity.value
-        // ))
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.readManyTWUProposals(
+          connection,
+          request.session,
+          validatedTWUOpportunity.value
+        ))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -248,9 +246,8 @@ const create: crud.Create<
       } = request.body;
 
       if (
-        !permissions.isSignedIn(request.session)
-        // TODO implement permissions for TWU once created
-        // || !(await permissions.createTWUProposal(connection, request.session))
+        !permissions.isSignedIn(request.session) ||
+        !(await permissions.createTWUProposal(connection, request.session))
       ) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
@@ -360,18 +357,17 @@ const create: crud.Create<
       }
 
       // Prior to submitting, re-check permissions
-      // TODO implement permission check when TWU qualified is ready
-      // if (
-      //   !(await permissions.submitTWUProposal(
-      //     connection,
-      //     request.session,
-      //     validatedOrganization.value
-      //   ))
-      // ) {
-      //   return invalid({
-      //     permissions: [permissions.ERROR_MESSAGE]
-      //   });
-      // }
+      if (
+        !(await permissions.submitTWUProposal(
+          connection,
+          request.session,
+          validatedOrganization.value
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
 
       const validatedResourceQuestionResponses =
         proposalValidation.validateTWUProposalResourceQuestionResponses(
@@ -380,8 +376,7 @@ const create: crud.Create<
         );
 
       /**
-       * Validate that the set of proposed capabilities across team members
-       * satisfies the opportunity required capabilities
+       * Validate individual team members.
        */
       const validatedTeamMembers = await validateTWUProposalTeam(
         connection,
@@ -389,8 +384,22 @@ const create: crud.Create<
         validatedOrganization.value.id
       );
 
+      /**
+       * Validate that the organizational service areas intersect with those
+       * of the opportunity
+       */
+      const validatedOrganizationServiceAreas =
+        proposalValidation.validateTWUProposalOrganizationServiceAreas(
+          validatedTWUOpportunity.value,
+          validatedOrganization.value
+        );
+
       if (
-        allValid([validatedResourceQuestionResponses, validatedTeamMembers])
+        allValid([
+          validatedResourceQuestionResponses,
+          validatedTeamMembers,
+          validatedOrganizationServiceAreas
+        ])
       ) {
         return valid({
           session: request.session,
@@ -410,7 +419,11 @@ const create: crud.Create<
           team: getInvalidValue<
             CreateTWUTeamMemberBodyValidationErrors[],
             undefined
-          >(validatedTeamMembers, undefined)
+          >(validatedTeamMembers, undefined),
+          organization: getInvalidValue(
+            validatedOrganizationServiceAreas,
+            undefined
+          )
         });
       }
     },
@@ -558,7 +571,7 @@ const update: crud.Update<
           const { organization, resourceQuestionResponses, attachments, team } =
             request.body.value;
 
-          const validatedOrganization = await validateProposalOrganization(
+          const validatedOrganization = await validateDraftProposalOrganization(
             connection,
             organization,
             request.session
@@ -647,10 +660,21 @@ const update: crud.Update<
             validatedOrganization.value.id
           );
 
+          /**
+           * Validate that the organizational service areas intersect with those
+           * of the opportunity
+           */
+          const validatedOrganizationServiceAreas =
+            proposalValidation.validateTWUProposalOrganizationServiceAreas(
+              twuOpportunity,
+              validatedOrganization.value
+            );
+
           if (
             allValid([
               validatedResourceQuestionResponses,
-              validatedProposalTeam
+              validatedProposalTeam,
+              validatedOrganizationServiceAreas
             ])
           ) {
             return valid({
@@ -671,7 +695,11 @@ const update: crud.Update<
                   resourceQuestionResponses: getInvalidValue<
                     CreateTWUResourceQuestionValidationErrors[],
                     undefined
-                  >(validatedResourceQuestionResponses, undefined)
+                  >(validatedResourceQuestionResponses, undefined),
+                  organization: getInvalidValue(
+                    validatedOrganizationServiceAreas,
+                    undefined
+                  )
                 } as UpdateEditValidationErrors
               )
             });
@@ -690,18 +718,42 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
+
+          const validatedOrganization = await validateOrganizationId(
+            connection,
+            validatedTWUProposal.value.organization?.id ?? "",
+            request.session
+          );
+          if (isInvalid(validatedOrganization)) {
+            return invalid({
+              proposal: adt(
+                "submit" as const,
+                getInvalidValue(validatedOrganization, [])
+              )
+            });
+          }
+
           // Validate draft proposal here to make sure it has everything
           if (
             !allValid([
               proposalValidation.validateTWUProposalResourceQuestionResponses(
                 validatedTWUProposal.value.resourceQuestionResponses,
                 twuOpportunity.resourceQuestions
+              ),
+              await validateTWUProposalTeam(
+                connection,
+                validatedTWUProposal.value.team.map(
+                  ({ member, hourlyRate }) => ({
+                    member: member.id,
+                    hourlyRate
+                  })
+                ),
+                validatedOrganization.value.id
+              ),
+              proposalValidation.validateTWUProposalOrganizationServiceAreas(
+                twuOpportunity,
+                validatedOrganization.value
               )
-              // await validateTWUProposalTeam(
-              //   connection,
-              //   validatedTWUProposal.value.team,
-              //   request.id
-              // )
             ])
           ) {
             return invalid({
@@ -728,7 +780,7 @@ const update: crud.Update<
             !(await permissions.submitTWUProposal(
               connection,
               request.session,
-              request.params.id
+              proposalOrganization
             ))
           ) {
             return invalid({

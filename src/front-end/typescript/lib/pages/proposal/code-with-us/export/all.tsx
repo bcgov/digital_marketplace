@@ -71,25 +71,20 @@ const init: component_.page.Init<
       ) as State,
       [
         component_.cmd.join(
-          api.opportunities.cwu.readOne(
-            opportunityId,
-            (response) => response
-          ) as component_.Cmd<api.ResponseValidation<CWUOpportunity, string[]>>,
+          api.opportunities.cwu.readOne<
+            api.ResponseValidation<CWUOpportunity, string[]>
+          >()(opportunityId, (response) => response),
           component_.cmd.andThen(
-            api.proposals.cwu.readMany(opportunityId)((response) =>
-              api.getValidValue(response, [])
-            ) as component_.Cmd<CWUProposalSlim[]>,
+            api.proposals.cwu.readMany<CWUProposalSlim[]>(opportunityId)(
+              (response) => api.getValidValue(response, [])
+            ),
             (slimProposals) =>
               component_.cmd.map(
                 component_.cmd.sequence(
-                  slimProposals.map(
-                    ({ id }) =>
-                      api.proposals.cwu.readOne(opportunityId)(
-                        id,
-                        (a) => a
-                      ) as component_.Cmd<
-                        api.ResponseValidation<CWUProposal, string[]>
-                      >
+                  slimProposals.map(({ id }) =>
+                    api.proposals.cwu.readOne<
+                      api.ResponseValidation<CWUProposal, string[]>
+                    >(opportunityId)(id, (a) => a)
                   )
                 ),
                 (proposalResponses) => {

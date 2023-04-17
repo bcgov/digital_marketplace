@@ -15,7 +15,7 @@ import {
   twuProposalStatusToColor,
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
-import * as proposalToasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
+// import * as proposalToasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
 import Badge from "front-end/lib/views/badge";
 import Link, {
   iconLinkSymbol,
@@ -223,48 +223,48 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       ];
     }
 
-    case "onScreenInToTeamScenarioResponse": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      state = state.set("screenToFromLoading", null);
-      const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("success", proposalToasts.screenedIn.success)
-                )
-              ),
-              component_.cmd.join(
-                api.opportunities.twu.readOne(opportunity.id, (response) =>
-                  api.getValidValue(response, opportunity)
-                ),
-                api.proposals.twu.readMany(opportunity.id)((response) =>
-                  api.getValidValue(response, state.proposals)
-                ),
-                (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
-              ) as component_.Cmd<Msg>
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-        default:
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", proposalToasts.screenedIn.error)
-                )
-              )
-            ]
-          ];
-      }
-    }
+    // case "onScreenInToTeamScenarioResponse": {
+    //   const opportunity = state.opportunity;
+    //   if (!opportunity) return [state, []];
+    //   state = state.set("screenToFromLoading", null);
+    //   const result = msg.value;
+    //   switch (result.tag) {
+    //     case "valid":
+    //       return [
+    //         state,
+    //         [
+    //           component_.cmd.dispatch(
+    //             component_.global.showToastMsg(
+    //               adt("success", proposalToasts.screenedIn.success)
+    //             )
+    //           ),
+    //           component_.cmd.join(
+    //             api.opportunities.twu.readOne(opportunity.id, (response) =>
+    //               api.getValidValue(response, opportunity)
+    //             ),
+    //             api.proposals.twu.readMany(opportunity.id)((response) =>
+    //               api.getValidValue(response, state.proposals)
+    //             ),
+    //             (newOpp, newProposals) =>
+    //               adt("onInitResponse", [newOpp, newProposals]) as Msg
+    //           ) as component_.Cmd<Msg>
+    //         ]
+    //       ];
+    //     case "invalid":
+    //     case "unhandled":
+    //     default:
+    //       return [
+    //         state,
+    //         [
+    //           component_.cmd.dispatch(
+    //             component_.global.showToastMsg(
+    //               adt("error", proposalToasts.screenedIn.error)
+    //             )
+    //           )
+    //         ]
+    //       ];
+    //   }
+    // }
 
     // case "screenOutFromTeamScenario": {
     //   state = state.set("showModal", null);
@@ -280,48 +280,48 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     //   ];
     // }
 
-    case "onScreenOutFromTeamScenarioResponse": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      state = state.set("screenToFromLoading", null);
-      const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("success", proposalToasts.screenedOut.success)
-                )
-              ),
-              component_.cmd.join(
-                api.opportunities.twu.readOne(opportunity.id, (response) =>
-                  api.getValidValue(response, opportunity)
-                ),
-                api.proposals.twu.readMany(opportunity.id)((response) =>
-                  api.getValidValue(response, state.proposals)
-                ),
-                (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
-              ) as component_.Cmd<Msg>
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-        default:
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", proposalToasts.screenedOut.error)
-                )
-              )
-            ]
-          ];
-      }
-    }
+    // case "onScreenOutFromTeamScenarioResponse": {
+    //   const opportunity = state.opportunity;
+    //   if (!opportunity) return [state, []];
+    //   state = state.set("screenToFromLoading", null);
+    //   const result = msg.value;
+    //   switch (result.tag) {
+    //     case "valid":
+    //       return [
+    //         state,
+    //         [
+    //           component_.cmd.dispatch(
+    //             component_.global.showToastMsg(
+    //               adt("success", proposalToasts.screenedOut.success)
+    //             )
+    //           ),
+    //           component_.cmd.join(
+    //             api.opportunities.twu.readOne(opportunity.id, (response) =>
+    //               api.getValidValue(response, opportunity)
+    //             ),
+    //             api.proposals.twu.readMany(opportunity.id)((response) =>
+    //               api.getValidValue(response, state.proposals)
+    //             ),
+    //             (newOpp, newProposals) =>
+    //               adt("onInitResponse", [newOpp, newProposals]) as Msg
+    //           ) as component_.Cmd<Msg>
+    //         ]
+    //       ];
+    //     case "invalid":
+    //     case "unhandled":
+    //     default:
+    //       return [
+    //         state,
+    //         [
+    //           component_.cmd.dispatch(
+    //             component_.global.showToastMsg(
+    //               adt("error", proposalToasts.screenedOut.error)
+    //             )
+    //           )
+    //         ]
+    //       ];
+    //   }
+    // }
 
     case "showModal":
       return [state.set("showModal", msg.value), []];

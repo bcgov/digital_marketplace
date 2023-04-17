@@ -34,6 +34,7 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   Organization
 } from "shared/lib/resources/organization";
 import {
@@ -741,6 +742,8 @@ export async function editTWUOpportunity(
   );
 }
 
+// TWU Proposals
+
 /**
  * Admins and proposal authors can edit Proposals, so long as they are in a
  * certain state
@@ -768,19 +771,6 @@ export async function editTWUProposal(
         opportunity.id
       )) &&
       doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) ||
-    false
-  );
-}
-
-export async function submitTWUProposal(
-  connection: Connection,
-  session: Session,
-  proposalId: string
-): Promise<boolean> {
-  return (
-    (session &&
-      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
-      (await hasAcceptedCurrentTerms(connection, session))) ||
     false
   );
 }
@@ -818,6 +808,25 @@ export async function readOneTWUProposal(
         (await isTWUProposalAuthor(connection, session.user, proposal.id))) ||
       false
     );
+  }
+  return false;
+}
+
+export async function readManyTWUProposals(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  if (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(connection, session.user, opportunity.id)))
+  ) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft or published
+    return doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return true;
   }
   return false;
 }
@@ -866,6 +875,29 @@ export async function readTWUProposalScore(
 }
 export function publishTWUOpportunity(session: Session): boolean {
   return isAdmin(session);
+}
+
+export async function createTWUProposal(
+  connection: Connection,
+  session: Session
+): Promise<boolean> {
+  return (
+    isVendor(session) && (await hasAcceptedPreviousTerms(connection, session))
+  );
+}
+
+export async function submitTWUProposal(
+  connection: Connection,
+  session: Session,
+  organization: Organization
+): Promise<boolean> {
+  return (
+    !!session &&
+    isVendor(session) &&
+    (await hasAcceptedCurrentTerms(connection, session)) &&
+    (await isUserOwnerOfOrg(connection, session.user, organization.id)) &&
+    doesOrganizationMeetTWUQualification(organization)
+  );
 }
 
 /**

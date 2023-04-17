@@ -78,7 +78,12 @@ export function makeCreateManyAction<
   InvalidItem,
   Msg
 >(
-  create: CreateAction<RequestBodyItem, ValidItem, InvalidItem, unknown>,
+  create: CreateAction<
+    RequestBodyItem,
+    ValidItem,
+    InvalidItem,
+    CreateManyAccumulator<ValidItem, InvalidItem>
+  >,
   emptyInvalidResult: InvalidItem
 ): CreateManyAction<RequestBodyItem, ValidItem, InvalidItem, Msg> {
   return (items, handleResponse) => {
@@ -116,7 +121,7 @@ export function makeCreateManyAction<
             ? invalid(accumulator.invalidResults)
             : valid(accumulator.validResults)
         )
-    ) as component.cmd.Cmd<Msg>;
+    );
   };
 }
 

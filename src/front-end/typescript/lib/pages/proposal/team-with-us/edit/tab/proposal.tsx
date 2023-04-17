@@ -26,9 +26,11 @@ import {
 import { isTWUOpportunityAcceptingProposals } from "shared/lib/resources/opportunity/team-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
+  DeleteValidationErrors,
   TWUProposal,
   // twuProposalNumTeamMembers,
-  TWUProposalStatus
+  TWUProposalStatus,
+  UpdateValidationErrors
   // twuProposalTotalProposedCost
 } from "shared/lib/resources/proposal/team-with-us";
 import { isVendor } from "shared/lib/resources/user";
@@ -95,15 +97,24 @@ export type InnerMsg =
   | ADT<"onSaveChangesAndSubmitPersistResponse", Form.PersistResult>
   | ADT<
       "onSaveChangesAndSubmitSubmitResponse",
-      api.ResponseValidation<TWUProposal, string[]>
+      api.ResponseValidation<TWUProposal, UpdateValidationErrors>
     >
   | ADT<"submit">
   | ADT<"onSubmitAcceptTermsResponse", boolean>
-  | ADT<"onSubmitSubmitResponse", api.ResponseValidation<TWUProposal, string[]>>
+  | ADT<
+      "onSubmitSubmitResponse",
+      api.ResponseValidation<TWUProposal, UpdateValidationErrors>
+    >
   | ADT<"withdraw">
-  | ADT<"onWithdrawResponse", api.ResponseValidation<TWUProposal, string[]>>
+  | ADT<
+      "onWithdrawResponse",
+      api.ResponseValidation<TWUProposal, UpdateValidationErrors>
+    >
   | ADT<"delete">
-  | ADT<"onDeleteResponse", api.ResponseValidation<TWUProposal, string[]>>;
+  | ADT<
+      "onDeleteResponse",
+      api.ResponseValidation<TWUProposal, DeleteValidationErrors>
+    >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -155,12 +166,12 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ),
       ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
       component_.cmd.join(
-        api.organizations.owned.readMany((response) =>
+        api.organizations.owned.readMany()((response) =>
           api.getValidValue(response, [])
-        ) as component_.Cmd<OrganizationSlim[]>,
-        api.content.readOne(TWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+        ),
+        api.content.readOne()(TWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
           api.isValid(response) ? response.value.body : ""
-        ) as component_.Cmd<string>,
+        ),
         (organizations, evalContent) =>
           adt("onInitResponse", [organizations, evalContent]) as Msg
       )
@@ -300,12 +311,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesLoading(state),
         [
           !isSave && isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSaveChangesAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAcceptTermsResponse", true)
               )
@@ -398,7 +409,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSaveChangesAndSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
@@ -406,7 +417,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                     "onSaveChangesAndSubmitAcceptTermsResponse",
                     api.isValid(response)
                   )
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAndSubmitAcceptTermsResponse", true)
               )
@@ -462,11 +473,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         newState,
         [
           ...cmds,
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             newProposal.id,
             adt("submit", ""),
             (response) => adt("onSaveChangesAndSubmitSubmitResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -508,12 +519,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSubmitAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(adt("onSubmitAcceptTermsResponse", true))
         ]
       ];
@@ -527,11 +538,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         ? [
             state,
             [
-              api.proposals.twu.update(
+              api.proposals.twu.update<Msg>()(
                 proposal.id,
                 adt("submit", ""),
                 (response) => adt("onSubmitSubmitResponse", response)
-              ) as component_.Cmd<Msg>
+              )
             ]
           ]
         : [
@@ -581,11 +592,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startWithdrawLoading(state),
         [
-          api.proposals.twu.update(
+          api.proposals.twu.update<Msg>()(
             proposal.id,
             adt("withdraw", ""),
             (response) => adt("onWithdrawResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -631,9 +642,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startDeleteLoading(state),
         [
-          api.proposals.twu.delete_(proposal.id, (response) =>
+          api.proposals.twu.delete_<Msg>()(proposal.id, (response) =>
             adt("onDeleteResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
