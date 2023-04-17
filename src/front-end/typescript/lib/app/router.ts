@@ -271,6 +271,22 @@ const router: router_.Router<Route> = {
         };
       }
     },
+    // This route needs to be matched before `proposalTWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/export"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUExportAll",
+          value: {
+            opportunityId: params.opportunityId || "",
+            anonymous: query.anonymous === "true"
+          }
+        };
+      }
+    },
     {
       path: prefixPath("/opportunities/team-with-us/:opportunityId"),
       makeRoute({ params }) {
@@ -321,6 +337,20 @@ const router: router_.Router<Route> = {
             proposalId: params.proposalId || "",
             opportunityId: params.opportunityId || "",
             tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/export"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUExportOne",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || ""
           }
         };
       }
@@ -704,6 +734,18 @@ const router: router_.Router<Route> = {
       case "opportunityTWUView":
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
+      case "proposalTWUExportOne":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
+        );
+      case "proposalTWUExportAll":
+        return prefixPath(
+          `/opportunities/team-with-us/${
+            route.value.opportunityId
+          }/proposals/export/${
+            route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ""
+          }`
         );
       case "proposalTWUCreate":
         return prefixPath(

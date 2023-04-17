@@ -19,8 +19,8 @@ import * as Tab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import Link, {
   iconLinkSymbol,
   leftPlacement,
-  rightPlacement
-  // routeDest
+  rightPlacement,
+  routeDest
 } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
@@ -345,12 +345,12 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
               newTab
               color="info"
               className="mt-3"
-              // dest={routeDest(
-              //   adt("proposalTWUExportOne", {
-              //     opportunityId: state.proposal.opportunity.id,
-              //     proposalId: state.proposal.id
-              //   })
-              // )}
+              dest={routeDest(
+                adt("proposalTWUExportOne", {
+                  opportunityId: state.proposal.opportunity.id,
+                  proposalId: state.proposal.id
+                })
+              )}
               symbol_={rightPlacement(iconLinkSymbol("file-export"))}>
               Export Proposal
             </Link>
