@@ -86,7 +86,7 @@ const init: component_.page.Init<
               return component_.cmd.map(
                 component_.cmd.sequence(
                   slimProposals.map(({ id }) =>
-                    api.proposals.swu.readOne(opportunityId)(id, (a) =>
+                    api.proposals.twu.readOne(opportunityId)(id, (a) =>
                       api.isValid(a) ? a.value : null
                     )
                   )
