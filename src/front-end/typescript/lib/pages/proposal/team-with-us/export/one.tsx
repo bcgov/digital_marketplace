@@ -13,7 +13,7 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import ExportedProposal from "front-end/lib/pages/proposal/team-with-us/lib/views/exported-proposals";
+import ExportedProposal from "front-end/lib/pages/proposal/team-with-us/lib/views/exported-proposal";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import React from "react";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";

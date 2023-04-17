@@ -17,7 +17,7 @@ import {
   twuOpportunityStatusToColor,
   twuOpportunityStatusToTitleCase
 } from "front-end/lib/pages/opportunity/team-with-us/lib";
-import ExportedProposal from "front-end/lib/pages/proposal/team-with-us/lib/views/exported-proposals";
+import ExportedProposal from "front-end/lib/pages/proposal/team-with-us/lib/views/exported-proposal";
 import Badge from "front-end/lib/views/badge";
 import DescriptionList from "front-end/lib/views/description-list";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
