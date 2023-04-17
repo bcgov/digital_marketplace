@@ -438,12 +438,12 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       style: { width: "0px" }
     },
     {
-      children: "Q",
+      children: "RQ",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
     {
-      children: "C",
+      children: "In/Ch",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
