@@ -1134,7 +1134,7 @@ const update: crud.Update<
             );
             break;
           case "scoreChallenge":
-            dbResult = await db.updateTWUProposalChallengeScore(
+            dbResult = await db.updateTWUProposalChallengeAndPriceScores(
               connection,
               request.params.id,
               body.value,
