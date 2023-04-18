@@ -989,6 +989,11 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
   );
 });
 
+/**
+ * Updates the Challenge Score, the Price Score, creates a history record
+ * (challenge), creates a history record (price), changes status to
+ * EVALUATED_CHALLENGE, reads a proposal record (sanity check)
+ */
 export const updateTWUProposalChallengeAndPriceScores = tryDb<
   [Id, number, AuthenticatedSession],
   TWUProposal
@@ -1210,7 +1215,7 @@ export const awardTWUProposal = tryDb<
           },
           "*"
         );
-
+      console.log("LINE 1218", proposalRecord);
       // Update all other proposals on opportunity to Not Awarded where their status is Evaluated/Awarded
       const otherProposalIds =
         (

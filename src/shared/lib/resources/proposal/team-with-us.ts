@@ -347,9 +347,15 @@ export function isValidStatusChange(
 
     case TWUProposalStatus.EvaluatedChallenge:
       return (
-        ([TWUProposalStatus.Disqualified].includes(to) &&
+        (([
+          TWUProposalStatus.Awarded,
+          TWUProposalStatus.NotAwarded,
+          TWUProposalStatus.Disqualified
+        ].includes(to) &&
           userType !== UserType.Vendor) ||
-        (to === TWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+          (to === TWUProposalStatus.Withdrawn &&
+            userType === UserType.Vendor)) &&
+        hasProposalDeadlinePassed
       );
 
     case TWUProposalStatus.Awarded:
