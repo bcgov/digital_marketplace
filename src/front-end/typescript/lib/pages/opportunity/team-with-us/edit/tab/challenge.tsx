@@ -41,9 +41,7 @@ import {
   isTWUProposalInChallenge,
   NUM_SCORE_DECIMALS,
   TWUProposalSlim,
-  TWUProposal,
   TWUProposalStatus,
-  UpdateValidationErrors as ProposalUpdateValidationErrors,
   canTWUProposalBeScreenedToFromChallenge
 } from "shared/lib/resources/proposal/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
@@ -66,16 +64,6 @@ export type InnerMsg =
   | ADT<"table", Table.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"screenInToTeamScenario", Id>
-  | ADT<
-      "onScreenInToTeamScenarioResponse",
-      api.ResponseValidation<TWUProposal, ProposalUpdateValidationErrors>
-    >
-  | ADT<"screenOutFromTeamScenario", Id>
-  | ADT<
-      "onScreenOutFromTeamScenarioResponse",
-      api.ResponseValidation<TWUProposal, ProposalUpdateValidationErrors>
-    >
   | ADT<"completeChallenge">
   | ADT<
       "onCompleteChallenge",
@@ -209,120 +197,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       ];
     }
 
-    case "screenInToTeamScenario": {
-      state = state.set("showModal", null);
-      return [
-        state.set("screenToFromLoading", msg.value),
-        [
-          // api.proposals.twu.update(
-          //   msg.value,
-          //   adt("screenInToTeamScenario", ""),
-          //   (response) => adt("onScreenInToTeamScenarioResponse", response)
-          // ) as component_.Cmd<Msg>
-        ]
-      ];
-    }
-
-    // case "onScreenInToTeamScenarioResponse": {
-    //   const opportunity = state.opportunity;
-    //   if (!opportunity) return [state, []];
-    //   state = state.set("screenToFromLoading", null);
-    //   const result = msg.value;
-    //   switch (result.tag) {
-    //     case "valid":
-    //       return [
-    //         state,
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("success", proposalToasts.screenedIn.success)
-    //             )
-    //           ),
-    //           component_.cmd.join(
-    //             api.opportunities.twu.readOne(opportunity.id, (response) =>
-    //               api.getValidValue(response, opportunity)
-    //             ),
-    //             api.proposals.twu.readMany(opportunity.id)((response) =>
-    //               api.getValidValue(response, state.proposals)
-    //             ),
-    //             (newOpp, newProposals) =>
-    //               adt("onInitResponse", [newOpp, newProposals]) as Msg
-    //           ) as component_.Cmd<Msg>
-    //         ]
-    //       ];
-    //     case "invalid":
-    //     case "unhandled":
-    //     default:
-    //       return [
-    //         state,
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("error", proposalToasts.screenedIn.error)
-    //             )
-    //           )
-    //         ]
-    //       ];
-    //   }
-    // }
-
-    // case "screenOutFromTeamScenario": {
-    //   state = state.set("showModal", null);
-    //   return [
-    //     state.set("screenToFromLoading", msg.value),
-    //     [
-    //       api.proposals.twu.update(
-    //         msg.value,
-    //         adt("screenOutFromTeamScenario", ""),
-    //         (response) => adt("onScreenOutFromTeamScenarioResponse", response)
-    //       ) as component_.Cmd<Msg>
-    //     ]
-    //   ];
-    // }
-
-    // case "onScreenOutFromTeamScenarioResponse": {
-    //   const opportunity = state.opportunity;
-    //   if (!opportunity) return [state, []];
-    //   state = state.set("screenToFromLoading", null);
-    //   const result = msg.value;
-    //   switch (result.tag) {
-    //     case "valid":
-    //       return [
-    //         state,
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("success", proposalToasts.screenedOut.success)
-    //             )
-    //           ),
-    //           component_.cmd.join(
-    //             api.opportunities.twu.readOne(opportunity.id, (response) =>
-    //               api.getValidValue(response, opportunity)
-    //             ),
-    //             api.proposals.twu.readMany(opportunity.id)((response) =>
-    //               api.getValidValue(response, state.proposals)
-    //             ),
-    //             (newOpp, newProposals) =>
-    //               adt("onInitResponse", [newOpp, newProposals]) as Msg
-    //           ) as component_.Cmd<Msg>
-    //         ]
-    //       ];
-    //     case "invalid":
-    //     case "unhandled":
-    //     default:
-    //       return [
-    //         state,
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("error", proposalToasts.screenedOut.error)
-    //             )
-    //           )
-    //         ]
-    //       ];
-    //   }
-    // }
-
     case "showModal":
       return [state.set("showModal", msg.value), []];
 
@@ -397,48 +271,6 @@ const WaitForChallenge: component_.base.ComponentView<State, Msg> = () => {
   );
 };
 
-const ContextMenuCell: component_.base.View<{
-  disabled: boolean;
-  loading: boolean;
-  proposal: TWUProposalSlim;
-  dispatch: component_.base.Dispatch<Msg>;
-}> = ({ disabled, loading, proposal, dispatch }) => {
-  switch (proposal.status) {
-    case TWUProposalStatus.EvaluatedChallenge:
-      return (
-        <Link
-          button
-          symbol_={leftPlacement(iconLinkSymbol("stars"))}
-          color="info"
-          size="sm"
-          disabled={disabled || loading}
-          loading={loading}
-          onClick={() =>
-            dispatch(adt("screenInToTeamScenario" as const, proposal.id))
-          }>
-          Screen In
-        </Link>
-      );
-    // case TWUProposalStatus.UnderReviewTeamScenario:
-    //   return (
-    //     <Link
-    //       button
-    //       symbol_={leftPlacement(iconLinkSymbol("ban"))}
-    //       color="danger"
-    //       size="sm"
-    //       disabled={disabled || loading}
-    //       loading={loading}
-    //       onClick={() =>
-    //         dispatch(adt("screenOutFromTeamScenario" as const, proposal.id))
-    //       }>
-    //       Screen Out
-    //     </Link>
-    //   );
-    default:
-      return null;
-  }
-};
-
 interface ProponentCellProps {
   proposal: TWUProposalSlim;
   opportunity: TWUOpportunity;
@@ -476,17 +308,13 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
   );
 };
 
-function evaluationTableBodyRows(
-  state: Immutable<State>,
-  dispatch: component_.base.Dispatch<Msg>
-): Table.BodyRows {
+function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
   const isCompleteChallengeLoading = state.completeChallengeLoading > 0;
   const isScreenToFromLoading = !!state.screenToFromLoading;
   const isLoading = isCompleteChallengeLoading || isScreenToFromLoading;
   return state.proposals.map((p) => {
-    const isProposalLoading = state.screenToFromLoading === p.id;
     return [
       {
         className: "text-wrap",
@@ -515,23 +343,7 @@ function evaluationTableBodyRows(
               : EMPTY_STRING}
           </div>
         )
-      },
-      ...(state.canProposalsBeScreened
-        ? [
-            {
-              showOnHover: !isProposalLoading,
-              className: "text-right text-nowrap",
-              children: (
-                <ContextMenuCell
-                  dispatch={dispatch}
-                  proposal={p}
-                  disabled={isLoading}
-                  loading={isProposalLoading}
-                />
-              )
-            }
-          ]
-        : [])
+      }
     ];
   });
 }
@@ -572,7 +384,7 @@ const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
   return (
     <Table.view
       headCells={evaluationTableHeadCells(state)}
-      bodyRows={evaluationTableBodyRows(state, dispatch)}
+      bodyRows={evaluationTableBodyRows(state)}
       state={state.table}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("table" as const, msg)
