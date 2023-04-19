@@ -409,6 +409,7 @@ export function generateTWUOpportunityQuery(
   return query;
 }
 
+// TODO - Unlike SWU, TWU does not currently have the ability to add attachments to Notes
 // async function createTWUOpportunityNoteAttachments(
 //   connection: Connection,
 //   trx: Transaction,

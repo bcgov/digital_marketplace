@@ -276,11 +276,17 @@ export async function handleTWUPublished(
   }
 }
 
+/**
+ * Notifies all subscribed users on this opportunity, for instance, on edit/update
+ * as well as users with proposals (we union so that we don't notify anyone twice)
+ *
+ * @param connection
+ * @param opportunity
+ */
 export async function handleTWUUpdated(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const author =
     (opportunity.createdBy &&
       getValidValue(
@@ -293,43 +299,49 @@ export async function handleTWUUpdated(
       await db.readManyTWUSubscribedUsers(connection, opportunity.id),
       null
     ) || [];
-  // const usersWithProposals =
-  //   getValidValue(
-  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
-  //     null
-  //   ) || [];
-  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-  const unionedUsers = unionBy(subscribedUsers, "id");
+  const usersWithProposals =
+    getValidValue(
+      await db.readManyTWUProposalAuthors(connection, opportunity.id),
+      null
+    ) || [];
+  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+
   if (author) {
     unionedUsers.push(author);
   }
   await updatedTWUOpportunity(unionedUsers, opportunity);
 }
 
+/**
+ * Notify all subscribed users on this opportunity,
+ * as well as users with proposals (we union so that we don't notify anyone twice).
+ * Notify authoring gov user of cancellation
+ *
+ * @param connection
+ * @param opportunity
+ */
 export async function handleTWUCancelled(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const subscribedUsers =
     getValidValue(
       await db.readManyTWUSubscribedUsers(connection, opportunity.id),
       null
     ) || [];
-  // const usersWithProposals =
-  //   getValidValue(
-  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
-  //     null
-  //   ) || [];
-  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-  const unionedUsers = unionBy(subscribedUsers, "id");
+  const usersWithProposals =
+    getValidValue(
+      await db.readManyTWUProposalAuthors(connection, opportunity.id),
+      null
+    ) || [];
+  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+
   await Promise.all(
     unionedUsers.map(
       async (user) => await cancelledTWUOpportunitySubscribed(user, opportunity)
     )
   );
 
-  // Notify authoring gov user of cancellation
   const author =
     opportunity.createdBy &&
     getValidValue(
@@ -341,30 +353,36 @@ export async function handleTWUCancelled(
   }
 }
 
+/**
+ *  Notify all subscribed users on this opportunity, as well as users with
+ *  proposals (we union so that we don't notify anyone twice).
+ *  Notify authoring gov user of suspension
+ *
+ * @param connection
+ * @param opportunity
+ */
 export async function handleTWUSuspended(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
   const subscribedUsers =
     getValidValue(
       await db.readManyTWUSubscribedUsers(connection, opportunity.id),
       null
     ) || [];
-  // const usersWithProposals =
-  //   getValidValue(
-  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
-  //     null
-  //   ) || [];
-  // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-  const unionedUsers = unionBy(subscribedUsers, "id");
+  const usersWithProposals =
+    getValidValue(
+      await db.readManyTWUProposalAuthors(connection, opportunity.id),
+      null
+    ) || [];
+  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
+
   await Promise.all(
     unionedUsers.map(
       async (user) => await suspendedTWUOpportunitySubscribed(user, opportunity)
     )
   );
 
-  // Notify authoring gov user of suspension
   const author =
     opportunity.createdBy &&
     getValidValue(
@@ -376,11 +394,16 @@ export async function handleTWUSuspended(
   }
 }
 
+/**
+ * Notify gov user that the opportunity is ready
+ *
+ * @param connection
+ * @param opportunity
+ */
 export async function handleTWUReadyForEvaluation(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  // Notify gov user that the opportunity is ready
   const author =
     (opportunity.createdBy &&
       getValidValue(
@@ -395,6 +418,12 @@ export async function handleTWUReadyForEvaluation(
 
 export const readyForEvalTWUOpportunity = makeSend(readyForEvalTWUOpportunityT);
 
+/**
+ * Generates email content
+ *
+ * @param recipient
+ * @param opportunity
+ */
 export async function readyForEvalTWUOpportunityT(
   recipient: User,
   opportunity: TWUOpportunity
@@ -433,6 +462,8 @@ export async function readyForEvalTWUOpportunityT(
 export const newTWUOpportunityPublished = makeSend(newTWUOpportunityPublishedT);
 
 /**
+ * Generates email content related to the publishing, or re-publishing of
+ * an opportunity
  *
  * @param recipients
  * @param opportunity
