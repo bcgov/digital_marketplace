@@ -1348,7 +1348,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Assignment Date"
+          label="Contract Award Date"
           help="Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time."
           state={state.assignmentDate}
           disabled={disabled}
@@ -1362,7 +1362,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Start Date"
+          label="Contract Start Date"
           help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
           state={state.startDate}
           disabled={disabled}
@@ -1376,7 +1376,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Completion Date"
+          label="Contract Completion Date"
           help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
@@ -1418,7 +1418,7 @@ const OverviewView: component_.base.View<Props> = ({
 
       <Col md="6" xs="12">
         <Select.view
-          extraChildProps={{}}
+          extraChildProps={{ prefix: "%" }}
           label="Resource Target Allocation"
           placeholder="% Allocation"
           help="Indicate the desired Full-Time Equivalency (FTE) allocation in terms of a 40-hour work week. For example, a resource working 20 hours a week would be allocated at 50% FTE."

@@ -10,6 +10,7 @@ import { Immutable } from "front-end/lib/framework";
 import { find } from "lodash";
 import React from "react";
 import { ADT } from "shared/lib/types";
+import { InputGroup, InputGroupAddon, InputGroupText } from "reactstrap";
 
 export {
   stringsToOptions,
@@ -34,6 +35,7 @@ type InnerChildMsg = ADT<"onChange", Value>;
 
 interface ExtraChildProps {
   loading?: boolean;
+  prefix?: string;
 }
 
 type ChildComponent = FormField.ChildComponent<
@@ -63,6 +65,7 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
 
 const ChildView: ChildComponent["view"] = (props) => {
   const {
+    prefix,
     state,
     dispatch,
     placeholder = "",
@@ -87,7 +90,19 @@ const ChildView: ChildComponent["view"] = (props) => {
     },
     formatGroupLabel: state.formatGroupLabel
   };
-  return <Select {...selectProps} />;
+  if (!prefix) {
+    return <Select {...selectProps} />;
+  }
+  return (
+    <InputGroup>
+      {prefix ? (
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>{prefix}</InputGroupText>
+        </InputGroupAddon>
+      ) : null}
+      <Select {...selectProps} />
+    </InputGroup>
+  );
 };
 
 export const component = FormField.makeComponent<
