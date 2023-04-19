@@ -371,7 +371,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (option) => {
       if (!option) {
-        return invalid(["Please select a Target Allocation."]);
+        return invalid(["Please select a Resource Target Allocation."]);
       }
       return valid(option);
     },
@@ -805,7 +805,7 @@ export function getValues(state: Immutable<State>): Values {
     maxBudget,
     serviceArea:
       parseTWUServiceArea(Select.getValue(state.serviceArea)) ??
-      TWUServiceArea.Developer,
+      TWUServiceArea.FullStackDeveloper,
     targetAllocation,
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
@@ -1259,8 +1259,8 @@ const OverviewView: component_.base.View<Props> = ({
       <Col xs="12">
         <LongText.view
           label="Teaser"
-          placeholder="Provide 1-2 sentences that describe to readers what you are inviting them to do."
-          help="Provide 1-2 sentences that will entice readers to apply to this opportunity and that describes what you are inviting them to do."
+          placeholder="Provide 1-2 sentences that describe to vendors what you are inviting them to do."
+          help="Provide 1-2 sentences that will entice vendors to apply to this opportunity and that describes what you are inviting them to do."
           extraChildProps={{
             style: { height: "200px" }
           }}
@@ -1348,7 +1348,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Assignment Date"
+          label="Contract Award Date"
           help="Choose a date that you will award the successful proponent the opportunity. The assignment date is fixed to 4:00PM Pacific Time."
           state={state.assignmentDate}
           disabled={disabled}
@@ -1362,7 +1362,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Start Date"
+          label="Contract Start Date"
           help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
           state={state.startDate}
           disabled={disabled}
@@ -1376,7 +1376,7 @@ const OverviewView: component_.base.View<Props> = ({
         <DateField.view
           required
           extraChildProps={{}}
-          label="Completion Date"
+          label="Contract Completion Date"
           help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
@@ -1418,10 +1418,10 @@ const OverviewView: component_.base.View<Props> = ({
 
       <Col md="6" xs="12">
         <Select.view
-          extraChildProps={{}}
-          label="Target Allocation"
+          extraChildProps={{ prefix: "%" }}
+          label="Resource Target Allocation"
           placeholder="% Allocation"
-          help="Indicate the percentage of full-time allocation for the successful proponent."
+          help="Indicate the desired Full-Time Equivalency (FTE) allocation in terms of a 40-hour work week. For example, a resource working 20 hours a week would be allocated at 50% FTE."
           required
           disabled={disabled}
           state={state.targetAllocation}
@@ -1436,7 +1436,7 @@ const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{}}
           label="Mandatory Skills"
           placeholder="Mandatory Skills"
-          help="Select the skill(s) from the list provided that the successful proponent must possess in order to be considered for the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below."
+          help="Start typing to search for a skill from our list or to create your own skill"
           required
           disabled={disabled}
           state={state.mandatorySkills}

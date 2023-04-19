@@ -34,9 +34,9 @@ export enum TWUOpportunityEvent {
 }
 
 export enum TWUServiceArea {
-  Developer = "DEVELOPER",
-  DataSpecialist = "DATA_SPECIALIST",
-  ScrumMaster = "SCRUM_MASTER",
+  FullStackDeveloper = "FULL_STACK_DEVELOPER",
+  DataProfessional = "DATA_PROFESSIONAL",
+  AgileCoach = "AGILE_COACH",
   DevopsSpecialist = "DEVOPS_SPECIALIST"
 }
 

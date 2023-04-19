@@ -170,15 +170,15 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   } = opportunity;
   const items = [
     {
-      name: "Assignment Date",
+      name: "Contract Award Date",
       children: formatDate(assignmentDate)
     },
     {
-      name: "Proposed Start Date",
+      name: "Contract Start Date",
       children: formatDate(startDate)
     },
     {
-      name: "Proposed End Date",
+      name: "Contract Completion Date",
       children: formatDate(completionDate)
     }
   ];
@@ -206,7 +206,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       },
       {
         icon: "balance-scale",
-        name: "Target Resource Allocation",
+        name: "Resource Target Allocation",
         value: targetAllocation.toString().concat("%")
       }
     ],
