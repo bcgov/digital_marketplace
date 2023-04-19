@@ -198,11 +198,11 @@ export function makeTWUOpportunityInformation(
       value: `${startCase(lowerCase(opportunity.serviceArea))}`
     },
     {
-      name: "Proposed Start Date",
+      name: "Contract Start Date",
       value: formatDate(opportunity.startDate, false)
     },
     {
-      name: "Proposed End Date",
+      name: "Contract End Date",
       value: opportunity.completionDate
         ? formatDate(opportunity.completionDate, false)
         : ""
