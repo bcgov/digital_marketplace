@@ -295,7 +295,7 @@ export async function handleTWUUpdated(
     ) || [];
   // const usersWithProposals =
   //   getValidValue(
-  //     await db.readManyCWUProposalAuthors(connection, opportunity.id),
+  //     await db.readManyTWUProposalAuthors(connection, opportunity.id),
   //     null
   //   ) || [];
   // const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
@@ -376,6 +376,57 @@ export async function handleTWUSuspended(
   }
 }
 
+export async function handleTWUReadyForEvaluation(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify gov user that the opportunity is ready
+  const author =
+    (opportunity.createdBy &&
+      getValidValue(
+        await db.readOneUser(connection, opportunity.createdBy.id),
+        null
+      )) ||
+    null;
+  if (author) {
+    await readyForEvalTWUOpportunity(author, opportunity);
+  }
+}
+
+export const readyForEvalTWUOpportunity = makeSend(readyForEvalTWUOpportunityT);
+
+export async function readyForEvalTWUOpportunityT(
+  recipient: User,
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "Your Team With Us Opportunity is Ready to Be Evaluated";
+  const description =
+    "Your Digital Marketplace opportunity has reached its proposal deadline.";
+  return [
+    {
+      summary:
+        "TWU opportunity proposal deadline reached; sent to government author.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              You may now view proposals submitted by vendors and assign scores
+              to each submission. Please note that each vendor with a submitted
+              proposal will remain anonymous until the next phase of the
+              opportunity has begun.
+            </p>
+          </div>
+        ),
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    }
+  ];
+}
 /**
  * wrapper
  */

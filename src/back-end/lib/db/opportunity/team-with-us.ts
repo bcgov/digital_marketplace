@@ -35,6 +35,7 @@ import {
   TWUProposalSlim,
   TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
+import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 
 /**
  * @remarks
@@ -1199,10 +1200,10 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
         rawOpportunity.addenda = [];
         rawOpportunity.resourceQuestions = [];
 
-        // twuOpportunityNotifications.handleTWUReadyForEvaluation(
-        //   connection,
-        //   await rawTWUOpportunityToTWUOpportunity(connection, rawOpportunity)
-        // );
+        twuOpportunityNotifications.handleTWUReadyForEvaluation(
+          connection,
+          await rawTWUOpportunityToTWUOpportunity(connection, rawOpportunity)
+        );
       }
       return lapsedOpportunities.length;
     })
