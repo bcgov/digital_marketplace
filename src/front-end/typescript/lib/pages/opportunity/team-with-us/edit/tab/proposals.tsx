@@ -41,7 +41,8 @@ import {
   getTWUProponentName,
   UpdateValidationErrors,
   TWUProposal,
-  NUM_SCORE_DECIMALS
+  NUM_SCORE_DECIMALS,
+  TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
 
@@ -283,20 +284,26 @@ const ContextMenuCell: component_.base.View<{
   proposal: TWUProposalSlim;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ disabled, loading, proposal, dispatch }) => {
-  return (
-    <Link
-      button
-      symbol_={leftPlacement(iconLinkSymbol("award"))}
-      color="primary"
-      size="sm"
-      disabled={disabled || loading}
-      loading={loading}
-      onClick={() =>
-        dispatch(adt("showModal", adt("award" as const, proposal.id)))
-      }>
-      Award
-    </Link>
-  );
+  switch (proposal.status) {
+    case TWUProposalStatus.EvaluatedChallenge:
+    case TWUProposalStatus.NotAwarded:
+      return (
+        <Link
+          button
+          symbol_={leftPlacement(iconLinkSymbol("award"))}
+          color="primary"
+          size="sm"
+          disabled={disabled || loading}
+          loading={loading}
+          onClick={() =>
+            dispatch(adt("showModal", adt("award" as const, proposal.id)))
+          }>
+          Award
+        </Link>
+      );
+    default:
+      return null;
+  }
 };
 
 interface ProponentCellProps {
