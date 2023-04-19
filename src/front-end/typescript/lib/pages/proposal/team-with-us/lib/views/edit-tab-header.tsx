@@ -6,7 +6,11 @@ import {
 import Badge from "front-end/lib/views/badge";
 import DescriptionList from "front-end/lib/views/description-list";
 import Icon from "front-end/lib/views/icon";
-import Link, { routeDest } from "front-end/lib/views/link";
+import Link, {
+  iconLinkSymbol,
+  rightPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import {
@@ -99,6 +103,19 @@ const ViewTabHeader: component.base.View<Props> = ({
       <Row>
         <Col xs="12">
           <DescriptionList items={items} />
+          <Link
+            newTab
+            color="info"
+            className="mt-3"
+            dest={routeDest(
+              adt("proposalTWUExportOne", {
+                opportunityId: proposal.opportunity.id,
+                proposalId: proposal.id
+              })
+            )}
+            symbol_={rightPlacement(iconLinkSymbol("file-export"))}>
+            Export Proposal
+          </Link>
         </Col>
       </Row>
     </div>

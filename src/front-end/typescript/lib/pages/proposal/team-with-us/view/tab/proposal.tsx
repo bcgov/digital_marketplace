@@ -19,8 +19,8 @@ import * as Tab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import Link, {
   iconLinkSymbol,
   leftPlacement,
-  rightPlacement
-  // routeDest
+  rightPlacement,
+  routeDest
 } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
@@ -345,12 +345,12 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
               newTab
               color="info"
               className="mt-3"
-              // dest={routeDest(
-              //   adt("proposalTWUExportOne", {
-              //     opportunityId: state.proposal.opportunity.id,
-              //     proposalId: state.proposal.id
-              //   })
-              // )}
+              dest={routeDest(
+                adt("proposalTWUExportOne", {
+                  opportunityId: state.proposal.opportunity.id,
+                  proposalId: state.proposal.id
+                })
+              )}
               symbol_={rightPlacement(iconLinkSymbol("file-export"))}>
               Export Proposal
             </Link>
@@ -391,14 +391,13 @@ export const component: Tab.Component<State, Msg> = {
   getModal: (state) => {
     const form = state.form;
     if (!form) return component_.page.modal.hide();
-    // TODO - uncomment Modal functionality when ready
-    // const formModal = component_.page.modal.map(
-    //   Form.getModal(form),
-    //   (msg) => adt("form", msg) as Msg
-    // );
-    // if (formModal.tag !== "hide") {
-    //   return formModal;
-    // }
+    const formModal = component_.page.modal.map(
+      Form.getModal(form),
+      (msg) => adt("form", msg) as Msg
+    );
+    if (formModal.tag !== "hide") {
+      return formModal;
+    }
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
       case "award":
@@ -480,6 +479,16 @@ export const component: Tab.Component<State, Msg> = {
       case TWUProposalStatus.UnderReviewResourceQuestions:
       case TWUProposalStatus.UnderReviewChallenge:
       case TWUProposalStatus.EvaluatedResourceQuestions:
+        return component_.page.actions.links([
+          {
+            children: "Disqualify",
+            symbol_: leftPlacement(iconLinkSymbol("user-slash")),
+            button: true,
+            outline: true,
+            color: "c-nav-fg-alt",
+            onClick: () => dispatch(adt("showModal", "disqualify" as const))
+          }
+        ]);
       case TWUProposalStatus.EvaluatedChallenge:
         return component_.page.actions.links([
           {

@@ -53,6 +53,8 @@ import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
+import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -351,6 +353,28 @@ function initPage(
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalSWUExportAll", value);
+        }
+      });
+    case "proposalTWUExportOne":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUExportOne"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUExportOne.component.init,
+        pageGetMetadata: PageProposalTWUExportOne.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUExportOne", value);
+        }
+      });
+    case "proposalTWUExportAll":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUExportAll"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUExportAll.component.init,
+        pageGetMetadata: PageProposalTWUExportAll.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUExportAll", value);
         }
       });
     case "proposalTWUCreate":
@@ -1186,6 +1210,30 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "proposalSWUExportAll"],
         pageUpdate: PageProposalSWUExportAll.component.update,
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUExportOne":
+      return component.app.updatePage({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUExportOne" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUExportOne"],
+        pageUpdate: PageProposalTWUExportOne.component.update,
+        pageGetMetadata: PageProposalTWUExportOne.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUExportAll":
+      return component.app.updatePage({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUExportAll" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUExportAll"],
+        pageUpdate: PageProposalTWUExportAll.component.update,
+        pageGetMetadata: PageProposalTWUExportAll.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageProposalTWUCreate":

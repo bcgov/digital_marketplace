@@ -347,9 +347,15 @@ export function isValidStatusChange(
 
     case TWUProposalStatus.EvaluatedChallenge:
       return (
-        ([TWUProposalStatus.Disqualified].includes(to) &&
+        (([
+          TWUProposalStatus.Awarded,
+          TWUProposalStatus.NotAwarded,
+          TWUProposalStatus.Disqualified
+        ].includes(to) &&
           userType !== UserType.Vendor) ||
-        (to === TWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+          (to === TWUProposalStatus.Withdrawn &&
+            userType === UserType.Vendor)) &&
+        hasProposalDeadlinePassed
       );
 
     case TWUProposalStatus.Awarded:
@@ -439,6 +445,7 @@ export function canTWUProposalBeAwarded(
 ): boolean {
   switch (p.status) {
     case TWUProposalStatus.NotAwarded:
+    case TWUProposalStatus.EvaluatedChallenge:
       return true;
     default:
       return false;
@@ -477,4 +484,34 @@ export function getTWUProponentName(
   p: Pick<TWUProposal, "organization" | "anonymousProponentName">
 ): string {
   return p.organization?.legalName || p.anonymousProponentName || "Proponent";
+}
+
+type TWUProposalTeamMembersAcc = [Set<string>, TWUProposalTeamMember[]];
+export function twuProposalTeamMembers(
+  proposal: TWUProposal,
+  sort = false
+): TWUProposalTeamMember[] {
+  const compute = (members: TWUProposalTeamMember[]) =>
+    members.reduce(
+      (acc, m) => {
+        const [set, members] = acc;
+        if (set.has(m.member.id)) {
+          return acc;
+        } else {
+          return [
+            set.add(m.member.id),
+            [...members, m]
+          ] as TWUProposalTeamMembersAcc;
+        }
+      },
+      [new Set(), []] as TWUProposalTeamMembersAcc
+    );
+  const members = compute([...proposal.team]);
+  if (sort) {
+    return members[1].sort((a, b) =>
+      compareStrings(a.member.name, b.member.name)
+    );
+  } else {
+    return members[1];
+  }
 }

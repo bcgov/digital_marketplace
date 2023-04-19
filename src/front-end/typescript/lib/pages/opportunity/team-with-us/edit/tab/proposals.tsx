@@ -18,7 +18,7 @@ import Badge from "front-end/lib/views/badge";
 import Link, {
   iconLinkSymbol,
   leftPlacement,
-  // rightPlacement,
+  rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import {
@@ -40,9 +40,9 @@ import {
   TWUProposalSlim,
   getTWUProponentName,
   UpdateValidationErrors,
-  TWUProposal
+  TWUProposal,
+  NUM_SCORE_DECIMALS
 } from "shared/lib/resources/proposal/team-with-us";
-import { isAdmin } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 
 type ModalId = ADT<"award", Id>;
@@ -102,15 +102,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       );
       const canViewProposals =
         canViewTWUOpportunityProposals(opportunity) && !!proposals.length;
+
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          // Determine whether the "Award" button should be shown at all.
-          // Can be awarded if...
-          // - Opportunity has the appropriate status; and
-          // - At least one proposal can be awarded.
+          /**
+           * Determine whether the "Award" button should be shown at all.
+           * Can be awarded if...
+           * - Opportunity has the appropriate status; and
+           * - At least one proposal can be awarded.
+           */
           .set(
             "canProposalsBeAwarded",
             canTWUOpportunityBeAwarded(opportunity) &&
@@ -207,6 +210,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
+/**
+ * Displays three 'Cards' at the top of the Proposal tab (opportunity page) which summarizes
+ * the number of proposals, the winning score and average score
+ *
+ * @param opportunity
+ * @param proposals
+ */
 const makeCardData = (
   opportunity: TWUOpportunity,
   proposals: TWUProposalSlim[]
@@ -246,6 +256,13 @@ const makeCardData = (
   ];
 };
 
+/**
+ * Displays a terse message in one of two scenarios; the opportunity has NOT closed
+ * or no proposals were submitted.
+ *
+ * @param state
+ * @constructor
+ */
 const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
@@ -261,16 +278,18 @@ const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
 };
 
 const ContextMenuCell: component_.base.View<{
+  disabled: boolean;
   loading: boolean;
   proposal: TWUProposalSlim;
   dispatch: component_.base.Dispatch<Msg>;
-}> = ({ loading, proposal, dispatch }) => {
+}> = ({ disabled, loading, proposal, dispatch }) => {
   return (
     <Link
       button
       symbol_={leftPlacement(iconLinkSymbol("award"))}
       color="primary"
       size="sm"
+      disabled={disabled || loading}
       loading={loading}
       onClick={() =>
         dispatch(adt("showModal", adt("award" as const, proposal.id)))
@@ -284,18 +303,17 @@ interface ProponentCellProps {
   proposal: TWUProposalSlim;
   opportunity: TWUOpportunity;
   disabled: boolean;
-  linkToProfile: boolean;
 }
 
 const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
   disabled
-  // linkToProfile
 }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
-    opportunityId: opportunity.id
+    opportunityId: opportunity.id,
+    tab: "proposal" as const
   };
   return (
     <div>
@@ -304,20 +322,16 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
         dest={routeDest(adt("proposalTWUView", proposalRouteParams))}>
         {getTWUProponentName(proposal)}
       </Link>
-      <div className="small text-secondary text-uppercase">
-        {/*{linkToProfile ? (*/}
-        {/*  <Link*/}
-        {/*    disabled={disabled}*/}
-        {/*    color="secondary"*/}
-        {/*    dest={routeDest(*/}
-        {/*      adt("userProfile", { userId: proposal.createdBy.id })*/}
-        {/*    )}>*/}
-        {/*    {proposal.createdBy.name}*/}
-        {/*  </Link>*/}
-        {/*) : (*/}
-        {/*  proposal.createdBy.name*/}
-        {/*)}*/}
-      </div>
+      {(() => {
+        if (!proposal.organization) {
+          return null;
+        }
+        return (
+          <div className="small text-secondary text-uppercase">
+            {proposal.anonymousProponentName}
+          </div>
+        );
+      })()}
     </div>
   );
 };
@@ -328,16 +342,18 @@ function evaluationTableBodyRows(
 ): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
+  const isAwardLoading = !!state.awardLoading;
+  const isLoading = isAwardLoading;
   return state.proposals.map((p) => {
+    const isProposalLoading = state.awardLoading === p.id;
     return [
       {
-        className: "text-nowrap",
+        className: "text-wrap",
         children: (
           <ProponentCell
             proposal={p}
             opportunity={opportunity}
-            linkToProfile={isAdmin(state.viewerUser)}
-            disabled={!!state.awardLoading}
+            disabled={isLoading}
           />
         )
       },
@@ -351,19 +367,57 @@ function evaluationTableBodyRows(
       },
       {
         className: "text-center",
-        children: <div>{/*{p.score ? `${p.score}%` : EMPTY_STRING}*/}</div>
+        children: (
+          <div>
+            {p.questionsScore
+              ? `${p.questionsScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.challengeScore
+              ? `${p.challengeScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.priceScore
+              ? `${p.priceScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
+      },
+      {
+        className: "text-center",
+        children: (
+          <div>
+            {p.totalScore
+              ? `${p.totalScore.toFixed(NUM_SCORE_DECIMALS)}%`
+              : EMPTY_STRING}
+          </div>
+        )
       },
       ...(state.canProposalsBeAwarded
         ? [
             {
-              showOnHover: true,
-              children: canTWUProposalBeAwarded(p) ? (
+              showOnHover: !isProposalLoading,
+              className: "text-right text-nowrap",
+              children: (
                 <ContextMenuCell
                   dispatch={dispatch}
                   proposal={p}
-                  loading={state.awardLoading === p.id}
+                  disabled={isLoading}
+                  loading={isProposalLoading}
                 />
-              ) : null
+              )
             }
           ]
         : [])
@@ -384,7 +438,22 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       style: { width: "0px" }
     },
     {
-      children: "Score",
+      children: "RQ",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "In/Ch",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "Price",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    },
+    {
+      children: "Total",
       className: "text-nowrap text-center",
       style: { width: "0px" }
     },
@@ -400,7 +469,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   ];
 }
 
-const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
+const Scoresheet: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
@@ -435,22 +504,25 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
             <h4 className="mb-0">Proposals</h4>
-            {/*{state.canViewProposals ? (*/}
-            {/*  <Link*/}
-            {/*    newTab*/}
-            {/*    color="info"*/}
-            {/*    className="mt-3 mt-md-0"*/}
-            {/*    symbol_={rightPlacement(iconLinkSymbol("file-export"))}*/}
-            {/*    dest={routeDest(*/}
-            {/*      adt("proposalTWUExportAll", { opportunityId: opportunity.id })*/}
-            {/*    )}>*/}
-            {/*    Export All Proposals*/}
-            {/*  </Link>*/}
-            {/*) : null}*/}
+            {state.canViewProposals ? (
+              <Link
+                newTab
+                color="info"
+                className="mt-3 mt-md-0"
+                symbol_={rightPlacement(iconLinkSymbol("file-export"))}
+                dest={routeDest(
+                  adt("proposalTWUExportAll", {
+                    opportunityId: opportunity.id,
+                    anonymous: false
+                  })
+                )}>
+                Export All Proposals
+              </Link>
+            ) : null}
           </Col>
           <Col xs="12">
             {state.canViewProposals ? (
-              <EvaluationTable {...props} />
+              <Scoresheet {...props} />
             ) : (
               <NotAvailable {...props} />
             )}
@@ -478,7 +550,7 @@ export const component: Tab.Component<State, Msg> = {
     switch (state.showModal.tag) {
       case "award":
         return component_.page.modal.show({
-          title: "Award Code With Us Opportunity?",
+          title: "Award Team With Us Opportunity?",
           onCloseMsg: adt("hideModal"),
           actions: [
             {

@@ -27,6 +27,8 @@ import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-wi
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
+import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
+import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
@@ -98,6 +100,8 @@ export type Route =
   | ADT<"opportunityTWUCreate", PageOpportunityTWUCreate.RouteParams>
   | ADT<"opportunityTWUEdit", PageOpportunityTWUEdit.RouteParams>
   | ADT<"opportunityTWUView", PageOpportunityTWUView.RouteParams>
+  | ADT<"proposalTWUExportOne", PageProposalTWUExportOne.RouteParams>
+  | ADT<"proposalTWUExportAll", PageProposalTWUExportAll.RouteParams>
   | ADT<"proposalTWUCreate", PageProposalTWUCreate.RouteParams>
   | ADT<"proposalTWUView", PageProposalTWUView.RouteParams>
   | ADT<"proposalTWUEdit", PageProposalTWUEdit.RouteParams>
@@ -190,6 +194,8 @@ export interface State {
     proposalTWUCreate?: Immutable<PageProposalTWUCreate.State>;
     proposalTWUView?: Immutable<PageProposalTWUView.State>;
     proposalTWUEdit?: Immutable<PageProposalTWUEdit.State>;
+    proposalTWUExportOne?: Immutable<PageProposalTWUExportOne.State>;
+    proposalTWUExportAll?: Immutable<PageProposalTWUExportAll.State>;
     opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
     opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
     opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
@@ -256,6 +262,8 @@ export type InnerMsg =
   | ADT<"pageProposalTWUCreate", PageProposalTWUCreate.Msg>
   | ADT<"pageProposalTWUEdit", PageProposalTWUEdit.Msg>
   | ADT<"pageProposalTWUView", PageProposalTWUView.Msg>
+  | ADT<"pageProposalTWUExportOne", PageProposalTWUExportOne.Msg>
+  | ADT<"pageProposalTWUExportAll", PageProposalTWUExportAll.Msg>
   | ADT<"pageOpportunityCWUCreate", PageOpportunityCWUCreate.Msg>
   | ADT<"pageOpportunityCWUEdit", PageOpportunityCWUEdit.Msg>
   | ADT<"pageOpportunityCWUView", PageOpportunityCWUView.Msg>

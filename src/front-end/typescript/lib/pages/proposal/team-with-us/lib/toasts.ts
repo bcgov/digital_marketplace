@@ -85,3 +85,40 @@ export const changesSubmitted = {
     body: "Your changes to your Team With Us proposal could not be submitted. Please try again later."
   }
 };
+
+type ScoreTest = "Resource Questions" | "Challenge";
+
+export const scored = {
+  success: (test: ScoreTest) => ({
+    title: `${test} Scored`,
+    body: `Team With Us proposal's ${test} ha${
+      test === "Resource Questions" ? "ve" : "s"
+    } been scored.`
+  }),
+  error: (test: ScoreTest) => ({
+    title: `Unable to Score ${test}`,
+    body: `Team With Us proposal's ${test} could not be scored. Please try again later.`
+  })
+};
+
+export const screenedIn = {
+  success: {
+    title: "Proposal Screened In",
+    body: "Team With Us proposal has been screened into the next round."
+  },
+  error: {
+    title: "Unable to Screen In Proposal",
+    body: "Team With Us proposal could not be screened into the next round. Please try again later."
+  }
+};
+
+export const screenedOut = {
+  success: {
+    title: "Proposal Screened Out",
+    body: "Team With Us proposal has been screened out of the next round."
+  },
+  error: {
+    title: "Unable to Screen Out Proposal",
+    body: "Team With Us proposal could not be screened out of the next round. Please try again later."
+  }
+};

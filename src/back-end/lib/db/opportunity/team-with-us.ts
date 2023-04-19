@@ -2,6 +2,9 @@ import { generateUuid } from "back-end/lib";
 import {
   Connection,
   RawTWUOpportunitySubscriber,
+  readOneOrganizationContactEmail,
+  readOneTWUAwardedProposal,
+  readSubmittedTWUProposalCount,
   Transaction,
   tryDb
 } from "back-end/lib/db";
@@ -27,7 +30,11 @@ import {
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
-import { getValidValue, isInvalid } from "shared/lib/validation";
+import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
+import {
+  TWUProposalSlim,
+  TWUProposalStatus
+} from "shared/lib/resources/proposal/team-with-us";
 
 /**
  * @remarks
@@ -131,6 +138,7 @@ interface RawTWUOpportunityHistoryRecord
   createdBy: Id | null;
   status?: TWUOpportunityStatus;
   event?: TWUOpportunityEvent;
+  attachments: Id[];
 }
 
 /**
@@ -673,6 +681,50 @@ export const readOneTWUOpportunity = tryDb<
         .first()
     )?.createdAt;
 
+    // Set awarded proponent flag if applicable
+    let awardedProposal: TWUProposalSlim | null;
+    if (result.status === TWUOpportunityStatus.Awarded) {
+      awardedProposal = getValidValue(
+        await readOneTWUAwardedProposal(connection, result.id, session),
+        null
+      );
+      if (
+        awardedProposal &&
+        awardedProposal.organization &&
+        awardedProposal.createdBy
+      ) {
+        /**
+         * Use the score to determine if session of user is permitted to see detailed
+         * proponent information.
+         */
+        const fullPermissions = !!awardedProposal.totalScore;
+        let email: string | undefined;
+        if (fullPermissions) {
+          const result = await readOneOrganizationContactEmail(
+            connection,
+            awardedProposal.organization.id
+          );
+          email = isValid(result) && result.value ? result.value : undefined;
+        }
+        result.successfulProponent = {
+          id: awardedProposal.organization.id,
+          name: awardedProposal.organization.legalName,
+          email,
+          totalScore: awardedProposal.totalScore,
+          createdBy: fullPermissions ? awardedProposal.createdBy : undefined
+        };
+      }
+    }
+
+    // If authenticated, add on subscription status flag
+    if (session) {
+      result.subscribed = await isSubscribed(
+        connection,
+        result.id,
+        session.user.id
+      );
+    }
+
     // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
     if (
       session?.user.type === UserType.Admin ||
@@ -689,6 +741,7 @@ export const readOneTWUOpportunity = tryDb<
       }
 
       // For reach status record, fetch any attachments and add their ids to the record as an array
+      // TODO - Unlike SWU, TWU does not currently have a db table for NoteAttachments
       // await Promise.all(
       //   rawHistory.map(
       //     async (raw) =>
@@ -725,13 +778,10 @@ export const readOneTWUOpportunity = tryDb<
           )?.length || 0;
 
         // Retrieve number of submitted proposals (exclude draft/withdrawn)
-        // const numProposals = getValidValue(
-        //   await readSubmittedTWUProposalCount(connection, result.id),
-        //   0
-        // );
-
-        // TODO - delete line below, uncomment code block above
-        const numProposals = 0;
+        const numProposals = getValidValue(
+          await readSubmittedTWUProposalCount(connection, result.id),
+          0
+        );
 
         result.reporting = {
           numViews,
@@ -1099,48 +1149,48 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
           status: TWUOpportunityStatus.EvaluationResourceQuestions,
           note: "This opportunity has closed."
         });
-        //     // Get a list of SUBMITTED proposals for this opportunity
-        //     const proposalIds =
-        //       (
-        //         await connection<{ id: Id }>("twuProposals as proposals")
-        //           .transacting(trx)
-        //           .join("twuProposalStatuses as statuses", function () {
-        //             this.on("proposals.id", "=", "statuses.proposal")
-        //               .andOnNotNull("statuses.status")
-        //               .andOn(
-        //                 "statuses.createdAt",
-        //                 "=",
-        //                 connection.raw(
-        //                   '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
-        //             statuses2.proposal = proposals.id and statuses2.status is not null)'
-        //                 )
-        //               );
-        //           })
-        //           .where({
-        //             "proposals.opportunity": lapsedOpportunity.id,
-        //             "statuses.status": TWUProposalStatus.Submitted
-        //           })
-        //           .select<Array<{ id: Id }>>("proposals.id")
-        //       )?.map((result) => result.id) || [];
+        // Get a list of SUBMITTED proposals for this opportunity
+        const proposalIds =
+          (
+            await connection<{ id: Id }>("twuProposals as proposals")
+              .transacting(trx)
+              .join("twuProposalStatuses as statuses", function () {
+                this.on("proposals.id", "=", "statuses.proposal")
+                  .andOnNotNull("statuses.status")
+                  .andOn(
+                    "statuses.createdAt",
+                    "=",
+                    connection.raw(
+                      '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
+                    statuses2.proposal = proposals.id and statuses2.status is not null)'
+                    )
+                  );
+              })
+              .where({
+                "proposals.opportunity": lapsedOpportunity.id,
+                "statuses.status": TWUProposalStatus.Submitted
+              })
+              .select<Array<{ id: Id }>>("proposals.id")
+          )?.map((result) => result.id) || [];
 
-        //     for (const [index, proposalId] of proposalIds.entries()) {
-        //       // Set the proposal to UNDER_REVIEW status
-        //       await connection("twuProposalStatuses").transacting(trx).insert({
-        //         id: generateUuid(),
-        //         createdAt: now,
-        //         proposal: proposalId,
-        //         status: TWUProposalStatus.UnderReviewResourceQuestions,
-        //         note: ""
-        //       });
+        for (const [index, proposalId] of proposalIds.entries()) {
+          // Set the proposal to UNDER_REVIEW status
+          await connection("twuProposalStatuses").transacting(trx).insert({
+            id: generateUuid(),
+            createdAt: now,
+            proposal: proposalId,
+            status: TWUProposalStatus.UnderReviewResourceQuestions,
+            note: ""
+          });
 
-        //       // And generate anonymized name
-        //       await connection("twuProposals")
-        //         .transacting(trx)
-        //         .where({ id: proposalId })
-        //         .update({
-        //           anonymousProponentName: `Proponent ${index + 1}`
-        //         });
-        //     }
+          // And generate anonymized name
+          await connection("twuProposals")
+            .transacting(trx)
+            .where({ id: proposalId })
+            .update({
+              anonymousProponentName: `Proponent ${index + 1}`
+            });
+        }
       }
       // Generate notifications for each of the lapsed opportunities
       for (const rawOpportunity of lapsedOpportunities) {
@@ -1159,30 +1209,31 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
   );
 });
 
-export const countScreenedInTWUChallenge = tryDb<[Id], number>(async () => {
-  // async (connection, opportunity) => {
-  return valid(0);
-  // (
-  //   await connection("twuProposals as proposals")
-  //     .join("twuProposalStatuses as statuses", function () {
-  //       this.on("proposals.id", "=", "statuses.proposal")
-  //         .andOnNotNull("statuses.status")
-  //         .andOn(
-  //           "statuses.createdAt",
-  //           "=",
-  //           connection.raw(
-  //             '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
-  //       statuses2.proposal = proposals.id and statuses2.status is not null)'
-  //           )
-  //         );
-  //     })
-  //     .where({
-  //       "proposals.opportunity": opportunity,
-  //       "statuses.status": TWUProposalStatus.UnderReviewChallenge
-  //     })
-  // )?.length || 0
-  // );
-});
+export const countScreenedInTWUChallenge = tryDb<[Id], number>(
+  async (connection, opportunity) => {
+    return valid(
+      (
+        await connection("twuProposals as proposals")
+          .join("twuProposalStatuses as statuses", function () {
+            this.on("proposals.id", "=", "statuses.proposal")
+              .andOnNotNull("statuses.status")
+              .andOn(
+                "statuses.createdAt",
+                "=",
+                connection.raw(
+                  '(select max("createdAt") from "twuProposalStatuses" as statuses2 where \
+            statuses2.proposal = proposals.id and statuses2.status is not null)'
+                )
+              );
+          })
+          .where({
+            "proposals.opportunity": opportunity,
+            "statuses.status": TWUProposalStatus.UnderReviewChallenge
+          })
+      )?.length || 0
+    );
+  }
+);
 
 export const readOneTWUOpportunityAuthor = tryDb<[Id], User | null>(
   async (connection, id) => {
