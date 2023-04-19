@@ -668,7 +668,11 @@ const OrganizationView: component_.base.View<Props> = ({
   );
 };
 
-const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
+const PricingView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
   const { maxBudget } = state.opportunity;
   return (
     <div>
@@ -683,6 +687,7 @@ const PricingView: component_.base.View<Props> = ({ state, dispatch }) => {
       <Row>
         <Col xs="12" md="6">
           <NumberField.view
+            disabled={disabled}
             extraChildProps={{ prefix: "$" }}
             label="Hourly Rate"
             placeholder="Hourly Rate"
