@@ -858,7 +858,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
           </Col>
           <Col xs="12" sm="6">
             <ContractDate
-              label="Contract End Date"
+              label="Contract Completion Date"
               date={state.opportunity.completionDate}
             />
           </Col>

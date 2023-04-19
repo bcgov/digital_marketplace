@@ -380,7 +380,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
                   icon="balance-scale"
-                  name="Target Resource Allocation"
+                  name="Resource Target Allocation"
                   value={opp.targetAllocation.toString().concat("%")}
                 />
               </Col>
@@ -721,15 +721,15 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
               <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
             </p>
             <p className="mb-2">
-              <strong>Assignment Deadline</strong>{" "}
+              <strong>Contract Award Date</strong>{" "}
               <span className="ml-3">{formatDate(assignment, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Proposed Start Date</strong>{" "}
+              <strong>Contract Start Date</strong>{" "}
               <span className="ml-3">{formatDate(startDate, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Proposed End Date</strong>{" "}
+              <strong>Contract Completion Date</strong>{" "}
               <span className="ml-3">{formatDate(completionDate, false)}</span>
             </p>
           </Col>
