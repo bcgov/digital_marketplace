@@ -2,7 +2,7 @@ import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/edit/tab/proposal";
-// import * as ScoresheetTab from "front-end/lib/pages/proposal/team-with-us/edit/tab/scoresheet";
+import * as ScoresheetTab from "front-end/lib/pages/proposal/team-with-us/edit/tab/scoresheet";
 import { routeDest } from "front-end/lib/views/link";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
@@ -47,12 +47,12 @@ export interface Tabs {
     ProposalTab.InnerMsg,
     InitResponse
   >;
-  // scoresheet: TabbedPage.Tab<
-  //   Params,
-  //   ScoresheetTab.State,
-  //   ScoresheetTab.InnerMsg,
-  //   InitResponse
-  // >;
+  scoresheet: TabbedPage.Tab<
+    Params,
+    ScoresheetTab.State,
+    ScoresheetTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -64,7 +64,7 @@ export type TabMsg<K extends TabId> = TabbedPage.TabMsg<Tabs, K>;
 export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
     case "proposal":
-      // case "scoresheet":
+    case "scoresheet":
       return raw;
     default:
       return null;
@@ -75,12 +75,12 @@ export function idToDefinition<K extends TabId>(
   id: K
 ): TabbedPage.TabDefinition<Tabs, K> {
   switch (id) {
-    // case "scoresheet":
-    //   return {
-    //     component: ScoresheetTab.component,
-    //     icon: "star-full",
-    //     title: "Scoresheet"
-    //   } as TabbedPage.TabDefinition<Tabs, K>;
+    case "scoresheet":
+      return {
+        component: ScoresheetTab.component,
+        icon: "star-full",
+        title: "Scoresheet"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "proposal":
     default:
       return {
@@ -120,7 +120,7 @@ export function makeSidebarState(
       adt("heading", "Proposal Management"),
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
-      // makeSidebarLink("scoresheet", proposal, activeTab),
+      makeSidebarLink("scoresheet", proposal, activeTab),
       adt("heading", "Need Help?"),
       adt("link", {
         icon: "external-link-alt",
