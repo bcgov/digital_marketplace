@@ -479,6 +479,16 @@ export const component: Tab.Component<State, Msg> = {
       case TWUProposalStatus.UnderReviewResourceQuestions:
       case TWUProposalStatus.UnderReviewChallenge:
       case TWUProposalStatus.EvaluatedResourceQuestions:
+        return component_.page.actions.links([
+          {
+            children: "Disqualify",
+            symbol_: leftPlacement(iconLinkSymbol("user-slash")),
+            button: true,
+            outline: true,
+            color: "c-nav-fg-alt",
+            onClick: () => dispatch(adt("showModal", "disqualify" as const))
+          }
+        ]);
       case TWUProposalStatus.EvaluatedChallenge:
         return component_.page.actions.links([
           {
