@@ -836,8 +836,8 @@ const update: crud.Update<
         case "submitForReview": {
           if (
             !isValidStatusChange(
-              validatedTWUOpportunity.value.status,
-              TWUOpportunityStatus.Published
+              twuOpportunity.status,
+              TWUOpportunityStatus.UnderReview
             )
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -845,48 +845,36 @@ const update: crud.Update<
           // Perform validation on draft to ensure it's ready for publishing
           if (
             !allValid([
-              genericValidation.validateTitle(
-                validatedTWUOpportunity.value.title
-              ),
-              genericValidation.validateTeaser(
-                validatedTWUOpportunity.value.teaser
-              ),
-              genericValidation.validateRemoteOk(
-                validatedTWUOpportunity.value.remoteOk
-              ),
+              genericValidation.validateTitle(twuOpportunity.title),
+              genericValidation.validateTeaser(twuOpportunity.teaser),
+              genericValidation.validateRemoteOk(twuOpportunity.remoteOk),
               genericValidation.validateRemoteDesc(
-                validatedTWUOpportunity.value.remoteDesc,
-                validatedTWUOpportunity.value.remoteOk
+                twuOpportunity.remoteDesc,
+                twuOpportunity.remoteOk
               ),
-              genericValidation.validateLocation(
-                validatedTWUOpportunity.value.location
-              ),
-              opportunityValidation.validateMaxBudget(
-                validatedTWUOpportunity.value.maxBudget
-              ),
+              genericValidation.validateLocation(twuOpportunity.location),
+              opportunityValidation.validateMaxBudget(twuOpportunity.maxBudget),
               genericValidation.validateMandatorySkills(
-                validatedTWUOpportunity.value.mandatorySkills
+                twuOpportunity.mandatorySkills
               ),
               opportunityValidation.validateOptionalSkills(
-                validatedTWUOpportunity.value.optionalSkills
+                twuOpportunity.optionalSkills
               ),
               opportunityValidation.validateTargetAllocation(
-                validatedTWUOpportunity.value.targetAllocation
+                twuOpportunity.targetAllocation
               ),
-              genericValidation.validateDescription(
-                validatedTWUOpportunity.value.description
-              ),
+              genericValidation.validateDescription(twuOpportunity.description),
               opportunityValidation.validateQuestionsWeight(
-                validatedTWUOpportunity.value.questionsWeight
+                twuOpportunity.questionsWeight
               ),
               opportunityValidation.validateChallengeWeight(
-                validatedTWUOpportunity.value.challengeWeight
+                twuOpportunity.challengeWeight
               ),
               opportunityValidation.validatePriceWeight(
-                validatedTWUOpportunity.value.priceWeight
+                twuOpportunity.priceWeight
               ),
               opportunityValidation.validateResourceQuestions(
-                validatedTWUOpportunity.value.resourceQuestions
+                twuOpportunity.resourceQuestions
               )
             ])
           ) {
@@ -916,7 +904,7 @@ const update: crud.Update<
         case "publish": {
           if (
             !isValidStatusChange(
-              validatedTWUOpportunity.value.status,
+              twuOpportunity.status,
               TWUOpportunityStatus.Published
             )
           ) {
@@ -943,7 +931,7 @@ const update: crud.Update<
         case "startChallenge": {
           if (
             !isValidStatusChange(
-              validatedTWUOpportunity.value.status,
+              twuOpportunity.status,
               TWUOpportunityStatus.EvaluationChallenge
             )
           ) {
@@ -951,10 +939,7 @@ const update: crud.Update<
           }
           // Ensure there is at least one screened in proponent
           const screenedInCProponentCount = getValidValue(
-            await db.countScreenedInTWUChallenge(
-              connection,
-              validatedTWUOpportunity.value.id
-            ),
+            await db.countScreenedInTWUChallenge(connection, twuOpportunity.id),
             0
           );
           if (!screenedInCProponentCount) {
@@ -982,9 +967,10 @@ const update: crud.Update<
         case "suspend": {
           if (
             !isValidStatusChange(
-              validatedTWUOpportunity.value.status,
+              twuOpportunity.status,
               TWUOpportunityStatus.Suspended
-            )
+            ) ||
+            !permissions.suspendTWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -1004,9 +990,10 @@ const update: crud.Update<
         case "cancel": {
           if (
             !isValidStatusChange(
-              validatedTWUOpportunity.value.status,
+              twuOpportunity.status,
               TWUOpportunityStatus.Canceled
-            )
+            ) ||
+            !permissions.cancelTWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -1025,7 +1012,8 @@ const update: crud.Update<
         }
         case "addAddendum": {
           if (
-            validatedTWUOpportunity.value.status === TWUOpportunityStatus.Draft
+            twuOpportunity.status === TWUOpportunityStatus.Draft ||
+            !permissions.addTWUAddendum(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -1139,7 +1127,7 @@ const update: crud.Update<
               session
             );
             // Notify subscribers of suspension
-            if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
+            if (isValid(dbResult)) {
               twuOpportunityNotifications.handleTWUSuspended(
                 connection,
                 dbResult.value
@@ -1155,7 +1143,7 @@ const update: crud.Update<
               session
             );
             // Notify subscribers of cancellation
-            if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
+            if (isValid(dbResult)) {
               twuOpportunityNotifications.handleTWUCancelled(
                 connection,
                 dbResult.value
@@ -1223,7 +1211,7 @@ const delete_: crud.Delete<
   return {
     async validateRequestBody(request) {
       if (
-        !(await permissions.canDeleteTWUOpportunity(
+        !(await permissions.deleteTWUOpportunity(
           connection,
           request.session,
           request.params.id
