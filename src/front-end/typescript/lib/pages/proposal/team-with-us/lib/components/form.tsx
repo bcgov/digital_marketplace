@@ -133,9 +133,7 @@ function isSelectedOrgQualified(
   }
   const org = find(organizations, ({ id }) => id === orgId);
   return [
-    // TODO: add TWU qualification check when ready
-    // !org || !doesOrganizationMeetTWUQualification(org) ? false : true,
-    true,
+    !org || !doesOrganizationMeetTWUQualification(org) ? false : true,
     org
   ];
 }

@@ -4,8 +4,8 @@ import {
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
 import Badge from "front-end/lib/views/badge";
+import DateMetadata from "front-end/lib/views/date-metadata";
 import DescriptionList from "front-end/lib/views/description-list";
-import Icon from "front-end/lib/views/icon";
 import Link, {
   iconLinkSymbol,
   rightPlacement,
@@ -13,15 +13,8 @@ import Link, {
 } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import {
-  doesOrganizationHaveAdminInfo
-  // doesOrganizationMeetTWUQualification
-} from "shared/lib/resources/organization";
-import {
-  getTWUProponentName,
-  TWUProposal
-} from "shared/lib/resources/proposal/team-with-us";
-import { isAdmin, User } from "shared/lib/resources/user";
+import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
+import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 
 export interface Props {
@@ -33,8 +26,21 @@ const ViewTabHeader: component.base.View<Props> = ({
   proposal,
   viewerUser
 }) => {
-  const createdBy = proposal.createdBy;
   const propStatus = proposal.status;
+  const dates = [
+    proposal.submittedAt
+      ? {
+          tag: "date" as const,
+          date: proposal.submittedAt,
+          label: "Submitted"
+        }
+      : null,
+    {
+      tag: "date" as const,
+      date: proposal.updatedAt,
+      label: "Updated"
+    }
+  ];
   const items = [
     {
       name: "Status",
@@ -46,58 +52,44 @@ const ViewTabHeader: component.base.View<Props> = ({
       )
     },
     {
-      name: "Proponent",
-      children:
-        proposal.organization &&
-        proposal.organization.active &&
-        isAdmin(viewerUser) ? (
-          <span>
-            <Link
-              dest={routeDest(
-                adt("orgEdit", { orgId: proposal.organization.id })
-              )}>
-              {proposal.organization.legalName}
-            </Link>
-            &nbsp; ({proposal.anonymousProponentName})
-          </span>
-        ) : (
-          getTWUProponentName(proposal)
-        )
-    },
-    proposal.organization &&
-    doesOrganizationHaveAdminInfo(proposal.organization)
-      ? {
-          // TODO - uncomment here when TWU qualified works
-          name: "Qualified Supplier",
-          children: <Icon name="check" color="success" />
-          //   doesOrganizationMeetTWUQualification(
-          //   proposal.organization
-          // ) ? (
-          //   <Icon name="check" color="success" />
-          // ) : (
-          //   <Icon name="times" color="danger" />
-          // )
+      name: "Organization",
+      children: (() => {
+        if (proposal.organization) {
+          if (proposal.organization.active) {
+            return (
+              <Link
+                dest={routeDest(
+                  adt("orgEdit", { orgId: proposal.organization.id })
+                )}>
+                {proposal.organization.legalName}
+              </Link>
+            );
+          } else {
+            return proposal.organization.legalName;
+          }
+        } else {
+          return proposal.anonymousProponentName;
         }
-      : null,
-    createdBy
-      ? {
-          name: "Submitted By",
-          children: isAdmin(viewerUser) ? (
-            <Link
-              dest={routeDest(adt("userProfile", { userId: createdBy.id }))}>
-              {createdBy.name}
-            </Link>
-          ) : (
-            createdBy.name
-          )
-        }
-      : null
+      })()
+    }
   ];
   return (
     <div>
-      <Row>
+      <Row className="mb-5">
         <Col xs="12">
-          <h3 className="mb-5">Team With Us: Vendor Proposal</h3>
+          <h3 className="mb-2">
+            Team With Us:&nbsp;
+            <Link
+              newTab
+              dest={routeDest(
+                adt("opportunityTWUView", {
+                  opportunityId: proposal.opportunity.id
+                })
+              )}>
+              {proposal.opportunity.title}
+            </Link>
+          </h3>
+          <DateMetadata dates={dates} />
         </Col>
       </Row>
       <Row>
