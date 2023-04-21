@@ -25,6 +25,7 @@ import {
   validateNumber,
   Validation
 } from "shared/lib/validation";
+
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
@@ -154,8 +155,7 @@ export function validateProposalDeadline(
   raw: string,
   opportunity?: TWUOpportunity
 ): Validation<Date> {
-  const now = new Date();
-  let minDate = now;
+  let minDate = new Date();
   if (opportunity && isTWUOpportunityClosed(opportunity)) {
     minDate = opportunity.proposalDeadline;
   }

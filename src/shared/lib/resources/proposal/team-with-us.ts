@@ -1,7 +1,6 @@
 import { compareNumbers, compareStrings, isDateInThePast } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
-  TWUOpportunity,
   TWUOpportunitySlim,
   TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
@@ -403,22 +402,6 @@ export function calculateProposalResourceQuestionScore(
   return (actualScore / maxPossibleScore) * 100;
 }
 
-// Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
-export function calculateTotalProposalScore(
-  proposal: TWUProposal,
-  opportunity: TWUOpportunity
-): number {
-  const resourceQuestionsScore = calculateProposalResourceQuestionScore(
-    proposal.resourceQuestionResponses,
-    opportunity.resourceQuestions
-  );
-  return (
-    (resourceQuestionsScore * opportunity.questionsWeight) / 100 +
-    ((proposal.challengeScore || 0) * opportunity.challengeWeight) / 100 +
-    ((proposal.priceScore || 0) * opportunity.priceWeight) / 100
-  );
-}
-
 export function showScoreAndRankToProponent(proposal: TWUProposal): boolean {
   return (
     proposal.totalScore !== undefined &&
@@ -449,21 +432,6 @@ export function canTWUProposalBeAwarded(
       return true;
     default:
       return false;
-  }
-}
-
-export function isTWUProposalInResourceQuestions(
-  p: Pick<TWUProposal, "status" | "questionsScore">
-): boolean {
-  switch (p.status) {
-    case TWUProposalStatus.UnderReviewResourceQuestions:
-    case TWUProposalStatus.EvaluatedResourceQuestions:
-    case TWUProposalStatus.UnderReviewChallenge:
-    case TWUProposalStatus.EvaluatedChallenge:
-    case TWUProposalStatus.Awarded:
-      return true;
-    default:
-      return p.questionsScore !== undefined;
   }
 }
 
