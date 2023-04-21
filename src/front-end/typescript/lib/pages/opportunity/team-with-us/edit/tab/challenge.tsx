@@ -1,5 +1,4 @@
 import { EMPTY_STRING } from "front-end/config";
-import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
@@ -7,68 +6,43 @@ import {
   Immutable,
   component as component_
 } from "front-end/lib/framework";
-import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
-import * as opportunityToasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import {
   twuProposalStatusToColor,
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
-// import * as proposalToasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
 import Badge from "front-end/lib/views/badge";
-import Link, {
-  iconLinkSymbol,
-  leftPlacement,
-  routeDest
-} from "front-end/lib/views/link";
+import Link, { routeDest } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import {
-  canTWUOpportunityBeScreenedInToChallenge,
   canViewTWUOpportunityProposals,
   hasTWUOpportunityPassedChallenge,
-  TWUOpportunity,
-  TWUOpportunityStatus,
-  UpdateValidationErrors
+  TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   compareTWUProposalsForPublicSector,
   getTWUProponentName,
   isTWUProposalInChallenge,
   NUM_SCORE_DECIMALS,
-  TWUProposalSlim,
-  TWUProposalStatus,
-  canTWUProposalBeScreenedToFromChallenge
+  TWUProposalSlim
 } from "shared/lib/resources/proposal/team-with-us";
-import { ADT, adt, Id } from "shared/lib/types";
-
-type ModalId = ADT<"completeChallenge">;
+import { ADT, adt } from "shared/lib/types";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
   proposals: TWUProposalSlim[];
-  showModal: ModalId | null;
-  completeChallengeLoading: number;
-  screenToFromLoading: Id | null;
-  canProposalsBeScreened: boolean;
   canViewProposals: boolean;
   table: Immutable<Table.State>;
 }
 
 export type InnerMsg =
   | ADT<"onInitResponse", Tab.InitResponse>
-  | ADT<"table", Table.Msg>
-  | ADT<"showModal", ModalId>
-  | ADT<"hideModal">
-  | ADT<"completeChallenge">
-  | ADT<
-      "onCompleteChallenge",
-      api.ResponseValidation<TWUOpportunity, UpdateValidationErrors>
-    >;
+  | ADT<"table", Table.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -92,13 +66,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   ];
 };
 
-const startCompleteChallengeLoading = makeStartLoading<State>(
-  "completeChallengeLoading"
-);
-const stopCompleteChallengeLoading = makeStopLoading<State>(
-  "completeChallengeLoading"
-);
-
 const update: component_.page.Update<State, InnerMsg, Route> = ({
   state,
   msg
@@ -116,92 +83,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         .sort((a, b) =>
           compareTWUProposalsForPublicSector(a, b, "challengeScore")
         );
-      // Can be screened in if...
-      // - Opportunity has the appropriate status; and
-      // - At least one proposal has been evaluated.
-      const canProposalsBeScreened =
-        canTWUOpportunityBeScreenedInToChallenge(opportunity) &&
-        proposals.reduce(
-          (acc, p) => acc || canTWUProposalBeScreenedToFromChallenge(p),
-          false as boolean
-        );
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
-          .set("canViewProposals", canViewProposals)
-          .set("canProposalsBeScreened", canProposalsBeScreened),
+          .set("canViewProposals", canViewProposals),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
-
-    case "completeChallenge": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      state = state.set("showModal", null);
-      return [
-        startCompleteChallengeLoading(state),
-        [
-          // api.opportunities.twu.update(
-          //   opportunity.id,
-          //   adt("startTeamScenario", ""),
-          //   (response) => adt("onCompleteChallenge", response)
-          // ) as component_.Cmd<Msg>
-        ]
-      ];
-    }
-
-    case "onCompleteChallenge": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      const result = msg.value;
-      if (!api.isValid(result)) {
-        return [
-          stopCompleteChallengeLoading(state),
-          [
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt(
-                  "error",
-                  opportunityToasts.statusChanged.error(
-                    TWUOpportunityStatus.EvaluationChallenge
-                  )
-                )
-              )
-            )
-          ]
-        ];
-      }
-      return [
-        state,
-        [
-          component_.cmd.dispatch(
-            component_.global.showToastMsg(
-              adt(
-                "success",
-                opportunityToasts.statusChanged.success(
-                  TWUOpportunityStatus.EvaluationChallenge
-                )
-              )
-            )
-          ),
-          component_.cmd.dispatch(
-            component_.global.newRouteMsg(
-              adt("opportunityTWUEdit", {
-                opportunityId: opportunity.id,
-                tab: "teamScenario" as const
-              })
-            ) as Msg
-          )
-        ]
-      ];
-    }
-
-    case "showModal":
-      return [state.set("showModal", msg.value), []];
-
-    case "hideModal":
-      return [state.set("showModal", null), []];
 
     case "table":
       return component_.base.updateChild({
@@ -311,9 +200,6 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
 function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
-  const isCompleteChallengeLoading = state.completeChallengeLoading > 0;
-  const isScreenToFromLoading = !!state.screenToFromLoading;
-  const isLoading = isCompleteChallengeLoading || isScreenToFromLoading;
   return state.proposals.map((p) => {
     return [
       {
@@ -321,8 +207,8 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
         children: (
           <ProponentCell
             proposal={p}
+            disabled={false}
             opportunity={opportunity}
-            disabled={isLoading}
           />
         )
       },
@@ -348,7 +234,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function evaluationTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Proponent",
@@ -364,16 +250,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       children: "Challenge",
       className: "text-nowrap text-center",
       style: { width: "0px" }
-    },
-    ...(state.canProposalsBeScreened
-      ? [
-          {
-            children: "",
-            className: "text-nowrap text-right",
-            style: { width: "0px" }
-          }
-        ]
-      : [])
+    }
   ];
 }
 
@@ -383,7 +260,7 @@ const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
 }) => {
   return (
     <Table.view
-      headCells={evaluationTableHeadCells(state)}
+      headCells={evaluationTableHeadCells()}
       bodyRows={evaluationTableBodyRows(state)}
       state={state.table}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
@@ -430,77 +307,7 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-
   onInitResponse(response) {
     return adt("onInitResponse", response);
-  },
-
-  getActions: ({ state, dispatch }) => {
-    const opportunity = state.opportunity;
-    if (
-      !opportunity ||
-      !state.canViewProposals ||
-      !state.canProposalsBeScreened
-    ) {
-      return component_.page.actions.none();
-    }
-    const isCompleteChallengeLoading = state.completeChallengeLoading > 0;
-    const isScreenToFromLoading = !!state.screenToFromLoading;
-    const isLoading = isCompleteChallengeLoading || isScreenToFromLoading;
-    return component_.page.actions.links([
-      {
-        children: "Complete Interview/Challenge",
-        symbol_: leftPlacement(iconLinkSymbol("code-outline")),
-        color: "primary",
-        button: true,
-        loading: isCompleteChallengeLoading,
-        disabled: (() => {
-          // At least one proposal already screened in.
-          return (
-            isLoading ||
-            !(
-              canTWUOpportunityBeScreenedInToChallenge(opportunity) &&
-              state.proposals.reduce(
-                (acc, p) =>
-                  acc || p.status === TWUProposalStatus.UnderReviewChallenge,
-                false as boolean
-              )
-            )
-          );
-        })(),
-        onClick: () =>
-          dispatch(adt("showModal", adt("completeChallenge")) as Msg)
-      }
-    ]);
-  },
-
-  getModal: (state) => {
-    if (!state.showModal) {
-      return component_.page.modal.hide();
-    }
-    switch (state.showModal.tag) {
-      case "completeChallenge":
-        return component_.page.modal.show({
-          title: "Complete Interview/Challenge?",
-          onCloseMsg: adt("hideModal") as Msg,
-          actions: [
-            {
-              text: "Complete Interview/Challenge",
-              icon: "code-outline",
-              color: "primary",
-              button: true,
-              msg: adt("completeChallenge")
-            },
-            {
-              text: "Cancel",
-              color: "secondary",
-              msg: adt("hideModal")
-            }
-          ],
-          body: () =>
-            "Are you sure you want to complete the evaluation of this opportunity's Interview/Challenge? You will no" +
-            " longer be able to screen proponents in or out."
-        });
-    }
   }
 };
