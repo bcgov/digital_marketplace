@@ -18,7 +18,6 @@ import {
 } from "back-end/lib/db/user";
 import {
   isSignedIn,
-  readOneTWUProposal as hasReadPermissionTWUProposal,
   readTWUProposalHistory,
   readTWUProposalScore
 } from "back-end/lib/permissions";
@@ -27,8 +26,6 @@ import { compareNumbers } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   doesTWUOpportunityStatusAllowGovToViewFullProposal,
-  privateOpportunityStatuses,
-  publicOpportunityStatuses,
   TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
@@ -1525,76 +1522,6 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
   });
 
   return proposals;
-}
-
-/**
- * This function checks whether the user can read the file
- * via its association to the TWU opportunity or proposal.
- */
-export async function hasTWUAttachmentPermission(
-  connection: Connection,
-  session: Session | null,
-  id: string
-): Promise<boolean> {
-  // If file is an attachment on a publicly viewable opportunity, allow
-  const query = generateTWUOpportunityQuery(connection)
-    .join(
-      "twuOpportunityAttachments as attachments",
-      "versions.id",
-      "=",
-      "attachments.opportunityVersion"
-    )
-    .whereIn(
-      "statuses.status",
-      publicOpportunityStatuses as TWUOpportunityStatus[]
-    )
-    .andWhere({ "attachments.file": id })
-    .clearSelect()
-    .select("attachments.*");
-
-  // If the opportunity was created by the current user, allow for private opportunity statuses as well
-  if (session) {
-    query.orWhere(function () {
-      this.whereIn(
-        "statuses.status",
-        privateOpportunityStatuses as TWUOpportunityStatus[]
-      ).andWhere({
-        "opportunities.createdBy": session.user.id,
-        "attachments.file": id
-      });
-    });
-  }
-  const results = await query;
-  if (results.length > 0) {
-    return true;
-  }
-
-  // If file is an attachment on a proposal, and requesting user has access to the proposal, allow
-  if (session) {
-    const rawProposals = await connection(
-      "twuProposalAttachments as attachments"
-    )
-      .join(
-        "twuProposals as proposals",
-        "proposals.id",
-        "=",
-        "attachments.proposal"
-      )
-      .where({ "attachments.file": id })
-      .select<RawTWUProposal[]>("proposals.*");
-
-    for (const rawProposal of rawProposals) {
-      const proposal = await rawTWUProposalToTWUProposal(
-        connection,
-        session,
-        rawProposal
-      );
-      if (await hasReadPermissionTWUProposal(connection, session, proposal)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
