@@ -64,9 +64,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
   return [state, []];
 };
 
-// TODO update Lorem ipsum dolor with real content
-// TODO create a new route opportunityTWUCreate + page
-// TODO add team-with-us-opportunity-guide
 const view: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
@@ -107,10 +104,9 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
           className="mb-4 mb-md-0"
           description={
             <span>
-              Use a <em>Team With Us</em> opportunity to Lorem ipsum dolor sit
-              amet, consectetur adipiscing elit, sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Amet risus nullam
-              eget felis eget nunc lobortis mattis.
+              Use a <em>Team With Us</em> opportunity to to procure individual
+              resources for your Agile product development team on a time and
+              materials basis.
             </span>
           }
           wideLinks
