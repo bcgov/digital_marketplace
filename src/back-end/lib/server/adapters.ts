@@ -266,8 +266,6 @@ export function express<
     router,
     sessionIdToSession,
     sessionToSessionId,
-    host,
-    port,
     maxMultipartFilesSize,
     parseFileUploadMetadata
   }) => {
@@ -481,9 +479,6 @@ export function express<
         app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs));
       }
     });
-
-    // Listen for incoming connections.
-    app.listen(port, host);
 
     return app;
   };

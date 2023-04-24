@@ -10,7 +10,10 @@ import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  SWUOpportunity,
+  SWUOpportunityStatus
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid } from "shared/lib/validation";
 
@@ -141,8 +144,20 @@ export const component: Tab.Component<State, InnerMsg> = {
     );
   },
 
+  /**
+   * Checks to see if state = isEditing and produces Publish and Cancel
+   * actions (via buttons), otherwise an 'Add Addendum' action/button. Produces
+   * nothing if the opportunity status is 'Canceled' or if addenda is not set.
+   *
+   * @param state
+   * @param dispatch
+   */
   getActions({ state, dispatch }) {
-    if (!state.addenda) return component_.page.actions.none();
+    if (
+      !state.addenda ||
+      state.opportunity?.status === SWUOpportunityStatus.Canceled
+    )
+      return component_.page.actions.none();
     return Addenda.getActions({
       state: state.addenda,
       dispatch: component_.base.mapDispatch(dispatch, (msg) =>
