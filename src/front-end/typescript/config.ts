@@ -64,4 +64,4 @@ export const CWU_PAYMENT_OPTIONS_URL =
   "https://github.com/BCDevExchange/code-with-us/wiki/4.-Payment";
 
 export const TWU_BC_BID_URL =
-  "https://new.bcbid.gov.bc.ca/page.aspx/en/bpm/process_manage_extranet/9703";
+  "https://bcbid.gov.bc.ca/page.aspx/en/bpm/process_manage_extranet/164269";
