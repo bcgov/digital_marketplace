@@ -104,7 +104,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
           className="mb-4 mb-md-0"
           description={
             <span>
-              Use a <em>Team With Us</em> opportunity to to procure individual
+              Use a <em>Team With Us</em> opportunity to procure individual
               resources for your Agile product development team on a time and
               materials basis.
             </span>
