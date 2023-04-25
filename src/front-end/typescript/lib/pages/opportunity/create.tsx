@@ -65,8 +65,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({ state }) => {
 };
 
 // TODO update Lorem ipsum dolor with real content
-// TODO create a new route opportunityTWUCreate + page
-// TODO add team-with-us-opportunity-guide
 const view: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">

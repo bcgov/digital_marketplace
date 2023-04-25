@@ -242,7 +242,12 @@ async function rawSWUProposalToSWUProposal(
     : undefined;
   const organization = organizationId
     ? getValidValue(
-        await readOneOrganizationSlim(connection, organizationId, true),
+        await readOneOrganizationSlim(
+          connection,
+          organizationId,
+          true,
+          session
+        ),
         undefined
       )
     : undefined;

@@ -213,7 +213,12 @@ async function rawTWUProposalToTWUProposal(
     : undefined;
   const organization = organizationId
     ? getValidValue(
-        await readOneOrganizationSlim(connection, organizationId, true),
+        await readOneOrganizationSlim(
+          connection,
+          organizationId,
+          true,
+          session
+        ),
         undefined
       )
     : undefined;
@@ -1212,7 +1217,6 @@ export const awardTWUProposal = tryDb<
           },
           "*"
         );
-      console.log("LINE 1218", proposalRecord);
       // Update all other proposals on opportunity to Not Awarded where their status is Evaluated/Awarded
       const otherProposalIds =
         (
