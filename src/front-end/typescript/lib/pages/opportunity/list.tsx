@@ -560,8 +560,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-// TODO update Lorem ipsum dolor with real content
-// TODO change icon 'ProgramType' for TWU
 const Header: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <Row>

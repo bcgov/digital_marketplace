@@ -54,7 +54,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-// TODO - update Lorem ipsum dolor with real content
 const TitleView: component_.base.View = () => {
   return (
     <div className="bg-c-learn-more-bg pt-4 pb-6 pb-md-7">
@@ -148,26 +147,14 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
   );
 };
 
-// TODO - update Lorem ipsum dolor with real content
+// TODO - update Under Construction content
 const VendorHIW: component_.base.View = () => {
   return (
     <div>
       <h3 className="mb-4">How It Works</h3>
       <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Amet risus nullam
-        eget felis eget nunc lobortis mattis. Est ullamcorper eget nulla
-        facilisi etiam dignissim diam quis enim. Elementum facilisis leo vel
-        fringilla. Ut placerat orci nulla pellentesque dignissim enim. Sed arcu
-        non odio euismod lacinia at quis risus. Malesuada nunc vel risus commodo
-        viverra maecenas accumsan. Blandit libero volutpat sed cras ornare arcu
-        dui. Eu sem integer vitae justo eget magna fermentum iaculis. Mauris
-        pellentesque pulvinar pellentesque habitant morbi tristique senectus et.
-        Consequat semper viverra nam libero justo laoreet sit amet. Quisque
-        egestas diam in arcu. Sit amet nisl purus in. Nisi vitae suscipit tellus
-        mauris a. Pulvinar etiam non quam lacus suspendisse. Lectus vestibulum
-        mattis ullamcorper velit sed ullamcorper. In cursus turpis massa
-        tincidunt dui ut ornare.
+        <b>Under Construction</b> - The draft language for this section is being
+        reviewed by Legal Services Branch.
       </p>
     </div>
   );
