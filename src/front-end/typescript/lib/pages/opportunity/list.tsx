@@ -560,8 +560,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-// TODO update Lorem ipsum dolor with real content
-// TODO change icon 'ProgramType' for TWU
 const Header: component_.page.View<State, InnerMsg, Route> = () => {
   return (
     <Row>
@@ -588,7 +586,9 @@ const Header: component_.page.View<State, InnerMsg, Route> = () => {
         <div className="rounded bg-c-opportunity-list-learn-more-bg p-4 h-100 d-flex flex-column align-items-start flex-nowrap">
           <ProgramType type_="twu" className="mb-2" />
           <p className="mb-3 font-size-small">
-            <em>Team With Us</em> opportunities Lorem ipsum dolor.
+            <em>Team With Us</em> opportunities are for registered organizations
+            that are pre-qualified to supply individual resources for a given
+            service area (e.g., Full-Stack Developer).
           </p>
           <Link
             className="font-size-small mt-auto"
