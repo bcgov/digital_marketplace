@@ -100,7 +100,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
           ]}
         />
         <ProgramCard
-          img={prefixPath("/images/illustrations/code_with_us.svg")}
+          img={prefixPath("/images/illustrations/team_with_us.svg")}
           title="Team With Us"
           className="mb-4 mb-md-0"
           description={
