@@ -76,7 +76,7 @@ const TitleView: component_.base.View = () => {
               style={{ maxWidth: "250px" }}
               className="d-none d-md-block position-absolute ml-6"
               src={prefixPath(
-                "/images/illustrations/code_with_us_learn_more.svg"
+                "/images/illustrations/team_with_us_learn_more.svg"
               )}
             />
           </Col>
