@@ -146,7 +146,7 @@ export async function handleTWUProposalWithdrawn(
   proposalId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  //Notify the opportunity author if the opportunity is in an awardable state
+  //Notify the opportunity author if the opportunity is in an award-able state
   const proposal = getValidValue(
     await db.readOneTWUProposal(connection, proposalId, session),
     null

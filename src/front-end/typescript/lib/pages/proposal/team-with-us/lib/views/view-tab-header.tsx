@@ -10,8 +10,8 @@ import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import {
-  doesOrganizationHaveAdminInfo
-  // doesOrganizationMeetTWUQualification
+  doesOrganizationHaveAdminInfo,
+  doesOrganizationMeetTWUQualification
 } from "shared/lib/resources/organization";
 import {
   getTWUProponentName,
@@ -63,16 +63,14 @@ const ViewTabHeader: component.base.View<Props> = ({
     proposal.organization &&
     doesOrganizationHaveAdminInfo(proposal.organization)
       ? {
-          // TODO - uncomment here when TWU qualified works
           name: "Qualified Supplier",
-          children: <Icon name="check" color="success" />
-          //   doesOrganizationMeetTWUQualification(
-          //   proposal.organization
-          // ) ? (
-          //   <Icon name="check" color="success" />
-          // ) : (
-          //   <Icon name="times" color="danger" />
-          // )
+          children: doesOrganizationMeetTWUQualification(
+            proposal.organization
+          ) ? (
+            <Icon name="check" color="success" />
+          ) : (
+            <Icon name="times" color="danger" />
+          )
         }
       : null,
     createdBy

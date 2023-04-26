@@ -16,18 +16,12 @@ import { Col, Row } from "reactstrap";
 import CAPABILITIES from "shared/lib/data/capabilities";
 import {
   CreateSWUOpportunityPhaseBody,
-  CreateSWUOpportunityPhaseRequiredCapabilityBody,
   CreateSWUOpportunityPhaseValidationErrors,
   SWUOpportunityPhase
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, Validation } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
-
-export interface Capability
-  extends CreateSWUOpportunityPhaseRequiredCapabilityBody {
-  checked: boolean;
-}
 
 export interface Params {
   phase?: SWUOpportunityPhase;

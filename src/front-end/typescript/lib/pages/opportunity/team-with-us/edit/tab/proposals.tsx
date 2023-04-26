@@ -2,9 +2,9 @@ import { EMPTY_STRING } from "front-end/config";
 import { Route } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
 import {
-  Immutable,
+  component as component_,
   immutable,
-  component as component_
+  Immutable
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
@@ -30,19 +30,19 @@ import { Col, Row } from "reactstrap";
 import {
   canTWUOpportunityBeAwarded,
   canViewTWUOpportunityProposals,
+  isTWUOpportunityAcceptingProposals,
   TWUOpportunity,
-  TWUOpportunityStatus,
-  isTWUOpportunityAcceptingProposals
+  TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   canTWUProposalBeAwarded,
   compareTWUProposalsForPublicSector,
-  TWUProposalSlim,
   getTWUProponentName,
-  UpdateValidationErrors,
-  TWUProposal,
   NUM_SCORE_DECIMALS,
-  TWUProposalStatus
+  TWUProposal,
+  TWUProposalSlim,
+  TWUProposalStatus,
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
 
@@ -349,8 +349,7 @@ function evaluationTableBodyRows(
 ): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
-  const isAwardLoading = !!state.awardLoading;
-  const isLoading = isAwardLoading;
+  const isLoading = !!state.awardLoading;
   return state.proposals.map((p) => {
     const isProposalLoading = state.awardLoading === p.id;
     return [

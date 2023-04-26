@@ -742,6 +742,48 @@ export async function editTWUOpportunity(
   );
 }
 
+/**
+ * Checks for authentication and specific roles. Admins can delete any
+ * opportunity (true) and Government users can delete only their own (true).
+ * Returns false if either one of those two conditions are not met.
+ *
+ * @see {@link delete_} in 'src/back-end/lib/resources/opportunity/team-with-us.ts'
+ *
+ * @param connection
+ * @param session
+ * @param opportunityId
+ * @returns boolean
+ */
+export async function deleteTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
+
+export function addTWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
 // TWU Proposals
 
 /**
@@ -897,36 +939,6 @@ export async function submitTWUProposal(
     (await hasAcceptedCurrentTerms(connection, session)) &&
     (await isUserOwnerOfOrg(connection, session.user, organization.id)) &&
     doesOrganizationMeetTWUQualification(organization)
-  );
-}
-
-/**
- * Checks for authentication and specific roles. Admins can delete any
- * opportunity (true) and Government users can delete only their own (true).
- * Returns false if either one of those two conditions are not met.
- *
- * @see {@link delete_} in 'src/back-end/lib/resources/opportunity/team-with-us.ts'
- *
- * @param connection
- * @param session
- * @param opportunityId
- * @returns boolean
- */
-export async function canDeleteTWUOpportunity(
-  connection: Connection,
-  session: Session,
-  opportunityId: string
-): Promise<boolean> {
-  return (
-    isAdmin(session) ||
-    (session &&
-      isGovernment(session) &&
-      (await isTWUOpportunityAuthor(
-        connection,
-        session.user,
-        opportunityId
-      ))) ||
-    false
   );
 }
 

@@ -67,11 +67,6 @@ interface UpdateTWUOpportunityParams
   id: Id;
 }
 
-interface UpdateTWUOpportunityWithNoteParams {
-  note: string;
-  attachments: FileRecord[];
-}
-
 interface TWUOpportunityRootRecord {
   id: Id;
   createdAt: Date;
@@ -1250,45 +1245,3 @@ export const readOneTWUOpportunityAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
-
-export const addTWUOpportunityNote = tryDb<
-  [Id, UpdateTWUOpportunityWithNoteParams, AuthenticatedSession],
-  TWUOpportunity
->(async (connection, id, noteParams, session) => {
-  const now = new Date();
-  await connection.transaction(async (trx) => {
-    // Add a history record for the note addition
-    const [event] = await connection<
-      RawTWUOpportunityHistoryRecord & { opportunity: Id }
-    >("twuOpportunityStatuses")
-      .transacting(trx)
-      .insert(
-        {
-          id: generateUuid(),
-          opportunity: id,
-          createdAt: now,
-          createdBy: session.user.id,
-          event: TWUOpportunityEvent.NoteAdded,
-          note: noteParams.note
-        },
-        "*"
-      );
-
-    if (!event) {
-      throw new Error("unable to create note for opportunity");
-    }
-
-    // await createTWUOpportunityNoteAttachments(
-    //   connection,
-    //   trx,
-    //   event.id,
-    //   noteParams.attachments
-    // );
-  });
-
-  const dbResult = await readOneTWUOpportunity(connection, id, session);
-  if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error("unable to add note");
-  }
-  return valid(dbResult.value);
-});

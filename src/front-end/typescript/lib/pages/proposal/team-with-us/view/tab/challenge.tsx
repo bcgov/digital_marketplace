@@ -39,7 +39,6 @@ type ModalId = "enterScore";
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   enterScoreLoading: number;
-  screenToFromLoading: number;
   score: Immutable<NumberField.State>;
 }
 
@@ -83,7 +82,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     {
       ...params,
       showModal: null,
-      screenToFromLoading: 0,
       enterScoreLoading: 0,
       score: immutable(scoreState)
     },
@@ -91,8 +89,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   ];
 };
 
-// const startScreenToFromLoading = makeStartLoading<State>("screenToFromLoading");
-// const stopScreenToFromLoading = makeStopLoading<State>("screenToFromLoading");
 const startEnterScoreLoading = makeStartLoading<State>("enterScoreLoading");
 const stopEnterScoreLoading = makeStopLoading<State>("enterScoreLoading");
 
@@ -341,7 +337,6 @@ export const component: Tab.Component<State, Msg> = {
     }
     const proposal = state.proposal;
     const propStatus = proposal.status;
-    const isScreenToFromLoading = state.screenToFromLoading > 0;
     switch (propStatus) {
       case TWUProposalStatus.UnderReviewChallenge:
         return component_.page.actions.links([
@@ -358,7 +353,6 @@ export const component: Tab.Component<State, Msg> = {
           {
             children: "Edit Score",
             symbol_: leftPlacement(iconLinkSymbol("star-full")),
-            disabled: isScreenToFromLoading,
             button: true,
             color: "info",
             onClick: () => dispatch(adt("showModal", "enterScore" as const))
