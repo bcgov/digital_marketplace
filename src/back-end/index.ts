@@ -17,6 +17,7 @@ import { Connection, readOneSession } from "back-end/lib/db";
 import codeWithUsHook from "back-end/lib/hooks/code-with-us";
 import loggerHook from "back-end/lib/hooks/logger";
 import sprintWithUsHook from "back-end/lib/hooks/sprint-with-us";
+import teamWithUsHook from "back-end/lib/hooks/team-with-us";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import basicAuth from "back-end/lib/map-routes/basic-auth";
@@ -29,13 +30,16 @@ import fileResource from "back-end/lib/resources/file";
 import metricsResource from "back-end/lib/resources/metrics";
 import codeWithUsOpportunityResource from "back-end/lib/resources/opportunity/code-with-us";
 import sprintWithUsOpportunityResource from "back-end/lib/resources/opportunity/sprint-with-us";
+import teamWithUsOpportunityResource from "back-end/lib/resources/opportunity/team-with-us";
 import organizationResource from "back-end/lib/resources/organization";
 import ownedOrganizationResource from "back-end/lib/resources/owned-organization";
 import codeWithUsProposalResource from "back-end/lib/resources/proposal/code-with-us";
+import teamWithUsProposalResource from "back-end/lib/resources/proposal/team-with-us";
 import sprintWithUsProposalResource from "back-end/lib/resources/proposal/sprint-with-us";
 import sessionResource from "back-end/lib/resources/session";
 import codeWithUsSubscriberResource from "back-end/lib/resources/subscribers/code-with-us";
 import sprintWithUsSubscriberResource from "back-end/lib/resources/subscribers/sprint-with-us";
+import teamWithUsSubscriberResource from "back-end/lib/resources/subscribers/team-with-us";
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
@@ -129,10 +133,13 @@ export function createRouter(connection: Connection): AppRouter {
     codeWithUsOpportunityResource,
     contentResource,
     sprintWithUsOpportunityResource,
+    teamWithUsOpportunityResource,
     codeWithUsProposalResource,
     sprintWithUsProposalResource,
     codeWithUsSubscriberResource,
     sprintWithUsSubscriberResource,
+    teamWithUsSubscriberResource,
+    teamWithUsProposalResource,
     fileResource,
     counterResource,
     organizationResource,
@@ -155,7 +162,11 @@ export function createRouter(connection: Connection): AppRouter {
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
     map((route: BasicRoute) => namespaceRoute("/api", route)),
-    addHooks([codeWithUsHook(connection), sprintWithUsHook(connection)])
+    addHooks([
+      codeWithUsHook(connection),
+      sprintWithUsHook(connection),
+      teamWithUsHook(connection)
+    ])
   ])(resources);
 
   // Collect all routes.
@@ -219,7 +230,8 @@ export async function initApplication() {
   // i.e. The status route effectively acts as an action triggered by a CRON job.
   const statusRouterWithHooks = addHooks([
     codeWithUsHook(connection),
-    sprintWithUsHook(connection)
+    sprintWithUsHook(connection),
+    teamWithUsHook(connection)
   ])(statusRouter as AppRouter);
   router = [...statusRouterWithHooks, ...router];
   // Bind the server to a port and listen for incoming connections.

@@ -68,9 +68,9 @@ export const init: component_.page.Init<
       ),
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
-        api.content.readMany((response) =>
+        api.content.readMany<Msg>()((response) =>
           adt("onInitResponse", response)
-        ) as component_.Cmd<Msg>
+        )
       ]
     ];
   },

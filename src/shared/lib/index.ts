@@ -1,5 +1,5 @@
 import { count } from "@wordpress/wordcount";
-import { get, isArray, isBoolean, repeat } from "lodash";
+import { get, isArray, isBoolean, reduce, repeat } from "lodash";
 import moment, { isDate, Moment } from "moment-timezone";
 import { TIMEZONE } from "shared/config";
 import { Comparison } from "shared/lib/types";
@@ -32,9 +32,17 @@ export function getString(
 }
 
 export function getStringArray(obj: any, keyPath: string | string[]): string[] {
+  return getStringArrayWithFallback(obj, keyPath, []);
+}
+
+export function getStringArrayWithFallback<Fallback>(
+  obj: any,
+  keyPath: string | string[],
+  fallback: Fallback
+): string[] | Fallback {
   const value: any[] = get(obj, keyPath, []);
   if (!isArray(value)) {
-    return [];
+    return fallback;
   }
   return value.map((v) => (v === undefined || value === null ? "" : String(v)));
 }
@@ -206,12 +214,41 @@ export function isDateInTheFuture(date: Date): boolean {
   return compareDates(date, new Date()) === 1;
 }
 
+/**
+ * Calculates the number of (days,years,minutes,etc) between two dates.
+ *
+ * @example diffDate(endDate, startDate, 'days')
+ * @see {@link https://momentjs.com/docs/#/displaying/difference/}
+ *
+ * @param a - endDate
+ * @param b - startDate
+ * @param unit - years, quarters, months, weeks, days, seconds, etc
+ */
 export function diffDates(
   a: Date,
   b: Date,
   unit: moment.unitOfTime.Diff
 ): number {
   return normalizeDateTimezone(a).diff(normalizeDateTimezone(b), unit, true);
+}
+
+/**
+ * Calculates the number of business days between two dates.
+ *
+ * @param startDate
+ * @param endDate
+ */
+export function determineBusinessDays(startDate: Date, endDate: Date): number {
+  const day = normalizeDateTimezone(startDate);
+  let businessDays = 0;
+
+  while (day.isSameOrBefore(endDate, "day")) {
+    if (day.day() !== 0 && day.day() !== 6) {
+      businessDays++;
+    }
+    day.add(1, "day");
+  }
+  return businessDays;
 }
 
 export function addDays(date: Date, days: number): Date {
@@ -278,4 +315,43 @@ export function sleep(ms: number): Promise<void> {
 
 export function countWords(raw: string): number {
   return count(raw, "words", {});
+}
+
+/**
+ * Creates an array derived from a range of numbers with
+ * the provided length.
+ *
+ * @param length - length of the element array
+ * @param offset - offset from the start
+ * @param step - distance between values of the elements
+ * @param cb - formats array elements
+ * @returns Element[]
+ */
+export function arrayFromRange<Element = number>(
+  length: number,
+  { offset = 0, step = 1, cb = (number: number) => number as Element } = {}
+): Element[] {
+  return Array.from({ length }, (_, i) => {
+    const number = (i + offset) * step;
+    return cb(number);
+  });
+}
+
+/**
+ * Intersperse array elements with a separator.
+ *
+ * @param collection
+ * @param separator - element placed between collection members
+ * @returns list of interspersed elements
+ */
+export function intersperse<A>(collection: A[], separator: A): A[] {
+  return reduce(
+    collection,
+    (acc: A[], val: A, index: number) => [
+      ...acc,
+      ...(index > 0 ? [separator] : []),
+      val
+    ],
+    []
+  );
 }

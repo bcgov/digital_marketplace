@@ -1,0 +1,20 @@
+{
+  "cleanUrls": false,
+  "renderSingle": false,
+  "trailingSlash": false,
+  "directoryListing": ["/"],
+  "redirects": [
+    {
+      "source": ":dir/modules",
+      "destination": ":dir/modules.html"
+    },
+    {
+      "source": ":dir",
+      "destination": ":dir/modules.html"
+    },
+    {
+      "source": ":dir/index.html",
+      "destination": ":dir/modules.html"
+    }
+  ]
+}

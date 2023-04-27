@@ -60,19 +60,19 @@ Should you receive the following error, and you have confirmed that the lines it
 type: brief description
 ```
 Common types according to [commitlint-config-conventional (based on the Angular convention)](https://github.com/conventional-changelog/commitlint/tree/master/@commitlint/config-conventional#type-enum) can be:
-  - build
-  - chore
-  - ci
-  - docs
-  - feat
-  - fix
-  - perf
-  - refactor
-  - revert
-  - style
-  - test
+  - build - "Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)"
+  - chore - "Other changes that don't modify src or test files"
+  - ci - "Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)"
+  - docs - "Documentation only changes"
+  - feat - "A new feature"
+  - fix - "A bug fix"
+  - perf - "A code change that improves performance"
+  - refactor - "A code change that neither fixes a bug nor adds a feature"
+  - revert - "Reverts a previous commit"
+  - style - "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)"
+  - test - "Adding missing tests or correcting existing tests"
 
 ### Failed commitlint check
 
-- If you fail the `commitlint` check your commit will be aborted and you will be given an error message that will indicate the problem
+- If you fail the `commitlint` check your commit will be aborted, and you will be given an error message that will indicate the problem
 - You will then need to run `git commit` once again and input a properly formatted commit message

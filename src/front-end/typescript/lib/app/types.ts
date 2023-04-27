@@ -9,6 +9,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -20,10 +21,19 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
+import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
+import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
+import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
+import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
+import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -45,12 +55,19 @@ import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
 import { ADT } from "shared/lib/types";
 
+/**
+ * Union Types combined for the purpose of constraining routes that the
+ * application accepts.
+ *
+ * @see {@link router} in `src/front-end/typescript/lib/app/router.ts`
+ */
 export type Route =
   | ADT<"landing", PageLanding.RouteParams>
   | ADT<"dashboard", PageDashboard.RouteParams>
   | ADT<"opportunities", PageOpportunities.RouteParams>
   | ADT<"opportunityCreate", PageOpportunityCreate.RouteParams>
   | ADT<"learnMoreCWU", PageLearnMoreCWU.RouteParams>
+  | ADT<"learnMoreTWU", PageLearnMoreTWU.RouteParams>
   | ADT<"learnMoreSWU", PageLearnMoreSWU.RouteParams>
   | ADT<"contentView", PageContentView.RouteParams>
   | ADT<"contentCreate", PageContentCreate.RouteParams>
@@ -68,6 +85,7 @@ export type Route =
   | ADT<"orgList", PageOrgList.RouteParams>
   | ADT<"orgEdit", PageOrgEdit.RouteParams>
   | ADT<"orgSWUTerms", PageOrgSWUTerms.RouteParams>
+  | ADT<"orgTWUTerms", PageOrgTWUTerms.RouteParams>
   | ADT<"proposalSWUCreate", PageProposalSWUCreate.RouteParams>
   | ADT<"proposalSWUEdit", PageProposalSWUEdit.RouteParams>
   | ADT<"proposalSWUView", PageProposalSWUView.RouteParams>
@@ -79,6 +97,14 @@ export type Route =
   | ADT<"opportunityCWUCreate", PageOpportunityCWUCreate.RouteParams>
   | ADT<"opportunityCWUEdit", PageOpportunityCWUEdit.RouteParams>
   | ADT<"opportunityCWUView", PageOpportunityCWUView.RouteParams>
+  | ADT<"opportunityTWUCreate", PageOpportunityTWUCreate.RouteParams>
+  | ADT<"opportunityTWUEdit", PageOpportunityTWUEdit.RouteParams>
+  | ADT<"opportunityTWUView", PageOpportunityTWUView.RouteParams>
+  | ADT<"proposalTWUExportOne", PageProposalTWUExportOne.RouteParams>
+  | ADT<"proposalTWUExportAll", PageProposalTWUExportAll.RouteParams>
+  | ADT<"proposalTWUCreate", PageProposalTWUCreate.RouteParams>
+  | ADT<"proposalTWUView", PageProposalTWUView.RouteParams>
+  | ADT<"proposalTWUEdit", PageProposalTWUEdit.RouteParams>
   | ADT<"proposalCWUCreate", PageProposalCWUCreate.RouteParams>
   | ADT<"proposalCWUEdit", PageProposalCWUEdit.RouteParams>
   | ADT<"proposalCWUView", PageProposalCWUView.RouteParams>
@@ -86,10 +112,14 @@ export type Route =
   | ADT<"proposalCWUExportAll", PageProposalCWUExportAll.RouteParams>
   | ADT<"proposalList", PageProposalList.RouteParams>;
 
+/**
+ * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
+ */
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route["tag"]> = [
   "signUpStepTwo",
   "contentView",
   "learnMoreCWU",
+  "learnMoreTWU",
   "learnMoreSWU",
   "signOut"
 ];
@@ -106,9 +136,13 @@ export interface SharedState {
 
 export type ModalId = "acceptNewTerms";
 
+/**
+ * Defines a hierarchical State object
+ */
 export interface State {
   //App Internal State
   ready: boolean;
+  showTWUBanner: boolean;
   incomingRoute: router.IncomingRoute<Route> | null;
   activeRoute: Route;
   //Toasts
@@ -128,6 +162,7 @@ export interface State {
     opportunities?: Immutable<PageOpportunities.State>;
     opportunityCreate?: Immutable<PageOpportunityCreate.State>;
     learnMoreCWU?: Immutable<PageLearnMoreCWU.State>;
+    learnMoreTWU?: Immutable<PageLearnMoreTWU.State>;
     learnMoreSWU?: Immutable<PageLearnMoreSWU.State>;
     contentView?: Immutable<PageContentView.State>;
     contentCreate?: Immutable<PageContentCreate.State>;
@@ -145,6 +180,7 @@ export interface State {
     orgList?: Immutable<PageOrgList.State>;
     orgEdit?: Immutable<PageOrgEdit.State>;
     orgSWUTerms?: Immutable<PageOrgSWUTerms.State>;
+    orgTWUTerms?: Immutable<PageOrgTWUTerms.State>;
     proposalSWUCreate?: Immutable<PageProposalSWUCreate.State>;
     proposalSWUEdit?: Immutable<PageProposalSWUEdit.State>;
     proposalSWUView?: Immutable<PageProposalSWUView.State>;
@@ -153,6 +189,14 @@ export interface State {
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
+    opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
+    opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
+    opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
+    proposalTWUCreate?: Immutable<PageProposalTWUCreate.State>;
+    proposalTWUView?: Immutable<PageProposalTWUView.State>;
+    proposalTWUEdit?: Immutable<PageProposalTWUEdit.State>;
+    proposalTWUExportOne?: Immutable<PageProposalTWUExportOne.State>;
+    proposalTWUExportAll?: Immutable<PageProposalTWUExportAll.State>;
     opportunityCWUCreate?: Immutable<PageOpportunityCWUCreate.State>;
     opportunityCWUEdit?: Immutable<PageOpportunityCWUEdit.State>;
     opportunityCWUView?: Immutable<PageOpportunityCWUView.State>;
@@ -181,11 +225,13 @@ export type InnerMsg =
   | ADT<"submitAcceptNewTerms">
   | ADT<"onAcceptNewTermsResponse", AcceptNewTerms.AcceptNewTermsResponse>
   | ADT<"nav", Nav.Msg>
+  | ADT<"setShowTWUBanner", boolean>
   | ADT<"pageLanding", PageLanding.Msg>
   | ADT<"pageDashboard", PageDashboard.Msg>
   | ADT<"pageOpportunities", PageOpportunities.Msg>
   | ADT<"pageOpportunityCreate", PageOpportunityCreate.Msg>
   | ADT<"pageLearnMoreCWU", PageLearnMoreCWU.Msg>
+  | ADT<"pageLearnMoreTWU", PageLearnMoreTWU.Msg>
   | ADT<"pageLearnMoreSWU", PageLearnMoreSWU.Msg>
   | ADT<"pageContentView", PageContentView.Msg>
   | ADT<"pageContentCreate", PageContentCreate.Msg>
@@ -203,6 +249,7 @@ export type InnerMsg =
   | ADT<"pageOrgList", PageOrgList.Msg>
   | ADT<"pageOrgEdit", PageOrgEdit.Msg>
   | ADT<"pageOrgSWUTerms", PageOrgSWUTerms.Msg>
+  | ADT<"pageOrgTWUTerms", PageOrgTWUTerms.Msg>
   | ADT<"pageProposalSWUCreate", PageProposalSWUCreate.Msg>
   | ADT<"pageProposalSWUEdit", PageProposalSWUEdit.Msg>
   | ADT<"pageProposalSWUView", PageProposalSWUView.Msg>
@@ -211,6 +258,14 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUCreate", PageOpportunitySWUCreate.Msg>
   | ADT<"pageOpportunitySWUEdit", PageOpportunitySWUEdit.Msg>
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
+  | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
+  | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
+  | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
+  | ADT<"pageProposalTWUCreate", PageProposalTWUCreate.Msg>
+  | ADT<"pageProposalTWUEdit", PageProposalTWUEdit.Msg>
+  | ADT<"pageProposalTWUView", PageProposalTWUView.Msg>
+  | ADT<"pageProposalTWUExportOne", PageProposalTWUExportOne.Msg>
+  | ADT<"pageProposalTWUExportAll", PageProposalTWUExportAll.Msg>
   | ADT<"pageOpportunityCWUCreate", PageOpportunityCWUCreate.Msg>
   | ADT<"pageOpportunityCWUEdit", PageOpportunityCWUEdit.Msg>
   | ADT<"pageOpportunityCWUView", PageOpportunityCWUView.Msg>

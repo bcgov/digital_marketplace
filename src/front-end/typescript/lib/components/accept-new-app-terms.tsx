@@ -89,9 +89,11 @@ export function submitAcceptNewTerms<ParentState, ParentInnerMsg>(
   return [
     params.startLoading(params.state),
     [
-      api.users.update(params.userId, adt("acceptTerms"), (response) =>
-        params.onAcceptNewTermsResponse(response)
-      ) as component_.Cmd<component_.global.Msg<ParentInnerMsg, Route>>
+      api.users.update<ParentInnerMsg>()(
+        params.userId,
+        adt("acceptTerms"),
+        (response) => params.onAcceptNewTermsResponse(response)
+      )
     ]
   ];
 }

@@ -8,7 +8,7 @@ export function makeUploadImage(
   metadata: Resource.FileUploadMetadata = [adt("any")]
 ): RichMarkdownEditor.UploadImage {
   return (file) => {
-    return files.create(
+    return files.create<RichMarkdownEditor.UploadImageResult>()(
       {
         name: file.name,
         file,
@@ -24,6 +24,6 @@ export function makeUploadImage(
           return invalid(["Unable to upload file."]);
         }
       }
-    ) as ReturnType<RichMarkdownEditor.UploadImage>;
+    );
   };
 }

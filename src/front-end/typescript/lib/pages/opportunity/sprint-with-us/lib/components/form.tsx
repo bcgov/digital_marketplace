@@ -53,6 +53,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 type RemoteOk = "yes" | "no";
 
@@ -176,7 +177,7 @@ function resetAssignmentDate(state: Immutable<State>): Immutable<State> {
     return FormField.setValidate(
       s,
       DateField.validateDate((v) =>
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           v,
           DateField.getDate(state.proposalDeadline) || new Date()
         )
@@ -226,7 +227,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateTitle,
+    validate: genericValidation.validateTitle,
     child: {
       type: "text",
       value: opportunity?.title || "",
@@ -235,7 +236,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teaserState, teaserCmds] = LongText.init({
     errors: [],
-    validate: opportunityValidation.validateTeaser,
+    validate: genericValidation.validateTeaser,
     child: {
       value: opportunity?.teaser || "",
       id: "swu-opportunity-teaser"
@@ -243,7 +244,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [locationState, locationCmds] = ShortText.init({
     errors: [],
-    validate: opportunityValidation.validateLocation,
+    validate: genericValidation.validateLocation,
     child: {
       type: "text",
       value: opportunity?.location || DEFAULT_LOCATION,
@@ -274,7 +275,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [remoteDescState, remoteDescCmds] = LongText.init({
     errors: [],
     validate: (v) =>
-      opportunityValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
+      genericValidation.validateRemoteDesc(v, !!opportunity?.remoteOk),
     child: {
       value: opportunity?.remoteDesc || "",
       id: "swu-opportunity-remote-desc"
@@ -295,7 +296,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [assignmentDateState, assignmentDateCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
-      opportunityValidation.validateAssignmentDate(
+      genericValidation.validateDateFormatMinMax(
         v,
         opportunity?.proposalDeadline || new Date()
       )
@@ -339,7 +340,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (v) => {
       const strings = v.map(({ value }) => value);
-      const validated0 = opportunityValidation.validateMandatorySkills(strings);
+      const validated0 = genericValidation.validateMandatorySkills(strings);
       const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
       return mapInvalid(validated1, (es) => flatten(es));
     },
@@ -375,7 +376,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
     errors: [],
-    validate: opportunityValidation.validateDescription,
+    validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
       id: "swu-opportunity-description",
@@ -765,26 +766,25 @@ export function persist(
     ({ id }) => id
   );
   // Cmd helpers
-  const uploadNewAttachmentsCmd = api.files.createMany(
-    newAttachments,
-    (response) => {
-      switch (response.tag) {
-        case "valid":
-          return valid([
-            ...existingAttachments,
-            ...response.value.map(({ id }) => id)
-          ]);
-        case "invalid":
-          return invalid(
-            state.update("attachments", (attachments) =>
-              Attachments.setNewAttachmentErrors(attachments, response.value)
-            )
-          );
-        case "unhandled":
-          return invalid(state);
-      }
+  const uploadNewAttachmentsCmd = api.files.createMany<
+    Validation<Id[], Immutable<State>>
+  >()(newAttachments, (response) => {
+    switch (response.tag) {
+      case "valid":
+        return valid([
+          ...existingAttachments,
+          ...response.value.map(({ id }) => id)
+        ]);
+      case "invalid":
+        return invalid(
+          state.update("attachments", (attachments) =>
+            Attachments.setNewAttachmentErrors(attachments, response.value)
+          )
+        );
+      case "unhandled":
+        return invalid(state);
     }
-  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  });
   const actionCmd = (
     attachments: Id[]
   ): component_.cmd.Cmd<
@@ -795,7 +795,9 @@ export function persist(
   > => {
     switch (action.tag) {
       case "create":
-        return api.opportunities.swu.create(
+        return api.opportunities.swu.create<
+          api.ResponseValidation<SWUOpportunity, CreateValidationErrors>
+        >()(
           {
             ...values,
             remoteOk,
@@ -803,12 +805,12 @@ export function persist(
             status: action.value
           },
           (response) => response
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<SWUOpportunity, CreateValidationErrors>
-        >;
+        );
       case "update":
         if (state.opportunity && shouldUploadAttachmentsAndUpdate) {
-          return api.opportunities.swu.update(
+          return api.opportunities.swu.update<
+            api.ResponseValidation<SWUOpportunity, UpdateEditValidationErrors>
+          >()(
             state.opportunity.id,
             adt("edit" as const, {
               ...values,
@@ -829,9 +831,7 @@ export function persist(
                 }
               });
             }
-          ) as component_.cmd.Cmd<
-            api.ResponseValidation<SWUOpportunity, UpdateEditValidationErrors>
-          >;
+          );
         } else if (state.opportunity) {
           return component_.cmd.dispatch(valid(state.opportunity));
         } else {
@@ -946,7 +946,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             const remoteOk = FormField.getValue(state.remoteOk) === "yes";
             return FormField.setValidate(
               s,
-              (v) => opportunityValidation.validateRemoteDesc(v, remoteOk),
+              (v) => genericValidation.validateRemoteDesc(v, remoteOk),
               remoteOk
             );
           }),

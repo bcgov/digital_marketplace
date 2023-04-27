@@ -111,7 +111,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               proposalId,
               (response) => response
             ),
-            api.opportunities.cwu.readOne(
+            api.opportunities.cwu.readOne()(
               opportunityId,
               (response) => response
             ),
@@ -121,8 +121,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 tabId,
                 proposalResponse,
                 opportunityResponse
-              ])
-          ) as component_.Cmd<Msg>
+              ]) as Msg
+          )
         ]
       ] as InitReturnValue<State_<K>, Msg>;
     },

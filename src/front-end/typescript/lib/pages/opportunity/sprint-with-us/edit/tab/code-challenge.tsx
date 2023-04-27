@@ -154,11 +154,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startCompleteCodeChallengeLoading(state),
         [
-          api.opportunities.swu.update(
+          api.opportunities.swu.update<Msg>()(
             opportunity.id,
             adt("startTeamScenario", ""),
             (response) => adt("onCompleteCodeChallenge", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -214,11 +214,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("screenToFromLoading", msg.value),
         [
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             msg.value,
             adt("screenInToTeamScenario", ""),
             (response) => adt("onScreenInToTeamScenarioResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -239,7 +239,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 )
               ),
               component_.cmd.join(
-                api.opportunities.swu.readOne(opportunity.id, (response) =>
+                api.opportunities.swu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.swu.readMany(opportunity.id)((response) =>
@@ -247,7 +247,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 ),
                 (newOpp, newProposals) =>
                   adt("onInitResponse", [newOpp, newProposals]) as Msg
-              ) as component_.Cmd<Msg>
+              )
             ]
           ];
         case "invalid":
@@ -271,11 +271,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("screenToFromLoading", msg.value),
         [
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             msg.value,
             adt("screenOutFromTeamScenario", ""),
             (response) => adt("onScreenOutFromTeamScenarioResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -296,7 +296,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 )
               ),
               component_.cmd.join(
-                api.opportunities.swu.readOne(opportunity.id, (response) =>
+                api.opportunities.swu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.swu.readMany(opportunity.id)((response) =>
@@ -304,7 +304,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 ),
                 (newOpp, newProposals) =>
                   adt("onInitResponse", [newOpp, newProposals]) as Msg
-              ) as component_.Cmd<Msg>
+              )
             ]
           ];
         case "invalid":

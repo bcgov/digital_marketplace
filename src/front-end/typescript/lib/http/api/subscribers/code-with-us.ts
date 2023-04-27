@@ -3,21 +3,25 @@ import * as Resource from "shared/lib/resources/subscribers/code-with-us";
 
 const NAMESPACE = "subscribers/code-with-us";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.CWUOpportunitySubscriber,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(
-  NAMESPACE,
-  (a: Resource.CWUOpportunitySubscriber) => a
-);
+  Msg
+> {
+  return crud.makeCreateAction(
+    NAMESPACE,
+    (a: Resource.CWUOpportunitySubscriber) => a
+  );
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.CWUOpportunitySubscriber,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(
-  NAMESPACE,
-  (a: Resource.CWUOpportunitySubscriber) => a
-);
+  Msg
+> {
+  return crud.makeDeleteAction(
+    NAMESPACE,
+    (a: Resource.CWUOpportunitySubscriber) => a
+  );
+}

@@ -4,11 +4,14 @@ import { component, router as router_ } from "front-end/lib/framework";
 import * as PageNotice from "front-end/lib/pages/notice";
 import * as CWUOpportunityEditTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as SWUOpportunityEditTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
+import * as TWUOpportunityEditTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import * as OrganizationEditTab from "front-end/lib/pages/organization/edit/tab";
 import * as CWUProposalEditTab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as CWUProposalViewTab from "front-end/lib/pages/proposal/code-with-us/view/tab";
+import * as TWUProposalViewTab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import * as TWUProposalEditTab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
 import { getString } from "shared/lib";
 import { adt } from "shared/lib/types";
@@ -21,6 +24,12 @@ export function replaceState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
   return component.cmd.replaceUrlState(router.routeToUrl(route), msg);
 }
 
+/**
+ * An array of route objects defined by an initial path, tag and value
+ *
+ * @typeParam Route - new routes below must be defined explicitly as an ADT in `type Route`
+ * @see {@link Route} in `src/front-end/typescript/lib/app/types.ts`
+ */
 const router: router_.Router<Route> = {
   routes: [
     {
@@ -64,7 +73,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/create"
@@ -170,7 +178,6 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
     {
       path: prefixPath(
         "/opportunities/code-with-us/:opportunityId/proposals/create"
@@ -243,7 +250,111 @@ const router: router_.Router<Route> = {
         };
       }
     },
-
+    {
+      path: prefixPath("/opportunities/team-with-us/create"),
+      makeRoute() {
+        return {
+          tag: "opportunityTWUCreate",
+          value: null
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId/edit"),
+      makeRoute({ params, query }) {
+        return {
+          tag: "opportunityTWUEdit",
+          value: {
+            opportunityId: params.opportunityId || "",
+            tab: TWUOpportunityEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    // This route needs to be matched before `proposalTWUView`,
+    // otherwise "export" gets parsed as a `proposalId`.
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/export"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUExportAll",
+          value: {
+            opportunityId: params.opportunityId || "",
+            anonymous: query.anonymous === "true"
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId"),
+      makeRoute({ params }) {
+        return {
+          tag: "opportunityTWUView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/create"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUCreate",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalEditTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "proposalTWUView",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/export"
+      ),
+      makeRoute({ params }) {
+        return {
+          tag: "proposalTWUExportOne",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
     {
       path: prefixPath("/proposals"),
       makeRoute() {
@@ -299,6 +410,14 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/organizations/:id/team-with-us-terms-and-conditions"),
+      makeRoute({ params }) {
+        return adt("orgTWUTerms", {
+          orgId: params.id || ""
+        });
+      }
+    },
+    {
       path: prefixPath("/users/:id"),
       makeRoute({ params, query }) {
         const affiliationId =
@@ -316,7 +435,7 @@ const router: router_.Router<Route> = {
               affiliationId && response
                 ? { affiliationId, response }
                 : undefined,
-            ...('unsubscribe' in query && {unsubscribe: true})
+            ...("unsubscribe" in query && { unsubscribe: true })
           }
         };
       }
@@ -353,6 +472,15 @@ const router: router_.Router<Route> = {
       makeRoute() {
         return {
           tag: "learnMoreCWU",
+          value: null
+        };
+      }
+    },
+    {
+      path: prefixPath("/learn-more/team-with-us"),
+      makeRoute() {
+        return {
+          tag: "learnMoreTWU",
           value: null
         };
       }
@@ -469,6 +597,8 @@ const router: router_.Router<Route> = {
         return prefixPath("/opportunities/create");
       case "learnMoreCWU":
         return prefixPath("/learn-more/code-with-us");
+      case "learnMoreTWU":
+        return prefixPath("/learn-more/team-with-us");
       case "learnMoreSWU":
         return prefixPath("/learn-more/sprint-with-us");
       case "contentList":
@@ -515,7 +645,7 @@ const router: router_.Router<Route> = {
           query.push(`invitationResponse=${route.value.invitation.response}`);
         }
         if (route.value.unsubscribe) {
-          query.push("unsubscribe")
+          query.push("unsubscribe");
         }
         let qs = "";
         if (query.length) {
@@ -542,6 +672,10 @@ const router: router_.Router<Route> = {
       case "orgSWUTerms":
         return prefixPath(
           `/organizations/${route.value.orgId}/sprint-with-us-terms-and-conditions`
+        );
+      case "orgTWUTerms":
+        return prefixPath(
+          `/organizations/${route.value.orgId}/team-with-us-terms-and-conditions`
         );
       case "orgCreate":
         return prefixPath("/organizations/create");
@@ -588,6 +722,46 @@ const router: router_.Router<Route> = {
       case "opportunitySWUView":
         return prefixPath(
           `/opportunities/sprint-with-us/${route.value.opportunityId}`
+        );
+      case "opportunityTWUCreate":
+        return prefixPath("/opportunities/team-with-us/create");
+      case "opportunityTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "opportunityTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}`
+        );
+      case "proposalTWUExportOne":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
+        );
+      case "proposalTWUExportAll":
+        return prefixPath(
+          `/opportunities/team-with-us/${
+            route.value.opportunityId
+          }/proposals/export/${
+            route.value.anonymous ? `?anonymous=${route.value.anonymous}` : ""
+          }`
+        );
+      case "proposalTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/create`
+        );
+      case "proposalTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "proposalTWUView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");

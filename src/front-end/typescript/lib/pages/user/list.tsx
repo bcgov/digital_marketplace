@@ -69,7 +69,7 @@ const init: component_.page.Init<
       initState,
       [
         ...initCmds,
-        api.users.readMany((response) => {
+        api.users.readMany<Msg>()((response) => {
           if (!api.isValid(response)) return adt("onInitResponse", []);
           const users = response.value
             .map((user) => ({
@@ -95,7 +95,7 @@ const init: component_.page.Init<
               return compareStrings(a.name, b.name);
             });
           return adt("onInitResponse", users);
-        }) as component_.Cmd<Msg>
+        })
       ]
     ];
   },

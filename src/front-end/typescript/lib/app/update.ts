@@ -1,4 +1,7 @@
-import { TOAST_AUTO_DISMISS_DURATION } from "front-end/config";
+import {
+  TOAST_AUTO_DISMISS_DURATION,
+  TWU_BANNER_ACKNOWLEDGED
+} from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import router from "front-end/lib/app/router";
 import {
@@ -19,6 +22,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -30,10 +34,14 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
+import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
+import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -45,6 +53,11 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
+import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
+import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
+import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -75,9 +88,15 @@ const stopAcceptNewTermsLoading = makeStopLoading<State>(
 );
 
 /**
- * Give precedence to app modals over page modals.
+ * Initializing a page requires both state and route.
+ * Gives precedence to app modals over page modals
+ *
+ * @param state - of type Immutable from immutable.js. New pages need to be added to State Interface.
+ * @param route - the route.tag value used as the conditional in a switch/case statement to modify what app component is returned
+ * @returns - base component with state, session (shared state), route, path + params, msg, metadata
+ *
+ * @see State in `src/front-end/typescript/lib/app/types.ts`
  */
-
 function initPage(
   state: Immutable<State>,
   route: Route
@@ -113,6 +132,18 @@ function initPage(
         pageGetMetadata: PageOrgSWUTerms.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageOrgSWUTerms", value);
+        }
+      });
+
+    case "orgTWUTerms":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "orgTWUTerms"],
+        pageRouteParams: route.value,
+        pageInit: PageOrgTWUTerms.component.init,
+        pageGetMetadata: PageOrgTWUTerms.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOrgTWUTerms", value);
         }
       });
 
@@ -183,7 +214,39 @@ function initPage(
           return adt("pageOpportunitySWUView", value);
         }
       });
-
+    case "opportunityTWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "opportunityTWUCreate"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityTWUCreate.component.init,
+        pageGetMetadata: PageOpportunityTWUCreate.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityTWUCreate", value);
+        }
+      });
+    case "opportunityTWUView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "opportunityTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityTWUView.component.init,
+        pageGetMetadata: PageOpportunityTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityTWUView", value);
+        }
+      });
+    case "opportunityTWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "opportunityTWUEdit"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityTWUEdit.component.init,
+        pageGetMetadata: PageOpportunityTWUEdit.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityTWUEdit", value) as Msg;
+        }
+      });
     case "opportunityCWUCreate":
       return component.app.initPage({
         ...defaultPageInitParams,
@@ -293,6 +356,61 @@ function initPage(
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalSWUExportAll", value);
+        }
+      });
+    case "proposalTWUExportOne":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUExportOne"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUExportOne.component.init,
+        pageGetMetadata: PageProposalTWUExportOne.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUExportOne", value);
+        }
+      });
+    case "proposalTWUExportAll":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUExportAll"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUExportAll.component.init,
+        pageGetMetadata: PageProposalTWUExportAll.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUExportAll", value);
+        }
+      });
+    case "proposalTWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUCreate.component.init,
+        pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUCreate", value);
+        }
+      });
+    case "proposalTWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUEdit"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUEdit.component.init,
+        pageGetMetadata: PageProposalTWUEdit.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUEdit", value);
+        }
+      });
+    case "proposalTWUView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageProposalTWUView.component.init,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUView", value);
         }
       });
     case "proposalList":
@@ -412,6 +530,18 @@ function initPage(
         pageGetMetadata: PageLearnMoreCWU.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageLearnMoreCWU", value);
+        }
+      });
+
+    case "learnMoreTWU":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "learnMoreTWU"],
+        pageRouteParams: route.value,
+        pageInit: PageLearnMoreTWU.component.init,
+        pageGetMetadata: PageLearnMoreTWU.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageLearnMoreTWU", value);
         }
       });
 
@@ -564,9 +694,9 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("incomingRoute", msg.value),
         [
-          api.sessions.readOne(CURRENT_SESSION_ID, (response) =>
+          api.sessions.readOne<Msg>()(CURRENT_SESSION_ID, (response) =>
             adt("onSessionResponseDuringTransition", response)
-          ) as component.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -631,9 +761,9 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
             // Refresh the front-end's view of the current session again if the user has been signed out.
             ...(incomingRoute.route.tag === "signOut"
               ? [
-                  api.sessions.readOne(CURRENT_SESSION_ID, (response) =>
+                  api.sessions.readOne<Msg>()(CURRENT_SESSION_ID, (response) =>
                     adt("onSessionResponse", response)
-                  ) as component.Cmd<Msg>
+                  )
                 ]
               : [])
           ]
@@ -770,6 +900,20 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: adtCurried<ADT<"nav", Nav.Msg>>("nav")
       });
 
+    case "setShowTWUBanner":
+      return [
+        state.set("showTWUBanner", msg.value),
+        !msg.value
+          ? [
+              component.cmd.localStorage.setItem(
+                TWU_BANNER_ACKNOWLEDGED,
+                TWU_BANNER_ACKNOWLEDGED,
+                adt("noop") as Msg
+              )
+            ]
+          : []
+      ];
+
     case "pageOrgEdit":
       return component.app.updatePage({
         ...defaultPageUpdateParams,
@@ -793,6 +937,22 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "orgSWUTerms"],
         pageUpdate: PageOrgSWUTerms.component.update,
         pageGetMetadata: PageOrgSWUTerms.component.getMetadata,
+        pageMsg: msg.value
+      });
+
+    case "pageOrgTWUTerms":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOrgTWUTerms.State,
+        PageOrgTWUTerms.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageOrgTWUTerms", value),
+        pageStatePath: ["pages", "orgTWUTerms"],
+        pageUpdate: PageOrgTWUTerms.component.update,
+        pageGetMetadata: PageOrgTWUTerms.component.getMetadata,
         pageMsg: msg.value
       });
 
@@ -887,7 +1047,54 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageGetMetadata: PageOpportunitySWUView.component.getMetadata,
         pageMsg: msg.value
       });
-
+    case "pageOpportunityTWUCreate":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityTWUCreate.State,
+        PageOpportunityTWUCreate.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunityTWUCreate" as const,
+          value
+        }),
+        pageStatePath: ["pages", "opportunityTWUCreate"],
+        pageUpdate: PageOpportunityTWUCreate.component.update,
+        pageGetMetadata: PageOpportunityTWUCreate.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunityTWUView":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityTWUView.State,
+        PageOpportunityTWUView.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunityTWUView" as const,
+          value
+        }),
+        pageStatePath: ["pages", "opportunityTWUView"],
+        pageUpdate: PageOpportunityTWUView.component.update,
+        pageGetMetadata: PageOpportunityTWUView.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunityTWUEdit":
+      return component.app.updatePage({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunityTWUEdit" as const,
+          value
+        }),
+        pageStatePath: ["pages", "opportunityTWUEdit"],
+        pageUpdate: PageOpportunityTWUEdit.component.update,
+        pageGetMetadata: PageOpportunityTWUEdit.component.getMetadata,
+        pageMsg: msg.value
+      });
     case "pageOpportunityCWUCreate":
       return component.app.updatePage<
         State,
@@ -1020,6 +1227,84 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "proposalSWUExportAll"],
         pageUpdate: PageProposalSWUExportAll.component.update,
         pageGetMetadata: PageProposalSWUExportAll.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUExportOne":
+      return component.app.updatePage({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUExportOne" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUExportOne"],
+        pageUpdate: PageProposalTWUExportOne.component.update,
+        pageGetMetadata: PageProposalTWUExportOne.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUExportAll":
+      return component.app.updatePage({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUExportAll" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUExportAll"],
+        pageUpdate: PageProposalTWUExportAll.component.update,
+        pageGetMetadata: PageProposalTWUExportAll.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUCreate":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalTWUCreate.State,
+        PageProposalTWUCreate.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUCreate" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUCreate"],
+        pageUpdate: PageProposalTWUCreate.component.update,
+        pageGetMetadata: PageProposalTWUCreate.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUEdit":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalTWUEdit.State,
+        PageProposalTWUEdit.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUEdit" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUEdit"],
+        pageUpdate: PageProposalTWUEdit.component.update,
+        pageGetMetadata: PageProposalTWUEdit.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageProposalTWUView":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageProposalTWUView.State,
+        PageProposalTWUView.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageProposalTWUView" as const,
+          value
+        }),
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageUpdate: PageProposalTWUView.component.update,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageProposalList":
@@ -1219,6 +1504,22 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "learnMoreCWU"],
         pageUpdate: PageLearnMoreCWU.component.update,
         pageGetMetadata: PageLearnMoreCWU.component.getMetadata,
+        pageMsg: msg.value
+      });
+
+    case "pageLearnMoreTWU":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageLearnMoreTWU.State,
+        PageLearnMoreTWU.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageLearnMoreTWU", value),
+        pageStatePath: ["pages", "learnMoreTWU"],
+        pageUpdate: PageLearnMoreTWU.component.update,
+        pageGetMetadata: PageLearnMoreTWU.component.getMetadata,
         pageMsg: msg.value
       });
 

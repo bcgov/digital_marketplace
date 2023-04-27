@@ -12,37 +12,50 @@ import {
 
 const NAMESPACE = "opportunities/sprint-with-us";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.SWUOpportunity,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+}
 
-export const readMany: crud.ReadManyAction<
+export function readMany<Msg>(): crud.ReadManyAction<
   Resource.SWUOpportunitySlim,
   string[],
-  unknown
-> = crud.makeReadManyAction(NAMESPACE, (a: Resource.SWUOpportunitySlim) => a);
+  Msg
+> {
+  return crud.makeReadManyAction(
+    NAMESPACE,
+    (a: Resource.SWUOpportunitySlim) => a
+  );
+}
 
-export const readOne: crud.ReadOneAction<
+export function readOne<Msg>(): crud.ReadOneAction<
   Resource.SWUOpportunity,
   string[],
-  unknown
-> = crud.makeReadOneAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+  Msg
+> {
+  return crud.makeReadOneAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+}
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.SWUOpportunity,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.SWUOpportunity,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
+}
 
 // Raw Conversion
 

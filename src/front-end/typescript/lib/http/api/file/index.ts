@@ -12,22 +12,28 @@ export { CreateFileRequestBody } from "front-end/lib/http/api/file/lib";
 
 const NAMESPACE = "files";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   CreateFileRequestBody,
   Resource.FileRecord,
   Resource.CreateValidationErrors,
-  unknown
-> = makeCreateAction(NAMESPACE);
+  Msg
+> {
+  return makeCreateAction(NAMESPACE);
+}
 
-export const createMany: crud.CreateManyAction<
+export function createMany<Msg>(): crud.CreateManyAction<
   CreateFileRequestBody,
   Resource.FileRecord,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateManyAction(create, {});
+  Msg
+> {
+  return crud.makeCreateManyAction(create(), {});
+}
 
-export const readOne: crud.ReadOneAction<
+export function readOne<Msg>(): crud.ReadOneAction<
   Resource.FileRecord,
   string[],
-  unknown
-> = crud.makeReadOneAction(NAMESPACE, rawFileRecordToFileRecord);
+  Msg
+> {
+  return crud.makeReadOneAction(NAMESPACE, rawFileRecordToFileRecord);
+}

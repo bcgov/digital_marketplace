@@ -13,25 +13,19 @@ export function swuProposalStatusToColor(
     case SWUProposalStatus.Draft:
       return "secondary";
     case SWUProposalStatus.Submitted:
+    case SWUProposalStatus.Awarded:
       return "success";
     case SWUProposalStatus.UnderReviewTeamQuestions:
-      return "warning";
     case SWUProposalStatus.UnderReviewCodeChallenge:
-      return "warning";
     case SWUProposalStatus.UnderReviewTeamScenario:
       return "warning";
     case SWUProposalStatus.EvaluatedTeamQuestions:
-      return viewerUserType === UserType.Vendor ? "warning" : "primary";
     case SWUProposalStatus.EvaluatedCodeChallenge:
-      return viewerUserType === UserType.Vendor ? "warning" : "primary";
     case SWUProposalStatus.EvaluatedTeamScenario:
       return viewerUserType === UserType.Vendor ? "warning" : "primary";
-    case SWUProposalStatus.Awarded:
-      return "success";
     case SWUProposalStatus.NotAwarded:
       return "primary";
     case SWUProposalStatus.Disqualified:
-      return "danger";
     case SWUProposalStatus.Withdrawn:
       return "danger";
   }
