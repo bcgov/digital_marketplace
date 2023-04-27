@@ -88,6 +88,7 @@ import { SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
+import TWUBannner from "src/front-end/typescript/lib/app/view/twu-banner";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
@@ -886,6 +887,10 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           navProps.contextualActions ? "contextual-actions-visible" : ""
         } app d-flex flex-column`}
         style={{ minHeight: "100vh" }}>
+        <TWUBannner
+          show={state.showTWUBanner}
+          onClose={() => dispatch(adt("setShowTWUBanner", false))}
+        />
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : <Footer />}
