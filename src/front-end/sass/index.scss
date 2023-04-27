@@ -947,6 +947,12 @@ nav.navbar .nav-link:hover {
   }
 }
 
+.twu-banner {
+  background-color: #FCBA19;
+  padding: 0.75rem 0 0.75rem;
+  z-index: 1001; // Above nav, below modals
+}
+
 // Page-specific overrides
 
 .route-orgSWUTerms,
