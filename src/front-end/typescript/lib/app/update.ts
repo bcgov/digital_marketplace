@@ -903,17 +903,15 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
     case "setShowTWUBanner":
       return [
         state.set("showTWUBanner", msg.value),
-        [
-          ...(!msg.value
-            ? [
-                component.cmd.localStorage.setItem(
-                  TWU_BANNER_ACKNOWLEDGED,
-                  TWU_BANNER_ACKNOWLEDGED,
-                  adt("noop") as Msg
-                )
-              ]
-            : [])
-        ]
+        !msg.value
+          ? [
+              component.cmd.localStorage.setItem(
+                TWU_BANNER_ACKNOWLEDGED,
+                TWU_BANNER_ACKNOWLEDGED,
+                adt("noop") as Msg
+              )
+            ]
+          : []
       ];
 
     case "pageOrgEdit":

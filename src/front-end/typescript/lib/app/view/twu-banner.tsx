@@ -4,13 +4,14 @@ import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Container, Row, Col } from "reactstrap";
 import { adt } from "shared/lib/types";
-import { State, Msg } from "src/front-end/typescript/lib/app/types";
 
-const TWUBannner: component.base.ComponentView<State, Msg> = ({
-  state,
-  dispatch
-}) => {
-  return state.showTWUBanner ? (
+interface Props {
+  show: boolean;
+  onClose(): void;
+}
+
+const TWUBannner: component.base.View<Props> = ({ show, onClose }) => {
+  return show ? (
     <div className="main-wrapper twu-banner">
       <div className="main">
         <Container>
@@ -32,7 +33,7 @@ const TWUBannner: component.base.ComponentView<State, Msg> = ({
                 height={1.4}
                 name="times"
                 color="black"
-                onClick={() => dispatch(adt("setShowTWUBanner", false))}
+                onClick={onClose}
               />
             </Col>
           </Row>
