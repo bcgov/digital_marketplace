@@ -88,7 +88,7 @@ import { SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
-import TWUBannner from "src/front-end/typescript/lib/app/view/twu-banner";
+import TWUBannner from "front-end/lib/app/view/twu-banner";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
