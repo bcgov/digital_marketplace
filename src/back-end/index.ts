@@ -216,12 +216,12 @@ export async function initApplication() {
     throw new Error("Invalid environment variable configuration.");
   }
   // Output log level.
-  console.log(`Log level set to: ${LOG_LEVEL.toUpperCase()}`);
+  logger.info(`Log level set to: ${LOG_LEVEL.toUpperCase()}`);
   // Connect to Postgres.
   const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
   await connection.raw("SELECT 1");
-  console.log("PostgreSQL connected");
+  logger.info("PostgreSQL connected");
 
   // Create the router.
   let router: AppRouter = (
