@@ -4,6 +4,7 @@ import {
   DB_MIGRATIONS_TABLE_NAME,
   getConfigErrors,
   KNEX_DEBUG,
+  LOG_LEVEL,
   PG_CONFIG,
   SCHEDULED_DOWNTIME,
   SERVER_HOST,
@@ -214,6 +215,8 @@ export async function initApplication() {
     configErrors.forEach((error: string) => logger.error(error));
     throw new Error("Invalid environment variable configuration.");
   }
+  // Output log level.
+  console.log(`Log level set to: ${LOG_LEVEL.toUpperCase()}`);
   // Connect to Postgres.
   const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
