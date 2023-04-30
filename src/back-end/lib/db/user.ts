@@ -19,7 +19,7 @@ export type CreateUserParams = Omit<Partial<User>, "avatarImageFile"> & {
   avatarImageFile?: Id;
 };
 
-type UpdateUserParams = Omit<Partial<User>, "avatarImageFile"> & {
+export type UpdateUserParams = Omit<Partial<User>, "avatarImageFile"> & {
   updatedAt?: Date;
   avatarImageFile?: Id;
 };
@@ -61,7 +61,26 @@ export async function rawUserSlimToUserSlim(
 }
 
 export const readOneUser = tryDb<[Id], User | null>(async (connection, id) => {
-  const result = await connection<RawUser>("users").where({ id }).first();
+  const result = await connection<RawUser>("users")
+    .select(
+      "id",
+      "type",
+      "status",
+      "name",
+      "email",
+      "jobTitle",
+      "avatarImageFile",
+      "notificationsOn",
+      "acceptedTermsAt",
+      "lastAcceptedTermsAt",
+      "idpUsername",
+      "idpId",
+      "deactivatedOn",
+      "deactivatedBy",
+      "capabilities"
+    )
+    .where({ id })
+    .first();
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 
@@ -112,7 +131,23 @@ export const findOneUserByTypeAndIdp = tryDb<[UserType, string], User | null>(
 );
 
 export const readManyUsers = tryDb<[], User[]>(async (connection) => {
-  const results = await connection<RawUser>("users").select();
+  const results = await connection<RawUser>("users").select(
+    "id",
+    "type",
+    "status",
+    "name",
+    "email",
+    "jobTitle",
+    "avatarImageFile",
+    "notificationsOn",
+    "acceptedTermsAt",
+    "lastAcceptedTermsAt",
+    "idpUsername",
+    "idpId",
+    "deactivatedOn",
+    "deactivatedBy",
+    "capabilities"
+  );
   return valid(
     await Promise.all(
       results.map(async (raw) => await rawUserToUser(connection, raw))
@@ -163,7 +198,23 @@ export const createUser = tryDb<[CreateUserParams], User>(
           createdAt: now,
           updatedAt: now
         } as CreateUserParams,
-        "*"
+        [
+          "id",
+          "type",
+          "status",
+          "name",
+          "email",
+          "jobTitle",
+          "avatarImageFile",
+          "notificationsOn",
+          "acceptedTermsAt",
+          "lastAcceptedTermsAt",
+          "idpUsername",
+          "idpId",
+          "deactivatedOn",
+          "deactivatedBy",
+          "capabilities"
+        ]
       );
       if (!result) {
         throw new Error("unable to create user");

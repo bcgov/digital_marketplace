@@ -39,7 +39,7 @@ import {
 import * as userValidation from "shared/lib/validation/user";
 import { isArray } from "lodash";
 
-type UpdateRequestBody = SharedUpdateRequestBody | null;
+export type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 export type ValidatedUpdateRequestBody =
   | ADT<"updateProfile", UpdateProfileRequestBody>
