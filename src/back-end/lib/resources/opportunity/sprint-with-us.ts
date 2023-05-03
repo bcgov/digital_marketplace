@@ -54,6 +54,7 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 interface ValidatedCreateSWUOpportunityPhaseBody
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
@@ -272,7 +273,7 @@ const create: crud.Create<
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
       const validatedAssignmentDate =
-        opportunityValidation.validateAssignmentDate(
+        genericValidation.validateDateFormatMinMax(
           assignmentDate,
           getValidValue(validatedProposalDeadline, now)
         );
@@ -282,7 +283,7 @@ const create: crud.Create<
         "startDate"
       );
       const validatedInceptionPhaseStartDate =
-        opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
+        genericValidation.validateDateFormatMinMax(
           inceptionPhaseStartDate,
           getValidValue(validatedAssignmentDate, now)
         );
@@ -472,26 +473,24 @@ const create: crud.Create<
         });
       }
 
-      const validatedTitle = opportunityValidation.validateTitle(title);
-      const validatedTeaser = opportunityValidation.validateTeaser(teaser);
-      const validatedRemoteOk =
-        opportunityValidation.validateRemoteOk(remoteOk);
-      const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+      const validatedTitle = genericValidation.validateTitle(title);
+      const validatedTeaser = genericValidation.validateTeaser(teaser);
+      const validatedRemoteOk = genericValidation.validateRemoteOk(remoteOk);
+      const validatedRemoteDesc = genericValidation.validateRemoteDesc(
         remoteDesc,
         getValidValue(validatedRemoteOk, false)
       );
-      const validatedLocation =
-        opportunityValidation.validateLocation(location);
+      const validatedLocation = genericValidation.validateLocation(location);
       const validatedTotalMaxBudget =
         opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
       const validatedMinTeamMembers =
         opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
       const validatedMandatorySkills =
-        opportunityValidation.validateMandatorySkills(mandatorySkills);
+        genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
       const validatedDescription =
-        opportunityValidation.validateDescription(description);
+        genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
         opportunityValidation.validateQuestionsWeight(questionsWeight);
       const validatedCodeChallengeWeight =
@@ -851,7 +850,7 @@ const update: crud.Update<
               swuOpportunity
             );
           const validatedAssignmentDate =
-            opportunityValidation.validateAssignmentDate(
+            genericValidation.validateDateFormatMinMax(
               assignmentDate,
               getValidValue(validatedProposalDeadline, now)
             );
@@ -860,7 +859,7 @@ const update: crud.Update<
             "startDate"
           );
           const validatedInceptionPhaseStartDate =
-            opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
+            genericValidation.validateDateFormatMinMax(
               inceptionPhaseStartDate,
               getValidValue(
                 validatedAssignmentDate,
@@ -1061,26 +1060,26 @@ const update: crud.Update<
             } as ValidatedUpdateRequestBody);
           }
 
-          const validatedTitle = opportunityValidation.validateTitle(title);
-          const validatedTeaser = opportunityValidation.validateTeaser(teaser);
+          const validatedTitle = genericValidation.validateTitle(title);
+          const validatedTeaser = genericValidation.validateTeaser(teaser);
           const validatedRemoteOk =
-            opportunityValidation.validateRemoteOk(remoteOk);
-          const validatedRemoteDesc = opportunityValidation.validateRemoteDesc(
+            genericValidation.validateRemoteOk(remoteOk);
+          const validatedRemoteDesc = genericValidation.validateRemoteDesc(
             remoteDesc,
             getValidValue(validatedRemoteOk, false)
           );
           const validatedLocation =
-            opportunityValidation.validateLocation(location);
+            genericValidation.validateLocation(location);
           const validatedTotalMaxBudget =
             opportunityValidation.validateTotalMaxBudget(totalMaxBudget);
           const validatedMinTeamMembers =
             opportunityValidation.validateMinimumTeamMembers(minTeamMembers);
           const validatedMandatorySkills =
-            opportunityValidation.validateMandatorySkills(mandatorySkills);
+            genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
           const validatedDescription =
-            opportunityValidation.validateDescription(description);
+            genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
             opportunityValidation.validateQuestionsWeight(questionsWeight);
           const validatedCodeChallengeWeight =
@@ -1271,20 +1270,20 @@ const update: crud.Update<
           // Perform validation on draft to ensure it's ready for publishing
           if (
             !allValid([
-              opportunityValidation.validateTitle(
+              genericValidation.validateTitle(
                 validatedSWUOpportunity.value.title
               ),
-              opportunityValidation.validateTeaser(
+              genericValidation.validateTeaser(
                 validatedSWUOpportunity.value.teaser
               ),
-              opportunityValidation.validateRemoteOk(
+              genericValidation.validateRemoteOk(
                 validatedSWUOpportunity.value.remoteOk
               ),
-              opportunityValidation.validateRemoteDesc(
+              genericValidation.validateRemoteDesc(
                 validatedSWUOpportunity.value.remoteDesc,
                 validatedSWUOpportunity.value.remoteOk
               ),
-              opportunityValidation.validateLocation(
+              genericValidation.validateLocation(
                 validatedSWUOpportunity.value.location
               ),
               opportunityValidation.validateTotalMaxBudget(
@@ -1293,13 +1292,13 @@ const update: crud.Update<
               opportunityValidation.validateMinimumTeamMembers(
                 validatedSWUOpportunity.value.minTeamMembers
               ),
-              opportunityValidation.validateMandatorySkills(
+              genericValidation.validateMandatorySkills(
                 validatedSWUOpportunity.value.mandatorySkills
               ),
               opportunityValidation.validateOptionalSkills(
                 validatedSWUOpportunity.value.optionalSkills
               ),
-              opportunityValidation.validateDescription(
+              genericValidation.validateDescription(
                 validatedSWUOpportunity.value.description
               ),
               opportunityValidation.validateQuestionsWeight(
@@ -1807,6 +1806,11 @@ const delete_: crud.Delete<
   };
 };
 
+/**
+ * Resources defined here are exported for use in the router
+ *
+ * @see {@link createRouter} in 'src/back-end/index.ts'
+ */
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,

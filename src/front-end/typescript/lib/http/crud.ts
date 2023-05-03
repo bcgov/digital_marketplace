@@ -40,8 +40,15 @@ export type DeleteAction<ValidResponse, InvalidResponse, Msg> = (
   handleResponse: HandleResponse<ValidResponse, InvalidResponse, Msg>
 ) => component.cmd.Cmd<Msg>;
 
-// makeCreateAction
-
+/**
+ * Ensuring the http request is formatted in the correct way,
+ * prior to sending to the back-end
+ *
+ * @param path
+ * @param transformResponse
+ * @param query
+ * @returns
+ */
 export function makeCreateAction<
   RequestBody extends object | null,
   RawResponse,
@@ -71,7 +78,12 @@ export function makeCreateManyAction<
   InvalidItem,
   Msg
 >(
-  create: CreateAction<RequestBodyItem, ValidItem, InvalidItem, unknown>,
+  create: CreateAction<
+    RequestBodyItem,
+    ValidItem,
+    InvalidItem,
+    CreateManyAccumulator<ValidItem, InvalidItem>
+  >,
   emptyInvalidResult: InvalidItem
 ): CreateManyAction<RequestBodyItem, ValidItem, InvalidItem, Msg> {
   return (items, handleResponse) => {
@@ -109,7 +121,7 @@ export function makeCreateManyAction<
             ? invalid(accumulator.invalidResults)
             : valid(accumulator.validResults)
         )
-    ) as component.cmd.Cmd<Msg>;
+    );
   };
 }
 

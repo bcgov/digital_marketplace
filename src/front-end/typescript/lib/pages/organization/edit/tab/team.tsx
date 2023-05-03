@@ -177,16 +177,16 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         const userEmail = FormField.getValue(s);
         cmd = component_.cmd.join(
           cmd,
-          api.affiliations.create(
+          api.affiliations.create<
+            api.ResponseValidation<Affiliation, CreateValidationErrors>
+          >()(
             {
               userEmail,
               organization: state.organization.id,
               membershipType: MembershipType.Member
             },
             (response) => response
-          ) as component_.Cmd<
-            api.ResponseValidation<Affiliation, CreateValidationErrors>
-          >,
+          ),
           (acc, response) => {
             switch (response.tag) {
               case "valid":
@@ -256,12 +256,15 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("approveAffiliationLoading", msg.value.id)
           .set("showModal", null),
         [
-          api.affiliations.update(msg.value.id, null, (response) =>
-            adt("onApproveAffiliationResponse", [
-              api.isValid(response),
-              msg.value
-            ])
-          ) as component_.Cmd<Msg>
+          api.affiliations.update<Msg>()(
+            msg.value.id,
+            null,
+            (response) =>
+              adt("onApproveAffiliationResponse", [
+                api.isValid(response),
+                msg.value
+              ]) as Msg
+          )
         ]
       ];
 
@@ -297,12 +300,14 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("removeTeamMemberLoading", msg.value.id),
         [
-          api.affiliations.delete_(msg.value.id, (response) =>
-            adt("onRemoveTeamMemberResponse", [
-              api.isValid(response),
-              msg.value
-            ])
-          ) as component_.Cmd<Msg>
+          api.affiliations.delete_<Msg>()(
+            msg.value.id,
+            (response) =>
+              adt("onRemoveTeamMemberResponse", [
+                api.isValid(response),
+                msg.value
+              ]) as Msg
+          )
         ]
       ];
 
@@ -488,6 +493,7 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
       <EditTabHeader
         legalName={state.organization.legalName}
         swuQualified={state.swuQualified}
+        twuQualified={state.twuQualified}
       />
       <Row className="mt-5">
         <Col xs="12">

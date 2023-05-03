@@ -4,7 +4,8 @@ import {
   makePageMetadata,
   prefixPath,
   updateValid,
-  viewValid
+  viewValid,
+  Intersperse
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -15,14 +16,6 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import {
-  cwuOpportunityStatusToColor,
-  cwuOpportunityStatusToTitleCase
-} from "front-end/lib/pages/opportunity/code-with-us/lib";
-import {
-  swuOpportunityStatusToColor,
-  swuOpportunityStatusToTitleCase
-} from "front-end/lib/pages/opportunity/sprint-with-us/lib";
 import {
   cwuProposalStatusToColor,
   cwuProposalStatusToTitleCase
@@ -43,15 +36,23 @@ import { Col, Row } from "reactstrap";
 import { compareDates, formatDate } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
+import * as TWUO from "shared/lib/resources/opportunity/team-with-us";
 import {
   doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   OrganizationSlim
 } from "shared/lib/resources/organization";
 import * as CWUP from "shared/lib/resources/proposal/code-with-us";
 import * as SWUP from "shared/lib/resources/proposal/sprint-with-us";
+import * as TWUP from "shared/lib/resources/proposal/team-with-us";
 import { isVendor, User } from "shared/lib/resources/user";
 import { adt, ADT, Defined } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import oppHelpers from "../interfaces/opportunities";
+import {
+  twuProposalStatusToColor,
+  twuProposalStatusToTitleCase
+} from "front-end/lib/pages/proposal/team-with-us/lib";
 
 interface ValidState {
   table: {
@@ -65,7 +66,8 @@ interface ValidState {
     state: Immutable<Table.State>;
   };
   viewerUser: User;
-  isQualified?: boolean;
+  isSWUQualified?: boolean;
+  isTWUQualified?: boolean;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -73,9 +75,21 @@ export type State = Validation<Immutable<ValidState>, null>;
 type InitResponse =
   | ADT<
       "vendor",
-      [CWUP.CWUProposalSlim[], SWUP.SWUProposalSlim[], OrganizationSlim[]]
+      [
+        CWUP.CWUProposalSlim[],
+        SWUP.SWUProposalSlim[],
+        TWUP.TWUProposalSlim[],
+        OrganizationSlim[]
+      ]
     >
-  | ADT<"publicSector", [CWUO.CWUOpportunitySlim[], SWUO.SWUOpportunitySlim[]]>;
+  | ADT<
+      "publicSector",
+      [
+        CWUO.CWUOpportunitySlim[],
+        SWUO.SWUOpportunitySlim[],
+        TWUO.TWUOpportunitySlim[]
+      ]
+    >;
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
@@ -88,11 +102,13 @@ export type RouteParams = null;
 function makeVendorBodyRows(
   cwu: CWUP.CWUProposalSlim[],
   swu: SWUP.SWUProposalSlim[],
+  twu: TWUP.TWUProposalSlim[],
   viewerUser: User
 ): Table.BodyRows {
   return [
     ...cwu.map((p) => adt("cwu" as const, p)),
-    ...swu.map((p) => adt("swu" as const, p))
+    ...swu.map((p) => adt("swu" as const, p)),
+    ...twu.map((p) => adt("twu" as const, p))
   ]
     .sort((a, b) => compareDates(a.value.createdAt, b.value.createdAt) * -1)
     .map((p) => {
@@ -102,15 +118,26 @@ function makeVendorBodyRows(
             <div>
               <Link
                 dest={routeDest(
-                  adt(p.tag === "cwu" ? "proposalCWUEdit" : "proposalSWUEdit", {
-                    proposalId: p.value.id,
-                    opportunityId: p.value.opportunity.id
-                  })
+                  adt(
+                    p.tag === "cwu"
+                      ? "proposalCWUEdit"
+                      : p.tag === "swu"
+                      ? "proposalSWUEdit"
+                      : "proposalTWUEdit",
+                    {
+                      proposalId: p.value.id,
+                      opportunityId: p.value.opportunity.id
+                    }
+                  )
                 )}>
                 {p.value.opportunity.title}
               </Link>
               <div className="small text-secondary text-uppercase">
-                {p.tag === "cwu" ? "Code With Us" : "Sprint With Us"}
+                {p.tag === "cwu"
+                  ? "Code With Us"
+                  : p.tag === "swu"
+                  ? "Sprint With Us"
+                  : "Team With Us"}
               </div>
             </div>
           )
@@ -121,7 +148,9 @@ function makeVendorBodyRows(
               color={
                 p.tag === "cwu"
                   ? cwuProposalStatusToColor(p.value.status, viewerUser.type)
-                  : swuProposalStatusToColor(p.value.status, viewerUser.type)
+                  : p.tag === "swu"
+                  ? swuProposalStatusToColor(p.value.status, viewerUser.type)
+                  : twuProposalStatusToColor(p.value.status, viewerUser.type)
               }
               text={
                 p.tag === "cwu"
@@ -129,7 +158,12 @@ function makeVendorBodyRows(
                       p.value.status,
                       viewerUser.type
                     )
-                  : swuProposalStatusToTitleCase(
+                  : p.tag === "swu"
+                  ? swuProposalStatusToTitleCase(
+                      p.value.status,
+                      viewerUser.type
+                    )
+                  : twuProposalStatusToTitleCase(
                       p.value.status,
                       viewerUser.type
                     )
@@ -147,36 +181,34 @@ function makeVendorBodyRows(
 function makePublicSectorBodyRows(
   cwu: CWUO.CWUOpportunitySlim[],
   swu: SWUO.SWUOpportunitySlim[],
+  twu: TWUO.TWUOpportunitySlim[],
   viewerUser: User
 ): Table.BodyRows {
   return [
     ...cwu.map((o) => adt("cwu" as const, o)),
-    ...swu.map((o) => adt("swu" as const, o))
+    ...swu.map((o) => adt("swu" as const, o)),
+    ...twu.map((o) => adt("twu" as const, o))
   ]
     .filter((o) => o.value.createdBy?.id === viewerUser.id)
     .sort((a, b) => compareDates(a.value.createdAt, b.value.createdAt) * -1)
     .map((p) => {
-      const defaultTitle =
-        p.tag === "cwu"
-          ? CWUO.DEFAULT_OPPORTUNITY_TITLE
-          : SWUO.DEFAULT_OPPORTUNITY_TITLE;
+      const defaultTitle = oppHelpers(p).dashboard.getDefaultTitle();
       return [
         {
           children: (
             <div>
               <Link
                 dest={routeDest(
-                  adt(
-                    p.tag === "cwu"
-                      ? "opportunityCWUEdit"
-                      : "opportunitySWUEdit",
-                    { opportunityId: p.value.id }
-                  )
+                  oppHelpers(p).dashboard.getOppEditRoute(p.value.id)
                 )}>
                 {p.value.title || defaultTitle}
               </Link>
               <div className="small text-secondary text-uppercase">
-                {p.tag === "cwu" ? "Code With Us" : "Sprint With Us"}
+                {p.tag === "cwu"
+                  ? "Code With Us"
+                  : p.tag === "swu"
+                  ? "Sprint With Us"
+                  : "Team With Us"}
               </div>
             </div>
           )
@@ -184,16 +216,8 @@ function makePublicSectorBodyRows(
         {
           children: (
             <Badge
-              color={
-                p.tag === "cwu"
-                  ? cwuOpportunityStatusToColor(p.value.status)
-                  : swuOpportunityStatusToColor(p.value.status)
-              }
-              text={
-                p.tag === "cwu"
-                  ? cwuOpportunityStatusToTitleCase(p.value.status)
-                  : swuOpportunityStatusToTitleCase(p.value.status)
-              }
+              color={oppHelpers(p).dashboard.getOppStatusColor(p.value.status)}
+              text={oppHelpers(p).dashboard.getOppStatusText(p.value.status)}
             />
           )
         },
@@ -240,7 +264,8 @@ const init: component_.page.Init<
     return [
       valid(
         immutable({
-          isQualified: false,
+          isSWUQualified: false,
+          isTWUQualified: false,
           viewerUser,
           table: {
             title,
@@ -259,33 +284,39 @@ const init: component_.page.Init<
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
         vendor
-          ? (component_.cmd.join3(
+          ? component_.cmd.join4(
               api.proposals.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
               api.proposals.swu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              api.organizations.owned.readMany((response) =>
+              api.proposals.twu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu, orgs) =>
+              api.organizations.owned.readMany()((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu, twu, orgs) =>
                 adt(
                   "onInitResponse",
-                  adt("vendor", [cwu, swu, orgs] as const)
+                  adt("vendor", [cwu, swu, twu, orgs] as const)
                 ) as Msg
-            ) as component_.Cmd<Msg>)
-          : component_.cmd.join(
-              api.opportunities.cwu.readMany((response) =>
+            )
+          : component_.cmd.join3(
+              api.opportunities.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              api.opportunities.swu.readMany((response) =>
+              api.opportunities.swu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu) =>
+              api.opportunities.twu.readMany()((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu, twu) =>
                 adt(
                   "onInitResponse",
-                  adt("publicSector", [cwu, swu] as const)
+                  adt("publicSector", [cwu, swu, twu]) as InitResponse
                 ) as Msg
             )
       ]
@@ -310,19 +341,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       case "onInitResponse": {
         switch (msg.value.tag) {
           case "vendor": {
-            const [cwuProposals, swuProposals, organizations] = msg.value.value;
-            const isQualified = organizations.reduce(
-              (acc, o) => acc || doesOrganizationMeetSWUQualification(o),
-              false as boolean
+            const [cwuProposals, swuProposals, twuProposals, organizations] =
+              msg.value.value;
+            const isSWUQualified = organizations.some(
+              doesOrganizationMeetSWUQualification
+            );
+            const isTWUQualified = organizations.some(
+              doesOrganizationMeetTWUQualification
             );
             return [
               state
-                .set("isQualified", isQualified)
+                .set("isSWUQualified", isSWUQualified)
+                .set("isTWUQualified", isTWUQualified)
                 .setIn(
                   ["table", "bodyRows"],
                   makeVendorBodyRows(
                     cwuProposals,
                     swuProposals,
+                    twuProposals,
                     state.viewerUser
                   )
                 ),
@@ -331,13 +367,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           }
           case "publicSector":
           default: {
-            const [cwuOpportunities, swuOpportunities] = msg.value.value;
+            const [cwuOpportunities, swuOpportunities, twuOpportunities] =
+              msg.value.value;
             return [
               state.setIn(
                 ["table", "bodyRows"],
                 makePublicSectorBodyRows(
                   cwuOpportunities,
                   swuOpportunities,
+                  twuOpportunities,
                   state.viewerUser
                 )
               ),
@@ -483,9 +521,37 @@ export const component: component_.page.Component<
   },
 
   getAlerts: getAlertsValid((state) => {
+    const programsToQualify = [
+      ...(state.isSWUQualified
+        ? []
+        : [
+            {
+              name: "Sprint With Us",
+              qualificationLink: (
+                <Link dest={routeDest(adt("learnMoreSWU", null))}>
+                  Qualified Sprint With Us Supplier
+                </Link>
+              )
+            }
+          ]),
+      ...(state.isTWUQualified
+        ? []
+        : [
+            {
+              name: "Team With Us",
+              qualificationLink: (
+                <Link dest={routeDest(adt("learnMoreTWU", null))}>
+                  Qualified Team With Us Supplier
+                </Link>
+              )
+            }
+          ])
+    ];
     return {
       info:
-        isVendor(state.viewerUser) && !state.isQualified && state.table
+        isVendor(state.viewerUser) &&
+        programsToQualify.length > 0 &&
+        state.table
           ? [
               {
                 text: (
@@ -495,10 +561,17 @@ export const component: component_.page.Component<
                       create an organization
                     </Link>{" "}
                     and be a{" "}
-                    <Link dest={routeDest(adt("learnMoreSWU", null))}>
-                      Qualified Supplier
-                    </Link>{" "}
-                    in order to submit proposals to Sprint With Us
+                    <Intersperse
+                      collection={programsToQualify.map(
+                        ({ qualificationLink }) => qualificationLink
+                      )}
+                      separator={" or "}
+                    />{" "}
+                    in order to submit proposals to{" "}
+                    <Intersperse
+                      collection={programsToQualify.map(({ name }) => name)}
+                      separator={" or "}
+                    />{" "}
                     opportunities.
                   </span>
                 )

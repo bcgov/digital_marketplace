@@ -181,7 +181,10 @@ export function view<
     fullWidth = false,
     backgroundColor = "white"
   } = component;
-  const dispatchPage = component_.app.mapDispatch(dispatch, mapPageMsg);
+  const dispatchPage = component_.app.mapDispatch<InnerMsg, PageMsg, Route>(
+    dispatch,
+    mapPageMsg
+  );
   const viewProps = {
     dispatch: dispatchPage,
     state: pageState

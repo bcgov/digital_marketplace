@@ -131,11 +131,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("awardLoading", msg.value),
         [
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             msg.value,
             adt("award", ""),
             (response) => adt("onAwardResponse", response) as Msg
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -159,7 +159,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 )
               ),
               component_.cmd.join(
-                api.opportunities.swu.readOne(opportunity.id, (response) =>
+                api.opportunities.swu.readOne()(opportunity.id, (response) =>
                   api.getValidValue(response, opportunity)
                 ),
                 api.proposals.swu.readMany(opportunity.id)((response) =>
@@ -168,7 +168,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 (newOpp, newProposals) =>
                   adt("onInitResponse", [newOpp, newProposals]) as Msg
               )
-            ] as component_.Cmd<Msg>[]
+            ]
           ];
         case "invalid":
         case "unhandled":

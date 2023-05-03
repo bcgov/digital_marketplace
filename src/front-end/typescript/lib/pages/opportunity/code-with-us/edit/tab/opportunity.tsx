@@ -197,11 +197,11 @@ function updateStatus(
         return "cancel";
     }
   })();
-  return api.opportunities.cwu.update(
+  return api.opportunities.cwu.update<InnerMsg>()(
     opportunityId,
     adt(updateAction, ""),
     mapResult
-  ) as component_.Cmd<InnerMsg>;
+  );
 }
 
 function handleUpdateStatusResult(
@@ -284,9 +284,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startStartEditingLoading(state),
         [
-          api.opportunities.cwu.readOne(opportunity.id, (result) =>
+          api.opportunities.cwu.readOne<Msg>()(opportunity.id, (result) =>
             adt("onStartEditingResponse", result)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -527,9 +527,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startDeleteLoading(state),
         [
-          api.opportunities.cwu.delete_(opportunity.id, (result) =>
+          api.opportunities.cwu.delete_<Msg>()(opportunity.id, (result) =>
             adt("onDeleteResult", result)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

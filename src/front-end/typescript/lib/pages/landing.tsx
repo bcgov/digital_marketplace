@@ -48,11 +48,7 @@ const init: component_.page.Init<
       totalCount: 0,
       totalAwarded: 0
     },
-    [
-      api.metrics.readMany((response) =>
-        adt("onInitResponse", response)
-      ) as component_.Cmd<Msg>
-    ]
+    [api.metrics.readMany<Msg>()((response) => adt("onInitResponse", response))]
   ];
 };
 
@@ -178,6 +174,29 @@ const Programs: component_.base.View = () => {
               {
                 button: true,
                 dest: routeDest(adt("learnMoreCWU", null)),
+                children: ["Learn More"],
+                color: "primary",
+                outline: true,
+                symbol_: rightPlacement(iconLinkSymbol("arrow-right"))
+              }
+            ]}
+          />
+          <ProgramCard
+            img={prefixPath("/images/illustrations/team_with_us.svg")}
+            title="Team With Us"
+            className="mb-4 mb-md-0"
+            description={
+              <div>
+                <p>
+                  Provide individual tech resources to work with an existing
+                  Agile Team. Get paid on a time and materials basis.
+                </p>
+              </div>
+            }
+            links={[
+              {
+                button: true,
+                dest: routeDest(adt("learnMoreTWU", null)),
                 children: ["Learn More"],
                 color: "primary",
                 outline: true,

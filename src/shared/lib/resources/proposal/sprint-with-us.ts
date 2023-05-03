@@ -150,7 +150,7 @@ export function compareSWUProposalsForPublicSector(
     return statusComparison;
   }
   // Compare by score.
-  // Give precendence to scored proposals.
+  // Give precedence to scored proposals.
   const aScore = a[byScore];
   const bScore = b[byScore];
   if (aScore === undefined && bScore !== undefined) {

@@ -73,7 +73,6 @@ const EditTabHeader: component.base.View<Props> = ({
           <h3 className="mb-2">
             Sprint With Us:&nbsp;
             <Link
-              newTab
               dest={routeDest(
                 adt("opportunitySWUView", { opportunityId: opportunity.id })
               )}>

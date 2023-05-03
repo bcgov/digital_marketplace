@@ -35,7 +35,7 @@ export type InnerMsg =
   | ADT<"saveChanges">
   | ADT<"onSaveChangesResponse", OrgForm.PersistResult>
   | ADT<"archive">
-  | ADT<"onArchiveResponse", boolean>
+  | ADT<"onArchiveResponse", OrgResource.Organization | null>
   | ADT<"hideArchiveModal">
   | ADT<"hideSaveChangesModal">;
 
@@ -87,12 +87,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state,
         [
-          api.organizations.delete_(organization.id, (response) =>
+          api.organizations.delete_<Msg>()(organization.id, (response) =>
             adt(
               "onArchiveResponse",
               api.isValid(response) ? response.value : null
             )
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -217,12 +217,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startEditingLoading(state),
         [
-          api.organizations.readOne(state.organization.id, (response) =>
+          api.organizations.readOne<Msg>()(state.organization.id, (response) =>
             adt(
               "onStartEditingResponse",
               api.isValid(response) ? response.value : null
             )
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     case "onStartEditingResponse": {
@@ -276,6 +276,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
       <EditTabHeader
         legalName={state.organization.legalName}
         swuQualified={state.swuQualified}
+        twuQualified={state.twuQualified}
       />
       <Row className="mt-5">
         <Col xs="12">

@@ -61,14 +61,14 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         state.set("loading", msg.value),
         [
-          api.users.update(
+          api.users.update<Msg>()(
             state.profileUser.id,
             adt(
               "updateCapabilities",
               capabilities.map(({ name }) => name)
             ),
             (response) => adt("onToggleCheckedResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

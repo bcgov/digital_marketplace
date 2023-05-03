@@ -4,22 +4,26 @@ import { Id } from "shared/lib/types";
 
 const NAMESPACE = "affiliations";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.Affiliation,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawAffiliationToAffiliation);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawAffiliationToAffiliation);
+}
 
-export const readMany: crud.ReadManyAction<
+export function readMany<Msg>(): crud.ReadManyAction<
   Resource.AffiliationSlim,
   string[],
-  unknown
-> = crud.makeReadManyAction(NAMESPACE, (a: Resource.AffiliationSlim) => a);
+  Msg
+> {
+  return crud.makeReadManyAction(NAMESPACE, (a: Resource.AffiliationSlim) => a);
+}
 
-export function readManyForOrganization(
+export function readManyForOrganization<Msg>(
   organizationId: Id
-): crud.ReadManyAction<Resource.AffiliationMember, string[], unknown> {
+): crud.ReadManyAction<Resource.AffiliationMember, string[], Msg> {
   return crud.makeReadManyAction(
     NAMESPACE,
     (a: Resource.AffiliationMember) => a,
@@ -27,18 +31,22 @@ export function readManyForOrganization(
   );
 }
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   null,
   Resource.Affiliation,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawAffiliationToAffiliation);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawAffiliationToAffiliation);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.Affiliation,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawAffiliationToAffiliation);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawAffiliationToAffiliation);
+}
 
 // Raw Conversion
 

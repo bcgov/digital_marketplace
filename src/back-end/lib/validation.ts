@@ -50,7 +50,192 @@ import {
   validateSWUProposalTeamCapabilities,
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
-import { isArray } from "util";
+import {
+  parseTWUServiceArea,
+  TWUOpportunity
+} from "shared/lib/resources/opportunity/team-with-us";
+import {
+  CreateTWUTeamMemberBody,
+  CreateTWUTeamMemberBodyValidationErrors,
+  TWUProposal
+} from "shared/lib/resources/proposal/team-with-us";
+import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
+
+/**
+ * TWU - Team With Us Validation
+ */
+
+/**
+ * Checks to see if the proposalId passed matches the expected regex pattern of
+ * a UUID for proposals, that the request is coming from an authenticated user
+ * and that the proposal exists in the db
+ *
+ * @param connection
+ * @param proposalId
+ * @param session
+ */
+export async function validateTWUProposalId(
+  connection: db.Connection,
+  proposalId: Id,
+  session: AuthenticatedSession
+): Promise<Validation<TWUProposal>> {
+  try {
+    const validatedId = validateUUID(proposalId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneTWUProposal(
+      connection,
+      proposalId,
+      session
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const proposal = dbResult.value;
+    if (!proposal) {
+      return invalid(["The specified proposal was not found."]);
+    }
+    return valid(proposal);
+  } catch (exception) {
+    return invalid(["Please select a valid proposal."]);
+  }
+}
+
+/**
+ * Checks that a TWU OpportunityId reflects something that lives in the db
+ *
+ * @param connection
+ * @param opportunityId
+ * @param session
+ */
+export async function validateTWUOpportunityId(
+  connection: db.Connection,
+  opportunityId: Id,
+  session: Session
+): Promise<Validation<TWUOpportunity>> {
+  try {
+    const validatedId = validateUUID(opportunityId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneTWUOpportunity(
+      connection,
+      opportunityId,
+      session
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const opportunity = dbResult.value;
+    if (!opportunity) {
+      return invalid(["The specified Team With Us opportunity was not found."]);
+    }
+    return valid(opportunity);
+  } catch (exception) {
+    return invalid(["Please select a valid Team With Us opportunity."]);
+  }
+}
+
+/**
+ * Takes a string from a validates it is a valid Team With Us service area in the database.
+ *
+ * @param raw - string argument
+ * @param connection - Knex connection wrapper
+ * @returns
+ */
+export async function validateServiceArea(
+  connection: db.Connection,
+  raw: string
+): Promise<Validation<ServiceAreaId>> {
+  const parsed = parseTWUServiceArea(raw);
+  if (!parsed) {
+    return invalid([`"${raw}" is not a valid service area.`]);
+  }
+  try {
+    const dbResult = await db.readOneServiceAreaByServiceArea(
+      connection,
+      parsed
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const serviceArea = dbResult.value;
+    if (serviceArea) {
+      return valid(serviceArea);
+    } else {
+      return invalid(["The specified service area was not found."]);
+    }
+  } catch (e) {
+    return invalid(["Please specify a valid service area."]);
+  }
+}
+
+/**
+ * Validates a list of service areas in the db.
+ *
+ * @param raw - string array argument
+ * @param connection - Knex connection wrapper
+ * @returns
+ */
+export function validateServiceAreas(
+  connection: db.Connection,
+  raw: string[]
+): Promise<ArrayValidation<ServiceAreaId>> {
+  return validateArrayAsync(raw, (v) => validateServiceArea(connection, v));
+}
+
+/**
+ * Checks to see if a TWU proposal's members are affiliated with the
+ * organization in the proposal
+ *
+ * @param connection - database connection
+ * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
+ * @param organization - organization id
+ */
+export function validateTWUProposalTeam(
+  connection: db.Connection,
+  raw: CreateTWUTeamMemberBody[],
+  organization: Id
+): Promise<
+  ArrayValidation<
+    CreateTWUTeamMemberBody,
+    CreateTWUTeamMemberBodyValidationErrors
+  >
+> {
+  return validateArrayCustomAsync(
+    raw,
+    async (rawMember) => {
+      const validatedMember = await validateMember(
+        connection,
+        getString(rawMember, "member"),
+        organization
+      );
+      const validatedHourlyRate = validateTWUHourlyRate(
+        getNumber<number>(rawMember, "hourlyRate")
+      );
+      if (isValid(validatedMember) && isValid(validatedHourlyRate)) {
+        return valid({
+          member: validatedMember.value.id,
+          hourlyRate: validatedHourlyRate.value
+        });
+      } else {
+        return invalid({
+          member: getInvalidValue<string[], undefined>(
+            validatedMember,
+            undefined
+          ),
+          hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+        }) as Validation<
+          CreateTWUTeamMemberBody,
+          CreateTWUTeamMemberBodyValidationErrors
+        >;
+      }
+    },
+    {}
+  );
+}
 
 export async function validateUserId(
   connection: db.Connection,
@@ -167,6 +352,9 @@ export function validateFilePath(path: string): Validation<string> {
   return validateGenericString(path, "File path");
 }
 
+/**
+ * CWU - Code With Us Validation
+ */
 export async function validateCWUOpportunityId(
   connection: db.Connection,
   opportunityId: Id,
@@ -223,6 +411,9 @@ export async function validateCWUProposalId(
   }
 }
 
+/**
+ * SWU - Sprint With Us Validation
+ */
 export async function validateSWUProposalId(
   connection: db.Connection,
   proposalId: Id,
@@ -380,6 +571,14 @@ export async function validateTeamMember(
   }
 }
 
+/**
+ * Checks to see if there is at least one member in an array of members, and
+ * that they are a ScrumMaster and that only one member is a Scrum Master.
+ *
+ * @param connection
+ * @param raw - Member as member id and boolean value as scrumMaster true/false
+ * @param organization
+ */
 export async function validateSWUProposalTeamMembers(
   connection: db.Connection,
   raw: any,
@@ -390,7 +589,7 @@ export async function validateSWUProposalTeamMembers(
     CreateSWUProposalTeamMemberValidationErrors
   >
 > {
-  if (!isArray(raw)) {
+  if (!Array.isArray(raw)) {
     return invalid([
       { parseFailure: ["Please provide an array of selected team members."] }
     ]);
@@ -494,7 +693,7 @@ export async function validateSWUProposalTeam(
   return validateSWUProposalTeamCapabilities(opportunity, teamMembers);
 }
 
-export async function validateSWUProposalOrganization(
+export async function validateDraftProposalOrganization(
   connection: db.Connection,
   organization: Id | undefined,
   session: Session
