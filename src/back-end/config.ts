@@ -1,4 +1,4 @@
-import { makeDomainLogger, parseLogLevel } from "back-end/lib/logger";
+import { LogLevel, makeDomainLogger, parseLogLevel } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import dotenv from "dotenv";
 import findUp from "find-up";
@@ -54,7 +54,7 @@ export const ENV = NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, "back-end:config");
 
-export const LOG_LEVEL =
+export const LOG_LEVEL: LogLevel =
   parseLogLevel(get("LOG_LEVEL", ENV === "development" ? "debug" : "info")) ??
   "info";
 
