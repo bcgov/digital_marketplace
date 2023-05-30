@@ -8,9 +8,7 @@
       "back-end/*": ["../../src/back-end/*"],
       "shared/*": ["../../src/shared/*"]
     },
-    "types": ["node", "mocha"]
+    "types": ["node", "jest"]
   },
-  "include": [
-    "**/*.ts"
-  ]
+  "include": ["**/*.ts"]
 }

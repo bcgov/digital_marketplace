@@ -1,4 +1,5 @@
 import { TITLE as SWU_TERMS_TITLE } from "front-end/lib/pages/organization/sprint-with-us-terms";
+import { TITLE as TWU_TERMS_TITLE } from "front-end/lib/pages/organization/team-with-us-terms";
 import React from "react";
 import {
   AffiliationMember,
@@ -125,6 +126,17 @@ export const acceptedSWUTerms = {
   })
 };
 
+export const acceptedTWUTerms = {
+  success: (organization: Organization) => ({
+    title: "Accepted Terms & Conditions",
+    body: `Successfully accepted the ${TWU_TERMS_TITLE} for ${organization.legalName}.`
+  }),
+  error: (organization: Organization) => ({
+    title: "Unable to Accept Terms & Conditions",
+    body: `An error occurred while attempting to accept the ${TWU_TERMS_TITLE} for ${organization.legalName}. Please try again later.`
+  })
+};
+
 export const leftOrganization = {
   success: (aff: AffiliationSlim) => ({
     title: "Left Organization",
@@ -156,4 +168,15 @@ export const rejectedOrganizationRequest = {
     title: "Unable to Reject Request",
     body: `An error occurred while attempting to reject the request to join ${aff.organization.legalName}. Please try again later.`
   })
+};
+
+export const serviceAreasUpdated = {
+  success: {
+    title: "Service Areas Updated",
+    body: "Your service areas have been successfully updated."
+  },
+  error: {
+    title: "Unable to Service Areas",
+    body: "Your service areas could not be updated. Please try again later."
+  }
 };

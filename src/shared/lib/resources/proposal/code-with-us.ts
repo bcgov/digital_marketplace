@@ -24,27 +24,31 @@ export enum CWUProposalEvent {
   ScoreEntered = "SCORE_ENTERED"
 }
 
+/**
+ * User-defined type guard to narrow raw input to a CWUProposalStatus.
+ *
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
+ *
+ * @param raw - a string value
+ * @returns boolean
+ */
+function isCWUProposalStatus(
+  raw: string | CWUProposalStatus
+): raw is CWUProposalStatus {
+  return Object.values(CWUProposalStatus).includes(raw as CWUProposalStatus);
+}
+
+/**
+ * Determines if a raw string is part of the enum CWUProposalStatus and returns
+ * the passed value or null.
+ *
+ * @see {@link CWUProposalStatus}
+ *
+ * @param raw - a string value
+ * @returns CWUProposalStatus | null
+ */
 export function parseCWUProposalStatus(raw: string): CWUProposalStatus | null {
-  switch (raw) {
-    case CWUProposalStatus.Draft:
-      return CWUProposalStatus.Draft;
-    case CWUProposalStatus.Submitted:
-      return CWUProposalStatus.Submitted;
-    case CWUProposalStatus.UnderReview:
-      return CWUProposalStatus.UnderReview;
-    case CWUProposalStatus.Evaluated:
-      return CWUProposalStatus.Evaluated;
-    case CWUProposalStatus.Awarded:
-      return CWUProposalStatus.Awarded;
-    case CWUProposalStatus.NotAwarded:
-      return CWUProposalStatus.NotAwarded;
-    case CWUProposalStatus.Disqualified:
-      return CWUProposalStatus.Disqualified;
-    case CWUProposalStatus.Withdrawn:
-      return CWUProposalStatus.Withdrawn;
-    default:
-      return null;
-  }
+  return isCWUProposalStatus(raw) ? raw : null;
 }
 
 function quantifyCWUProposalStatusForSort(a: CWUProposalStatus): number {

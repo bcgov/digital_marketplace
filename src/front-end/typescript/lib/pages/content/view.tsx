@@ -43,9 +43,9 @@ const init: component_.page.Init<
     return [
       valid(immutable({ routePath, content: null })),
       [
-        api.content.readOne(routeParams, (msg) =>
+        api.content.readOne<Msg>()(routeParams, (msg) =>
           adt("onContentResponse", msg)
-        ) as component_.Cmd<Msg>
+        )
       ]
     ];
   } else {

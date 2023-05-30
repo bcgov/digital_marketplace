@@ -1,5 +1,6 @@
 import { FileRecord } from "shared/lib/resources/file";
 import { UserSlim } from "shared/lib/resources/user";
+import { TWUServiceAreaRecord } from "shared/lib/resources/service-area";
 import {
   ADT,
   BodyWithErrors,
@@ -7,6 +8,7 @@ import {
   ReadManyResponseBodyBase
 } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation/index";
+import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 
 export { ReadManyResponseValidationErrors } from "shared/lib/types";
 
@@ -15,8 +17,11 @@ export { ReadManyResponseValidationErrors } from "shared/lib/types";
 export interface OrganizationAdmin {
   owner?: UserSlim;
   acceptedSWUTerms?: Date | null;
+  acceptedTWUTerms?: Date | null;
   possessAllCapabilities?: boolean;
+  possessOneServiceArea?: boolean;
   numTeamMembers?: number;
+  serviceAreas: TWUServiceAreaRecord[];
 }
 
 export interface Organization extends OrganizationAdmin {
@@ -58,8 +63,11 @@ export interface CreateRequestBody
     | "active"
     | "owner"
     | "acceptedSWUTerms"
+    | "acceptedTWUTerms"
     | "possessAllCapabilities"
+    | "possessOneServiceArea"
     | "numTeamMembers"
+    | "serviceAreas"
   > {
   logoImageFile?: Id;
 }
@@ -69,7 +77,9 @@ export type CreateValidationErrors = ErrorTypeFrom<CreateRequestBody> &
 
 export type UpdateRequestBody =
   | ADT<"updateProfile", UpdateProfileRequestBody>
-  | ADT<"acceptSWUTerms">;
+  | ADT<"acceptSWUTerms">
+  | ADT<"acceptTWUTerms">
+  | ADT<"qualifyServiceAreas", TWUServiceArea[]>;
 
 export type UpdateProfileRequestBody = CreateRequestBody;
 
@@ -79,6 +89,8 @@ export type UpdateProfileValidationErrors =
 type UpdateADTErrors =
   | ADT<"updateProfile", UpdateProfileValidationErrors>
   | ADT<"acceptSWUTerms", string[]>
+  | ADT<"acceptTWUTerms", string[]>
+  | ADT<"qualifyServiceAreas", string[][]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -108,5 +120,22 @@ export function doesOrganizationMeetSWUQualification(
     doesOrganizationMeetSWUQualificationNumTeamMembers(organization) &&
     !!organization.acceptedSWUTerms &&
     !!organization.possessAllCapabilities
+  );
+}
+
+export function doesOrganizationMeetTWUQualification(
+  organization: Organization | OrganizationSlim
+): boolean {
+  return (
+    !!organization.possessOneServiceArea && !!organization.acceptedTWUTerms
+  );
+}
+
+export function doesOrganizationProvideServiceArea(
+  organization: Organization | OrganizationSlim,
+  serviceArea: TWUServiceArea
+): boolean {
+  return organization.serviceAreas.some(
+    (orgServiceArea) => orgServiceArea.serviceArea === serviceArea
   );
 }

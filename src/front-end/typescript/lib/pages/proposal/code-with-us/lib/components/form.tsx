@@ -662,26 +662,25 @@ export function persist(
     ({ id }) => id
   );
   // Cmd helpers
-  const uploadNewAttachmentsCmd = api.files.createMany(
-    newAttachments,
-    (response) => {
-      switch (response.tag) {
-        case "valid":
-          return valid([
-            ...existingAttachments,
-            ...response.value.map(({ id }) => id)
-          ]);
-        case "invalid":
-          return invalid(
-            state.update("attachments", (attachments) =>
-              Attachments.setNewAttachmentErrors(attachments, response.value)
-            )
-          );
-        case "unhandled":
-          return invalid(state);
-      }
+  const uploadNewAttachmentsCmd = api.files.createMany<
+    Validation<Id[], Immutable<State>>
+  >()(newAttachments, (response) => {
+    switch (response.tag) {
+      case "valid":
+        return valid([
+          ...existingAttachments,
+          ...response.value.map(({ id }) => id)
+        ]);
+      case "invalid":
+        return invalid(
+          state.update("attachments", (attachments) =>
+            Attachments.setNewAttachmentErrors(attachments, response.value)
+          )
+        );
+      case "unhandled":
+        return invalid(state);
     }
-  ) as component_.cmd.Cmd<Validation<Id[], Immutable<State>>>;
+  });
   const actionCmd = (
     attachments: Id[]
   ): component_.cmd.Cmd<
@@ -692,7 +691,9 @@ export function persist(
   > => {
     switch (action.tag) {
       case "create":
-        return api.proposals.cwu.create(
+        return api.proposals.cwu.create<
+          api.ResponseValidation<CWUProposal, CreateValidationErrors>
+        >()(
           {
             ...values,
             opportunity: state.opportunity.id,
@@ -700,11 +701,11 @@ export function persist(
             status: action.value
           },
           (response) => response
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<CWUProposal, CreateValidationErrors>
-        >;
+        );
       case "update":
-        return api.proposals.cwu.update(
+        return api.proposals.cwu.update<
+          api.ResponseValidation<CWUProposal, UpdateEditValidationErrors>
+        >()(
           action.value,
           adt("edit" as const, {
             ...values,
@@ -724,9 +725,7 @@ export function persist(
               }
             });
           }
-        ) as component_.cmd.Cmd<
-          api.ResponseValidation<CWUProposal, UpdateEditValidationErrors>
-        >;
+        );
     }
   };
   // Upload new attachments if necessary.

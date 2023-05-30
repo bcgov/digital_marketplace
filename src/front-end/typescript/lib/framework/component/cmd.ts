@@ -158,6 +158,50 @@ export function back<Msg>(msg: Msg): Cmd<Msg> {
   });
 }
 
+function getItem<Msg>(
+  key: string,
+  toMsg: (value: string | null) => Msg
+): Cmd<Msg> {
+  return adt("async", async () => {
+    if (!window.localStorage) return toMsg(null);
+    return toMsg(window.localStorage.getItem(key));
+  });
+}
+
+function setItem<Msg>(key: string, value: string, noOpMsg: Msg): Cmd<Msg> {
+  return adt("async", async () => {
+    if (window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+    return noOpMsg;
+  });
+}
+
+function removeItem<Msg>(key: string, noOpMsg: Msg): Cmd<Msg> {
+  return adt("async", async () => {
+    if (window.localStorage) {
+      window.localStorage.removeItem(key);
+    }
+    return noOpMsg;
+  });
+}
+
+function clear<Msg>(noOpMsg: Msg): Cmd<Msg> {
+  return adt("async", async () => {
+    if (window.localStorage) {
+      window.localStorage.clear();
+    }
+    return noOpMsg;
+  });
+}
+
+export const localStorage = {
+  getItem,
+  setItem,
+  removeItem,
+  clear
+};
+
 // Helpers
 
 export function map<A, B>(cmd: Cmd<A>, convert: (msgA: A) => B): Cmd<B> {

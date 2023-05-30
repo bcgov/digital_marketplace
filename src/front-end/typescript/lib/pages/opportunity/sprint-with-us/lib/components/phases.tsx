@@ -15,6 +15,7 @@ import {
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 export interface Params {
   opportunity?: SWUOpportunity;
@@ -40,10 +41,7 @@ export function updateAssignmentDate(
   return state
     .update("inceptionPhase", (s) =>
       Phase.setValidateStartDate(s, (raw) =>
-        opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
-          raw,
-          assignmentDate
-        )
+        genericValidation.validateDateFormatMinMax(raw, assignmentDate)
       )
     )
     .update("prototypePhase", (s) =>
@@ -112,10 +110,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     totalMaxBudget,
     isAccordionOpen: false,
     validateStartDate: (raw) =>
-      opportunityValidation.validateSWUOpportunityInceptionPhaseStartDate(
-        raw,
-        assignmentDate
-      ),
+      genericValidation.validateDateFormatMinMax(raw, assignmentDate),
     validateCompletionDate:
       opportunityValidation.validateSWUOpportunityPhaseCompletionDate
   });

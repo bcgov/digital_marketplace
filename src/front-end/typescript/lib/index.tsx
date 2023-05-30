@@ -1,7 +1,9 @@
 import { PATH_PREFIX } from "front-end/config";
 import { component, Immutable } from "front-end/lib/framework";
+import React from "react";
+import { Fragment, ReactElement } from "react";
 import { COPY } from "shared/config";
-import { prefix } from "shared/lib";
+import { intersperse, prefix } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   UserType,
@@ -177,3 +179,19 @@ export function getSignInUrl(
 export function fileBlobPath(file: Pick<FileRecord, "id">) {
   return prefixPath(`api/files/${file.id}?type=blob`);
 }
+
+interface IntersperseProps {
+  collection: Array<ReactElement | string>;
+  separator: ReactElement | string;
+}
+
+export const Intersperse: component.base.View<IntersperseProps> = ({
+  collection,
+  separator
+}) => (
+  <Fragment
+    children={intersperse(collection, separator).map((child, i) => (
+      <Fragment key={`${i}`}>{child}</Fragment>
+    ))}
+  />
+);

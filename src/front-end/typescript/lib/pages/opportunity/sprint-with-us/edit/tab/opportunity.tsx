@@ -215,11 +215,11 @@ function updateStatus(
         return "cancel";
     }
   })();
-  return api.opportunities.swu.update(
+  return api.opportunities.swu.update<InnerMsg>()(
     opportunityId,
     adt(updateAction, ""),
     mapResult
-  ) as component_.Cmd<InnerMsg>;
+  );
 }
 
 function handleUpdateStatusResult(
@@ -304,9 +304,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startStartEditingLoading(state),
         [
-          api.opportunities.swu.readOne(opportunity.id, (result) =>
+          api.opportunities.swu.readOne<Msg>()(opportunity.id, (result) =>
             adt("onStartEditingResponse", result)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -617,9 +617,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startDeleteLoading(state),
         [
-          api.opportunities.swu.delete_(opportunity.id, (result) =>
+          api.opportunities.swu.delete_<Msg>()(opportunity.id, (result) =>
             adt("onDeleteResult", result)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

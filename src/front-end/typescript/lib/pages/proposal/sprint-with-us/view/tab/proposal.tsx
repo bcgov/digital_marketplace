@@ -98,12 +98,12 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
         (msg) => adt("disqualificationReasonMsg", msg) as Msg
       ),
       component_.cmd.join(
-        api.organizations.owned.readMany((response) =>
+        api.organizations.owned.readMany()((response) =>
           api.getValidValue(response, [])
-        ) as component_.Cmd<OrganizationSlim[]>,
-        api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
+        ),
+        api.content.readOne()(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
           api.isValid(response) ? response.value.body : ""
-        ) as component_.Cmd<string>,
+        ),
         (organizations, evalContent) =>
           adt("onInitResponse", [organizations, evalContent]) as Msg
       )
@@ -191,11 +191,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startDisqualifyLoading(state),
         [
-          api.proposals.swu.update(
+          api.proposals.swu.update<Msg>()(
             proposal.id,
             adt("disqualify", reason),
             (response) => adt("onDisqualifyResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -261,9 +261,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startAwardLoading(state).set("showModal", null),
         [
-          api.proposals.swu.update(proposal.id, adt("award", ""), (response) =>
-            adt("onAwardResponse", response)
-          ) as component_.Cmd<Msg>
+          api.proposals.swu.update<Msg>()(
+            proposal.id,
+            adt("award", ""),
+            (response) => adt("onAwardResponse", response)
+          )
         ]
       ];
     }

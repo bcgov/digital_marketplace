@@ -127,13 +127,13 @@ const init: component_.page.Init<
       })
     ),
     [
-      api.counters.update(
+      api.counters.update<Msg>()(
         getSWUOpportunityViewsCounterName(opportunityId),
         null,
         () => adt("noop")
-      ) as component_.Cmd<Msg>,
+      ),
       component_.cmd.join4(
-        api.opportunities.swu.readOne(opportunityId, (response) => response),
+        api.opportunities.swu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.swu.readExistingProposalForOpportunity(
               opportunityId,
@@ -141,11 +141,11 @@ const init: component_.page.Init<
             )
           : component_.cmd.dispatch(null),
 
-        api.content.readOne(
+        api.content.readOne()(
           SWU_OPPORTUNITY_SCOPE_CONTENT_ID,
           (response) => response
         ),
-        api.organizations.owned.readMany((response) => {
+        api.organizations.owned.readMany()((response) => {
           return api
             .getValidValue(response, [])
             .reduce(
@@ -214,12 +214,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           startToggleWatchLoading(state),
           [
             state.opportunity.subscribed
-              ? (api.subscribers.swu.delete_(id, (response) =>
+              ? api.subscribers.swu.delete_<Msg>()(id, (response) =>
                   adt("onToggleWatchResponse", api.isValid(response))
-                ) as component_.Cmd<Msg>)
-              : (api.subscribers.swu.create({ opportunity: id }, (response) =>
-                  adt("onToggleWatchResponse", api.isValid(response))
-                ) as component_.Cmd<Msg>)
+                )
+              : api.subscribers.swu.create<Msg>()(
+                  { opportunity: id },
+                  (response) =>
+                    adt("onToggleWatchResponse", api.isValid(response))
+                )
           ]
         ];
       }

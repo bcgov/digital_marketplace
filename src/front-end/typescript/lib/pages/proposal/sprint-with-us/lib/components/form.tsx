@@ -150,9 +150,9 @@ function getAffiliations(orgId?: Id): component_.Cmd<AffiliationMember[]> {
   if (!orgId) {
     return component_.cmd.dispatch([]);
   }
-  return api.affiliations.readManyForOrganization(orgId)((response) =>
-    api.getValidValue(response, [])
-  ) as component_.Cmd<AffiliationMember[]>;
+  return api.affiliations.readManyForOrganization<AffiliationMember[]>(orgId)(
+    (response) => api.getValidValue(response, [])
+  );
 }
 
 function isSelectedOrgQualified(
@@ -520,7 +520,7 @@ export function persist(
   const formValues = getValues(state);
   switch (action.tag) {
     case "create":
-      return api.proposals.swu.create(
+      return api.proposals.swu.create<PersistResult>()(
         {
           ...formValues,
           opportunity: state.opportunity.id,
@@ -537,9 +537,9 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     case "update": {
-      return api.proposals.swu.update(
+      return api.proposals.swu.update<PersistResult>()(
         action.value,
         adt("edit" as const, formValues),
         (response) => {
@@ -560,7 +560,7 @@ export function persist(
               return invalid(state);
           }
         }
-      ) as component_.Cmd<PersistResult>;
+      );
     }
   }
 }
@@ -1512,7 +1512,7 @@ export function getAlerts<Msg>(
                     dest={routeDest(
                       adt("orgEdit", {
                         orgId: org.id,
-                        tab: "qualification" as const
+                        tab: "swuQualification" as const
                       })
                     )}>
                     {meetsCriteria}

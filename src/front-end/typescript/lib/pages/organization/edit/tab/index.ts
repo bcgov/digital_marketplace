@@ -2,7 +2,8 @@ import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
 import * as OrganizationTab from "front-end/lib/pages/organization/edit/tab/organization";
-import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/qualification";
+import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
+import * as TWUQualificationTab from "front-end/lib/pages/organization/edit/tab/twu-qualification";
 import * as TeamTab from "front-end/lib/pages/organization/edit/tab/team";
 import { routeDest } from "front-end/lib/views/link";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
@@ -30,6 +31,7 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 export interface Params {
   organization: Organization;
   swuQualified: boolean;
+  twuQualified: boolean;
   affiliations: AffiliationMember[];
   viewerUser: User;
 }
@@ -51,10 +53,16 @@ export interface Tabs {
     InitResponse
   >;
   team: TabbedPage.Tab<Params, TeamTab.State, TeamTab.InnerMsg, InitResponse>;
-  qualification: TabbedPage.Tab<
+  swuQualification: TabbedPage.Tab<
     Params,
     QualificationTab.State,
     QualificationTab.InnerMsg,
+    InitResponse
+  >;
+  twuQualification: TabbedPage.Tab<
+    Params,
+    TWUQualificationTab.State,
+    TWUQualificationTab.InnerMsg,
     InitResponse
   >;
 }
@@ -69,7 +77,8 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   switch (raw) {
     case "organization":
     case "team":
-    case "qualification":
+    case "swuQualification":
+    case "twuQualification":
       return raw;
     default:
       return null;
@@ -86,11 +95,17 @@ export function idToDefinition<K extends TabId>(
         icon: "users",
         title: "Team"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case "qualification":
+    case "swuQualification":
       return {
         component: QualificationTab.component,
         icon: "shield",
         title: "SWU Qualification"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "twuQualification":
+      return {
+        component: TWUQualificationTab.component,
+        icon: "shield",
+        title: "TWU Qualification"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "organization":
     default:
@@ -124,7 +139,8 @@ export function makeSidebarState(
     items: [
       makeSidebarLink("organization", organization, activeTab),
       makeSidebarLink("team", organization, activeTab),
-      makeSidebarLink("qualification", organization, activeTab)
+      makeSidebarLink("swuQualification", organization, activeTab),
+      makeSidebarLink("twuQualification", organization, activeTab)
     ]
   });
 }

@@ -113,6 +113,13 @@ export function determineCapabilities(
     : [];
 }
 
+/**
+ * Sets the state with added members and members from the opportunity phase
+ * already saved in state, while determining if the members have capabilities
+ * checked.
+ *
+ * @param state
+ */
 function resetCapabilities(state: Immutable<State>): Immutable<State> {
   return state.set(
     "capabilities",
@@ -284,10 +291,13 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
 
 export type Errors = CreateSWUProposalPhaseValidationErrors;
 
-// No need to set errors as the fields themselves can't result in errors.
+/**
+ * No need to set errors as the fields themselves can't result in errors.
+ * TODO - find a better solution than disabling eslint
+ */
 export function setErrors(
   state: Immutable<State>,
-  errors?: Errors
+  errors?: Errors // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Immutable<State> {
   return state;
 }

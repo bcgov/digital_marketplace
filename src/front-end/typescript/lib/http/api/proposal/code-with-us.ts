@@ -11,12 +11,14 @@ import {
 
 const NAMESPACE = "proposals/code-with-us";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.CWUProposal,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawCWUProposalToCWUProposal);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawCWUProposalToCWUProposal);
+}
 
 export function readMany<Msg>(
   opportunityId?: Id
@@ -53,18 +55,22 @@ export function readExistingProposalForOpportunity<Msg>(
   ) as component.Cmd<Msg>;
 }
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.CWUProposal,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawCWUProposalToCWUProposal);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawCWUProposalToCWUProposal);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.CWUProposal,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawCWUProposalToCWUProposal);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawCWUProposalToCWUProposal);
+}
 
 // Raw Conversion
 

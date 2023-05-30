@@ -10,9 +10,11 @@ import { Immutable } from "front-end/lib/framework";
 import { find } from "lodash";
 import React from "react";
 import { ADT } from "shared/lib/types";
+import { InputGroup, InputGroupAddon, InputGroupText } from "reactstrap";
 
 export {
   stringsToOptions,
+  objectToOptions,
   Options,
   OptionGroup,
   Option
@@ -33,6 +35,7 @@ type InnerChildMsg = ADT<"onChange", Value>;
 
 interface ExtraChildProps {
   loading?: boolean;
+  prefix?: string;
 }
 
 type ChildComponent = FormField.ChildComponent<
@@ -62,6 +65,7 @@ const childUpdate: ChildComponent["update"] = ({ state, msg }) => {
 
 const ChildView: ChildComponent["view"] = (props) => {
   const {
+    prefix,
     state,
     dispatch,
     placeholder = "",
@@ -86,7 +90,19 @@ const ChildView: ChildComponent["view"] = (props) => {
     },
     formatGroupLabel: state.formatGroupLabel
   };
-  return <Select {...selectProps} />;
+  if (!prefix) {
+    return <Select {...selectProps} />;
+  }
+  return (
+    <InputGroup>
+      {prefix ? (
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>{prefix}</InputGroupText>
+        </InputGroupAddon>
+      ) : null}
+      <Select {...selectProps} />
+    </InputGroup>
+  );
 };
 
 export const component = FormField.makeComponent<
@@ -129,4 +145,14 @@ export function setValueFromString(
       value: found
     };
   }
+}
+
+/**
+ * Converts the state object into a string value
+ *
+ * @param state
+ * @returns string
+ */
+export function getValue(state: Immutable<State>): string {
+  return state.child.value ? state.child.value.value : "";
 }

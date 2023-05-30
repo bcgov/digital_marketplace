@@ -18,15 +18,14 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/organization/edit/tab";
-import Link, { routeDest } from "front-end/lib/views/link";
-import React from "react";
-import { isAdmin, isVendor, UserType, User } from "shared/lib/resources/user";
+import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import {
   Organization,
-  doesOrganizationMeetSWUQualification
+  doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification
 } from "shared/lib/resources/organization";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
@@ -78,12 +77,12 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
         ) as State_<K>,
         [
           component_.cmd.join(
-            api.organizations.readOne(orgId, (response) =>
+            api.organizations.readOne()(orgId, (response) =>
               api.isValid(response) ? response.value : null
-            ) as component_.Cmd<Organization | null>,
+            ),
             api.affiliations.readManyForOrganization(orgId)((response) =>
               api.isValid(response) ? response.value : null
-            ) as component_.Cmd<AffiliationMember[] | null>,
+            ),
             (organization, affiliations) => {
               if (!organization || !affiliations)
                 return component_.global.replaceRouteMsg(
@@ -141,6 +140,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabId, organization, affiliations] = msg.value;
               const swuQualified =
                 doesOrganizationMeetSWUQualification(organization);
+              const twuQualified =
+                doesOrganizationMeetTWUQualification(organization);
               // Initialize the sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
@@ -151,6 +152,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabState, tabCmds] = tabComponent.init({
                 organization,
                 swuQualified,
+                twuQualified,
                 affiliations,
                 viewerUser: state.viewerUser
               });
@@ -188,57 +190,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
     ),
     view: viewValid(TabbedPage.makeParentView(idToDefinition)),
     sidebar: sidebarValid(TabbedPage.makeParentSidebar()),
-    getAlerts: getAlertsValid((state) => {
-      return component_.page.alerts.merge(
-        {
-          info: (() => {
-            if (
-              state.tab &&
-              !state.tab[1].swuQualified &&
-              state.tab[0] !== "qualification"
-            ) {
-              if (isVendor(state.tab[1].viewerUser)) {
-                return [
-                  {
-                    text: (
-                      <div>
-                        This organization is not qualified to apply for{" "}
-                        <em>Sprint With Us</em> opportunities. You must{" "}
-                        <Link
-                          dest={routeDest(
-                            adt("orgEdit", {
-                              orgId: state.tab[1].organization.id,
-                              tab: "qualification" as const
-                            })
-                          )}>
-                          apply to become a Qualified Supplier
-                        </Link>
-                        .
-                      </div>
-                    )
-                  }
-                ];
-              } else if (isAdmin(state.tab[1].viewerUser)) {
-                return [
-                  {
-                    text: (
-                      <div>
-                        This organization is not qualified to apply for{" "}
-                        <em>Sprint With Us</em> opportunities.
-                      </div>
-                    )
-                  }
-                ];
-              }
-            }
-            return [];
-          })()
-        },
-        TabbedPage.makeGetParentAlerts(
-          idToDefinition
-        ) as component_.page.Alerts<Msg>
-      );
-    }),
+    getAlerts: getAlertsValid(TabbedPage.makeGetParentAlerts(idToDefinition)),
     getModal: getModalValid(TabbedPage.makeGetParentModal(idToDefinition)),
     getActions: getActionsValid(
       TabbedPage.makeGetParentActions(idToDefinition)

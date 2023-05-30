@@ -114,24 +114,26 @@ const init: component_.page.Init<
         })
       ),
       [
-        ...component_.cmd.mapMany(submitTermsCmds, (msg) =>
-          adt("submitTerms", msg)
+        ...component_.cmd.mapMany(
+          submitTermsCmds,
+          (msg) => adt("submitTerms", msg) as Msg
         ),
         // Make necessary network requests
         component_.cmd.join4(
-          api.proposals.swu.readExistingProposalForOpportunity(
+          api.proposals.swu.readExistingProposalForOpportunity<
+            SWUProposalSlim | undefined
+          >(opportunityId, (response) => response),
+          api.opportunities.swu.readOne<SWUOpportunity | null>()(
             opportunityId,
-            (response) => response
-          ) as component_.Cmd<SWUProposalSlim | undefined>,
-          api.opportunities.swu.readOne(opportunityId, (response) =>
-            api.isValid(response) ? response.value : null
-          ) as component_.Cmd<SWUOpportunity | null>,
-          api.organizations.owned.readMany((response) =>
+            (response) => (api.isValid(response) ? response.value : null)
+          ),
+          api.organizations.owned.readMany<OrganizationSlim[]>()((response) =>
             api.getValidValue(response, [])
-          ) as component_.Cmd<OrganizationSlim[]>,
-          api.content.readOne(SWU_PROPOSAL_EVALUATION_CONTENT_ID, (response) =>
-            api.isValid(response) ? response.value.body : ""
-          ) as component_.Cmd<string>,
+          ),
+          api.content.readOne<string>()(
+            SWU_PROPOSAL_EVALUATION_CONTENT_ID,
+            (response) => (api.isValid(response) ? response.value.body : "")
+          ),
           (existingProposal, opportunity, orgs, evalBody) => {
             // Redirect to proposal edit page if the user has already created a proposal for this opportunity.
             if (existingProposal)
@@ -155,7 +157,7 @@ const init: component_.page.Init<
             return adt("onInitResponse", [opportunity, orgs, evalBody]) as Msg;
           }
         )
-      ] as component_.Cmd<Msg>[]
+      ]
     ];
   },
   fail({ routePath }) {
@@ -278,12 +280,12 @@ const update: component_.base.Update<State, Msg> = updateValid(
         return [
           startSubmitLoading(state),
           [
-            api.users.update(
+            api.users.update<Msg>()(
               state.sessionUser.id,
               adt("acceptTerms"),
               (response) =>
                 adt("onSubmitAcceptTermsResponse", api.isValid(response))
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }

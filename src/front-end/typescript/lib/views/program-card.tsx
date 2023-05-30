@@ -12,6 +12,12 @@ export interface Props {
   wideLinks?: boolean;
 }
 
+/**
+ * Defines a block of content, current column width suitable for 3 horizontal blocks
+ *
+ * @param param0 - all the properties (img, title, etc) required to make a card
+ * @returns - HTML in a box
+ */
 const ProgramCard: component.base.View<Props> = ({
   img,
   title,
@@ -21,7 +27,7 @@ const ProgramCard: component.base.View<Props> = ({
   className
 }) => {
   return (
-    <Col xs="12" md="6" className={className}>
+    <Col xs="12" md="4" className={className}>
       <div className="d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-sm-5 text-center h-100 shadow-hover">
         <img
           src={img}

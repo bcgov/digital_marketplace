@@ -33,13 +33,16 @@ export const REPOSITORY_ROOT_DIR =
 // Load environment variables from a .env file.
 dotenv.config({
   debug: process.env.NODE_ENV === "development",
-  path: resolve(REPOSITORY_ROOT_DIR, ".env")
+  path: resolve(REPOSITORY_ROOT_DIR, ".env"),
+  override: false
 });
 
-export const NODE_ENV: "development" | "production" = (() => {
+export const NODE_ENV: "development" | "test" | "production" = (() => {
   switch (process.env.NODE_ENV) {
     case "development":
       return "development";
+    case "test":
+      return "test";
     case "production":
       return "production";
     default:
@@ -232,8 +235,10 @@ function errorToJson(error: Error): object {
 export function getConfigErrors(): string[] {
   let errors: string[] = [];
 
-  if (ENV !== "development" && ENV !== "production") {
-    errors.push('NODE_ENV must be either "development" or "production"');
+  if (!["development", "test", "production"].includes(ENV)) {
+    errors.push(
+      'NODE_ENV must be either "development", "test", or "production"'
+    );
   }
 
   if (!SERVER_HOST.match(/^\d+\.\d+\.\d+\.\d+/)) {

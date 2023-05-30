@@ -7,12 +7,14 @@ import { component } from "front-end/lib/framework";
 
 const NAMESPACE = "proposals/sprint-with-us";
 
-export const create: crud.CreateAction<
+export function create<Msg>(): crud.CreateAction<
   Resource.CreateRequestBody,
   Resource.SWUProposal,
   Resource.CreateValidationErrors,
-  unknown
-> = crud.makeCreateAction(NAMESPACE, rawSWUProposalToSWUProposal);
+  Msg
+> {
+  return crud.makeCreateAction(NAMESPACE, rawSWUProposalToSWUProposal);
+}
 
 export function readMany<Msg>(
   opportunityId?: Id
@@ -49,18 +51,22 @@ export function readExistingProposalForOpportunity<Msg>(
   ) as component.Cmd<Msg>;
 }
 
-export const update: crud.UpdateAction<
+export function update<Msg>(): crud.UpdateAction<
   Resource.UpdateRequestBody,
   Resource.SWUProposal,
   Resource.UpdateValidationErrors,
-  unknown
-> = crud.makeUpdateAction(NAMESPACE, rawSWUProposalToSWUProposal);
+  Msg
+> {
+  return crud.makeUpdateAction(NAMESPACE, rawSWUProposalToSWUProposal);
+}
 
-export const delete_: crud.DeleteAction<
+export function delete_<Msg>(): crud.DeleteAction<
   Resource.SWUProposal,
   Resource.DeleteValidationErrors,
-  unknown
-> = crud.makeDeleteAction(NAMESPACE, rawSWUProposalToSWUProposal);
+  Msg
+> {
+  return crud.makeDeleteAction(NAMESPACE, rawSWUProposalToSWUProposal);
+}
 
 // Raw Conversion
 

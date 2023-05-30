@@ -17,6 +17,7 @@ import { Connection, readOneSession } from "back-end/lib/db";
 import codeWithUsHook from "back-end/lib/hooks/code-with-us";
 import loggerHook from "back-end/lib/hooks/logger";
 import sprintWithUsHook from "back-end/lib/hooks/sprint-with-us";
+import teamWithUsHook from "back-end/lib/hooks/team-with-us";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import basicAuth from "back-end/lib/map-routes/basic-auth";
@@ -29,13 +30,16 @@ import fileResource from "back-end/lib/resources/file";
 import metricsResource from "back-end/lib/resources/metrics";
 import codeWithUsOpportunityResource from "back-end/lib/resources/opportunity/code-with-us";
 import sprintWithUsOpportunityResource from "back-end/lib/resources/opportunity/sprint-with-us";
+import teamWithUsOpportunityResource from "back-end/lib/resources/opportunity/team-with-us";
 import organizationResource from "back-end/lib/resources/organization";
 import ownedOrganizationResource from "back-end/lib/resources/owned-organization";
 import codeWithUsProposalResource from "back-end/lib/resources/proposal/code-with-us";
+import teamWithUsProposalResource from "back-end/lib/resources/proposal/team-with-us";
 import sprintWithUsProposalResource from "back-end/lib/resources/proposal/sprint-with-us";
 import sessionResource from "back-end/lib/resources/session";
 import codeWithUsSubscriberResource from "back-end/lib/resources/subscribers/code-with-us";
 import sprintWithUsSubscriberResource from "back-end/lib/resources/subscribers/sprint-with-us";
+import teamWithUsSubscriberResource from "back-end/lib/resources/subscribers/team-with-us";
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
@@ -56,6 +60,8 @@ import {
   SupportedRequestBodies,
   SupportedResponseBodies
 } from "back-end/lib/types";
+import { Application } from "express";
+import { Server } from "http";
 import Knex, { ConnectionConfig } from "knex";
 import { concat, flatten, flow, map } from "lodash/fp";
 import { flipCurried } from "shared/lib";
@@ -119,7 +125,7 @@ const flippedConcat = flipCurried(concat);
  *
  * @returns a {@link AppRouter} constructed from the Digital Marketplace resources.
  */
-export async function createRouter(connection: Connection): Promise<AppRouter> {
+export function createRouter(connection: Connection): AppRouter {
   // Add new resources to this array.
   const resources: BasicCrudResource[] = [
     affiliationResource,
@@ -127,10 +133,13 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     codeWithUsOpportunityResource,
     contentResource,
     sprintWithUsOpportunityResource,
+    teamWithUsOpportunityResource,
     codeWithUsProposalResource,
     sprintWithUsProposalResource,
     codeWithUsSubscriberResource,
     sprintWithUsSubscriberResource,
+    teamWithUsSubscriberResource,
+    teamWithUsProposalResource,
     fileResource,
     counterResource,
     organizationResource,
@@ -153,7 +162,11 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     flippedConcat(notFoundJsonRoute),
     // Namespace all CRUD routes with '/api'.
     map((route: BasicRoute) => namespaceRoute("/api", route)),
-    addHooks([codeWithUsHook(connection), sprintWithUsHook(connection)])
+    addHooks([
+      codeWithUsHook(connection),
+      sprintWithUsHook(connection),
+      teamWithUsHook(connection)
+    ])
   ])(resources);
 
   // Collect all routes.
@@ -161,7 +174,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
     // API routes.
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
-    flippedConcat(await authRouter(connection)),
+    flippedConcat(authRouter(connection)),
     // Admin router
     flippedConcat(
       adminRouter().map((route) => namespaceRoute("/admin", route))
@@ -185,7 +198,7 @@ export async function createRouter(connection: Connection): Promise<AppRouter> {
   return allRoutes;
 }
 
-export async function createDowntimeRouter(): Promise<AppRouter> {
+export function createDowntimeRouter(): AppRouter {
   return flow([
     // Front-end router.
     flippedConcat(frontEndRouter("downtime.html")),
@@ -194,7 +207,7 @@ export async function createDowntimeRouter(): Promise<AppRouter> {
   ])([]);
 }
 
-async function start() {
+export async function initApplication() {
   // Ensure all environment variables are specified correctly.
   const configErrors = getConfigErrors();
   if (configErrors.length || !PG_CONFIG) {
@@ -204,21 +217,21 @@ async function start() {
   // Connect to Postgres.
   const connection = connectToDatabase(PG_CONFIG);
   // Test DB connection
-  connection.raw("SELECT 1").then(() => {
-    console.log("PostgreSQL connected");
-  });
+  await connection.raw("SELECT 1");
+  console.log("PostgreSQL connected");
 
   // Create the router.
-  let router: AppRouter = await (SCHEDULED_DOWNTIME
-    ? createDowntimeRouter
-    : createRouter)(connection);
+  let router: AppRouter = (
+    SCHEDULED_DOWNTIME ? createDowntimeRouter : createRouter
+  )(connection);
   // Add the status router.
   // This should not be behind basic auth.
   // Also, run the CWU and SWU hooks with the status router.
   // i.e. The status route effectively acts as an action triggered by a CRON job.
   const statusRouterWithHooks = addHooks([
     codeWithUsHook(connection),
-    sprintWithUsHook(connection)
+    sprintWithUsHook(connection),
+    teamWithUsHook(connection)
   ])(statusRouter as AppRouter);
   router = [...statusRouterWithHooks, ...router];
   // Bind the server to a port and listen for incoming connections.
@@ -232,7 +245,7 @@ async function start() {
     FileUploadMetadata | null
   > = express();
 
-  adapter({
+  const app = adapter({
     router,
     sessionIdToSession: async (id) => {
       //Do not touch the database:
@@ -262,13 +275,35 @@ async function start() {
       return parseFilePermissions(raw);
     }
   });
-  logger.info("server started", {
-    host: SERVER_HOST,
-    port: String(SERVER_PORT)
-  });
+
+  return app;
 }
 
-start().catch((error) => {
-  logger.error("app startup failed", makeErrorResponseBody(error).value);
-  process.exit(1);
-});
+let server: Server;
+export let app: Application;
+
+export async function startServer() {
+  try {
+    app = await initApplication();
+    server = app.listen(SERVER_PORT, SERVER_HOST);
+    logger.info("server started", {
+      host: SERVER_HOST,
+      port: String(SERVER_PORT)
+    });
+  } catch (error) {
+    logger.error(
+      "app startup failed",
+      makeErrorResponseBody(error as Error).value
+    );
+    process.exit(1);
+  }
+}
+
+export async function stopServer() {
+  if (!server) {
+    console.error("Server is not started");
+    process.exit(1);
+  }
+
+  await server.close();
+}

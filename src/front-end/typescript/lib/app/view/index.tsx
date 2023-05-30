@@ -7,7 +7,9 @@ import getAppModal from "front-end/lib/app/modal";
 import {
   isAllowedRouteForUsersWithUnacceptedTerms,
   Msg,
-  State
+  State,
+  Route,
+  InnerMsg
 } from "front-end/lib/app/types";
 import Footer from "front-end/lib/app/view/footer";
 import * as Nav from "front-end/lib/app/view/nav";
@@ -20,6 +22,7 @@ import * as PageContentView from "front-end/lib/pages/content/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
+import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
@@ -31,10 +34,14 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
+import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
+import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageOrgCreate from "front-end/lib/pages/organization/create";
 import * as PageOrgEdit from "front-end/lib/pages/organization/edit";
 import * as PageOrgList from "front-end/lib/pages/organization/list";
 import * as PageOrgSWUTerms from "front-end/lib/pages/organization/sprint-with-us-terms";
+import * as PageOrgTWUTerms from "front-end/lib/pages/organization/team-with-us-terms";
 import * as PageProposalCWUCreate from "front-end/lib/pages/proposal/code-with-us/create";
 import * as PageProposalCWUEdit from "front-end/lib/pages/proposal/code-with-us/edit";
 import * as PageProposalCWUExportAll from "front-end/lib/pages/proposal/code-with-us/export/all";
@@ -46,6 +53,11 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
+import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
+import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
+import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
 import * as PageSignUpStepOne from "front-end/lib/pages/sign-up/step-one";
@@ -76,6 +88,7 @@ import { SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
+import TWUBannner from "front-end/lib/app/view/twu-banner";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
@@ -141,6 +154,14 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageLearnMoreCWU", value })
       );
 
+    case "learnMoreTWU":
+      return makeViewPageProps(
+        props,
+        PageLearnMoreTWU.component,
+        (state) => state.pages.learnMoreTWU,
+        (value) => ({ tag: "pageLearnMoreTWU", value })
+      );
+
     case "learnMoreSWU":
       return makeViewPageProps(
         props,
@@ -195,6 +216,14 @@ function pageToViewPageProps(
         PageOrgSWUTerms.component,
         (state) => state.pages.orgSWUTerms,
         (value) => ({ tag: "pageOrgSWUTerms", value })
+      );
+
+    case "orgTWUTerms":
+      return makeViewPageProps(
+        props,
+        PageOrgTWUTerms.component,
+        (state) => state.pages.orgTWUTerms,
+        (value) => ({ tag: "pageOrgTWUTerms", value })
       );
 
     case "orgCreate":
@@ -261,6 +290,28 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageOpportunitySWUView", value })
       );
 
+    case "opportunityTWUCreate":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUCreate.component,
+        (state) => state.pages.opportunityTWUCreate,
+        (value) => ({ tag: "pageOpportunityTWUCreate", value })
+      );
+
+    case "opportunityTWUEdit":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUEdit.component,
+        (state) => state.pages.opportunityTWUEdit,
+        (value) => ({ tag: "pageOpportunityTWUEdit", value })
+      );
+    case "opportunityTWUView":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUView.component,
+        (state) => state.pages.opportunityTWUView,
+        (value) => ({ tag: "pageOpportunityTWUView", value })
+      );
     case "opportunityCWUCreate":
       return makeViewPageProps(
         props,
@@ -339,6 +390,46 @@ function pageToViewPageProps(
         PageProposalSWUExportAll.component,
         (state) => state.pages.proposalSWUExportAll,
         (value) => ({ tag: "pageProposalSWUExportAll", value })
+      );
+
+    case "proposalTWUCreate":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUCreate.component,
+        (state) => state.pages.proposalTWUCreate,
+        (value) => ({ tag: "pageProposalTWUCreate", value })
+      );
+
+    case "proposalTWUEdit":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUEdit.component,
+        (state) => state.pages.proposalTWUEdit,
+        (value) => ({ tag: "pageProposalTWUEdit", value })
+      );
+
+    case "proposalTWUView":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUView.component,
+        (state) => state.pages.proposalTWUView,
+        (value) => ({ tag: "pageProposalTWUView", value })
+      );
+
+    case "proposalTWUExportOne":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUExportOne.component,
+        (state) => state.pages.proposalTWUExportOne,
+        (value) => ({ tag: "pageProposalTWUExportOne", value })
+      );
+
+    case "proposalTWUExportAll":
+      return makeViewPageProps(
+        props,
+        PageProposalTWUExportAll.component,
+        (state) => state.pages.proposalTWUExportAll,
+        (value) => ({ tag: "pageProposalTWUExportAll", value })
       );
 
     case "proposalList":
@@ -705,7 +796,7 @@ function navContextualLinks(
   return (
     viewPageProps.component.getActions({
       state: viewPageProps.pageState,
-      dispatch: component_.app.mapDispatch(
+      dispatch: component_.app.mapDispatch<InnerMsg, any, Route>(
         props.dispatch,
         viewPageProps.mapPageMsg
       )
@@ -796,6 +887,10 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           navProps.contextualActions ? "contextual-actions-visible" : ""
         } app d-flex flex-column`}
         style={{ minHeight: "100vh" }}>
+        <TWUBannner
+          show={state.showTWUBanner}
+          onClose={() => dispatch(adt("setShowTWUBanner", false))}
+        />
         <Nav.view {...navProps} />
         <ViewPage {...viewPageProps} />
         {viewPageProps.component.simpleNav ? null : <Footer />}

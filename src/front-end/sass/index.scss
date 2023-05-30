@@ -129,6 +129,7 @@ $c-sidebar-menu-link-active-fg: $white;
 $c-sidebar-menu-link-active-icon: $blue;
 $c-sidebar-menu-link-active-bg: $blue-dark-alt-2;
 $c-sidebar-menu-mobile-caret: $white;
+$c-banner-bg: $yellow;
 // Pages
 $c-landing-role-heading: $blue-dark;
 $c-landing-role-icon: $yellow;
@@ -945,6 +946,12 @@ nav.navbar .nav-link:hover {
       min-height: 440px;
     }
   }
+}
+
+.twu-banner {
+  background-color: $c-banner-bg;
+  padding: 0.75rem 0 0.75rem;
+  z-index: 1001; // Above nav, below modals
 }
 
 // Page-specific overrides

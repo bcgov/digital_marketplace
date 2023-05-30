@@ -5,6 +5,8 @@ import {
   isCWUOpportunityAuthor,
   isCWUProposalAuthor,
   isSWUOpportunityAuthor,
+  isTWUOpportunityAuthor,
+  isTWUProposalAuthor,
   isUserOwnerOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
@@ -25,7 +27,14 @@ import {
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  CreateTWUOpportunityStatus,
+  doesTWUOpportunityStatusAllowGovToViewProposals,
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
+import {
   doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   Organization
 } from "shared/lib/resources/organization";
 import {
@@ -44,16 +53,17 @@ import {
   Session
 } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
+import {
+  isTWUProposalStatusVisibleToGovernment,
+  TWUProposal,
+  TWUProposalStatus
+} from "shared/lib/resources/proposal/team-with-us";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
 
 export function isSignedIn(session: Session): session is AuthenticatedSession {
   return !!session;
-}
-
-export function isSignedOut(session: Session): boolean {
-  return !isSignedIn(session);
 }
 
 export function isOwnAccount(session: Session, id: string): boolean {
@@ -339,7 +349,7 @@ export async function readManyCWUProposals(
   return false;
 }
 
-export function readOwnCWUProposals(session: Session): boolean {
+export function readOwnProposals(session: Session): boolean {
   return isVendor(session);
 }
 
@@ -698,6 +708,255 @@ export async function deleteSWUProposal(
   return (
     (session &&
       (await isSWUProposalAuthor(connection, session.user, proposalId))) ||
+    false
+  );
+}
+
+// TWU Opportunities
+
+export function createTWUOpportunity(
+  session: Session,
+  createStatus: CreateTWUOpportunityStatus
+): boolean {
+  return (
+    isAdmin(session) ||
+    (isGovernment(session) && createStatus !== TWUOpportunityStatus.Published)
+  );
+}
+
+export async function editTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
+
+/**
+ * Checks for authentication and specific roles. Admins can delete any
+ * opportunity (true) and Government users can delete only their own (true).
+ * Returns false if either one of those two conditions are not met.
+ *
+ * @see {@link delete_} in 'src/back-end/lib/resources/opportunity/team-with-us.ts'
+ *
+ * @param connection
+ * @param session
+ * @param opportunityId
+ * @returns boolean
+ */
+export async function deleteTWUOpportunity(
+  connection: Connection,
+  session: Session,
+  opportunityId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      isGovernment(session) &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    false
+  );
+}
+
+export function addTWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+// TWU Proposals
+
+/**
+ * Admins and proposal authors can edit Proposals, so long as they are in a
+ * certain state
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ * @param opportunity
+ */
+export async function editTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await hasAcceptedPreviousTerms(connection, session))) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunity.id
+      )) &&
+      doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status)) ||
+    false
+  );
+}
+
+export async function readOneTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposal: TWUProposal
+): Promise<boolean> {
+  if (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        proposal.opportunity.id
+      )))
+  ) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft/published
+    // And proposal is not in draft/submitted
+    return (
+      isSignedIn(session) &&
+      doesTWUOpportunityStatusAllowGovToViewProposals(
+        proposal.opportunity.status
+      ) &&
+      isTWUProposalStatusVisibleToGovernment(
+        proposal.status,
+        session.user.type as UserType.Government | UserType.Admin
+      )
+    );
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return (
+      (session &&
+        (await isTWUProposalAuthor(connection, session.user, proposal.id))) ||
+      false
+    );
+  }
+  return false;
+}
+
+export async function readManyTWUProposals(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  if (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(connection, session.user, opportunity.id)))
+  ) {
+    // Only provide permission to admins/gov owners if opportunity is not in draft or published
+    return doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
+  } else if (isVendor(session)) {
+    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    return true;
+  }
+  return false;
+}
+
+export async function readTWUProposalHistory(
+  connection: Connection,
+  session: Session,
+  opportunityId: string,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+    false
+  );
+}
+
+export async function readTWUProposalScore(
+  connection: Connection,
+  session: Session,
+  opportunityId: string,
+  proposalId: string,
+  proposalStatus: TWUProposalStatus
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunityId
+      ))) ||
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (proposalStatus === TWUProposalStatus.Awarded ||
+        proposalStatus === TWUProposalStatus.NotAwarded)) ||
+    false
+  );
+}
+export function publishTWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export async function createTWUProposal(
+  connection: Connection,
+  session: Session
+): Promise<boolean> {
+  return (
+    isVendor(session) && (await hasAcceptedPreviousTerms(connection, session))
+  );
+}
+
+export async function submitTWUProposal(
+  connection: Connection,
+  session: Session,
+  organization: Organization
+): Promise<boolean> {
+  return (
+    !!session &&
+    isVendor(session) &&
+    (await hasAcceptedCurrentTerms(connection, session)) &&
+    (await isUserOwnerOfOrg(connection, session.user, organization.id)) &&
+    doesOrganizationMeetTWUQualification(organization)
+  );
+}
+
+/**
+ * Only authors of the proposal can delete the proposal
+ *
+ * @param connection
+ * @param session
+ * @param proposalId
+ */
+export async function deleteTWUProposal(
+  connection: Connection,
+  session: Session,
+  proposalId: string
+): Promise<boolean> {
+  return (
+    (session &&
+      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
     false
   );
 }

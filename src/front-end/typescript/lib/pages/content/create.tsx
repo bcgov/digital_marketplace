@@ -120,9 +120,9 @@ export const update: component_.page.Update<State, InnerMsg, Route> =
         return [
           startLoading(state).set("showModal", null),
           [
-            api.content.create(values, (response) =>
+            api.content.create<Msg>()(values, (response) =>
               adt("onPublishResponse", response)
-            ) as component_.Cmd<Msg>
+            )
           ]
         ];
       }

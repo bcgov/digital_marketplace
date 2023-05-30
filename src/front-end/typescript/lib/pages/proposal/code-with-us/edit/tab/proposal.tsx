@@ -27,7 +27,9 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CWUProposal,
-  CWUProposalStatus
+  CWUProposalStatus,
+  UpdateValidationErrors,
+  DeleteValidationErrors
 } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -91,15 +93,24 @@ export type InnerMsg =
   | ADT<"onSaveChangesAndSubmitPersistResponse", Form.PersistResult>
   | ADT<
       "onSaveChangesAndSubmitSubmitResponse",
-      api.ResponseValidation<CWUProposal, string[]>
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
     >
   | ADT<"submit">
   | ADT<"onSubmitAcceptTermsResponse", boolean>
-  | ADT<"onSubmitSubmitResponse", api.ResponseValidation<CWUProposal, string[]>>
+  | ADT<
+      "onSubmitSubmitResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >
   | ADT<"withdraw">
-  | ADT<"onWithdrawResponse", api.ResponseValidation<CWUProposal, string[]>>
+  | ADT<
+      "onWithdrawResponse",
+      api.ResponseValidation<CWUProposal, UpdateValidationErrors>
+    >
   | ADT<"delete">
-  | ADT<"onDeleteResponse", api.ResponseValidation<CWUProposal, string[]>>;
+  | ADT<
+      "onDeleteResponse",
+      api.ResponseValidation<CWUProposal, DeleteValidationErrors>
+    >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -271,13 +282,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               proposal.id,
               (response) => response
             ),
-            api.affiliations.readMany((response) => response),
+            api.affiliations.readMany()((response) => response),
             (proposalResponse, affiliationsResponse) =>
               adt("onStartEditingResponse", [
                 proposalResponse,
                 affiliationsResponse
-              ])
-          ) as component_.Cmd<Msg>
+              ]) as Msg
+          )
         ]
       ];
     }
@@ -323,12 +334,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startSaveChangesLoading(state),
         [
           !isSave && isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSaveChangesAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAcceptTermsResponse", true)
               )
@@ -422,7 +433,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startSaveChangesAndSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
@@ -430,7 +441,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                     "onSaveChangesAndSubmitAcceptTermsResponse",
                     api.isValid(response)
                   )
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(
                 adt("onSaveChangesAndSubmitAcceptTermsResponse", true)
               )
@@ -486,11 +497,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         newState,
         [
           ...cmds,
-          api.proposals.cwu.update(
+          api.proposals.cwu.update<Msg>()(
             newProposal.id,
             adt("submit", ""),
             (response) => adt("onSaveChangesAndSubmitSubmitResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -532,12 +543,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startSubmitLoading(state),
         [
           isVendor(state.viewerUser)
-            ? (api.users.update(
+            ? api.users.update<Msg>()(
                 state.viewerUser.id,
                 adt("acceptTerms"),
                 (response) =>
                   adt("onSubmitAcceptTermsResponse", api.isValid(response))
-              ) as component_.Cmd<Msg>)
+              )
             : component_.cmd.dispatch(adt("onSubmitAcceptTermsResponse", true))
         ]
       ];
@@ -551,11 +562,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         ? [
             state,
             [
-              api.proposals.cwu.update(
+              api.proposals.cwu.update<Msg>()(
                 proposal.id,
                 adt("submit", ""),
                 (response) => adt("onSubmitSubmitResponse", response)
-              ) as component_.Cmd<Msg>
+              )
             ]
           ]
         : [
@@ -605,11 +616,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startWithdrawLoading(state),
         [
-          api.proposals.cwu.update(
+          api.proposals.cwu.update<Msg>()(
             proposal.id,
             adt("withdraw", ""),
             (response) => adt("onWithdrawResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }
@@ -655,9 +666,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startDeleteLoading(state),
         [
-          api.proposals.cwu.delete_(proposal.id, (response) =>
+          api.proposals.cwu.delete_<Msg>()(proposal.id, (response) =>
             adt("onDeleteResponse", response)
-          ) as component_.Cmd<Msg>
+          )
         ]
       ];
     }

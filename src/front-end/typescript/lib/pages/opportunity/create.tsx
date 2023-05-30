@@ -99,6 +99,36 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
           ]}
         />
         <ProgramCard
+          img={prefixPath("/images/illustrations/team_with_us.svg")}
+          title="Team With Us"
+          className="mb-4 mb-md-0"
+          description={
+            <span>
+              Use a <em>Team With Us</em> opportunity to procure individual
+              resources for your Agile product development team on a time and
+              materials basis.
+            </span>
+          }
+          wideLinks
+          links={[
+            {
+              button: true,
+              dest: routeDest(
+                adt("contentView", "team-with-us-opportunity-guide")
+              ),
+              children: ["Read Guide"],
+              color: "info" as TextColor,
+              outline: true
+            },
+            {
+              button: true,
+              dest: routeDest(adt("opportunityTWUCreate", null)),
+              children: ["Get Started"],
+              color: "primary" as TextColor
+            }
+          ]}
+        />
+        <ProgramCard
           img={prefixPath("/images/illustrations/sprint_with_us.svg")}
           title="Sprint With Us"
           description={
