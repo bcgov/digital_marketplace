@@ -28,10 +28,7 @@ export async function insertUserWithActiveSession(
   return [user, session];
 }
 
-export function getRequestWithCookie(
-  request: Request,
-  session: Session
-): Request {
+export function requestWithCookie(request: Request, session: Session): Request {
   const signedSessionId = getSignedSessionId(session);
   return request.set("Cookie", [`sid=${signedSessionId}`]);
 }
