@@ -9,6 +9,15 @@ export async function clearTestDatabase(): Promise<void> {
   const connection = await connectToDatabase(PG_CONFIG);
   await connection.raw(
     `
+      DELETE FROM "digmkt-test"."cwuProponents";
+      DELETE FROM "digmkt-test"."cwuProposalAttachments";
+      DELETE FROM "digmkt-test"."cwuProposalStatuses";
+      DELETE FROM "digmkt-test"."cwuProposals";
+      DELETE FROM "digmkt-test"."cwuOpportunityAttachments";
+      DELETE FROM "digmkt-test"."cwuOpportunityNoteAttachments";
+      DELETE FROM "digmkt-test"."cwuOpportunityStatuses";
+      DELETE FROM "digmkt-test"."cwuOpportunityVersions";
+      DELETE FROM "digmkt-test"."cwuOpportunities";
       DELETE FROM "digmkt-test".sessions;
       DELETE FROM "digmkt-test".users;
     `

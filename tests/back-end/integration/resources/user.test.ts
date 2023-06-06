@@ -14,7 +14,7 @@ import {
 import { agent, SuperAgentTest } from "supertest";
 import { clearTestDatabase } from "../helpers";
 
-const testCreateAdminUserParams: CreateUserParams = {
+export const testCreateAdminUserParams: CreateUserParams = {
   type: UserType.Admin,
   status: UserStatus.Active,
   name: "Test Admin User",
@@ -23,7 +23,7 @@ const testCreateAdminUserParams: CreateUserParams = {
   idpId: "testadmin"
 };
 
-const testCreateGovUserParams: CreateUserParams = {
+export const testCreateGovUserParams: CreateUserParams = {
   type: UserType.Government,
   status: UserStatus.Active,
   name: "Test Gov User",
@@ -32,13 +32,22 @@ const testCreateGovUserParams: CreateUserParams = {
   idpId: "testgov"
 };
 
-const testCreateVendorUserParams: CreateUserParams = {
+export const testCreateVendorUserParams: CreateUserParams = {
   type: UserType.Vendor,
   status: UserStatus.Active,
   name: "Test Vendor User",
   email: "testvendor@email.com",
   idpUsername: "testvendor",
   idpId: "testvendor"
+};
+
+export const testCreateVendorUserParams2: CreateUserParams = {
+  type: UserType.Vendor,
+  status: UserStatus.Active,
+  name: "Test Vendor User 2",
+  email: "testvendor2@email.com",
+  idpUsername: "testvendor2",
+  idpId: "testvendor2"
 };
 
 describe("User resource", () => {

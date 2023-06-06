@@ -13,4 +13,4 @@ docker compose up -d test-db
 
 yarn migrations:latest
 
-yarn jest --detectOpenHandles --forceExit --config tests/back-end/jest.config.ts
+yarn jest --detectOpenHandles --forceExit --config tests/back-end/jest.config.ts "$@"

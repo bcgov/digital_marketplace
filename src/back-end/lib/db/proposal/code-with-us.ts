@@ -39,7 +39,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
-interface CreateCWUProposalParams {
+export interface CreateCWUProposalParams {
   opportunity: Id;
   proposalText: string;
   additionalComments: string;

@@ -35,7 +35,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
-interface CreateCWUOpportunityParams
+export interface CreateCWUOpportunityParams
   extends Omit<
     CWUOpportunity,
     | "createdBy"
