@@ -2,24 +2,21 @@ import { PG_CONFIG } from "back-end/config";
 import { connectToDatabase } from "back-end/index";
 import {
   awardCWUProposal,
+  closeCWUOpportunities,
+  readOneCWUOpportunity,
   readOneCWUProposal,
-  updateCWUOpportunityStatus
+  updateCWUOpportunityVersion
 } from "back-end/lib/db";
 import { CWUOpportunityStatus } from "shared/lib/resources/opportunity/code-with-us";
 import { CWUProposalStatus } from "shared/lib/resources/proposal/code-with-us";
 import { getValidValue } from "shared/lib/validation";
 import { clearTestDatabase } from "../helpers";
-import { setupCWUScenario1 } from "../helpers/scenario";
-//import { agent, SuperAgentTest } from "supertest";
-//import { app } from "back-end/index";
+import {
+  setupCWUScenario1,
+  testCreateCWUOpportunityParams
+} from "../helpers/scenario";
 
 describe("CWU Proposal Resource", () => {
-  //let appAgent: SuperAgentTest;
-
-  //beforeEach(() => {
-  //appAgent = agent(app);
-  //});
-
   afterEach(async () => {
     await clearTestDatabase();
   });
@@ -31,14 +28,42 @@ describe("CWU Proposal Resource", () => {
     const { cwuOpportunity, cwuProposal1, cwuProposal2, testAdminSession } =
       await setupCWUScenario1();
 
-    // Update CWU opportunity status to Closed
-    await updateCWUOpportunityStatus(
+    // Update CWU opportunity status to Closed by setting date to in the past and calling hook
+    await updateCWUOpportunityVersion(
       connection,
-      cwuOpportunity.id,
-      CWUOpportunityStatus.Evaluation,
-      "Note",
+      {
+        ...testCreateCWUOpportunityParams,
+        id: cwuOpportunity.id,
+        proposalDeadline: new Date("2000-01-01")
+      },
       testAdminSession
     );
+
+    await closeCWUOpportunities(connection);
+
+    const closedOpportunity = getValidValue(
+      await readOneCWUOpportunity(
+        connection,
+        cwuOpportunity.id,
+        testAdminSession
+      ),
+      null
+    );
+    expect(closedOpportunity?.status).toEqual(CWUOpportunityStatus.Evaluation);
+
+    // Validate that the CWU proposal statuses were updated to UnderReview
+    const updatedProposal1 = getValidValue(
+      await readOneCWUProposal(connection, cwuProposal1.id, testAdminSession),
+      null
+    );
+
+    const updatedProposal2 = getValidValue(
+      await readOneCWUProposal(connection, cwuProposal2.id, testAdminSession),
+      null
+    );
+
+    expect(updatedProposal1?.status).toEqual(CWUProposalStatus.UnderReview);
+    expect(updatedProposal2?.status).toEqual(CWUProposalStatus.UnderReview);
 
     // Award first proposal
     const awardedProposal = getValidValue(

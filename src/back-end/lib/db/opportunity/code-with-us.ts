@@ -740,7 +740,7 @@ export const updateCWUOpportunityVersion = tryDb<
   CWUOpportunity
 >(async (connection, opportunity, session) => {
   const now = new Date();
-  const { attachments, ...restOfOpportunity } = opportunity;
+  const { attachments, status, ...restOfOpportunity } = opportunity;
   const oppVersion = await connection.transaction(async (trx) => {
     const [oppVersion] = await connection<OpportunityVersionRecord>(
       "cwuOpportunityVersions"

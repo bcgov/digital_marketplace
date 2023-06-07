@@ -23,7 +23,7 @@ import { getValidValue } from "shared/lib/validation";
 import { insertUserWithActiveSession } from "./user";
 import { SessionRecord } from "shared/lib/resources/session";
 
-const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
+export const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   title: "Test CWU Opportunity",
   teaser: "Sample Teaser",
   remoteOk: false,
@@ -39,7 +39,7 @@ const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   submissionInfo: "github.com",
   acceptanceCriteria: "Sample Acceptance Criteria",
   evaluationCriteria: "Sample Evaluation Criteria",
-  status: CWUOpportunityStatus.Draft,
+  status: CWUOpportunityStatus.Published,
   attachments: []
 };
 
