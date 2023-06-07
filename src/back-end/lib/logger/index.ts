@@ -36,7 +36,7 @@ export function parseLogLevel(input: string): LogLevel | null {
 }
 
 export function logLevelEnabled(level: LogLevel): boolean {
-  return LogLevelValues[level] <= LogLevelValues[LOG_LEVEL as LogLevel];
+  return LogLevelValues[level] <= LogLevelValues[LOG_LEVEL];
 }
 
 export function logWith(adapter: AdapterFunction): LogFunction {
