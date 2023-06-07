@@ -11,10 +11,17 @@ import {
   testCreateVendorUserParams,
   testCreateVendorUserParams2
 } from "../resources/user.test";
-import { CWUOpportunityStatus } from "shared/lib/resources/opportunity/code-with-us";
-import { CWUProposalStatus } from "shared/lib/resources/proposal/code-with-us";
+import {
+  CWUOpportunity,
+  CWUOpportunityStatus
+} from "shared/lib/resources/opportunity/code-with-us";
+import {
+  CWUProposal,
+  CWUProposalStatus
+} from "shared/lib/resources/proposal/code-with-us";
 import { getValidValue } from "shared/lib/validation";
 import { insertUserWithActiveSession } from "./user";
+import { SessionRecord } from "shared/lib/resources/session";
 
 const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   title: "Test CWU Opportunity",
@@ -25,7 +32,7 @@ const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   reward: 70000,
   skills: ["foo", "bar"],
   description: "Sample Description Lorem Ipsum",
-  proposalDeadline: new Date("2021-02-15"),
+  proposalDeadline: new Date("2999-02-15"), // Set this far in the future for now
   assignmentDate: new Date("2021-02-15"),
   startDate: new Date("2021-02-15"),
   completionDate: new Date("2021-02-20"),
@@ -36,10 +43,19 @@ const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   attachments: []
 };
 
+interface CWUScenario1 {
+  cwuOpportunity: CWUOpportunity;
+  cwuProposal1: CWUProposal;
+  cwuProposal2: CWUProposal;
+  testAdminSession: SessionRecord;
+  testVendorSession1: SessionRecord;
+  testVendorSession2: SessionRecord;
+}
+
 /**
  * Set up a testing scenario with a CWU opportunity and two submitted vendor proposals.
  */
-export async function setupCWUScenario1() {
+export async function setupCWUScenario1(): Promise<CWUScenario1> {
   const connection = await connectToDatabase(PG_CONFIG);
 
   // Create an admin session
@@ -139,4 +155,13 @@ export async function setupCWUScenario1() {
   if (!cwuProposal1 || !cwuProposal2) {
     throw new Error("Failed to create test CWU proposals");
   }
+
+  return {
+    cwuOpportunity,
+    cwuProposal1,
+    cwuProposal2,
+    testAdminSession,
+    testVendorSession1,
+    testVendorSession2
+  };
 }
