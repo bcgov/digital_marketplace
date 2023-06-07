@@ -58,7 +58,7 @@ import { User, userToUserSlim, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
 
-interface CreateSWUProposalParams
+export interface CreateSWUProposalParams
   extends Omit<CreateRequestBody, "attachments" | "status"> {
   attachments: FileRecord[];
   status: CreateSWUProposalStatus;
@@ -1195,7 +1195,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<
           updatedBy: session.user.id
         });
 
-      if (!numberUpdated) {
+      if (numberUpdated === 0) {
         throw new Error("unable to update team question scores");
       }
 

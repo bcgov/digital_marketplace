@@ -10,18 +10,18 @@ import {
 import { CWUOpportunityStatus } from "shared/lib/resources/opportunity/code-with-us";
 import { CWUProposalStatus } from "shared/lib/resources/proposal/code-with-us";
 import { getValidValue } from "shared/lib/validation";
-import { clearTestDatabase } from "../helpers";
+import { clearTestDatabase } from "../../helpers";
 import {
   setupCWUScenario1,
   testCreateCWUOpportunityParams
-} from "../helpers/scenario";
+} from "../../helpers/cwu-scenario-1";
 
 describe("CWU Proposal Resource", () => {
   afterEach(async () => {
     await clearTestDatabase();
   });
 
-  it("should properly updated proposal statuses when a proposal is awarded", async () => {
+  it("should properly update opportunity and proposal statuses when an opportunity is closed and awarded", async () => {
     const connection = await connectToDatabase(PG_CONFIG);
 
     // Setup scenario (create an opportunity with two submitted vendor proposals)
