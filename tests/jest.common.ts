@@ -8,7 +8,12 @@ const config: Config.InitialOptions = {
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
     prefix: "<rootDir>/"
-  })
+  }),
+  watchPlugins: [
+    "jest-watch-select-projects",
+    "jest-watch-typeahead/filename",
+    "jest-watch-typeahead/testname"
+  ]
 };
 
 export default config;
