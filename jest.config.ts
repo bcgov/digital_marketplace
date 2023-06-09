@@ -1,13 +1,10 @@
 import type { Config } from "@jest/types";
-import { pathsToModuleNameMapper } from "ts-jest";
-import { compilerOptions } from "./tsconfig.json";
+import common from "./tests/jest.common";
 
 const config: Config.InitialOptions = {
-  modulePaths: [compilerOptions.baseUrl],
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
-    prefix: "<rootDir>/"
-  }),
-  testPathIgnorePatterns: ["back-end/integration", "cypress"]
+  ...common,
+  collectCoverageFrom: ["**/src/**/*.+(js|ts|tsx)"],
+  projects: ["tests/jest.front-end.ts"]
 };
 
 export default config;
