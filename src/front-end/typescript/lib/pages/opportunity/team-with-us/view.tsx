@@ -254,7 +254,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
   const isAcceptingProposals = isTWUOpportunityAcceptingProposals(
     state.opportunity
   );
-  const compNumber = "ON-003166-1";
+  const competitionNoticeOpportunityId = "DO-2024-1";
   return (
     <div>
       <Container>
@@ -280,9 +280,9 @@ const Header: component_.base.ComponentView<State, Msg> = ({
               ]}
             />
             <p className="font-italic small text-secondary mb-5">
-              This RFP is a Competition Notice under RFQ No. {compNumber} and is
-              restricted to Proponents that have become Qualified Suppliers
-              pursuant to that RFQ.
+              This RFP is a Competition Notice under Opportunity ID{" "}
+              {competitionNoticeOpportunityId} and is restricted to Proponents
+              that have become Qualified Suppliers pursuant to that Opportunity.
             </p>
           </Col>
         </Row>
