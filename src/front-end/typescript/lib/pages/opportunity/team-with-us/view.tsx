@@ -356,7 +356,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
                   icon="badge-dollar-outline"
-                  name="Value"
+                  name="Maximum Contract Value"
                   value={
                     opp.maxBudget
                       ? formatAmount(opp.maxBudget, "$")
