@@ -347,7 +347,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
                   icon="calendar"
-                  name="Proposal Deadline"
+                  name="Closing Date"
                   value={formatDate(opp.proposalDeadline)}
                 />
               </Col>
@@ -642,8 +642,8 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
               ) : null}
             </p>
             <p className="mb-0">
-              Please note that you will not be able to submit a proposal if the
-              opportunity{"'"}s proposal deadline has passed.
+              Please note that you will not be able to submit a proposal after
+              the opportunity{"'"}s closing date and time.
             </p>
             {viewerUser &&
             isVendor(viewerUser) &&
@@ -671,7 +671,7 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             className="align-items-center justify-content-center d-none d-md-flex">
             <OpportunityInfo
               icon="comment-dollar-outline"
-              name="Proposal Deadline"
+              name="Closing Date"
               value={formatDate(state.opportunity.proposalDeadline, true)}
             />
           </Col>
@@ -717,7 +717,7 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
           <Col xs="12">
             <h3 className="mb-4">Key Dates</h3>
             <p className="mb-2">
-              <strong>Proposal Deadline</strong>{" "}
+              <strong>Closing Date and Time</strong>{" "}
               <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
             </p>
             <p className="mb-2">
