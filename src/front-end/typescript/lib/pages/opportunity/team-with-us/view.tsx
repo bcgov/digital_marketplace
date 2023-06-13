@@ -692,8 +692,7 @@ const Budget: component_.base.ComponentView<State, Msg> = ({ state }) => {
           <Col xs="12">
             <h3 className="mb-4">Budget</h3>
             <p className="mb-0">
-              The maximum available budget for the initial term of this
-              opportunity would be{" "}
+              The maximum available budget for this opportunity would be{" "}
               {maxBudget ? formatAmount(maxBudget, "$") : EMPTY_STRING}{" "}
             </p>
           </Col>
