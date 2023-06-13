@@ -504,7 +504,7 @@ const InfoScope: component_.base.ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
-        <h3 className="mb-0">Scope &amp; Contract</h3>
+        <h3 className="mb-0">Form of Contract</h3>
       </Col>
       <Col xs="12" className="mt-4">
         <Markdown source={state.scopeContent} openLinksInNewTabs />
@@ -586,7 +586,7 @@ const InfoTabs: component_.base.ComponentView<State, Msg> = ({
     },
     {
       ...getTabInfo("scope"),
-      text: "Scope & Contract"
+      text: "Form of Contract"
     },
     {
       ...getTabInfo("competitionRules"),
