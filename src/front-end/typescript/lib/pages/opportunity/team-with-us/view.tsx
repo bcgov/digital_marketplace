@@ -1,6 +1,7 @@
 import {
   EMPTY_STRING,
-  TWU_OPPORTUNITY_SCOPE_CONTENT_ID
+  TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
+  TWU_QUALIFICATION_TERMS_ID
 } from "front-end/config";
 import {
   makePageMetadata,
@@ -48,7 +49,12 @@ import {
   doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 
-type InfoTab = "details" | "scope" | "attachments" | "addenda";
+type InfoTab =
+  | "details"
+  | "scope"
+  | "competitionRules"
+  | "attachments"
+  | "addenda";
 
 type Qualification =
   | "notQualified"
@@ -63,6 +69,7 @@ export interface State {
   activeInfoTab: InfoTab;
   routePath: string;
   scopeContent: string;
+  competitionRulesContent: string;
   qualification: Qualification;
 }
 
@@ -74,6 +81,7 @@ export type InnerMsg =
         string,
         api.ResponseValidation<TWUOpportunity, string[]>,
         TWUProposalSlim | null,
+        api.ResponseValidation<Content, string[]>,
         api.ResponseValidation<Content, string[]>,
         api.ResponseValidation<OrganizationSlim[], string[]>
       ]
@@ -106,6 +114,7 @@ const init: component_.page.Init<
       activeInfoTab: "details",
       routePath,
       scopeContent: "",
+      competitionRulesContent: "",
       qualification: "notQualified"
     },
     [
@@ -114,7 +123,7 @@ const init: component_.page.Init<
         null,
         () => adt("noop")
       ),
-      component_.cmd.join4(
+      component_.cmd.join5(
         api.opportunities.twu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.twu.readExistingProposalForOpportunity(
@@ -126,18 +135,24 @@ const init: component_.page.Init<
           TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
           (response) => response
         ),
+        api.content.readOne()(
+          TWU_QUALIFICATION_TERMS_ID,
+          (response) => response
+        ),
         api.organizations.owned.readMany()((response) => response),
         (
           opportunityResponse,
           proposalResponse,
-          contentResponse,
+          scopeContentResponse,
+          competitionRulesContentResponse,
           organizationsResponse
         ) =>
           adt("onInitResponse", [
             routePath,
             opportunityResponse,
             proposalResponse,
-            contentResponse,
+            scopeContentResponse,
+            competitionRulesContentResponse,
             organizationsResponse
           ]) as Msg
       )
@@ -158,7 +173,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         routePath,
         opportunityResponse,
         proposalResponse,
-        contentResponse,
+        scopeContentResponse,
+        competitionRulesContentResponse,
         organizationsResponse
       ] = msg.value;
       if (!api.isValid(opportunityResponse)) {
@@ -179,8 +195,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       if (proposalResponse) {
         state = state.set("existingProposal", proposalResponse);
       }
-      if (contentResponse && api.isValid(contentResponse)) {
-        state = state.set("scopeContent", contentResponse.value.body);
+      if (scopeContentResponse && api.isValid(scopeContentResponse)) {
+        state = state.set("scopeContent", scopeContentResponse.value.body);
+      }
+      if (
+        competitionRulesContentResponse &&
+        api.isValid(competitionRulesContentResponse)
+      ) {
+        state = state.set(
+          "competitionRulesContent",
+          competitionRulesContentResponse.value.body
+        );
       }
       const organizations = api.getValidValue(organizationsResponse, []);
 
@@ -487,6 +512,22 @@ const InfoScope: component_.base.ComponentView<State, Msg> = ({ state }) => {
     </Row>
   );
 };
+
+const InfoCompetitionRules: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  return (
+    <Row>
+      <Col xs="12">
+        <h3 className="mb-0">Competition Rules</h3>
+      </Col>
+      <Col xs="12" className="mt-4">
+        <Markdown source={state.competitionRulesContent} openLinksInNewTabs />
+      </Col>
+    </Row>
+  );
+};
+
 const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
   state
 }) => {
@@ -548,6 +589,10 @@ const InfoTabs: component_.base.ComponentView<State, Msg> = ({
       text: "Scope & Contract"
     },
     {
+      ...getTabInfo("competitionRules"),
+      text: "Competition Rules"
+    },
+    {
       ...getTabInfo("attachments"),
       text: "Attachments",
       count: opp.attachments.length
@@ -576,6 +621,8 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
         return <InfoDetails {...props} />;
       case "scope":
         return <InfoScope {...props} />;
+      case "competitionRules":
+        return <InfoCompetitionRules {...props} />;
       case "attachments":
         return <InfoAttachments {...props} />;
       case "addenda":
