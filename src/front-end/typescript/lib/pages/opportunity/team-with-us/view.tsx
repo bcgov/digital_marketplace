@@ -720,15 +720,15 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
               <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Award Date</strong>{" "}
+              <strong>Contract Award Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(assignment, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Start Date</strong>{" "}
+              <strong>Contract Start Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(startDate, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Completion Date</strong>{" "}
+              <strong>Contract Completion Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(completionDate, false)}</span>
             </p>
           </Col>
