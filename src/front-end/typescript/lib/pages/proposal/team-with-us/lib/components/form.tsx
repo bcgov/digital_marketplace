@@ -762,6 +762,28 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
   return (
     <Row>
       <Col xs="12">
+        <p className="font-weight-bold">
+          General Instructions for Team with Us Proposal Response Form:
+        </p>
+        <ul>
+          <li>
+            This Proposal Response Form includes response guidelines which are
+            intended to assist Proponents in the development of their Proposals.
+          </li>
+          <li>
+            The response guidelines are not intended to be comprehensive.
+            Proponents should use their own judgement in determining what
+            information to provide to demonstrate that the Proponent meets or,
+            if applicable exceeds the Province’s expectations with respect to a
+            particular response guideline.
+          </li>
+          <li>
+            Proposals should not contain links to information that is not set
+            down directly in the Proponent’s Proposal. Should this occur, the
+            Province may disregard any referred to source of information that is
+            not contained in the Proposal being evaluated.
+          </li>
+        </ul>
         <p className="mb-4">
           Provide a response to each of the team questions below. Please note
           that responses that exceed the word limit will receive a score of
