@@ -1,6 +1,7 @@
 import {
   EMPTY_STRING,
-  TWU_OPPORTUNITY_SCOPE_CONTENT_ID
+  TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
+  TWU_QUALIFICATION_TERMS_ID
 } from "front-end/config";
 import {
   makePageMetadata,
@@ -48,7 +49,12 @@ import {
   doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 
-type InfoTab = "details" | "scope" | "attachments" | "addenda";
+type InfoTab =
+  | "details"
+  | "scope"
+  | "competitionRules"
+  | "attachments"
+  | "addenda";
 
 type Qualification =
   | "notQualified"
@@ -63,6 +69,7 @@ export interface State {
   activeInfoTab: InfoTab;
   routePath: string;
   scopeContent: string;
+  competitionRulesContent: string;
   qualification: Qualification;
 }
 
@@ -74,6 +81,7 @@ export type InnerMsg =
         string,
         api.ResponseValidation<TWUOpportunity, string[]>,
         TWUProposalSlim | null,
+        api.ResponseValidation<Content, string[]>,
         api.ResponseValidation<Content, string[]>,
         api.ResponseValidation<OrganizationSlim[], string[]>
       ]
@@ -106,6 +114,7 @@ const init: component_.page.Init<
       activeInfoTab: "details",
       routePath,
       scopeContent: "",
+      competitionRulesContent: "",
       qualification: "notQualified"
     },
     [
@@ -114,7 +123,7 @@ const init: component_.page.Init<
         null,
         () => adt("noop")
       ),
-      component_.cmd.join4(
+      component_.cmd.join5(
         api.opportunities.twu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.twu.readExistingProposalForOpportunity(
@@ -126,18 +135,24 @@ const init: component_.page.Init<
           TWU_OPPORTUNITY_SCOPE_CONTENT_ID,
           (response) => response
         ),
+        api.content.readOne()(
+          TWU_QUALIFICATION_TERMS_ID,
+          (response) => response
+        ),
         api.organizations.owned.readMany()((response) => response),
         (
           opportunityResponse,
           proposalResponse,
-          contentResponse,
+          scopeContentResponse,
+          competitionRulesContentResponse,
           organizationsResponse
         ) =>
           adt("onInitResponse", [
             routePath,
             opportunityResponse,
             proposalResponse,
-            contentResponse,
+            scopeContentResponse,
+            competitionRulesContentResponse,
             organizationsResponse
           ]) as Msg
       )
@@ -158,7 +173,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         routePath,
         opportunityResponse,
         proposalResponse,
-        contentResponse,
+        scopeContentResponse,
+        competitionRulesContentResponse,
         organizationsResponse
       ] = msg.value;
       if (!api.isValid(opportunityResponse)) {
@@ -179,8 +195,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       if (proposalResponse) {
         state = state.set("existingProposal", proposalResponse);
       }
-      if (contentResponse && api.isValid(contentResponse)) {
-        state = state.set("scopeContent", contentResponse.value.body);
+      if (scopeContentResponse && api.isValid(scopeContentResponse)) {
+        state = state.set("scopeContent", scopeContentResponse.value.body);
+      }
+      if (
+        competitionRulesContentResponse &&
+        api.isValid(competitionRulesContentResponse)
+      ) {
+        state = state.set(
+          "competitionRulesContent",
+          competitionRulesContentResponse.value.body
+        );
       }
       const organizations = api.getValidValue(organizationsResponse, []);
 
@@ -254,7 +279,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
   const isAcceptingProposals = isTWUOpportunityAcceptingProposals(
     state.opportunity
   );
-  const compNumber = "ON-003166-1";
+  const competitionNoticeOpportunityId = "DO-2024-1";
   return (
     <div>
       <Container>
@@ -280,9 +305,9 @@ const Header: component_.base.ComponentView<State, Msg> = ({
               ]}
             />
             <p className="font-italic small text-secondary mb-5">
-              This RFP is a Competition Notice under RFQ No. {compNumber} and is
-              restricted to Proponents that have become Qualified Suppliers
-              pursuant to that RFQ.
+              This RFP is a Competition Notice under Opportunity ID{" "}
+              {competitionNoticeOpportunityId} and is restricted to Proponents
+              that have become Qualified Suppliers pursuant to that Opportunity.
             </p>
           </Col>
         </Row>
@@ -347,7 +372,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
                   icon="calendar"
-                  name="Proposal Deadline"
+                  name="Closing Date"
                   value={formatDate(opp.proposalDeadline)}
                 />
               </Col>
@@ -356,7 +381,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
                   icon="badge-dollar-outline"
-                  name="Value"
+                  name="Maximum Contract Value"
                   value={
                     opp.maxBudget
                       ? formatAmount(opp.maxBudget, "$")
@@ -479,7 +504,7 @@ const InfoScope: component_.base.ComponentView<State, Msg> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
-        <h3 className="mb-0">Scope &amp; Contract</h3>
+        <h3 className="mb-0">Form of Contract</h3>
       </Col>
       <Col xs="12" className="mt-4">
         <Markdown source={state.scopeContent} openLinksInNewTabs />
@@ -487,6 +512,22 @@ const InfoScope: component_.base.ComponentView<State, Msg> = ({ state }) => {
     </Row>
   );
 };
+
+const InfoCompetitionRules: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  return (
+    <Row>
+      <Col xs="12">
+        <h3 className="mb-0">Competition Rules</h3>
+      </Col>
+      <Col xs="12" className="mt-4">
+        <Markdown source={state.competitionRulesContent} openLinksInNewTabs />
+      </Col>
+    </Row>
+  );
+};
+
 const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
   state
 }) => {
@@ -545,7 +586,11 @@ const InfoTabs: component_.base.ComponentView<State, Msg> = ({
     },
     {
       ...getTabInfo("scope"),
-      text: "Scope & Contract"
+      text: "Form of Contract"
+    },
+    {
+      ...getTabInfo("competitionRules"),
+      text: "Competition Rules"
     },
     {
       ...getTabInfo("attachments"),
@@ -576,6 +621,8 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
         return <InfoDetails {...props} />;
       case "scope":
         return <InfoScope {...props} />;
+      case "competitionRules":
+        return <InfoCompetitionRules {...props} />;
       case "attachments":
         return <InfoAttachments {...props} />;
       case "addenda":
@@ -642,8 +689,8 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
               ) : null}
             </p>
             <p className="mb-0">
-              Please note that you will not be able to submit a proposal if the
-              opportunity{"'"}s proposal deadline has passed.
+              Please note that you will not be able to submit a proposal after
+              the opportunity{"'"}s closing date and time.
             </p>
             {viewerUser &&
             isVendor(viewerUser) &&
@@ -671,7 +718,7 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             className="align-items-center justify-content-center d-none d-md-flex">
             <OpportunityInfo
               icon="comment-dollar-outline"
-              name="Proposal Deadline"
+              name="Closing Date"
               value={formatDate(state.opportunity.proposalDeadline, true)}
             />
           </Col>
@@ -692,8 +739,7 @@ const Budget: component_.base.ComponentView<State, Msg> = ({ state }) => {
           <Col xs="12">
             <h3 className="mb-4">Budget</h3>
             <p className="mb-0">
-              The maximum available budget for the initial term of this
-              opportunity would be{" "}
+              The maximum available budget for this opportunity would be{" "}
               {maxBudget ? formatAmount(maxBudget, "$") : EMPTY_STRING}{" "}
             </p>
           </Col>
@@ -717,19 +763,19 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
           <Col xs="12">
             <h3 className="mb-4">Key Dates</h3>
             <p className="mb-2">
-              <strong>Proposal Deadline</strong>{" "}
+              <strong>Closing Date and Time</strong>{" "}
               <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Award Date</strong>{" "}
+              <strong>Contract Award Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(assignment, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Start Date</strong>{" "}
+              <strong>Contract Start Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(startDate, false)}</span>
             </p>
             <p className="mb-2">
-              <strong>Contract Completion Date</strong>{" "}
+              <strong>Contract Completion Date (Anticipated)</strong>{" "}
               <span className="ml-3">{formatDate(completionDate, false)}</span>
             </p>
           </Col>

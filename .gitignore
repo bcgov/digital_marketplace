@@ -21,6 +21,7 @@ node_modules/
 /cypress/videos/
 *.tsbuildinfo
 yarn-error.log
+coverage/
 
 Session.vim
 tags
