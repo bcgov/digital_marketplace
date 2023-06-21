@@ -459,7 +459,10 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
         ) : null}
       </Col>
       <Col xs="12" className="mt-5">
-        <InfoDetailsHeading icon="info-circle-outline" text="Description" />
+        <InfoDetailsHeading
+          icon="info-circle-outline"
+          text="Description and Contract Details"
+        />
         <Markdown
           source={opp.description || EMPTY_STRING}
           smallerHeadings
