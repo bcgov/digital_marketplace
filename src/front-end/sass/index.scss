@@ -954,6 +954,29 @@ nav.navbar .nav-link:hover {
   z-index: 1001; // Above nav, below modals
 }
 
+.li-paren {
+  counter-reset: list;
+  & > li {
+    list-style: none;
+  }
+  & > li:before {
+    font-weight: $font-weight-bold;
+    counter-increment: list;
+  }
+  &-lower-roman {
+    @extend .li-paren;
+    & > li:before {
+      content: counter(list, lower-roman) ") ";
+    }
+  }
+  &-lower-alpha {
+    @extend .li-paren;
+    & > li:before {
+      content: counter(list, lower-alpha) ") ";
+    }
+  }
+}
+
 // Page-specific overrides
 
 .route-orgSWUTerms,

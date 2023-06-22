@@ -676,6 +676,56 @@ const PricingView: component_.base.View<Props> = ({
     <div>
       <Row>
         <Col xs="12" className="mb-4">
+          <p className="font-weight-bold">
+            Proponents take note of the following pricing rules and
+            requirements:
+          </p>
+          <ol className="li-paren-lower-alpha">
+            <li>
+              Proponent pricing quoted will be taken to mean and deemed to be:
+              <ol className="li-paren-lower-roman">
+                <li>in Canadian dollars;</li>
+                <li>
+                  inclusive of all costs or expenses that may be incurred with
+                  respect to the services specified by the Competition Notice;
+                </li>
+                <li>exclusive of any applicable taxes.</li>
+              </ol>
+            </li>
+            <li>
+              In addition, the following rules apply to pricing bid by
+              Proponents:
+              <ol className="li-paren-lower-roman">
+                <li>
+                  Team With Us Terms & Conditions section 1.8 regarding pricing
+                  and its provisions are incorporated herein by this reference.
+                </li>
+                <li>
+                  All pricing bid is required to be unconditional and
+                  unqualified. If any pricing bid does not meet this
+                  requirement, the Proponent’s Proposal may be rejected
+                  resulting in the Proponent being eliminated from the
+                  Competition Notice competition.
+                </li>
+                <li>
+                  Failure to provide pricing where required by the Competition
+                  Notice will result in the Proponent being unable to submit a
+                  Proposal.
+                </li>
+                <li>
+                  Entering the numerical figure of “$0”, “$zero”, or the like in
+                  response to a call for a specific dollar amount will result in
+                  the Proponent being unable to submit a Proposal.
+                </li>
+                <li>
+                  The Contract will provide that the Contractor may request an
+                  increase in the bid pricing for any extension term of the
+                  Contract, limited to any increases, if any, as supported by
+                  the Canadian Consumer Price Index or 3% whichever is lower.
+                </li>
+              </ol>
+            </li>
+          </ol>
           <p>
             Please provide the hourly rate you are proposing for this
             opportunity.
@@ -712,6 +762,28 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
   return (
     <Row>
       <Col xs="12">
+        <p className="font-weight-bold">
+          General Instructions for Team with Us Proposal Response Form:
+        </p>
+        <ul>
+          <li>
+            This Proposal Response Form includes response guidelines which are
+            intended to assist Proponents in the development of their Proposals.
+          </li>
+          <li>
+            The response guidelines are not intended to be comprehensive.
+            Proponents should use their own judgement in determining what
+            information to provide to demonstrate that the Proponent meets or,
+            if applicable exceeds the Province’s expectations with respect to a
+            particular response guideline.
+          </li>
+          <li>
+            Proposals should not contain links to information that is not set
+            down directly in the Proponent’s Proposal. Should this occur, the
+            Province may disregard any referred to source of information that is
+            not contained in the Proposal being evaluated.
+          </li>
+        </ul>
         <p className="mb-4">
           Provide a response to each of the team questions below. Please note
           that responses that exceed the word limit will receive a score of
