@@ -1,12 +1,6 @@
 import { connectToDatabase, startServer, stopServer } from "back-end/index";
-import { PG_CONFIG } from "back-end/config";
-import { Connection } from "back-end/lib/db";
-import log from "why-is-node-running";
-
-let connection: Connection;
 
 beforeAll(async () => {
-  connection = connectToDatabase(PG_CONFIG);
   await startServer({
     port: 3000 + Number(process.env.JEST_WORKER_ID)
   });
@@ -14,8 +8,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await stopServer();
-  await connection.destroy();
-  log();
 });
 
-export { connection };
+export const connection = connectToDatabase();
