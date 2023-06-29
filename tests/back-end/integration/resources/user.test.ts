@@ -13,6 +13,7 @@ import {
 } from "shared/lib/resources/user";
 import { agent, SuperAgentTest } from "supertest";
 import { clearTestDatabase } from "../helpers";
+import { connection } from "../../setup.jest";
 
 const testCreateAdminUserParams: CreateUserParams = {
   type: UserType.Admin,
@@ -49,15 +50,15 @@ describe("User resource", () => {
   });
 
   afterEach(async () => {
-    await clearTestDatabase();
+    await clearTestDatabase(connection);
   });
 
   it("correctly supports a user reading their own profile", async () => {
     const [testVendor, testVendorSession] = await insertUserWithActiveSession(
-      testCreateVendorUserParams
+      testCreateVendorUserParams,
+      connection
     );
     const request = appAgent.get(`/api/users/${testVendor.id}`);
-
     const result = await requestWithCookie(request, testVendorSession);
 
     expect(result.status).toEqual(200);
@@ -66,10 +67,11 @@ describe("User resource", () => {
 
   it("correctly supports an admin reading all users", async () => {
     const [testAdmin, testAdminSession] = await insertUserWithActiveSession(
-      testCreateAdminUserParams
+      testCreateAdminUserParams,
+      connection
     );
 
-    const testVendor = await insertUser(testCreateVendorUserParams);
+    const testVendor = await insertUser(testCreateVendorUserParams, connection);
 
     const request = appAgent.get("/api/users");
 
@@ -81,7 +83,8 @@ describe("User resource", () => {
 
   it("correctly supports updating user notifications", async () => {
     const [testVendor, testVendorSession] = await insertUserWithActiveSession(
-      testCreateVendorUserParams
+      testCreateVendorUserParams,
+      connection
     );
 
     const updateParams: UpdateRequestBody = {
@@ -104,7 +107,8 @@ describe("User resource", () => {
 
   it("correctly supports updating user profiles", async () => {
     const [testVendor, testVendorSession] = await insertUserWithActiveSession(
-      testCreateVendorUserParams
+      testCreateVendorUserParams,
+      connection
     );
 
     const updateProfileRequestBody: UpdateProfileRequestBody = {
@@ -133,7 +137,8 @@ describe("User resource", () => {
 
   it("correctly supports updating user capabilities", async () => {
     const [testVendor, testVendorSession] = await insertUserWithActiveSession(
-      testCreateVendorUserParams
+      testCreateVendorUserParams,
+      connection
     );
 
     const updateParams: UpdateRequestBody = {
@@ -156,7 +161,8 @@ describe("User resource", () => {
 
   it("correctly supports accepting user terms", async () => {
     const [testVendor, testVendorSession] = await insertUserWithActiveSession(
-      testCreateVendorUserParams
+      testCreateVendorUserParams,
+      connection
     );
 
     const updateParams: UpdateRequestBody = {
@@ -178,10 +184,13 @@ describe("User resource", () => {
   });
 
   it("correctly supports an admin reactivating a user that was disabled by an admin", async () => {
-    const testVendor = await insertUser({
-      ...testCreateVendorUserParams,
-      status: UserStatus.InactiveByAdmin
-    });
+    const testVendor = await insertUser(
+      {
+        ...testCreateVendorUserParams,
+        status: UserStatus.InactiveByAdmin
+      },
+      connection
+    );
 
     const updateParams: UpdateRequestBody = {
       tag: "reactivateUser",
@@ -189,7 +198,8 @@ describe("User resource", () => {
     };
 
     const [, testAdminSession] = await insertUserWithActiveSession(
-      testCreateAdminUserParams
+      testCreateAdminUserParams,
+      connection
     );
 
     const request = appAgent
@@ -206,7 +216,7 @@ describe("User resource", () => {
   });
 
   it("correctly supports an admin granting admin permissions to a gov user", async () => {
-    const testGovUser = await insertUser(testCreateGovUserParams);
+    const testGovUser = await insertUser(testCreateGovUserParams, connection);
 
     const updateParams: UpdateRequestBody = {
       tag: "updateAdminPermissions",
@@ -214,7 +224,8 @@ describe("User resource", () => {
     };
 
     const [, testAdminSession] = await insertUserWithActiveSession(
-      testCreateAdminUserParams
+      testCreateAdminUserParams,
+      connection
     );
 
     const request = appAgent
@@ -231,10 +242,13 @@ describe("User resource", () => {
   });
 
   it("correctly supports an admin removing admin permissions from an admin user", async () => {
-    const testAdminUser = await insertUser({
-      ...testCreateGovUserParams,
-      type: UserType.Admin
-    });
+    const testAdminUser = await insertUser(
+      {
+        ...testCreateGovUserParams,
+        type: UserType.Admin
+      },
+      connection
+    );
 
     const updateParams: UpdateRequestBody = {
       tag: "updateAdminPermissions",
@@ -242,7 +256,8 @@ describe("User resource", () => {
     };
 
     const [, testAdminSession] = await insertUserWithActiveSession(
-      testCreateAdminUserParams
+      testCreateAdminUserParams,
+      connection
     );
 
     const request = appAgent

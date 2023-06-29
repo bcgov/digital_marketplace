@@ -13,7 +13,9 @@ const config: Config.InitialOptions = {
     "jest-watch-select-projects",
     "jest-watch-typeahead/filename",
     "jest-watch-typeahead/testname"
-  ]
+  ],
+  globalSetup: "<rootDir>/tests/utils/global-setup.ts",
+  globalTeardown: "<rootDir>/tests/utils/global-teardown.ts"
 };
 
 export default config;

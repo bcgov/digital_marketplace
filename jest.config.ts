@@ -4,7 +4,7 @@ import common from "./tests/jest.common";
 const config: Config.InitialOptions = {
   ...common,
   collectCoverageFrom: ["**/src/**/*.+(js|ts|tsx)"],
-  projects: ["tests/jest.front-end.ts"]
+  projects: ["tests/jest.front-end.ts", "tests/jest.back-end.ts"]
 };
 
 export default config;

@@ -279,19 +279,20 @@ export async function initApplication() {
     }
   });
 
-  return app;
+  return { app, connection };
 }
 
 let server: Server;
+let connection: Connection;
 export let app: Application;
 
-export async function startServer() {
+export async function startServer({ port = SERVER_PORT } = {}) {
   try {
-    app = await initApplication();
-    server = app.listen(SERVER_PORT, SERVER_HOST);
+    ({ app, connection } = await initApplication());
+    server = app.listen(port, SERVER_HOST);
     logger.info("server started", {
       host: SERVER_HOST,
-      port: String(SERVER_PORT)
+      port: String(port)
     });
   } catch (error) {
     logger.error(
@@ -308,5 +309,19 @@ export async function stopServer() {
     process.exit(1);
   }
 
-  await server.close();
+  try {
+    await connection.destroy();
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error stopping the server:", error);
+    process.exit(1);
+  }
 }
