@@ -229,6 +229,7 @@
     "superagent": "^8.0.9",
     "supertest": "^6.3.3",
     "typedoc": "^0.23.28",
-    "typedoc-plugin-missing-exports": "^1.0.0"
+    "typedoc-plugin-missing-exports": "^1.0.0",
+    "why-is-node-running": "^2.2.2"
   }
 }

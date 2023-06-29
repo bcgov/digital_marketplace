@@ -1,6 +1,7 @@
 import { connectToDatabase, startServer, stopServer } from "back-end/index";
 import { PG_CONFIG } from "back-end/config";
 import { Connection } from "back-end/lib/db";
+import log from "why-is-node-running";
 
 let connection: Connection;
 
@@ -14,6 +15,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await stopServer();
   await connection.destroy();
+  log();
 });
 
 export { connection };
