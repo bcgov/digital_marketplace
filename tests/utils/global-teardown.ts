@@ -3,7 +3,7 @@ import { spawnSync } from "child_process";
 export default function () {
   const dockerComposeDown = spawnSync(
     "docker",
-    ["compose", "down", "--remove-orphans"],
+    ["compose", "rm", "-s", "-v", "-f", "test-db"],
     { stdio: "inherit" }
   );
   if (dockerComposeDown.error) {
