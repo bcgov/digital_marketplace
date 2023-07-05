@@ -12,3 +12,7 @@ export async function clearTestDatabase(connection: Connection): Promise<void> {
     `
   );
 }
+
+export function jsonClone(value: unknown) {
+  return JSON.parse(JSON.stringify(value));
+}
