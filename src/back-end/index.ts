@@ -63,7 +63,7 @@ import {
 } from "back-end/lib/types";
 import { Application } from "express";
 import { Server } from "http";
-import Knex, { ConnectionConfig } from "knex";
+import Knex from "knex";
 import { concat, flatten, flow, map } from "lodash/fp";
 import { flipCurried } from "shared/lib";
 import {
@@ -95,20 +95,32 @@ type AppRouter = Router<
   Session
 >;
 
+// Ensure all environment variables are specified correctly.
+const configErrors = getConfigErrors();
+
+if (configErrors.length || !PG_CONFIG) {
+  configErrors.forEach((error: string) => logger.error(error));
+  throw new Error("Invalid environment variable configuration.");
+}
+
 const logger = makeDomainLogger(consoleAdapter, "back-end");
 
-export function connectToDatabase(
-  connectionConfig: string | ConnectionConfig
-): Connection {
-  return Knex({
-    client: "pg",
-    connection: connectionConfig,
-    migrations: {
-      tableName: DB_MIGRATIONS_TABLE_NAME
-    },
-    debug: KNEX_DEBUG
-  });
-}
+export const connectToDatabase: () => Connection = (() => {
+  let _connection: Connection | null = null;
+  return function (): Connection {
+    _connection =
+      _connection ||
+      Knex({
+        client: "pg",
+        connection: PG_CONFIG,
+        migrations: {
+          tableName: DB_MIGRATIONS_TABLE_NAME
+        },
+        debug: KNEX_DEBUG
+      });
+    return _connection;
+  };
+})();
 
 const globalHooks = [loggerHook];
 
@@ -209,16 +221,10 @@ export function createDowntimeRouter(): AppRouter {
 }
 
 export async function initApplication() {
-  // Ensure all environment variables are specified correctly.
-  const configErrors = getConfigErrors();
-  if (configErrors.length || !PG_CONFIG) {
-    configErrors.forEach((error: string) => logger.error(error));
-    throw new Error("Invalid environment variable configuration.");
-  }
   // Output log level.
   logger.info(`Log level set to: ${LOG_LEVEL.toUpperCase()}`);
   // Connect to Postgres.
-  const connection = connectToDatabase(PG_CONFIG);
+  const connection = connectToDatabase();
   // Test DB connection
   await connection.raw("SELECT 1");
   logger.info("PostgreSQL connected");
@@ -285,13 +291,13 @@ export async function initApplication() {
 let server: Server;
 export let app: Application;
 
-export async function startServer() {
+export async function startServer({ port = SERVER_PORT } = {}) {
   try {
     app = await initApplication();
-    server = app.listen(SERVER_PORT, SERVER_HOST);
+    server = app.listen(port, SERVER_HOST);
     logger.info("server started", {
       host: SERVER_HOST,
-      port: String(SERVER_PORT)
+      port: String(port)
     });
   } catch (error) {
     logger.error(
@@ -308,5 +314,21 @@ export async function stopServer() {
     process.exit(1);
   }
 
-  await server.close();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error);
+        } else {
+          connectToDatabase()
+            .destroy()
+            .then(() => resolve())
+            .catch(reject);
+        }
+      });
+    });
+  } catch (error) {
+    console.error("Error stopping the server:", error);
+    process.exit(1);
+  }
 }

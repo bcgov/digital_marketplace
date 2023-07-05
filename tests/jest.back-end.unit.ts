@@ -3,11 +3,10 @@ import common from "./jest.common";
 
 const config: Config.InitialOptions = {
   ...common,
-  roots: ["./tests/back-end"],
-  displayName: "back-end",
+  roots: ["./tests/back-end/unit"],
+  displayName: "back-end:unit",
   testEnvironment: "jest-environment-node",
-  clearMocks: true,
-  setupFilesAfterEnv: ["<rootDir>/tests/back-end/setup.jest.ts"]
+  clearMocks: true
 };
 
 export default config;
