@@ -15,7 +15,7 @@ import {
   clearTestDatabase,
   jsonClone
 } from "tests/back-end/integration/helpers";
-import { connection } from "tests/back-end/setup.jest";
+import { connection } from "tests/back-end/setup-server.jest";
 import { buildCreateUserParams } from "tests/utils/generate/user";
 
 const testCreateAdminUserParams = buildCreateUserParams({

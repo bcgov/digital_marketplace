@@ -5,9 +5,8 @@ const config: Config.InitialOptions = {
   ...unit,
   roots: ["./tests/back-end/integration"],
   displayName: "back-end:integration",
-  setupFilesAfterEnv: ["<rootDir>/tests/back-end/setup.jest.ts"],
-  globalSetup: "<rootDir>/tests/utils/global-setup.ts",
-  globalTeardown: "<rootDir>/tests/utils/global-teardown.ts"
+  setupFiles: ["<rootDir>/tests/back-end/setup-env.jest.ts"],
+  setupFilesAfterEnv: ["<rootDir>/tests/back-end/setup-server.jest.ts"]
 };
 
 export default config;

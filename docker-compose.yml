@@ -31,14 +31,14 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
 
   test-db:
-    container_name: dm_test_db
+    container_name: ${CONTAINER_NAME:-dm_test_db}
     image: postgres:12
     volumes:
       - ./sql/create_test_schema.sql:/docker-entrypoint-initdb.d/create_test_schema.sql
       - dm-test-vol:/var/lib/postgresql/data
     restart: always
     ports:
-      - "5433:5432"
+      - "${DB_PORT:-5433}:5432"
     environment:
       POSTGRES_USER: digmkt-test
       POSTGRES_PASSWORD: digmkt-test
