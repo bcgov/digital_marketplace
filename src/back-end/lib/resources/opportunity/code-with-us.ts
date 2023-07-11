@@ -82,7 +82,6 @@ interface ValidatedUpdateRequestBody {
   body:
     | ADT<"edit", ValidatedUpdateEditRequestBody>
     | ADT<"publish", string>
-    | ADT<"startEvaluation", string>
     | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
@@ -912,15 +911,6 @@ const update: crud.Update<
             }
             break;
           }
-          case "startEvaluation":
-            dbResult = await db.updateCWUOpportunityStatus(
-              connection,
-              request.params.id,
-              CWUOpportunityStatus.Evaluation,
-              body.value,
-              session
-            );
-            break;
           case "suspend":
             dbResult = await db.updateCWUOpportunityStatus(
               connection,

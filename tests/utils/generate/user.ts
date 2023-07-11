@@ -1,6 +1,11 @@
 import { faker } from "@faker-js/faker";
-import { omit } from "lodash";
-import { User, UserType, UserStatus } from "shared/lib/resources/user";
+import { omit, pick } from "lodash";
+import {
+  User,
+  UserType,
+  UserStatus,
+  UserSlim
+} from "shared/lib/resources/user";
 import {
   getEmail,
   getId,
@@ -28,8 +33,15 @@ function buildUser(overrides: Partial<User> = {}): User {
     idpUsername,
     deactivatedOn: null,
     deactivatedBy: null,
-    capabilities: CAPABILITY_NAMES_ONLY,
+    capabilities: faker.helpers.arrayElements(CAPABILITY_NAMES_ONLY),
     idpId: idpUsername,
+    ...overrides
+  };
+}
+
+function buildUserSlim(overrides: Partial<UserSlim> = {}): UserSlim {
+  return {
+    ...pick(buildUser(), ["id", "name", "avatarImageFile"]),
     ...overrides
   };
 }
@@ -43,4 +55,4 @@ function buildCreateUserParams(
   };
 }
 
-export { buildUser, buildCreateUserParams };
+export { buildUser, buildUserSlim, buildCreateUserParams };
