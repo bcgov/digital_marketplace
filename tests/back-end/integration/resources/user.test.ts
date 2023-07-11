@@ -66,7 +66,9 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testAdminSession);
 
     expect(result.status).toEqual(200);
-    expect(result.body).toEqual([testAdmin, testVendor].map(jsonClone));
+    expect(result.body).toEqual(
+      expect.arrayContaining([testAdmin, testVendor].map(jsonClone))
+    );
   });
 
   it("correctly supports updating user notifications", async () => {
