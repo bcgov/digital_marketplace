@@ -56,7 +56,7 @@ export async function rawUserSlimToUserSlim(
     : null;
   return {
     ...restOfRawUser,
-    avatarImageFile: avatarImageFile || undefined
+    avatarImageFile: avatarImageFile ?? null
   };
 }
 

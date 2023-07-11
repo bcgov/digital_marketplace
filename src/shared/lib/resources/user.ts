@@ -53,17 +53,13 @@ export interface User {
   idpId: string;
 }
 
-export interface UserSlim {
-  id: Id;
-  name: string;
-  avatarImageFile?: FileRecord;
-}
+export type UserSlim = Pick<User, "id" | "name" | "avatarImageFile">;
 
 export function userToUserSlim(u: User): UserSlim {
   return {
     id: u.id,
     name: u.name,
-    avatarImageFile: u.avatarImageFile || undefined
+    avatarImageFile: u.avatarImageFile ?? null
   };
 }
 
