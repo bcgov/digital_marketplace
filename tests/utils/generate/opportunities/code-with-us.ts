@@ -12,12 +12,17 @@ import { dateAt4PM } from "tests/utils/date";
 function buildCWUOpportunity(
   overrides: Partial<CWUOpportunity> = {}
 ): CWUOpportunity {
-  const createdAt = new Date();
-  const createdBy = buildUserSlim();
-  const remoteOk = faker.datatype.boolean();
-  const proposalDeadline = faker.date.soon({ refDate: createdAt });
-  const assignmentDate = faker.date.soon({ refDate: proposalDeadline });
-  const completionDate = faker.date.future({ refDate: assignmentDate });
+  const {
+    createdAt = new Date(),
+    createdBy = buildUserSlim(),
+    remoteOk = faker.datatype.boolean(),
+    proposalDeadline = faker.date.soon({ refDate: createdAt }),
+    assignmentDate = faker.date.soon({ refDate: proposalDeadline }),
+    completionDate = overrides.completionDate
+      ? overrides.completionDate
+      : faker.date.future({ refDate: assignmentDate })
+  } = overrides;
+
   return {
     id: getId(),
     createdAt,
@@ -35,9 +40,14 @@ function buildCWUOpportunity(
     proposalDeadline: dateAt4PM(proposalDeadline),
     assignmentDate: dateAt4PM(assignmentDate),
     startDate: dateAt4PM(
-      faker.date.between({ from: assignmentDate, to: completionDate })
+      completionDate
+        ? faker.date.between({
+            from: assignmentDate,
+            to: completionDate
+          })
+        : faker.date.soon({ refDate: assignmentDate })
     ),
-    completionDate: dateAt4PM(completionDate),
+    completionDate: completionDate ? dateAt4PM(completionDate) : null,
     submissionInfo: faker.lorem.sentence(),
     acceptanceCriteria: faker.lorem.paragraphs(),
     evaluationCriteria: faker.lorem.paragraphs(),
