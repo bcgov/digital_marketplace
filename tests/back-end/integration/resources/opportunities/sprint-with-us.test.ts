@@ -6,7 +6,7 @@ import {
 } from "tests/back-end/integration/helpers/user";
 import { connection } from "tests/back-end/setup-server.jest";
 import { UserType } from "shared/lib/resources/user";
-import { agent } from "supertest";
+import request, { agent } from "supertest";
 import { buildCreateUserParams } from "tests/utils/generate/user";
 import { buildSWUOpportunity } from "tests/utils/generate/opportunities/sprint-with-us";
 import {
@@ -38,7 +38,8 @@ afterEach(async () => {
 });
 
 test("sprint-with-us opportunity crud", async () => {
-  const { testUser, testUserSession, appAgent } = await setup();
+  const { testUser, testUserSession, testAdmin, testAdminSession, appAgent } =
+    await setup();
 
   const opportunity = buildSWUOpportunity();
   const body: CreateRequestBody = {
@@ -106,6 +107,7 @@ test("sprint-with-us opportunity crud", async () => {
   const opportunityIdUrl = `/api/opportunities/sprint-with-us/${opportunityId}`;
 
   const readResult = await appAgent.get(opportunityIdUrl);
+
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
 
@@ -155,5 +157,23 @@ test("sprint-with-us opportunity crud", async () => {
       ...editResult.body.history
     ],
     updatedAt: expect.any(String)
+  });
+
+  const publishResult = await requestWithCookie(
+    request(app).put(opportunityIdUrl).send(adt("publish")),
+    testAdminSession
+  );
+  expect(publishResult.status).toEqual(200);
+  expect(publishResult.body).toMatchObject({
+    ...submitForReviewResult.body,
+    status: SWUOpportunityStatus.Published,
+    history: [
+      { type: { value: SWUOpportunityStatus.Published } },
+      ...submitForReviewResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    updatedBy: {
+      id: testAdmin.id
+    }
   });
 });
