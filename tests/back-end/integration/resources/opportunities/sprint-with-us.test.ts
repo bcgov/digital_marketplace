@@ -141,4 +141,19 @@ test("sprint-with-us opportunity crud", async () => {
       }))
     ]
   });
+
+  const submitForReviewResult = await appAgent
+    .put(opportunityIdUrl)
+    .send(adt("submitForReview"));
+
+  expect(submitForReviewResult.status).toEqual(200);
+  expect(submitForReviewResult.body).toMatchObject({
+    ...editResult.body,
+    status: SWUOpportunityStatus.UnderReview,
+    history: [
+      { type: { value: SWUOpportunityStatus.UnderReview } },
+      ...editResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
