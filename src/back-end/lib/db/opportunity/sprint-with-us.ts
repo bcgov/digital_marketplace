@@ -138,14 +138,17 @@ interface RawSWUOpportunityPhase
   id: Id;
   createdBy?: Id;
   requiredCapabilities: Id[];
+  opportunityVersion: Id;
 }
 
 interface RawPhaseRequiredCapability
   extends Omit<SWUOpportunityPhaseRequiredCapability, "createdBy"> {
+  phase: Id;
   createdBy?: Id;
 }
 
 interface RawTeamQuestion extends Omit<SWUTeamQuestion, "createdBy"> {
+  opportunityVersion: Id;
   createdBy?: Id;
 }
 
@@ -172,6 +175,7 @@ async function rawSWUOpportunityToSWUOpportunity(
     prototypePhase: prototypePhaseId,
     implementationPhase: implementationPhaseId,
     minTeamMembers,
+    versionId,
     ...restOfRaw
   } = raw;
 
@@ -218,8 +222,6 @@ async function rawSWUOpportunityToSWUOpportunity(
   if (!addenda || !teamQuestions || !implementationPhase) {
     throw new Error("unable to process opportunity");
   }
-
-  delete raw.versionId;
 
   return {
     ...restOfRaw,
@@ -281,7 +283,7 @@ async function rawSWUOpportunityPhaseToSWUOpportunityPhase(
   connection: Connection,
   raw: RawSWUOpportunityPhase
 ): Promise<SWUOpportunityPhase> {
-  const { createdBy: createdById, ...restOfRaw } = raw;
+  const { createdBy: createdById, opportunityVersion, id, ...restOfRaw } = raw;
 
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), undefined)
@@ -306,7 +308,7 @@ async function rawRequiredCapabilityToRequiredCapability(
   connection: Connection,
   raw: RawPhaseRequiredCapability
 ): Promise<SWUOpportunityPhaseRequiredCapability> {
-  const { createdBy: createdById, ...restOfRaw } = raw;
+  const { createdBy: createdById, phase, ...restOfRaw } = raw;
 
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), undefined)
@@ -326,7 +328,7 @@ async function rawTeamQuestionToTeamQuestion(
   connection: Connection,
   raw: RawTeamQuestion
 ): Promise<SWUTeamQuestion> {
-  const { createdBy: createdById, ...restOfRaw } = raw;
+  const { createdBy: createdById, opportunityVersion, ...restOfRaw } = raw;
 
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), undefined)

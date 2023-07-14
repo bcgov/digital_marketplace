@@ -113,6 +113,7 @@ async function rawCWUOpportunityToCWUOpportunity(
     updatedBy: updatedById,
     attachments: attachmentIds,
     addenda: addendaIds,
+    versionId,
     ...restOfRaw
   } = raw;
   const createdBy = createdById
@@ -142,8 +143,6 @@ async function rawCWUOpportunityToCWUOpportunity(
       return result;
     })
   );
-
-  delete raw.versionId;
 
   return {
     ...restOfRaw,
