@@ -97,4 +97,11 @@ test("sprint-with-us opportunity crud", async () => {
     },
     createdBy: { id: testUser.id }
   });
+
+  const opportunityId = createResult.body.id;
+  const opportunityIdUrl = `/api/opportunities/sprint-with-us/${opportunityId}`;
+
+  const readResult = await appAgent.get(opportunityIdUrl);
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(createResult.body);
 });
