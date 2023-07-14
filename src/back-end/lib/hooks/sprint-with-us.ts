@@ -17,8 +17,8 @@ const createCrudHook: (
   const throttledBefore = throttle(
     () => {
       logger.info(`Invoked swuCrudHook at ${new Date()}`);
-      db.closeSWUOpportunities(connection).then(
-        (result: Validation<number, null>) => {
+      db.closeSWUOpportunities(connection)
+        .then((result: Validation<number, null>) => {
           if (isValid(result) && result.value > 0) {
             logger.info(
               `${result.value} Sprint With Us opportunities were set to Evaluation`
@@ -26,8 +26,13 @@ const createCrudHook: (
           } else if (isInvalid(result)) {
             logger.warn("Unable to update lapsed Sprint With Us opportunities");
           }
-        }
-      );
+        })
+        .catch((error) =>
+          logger.error("database operation failed", {
+            message: error.message,
+            stack: error.stack
+          })
+        );
     },
     UPDATE_HOOK_THROTTLE,
     { leading: true, trailing: true }

@@ -1,12 +1,10 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
+import { Connection } from "back-end/lib/db";
 
-export async function clearTestDatabase(): Promise<void> {
+export async function clearTestDatabase(connection: Connection): Promise<void> {
   if (process.env.NODE_ENV !== "test") {
     throw new Error("Attempt to call test utility in non-test environment");
   }
 
-  const connection = await connectToDatabase(PG_CONFIG);
   await connection.raw(
     `
       DELETE FROM "digmkt-test".sessions;
