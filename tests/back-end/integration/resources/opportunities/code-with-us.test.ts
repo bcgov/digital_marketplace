@@ -89,8 +89,7 @@ test("code-with-us opportunity crud", async () => {
       { type: { value: CWUOpportunityEvent.Edited } },
       ...readResult.body.history
     ],
-    updatedAt: expect.any(String),
-    versionId: expect.any(String)
+    updatedAt: expect.any(String)
   });
 
   const publishResult = await appAgent
@@ -160,6 +159,7 @@ test("code-with-us opportunity crud", async () => {
   const readManyBeforeDeleteResult = await appAgent.get(
     "/api/opportunities/code-with-us"
   );
+  expect(readManyBeforeDeleteResult.body).toHaveLength(2);
   expect(readManyBeforeDeleteResult.body).toMatchObject(
     expect.arrayContaining([
       expect.objectContaining({ id: opportunityId }),
