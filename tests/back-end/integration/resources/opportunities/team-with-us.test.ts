@@ -165,4 +165,20 @@ test("team-with-us opportunity crud", async () => {
       id: testAdmin.id
     }
   });
+
+  const description = "New Addendum";
+  const addAddendumResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("addAddendum", description));
+
+  expect(addAddendumResult.status).toEqual(200);
+  expect(addAddendumResult.body).toMatchObject({
+    ...publishResult.body,
+    addenda: [{ description }],
+    history: [
+      { type: { value: TWUOpportunityEvent.AddendumAdded } },
+      ...publishResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
