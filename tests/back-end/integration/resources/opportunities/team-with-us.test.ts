@@ -45,7 +45,14 @@ afterEach(async () => {
 });
 
 test("team-with-us opportunity crud", async () => {
-  const { testUser, testUserSession, userAppAgent } = await setup();
+  const {
+    testUser,
+    testUserSession,
+    testAdmin,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  } = await setup();
 
   const opportunity = buildTWUOpportunity();
   const body: CreateRequestBody = {
@@ -134,5 +141,28 @@ test("team-with-us opportunity crud", async () => {
       ...editResult.body.history
     ],
     updatedAt: expect.any(String)
+  });
+
+  const publishRequest = adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("publish"));
+
+  const publishResult = await requestWithCookie(
+    publishRequest,
+    testAdminSession
+  );
+
+  expect(publishResult.status).toEqual(200);
+  expect(publishResult.body).toMatchObject({
+    ...submitForReviewResult.body,
+    status: TWUOpportunityStatus.Published,
+    history: [
+      { type: { value: TWUOpportunityStatus.Published } },
+      ...submitForReviewResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    updatedBy: {
+      id: testAdmin.id
+    }
   });
 });
