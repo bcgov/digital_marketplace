@@ -181,6 +181,7 @@ test("sprint-with-us opportunity crud", async () => {
     publishRequest,
     testAdminSession
   );
+
   expect(publishResult.status).toEqual(200);
   expect(publishResult.body).toMatchObject({
     ...submitForReviewResult.body,
@@ -241,11 +242,12 @@ test("sprint-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
-  const createForDeleteResult = await adminAppAgent
+  const createForDeleteResult = await userAppAgent
     .post("/api/opportunities/sprint-with-us")
     .send(body);
+  const deleteOpportunityId = createForDeleteResult.body.id;
 
-  const readManyBeforeDeleteResult = await adminAppAgent.get(
+  const readManyBeforeDeleteResult = await userAppAgent.get(
     "/api/opportunities/sprint-with-us"
   );
 
@@ -270,4 +272,18 @@ test("sprint-with-us opportunity crud", async () => {
       ])
     ])
   );
+
+  const deleteResult = await userAppAgent.delete(
+    `/api/opportunities/sprint-with-us/${deleteOpportunityId}`
+  );
+
+  expect(deleteResult.status).toBe(200);
+  expect(deleteResult.body).toMatchObject({ id: deleteOpportunityId });
+
+  const readManyAfterDeleteResult = await userAppAgent.get(
+    "/api/opportunities/sprint-with-us"
+  );
+
+  expect(readManyAfterDeleteResult.body).toHaveLength(1);
+  expect(readManyAfterDeleteResult.body).toMatchObject([{ id: opportunityId }]);
 });

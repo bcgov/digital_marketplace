@@ -73,6 +73,7 @@ test("code-with-us opportunity crud", async () => {
   const opportunityIdUrl = `/api/opportunities/code-with-us/${opportunityId}`;
 
   const readResult = await appAgent.get(opportunityIdUrl);
+
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
 
@@ -159,6 +160,7 @@ test("code-with-us opportunity crud", async () => {
   const readManyBeforeDeleteResult = await appAgent.get(
     "/api/opportunities/code-with-us"
   );
+
   expect(readManyBeforeDeleteResult.body).toHaveLength(2);
   expect(readManyBeforeDeleteResult.body).toMatchObject(
     expect.arrayContaining([
@@ -184,12 +186,14 @@ test("code-with-us opportunity crud", async () => {
   const deleteResult = await appAgent.delete(
     `/api/opportunities/code-with-us/${deleteOpportunityId}`
   );
+
   expect(deleteResult.status).toBe(200);
   expect(deleteResult.body).toMatchObject({ id: deleteOpportunityId });
 
   const readManyAfterDeleteResult = await appAgent.get(
     "/api/opportunities/code-with-us"
   );
+
   expect(readManyAfterDeleteResult.body).toHaveLength(1);
   expect(readManyAfterDeleteResult.body).toMatchObject([{ id: opportunityId }]);
 }, 7000);
