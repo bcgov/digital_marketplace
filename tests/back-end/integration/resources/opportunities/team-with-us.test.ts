@@ -120,4 +120,19 @@ test("team-with-us opportunity crud", async () => {
       )
     ]
   });
+
+  const submitForReviewResult = await userAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("submitForReview"));
+
+  expect(submitForReviewResult.status).toEqual(200);
+  expect(submitForReviewResult.body).toMatchObject({
+    ...editResult.body,
+    status: TWUOpportunityStatus.UnderReview,
+    history: [
+      { type: { value: TWUOpportunityStatus.UnderReview } },
+      ...editResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
