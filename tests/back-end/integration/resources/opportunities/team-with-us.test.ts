@@ -211,4 +211,34 @@ test("team-with-us opportunity crud", async () => {
     ],
     updatedAt: expect.any(String)
   });
+
+  const createForDeleteResult = await userAppAgent
+    .post("/api/opportunities/team-with-us")
+    .send(body);
+
+  const readManyBeforeDeleteResult = await userAppAgent.get(
+    "/api/opportunities/team-with-us"
+  );
+
+  expect(readManyBeforeDeleteResult.body).toHaveLength(2);
+  expect(readManyBeforeDeleteResult.body).toMatchObject(
+    expect.arrayContaining([
+      expect.objectContaining({ id: opportunityId }),
+      pick(createForDeleteResult.body, [
+        "id",
+        "title",
+        "teaser",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "status",
+        "proposalDeadline",
+        "maxBudget",
+        "location",
+        "remoteOk",
+        "subscribed"
+      ])
+    ])
+  );
 });

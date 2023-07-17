@@ -25,7 +25,8 @@ import {
   TWUOpportunityHistoryRecord,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
-  TWUResourceQuestion
+  TWUResourceQuestion,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -116,6 +117,7 @@ export interface RawTWUOpportunitySlim
   createdBy?: Id;
   updatedBy?: Id;
   versionId: Id;
+  serviceArea: TWUServiceArea;
 }
 
 interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
@@ -210,7 +212,13 @@ async function rawTWUOpportunitySlimToTWUOpportunitySlim(
   connection: Connection,
   raw: RawTWUOpportunitySlim
 ): Promise<TWUOpportunitySlim> {
-  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const {
+    createdBy: createdById,
+    updatedBy: updatedById,
+    versionId,
+    serviceArea,
+    ...restOfRaw
+  } = raw;
   const createdBy =
     (createdById &&
       getValidValue(
