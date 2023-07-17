@@ -15,7 +15,7 @@ import {
   TWUOpportunityStatus,
   TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
-import { pick } from "lodash";
+import { omit, pick } from "lodash";
 import { getISODateString } from "shared/lib";
 import { adt } from "shared/lib/types";
 
@@ -178,6 +178,21 @@ test("team-with-us opportunity crud", async () => {
     history: [
       { type: { value: TWUOpportunityEvent.AddendumAdded } },
       ...publishResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
+
+  const suspendResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("suspend"));
+
+  expect(suspendResult.status).toBe(200);
+  expect(suspendResult.body).toMatchObject({
+    ...omit(addAddendumResult.body, ["reporting"]),
+    status: TWUOpportunityStatus.Suspended,
+    history: [
+      { type: { value: TWUOpportunityStatus.Suspended } },
+      ...addAddendumResult.body.history
     ],
     updatedAt: expect.any(String)
   });
