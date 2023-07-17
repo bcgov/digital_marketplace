@@ -85,4 +85,12 @@ test("team-with-us opportunity crud", async () => {
     ...body,
     createdBy: { id: testUser.id }
   });
+
+  const opportunityId = createResult.body.id;
+  const opportunityIdUrl = `/api/opportunities/team-with-us/${opportunityId}`;
+
+  const readResult = await userAppAgent.get(opportunityIdUrl);
+
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(createResult.body);
 });
