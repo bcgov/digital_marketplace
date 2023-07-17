@@ -6,7 +6,7 @@ import {
 } from "tests/back-end/integration/helpers/user";
 import { connection } from "tests/back-end/setup-server.jest";
 import { UserType } from "shared/lib/resources/user";
-import request, { agent } from "supertest";
+import { agent } from "supertest";
 import { buildCreateUserParams } from "tests/utils/generate/user";
 import { buildSWUOpportunity } from "tests/utils/generate/opportunities/sprint-with-us";
 import {
@@ -29,8 +29,16 @@ async function setup() {
     buildCreateUserParams({ type: UserType.Admin }),
     connection
   );
-  const appAgent = agent(app);
-  return { testUser, testUserSession, testAdmin, testAdminSession, appAgent };
+  const userAppAgent = agent(app);
+  const adminAppAgent = agent(app);
+  return {
+    testUser,
+    testUserSession,
+    testAdmin,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  };
 }
 
 afterEach(async () => {
@@ -38,8 +46,14 @@ afterEach(async () => {
 });
 
 test("sprint-with-us opportunity crud", async () => {
-  const { testUser, testUserSession, testAdmin, testAdminSession, appAgent } =
-    await setup();
+  const {
+    testUser,
+    testUserSession,
+    testAdmin,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  } = await setup();
 
   const opportunity = buildSWUOpportunity();
   const body: CreateRequestBody = {
@@ -80,7 +94,7 @@ test("sprint-with-us opportunity crud", async () => {
     )
   };
 
-  const createRequest = appAgent
+  const createRequest = userAppAgent
     .post("/api/opportunities/sprint-with-us")
     .send(body);
 
@@ -106,13 +120,13 @@ test("sprint-with-us opportunity crud", async () => {
   const opportunityId = createResult.body.id;
   const opportunityIdUrl = `/api/opportunities/sprint-with-us/${opportunityId}`;
 
-  const readResult = await appAgent.get(opportunityIdUrl);
+  const readResult = await userAppAgent.get(opportunityIdUrl);
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
 
   const editedBody = { ...body, title: "Updated Title" };
-  const editResult = await appAgent
+  const editResult = await userAppAgent
     .put(opportunityIdUrl)
     .send(adt("edit", editedBody));
 
@@ -144,7 +158,7 @@ test("sprint-with-us opportunity crud", async () => {
     ]
   });
 
-  const submitForReviewResult = await appAgent
+  const submitForReviewResult = await userAppAgent
     .put(opportunityIdUrl)
     .send(adt("submitForReview"));
 
@@ -159,8 +173,12 @@ test("sprint-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
+  const publishRequest = adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("publish"));
+
   const publishResult = await requestWithCookie(
-    request(app).put(opportunityIdUrl).send(adt("publish")),
+    publishRequest,
     testAdminSession
   );
   expect(publishResult.status).toEqual(200);
@@ -178,10 +196,9 @@ test("sprint-with-us opportunity crud", async () => {
   });
 
   const description = "New Addendum";
-  const addAddendumResult = await requestWithCookie(
-    request(app).put(opportunityIdUrl).send(adt("addAddendum", description)),
-    testAdminSession
-  );
+  const addAddendumResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("addAddendum", description));
 
   expect(addAddendumResult.status).toEqual(200);
   expect(addAddendumResult.body).toMatchObject({
@@ -194,10 +211,9 @@ test("sprint-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
-  const suspendResult = await requestWithCookie(
-    request(app).put(opportunityIdUrl).send(adt("suspend")),
-    testAdminSession
-  );
+  const suspendResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("suspend"));
 
   expect(suspendResult.status).toBe(200);
   expect(suspendResult.body).toMatchObject({
@@ -206,6 +222,21 @@ test("sprint-with-us opportunity crud", async () => {
     history: [
       { type: { value: SWUOpportunityStatus.Suspended } },
       ...addAddendumResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
+
+  const cancelResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("cancel"));
+
+  expect(cancelResult.status).toBe(200);
+  expect(cancelResult.body).toMatchObject({
+    ...suspendResult.body,
+    status: SWUOpportunityStatus.Canceled,
+    history: [
+      { type: { value: SWUOpportunityStatus.Canceled } },
+      ...suspendResult.body.history
     ],
     updatedAt: expect.any(String)
   });
