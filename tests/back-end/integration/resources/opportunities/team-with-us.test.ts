@@ -196,4 +196,19 @@ test("team-with-us opportunity crud", async () => {
     ],
     updatedAt: expect.any(String)
   });
+
+  const cancelResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("cancel"));
+
+  expect(cancelResult.status).toBe(200);
+  expect(cancelResult.body).toMatchObject({
+    ...suspendResult.body,
+    status: TWUOpportunityStatus.Canceled,
+    history: [
+      { type: { value: TWUOpportunityStatus.Canceled } },
+      ...suspendResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
