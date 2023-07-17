@@ -102,7 +102,7 @@ test("sprint-with-us opportunity crud", async () => {
 
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
-    ...omit(createResult.body, ["minTeamMembers"]),
+    ...omit(body, ["minTeamMembers"]),
     // Express' res.json omits falsy values.
     ...(body.minTeamMembers ? { minTeamMembers: body.minTeamMembers } : {}),
     implementationPhase: {

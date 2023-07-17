@@ -196,4 +196,4 @@ test("code-with-us opportunity crud", async () => {
 
   expect(readManyAfterDeleteResult.body).toHaveLength(1);
   expect(readManyAfterDeleteResult.body).toMatchObject([{ id: opportunityId }]);
-}, 7000);
+});
