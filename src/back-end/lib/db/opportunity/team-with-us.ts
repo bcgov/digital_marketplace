@@ -124,6 +124,7 @@ interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
 
 interface RawResourceQuestion extends Omit<TWUResourceQuestion, "createdBy"> {
   createdBy?: Id;
+  opportunityVersion: Id;
 }
 
 interface RawTWUOpportunityHistoryRecord
@@ -154,6 +155,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     createdBy: createdById,
     updatedBy: updatedById,
     attachments: attachmentIds,
+    versionId,
     ...restOfRaw
   } = raw;
 
@@ -184,8 +186,6 @@ async function rawTWUOpportunityToTWUOpportunity(
   if (!addenda || !resourceQuestions) {
     throw new Error("unable to process opportunity");
   }
-
-  delete raw.versionId;
 
   return {
     ...restOfRaw,
@@ -270,7 +270,7 @@ async function rawResourceQuestionToResourceQuestion(
   connection: Connection,
   raw: RawResourceQuestion
 ): Promise<TWUResourceQuestion> {
-  const { createdBy: createdById, ...restOfRaw } = raw;
+  const { createdBy: createdById, opportunityVersion, ...restOfRaw } = raw;
 
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), undefined)

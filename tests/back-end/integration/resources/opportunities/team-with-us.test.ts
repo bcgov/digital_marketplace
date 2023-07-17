@@ -11,10 +11,13 @@ import { buildCreateUserParams } from "tests/utils/generate/user";
 import { buildTWUOpportunity } from "tests/utils/generate/opportunities/team-with-us";
 import {
   CreateRequestBody,
-  TWUOpportunityStatus
+  TWUOpportunityEvent,
+  TWUOpportunityStatus,
+  TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
 import { pick } from "lodash";
 import { getISODateString } from "shared/lib";
+import { adt } from "shared/lib/types";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -93,4 +96,28 @@ test("team-with-us opportunity crud", async () => {
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
+
+  const editedBody = { ...body, title: "Updated Title" };
+  const editResult = await userAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("edit", editedBody));
+
+  expect(editResult.status).toEqual(200);
+  expect(editResult.body).toMatchObject({
+    ...readResult.body,
+    title: editedBody.title,
+    history: [
+      { type: { value: TWUOpportunityEvent.Edited } },
+      ...readResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    resourceQuestions: [
+      ...readResult.body.resourceQuestions.map(
+        (question: TWUResourceQuestion) => ({
+          ...question,
+          createdAt: expect.any(String)
+        })
+      )
+    ]
+  });
 });
