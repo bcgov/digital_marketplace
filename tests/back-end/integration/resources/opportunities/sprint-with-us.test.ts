@@ -240,4 +240,34 @@ test("sprint-with-us opportunity crud", async () => {
     ],
     updatedAt: expect.any(String)
   });
+
+  const createForDeleteResult = await adminAppAgent
+    .post("/api/opportunities/sprint-with-us")
+    .send(body);
+
+  const readManyBeforeDeleteResult = await adminAppAgent.get(
+    "/api/opportunities/sprint-with-us"
+  );
+
+  expect(readManyBeforeDeleteResult.body).toHaveLength(2);
+  expect(readManyBeforeDeleteResult.body).toMatchObject(
+    expect.arrayContaining([
+      expect.objectContaining({ id: opportunityId }),
+      pick(createForDeleteResult.body, [
+        "id",
+        "title",
+        "teaser",
+        "createdAt",
+        "createdBy",
+        "updatedAt",
+        "updatedBy",
+        "status",
+        "proposalDeadline",
+        "totalMaxBudget",
+        "location",
+        "remoteOk",
+        "subscribed"
+      ])
+    ])
+  );
 });

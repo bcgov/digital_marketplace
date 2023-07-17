@@ -241,7 +241,12 @@ async function rawSWUOpportunitySlimToSWUOpportunitySlim(
   connection: Connection,
   raw: RawSWUOpportunitySlim
 ): Promise<SWUOpportunitySlim> {
-  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const {
+    createdBy: createdById,
+    updatedBy: updatedById,
+    versionId,
+    ...restOfRaw
+  } = raw;
   const createdBy =
     (createdById &&
       getValidValue(
