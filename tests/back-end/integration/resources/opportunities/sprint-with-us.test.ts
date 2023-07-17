@@ -193,4 +193,20 @@ test("sprint-with-us opportunity crud", async () => {
     ],
     updatedAt: expect.any(String)
   });
+
+  const suspendResult = await requestWithCookie(
+    request(app).put(opportunityIdUrl).send(adt("suspend")),
+    testAdminSession
+  );
+
+  expect(suspendResult.status).toBe(200);
+  expect(suspendResult.body).toMatchObject({
+    ...omit(addAddendumResult.body, ["reporting"]),
+    status: SWUOpportunityStatus.Suspended,
+    history: [
+      { type: { value: SWUOpportunityStatus.Suspended } },
+      ...addAddendumResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
