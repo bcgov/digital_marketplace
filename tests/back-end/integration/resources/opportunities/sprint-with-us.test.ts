@@ -176,4 +176,21 @@ test("sprint-with-us opportunity crud", async () => {
       id: testAdmin.id
     }
   });
+
+  const description = "New Addendum";
+  const addAddendumResult = await requestWithCookie(
+    request(app).put(opportunityIdUrl).send(adt("addAddendum", description)),
+    testAdminSession
+  );
+
+  expect(addAddendumResult.status).toEqual(200);
+  expect(addAddendumResult.body).toMatchObject({
+    ...publishResult.body,
+    addenda: [{ description }],
+    history: [
+      { type: { value: SWUOpportunityEvent.AddendumAdded } },
+      ...publishResult.body.history
+    ],
+    updatedAt: expect.any(String)
+  });
 });
