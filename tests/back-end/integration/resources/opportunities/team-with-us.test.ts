@@ -215,6 +215,7 @@ test("team-with-us opportunity crud", async () => {
   const createForDeleteResult = await userAppAgent
     .post("/api/opportunities/team-with-us")
     .send(body);
+  const deleteOpportunityId = createForDeleteResult.body.id;
 
   const readManyBeforeDeleteResult = await userAppAgent.get(
     "/api/opportunities/team-with-us"
@@ -241,4 +242,18 @@ test("team-with-us opportunity crud", async () => {
       ])
     ])
   );
+
+  const deleteResult = await userAppAgent.delete(
+    `/api/opportunities/team-with-us/${deleteOpportunityId}`
+  );
+
+  expect(deleteResult.status).toBe(200);
+  expect(deleteResult.body).toMatchObject({ id: deleteOpportunityId });
+
+  const readManyAfterDeleteResult = await userAppAgent.get(
+    "/api/opportunities/team-with-us"
+  );
+
+  expect(readManyAfterDeleteResult.body).toHaveLength(1);
+  expect(readManyAfterDeleteResult.body).toMatchObject([{ id: opportunityId }]);
 });
