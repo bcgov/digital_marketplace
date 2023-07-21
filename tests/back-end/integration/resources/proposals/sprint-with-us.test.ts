@@ -155,4 +155,12 @@ test("sprint-with-us proposal crud", async () => {
     },
     teamQuestionResponses: expect.arrayContaining(body.teamQuestionResponses)
   });
+
+  const proposalId = createResult.body.id;
+  const proposalIdUrl = `/api/proposals/sprint-with-us/${proposalId}`;
+
+  const readResult = await userAppAgent.get(proposalIdUrl);
+
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(createResult.body);
 });
