@@ -25,6 +25,7 @@ import { SWUOpportunityStatus } from "shared/lib/resources/opportunity/sprint-wi
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
+import { adt } from "shared/lib/types";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -100,7 +101,7 @@ test("sprint-with-us proposal crud", async () => {
       members: proposal.implementationPhase.members.map(
         ({ member, scrumMaster }) => ({ member: member.id, scrumMaster })
       ),
-      proposedCost: proposal.implementationPhase.proposedCost
+      proposedCost: opportunity.implementationPhase.maxBudget
     },
     references: proposal.references ?? [],
     attachments: [],
@@ -163,4 +164,27 @@ test("sprint-with-us proposal crud", async () => {
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
+
+  const editedBody = {
+    ...body,
+    implementationPhase: {
+      ...body.implementationPhase,
+      proposedCost: opportunity.implementationPhase.maxBudget - 500
+    }
+  };
+  const editResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("edit", editedBody));
+  expect(editResult.status).toBe(200);
+  expect(editResult.body).toMatchObject({
+    ...readResult.body,
+    implementationPhase: {
+      ...readResult.body.implementation,
+      proposedCost: editedBody.implementationPhase.proposedCost
+    },
+    teamQuestionResponses: expect.arrayContaining(
+      readResult.body.teamQuestionResponses
+    ),
+    updatedAt: expect.any(String)
+  });
 });
