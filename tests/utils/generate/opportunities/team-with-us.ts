@@ -10,7 +10,7 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { getId } from "..";
 import { buildUserSlim } from "../user";
-import { faker } from "@faker-js/faker";
+import { fakerEN_CA as faker } from "@faker-js/faker";
 import SKILLS from "shared/lib/data/skills";
 import { dateAt4PM } from "tests/utils/date";
 

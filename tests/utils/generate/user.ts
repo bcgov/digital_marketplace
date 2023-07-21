@@ -1,4 +1,4 @@
-import { faker } from "@faker-js/faker";
+import { fakerEN_CA as faker } from "@faker-js/faker";
 import { omit, pick } from "lodash";
 import {
   User,
@@ -9,7 +9,7 @@ import {
 import {
   getEmail,
   getId,
-  getDisplayName,
+  getFullName,
   getUserName
 } from "tests/utils/generate";
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
@@ -23,7 +23,7 @@ function buildUser(overrides: Partial<User> = {}): User {
     id: getId(),
     type: UserType.Government,
     status: UserStatus.Active,
-    name: getDisplayName(),
+    name: getFullName(),
     email: getEmail(),
     jobTitle: faker.lorem.sentence(),
     avatarImageFile: null,
@@ -41,8 +41,7 @@ function buildUser(overrides: Partial<User> = {}): User {
 
 function buildUserSlim(overrides: Partial<UserSlim> = {}): UserSlim {
   return {
-    ...pick(buildUser(), ["id", "name", "avatarImageFile"]),
-    ...overrides
+    ...pick(buildUser(overrides), ["id", "name", "avatarImageFile"])
   };
 }
 
