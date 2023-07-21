@@ -6,10 +6,11 @@ import {
   SWUOpportunity,
   SWUOpportunityPhase,
   SWUOpportunityPhaseType,
+  SWUOpportunitySlim,
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { getId } from "..";
-import { faker } from "@faker-js/faker";
+import { fakerEN_CA as faker } from "@faker-js/faker";
 import { buildUserSlim } from "../user";
 import { SWU_MAX_BUDGET } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
@@ -19,6 +20,11 @@ import {
   DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE
 } from "build/back-end/shared/lib/resources/opportunity/sprint-with-us";
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
+import { omit, pick } from "lodash";
+import {
+  CreateSWUOpportunityParams,
+  CreateSWUOpportunityPhaseParams
+} from "back-end/lib/db";
 
 function buildSWUOpportunity(
   overrides: Partial<SWUOpportunity> = {}
@@ -151,4 +157,76 @@ function buildSWUOpportunityPhase(
   };
 }
 
-export { buildSWUOpportunity, buildSWUOpportunityPhase };
+function buildSWUOpportunitySlim(
+  overrides: Partial<SWUOpportunitySlim> = {}
+): SWUOpportunitySlim {
+  return {
+    ...pick(buildSWUOpportunity(overrides), [
+      "id",
+      "title",
+      "teaser",
+      "createdAt",
+      "createdBy",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "proposalDeadline",
+      "totalMaxBudget",
+      "location",
+      "remoteOk",
+      "subscribed"
+    ])
+  };
+}
+
+export function buildCreateSWUOpportunityParams(
+  overrides: Partial<CreateSWUOpportunityParams> = {}
+): CreateSWUOpportunityParams {
+  const opportunity = buildSWUOpportunity();
+
+  return {
+    ...omit(opportunity, [
+      "createdBy",
+      "createdAt",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "id",
+      "addenda",
+      "inceptionPhase",
+      "prototypePhase",
+      "implementationPhase",
+      "teamQuestions"
+    ]),
+    status: SWUOpportunityStatus.Draft,
+    implementationPhase: buildCreateSWUOpportunityPhaseParams(
+      opportunity.implementationPhase
+    ),
+    teamQuestions: opportunity.teamQuestions.map(
+      ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
+    ),
+    ...overrides
+  };
+}
+
+function buildCreateSWUOpportunityPhaseParams(
+  overrides: Partial<CreateSWUOpportunityPhaseParams>
+): CreateSWUOpportunityPhaseParams {
+  const { maxBudget, startDate, completionDate, requiredCapabilities } =
+    buildSWUOpportunityPhase();
+  return {
+    maxBudget,
+    startDate,
+    completionDate,
+    requiredCapabilities: requiredCapabilities.map(
+      ({ capability, fullTime }) => ({ capability, fullTime })
+    ),
+    ...overrides
+  };
+}
+
+export {
+  buildSWUOpportunity,
+  buildSWUOpportunityPhase,
+  buildSWUOpportunitySlim
+};
