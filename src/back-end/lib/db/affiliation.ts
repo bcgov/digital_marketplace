@@ -18,7 +18,7 @@ import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 
-type CreateAffiliationParams = Partial<
+export type CreateAffiliationParams = Partial<
   Omit<Affiliation, "user" | "organization">
 > & { user: Id; organization: Id };
 

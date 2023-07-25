@@ -21,11 +21,19 @@ import {
   CreateRequestBody,
   SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUOpportunityStatus } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  SWUOpportunitySlim,
+  SWUOpportunityStatus
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
 import { adt } from "shared/lib/types";
+import { insertAffiliation } from "tests/back-end/integration/helpers/affiliations";
+import {
+  MembershipStatus,
+  MembershipType
+} from "shared/lib/resources/affiliation";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -79,16 +87,56 @@ test("sprint-with-us proposal crud", async () => {
     ),
     testUserSession
   );
+
+  const [testTeamMember, _] = await insertUserWithActiveSession(
+    buildCreateUserParams({
+      type: UserType.Vendor,
+      capabilities: []
+    }),
+    connection
+  );
+  await insertAffiliation(connection, {
+    user: testTeamMember.id,
+    organization: organization.id,
+    membershipStatus: MembershipStatus.Active,
+    membershipType: MembershipType.Member
+  });
+  organization.numTeamMembers =
+    organization.numTeamMembers && organization.numTeamMembers + 1;
+
   const opportunity = await insertSWUOpportunity(
     connection,
-    buildCreateSWUOpportunityParams({ status: SWUOpportunityStatus.Published }),
+    buildCreateSWUOpportunityParams({
+      status: SWUOpportunityStatus.Published,
+      proposalDeadline: faker.date.soon()
+    }),
     testAdminSession
   );
+  const opportunitySlim: SWUOpportunitySlim = pick(opportunity, [
+    "status",
+    "createdAt",
+    "updatedAt",
+    "createdBy",
+    "updatedBy",
+    "id",
+    "title",
+    "teaser",
+    "remoteOk",
+    "location",
+    "totalMaxBudget",
+    "proposalDeadline",
+    "subscribed"
+  ]);
+
   const proposal = buildSWUProposal({
     createdBy: testUserSlim,
     organization,
-    opportunity
+    opportunity: opportunitySlim
   });
+  proposal.teamQuestionResponses = proposal.teamQuestionResponses.slice(
+    0,
+    opportunity.teamQuestions.length
+  );
 
   if (!proposal.implementationPhase) {
     throw Error("Error creating test data");
@@ -123,18 +171,7 @@ test("sprint-with-us proposal crud", async () => {
       )
     },
     opportunity: {
-      ...pick(opportunity, [
-        "status",
-        "createdAt",
-        "updatedAt",
-        "id",
-        "title",
-        "teaser",
-        "remoteOk",
-        "location",
-        "totalMaxBudget",
-        "proposalDeadline"
-      ]),
+      ...omit(opportunitySlim, ["createdBy", "updatedBy", "subscribed"]),
       createdAt: getISODateString(opportunity, "createdAt"),
       updatedAt: getISODateString(opportunity, "updatedAt"),
       proposalDeadline: getISODateString(opportunity, "proposalDeadline")
@@ -187,4 +224,25 @@ test("sprint-with-us proposal crud", async () => {
     ),
     updatedAt: expect.any(String)
   });
+
+  const submitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  expect(submitResult.body).toMatchObject({
+    ...editResult.body,
+    status: SWUProposalStatus.Submitted,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String), // TODO: fix this after writing tests
+    history: [
+      {
+        createdBy: { id: testUser.id },
+        type: {
+          value: SWUProposalStatus.Submitted
+        }
+      },
+      ...editResult.body.history
+    ]
+  });
+  expect(submitResult.status).toEqual(200);
 });

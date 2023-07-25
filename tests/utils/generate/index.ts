@@ -4,6 +4,6 @@ const getId = faker.string.uuid;
 const getFullName = faker.person.fullName;
 const getEmail = faker.internet.email;
 const getUserName = faker.internet.userName;
-const getPhoneNumber = faker.phone.number;
+const getPhoneNumber = () => faker.phone.number("###-###-####");
 
 export { getId, getFullName, getEmail, getUserName, getPhoneNumber };
