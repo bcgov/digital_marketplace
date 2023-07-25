@@ -40,6 +40,7 @@ import {
 } from "shared/lib/resources/affiliation";
 import {
   closeSWUOpportunities,
+  updateSWUOpportunityStatus,
   updateSWUOpportunityVersion
 } from "back-end/lib/db/opportunity/sprint-with-us";
 
@@ -334,4 +335,38 @@ test("sprint-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const screenInToCodeChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToCodeChallenge"));
+
+  expect(screenInToCodeChallengeResult.status).toEqual(200);
+  expect(screenInToCodeChallengeResult.body).toMatchObject({
+    ...scoreQuestionsResult.body,
+    status: SWUProposalStatus.UnderReviewCodeChallenge,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const screenOutFromCodeChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenOutFromCodeChallenge"));
+
+  expect(screenOutFromCodeChallengeResult.status).toEqual(200);
+  expect(screenOutFromCodeChallengeResult.body).toMatchObject({
+    ...screenInToCodeChallengeResult.body,
+    status: SWUProposalStatus.EvaluatedTeamQuestions,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  await adminAppAgent.put(proposalIdUrl).send(adt("screenInToCodeChallenge"));
+
+  await updateSWUOpportunityStatus(
+    connection,
+    opportunity.id,
+    SWUOpportunityStatus.EvaluationCodeChallenge,
+    "",
+    testAdminSession
+  );
 });
