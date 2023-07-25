@@ -251,6 +251,7 @@ test("sprint-with-us proposal crud", async () => {
     .put(proposalIdUrl)
     .send(adt("submit"));
 
+  expect(submitResult.status).toEqual(200);
   expect(submitResult.body).toMatchObject({
     ...editResult.body,
     status: SWUProposalStatus.Submitted,
@@ -266,7 +267,33 @@ test("sprint-with-us proposal crud", async () => {
       ...editResult.body.history
     ]
   });
-  expect(submitResult.status).toEqual(200);
+
+  const withdrawResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("withdraw"));
+
+  expect(withdrawResult.status).toEqual(200);
+  expect(withdrawResult.body).toMatchObject({
+    ...submitResult.body,
+    status: SWUProposalStatus.Withdrawn,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String), // TODO: fix this after writing tests
+    history: [
+      {
+        createdBy: { id: testUser.id },
+        type: {
+          value: SWUProposalStatus.Withdrawn
+        }
+      },
+      ...submitResult.body.history
+    ]
+  });
+
+  const resubmitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  expect(resubmitResult.status).toEqual(200);
 
   // Close the opportunity
   const newDeadline = faker.date.recent();
@@ -292,12 +319,12 @@ test("sprint-with-us proposal crud", async () => {
     testAdminSession
   );
 
-  expect(scoreQuestionsResult.status).toBe(200);
+  expect(scoreQuestionsResult.status).toEqual(200);
   expect(scoreQuestionsResult.body).toMatchObject({
-    id: submitResult.body.id,
-    submittedAt: submitResult.body.submittedAt,
+    id: resubmitResult.body.id,
+    submittedAt: resubmitResult.body.submittedAt,
     opportunity: {
-      ...submitResult.body.opportunity,
+      ...resubmitResult.body.opportunity,
       proposalDeadline: newDeadline.toISOString(),
       status: SWUOpportunityStatus.EvaluationTeamQuestions,
       updatedAt: expect.any(String)
