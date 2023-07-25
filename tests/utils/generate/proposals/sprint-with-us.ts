@@ -3,7 +3,8 @@ import {
   SWUProposalPhase,
   SWUProposalPhaseType,
   SWUProposalStatus,
-  SWUProposalTeamMember
+  SWUProposalTeamMember,
+  SWUProposalTeamQuestionResponse
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT } from "shared/lib/resources/opportunity/sprint-with-us";
 import { getFullName, getEmail, getId, getPhoneNumber } from "..";
@@ -50,13 +51,10 @@ function buildSWUProposal(overrides: Partial<SWUProposal> = {}): SWUProposal {
     })),
     attachments: [],
     teamQuestionResponses: [...Array(faker.number.int({ min: 1, max: 4 }))].map(
-      (_, i) => ({
-        response: faker.lorem.words({
-          min: 1,
-          max: DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT
-        }),
-        order: i
-      })
+      (_, i) =>
+        buildSWUProposalTeamQuestionResponse({
+          order: i
+        })
     ),
     anonymousProponentName: "",
     ...overrides
@@ -87,4 +85,17 @@ function buildSWUProposalTeamMember(
   };
 }
 
-export { buildSWUProposal };
+function buildSWUProposalTeamQuestionResponse(
+  overrides: Partial<SWUProposalTeamQuestionResponse> = {}
+): SWUProposalTeamQuestionResponse {
+  return {
+    response: faker.lorem.words({
+      min: 1,
+      max: DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT
+    }),
+    order: 0,
+    ...overrides
+  };
+}
+
+export { buildSWUProposal, buildSWUProposalTeamQuestionResponse };

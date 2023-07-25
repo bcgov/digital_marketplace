@@ -11,7 +11,10 @@ import {
   buildCreateUserParams,
   buildUserSlim
 } from "tests/utils/generate/user";
-import { buildSWUProposal } from "tests/utils/generate/proposals/sprint-with-us";
+import {
+  buildSWUProposal,
+  buildSWUProposalTeamQuestionResponse
+} from "tests/utils/generate/proposals/sprint-with-us";
 import { buildOrganization } from "tests/utils/generate/organization";
 import { insertOrganization } from "tests/back-end/integration/helpers/organization";
 import { omit, pick } from "lodash";
@@ -19,7 +22,8 @@ import { insertSWUOpportunity } from "tests/back-end/integration/helpers/opportu
 import { buildCreateSWUOpportunityParams } from "tests/utils/generate/opportunities/sprint-with-us";
 import {
   CreateRequestBody,
-  SWUProposalStatus
+  SWUProposalStatus,
+  UpdateTeamQuestionScoreBody
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUOpportunitySlim,
@@ -34,6 +38,10 @@ import {
   MembershipStatus,
   MembershipType
 } from "shared/lib/resources/affiliation";
+import {
+  closeSWUOpportunities,
+  updateSWUOpportunityVersion
+} from "back-end/lib/db/opportunity/sprint-with-us";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -47,6 +55,11 @@ async function setup() {
     buildCreateUserParams({ type: UserType.Admin }),
     connection
   );
+
+  if (!(testAdminSession && testUserSession)) {
+    throw new Error("Failed to create test sessions");
+  }
+
   const userAppAgent = agent(app);
   const adminAppAgent = agent(app);
   return {
@@ -64,8 +77,13 @@ afterEach(async () => {
 });
 
 test("sprint-with-us proposal crud", async () => {
-  const { testUser, testUserSession, testAdminSession, userAppAgent } =
-    await setup();
+  const {
+    testUser,
+    testUserSession,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  } = await setup();
 
   const testUserSlim = buildUserSlim(testUser);
   const organization = await insertOrganization(
@@ -104,12 +122,13 @@ test("sprint-with-us proposal crud", async () => {
   organization.numTeamMembers =
     organization.numTeamMembers && organization.numTeamMembers + 1;
 
+  const opportunityParams = buildCreateSWUOpportunityParams({
+    status: SWUOpportunityStatus.Published,
+    proposalDeadline: faker.date.soon()
+  });
   const opportunity = await insertSWUOpportunity(
     connection,
-    buildCreateSWUOpportunityParams({
-      status: SWUOpportunityStatus.Published,
-      proposalDeadline: faker.date.soon()
-    }),
+    opportunityParams,
     testAdminSession
   );
   const opportunitySlim: SWUOpportunitySlim = pick(opportunity, [
@@ -131,12 +150,15 @@ test("sprint-with-us proposal crud", async () => {
   const proposal = buildSWUProposal({
     createdBy: testUserSlim,
     organization,
-    opportunity: opportunitySlim
+    opportunity: opportunitySlim,
+    teamQuestionResponses: opportunity.teamQuestions.map(
+      ({ order, wordLimit }) =>
+        buildSWUProposalTeamQuestionResponse({
+          order,
+          response: faker.lorem.words({ min: 1, max: wordLimit })
+        })
+    )
   });
-  proposal.teamQuestionResponses = proposal.teamQuestionResponses.slice(
-    0,
-    opportunity.teamQuestions.length
-  );
 
   if (!proposal.implementationPhase) {
     throw Error("Error creating test data");
@@ -245,4 +267,44 @@ test("sprint-with-us proposal crud", async () => {
     ]
   });
   expect(submitResult.status).toEqual(200);
+
+  // Close the opportunity
+  const newDeadline = faker.date.recent();
+  await updateSWUOpportunityVersion(
+    connection,
+    {
+      ...omit(opportunityParams, ["status"]),
+      id: opportunity.id,
+      proposalDeadline: newDeadline
+    },
+    testAdminSession
+  );
+
+  await closeSWUOpportunities(connection);
+
+  const scoreBody: UpdateTeamQuestionScoreBody[] =
+    opportunity.teamQuestions.map(({ score, order }) => ({ score, order }));
+  const scoreQuestionsRequest = adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("scoreQuestions", scoreBody));
+  const scoreQuestionsResult = await requestWithCookie(
+    scoreQuestionsRequest,
+    testAdminSession
+  );
+
+  expect(scoreQuestionsResult.status).toBe(200);
+  expect(scoreQuestionsResult.body).toMatchObject({
+    id: submitResult.body.id,
+    submittedAt: submitResult.body.submittedAt,
+    opportunity: {
+      ...submitResult.body.opportunity,
+      proposalDeadline: newDeadline.toISOString(),
+      status: SWUOpportunityStatus.EvaluationTeamQuestions,
+      updatedAt: expect.any(String)
+    },
+    questionsScore: 100,
+    anonymousProponentName: "Proponent 1",
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
