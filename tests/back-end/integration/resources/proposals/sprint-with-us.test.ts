@@ -599,4 +599,26 @@ test("sprint-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const disqualificationReason = "testing";
+  const disqualifyResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("disqualify", disqualificationReason));
+
+  expect(disqualifyResult.status).toEqual(200);
+  expect(disqualifyResult.body).toEqual({
+    ...omit(awardResult.body, ["rank"]),
+    status: SWUProposalStatus.Disqualified,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.Disqualified
+        })
+      }),
+      ...awardResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
