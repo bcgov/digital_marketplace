@@ -15,7 +15,7 @@ import { agent, SuperAgentTest } from "supertest";
 import { clearTestDatabase } from "../helpers";
 import { connection } from "../../setup.jest";
 
-const testCreateAdminUserParams: CreateUserParams = {
+export const testCreateAdminUserParams: CreateUserParams = {
   type: UserType.Admin,
   status: UserStatus.Active,
   name: "Test Admin User",
@@ -24,7 +24,7 @@ const testCreateAdminUserParams: CreateUserParams = {
   idpId: "testadmin"
 };
 
-const testCreateGovUserParams: CreateUserParams = {
+export const testCreateGovUserParams: CreateUserParams = {
   type: UserType.Government,
   status: UserStatus.Active,
   name: "Test Gov User",
@@ -33,13 +33,26 @@ const testCreateGovUserParams: CreateUserParams = {
   idpId: "testgov"
 };
 
-const testCreateVendorUserParams: CreateUserParams = {
+export const testCreateVendorUserParams: CreateUserParams = {
   type: UserType.Vendor,
   status: UserStatus.Active,
   name: "Test Vendor User",
   email: "testvendor@email.com",
   idpUsername: "testvendor",
-  idpId: "testvendor"
+  idpId: "testvendor",
+  capabilities: ["Agile Coaching"],
+  acceptedTermsAt: new Date()
+};
+
+export const testCreateVendorUserParams2: CreateUserParams = {
+  type: UserType.Vendor,
+  status: UserStatus.Active,
+  name: "Test Vendor User 2",
+  email: "testvendor2@email.com",
+  idpUsername: "testvendor2",
+  idpId: "testvendor2",
+  capabilities: ["Agile Coaching"],
+  acceptedTermsAt: new Date()
 };
 
 describe("User resource", () => {
@@ -62,7 +75,8 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testVendorSession);
 
     expect(result.status).toEqual(200);
-    expect(result.body).toEqual(testVendor);
+    const { acceptedTermsAt, ...restOfVendor } = testVendor;
+    expect(result.body).toMatchObject(restOfVendor);
   });
 
   it("correctly supports an admin reading all users", async () => {
@@ -78,7 +92,11 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testAdminSession);
 
     expect(result.status).toEqual(200);
-    expect(result.body).toEqual([testAdmin, testVendor]);
+
+    const { acceptedTermsAt, ...restOfAdmin } = testAdmin;
+    const { acceptedTermsAt: _, ...restOfVendor } = testVendor;
+    expect(result.body[0]).toMatchObject(restOfAdmin);
+    expect(result.body[1]).toMatchObject(restOfVendor);
   });
 
   it("correctly supports updating user notifications", async () => {
@@ -100,7 +118,7 @@ describe("User resource", () => {
 
     expect(result.status).toEqual(200);
 
-    const { notificationsOn, ...rest } = testVendor;
+    const { notificationsOn, acceptedTermsAt, ...rest } = testVendor;
     expect(result.body).toMatchObject(rest);
     expect(result.body.notificationsOn).toBeTruthy();
   });
@@ -129,8 +147,9 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testVendorSession);
 
     expect(result.status).toEqual(200);
+    const { acceptedTermsAt, ...rest } = testVendor;
     expect(result.body).toMatchObject({
-      ...testVendor,
+      ...rest,
       ...updateProfileRequestBody
     });
   });
@@ -153,8 +172,9 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testVendorSession);
 
     expect(result.status).toEqual(200);
+    const { acceptedTermsAt, ...rest } = testVendor;
     expect(result.body).toMatchObject({
-      ...testVendor,
+      ...rest,
       capabilities: ["Agile Coaching"]
     });
   });
@@ -209,8 +229,9 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testAdminSession);
 
     expect(result.status).toEqual(200);
+    const { acceptedTermsAt, ...rest } = testVendor;
     expect(result.body).toMatchObject({
-      ...testVendor,
+      ...rest,
       status: UserStatus.Active
     });
   });

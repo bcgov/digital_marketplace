@@ -39,7 +39,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
 
-interface CreateSWUOpportunityParams
+export interface CreateSWUOpportunityParams
   extends Omit<
     SWUOpportunity,
     | "createdBy"

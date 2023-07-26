@@ -35,7 +35,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
-interface CreateCWUOpportunityParams
+export interface CreateCWUOpportunityParams
   extends Omit<
     CWUOpportunity,
     | "createdBy"
@@ -740,7 +740,7 @@ export const updateCWUOpportunityVersion = tryDb<
   CWUOpportunity
 >(async (connection, opportunity, session) => {
   const now = new Date();
-  const { attachments, ...restOfOpportunity } = opportunity;
+  const { attachments, status, ...restOfOpportunity } = opportunity;
   const oppVersion = await connection.transaction(async (trx) => {
     const [oppVersion] = await connection<OpportunityVersionRecord>(
       "cwuOpportunityVersions"
