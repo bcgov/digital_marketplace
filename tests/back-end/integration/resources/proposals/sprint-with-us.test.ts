@@ -188,7 +188,7 @@ test("sprint-with-us proposal crud", async () => {
     .send(body);
 
   const createResult = await requestWithCookie(createRequest, testUserSession);
-  expect(createResult.status).toBe(201);
+  expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
     implementationPhase: {
@@ -571,6 +571,30 @@ test("sprint-with-us proposal crud", async () => {
         })
       }),
       ...rescreenInToTeamScenarioResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const awardResult = await adminAppAgent.put(proposalIdUrl).send(adt("award"));
+
+  expect(awardResult.status).toEqual(200);
+  expect(awardResult.body).toEqual({
+    ...scoreTeamScenarioResult.body,
+    opportunity: {
+      ...scoreTeamScenarioResult.body.opportunity,
+      status: SWUOpportunityStatus.Awarded,
+      updatedAt: expect.any(String)
+    },
+    status: SWUProposalStatus.Awarded,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.Awarded
+        })
+      }),
+      ...scoreTeamScenarioResult.body.history
     ],
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
