@@ -22,6 +22,7 @@ import { insertSWUOpportunity } from "tests/back-end/integration/helpers/opportu
 import { buildCreateSWUOpportunityParams } from "tests/utils/generate/opportunities/sprint-with-us";
 import {
   CreateRequestBody,
+  SWUProposalEvent,
   SWUProposalStatus,
   UpdateTeamQuestionScoreBody
 } from "shared/lib/resources/proposal/sprint-with-us";
@@ -43,6 +44,7 @@ import {
   updateSWUOpportunityStatus,
   updateSWUOpportunityVersion
 } from "back-end/lib/db/opportunity/sprint-with-us";
+import { getValidValue } from "shared/lib/validation";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -81,6 +83,7 @@ test("sprint-with-us proposal crud", async () => {
   const {
     testUser,
     testUserSession,
+    testAdmin,
     testAdminSession,
     userAppAgent,
     adminAppAgent
@@ -132,7 +135,7 @@ test("sprint-with-us proposal crud", async () => {
     opportunityParams,
     testAdminSession
   );
-  const opportunitySlim: SWUOpportunitySlim = pick(opportunity, [
+  const slimProps = [
     "status",
     "createdAt",
     "updatedAt",
@@ -146,7 +149,8 @@ test("sprint-with-us proposal crud", async () => {
     "totalMaxBudget",
     "proposalDeadline",
     "subscribed"
-  ]);
+  ] as const;
+  const opportunitySlim: SWUOpportunitySlim = pick(opportunity, slimProps);
 
   const proposal = buildSWUProposal({
     createdBy: testUserSlim,
@@ -235,11 +239,12 @@ test("sprint-with-us proposal crud", async () => {
   const editResult = await userAppAgent
     .put(proposalIdUrl)
     .send(adt("edit", editedBody));
-  expect(editResult.status).toBe(200);
-  expect(editResult.body).toMatchObject({
+
+  expect(editResult.status).toEqual(200);
+  expect(editResult.body).toEqual({
     ...readResult.body,
     implementationPhase: {
-      ...readResult.body.implementation,
+      ...readResult.body.implementationPhase,
       proposedCost: editedBody.implementationPhase.proposedCost
     },
     teamQuestionResponses: expect.arrayContaining(
@@ -253,20 +258,21 @@ test("sprint-with-us proposal crud", async () => {
     .send(adt("submit"));
 
   expect(submitResult.status).toEqual(200);
-  expect(submitResult.body).toMatchObject({
+  expect(submitResult.body).toEqual({
     ...editResult.body,
     status: SWUProposalStatus.Submitted,
-    updatedAt: expect.any(String),
-    createdAt: expect.any(String), // TODO: fix this after writing tests
+    submittedAt: expect.any(String),
     history: [
-      {
-        createdBy: { id: testUser.id },
-        type: {
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({
           value: SWUProposalStatus.Submitted
-        }
-      },
+        })
+      }),
       ...editResult.body.history
-    ]
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
   });
 
   const withdrawResult = await userAppAgent
@@ -274,18 +280,18 @@ test("sprint-with-us proposal crud", async () => {
     .send(adt("withdraw"));
 
   expect(withdrawResult.status).toEqual(200);
-  expect(withdrawResult.body).toMatchObject({
+  expect(withdrawResult.body).toEqual({
     ...submitResult.body,
     status: SWUProposalStatus.Withdrawn,
     updatedAt: expect.any(String),
     createdAt: expect.any(String), // TODO: fix this after writing tests
     history: [
-      {
-        createdBy: { id: testUser.id },
-        type: {
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({
           value: SWUProposalStatus.Withdrawn
-        }
-      },
+        })
+      }),
       ...submitResult.body.history
     ]
   });
@@ -293,8 +299,6 @@ test("sprint-with-us proposal crud", async () => {
   const resubmitResult = await userAppAgent
     .put(proposalIdUrl)
     .send(adt("submit"));
-
-  expect(resubmitResult.status).toEqual(200);
 
   // Close the opportunity
   const newDeadline = faker.date.recent();
@@ -307,29 +311,37 @@ test("sprint-with-us proposal crud", async () => {
     },
     testAdminSession
   );
-
   await closeSWUOpportunities(connection);
 
-  const scoreBody: UpdateTeamQuestionScoreBody[] =
+  const scoreQuestionsBody: UpdateTeamQuestionScoreBody[] =
     opportunity.teamQuestions.map(({ score, order }) => ({ score, order }));
   const scoreQuestionsRequest = adminAppAgent
     .put(proposalIdUrl)
-    .send(adt("scoreQuestions", scoreBody));
+    .send(adt("scoreQuestions", scoreQuestionsBody));
   const scoreQuestionsResult = await requestWithCookie(
     scoreQuestionsRequest,
     testAdminSession
   );
 
   expect(scoreQuestionsResult.status).toEqual(200);
-  expect(scoreQuestionsResult.body).toMatchObject({
+  expect(scoreQuestionsResult.body).toEqual({
+    // Proposals are anonymized prior to code challenge evaluation
     id: resubmitResult.body.id,
     submittedAt: resubmitResult.body.submittedAt,
     opportunity: {
       ...resubmitResult.body.opportunity,
       proposalDeadline: newDeadline.toISOString(),
       status: SWUOpportunityStatus.EvaluationTeamQuestions,
-      updatedAt: expect.any(String)
+      updatedAt: expect.any(String),
+      createdBy: expect.objectContaining({ id: testAdmin.id })
     },
+    status: SWUProposalStatus.EvaluatedTeamQuestions,
+    teamQuestionResponses: expect.arrayContaining(
+      proposal.teamQuestionResponses.map((qr) => ({
+        ...qr,
+        score: scoreQuestionsBody.find(({ order }) => order === qr.order)?.score
+      }))
+    ),
     questionsScore: 100,
     anonymousProponentName: "Proponent 1",
     updatedAt: expect.any(String),
@@ -341,7 +353,7 @@ test("sprint-with-us proposal crud", async () => {
     .send(adt("screenInToCodeChallenge"));
 
   expect(screenInToCodeChallengeResult.status).toEqual(200);
-  expect(screenInToCodeChallengeResult.body).toMatchObject({
+  expect(screenInToCodeChallengeResult.body).toEqual({
     ...scoreQuestionsResult.body,
     status: SWUProposalStatus.UnderReviewCodeChallenge,
     updatedAt: expect.any(String),
@@ -353,7 +365,7 @@ test("sprint-with-us proposal crud", async () => {
     .send(adt("screenOutFromCodeChallenge"));
 
   expect(screenOutFromCodeChallengeResult.status).toEqual(200);
-  expect(screenOutFromCodeChallengeResult.body).toMatchObject({
+  expect(screenOutFromCodeChallengeResult.body).toEqual({
     ...screenInToCodeChallengeResult.body,
     status: SWUProposalStatus.EvaluatedTeamQuestions,
     updatedAt: expect.any(String),
@@ -364,12 +376,23 @@ test("sprint-with-us proposal crud", async () => {
     .put(proposalIdUrl)
     .send(adt("screenInToCodeChallenge"));
 
-  await updateSWUOpportunityStatus(
-    connection,
-    opportunity.id,
-    SWUOpportunityStatus.EvaluationCodeChallenge,
-    "",
-    testAdminSession
+  const codeChallengeOpportunity = getValidValue(
+    await updateSWUOpportunityStatus(
+      connection,
+      opportunity.id,
+      SWUOpportunityStatus.EvaluationCodeChallenge,
+      "",
+      testAdminSession
+    ),
+    null
+  );
+  if (!codeChallengeOpportunity) {
+    throw new Error("Unable to evaluate team questions");
+  }
+
+  const codeChallengeOpportunitySlim = pick(
+    codeChallengeOpportunity,
+    slimProps.filter((p) => p !== "subscribed")
   );
 
   const challengeScore = 100;
@@ -378,15 +401,177 @@ test("sprint-with-us proposal crud", async () => {
     .send(adt("scoreCodeChallenge", challengeScore));
 
   expect(scoreCodeChallengeResult.status).toEqual(200);
-  expect(scoreCodeChallengeResult.body).toMatchObject({
+  expect(scoreCodeChallengeResult.body).toEqual({
+    ...resubmitResult.body,
     ...rescreenInToCodeChallengeResult.body,
     opportunity: {
       ...rescreenInToCodeChallengeResult.body.opportunity,
       status: SWUOpportunityStatus.EvaluationCodeChallenge,
+      updatedBy: expect.objectContaining({ id: testAdmin.id }),
       updatedAt: expect.any(String)
     },
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.EvaluatedCodeChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalEvent.ChallengeScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.UnderReviewCodeChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.EvaluatedTeamQuestions
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.UnderReviewCodeChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.EvaluatedTeamQuestions
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalEvent.QuestionsScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: null,
+        type: expect.objectContaining({
+          value: SWUProposalStatus.UnderReviewTeamQuestions
+        })
+      }),
+      ...resubmitResult.body.history
+    ],
     challengeScore,
     status: SWUProposalStatus.EvaluatedCodeChallenge,
+    updatedBy: expect.objectContaining({ id: testAdmin.id }),
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const screenInToTeamScenarioResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToTeamScenario"));
+
+  expect(screenInToTeamScenarioResult.status).toEqual(200);
+  expect(screenInToTeamScenarioResult.body).toMatchObject({
+    // Proposals are unanonymized at this point
+    ...resubmitResult.body,
+    ...scoreCodeChallengeResult.body,
+    opportunity: {
+      ...codeChallengeOpportunitySlim,
+      createdAt: getISODateString(codeChallengeOpportunitySlim, "createdAt"),
+      updatedAt: getISODateString(codeChallengeOpportunitySlim, "updatedAt"),
+      proposalDeadline: getISODateString(
+        codeChallengeOpportunitySlim,
+        "proposalDeadline"
+      )
+    },
+    history: [
+      {
+        createdBy: { id: testAdmin.id },
+        type: {
+          value: SWUProposalStatus.UnderReviewTeamScenario
+        }
+      },
+      ...scoreCodeChallengeResult.body.history
+    ],
+    status: SWUProposalStatus.UnderReviewTeamScenario,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const screenOutFromTeamScenarioResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenOutFromTeamScenario"));
+
+  expect(screenOutFromTeamScenarioResult.status).toEqual(200);
+  expect(screenOutFromTeamScenarioResult.body).toEqual({
+    ...screenInToTeamScenarioResult.body,
+    status: SWUProposalStatus.EvaluatedCodeChallenge,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.EvaluatedCodeChallenge
+        })
+      }),
+      ...screenInToTeamScenarioResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const rescreenInToTeamScenarioResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToTeamScenario"));
+
+  await updateSWUOpportunityStatus(
+    connection,
+    opportunity.id,
+    SWUOpportunityStatus.EvaluationTeamScenario,
+    "",
+    testAdminSession
+  );
+
+  const scenarioScore = 100;
+  const scoreTeamScenarioResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("scoreTeamScenario", scenarioScore));
+
+  expect(scoreTeamScenarioResult.status).toEqual(200);
+  expect(scoreTeamScenarioResult.body).toEqual({
+    ...rescreenInToTeamScenarioResult.body,
+    opportunity: {
+      ...rescreenInToTeamScenarioResult.body.opportunity,
+      status: SWUOpportunityStatus.EvaluationTeamScenario,
+      updatedAt: expect.any(String)
+    },
+    scenarioScore,
+    totalScore: 100,
+    priceScore: 100,
+    rank: 1,
+    status: SWUProposalStatus.EvaluatedTeamScenario,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalStatus.EvaluatedTeamScenario
+        })
+      }),
+      expect.objectContaining({
+        createdBy: null,
+        type: expect.objectContaining({
+          value: SWUProposalEvent.PriceScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: SWUProposalEvent.ScenarioScoreEntered
+        })
+      }),
+      ...rescreenInToTeamScenarioResult.body.history
+    ],
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });

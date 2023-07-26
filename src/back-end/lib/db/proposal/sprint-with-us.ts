@@ -94,6 +94,7 @@ interface RawSWUProposal
     | "implementationPhase"
     | "references"
     | "attachments"
+    | "teamQuestionResponses"
   > {
   createdBy?: Id;
   updatedBy?: Id;
@@ -104,7 +105,13 @@ interface RawSWUProposal
   implementationPhase: Id;
   attachments: Id[];
   anonymousProponentName: string;
+  teamQuestionResponses: RawSWUProposalTeamQuestionResponse[];
 }
+
+export type RawSWUProposalTeamQuestionResponse =
+  SWUProposal["teamQuestionResponses"][number] & {
+    proposal: Id;
+  };
 
 interface RawSWUProposalSlim
   extends Omit<
@@ -206,6 +213,10 @@ async function rawSWUProposalToSWUProposal(
   if (!opportunity) {
     throw new Error("unable to process proposal");
   }
+
+  const teamQuestionResponses = raw.teamQuestionResponses.map(
+    ({ proposal, ...teamQuestionResponses }) => teamQuestionResponses
+  );
   if (
     session?.user.type !== UserType.Vendor &&
     !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)
@@ -218,7 +229,7 @@ async function rawSWUProposalToSWUProposal(
       status: raw.status,
       submittedAt: raw.submittedAt,
       opportunity,
-      teamQuestionResponses: raw.teamQuestionResponses,
+      teamQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
       anonymousProponentName: raw.anonymousProponentName
     };
@@ -232,6 +243,7 @@ async function rawSWUProposalToSWUProposal(
     inceptionPhase: inceptionPhaseId,
     prototypePhase: prototypePhaseId,
     implementationPhase: implementationPhaseId,
+    teamQuestionResponses: rawTeamQuestionResponses,
     ...restOfRaw
   } = raw;
   const createdBy = createdById
@@ -328,7 +340,8 @@ async function rawSWUProposalToSWUProposal(
     inceptionPhase: inceptionPhase ?? undefined,
     prototypePhase: prototypePhase ?? undefined,
     implementationPhase,
-    references
+    references,
+    teamQuestionResponses
   };
 }
 
@@ -657,9 +670,9 @@ export const readManyProposalReferences = tryDb<[Id], SWUProposalReference[]>(
 
 export const readManyProposalTeamQuestionResponses = tryDb<
   [Id, boolean?],
-  SWUProposalTeamQuestionResponse[]
+  RawSWUProposalTeamQuestionResponse[]
 >(async (connection, proposalId, includeScores = false) => {
-  const query = connection<SWUProposalTeamQuestionResponse>(
+  const query = connection<RawSWUProposalTeamQuestionResponse>(
     "swuTeamQuestionResponses"
   ).where({ proposal: proposalId });
 
