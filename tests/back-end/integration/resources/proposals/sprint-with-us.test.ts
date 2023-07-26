@@ -360,7 +360,9 @@ test("sprint-with-us proposal crud", async () => {
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
 
-  await adminAppAgent.put(proposalIdUrl).send(adt("screenInToCodeChallenge"));
+  const rescreenInToCodeChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToCodeChallenge"));
 
   await updateSWUOpportunityStatus(
     connection,
@@ -369,4 +371,23 @@ test("sprint-with-us proposal crud", async () => {
     "",
     testAdminSession
   );
+
+  const challengeScore = 100;
+  const scoreCodeChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("scoreCodeChallenge", challengeScore));
+
+  expect(scoreCodeChallengeResult.status).toEqual(200);
+  expect(scoreCodeChallengeResult.body).toMatchObject({
+    ...rescreenInToCodeChallengeResult.body,
+    opportunity: {
+      ...rescreenInToCodeChallengeResult.body.opportunity,
+      status: SWUOpportunityStatus.EvaluationCodeChallenge,
+      updatedAt: expect.any(String)
+    },
+    challengeScore,
+    status: SWUProposalStatus.EvaluatedCodeChallenge,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
