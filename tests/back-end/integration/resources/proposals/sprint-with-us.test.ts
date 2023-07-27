@@ -221,13 +221,51 @@ test("sprint-with-us proposal crud", async () => {
     teamQuestionResponses: expect.arrayContaining(body.teamQuestionResponses)
   });
 
-  const proposalId = createResult.body.id;
+  const deleteProposalId = createResult.body.id;
+  const deleteProposalIdUrl = `/api/proposals/sprint-with-us/${deleteProposalId}`;
+
+  const readManyBeforeDeleteResult = await userAppAgent.get(
+    "/api/proposals/sprint-with-us"
+  );
+
+  expect(readManyBeforeDeleteResult.status).toEqual(200);
+  expect(readManyBeforeDeleteResult.body).toHaveLength(1);
+  expect(readManyBeforeDeleteResult.body).toEqual(
+    expect.arrayContaining([
+      omit(createResult.body, [
+        "history",
+        "attachments",
+        "references",
+        "teamQuestionResponses",
+        "inceptionPhase",
+        "implementationPhase",
+        "prototypePhase"
+      ])
+    ])
+  );
+
+  const deleteResult = await userAppAgent.delete(deleteProposalIdUrl);
+
+  expect(deleteResult.status).toEqual(200);
+  expect(deleteResult.body).toEqual(createResult.body);
+
+  const readManyAfterDeleteResult = await userAppAgent.get(
+    "/api/proposals/sprint-with-us"
+  );
+
+  expect(readManyAfterDeleteResult.body).toHaveLength(0);
+
+  const recreateResult = await userAppAgent
+    .post("/api/proposals/sprint-with-us")
+    .send(body);
+
+  const proposalId = recreateResult.body.id;
   const proposalIdUrl = `/api/proposals/sprint-with-us/${proposalId}`;
 
   const readResult = await userAppAgent.get(proposalIdUrl);
 
   expect(readResult.status).toEqual(200);
-  expect(readResult.body).toEqual(createResult.body);
+  expect(readResult.body).toEqual(recreateResult.body);
 
   const editedBody = {
     ...body,
@@ -621,4 +659,4 @@ test("sprint-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
-});
+}, 10000);
