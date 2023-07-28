@@ -33,7 +33,7 @@ import {
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
-import { arrayOfUnion } from "shared/lib/types";
+import { adt, arrayOfUnion } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 import { validateServiceArea } from "back-end/lib/validation";
 import { qualifyOrganizationServiceAreas } from "back-end/lib/db";
@@ -259,4 +259,30 @@ test("team-with-us proposal crud", async () => {
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(recreateResult.body);
+
+  const editedBody = {
+    ...body,
+    team: body.team.map((member) => ({
+      ...member,
+      hourlyRate: member.hourlyRate + 1
+    }))
+  };
+  const editResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("edit", editedBody));
+
+  expect(editResult.status).toEqual(200);
+  expect(editResult.body).toEqual({
+    ...readResult.body,
+    team: proposal.team.map((member) => ({
+      ...member,
+      hourlyRate: editedBody.team.find(
+        (editedMember) => editedMember.member === member.member.id
+      )?.hourlyRate
+    })),
+    resourceQuestionResponses: expect.arrayContaining(
+      readResult.body.resourceQuestionResponses
+    ),
+    updatedAt: expect.any(String)
+  });
 }, 10000);
