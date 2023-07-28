@@ -51,9 +51,8 @@ function buildTWUProposalTeamMember(
 ): TWUProposalTeamMember {
   return {
     member: buildUserSlim(),
-    pending: false,
     idpUsername: faker.internet.userName(),
-    hourlyRate: faker.number.float({ max: 200, precision: 0.01 }),
+    hourlyRate: faker.number.int({ max: 200 }),
     ...overrides
   };
 }
@@ -71,4 +70,8 @@ function buildTWUProposalResourceQuestionResponse(
   };
 }
 
-export { buildTWUProposal, buildTWUProposalResourceQuestionResponse };
+export {
+  buildTWUProposal,
+  buildTWUProposalResourceQuestionResponse,
+  buildTWUProposalTeamMember
+};

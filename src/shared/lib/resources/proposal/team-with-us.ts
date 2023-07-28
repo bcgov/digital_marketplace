@@ -198,7 +198,6 @@ export type CreateTWUTeamMemberBodyValidationErrors =
 
 export interface TWUProposalTeamMember {
   member: UserSlim;
-  pending: boolean;
   idpUsername: string;
   hourlyRate: number;
 }
