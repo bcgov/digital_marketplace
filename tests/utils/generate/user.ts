@@ -39,7 +39,7 @@ function buildUser(overrides: Partial<User> = {}): User {
   };
 }
 
-function buildUserSlim(overrides: Partial<UserSlim> = {}): UserSlim {
+function buildUserSlim(overrides: Partial<User> = {}): UserSlim {
   return {
     ...pick(buildUser(overrides), ["id", "name", "avatarImageFile"])
   };

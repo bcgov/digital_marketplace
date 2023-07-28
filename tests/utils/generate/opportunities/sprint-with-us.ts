@@ -158,7 +158,7 @@ function buildSWUOpportunityPhase(
 }
 
 function buildSWUOpportunitySlim(
-  overrides: Partial<SWUOpportunitySlim> = {}
+  overrides: Partial<SWUOpportunity> = {}
 ): SWUOpportunitySlim {
   return {
     ...pick(buildSWUOpportunity(overrides), [
@@ -179,7 +179,7 @@ function buildSWUOpportunitySlim(
   };
 }
 
-export function buildCreateSWUOpportunityParams(
+function buildCreateSWUOpportunityParams(
   overrides: Partial<CreateSWUOpportunityParams> = {}
 ): CreateSWUOpportunityParams {
   const opportunity = buildSWUOpportunity();
@@ -226,6 +226,7 @@ function buildCreateSWUOpportunityPhaseParams(
 }
 
 export {
+  buildCreateSWUOpportunityParams,
   buildSWUOpportunity,
   buildSWUOpportunityPhase,
   buildSWUOpportunitySlim
