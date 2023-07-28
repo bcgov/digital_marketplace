@@ -159,7 +159,7 @@ export interface TWUProposalHistoryRecord {
 
 export type TWUProposalSlim = Omit<
   TWUProposal,
-  "history" | "attachments" | "resourceQuestionResponses"
+  "history" | "attachments" | "resourceQuestionResponses" | "team"
 >;
 
 // Create.

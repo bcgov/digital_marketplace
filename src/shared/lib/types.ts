@@ -85,7 +85,7 @@ export interface ReadManyResponseValidationErrors extends BodyWithErrors {
   pageSize?: string[];
 }
 
-export const arrayOfAll =
+export const arrayOfUnion =
   <T>() =>
   <U extends T[]>(array: U & ([T] extends [U[number]] ? unknown : never)) =>
     array;

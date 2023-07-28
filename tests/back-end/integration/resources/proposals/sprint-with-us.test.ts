@@ -33,7 +33,7 @@ import {
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
-import { adt, arrayOfAll } from "shared/lib/types";
+import { adt, arrayOfUnion } from "shared/lib/types";
 import { insertAffiliation } from "tests/back-end/integration/helpers/affiliations";
 import {
   MembershipStatus,
@@ -112,7 +112,7 @@ test("sprint-with-us proposal crud", async () => {
   );
   const { logoImageFile, ...organizationSlim } = pick(
     organization,
-    arrayOfAll<keyof OrganizationSlim>()([
+    arrayOfUnion<keyof OrganizationSlim>()([
       "owner",
       "acceptedSWUTerms",
       "acceptedTWUTerms",
@@ -153,7 +153,7 @@ test("sprint-with-us proposal crud", async () => {
     testAdminSession
   );
 
-  const slimOpportunityProps = arrayOfAll<keyof SWUOpportunitySlim>()([
+  const slimOpportunityProps = arrayOfUnion<keyof SWUOpportunitySlim>()([
     "status",
     "createdAt",
     "updatedAt",

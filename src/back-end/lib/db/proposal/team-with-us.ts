@@ -277,7 +277,6 @@ async function rawTWUProposalSlimToTWUProposalSlim(
     return {
       challengeScore: 0,
       createdBy: undefined,
-      team: raw.team || undefined,
       organization: undefined,
       priceScore: 0,
       rank: 0,

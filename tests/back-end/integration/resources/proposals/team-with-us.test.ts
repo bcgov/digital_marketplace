@@ -33,7 +33,7 @@ import {
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
-import { arrayOfAll } from "shared/lib/types";
+import { arrayOfUnion } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 import { validateServiceArea } from "back-end/lib/validation";
 import { qualifyOrganizationServiceAreas } from "back-end/lib/db";
@@ -119,7 +119,7 @@ test("team-with-us proposal crud", async () => {
   }
   const { logoImageFile, ...qualifiedOrganizationSlim } = pick(
     qualifiedOrganization,
-    arrayOfAll<keyof OrganizationSlim>()([
+    arrayOfUnion<keyof OrganizationSlim>()([
       "owner",
       "acceptedSWUTerms",
       "acceptedTWUTerms",
@@ -144,7 +144,7 @@ test("team-with-us proposal crud", async () => {
     opportunityParams,
     testAdminSession
   );
-  const slimOpportunityProps = arrayOfAll<keyof TWUOpportunitySlim>()([
+  const slimOpportunityProps = arrayOfUnion<keyof TWUOpportunitySlim>()([
     "id",
     "title",
     "teaser",
@@ -218,4 +218,33 @@ test("team-with-us proposal crud", async () => {
     ),
     createdBy: { id: testUser.id }
   });
+
+  const deleteProposalId = createResult.body.id;
+  const deleteProposalIdUrl = `/api/proposals/team-with-us/${deleteProposalId}`;
+
+  const readManyBeforeDeleteResult = await userAppAgent.get(
+    "/api/proposals/team-with-us"
+  );
+
+  expect(readManyBeforeDeleteResult.status).toEqual(200);
+  expect(readManyBeforeDeleteResult.body).toHaveLength(1);
+  expect(readManyBeforeDeleteResult.body).toEqual([
+    omit(createResult.body, [
+      "history",
+      "attachments",
+      "resourceQuestionResponses",
+      "team"
+    ])
+  ]);
+
+  const deleteResult = await userAppAgent.delete(deleteProposalIdUrl);
+
+  expect(deleteResult.status).toEqual(200);
+  expect(deleteResult.body).toEqual(createResult.body);
+
+  const readManyAfterDeleteResult = await userAppAgent.get(
+    "/api/proposals/team-with-us"
+  );
+
+  expect(readManyAfterDeleteResult.body).toHaveLength(0);
 }, 10000);
