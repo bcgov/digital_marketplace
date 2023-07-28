@@ -6,13 +6,16 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   DEFAULT_CODE_CHALLENGE_WEIGHT,
   DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT,
-  DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE
+  DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE,
+  TWUOpportunitySlim
 } from "shared/lib/resources/opportunity/team-with-us";
 import { getId } from "..";
 import { buildUserSlim } from "../user";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import SKILLS from "shared/lib/data/skills";
 import { dateAt4PM } from "tests/utils/date";
+import { omit, pick } from "lodash";
+import { CreateTWUOpportunityParams } from "back-end/lib/db";
 
 function buildTWUOpportunity(
   overrides: Partial<TWUOpportunity> = {}
@@ -82,4 +85,56 @@ function buildTWUOpportunity(
   };
 }
 
-export { buildTWUOpportunity };
+function buildTWUOpportunitySlim(
+  overrides: Partial<TWUOpportunity> = {}
+): TWUOpportunitySlim {
+  return {
+    ...pick(buildTWUOpportunity(overrides), [
+      "id",
+      "title",
+      "teaser",
+      "createdAt",
+      "createdBy",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "proposalDeadline",
+      "maxBudget",
+      "location",
+      "remoteOk",
+      "subscribed"
+    ])
+  };
+}
+
+function buildCreateTWUOpportunityParams(
+  overrides: Partial<CreateTWUOpportunityParams> = {}
+): CreateTWUOpportunityParams {
+  const opportunity = buildTWUOpportunity();
+
+  return {
+    ...omit(opportunity, [
+      "createdBy",
+      "createdAt",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "id",
+      "addenda",
+      "resourceQuestions",
+      "serviceArea"
+    ]),
+    status: TWUOpportunityStatus.Draft,
+    resourceQuestions: opportunity.resourceQuestions.map(
+      ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
+    ),
+    serviceArea: 1,
+    ...overrides
+  };
+}
+
+export {
+  buildTWUOpportunity,
+  buildTWUOpportunitySlim,
+  buildCreateTWUOpportunityParams
+};
