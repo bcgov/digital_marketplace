@@ -33,7 +33,7 @@ import {
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
-import { adt } from "shared/lib/types";
+import { adt, arrayOfAll } from "shared/lib/types";
 import { insertAffiliation } from "tests/back-end/integration/helpers/affiliations";
 import {
   MembershipStatus,
@@ -45,6 +45,7 @@ import {
   updateSWUOpportunityVersion
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue } from "shared/lib/validation";
+import { OrganizationSlim } from "shared/lib/resources/organization";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -109,6 +110,22 @@ test("sprint-with-us proposal crud", async () => {
     ),
     testUserSession
   );
+  const { logoImageFile, ...organizationSlim } = pick(
+    organization,
+    arrayOfAll<keyof OrganizationSlim>()([
+      "owner",
+      "acceptedSWUTerms",
+      "acceptedTWUTerms",
+      "possessAllCapabilities",
+      "possessOneServiceArea",
+      "numTeamMembers",
+      "serviceAreas",
+      "id",
+      "legalName",
+      "logoImageFile",
+      "active"
+    ])
+  );
 
   const [testTeamMember, _] = await insertUserWithActiveSession(
     buildCreateUserParams({
@@ -123,8 +140,8 @@ test("sprint-with-us proposal crud", async () => {
     membershipStatus: MembershipStatus.Active,
     membershipType: MembershipType.Member
   });
-  organization.numTeamMembers =
-    organization.numTeamMembers && organization.numTeamMembers + 1;
+  organizationSlim.numTeamMembers =
+    organizationSlim.numTeamMembers && organizationSlim.numTeamMembers + 1;
 
   const opportunityParams = buildCreateSWUOpportunityParams({
     status: SWUOpportunityStatus.Published,
@@ -135,7 +152,8 @@ test("sprint-with-us proposal crud", async () => {
     opportunityParams,
     testAdminSession
   );
-  const slimProps = [
+
+  const slimOpportunityProps = arrayOfAll<keyof SWUOpportunitySlim>()([
     "status",
     "createdAt",
     "updatedAt",
@@ -149,12 +167,16 @@ test("sprint-with-us proposal crud", async () => {
     "totalMaxBudget",
     "proposalDeadline",
     "subscribed"
-  ] as const;
-  const opportunitySlim: SWUOpportunitySlim = pick(opportunity, slimProps);
+  ]);
+
+  const opportunitySlim: SWUOpportunitySlim = pick(
+    opportunity,
+    slimOpportunityProps
+  );
 
   const proposal = buildSWUProposal({
     createdBy: testUserSlim,
-    organization,
+    organization: organizationSlim,
     opportunity: opportunitySlim,
     teamQuestionResponses: opportunity.teamQuestions.map(
       ({ order, wordLimit }) =>
@@ -204,21 +226,11 @@ test("sprint-with-us proposal crud", async () => {
       proposalDeadline: getISODateString(opportunity, "proposalDeadline")
     },
     organization: {
-      ...pick(organization, [
-        "id",
-        "legalName",
-        "owner",
-        "acceptedTWUTerms",
-        "acceptedSWUTerms",
-        "possessAllCapabilities",
-        "possessOneServiceArea",
-        "active",
-        "numTeamMembers",
-        "serviceAreas"
-      ]),
+      ...organizationSlim,
       acceptedSWUTerms: getISODateString(organization, "acceptedSWUTerms")
     },
-    teamQuestionResponses: expect.arrayContaining(body.teamQuestionResponses)
+    teamQuestionResponses: expect.arrayContaining(body.teamQuestionResponses),
+    createdBy: { id: testUser.id }
   });
 
   const deleteProposalId = createResult.body.id;
@@ -430,7 +442,7 @@ test("sprint-with-us proposal crud", async () => {
 
   const codeChallengeOpportunitySlim = pick(
     codeChallengeOpportunity,
-    slimProps.filter((p) => p !== "subscribed")
+    slimOpportunityProps.filter((p) => p !== "subscribed")
   );
 
   const challengeScore = 100;
