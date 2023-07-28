@@ -247,4 +247,16 @@ test("team-with-us proposal crud", async () => {
   );
 
   expect(readManyAfterDeleteResult.body).toHaveLength(0);
+
+  const recreateResult = await userAppAgent
+    .post("/api/proposals/team-with-us")
+    .send(body);
+
+  const proposalId = recreateResult.body.id;
+  const proposalIdUrl = `/api/proposals/team-with-us/${proposalId}`;
+
+  const readResult = await userAppAgent.get(proposalIdUrl);
+
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(recreateResult.body);
 }, 10000);
