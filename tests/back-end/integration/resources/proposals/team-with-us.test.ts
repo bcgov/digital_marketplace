@@ -393,4 +393,28 @@ test("team-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const screenInToChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToChallenge"));
+
+  expect(screenInToChallengeResult.status).toEqual(200);
+  expect(screenInToChallengeResult.body).toEqual({
+    ...scoreQuestionsResult.body,
+    status: TWUProposalStatus.UnderReviewChallenge,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const screenOutFromChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenOutFromChallenge"));
+
+  expect(screenOutFromChallengeResult.status).toEqual(200);
+  expect(screenOutFromChallengeResult.body).toEqual({
+    ...screenInToChallengeResult.body,
+    status: TWUProposalStatus.EvaluatedResourceQuestions,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 }, 10000);
