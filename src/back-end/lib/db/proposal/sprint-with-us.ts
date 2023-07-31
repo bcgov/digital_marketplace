@@ -243,7 +243,6 @@ async function rawSWUProposalToSWUProposal(
     inceptionPhase: inceptionPhaseId,
     prototypePhase: prototypePhaseId,
     implementationPhase: implementationPhaseId,
-    teamQuestionResponses: rawTeamQuestionResponses,
     ...restOfRaw
   } = raw;
   const createdBy = createdById
@@ -677,9 +676,9 @@ export const readManyProposalTeamQuestionResponses = tryDb<
   ).where({ proposal: proposalId });
 
   if (includeScores) {
-    query.select<SWUProposalTeamQuestionResponse[]>("*");
+    query.select<RawSWUProposalTeamQuestionResponse[]>("*");
   } else {
-    query.select<SWUProposalTeamQuestionResponse[]>("order", "response");
+    query.select<RawSWUProposalTeamQuestionResponse[]>("order", "response");
   }
   const results = await query;
   if (!results) {

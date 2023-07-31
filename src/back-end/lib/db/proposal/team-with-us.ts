@@ -22,7 +22,6 @@ import {
   readTWUProposalScore
 } from "back-end/lib/permissions";
 import { compareNumbers } from "shared/lib";
-// import { MembershipStatus } from "shared/lib/resources/affiliation";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   doesTWUOpportunityStatusAllowGovToViewFullProposal,
@@ -33,7 +32,7 @@ import {
   CreateRequestBody,
   CreateTWUProposalResourceQuestionResponseBody,
   CreateTWUProposalStatus,
-  CreateTWUTeamMemberBody,
+  CreateTWUProposalTeamMemberBody,
   isTWUProposalStatusVisibleToGovernment,
   rankableTWUProposalStatuses,
   TWUProposal,
@@ -78,7 +77,12 @@ interface TWUProposalStatusRecord {
 interface RawTWUProposal
   extends Omit<
     TWUProposal,
-    "createdBy" | "updatedBy" | "opportunity" | "organization" | "attachments"
+    | "createdBy"
+    | "updatedBy"
+    | "opportunity"
+    | "organization"
+    | "attachments"
+    | "resourceQuestionResponses"
   > {
   createdBy?: Id;
   updatedBy?: Id;
@@ -86,7 +90,13 @@ interface RawTWUProposal
   organization: Id | null;
   attachments: Id[];
   anonymousProponentName: string;
+  resourceQuestionResponses: RawTWUProposalResourceQuestionResponse[];
 }
+
+export type RawTWUProposalResourceQuestionResponse =
+  TWUProposal["resourceQuestionResponses"][number] & {
+    proposal: Id;
+  };
 
 interface RawTWUProposalSlim
   extends Omit<
@@ -179,6 +189,9 @@ async function rawTWUProposalToTWUProposal(
    *   If the user is gov/admin and the opportunity status is anything prior to
    *   EvaluationChallenge, keep the proposal anonymous
    */
+  const resourceQuestionResponses = raw.resourceQuestionResponses.map(
+    ({ proposal, ...resourceQuestionResponses }) => resourceQuestionResponses
+  );
   if (
     session?.user.type !== UserType.Vendor &&
     !doesTWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)
@@ -190,11 +203,9 @@ async function rawTWUProposalToTWUProposal(
       status: raw.status,
       submittedAt: raw.submittedAt,
       opportunity,
-      team: raw.team,
-      resourceQuestionResponses: raw.resourceQuestionResponses,
+      resourceQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
-      anonymousProponentName: raw.anonymousProponentName,
-      attachments: []
+      anonymousProponentName: raw.anonymousProponentName
     };
   }
 
@@ -239,7 +250,8 @@ async function rawTWUProposalToTWUProposal(
     updatedBy: updatedBy || undefined,
     opportunity,
     organization: organization || undefined,
-    attachments
+    attachments,
+    resourceQuestionResponses
   };
 }
 
@@ -519,16 +531,16 @@ export async function isTWUProposalAuthor(
 
 export const readManyProposalResourceQuestionResponses = tryDb<
   [Id, boolean?],
-  TWUProposalResourceQuestionResponse[]
+  RawTWUProposalResourceQuestionResponse[]
 >(async (connection, proposalId, includeScores = false) => {
-  const query = connection<TWUProposalResourceQuestionResponse>(
+  const query = connection<RawTWUProposalResourceQuestionResponse>(
     "twuResourceQuestionResponses"
   ).where({ proposal: proposalId });
 
   if (includeScores) {
-    query.select<TWUProposalResourceQuestionResponse[]>("*");
+    query.select<RawTWUProposalResourceQuestionResponse[]>("*");
   } else {
-    query.select<TWUProposalResourceQuestionResponse[]>("order", "response");
+    query.select<RawTWUProposalResourceQuestionResponse[]>("order", "response");
   }
   const results = await query;
   if (!results) {
@@ -749,7 +761,7 @@ export const createTWUProposal = tryDb<
 async function createTWUProposalTeamMembers(
   trx: Transaction,
   proposalId: Id,
-  teamMembers: CreateTWUTeamMemberBody[]
+  teamMembers: CreateTWUProposalTeamMemberBody[]
 ) {
   // delete existing and recreate
   await trx("twuProposalMember").where({ proposal: proposalId }).delete();
