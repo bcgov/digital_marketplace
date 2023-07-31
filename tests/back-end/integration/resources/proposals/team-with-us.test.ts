@@ -307,4 +307,27 @@ test("team-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const withdrawResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("withdraw"));
+
+  expect(withdrawResult.status).toEqual(200);
+  expect(withdrawResult.body).toEqual({
+    ...submitResult.body,
+    status: TWUProposalStatus.Withdrawn,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String), // TODO: fix this after writing tests
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.Withdrawn
+        })
+      }),
+      ...submitResult.body.history
+    ]
+  });
+
+  await userAppAgent.put(proposalIdUrl).send(adt("submit"));
 }, 10000);
