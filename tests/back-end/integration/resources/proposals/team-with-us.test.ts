@@ -23,7 +23,8 @@ import { insertTWUOpportunity } from "tests/back-end/integration/helpers/opportu
 import { buildCreateTWUOpportunityParams } from "tests/utils/generate/opportunities/team-with-us";
 import {
   CreateRequestBody,
-  TWUProposalStatus
+  TWUProposalStatus,
+  UpdateResourceQuestionScoreBody
 } from "shared/lib/resources/proposal/team-with-us";
 import {
   TWUOpportunitySlim,
@@ -34,6 +35,10 @@ import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
 import { adt, arrayOfUnion } from "shared/lib/types";
+import {
+  closeTWUOpportunities,
+  updateTWUOpportunityVersion
+} from "back-end/lib/db/opportunity/team-with-us";
 import { getValidValue } from "shared/lib/validation";
 import { validateServiceArea } from "back-end/lib/validation";
 import { qualifyOrganizationServiceAreas } from "back-end/lib/db";
@@ -73,8 +78,14 @@ afterEach(async () => {
 });
 
 test("team-with-us proposal crud", async () => {
-  const { testUser, testUserSession, testAdminSession, userAppAgent } =
-    await setup();
+  const {
+    testUser,
+    testUserSession,
+    testAdmin,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  } = await setup();
 
   const serviceAreaId = getValidValue(
     await validateServiceArea(connection, TWUServiceArea.FullStackDeveloper),
@@ -188,10 +199,11 @@ test("team-with-us proposal crud", async () => {
     organization: organization.id,
     attachments: [],
     resourceQuestionResponses: proposal.resourceQuestionResponses,
-    team: proposal.team.map(({ member, hourlyRate }) => ({
-      member: member.id,
-      hourlyRate
-    })),
+    team:
+      proposal.team?.map(({ member, hourlyRate }) => ({
+        member: member.id,
+        hourlyRate
+      })) ?? [],
     status: TWUProposalStatus.Draft
   };
   const createRequest = userAppAgent
@@ -274,12 +286,13 @@ test("team-with-us proposal crud", async () => {
   expect(editResult.status).toEqual(200);
   expect(editResult.body).toEqual({
     ...readResult.body,
-    team: proposal.team.map((member) => ({
-      ...member,
-      hourlyRate: editedBody.team.find(
-        (editedMember) => editedMember.member === member.member.id
-      )?.hourlyRate
-    })),
+    team:
+      proposal.team?.map((member) => ({
+        ...member,
+        hourlyRate: editedBody.team.find(
+          (editedMember) => editedMember.member === member.member.id
+        )?.hourlyRate
+      })) ?? [],
     resourceQuestionResponses: expect.arrayContaining(
       readResult.body.resourceQuestionResponses
     ),
@@ -329,5 +342,55 @@ test("team-with-us proposal crud", async () => {
     ]
   });
 
-  await userAppAgent.put(proposalIdUrl).send(adt("submit"));
+  const resubmitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  // Close the opportunity
+  const newDeadline = faker.date.recent();
+  await updateTWUOpportunityVersion(
+    connection,
+    {
+      ...omit(opportunityParams, ["status"]),
+      id: opportunity.id,
+      proposalDeadline: newDeadline
+    },
+    testAdminSession
+  );
+  await closeTWUOpportunities(connection);
+
+  const scoreQuestionsBody: UpdateResourceQuestionScoreBody[] =
+    opportunity.resourceQuestions.map(({ score, order }) => ({ score, order }));
+  const scoreQuestionsRequest = adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("scoreQuestions", scoreQuestionsBody));
+  const scoreQuestionsResult = await requestWithCookie(
+    scoreQuestionsRequest,
+    testAdminSession
+  );
+
+  expect(scoreQuestionsResult.status).toEqual(200);
+  expect(scoreQuestionsResult.body).toEqual({
+    // Proposals are anonymized prior to resource challenge evaluation
+    id: resubmitResult.body.id,
+    submittedAt: resubmitResult.body.submittedAt,
+    opportunity: {
+      ...resubmitResult.body.opportunity,
+      proposalDeadline: newDeadline.toISOString(),
+      status: TWUOpportunityStatus.EvaluationResourceQuestions,
+      updatedAt: expect.any(String),
+      createdBy: expect.objectContaining({ id: testAdmin.id })
+    },
+    status: TWUProposalStatus.EvaluatedResourceQuestions,
+    resourceQuestionResponses: expect.arrayContaining(
+      proposal.resourceQuestionResponses.map((qr) => ({
+        ...qr,
+        score: scoreQuestionsBody.find(({ order }) => order === qr.order)?.score
+      }))
+    ),
+    questionsScore: 100,
+    anonymousProponentName: "Proponent 1",
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 }, 10000);
