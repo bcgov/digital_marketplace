@@ -23,6 +23,7 @@ import { insertTWUOpportunity } from "tests/back-end/integration/helpers/opportu
 import { buildCreateTWUOpportunityParams } from "tests/utils/generate/opportunities/team-with-us";
 import {
   CreateRequestBody,
+  TWUProposalEvent,
   TWUProposalStatus,
   UpdateResourceQuestionScoreBody
 } from "shared/lib/resources/proposal/team-with-us";
@@ -37,6 +38,7 @@ import { getISODateString } from "shared/lib";
 import { adt, arrayOfUnion } from "shared/lib/types";
 import {
   closeTWUOpportunities,
+  updateTWUOpportunityStatus,
   updateTWUOpportunityVersion
 } from "back-end/lib/db/opportunity/team-with-us";
 import { getValidValue } from "shared/lib/validation";
@@ -414,6 +416,100 @@ test("team-with-us proposal crud", async () => {
   expect(screenOutFromChallengeResult.body).toEqual({
     ...screenInToChallengeResult.body,
     status: TWUProposalStatus.EvaluatedResourceQuestions,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const rescreenInToChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("screenInToChallenge"));
+
+  await updateTWUOpportunityStatus(
+    connection,
+    opportunity.id,
+    TWUOpportunityStatus.EvaluationChallenge,
+    "",
+    testAdminSession
+  ),
+    null;
+
+  const challengeScore = 100;
+  const scoreChallengeResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("scoreChallenge", challengeScore));
+
+  expect(scoreChallengeResult.status).toEqual(200);
+  expect(scoreChallengeResult.body).toEqual({
+    ...resubmitResult.body,
+    ...rescreenInToChallengeResult.body,
+    opportunity: {
+      ...rescreenInToChallengeResult.body.opportunity,
+      status: TWUOpportunityStatus.EvaluationChallenge,
+      updatedBy: expect.objectContaining({ id: testAdmin.id }),
+      updatedAt: expect.any(String)
+    },
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.EvaluatedChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: null,
+        type: expect.objectContaining({
+          value: TWUProposalEvent.PriceScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalEvent.ChallengeScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.UnderReviewChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.EvaluatedResourceQuestions
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.UnderReviewChallenge
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.EvaluatedResourceQuestions
+        })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalEvent.QuestionsScoreEntered
+        })
+      }),
+      expect.objectContaining({
+        createdBy: null,
+        type: expect.objectContaining({
+          value: TWUProposalStatus.UnderReviewResourceQuestions
+        })
+      }),
+      ...resubmitResult.body.history
+    ],
+    challengeScore,
+    totalScore: 100,
+    priceScore: 100,
+    status: TWUProposalStatus.EvaluatedChallenge,
+    updatedBy: expect.objectContaining({ id: testAdmin.id }),
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
