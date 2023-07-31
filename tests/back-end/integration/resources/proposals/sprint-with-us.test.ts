@@ -662,6 +662,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
+        note: disqualificationReason,
         type: expect.objectContaining({
           value: SWUProposalStatus.Disqualified
         })
@@ -671,4 +672,4 @@ test("sprint-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
-}, 10000);
+});
