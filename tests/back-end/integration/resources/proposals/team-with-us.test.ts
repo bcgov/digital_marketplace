@@ -285,4 +285,26 @@ test("team-with-us proposal crud", async () => {
     ),
     updatedAt: expect.any(String)
   });
+
+  const submitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  expect(submitResult.status).toEqual(200);
+  expect(submitResult.body).toEqual({
+    ...editResult.body,
+    status: TWUProposalStatus.Submitted,
+    submittedAt: expect.any(String),
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.Submitted
+        })
+      }),
+      ...editResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 }, 10000);
