@@ -139,7 +139,7 @@ export interface TWUProposal {
   challengeScore?: number;
   priceScore?: number;
   totalScore?: number;
-  team: TWUProposalTeamMember[];
+  team?: TWUProposalTeamMember[];
   rank?: number;
   anonymousProponentName: string;
 }
@@ -177,7 +177,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   resourceQuestionResponses: CreateTWUProposalResourceQuestionResponseBody[];
   status: CreateTWUProposalStatus;
-  team: CreateTWUTeamMemberBody[];
+  team: CreateTWUProposalTeamMemberBody[];
 }
 
 export interface CreateTWUProposalResourceQuestionResponseValidationErrors
@@ -188,13 +188,15 @@ export interface CreateTWUProposalResourceQuestionResponseValidationErrors
 /**
  * Defines a team member when creating a proposal.
  */
-export interface CreateTWUTeamMemberBody {
+export interface CreateTWUProposalTeamMemberBody {
   member: Id;
   hourlyRate: number;
 }
 
-export type CreateTWUTeamMemberBodyValidationErrors =
-  ErrorTypeFrom<CreateTWUTeamMemberBody>;
+export interface CreateTWUProposalTeamMemberValidationErrors
+  extends ErrorTypeFrom<CreateTWUProposalTeamMemberBody> {
+  members?: string[];
+}
 
 export interface TWUProposalTeamMember {
   member: UserSlim;
@@ -208,7 +210,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   organization?: string[];
   opportunity?: string[];
   status?: string[];
-  team?: CreateTWUTeamMemberBodyValidationErrors[];
+  team?: CreateTWUProposalTeamMemberValidationErrors[];
 }
 
 // Update.
@@ -473,7 +475,7 @@ export function twuProposalTeamMembers(
       },
       [new Set(), []] as TWUProposalTeamMembersAcc
     );
-  const members = compute([...proposal.team]);
+  const members = compute(proposal?.team ?? []);
   if (sort) {
     return members[1].sort((a, b) =>
       compareStrings(a.member.name, b.member.name)
