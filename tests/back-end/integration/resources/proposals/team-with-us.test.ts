@@ -331,8 +331,6 @@ test("team-with-us proposal crud", async () => {
   expect(withdrawResult.body).toEqual({
     ...submitResult.body,
     status: TWUProposalStatus.Withdrawn,
-    updatedAt: expect.any(String),
-    createdAt: expect.any(String), // TODO: fix this after writing tests
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
@@ -341,7 +339,9 @@ test("team-with-us proposal crud", async () => {
         })
       }),
       ...submitResult.body.history
-    ]
+    ],
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
   });
 
   const resubmitResult = await userAppAgent
@@ -448,6 +448,12 @@ test("team-with-us proposal crud", async () => {
       updatedBy: expect.objectContaining({ id: testAdmin.id }),
       updatedAt: expect.any(String)
     },
+    challengeScore,
+    totalScore: 100,
+    priceScore: 100,
+    rank: 1,
+    status: TWUProposalStatus.EvaluatedChallenge,
+    updatedBy: expect.objectContaining({ id: testAdmin.id }),
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
@@ -505,11 +511,30 @@ test("team-with-us proposal crud", async () => {
       }),
       ...resubmitResult.body.history
     ],
-    challengeScore,
-    totalScore: 100,
-    priceScore: 100,
-    status: TWUProposalStatus.EvaluatedChallenge,
-    updatedBy: expect.objectContaining({ id: testAdmin.id }),
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const awardResult = await adminAppAgent.put(proposalIdUrl).send(adt("award"));
+
+  expect(awardResult.status).toEqual(200);
+  expect(awardResult.body).toEqual({
+    ...scoreChallengeResult.body,
+    opportunity: {
+      ...scoreChallengeResult.body.opportunity,
+      status: TWUOpportunityStatus.Awarded,
+      updatedAt: expect.any(String)
+    },
+    status: TWUProposalStatus.Awarded,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: TWUProposalStatus.Awarded
+        })
+      }),
+      ...scoreChallengeResult.body.history
+    ],
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });

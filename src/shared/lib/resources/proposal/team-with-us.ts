@@ -285,6 +285,7 @@ export function isTWUProposalStatusVisibleToGovernment(
 }
 
 export const rankableTWUProposalStatuses: readonly TWUProposalStatus[] = [
+  TWUProposalStatus.EvaluatedChallenge,
   TWUProposalStatus.Awarded,
   TWUProposalStatus.NotAwarded
 ];
