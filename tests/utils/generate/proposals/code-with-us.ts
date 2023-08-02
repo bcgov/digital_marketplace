@@ -58,4 +58,4 @@ function buildCWUIndividualProponent({
   };
 }
 
-export { buildCWUProposal };
+export { buildCWUIndividualProponent, buildCWUProposal };

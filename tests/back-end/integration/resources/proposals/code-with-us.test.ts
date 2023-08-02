@@ -11,7 +11,10 @@ import {
   buildCreateUserParams,
   buildUserSlim
 } from "tests/utils/generate/user";
-import { buildCWUProposal } from "tests/utils/generate/proposals/code-with-us";
+import {
+  buildCWUIndividualProponent,
+  buildCWUProposal
+} from "tests/utils/generate/proposals/code-with-us";
 import { buildOrganization } from "tests/utils/generate/organization";
 import { insertOrganization } from "tests/back-end/integration/helpers/organization";
 import { omit, pick } from "lodash";
@@ -28,6 +31,7 @@ import {
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
 import { adt, arrayOfUnion } from "shared/lib/types";
+import { getPhoneNumber } from "tests/utils/generate";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -186,4 +190,34 @@ test("code-with-us proposal crud", async () => {
   );
 
   expect(readManyAfterDeleteResult.body).toHaveLength(0);
+
+  const createIndividualProponentBody: CreateRequestBody = {
+    ...body,
+    proponent: adt("individual", {
+      ...omit(
+        buildCWUIndividualProponent({
+          legalName: testUser.name,
+          ...(testUser.email ? { email: testUser.email } : {})
+        }),
+        ["id", "phone", "street2"]
+      ),
+      phone: getPhoneNumber(),
+      street2: null
+    })
+  };
+  const recreateResult = await userAppAgent
+    .post("/api/proposals/code-with-us")
+    .send(createIndividualProponentBody);
+
+  expect(recreateResult.body).toMatchObject({
+    proponent: createIndividualProponentBody.proponent
+  });
+
+  const proposalId = recreateResult.body.id;
+  const proposalIdUrl = `/api/proposals/code-with-us/${proposalId}`;
+
+  const readResult = await userAppAgent.get(proposalIdUrl);
+
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(recreateResult.body);
 });
