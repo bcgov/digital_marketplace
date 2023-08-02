@@ -220,4 +220,24 @@ test("code-with-us proposal crud", async () => {
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(recreateResult.body);
+
+  const additionalComments = "Testing";
+  const editedBody: CreateRequestBody = {
+    ...createIndividualProponentBody,
+    additionalComments
+  };
+  const editResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("edit", editedBody));
+
+  expect(editResult.status).toEqual(200);
+  expect(editResult.body).toEqual({
+    ...readResult.body,
+    additionalComments,
+    proponent: adt("individual", {
+      ...readResult.body.proponent.value,
+      updatedAt: expect.any(String)
+    }),
+    updatedAt: expect.any(String)
+  });
 });
