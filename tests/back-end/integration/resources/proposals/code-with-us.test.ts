@@ -157,4 +157,33 @@ test("code-with-us proposal crud", async () => {
     }),
     createdBy: { id: testUser.id }
   });
+
+  const deleteProposalId = createResult.body.id;
+  const deleteProposalIdUrl = `/api/proposals/code-with-us/${deleteProposalId}`;
+
+  const readManyBeforeDeleteResult = await userAppAgent.get(
+    "/api/proposals/code-with-us"
+  );
+
+  expect(readManyBeforeDeleteResult.status).toEqual(200);
+  expect(readManyBeforeDeleteResult.body).toHaveLength(1);
+  expect(readManyBeforeDeleteResult.body).toEqual([
+    omit(createResult.body, [
+      "proposalText",
+      "additionalComments",
+      "history",
+      "attachments"
+    ])
+  ]);
+
+  const deleteResult = await userAppAgent.delete(deleteProposalIdUrl);
+
+  expect(deleteResult.status).toEqual(200);
+  expect(deleteResult.body).toEqual(createResult.body);
+
+  const readManyAfterDeleteResult = await userAppAgent.get(
+    "/api/proposals/code-with-us"
+  );
+
+  expect(readManyAfterDeleteResult.body).toHaveLength(0);
 });
