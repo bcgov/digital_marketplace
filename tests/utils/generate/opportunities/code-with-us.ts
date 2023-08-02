@@ -1,5 +1,6 @@
 import {
   CWUOpportunity,
+  CWUOpportunitySlim,
   CWUOpportunityStatus
 } from "shared/lib/resources/opportunity/code-with-us";
 import { getId } from "..";
@@ -8,6 +9,8 @@ import { faker } from "@faker-js/faker";
 import { CWU_MAX_BUDGET } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import { dateAt4PM } from "tests/utils/date";
+import { omit, pick } from "lodash";
+import { CreateCWUOpportunityParams } from "back-end/lib/db";
 
 function buildCWUOpportunity(
   overrides: Partial<CWUOpportunity> = {}
@@ -58,4 +61,50 @@ function buildCWUOpportunity(
   };
 }
 
-export { buildCWUOpportunity };
+function buildCWUOpportunitySlim(
+  overrides: Partial<CWUOpportunity> = {}
+): CWUOpportunitySlim {
+  return {
+    ...pick(buildCWUOpportunity(overrides), [
+      "id",
+      "title",
+      "teaser",
+      "createdAt",
+      "createdBy",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "proposalDeadline",
+      "remoteOk",
+      "reward",
+      "location",
+      "subscribed"
+    ])
+  };
+}
+
+function buildCreateCWUOpportunityParams(
+  overrides: Partial<CreateCWUOpportunityParams> = {}
+): CreateCWUOpportunityParams {
+  const opportunity = buildCWUOpportunity();
+
+  return {
+    ...omit(opportunity, [
+      "createdBy",
+      "createdAt",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "id",
+      "addenda"
+    ]),
+    status: CWUOpportunityStatus.Draft,
+    ...overrides
+  };
+}
+
+export {
+  buildCreateCWUOpportunityParams,
+  buildCWUOpportunity,
+  buildCWUOpportunitySlim
+};
