@@ -240,4 +240,17 @@ test("code-with-us proposal crud", async () => {
     }),
     updatedAt: expect.any(String)
   });
+
+  const submitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  expect(submitResult.status).toEqual(200);
+  expect(submitResult.body).toEqual({
+    ...editResult.body,
+    status: CWUProposalStatus.Submitted,
+    submittedAt: expect.any(String),
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
