@@ -179,7 +179,7 @@ test("team-with-us proposal crud", async () => {
 
   const proposal = buildTWUProposal({
     createdBy: testUserSlim,
-    organization,
+    organization: qualifiedOrganizationSlim,
     opportunity: opportunitySlim,
     resourceQuestionResponses: opportunity.resourceQuestions.map(
       ({ order, wordLimit }) =>
