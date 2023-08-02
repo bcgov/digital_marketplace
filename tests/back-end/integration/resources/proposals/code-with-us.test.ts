@@ -253,4 +253,16 @@ test("code-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const withdrawResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("withdraw"));
+
+  expect(withdrawResult.status).toEqual(200);
+  expect(withdrawResult.body).toEqual({
+    ...submitResult.body,
+    status: CWUProposalStatus.Withdrawn,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
