@@ -318,31 +318,31 @@ test("code-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({ value: CWUProposalEvent.ScoreEntered })
+        type: adt("event", CWUProposalEvent.ScoreEntered)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({ value: CWUProposalStatus.Evaluated })
+        type: adt("status", CWUProposalStatus.Evaluated)
       }),
       expect.objectContaining({
         createdBy: null,
-        type: expect.objectContaining({ value: CWUProposalStatus.UnderReview })
+        type: adt("status", CWUProposalStatus.UnderReview)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({ value: CWUProposalStatus.Submitted })
+        type: adt("status", CWUProposalStatus.Submitted)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({ value: CWUProposalStatus.Withdrawn })
+        type: adt("status", CWUProposalStatus.Withdrawn)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({ value: CWUProposalStatus.Submitted })
+        type: adt("status", CWUProposalStatus.Submitted)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({ value: CWUProposalStatus.Draft })
+        type: adt("status", CWUProposalStatus.Draft)
       })
     ],
     updatedBy: expect.objectContaining({
@@ -371,12 +371,31 @@ test("code-with-us proposal crud", async () => {
     history: expect.arrayContaining([
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: CWUProposalStatus.Awarded
-        })
+        type: adt("status", CWUProposalStatus.Awarded)
       }),
       ...scoreResult.body.history
     ]),
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const disqualificationReason = "testing";
+  const disqualifyResult = await adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("disqualify", disqualificationReason));
+
+  expect(disqualifyResult.status).toEqual(200);
+  expect(disqualifyResult.body).toEqual({
+    ...omit(awardResult.body, ["rank"]),
+    status: CWUProposalStatus.Disqualified,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        note: disqualificationReason,
+        type: adt("status", CWUProposalStatus.Disqualified)
+      }),
+      ...awardResult.body.history
+    ],
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
