@@ -395,7 +395,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
             .andWhere({ "proposals.opportunity": result.opportunity })
             .select<Array<{ id: Id; rank: number }>>(
               connection.raw(
-                "proposals.id, RANK () OVER (ORDER BY score DESC) rank"
+                "proposals.id, CAST(RANK () OVER (ORDER BY score DESC) AS Integer) rank"
               )
             );
           result.rank = ranks.find((r) => r.id === result.id)?.rank;

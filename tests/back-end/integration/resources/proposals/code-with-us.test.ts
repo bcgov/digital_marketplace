@@ -22,6 +22,7 @@ import { insertCWUOpportunity } from "tests/back-end/integration/helpers/opportu
 import { buildCreateCWUOpportunityParams } from "tests/utils/generate/opportunities/code-with-us";
 import {
   CreateRequestBody,
+  CWUProposalEvent,
   CWUProposalStatus
 } from "shared/lib/resources/proposal/code-with-us";
 import {
@@ -32,6 +33,10 @@ import { fakerEN_CA as faker } from "@faker-js/faker";
 import { getISODateString } from "shared/lib";
 import { adt, arrayOfUnion } from "shared/lib/types";
 import { getPhoneNumber } from "tests/utils/generate";
+import {
+  updateCWUOpportunityVersion,
+  closeCWUOpportunities
+} from "back-end/lib/db";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -66,8 +71,14 @@ afterEach(async () => {
 });
 
 test("code-with-us proposal crud", async () => {
-  const { testUser, testUserSession, testAdminSession, userAppAgent } =
-    await setup();
+  const {
+    testUser,
+    testUserSession,
+    testAdmin,
+    testAdminSession,
+    userAppAgent,
+    adminAppAgent
+  } = await setup();
 
   const testUserSlim = buildUserSlim(testUser);
   const organization = await insertOrganization(
@@ -262,6 +273,81 @@ test("code-with-us proposal crud", async () => {
   expect(withdrawResult.body).toEqual({
     ...submitResult.body,
     status: CWUProposalStatus.Withdrawn,
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
+
+  const resubmitResult = await userAppAgent
+    .put(proposalIdUrl)
+    .send(adt("submit"));
+
+  // Close the opportunity
+  const newDeadline = faker.date.recent();
+  await updateCWUOpportunityVersion(
+    connection,
+    {
+      ...omit(opportunityParams, ["status"]),
+      id: opportunity.id,
+      proposalDeadline: newDeadline
+    },
+    testAdminSession
+  );
+  await closeCWUOpportunities(connection);
+
+  const score = 100;
+  const scoreRequest = adminAppAgent
+    .put(proposalIdUrl)
+    .send(adt("score", score));
+  const scoreResult = await requestWithCookie(scoreRequest, testAdminSession);
+
+  expect(scoreResult.status).toEqual(200);
+  expect(scoreResult.body).toEqual({
+    ...resubmitResult.body,
+    opportunity: {
+      ...resubmitResult.body.opportunity,
+      status: CWUOpportunityStatus.Evaluation,
+      proposalDeadline: expect.any(String),
+      updatedAt: expect.any(String),
+      createdBy: expect.objectContaining({
+        id: testAdmin.id
+      })
+    },
+    status: CWUProposalStatus.Evaluated,
+    score,
+    rank: 1,
+    history: [
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({ value: CWUProposalEvent.ScoreEntered })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({ value: CWUProposalStatus.Evaluated })
+      }),
+      expect.objectContaining({
+        createdBy: null,
+        type: expect.objectContaining({ value: CWUProposalStatus.UnderReview })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({ value: CWUProposalStatus.Submitted })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({ value: CWUProposalStatus.Withdrawn })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({ value: CWUProposalStatus.Submitted })
+      }),
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testUser.id }),
+        type: expect.objectContaining({ value: CWUProposalStatus.Draft })
+      })
+    ],
+    updatedBy: expect.objectContaining({
+      id: testAdmin.id
+    }),
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
