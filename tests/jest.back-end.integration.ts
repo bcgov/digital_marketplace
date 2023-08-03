@@ -6,8 +6,7 @@ const config: Config.InitialOptions = {
   roots: ["./tests/back-end/integration"],
   displayName: "back-end:integration",
   setupFiles: ["<rootDir>/tests/back-end/setup-env.jest.ts"],
-  setupFilesAfterEnv: ["<rootDir>/tests/back-end/setup-server.jest.ts"],
-  testTimeout: 10000
+  setupFilesAfterEnv: ["<rootDir>/tests/back-end/setup-server.jest.ts"]
 };
 
 export default config;
