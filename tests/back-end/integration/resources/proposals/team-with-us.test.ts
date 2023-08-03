@@ -313,9 +313,7 @@ test("team-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.Submitted
-        })
+        type: adt("status", TWUProposalStatus.Submitted)
       }),
       ...editResult.body.history
     ],
@@ -334,9 +332,7 @@ test("team-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.Withdrawn
-        })
+        type: adt("status", TWUProposalStatus.Withdrawn)
       }),
       ...submitResult.body.history
     ],
@@ -457,57 +453,39 @@ test("team-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.EvaluatedChallenge
-        })
+        type: adt("status", TWUProposalStatus.EvaluatedChallenge)
       }),
       expect.objectContaining({
         createdBy: null,
-        type: expect.objectContaining({
-          value: TWUProposalEvent.PriceScoreEntered
-        })
+        type: adt("event", TWUProposalEvent.PriceScoreEntered)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalEvent.ChallengeScoreEntered
-        })
+        type: adt("event", TWUProposalEvent.ChallengeScoreEntered)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.UnderReviewChallenge
-        })
+        type: adt("status", TWUProposalStatus.UnderReviewChallenge)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.EvaluatedResourceQuestions
-        })
+        type: adt("status", TWUProposalStatus.EvaluatedResourceQuestions)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.UnderReviewChallenge
-        })
+        type: adt("status", TWUProposalStatus.UnderReviewChallenge)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.EvaluatedResourceQuestions
-        })
+        type: adt("status", TWUProposalStatus.EvaluatedResourceQuestions)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalEvent.QuestionsScoreEntered
-        })
+        type: adt("event", TWUProposalEvent.QuestionsScoreEntered)
       }),
       expect.objectContaining({
         createdBy: null,
-        type: expect.objectContaining({
-          value: TWUProposalStatus.UnderReviewResourceQuestions
-        })
+        type: adt("status", TWUProposalStatus.UnderReviewResourceQuestions)
       }),
       ...resubmitResult.body.history
     ],
@@ -529,9 +507,7 @@ test("team-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: TWUProposalStatus.Awarded
-        })
+        type: adt("status", TWUProposalStatus.Awarded)
       }),
       ...scoreChallengeResult.body.history
     ],
@@ -552,9 +528,7 @@ test("team-with-us proposal crud", async () => {
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
         note: disqualificationReason,
-        type: expect.objectContaining({
-          value: TWUProposalStatus.Disqualified
-        })
+        type: adt("status", TWUProposalStatus.Disqualified)
       }),
       ...awardResult.body.history
     ],

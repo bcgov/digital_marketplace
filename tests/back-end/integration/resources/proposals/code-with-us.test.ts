@@ -232,7 +232,7 @@ test("code-with-us proposal crud", async () => {
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(recreateResult.body);
 
-  const additionalComments = "Testing";
+  const additionalComments = "testing";
   const editedBody: CreateRequestBody = {
     ...createIndividualProponentBody,
     additionalComments

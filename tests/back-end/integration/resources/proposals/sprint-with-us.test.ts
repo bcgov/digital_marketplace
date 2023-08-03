@@ -315,9 +315,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.Submitted
-        })
+        type: adt("status", SWUProposalStatus.Submitted)
       }),
       ...editResult.body.history
     ],
@@ -338,9 +336,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testUser.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.Withdrawn
-        })
+        type: adt("status", SWUProposalStatus.Withdrawn)
       }),
       ...submitResult.body.history
     ]
@@ -463,51 +459,35 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.EvaluatedCodeChallenge
-        })
+        type: adt("status", SWUProposalStatus.EvaluatedCodeChallenge)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalEvent.ChallengeScoreEntered
-        })
+        type: adt("event", SWUProposalEvent.ChallengeScoreEntered)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.UnderReviewCodeChallenge
-        })
+        type: adt("status", SWUProposalStatus.UnderReviewCodeChallenge)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.EvaluatedTeamQuestions
-        })
+        type: adt("status", SWUProposalStatus.EvaluatedTeamQuestions)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.UnderReviewCodeChallenge
-        })
+        type: adt("status", SWUProposalStatus.UnderReviewCodeChallenge)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.EvaluatedTeamQuestions
-        })
+        type: adt("status", SWUProposalStatus.EvaluatedTeamQuestions)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalEvent.QuestionsScoreEntered
-        })
+        type: adt("event", SWUProposalEvent.QuestionsScoreEntered)
       }),
       expect.objectContaining({
         createdBy: null,
-        type: expect.objectContaining({
-          value: SWUProposalStatus.UnderReviewTeamQuestions
-        })
+        type: adt("status", SWUProposalStatus.UnderReviewTeamQuestions)
       }),
       ...resubmitResult.body.history
     ],
@@ -539,9 +519,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       {
         createdBy: { id: testAdmin.id },
-        type: {
-          value: SWUProposalStatus.UnderReviewTeamScenario
-        }
+        type: adt("status", SWUProposalStatus.UnderReviewTeamScenario)
       },
       ...scoreCodeChallengeResult.body.history
     ],
@@ -561,9 +539,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.EvaluatedCodeChallenge
-        })
+        type: adt("status", SWUProposalStatus.EvaluatedCodeChallenge)
       }),
       ...screenInToTeamScenarioResult.body.history
     ],
@@ -604,21 +580,15 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.EvaluatedTeamScenario
-        })
+        type: adt("status", SWUProposalStatus.EvaluatedTeamScenario)
       }),
       expect.objectContaining({
         createdBy: null,
-        type: expect.objectContaining({
-          value: SWUProposalEvent.PriceScoreEntered
-        })
+        type: adt("event", SWUProposalEvent.PriceScoreEntered)
       }),
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalEvent.ScenarioScoreEntered
-        })
+        type: adt("event", SWUProposalEvent.ScenarioScoreEntered)
       }),
       ...rescreenInToTeamScenarioResult.body.history
     ],
@@ -640,9 +610,7 @@ test("sprint-with-us proposal crud", async () => {
     history: [
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
-        type: expect.objectContaining({
-          value: SWUProposalStatus.Awarded
-        })
+        type: adt("status", SWUProposalStatus.Awarded)
       }),
       ...scoreTeamScenarioResult.body.history
     ],
@@ -663,9 +631,7 @@ test("sprint-with-us proposal crud", async () => {
       expect.objectContaining({
         createdBy: expect.objectContaining({ id: testAdmin.id }),
         note: disqualificationReason,
-        type: expect.objectContaining({
-          value: SWUProposalStatus.Disqualified
-        })
+        type: adt("status", SWUProposalStatus.Disqualified)
       }),
       ...awardResult.body.history
     ],
