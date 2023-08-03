@@ -351,4 +351,33 @@ test("code-with-us proposal crud", async () => {
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
+
+  const awardResult = await adminAppAgent.put(proposalIdUrl).send(adt("award"));
+
+  expect(awardResult.status).toEqual(200);
+  expect(awardResult.body).toEqual({
+    ...scoreResult.body,
+    opportunity: {
+      ...scoreResult.body.opportunity,
+      status: CWUOpportunityStatus.Awarded,
+      updatedBy: expect.objectContaining({
+        id: testAdmin.id
+      }),
+      updatedAt: expect.any(String)
+    },
+    status: CWUProposalStatus.Awarded,
+    // History is ordered by time
+    // CWUProposalStatus.Evaluated and CWUProposalEvent.ScoreEntered occur at the same time
+    history: expect.arrayContaining([
+      expect.objectContaining({
+        createdBy: expect.objectContaining({ id: testAdmin.id }),
+        type: expect.objectContaining({
+          value: CWUProposalStatus.Awarded
+        })
+      }),
+      ...scoreResult.body.history
+    ]),
+    updatedAt: expect.any(String),
+    createdAt: expect.any(String) // TODO: fix this after writing tests
+  });
 });
