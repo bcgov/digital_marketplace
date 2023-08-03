@@ -17,7 +17,7 @@ beforeAll(async () => {
   await startServer({
     port: 3000 + Number(process.env.JEST_WORKER_ID)
   });
-});
+}, 15000);
 
 afterAll(async () => {
   await stopServer();

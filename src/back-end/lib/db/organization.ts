@@ -26,7 +26,9 @@ import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
-type CreateOrganizationParams = Partial<Omit<Organization, "logoImageFile">> & {
+export type CreateOrganizationParams = Partial<
+  Omit<Organization, "logoImageFile">
+> & {
   logoImageFile?: Id;
 };
 
