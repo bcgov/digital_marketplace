@@ -1,5 +1,3 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
 import {
   awardCWUProposal,
   closeCWUOpportunities,
@@ -15,15 +13,14 @@ import {
   setupCWUScenario1,
   testCreateCWUOpportunityParams
 } from "../../helpers/cwu-scenario-1";
+import { connection } from "tests/back-end/setup-server.jest";
 
 describe("CWU Proposal Resource", () => {
   afterEach(async () => {
-    await clearTestDatabase();
+    await clearTestDatabase(connection);
   });
 
   it("should properly update opportunity and proposal statuses when an opportunity is closed and awarded", async () => {
-    const connection = await connectToDatabase(PG_CONFIG);
-
     // Setup scenario (create an opportunity with two submitted vendor proposals)
     const { cwuOpportunity, cwuProposal1, cwuProposal2, testAdminSession } =
       await setupCWUScenario1();

@@ -1,5 +1,3 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
 import {
   awardSWUProposal,
   closeSWUOpportunities,
@@ -20,15 +18,14 @@ import { SWUOpportunityStatus } from "shared/lib/resources/opportunity/sprint-wi
 import { getValidValue } from "shared/lib/validation";
 import { clearTestDatabase } from "../../helpers";
 import { SWUProposalStatus } from "shared/lib/resources/proposal/sprint-with-us";
+import { connection } from "tests/back-end/setup-server.jest";
 
 describe("SWU Opportunity and Proposal Resources", () => {
   afterEach(async () => {
-    await clearTestDatabase();
+    await clearTestDatabase(connection);
   });
 
   it("should properly update opportunity and proposal statuses when an opportunity is closed and awarded", async () => {
-    const connection = await connectToDatabase(PG_CONFIG);
-
     // Setup scenario (create an opportunity with two submitted vendor proposals)
     const { swuOpportunity, swuProposal1, swuProposal2, testAdminSession } =
       await setupSWUScenario1();

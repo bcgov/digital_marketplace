@@ -1,5 +1,3 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
 import {
   createAffiliation,
   createOrganization,
@@ -9,11 +7,6 @@ import {
   createSWUProposal,
   CreateSWUProposalParams
 } from "back-end/lib/db";
-import {
-  testCreateAdminUserParams,
-  testCreateVendorUserParams,
-  testCreateVendorUserParams2
-} from "../resources/user.test";
 import { getValidValue } from "shared/lib/validation";
 import { insertUserWithActiveSession } from "./user";
 import { SessionRecord } from "shared/lib/resources/session";
@@ -30,6 +23,9 @@ import {
   MembershipType
 } from "shared/lib/resources/affiliation";
 import { Organization } from "shared/lib/resources/organization";
+import { connection } from "tests/back-end/setup-server.jest";
+import { UserType } from "shared/lib/resources/user";
+import { buildCreateUserParams } from "tests/utils/generate/user";
 
 export const testCreateSWUOpportunityParams: CreateSWUOpportunityParams = {
   title: "Sample Title",
@@ -103,11 +99,12 @@ interface OrgSetupResult {
  * Set up a testing scenario with a SWU opportunity and two submitted vendor proposals. This requires setting up vendor organizations with an RFQ status.
  */
 export async function setupSWUScenario1(): Promise<SWUScenario1> {
-  const connection = await connectToDatabase(PG_CONFIG);
-
   // Create an admin session
   const [, testAdminSession] = await insertUserWithActiveSession(
-    testCreateAdminUserParams
+    buildCreateUserParams({
+      type: UserType.Admin
+    }),
+    connection
   );
 
   if (!testAdminSession) {
@@ -215,14 +212,18 @@ export async function setupSWUScenario1(): Promise<SWUScenario1> {
 }
 
 async function setupOrgsWithRFQ(): Promise<OrgSetupResult> {
-  const connection = await connectToDatabase(PG_CONFIG);
-
   // Create two vendor sessions
   const [, testVendorSession1] = await insertUserWithActiveSession(
-    testCreateVendorUserParams
+    buildCreateUserParams({
+      type: UserType.Vendor
+    }),
+    connection
   );
   const [, testVendorSession2] = await insertUserWithActiveSession(
-    testCreateVendorUserParams2
+    buildCreateUserParams({
+      type: UserType.Vendor
+    }),
+    connection
   );
 
   if (!testVendorSession1 || !testVendorSession2) {

@@ -2,9 +2,8 @@ import {
   insertUser,
   insertUserWithActiveSession,
   requestWithCookie
-} from "../helpers/user";
+} from "tests/back-end/integration/helpers/user";
 import { app } from "back-end/index";
-import { CreateUserParams } from "back-end/lib/db";
 import {
   UpdateProfileRequestBody,
   UpdateRequestBody,
@@ -12,48 +11,26 @@ import {
   UserType
 } from "shared/lib/resources/user";
 import { agent, SuperAgentTest } from "supertest";
-import { clearTestDatabase } from "../helpers";
-import { connection } from "../../setup.jest";
+import { clearTestDatabase } from "tests/back-end/integration/helpers";
+import { connection } from "tests/back-end/setup-server.jest";
+import { buildCreateUserParams } from "tests/utils/generate/user";
 
-export const testCreateAdminUserParams: CreateUserParams = {
+const testCreateAdminUserParams = buildCreateUserParams({
   type: UserType.Admin,
-  status: UserStatus.Active,
-  name: "Test Admin User",
-  email: "testadmin@email.com",
-  idpUsername: "testadmin",
-  idpId: "testadmin"
-};
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null
+});
 
-export const testCreateGovUserParams: CreateUserParams = {
+const testCreateGovUserParams = buildCreateUserParams({
   type: UserType.Government,
-  status: UserStatus.Active,
-  name: "Test Gov User",
-  email: "testgov@email.com",
-  idpUsername: "testgov",
-  idpId: "testgov"
-};
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null
+});
 
-export const testCreateVendorUserParams: CreateUserParams = {
+const testCreateVendorUserParams = buildCreateUserParams({
   type: UserType.Vendor,
-  status: UserStatus.Active,
-  name: "Test Vendor User",
-  email: "testvendor@email.com",
-  idpUsername: "testvendor",
-  idpId: "testvendor",
-  capabilities: ["Agile Coaching"],
-  acceptedTermsAt: new Date()
-};
-
-export const testCreateVendorUserParams2: CreateUserParams = {
-  type: UserType.Vendor,
-  status: UserStatus.Active,
-  name: "Test Vendor User 2",
-  email: "testvendor2@email.com",
-  idpUsername: "testvendor2",
-  idpId: "testvendor2",
-  capabilities: ["Agile Coaching"],
-  acceptedTermsAt: new Date()
-};
+  lastAcceptedTermsAt: null
+});
 
 describe("User resource", () => {
   let appAgent: SuperAgentTest;
@@ -92,11 +69,14 @@ describe("User resource", () => {
     const result = await requestWithCookie(request, testAdminSession);
 
     expect(result.status).toEqual(200);
-
     const { acceptedTermsAt, ...restOfAdmin } = testAdmin;
     const { acceptedTermsAt: _, ...restOfVendor } = testVendor;
-    expect(result.body[0]).toMatchObject(restOfAdmin);
-    expect(result.body[1]).toMatchObject(restOfVendor);
+    expect(result.body).toMatchObject(
+      expect.arrayContaining([
+        expect.objectContaining(restOfAdmin),
+        expect.objectContaining(restOfVendor)
+      ])
+    );
   });
 
   it("correctly supports updating user notifications", async () => {

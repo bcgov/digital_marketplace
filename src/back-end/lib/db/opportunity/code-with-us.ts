@@ -86,6 +86,7 @@ interface RawCWUOpportunitySlim
   extends Omit<CWUOpportunitySlim, "createdBy" | "updatedBy"> {
   createdBy?: Id;
   updatedBy?: Id;
+  versionId?: Id;
 }
 
 interface RawCWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
@@ -112,6 +113,7 @@ async function rawCWUOpportunityToCWUOpportunity(
     updatedBy: updatedById,
     attachments: attachmentIds,
     addenda: addendaIds,
+    versionId,
     ...restOfRaw
   } = raw;
   const createdBy = createdById
@@ -142,8 +144,6 @@ async function rawCWUOpportunityToCWUOpportunity(
     })
   );
 
-  delete raw.versionId;
-
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -157,7 +157,12 @@ async function rawCWUOpportunitySlimToCWUOpportunitySlim(
   connection: Connection,
   raw: RawCWUOpportunitySlim
 ): Promise<CWUOpportunitySlim> {
-  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const {
+    createdBy: createdById,
+    updatedBy: updatedById,
+    versionId,
+    ...restOfRaw
+  } = raw;
   const createdBy =
     (createdById &&
       getValidValue(

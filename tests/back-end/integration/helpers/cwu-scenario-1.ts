@@ -1,16 +1,9 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
 import {
   createCWUOpportunity,
   CreateCWUOpportunityParams,
   createCWUProposal,
   CreateCWUProposalParams
 } from "back-end/lib/db";
-import {
-  testCreateAdminUserParams,
-  testCreateVendorUserParams,
-  testCreateVendorUserParams2
-} from "../resources/user.test";
 import {
   CWUOpportunity,
   CWUOpportunityStatus
@@ -22,6 +15,9 @@ import {
 import { getValidValue } from "shared/lib/validation";
 import { insertUserWithActiveSession } from "./user";
 import { SessionRecord } from "shared/lib/resources/session";
+import { connection } from "tests/back-end/setup-server.jest";
+import { UserType } from "shared/lib/resources/user";
+import { buildCreateUserParams } from "tests/utils/generate/user";
 
 export const testCreateCWUOpportunityParams: CreateCWUOpportunityParams = {
   title: "Test CWU Opportunity",
@@ -56,19 +52,26 @@ interface CWUScenario1 {
  * Set up a testing scenario with a CWU opportunity and two submitted vendor proposals.
  */
 export async function setupCWUScenario1(): Promise<CWUScenario1> {
-  const connection = await connectToDatabase(PG_CONFIG);
-
   // Create an admin session
   const [, testAdminSession] = await insertUserWithActiveSession(
-    testCreateAdminUserParams
+    buildCreateUserParams({
+      type: UserType.Admin
+    }),
+    connection
   );
 
   // Create two vendor sessions
   const [, testVendorSession1] = await insertUserWithActiveSession(
-    testCreateVendorUserParams
+    buildCreateUserParams({
+      type: UserType.Vendor
+    }),
+    connection
   );
   const [, testVendorSession2] = await insertUserWithActiveSession(
-    testCreateVendorUserParams2
+    buildCreateUserParams({
+      type: UserType.Vendor
+    }),
+    connection
   );
 
   if (!testAdminSession || !testVendorSession1 || !testVendorSession2) {

@@ -7,6 +7,20 @@ export async function clearTestDatabase(connection: Connection): Promise<void> {
 
   await connection.raw(
     `
+      DELETE FROM "digmkt-test"."twuProposalAttachments";
+      DELETE FROM "digmkt-test"."twuProposalStatuses";
+      DELETE FROM "digmkt-test"."twuProposalMember";
+      DELETE FROM "digmkt-test"."twuProposals";
+      DELETE FROM "digmkt-test"."twuOpportunityAddenda";
+      DELETE FROM "digmkt-test"."twuOpportunityAttachments";
+      DELETE FROM "digmkt-test"."twuOpportunitySubscribers";
+      DELETE FROM "digmkt-test"."twuOpportunityStatuses";
+      DELETE FROM "digmkt-test"."twuOpportunityVersions";
+      DELETE FROM "digmkt-test"."twuResourceQuestions";
+      DELETE FROM "digmkt-test"."twuResourceQuestionResponses";
+      DELETE FROM "digmkt-test"."twuResources";
+      DELETE FROM "digmkt-test"."twuOrganizationServiceAreas";
+      DELETE FROM "digmkt-test"."twuOpportunities";
       DELETE FROM "digmkt-test"."cwuProponents";
       DELETE FROM "digmkt-test"."cwuProposalAttachments";
       DELETE FROM "digmkt-test"."cwuProposalStatuses";

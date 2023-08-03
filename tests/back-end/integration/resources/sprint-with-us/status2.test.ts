@@ -1,5 +1,3 @@
-import { PG_CONFIG } from "back-end/config";
-import { connectToDatabase } from "back-end/index";
 import {
   awardSWUProposal,
   closeSWUOpportunities,
@@ -20,17 +18,17 @@ import { SWUOpportunityStatus } from "shared/lib/resources/opportunity/sprint-wi
 import { getValidValue } from "shared/lib/validation";
 import { clearTestDatabase } from "../../helpers";
 import { SWUProposalStatus } from "shared/lib/resources/proposal/sprint-with-us";
-import { testCreateGovUserParams } from "../user.test";
 import { insertUserWithActiveSession } from "../../helpers/user";
+import { connection } from "tests/back-end/setup-server.jest";
+import { UserType } from "shared/lib/resources/user";
+import { buildCreateUserParams } from "tests/utils/generate/user";
 
 describe("SWU Opportunity and Proposal Resources", () => {
   afterEach(async () => {
-    await clearTestDatabase();
+    await clearTestDatabase(connection);
   });
 
   it("should properly update opportunity and proposal statuses when an opportunity is closed and awarded, even if other proposals failed earlier stages", async () => {
-    const connection = await connectToDatabase(PG_CONFIG);
-
     // Setup scenario (create an opportunity with two submitted vendor proposals)
     const { swuOpportunity, swuProposal1, swuProposal2, testAdminSession } =
       await setupSWUScenario1();
@@ -282,7 +280,10 @@ describe("SWU Opportunity and Proposal Resources", () => {
 
     // Read non-awarded proposal status with a gov user session
     const [, govUserSession] = await insertUserWithActiveSession(
-      testCreateGovUserParams
+      buildCreateUserParams({
+        type: UserType.Government
+      }),
+      connection
     );
 
     if (!govUserSession) {

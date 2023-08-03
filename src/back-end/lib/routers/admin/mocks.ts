@@ -66,7 +66,8 @@ export const vendorUser: User = {
 
 export const vendorUserSlim: UserSlim = {
   id: vendorUser.id,
-  name: vendorUser.name
+  name: vendorUser.name,
+  avatarImageFile: null
 };
 
 export const govUser: User = {
