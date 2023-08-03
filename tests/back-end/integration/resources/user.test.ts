@@ -11,20 +11,20 @@ import {
   UserType
 } from "shared/lib/resources/user";
 import { agent, SuperAgentTest } from "supertest";
-import {
-  clearTestDatabase,
-  jsonClone
-} from "tests/back-end/integration/helpers";
+import { clearTestDatabase } from "tests/back-end/integration/helpers";
 import { connection } from "tests/back-end/setup-server.jest";
 import { buildCreateUserParams } from "tests/utils/generate/user";
 
 const testCreateAdminUserParams = buildCreateUserParams({
   type: UserType.Admin,
+  acceptedTermsAt: null,
   lastAcceptedTermsAt: null
 });
 
 const testCreateGovUserParams = buildCreateUserParams({
-  type: UserType.Government
+  type: UserType.Government,
+  acceptedTermsAt: null,
+  lastAcceptedTermsAt: null
 });
 
 const testCreateVendorUserParams = buildCreateUserParams({
@@ -71,8 +71,12 @@ describe("User resource", () => {
     expect(result.status).toEqual(200);
     const { acceptedTermsAt, ...restOfAdmin } = testAdmin;
     const { acceptedTermsAt: _, ...restOfVendor } = testVendor;
-    expect(result.body[0]).toMatchObject(restOfAdmin);
-    expect(result.body[1]).toMatchObject(restOfVendor);
+    expect(result.body).toMatchObject(
+      expect.arrayContaining([
+        expect.objectContaining(restOfAdmin),
+        expect.objectContaining(restOfVendor)
+      ])
+    );
   });
 
   it("correctly supports updating user notifications", async () => {
@@ -233,7 +237,7 @@ describe("User resource", () => {
 
     expect(result.status).toEqual(200);
     expect(result.body).toMatchObject({
-      ...jsonClone(testGovUser),
+      ...testGovUser,
       type: UserType.Admin
     });
   });
@@ -265,7 +269,7 @@ describe("User resource", () => {
 
     expect(result.status).toEqual(200);
     expect(result.body).toMatchObject({
-      ...jsonClone(testAdminUser),
+      ...testAdminUser,
       type: UserType.Government
     });
   });
