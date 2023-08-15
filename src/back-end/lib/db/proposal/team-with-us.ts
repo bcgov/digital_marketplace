@@ -205,7 +205,8 @@ async function rawTWUProposalToTWUProposal(
       opportunity,
       resourceQuestionResponses,
       questionsScore: raw.questionsScore || undefined,
-      anonymousProponentName: raw.anonymousProponentName
+      anonymousProponentName: raw.anonymousProponentName,
+      attachments: []
     };
   }
 

@@ -388,6 +388,7 @@ test("team-with-us proposal crud", async () => {
     ),
     questionsScore: 100,
     anonymousProponentName: "Proponent 1",
+    attachments: [],
     updatedAt: expect.any(String),
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
