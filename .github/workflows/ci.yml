@@ -1,6 +1,8 @@
 name: CI
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - feat/proposal-crud-tests
   pull_request:
     types: [opened]
     branches:
