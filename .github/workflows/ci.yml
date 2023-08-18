@@ -22,6 +22,8 @@ jobs:
       - run: |
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh ./get-docker.sh --dry-run
+      - run: |
+          echo "${{ secrets.TEST_ENV }}" > .env
       - run: yarn
       - run: npm t
   yarn-build:
