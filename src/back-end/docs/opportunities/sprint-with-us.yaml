@@ -285,7 +285,7 @@ components:
           remoteOk: true
           remoteDesc: Remote is okay
           location: Victoria
-          reward: 2000000
+          reward: 5000000
           mandatorySkills: [Agile Coaching, Front-end Development]
           optionalSkills: [JavaScript, React]
           description: We need someone to create and maintain our WordPress for the next 8 months.
@@ -353,4 +353,4 @@ components:
       summary: Request body for adding an addendum to a Sprint-With-Us opportunity
       value:
         tag: addAddendum
-        value: The reward value has been changed to $2,000,000
+        value: The reward value has been changed to $5,000,000
