@@ -7,7 +7,7 @@ import {
   RawFileRecord,
   rawFileRecordToFileRecord
 } from "front-end/lib/http/api/file/lib";
-import { compareDates } from "shared/lib";
+import { compareDates, compareNumbers } from "shared/lib";
 
 /**
  * reflects the path for the CRUD request being made
@@ -99,7 +99,10 @@ function rawTWUProposalToTWUProposal(
       raw.history &&
       raw.history
         .map((s) => rawTWUProposalHistoryRecordToTWUProposalHistoryRecord(s))
-        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
+        .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
+    resourceQuestionResponses: raw.resourceQuestionResponses.sort((a, b) =>
+      compareNumbers(a.order, b.order)
+    )
   };
 }
 
