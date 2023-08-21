@@ -18,7 +18,7 @@ import { dateAt4PM } from "tests/utils/date";
 import {
   DEFAULT_CODE_CHALLENGE_WEIGHT,
   DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE
-} from "build/back-end/shared/lib/resources/opportunity/sprint-with-us";
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
 import { omit, pick } from "lodash";
 import {
