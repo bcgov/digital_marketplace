@@ -13,9 +13,9 @@ import { getId } from "..";
 import { buildUserSlim } from "../user";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import SKILLS from "shared/lib/data/skills";
-import { dateAt4PM } from "tests/utils/date";
 import { omit, pick } from "lodash";
 import { CreateTWUOpportunityParams } from "back-end/lib/db";
+import { setDateTo4PM } from "shared/lib";
 
 function buildTWUOpportunity(
   overrides: Partial<TWUOpportunity> = {}
@@ -53,15 +53,15 @@ function buildTWUOpportunity(
     ),
     serviceArea: TWUServiceArea.FullStackDeveloper,
     description: faker.lorem.paragraphs(),
-    proposalDeadline: dateAt4PM(proposalDeadline),
-    assignmentDate: dateAt4PM(assignmentDate),
-    startDate: dateAt4PM(
+    proposalDeadline: setDateTo4PM(proposalDeadline),
+    assignmentDate: setDateTo4PM(assignmentDate),
+    startDate: setDateTo4PM(
       faker.date.between({
         from: assignmentDate,
         to: completionDate
       })
     ),
-    completionDate: dateAt4PM(completionDate),
+    completionDate: setDateTo4PM(completionDate),
     maxBudget: faker.number.float({ min: 1, precision: 2 }),
     targetAllocation: faker.number.int({ min: 1, max: 100 }),
     questionsWeight: DEFAULT_QUESTIONS_WEIGHT,

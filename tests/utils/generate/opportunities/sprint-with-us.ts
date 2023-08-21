@@ -14,7 +14,6 @@ import { fakerEN_CA as faker } from "@faker-js/faker";
 import { buildUserSlim } from "../user";
 import { SWU_MAX_BUDGET } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
-import { dateAt4PM } from "tests/utils/date";
 import {
   DEFAULT_CODE_CHALLENGE_WEIGHT,
   DEFAULT_TEAM_QUESTION_AVAILABLE_SCORE
@@ -25,6 +24,7 @@ import {
   CreateSWUOpportunityParams,
   CreateSWUOpportunityPhaseParams
 } from "back-end/lib/db";
+import { setDateTo4PM } from "shared/lib";
 
 function buildSWUOpportunity(
   overrides: Partial<SWUOpportunity> = {}
@@ -56,8 +56,8 @@ function buildSWUOpportunity(
     } = {},
     implementationPhase = buildSWUOpportunityPhase({
       phase: SWUOpportunityPhaseType.Implementation,
-      startDate: dateAt4PM(implementationPhaseStartDate),
-      completionDate: dateAt4PM(implementationPhaseCompletionDate),
+      startDate: setDateTo4PM(implementationPhaseStartDate),
+      completionDate: setDateTo4PM(implementationPhaseCompletionDate),
       maxBudget: totalMaxBudget
     })
   } = overrides;
@@ -102,8 +102,8 @@ function buildSWUOpportunity(
       { min: 1, max: 6 }
     ),
     description: faker.lorem.paragraphs(),
-    proposalDeadline: dateAt4PM(proposalDeadline),
-    assignmentDate: dateAt4PM(assignmentDate),
+    proposalDeadline: setDateTo4PM(proposalDeadline),
+    assignmentDate: setDateTo4PM(assignmentDate),
     questionsWeight: DEFAULT_QUESTIONS_WEIGHT,
     codeChallengeWeight: DEFAULT_CODE_CHALLENGE_WEIGHT,
     scenarioWeight: DEFAULT_SCENARIO_WEIGHT,
@@ -140,8 +140,8 @@ function buildSWUOpportunityPhase(
   } = overrides;
   return {
     phase: SWUOpportunityPhaseType.Implementation,
-    startDate: dateAt4PM(startDate),
-    completionDate: dateAt4PM(completionDate),
+    startDate: setDateTo4PM(startDate),
+    completionDate: setDateTo4PM(completionDate),
     maxBudget: SWU_MAX_BUDGET,
     createdBy,
     createdAt: startDate,
