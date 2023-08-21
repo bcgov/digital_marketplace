@@ -19,9 +19,9 @@ jobs:
         with:
           node-version: "16"
           cache: "yarn"
-      - run: docker compose pull test-db
       - run: |
           echo "${{ secrets.TEST_ENV }}" > .env
+      - run: docker compose pull test-db
       - run: yarn
       - run: npm t
   yarn-build:
