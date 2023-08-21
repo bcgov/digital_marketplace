@@ -23,6 +23,7 @@ jobs:
           echo "${{ secrets.TEST_ENV }}" > .env
       - run: docker compose pull test-db
       - run: yarn
+      - run: npm run migrations:latest
       - run: npm t
   yarn-build:
     if: github.actor != 'dependabot[bot]'
