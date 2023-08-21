@@ -19,9 +19,7 @@ jobs:
         with:
           node-version: "16"
           cache: "yarn"
-      - run: |
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh ./get-docker.sh --dry-run
+      - run: docker compose pull test-db
       - run: |
           echo "${{ secrets.TEST_ENV }}" > .env
       - run: yarn
