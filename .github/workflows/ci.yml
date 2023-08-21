@@ -1,8 +1,5 @@
 name: CI
 on:
-  push:
-    branches:
-      - feat/proposal-crud-tests
   pull_request:
     types: [opened]
     branches:
