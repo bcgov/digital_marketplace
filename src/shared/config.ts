@@ -26,7 +26,7 @@ export const TIMEZONE = "America/Vancouver";
 
 export const CWU_MAX_BUDGET = 70000;
 
-export const SWU_MAX_BUDGET = 2000000;
+export const SWU_MAX_BUDGET = 5000000;
 
 export const COPY = {
   appTermsTitle: "Digital Marketplace Terms & Conditions for E-Bidding",

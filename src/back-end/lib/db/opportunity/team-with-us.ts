@@ -25,7 +25,8 @@ import {
   TWUOpportunityHistoryRecord,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
-  TWUResourceQuestion
+  TWUResourceQuestion,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -116,6 +117,7 @@ export interface RawTWUOpportunitySlim
   createdBy?: Id;
   updatedBy?: Id;
   versionId: Id;
+  serviceArea: TWUServiceArea;
 }
 
 interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
@@ -124,6 +126,7 @@ interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
 
 interface RawResourceQuestion extends Omit<TWUResourceQuestion, "createdBy"> {
   createdBy?: Id;
+  opportunityVersion: Id;
 }
 
 interface RawTWUOpportunityHistoryRecord
@@ -154,6 +157,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     createdBy: createdById,
     updatedBy: updatedById,
     attachments: attachmentIds,
+    versionId,
     ...restOfRaw
   } = raw;
 
@@ -185,8 +189,6 @@ async function rawTWUOpportunityToTWUOpportunity(
     throw new Error("unable to process opportunity");
   }
 
-  delete raw.versionId;
-
   return {
     ...restOfRaw,
     createdBy: createdBy || undefined,
@@ -210,7 +212,13 @@ async function rawTWUOpportunitySlimToTWUOpportunitySlim(
   connection: Connection,
   raw: RawTWUOpportunitySlim
 ): Promise<TWUOpportunitySlim> {
-  const { createdBy: createdById, updatedBy: updatedById, ...restOfRaw } = raw;
+  const {
+    createdBy: createdById,
+    updatedBy: updatedById,
+    versionId,
+    serviceArea,
+    ...restOfRaw
+  } = raw;
   const createdBy =
     (createdById &&
       getValidValue(
@@ -270,7 +278,7 @@ async function rawResourceQuestionToResourceQuestion(
   connection: Connection,
   raw: RawResourceQuestion
 ): Promise<TWUResourceQuestion> {
-  const { createdBy: createdById, ...restOfRaw } = raw;
+  const { createdBy: createdById, opportunityVersion, ...restOfRaw } = raw;
 
   const createdBy = createdById
     ? getValidValue(await readOneUserSlim(connection, createdById), undefined)

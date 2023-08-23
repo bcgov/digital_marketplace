@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "back-end/*": ["../../src/back-end/*"],
-      "shared/*": ["../../src/shared/*"]
+      "shared/*": ["../../src/shared/*"],
+      "tests/*": ["../*"]
     },
     "types": ["node", "jest"]
   },
