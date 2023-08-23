@@ -45,7 +45,7 @@ import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/
  * with Team With Us Opportunities
  */
 
-interface CreateTWUOpportunityParams
+export interface CreateTWUOpportunityParams
   extends Omit<
     TWUOpportunity,
     | "createdBy"

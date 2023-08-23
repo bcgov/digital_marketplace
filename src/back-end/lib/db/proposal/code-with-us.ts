@@ -395,7 +395,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
             .andWhere({ "proposals.opportunity": result.opportunity })
             .select<Array<{ id: Id; rank: number }>>(
               connection.raw(
-                "proposals.id, RANK () OVER (ORDER BY score DESC) rank"
+                "proposals.id, CAST(RANK () OVER (ORDER BY score DESC) AS Integer) rank"
               )
             );
           result.rank = ranks.find((r) => r.id === result.id)?.rank;
@@ -987,6 +987,15 @@ export const awardCWUProposal = tryDb<
 
 export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(
   async (connection, id, session) => {
+    // Read the proposal first, so we can respond with it after deleting
+    const proposal = getValidValue(
+      await readOneCWUProposal(connection, id, session),
+      undefined
+    );
+    if (!proposal) {
+      throw new Error("unable to delete proposal");
+    }
+
     // Delete root record
     const [result] = await connection<RawCWUProposal>("cwuProposals")
       .where({ id })
@@ -995,10 +1004,7 @@ export const deleteCWUProposal = tryDb<[Id, Session], CWUProposal>(
     if (!result) {
       throw new Error("unable to delete opportunity");
     }
-    result.attachments = [];
-    return valid(
-      await rawCWUProposalToCWUProposal(connection, session, result)
-    );
+    return valid(proposal);
   }
 );
 

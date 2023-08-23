@@ -2,6 +2,9 @@ import { execSync } from "child_process";
 import { connectToDatabase, startServer, stopServer } from "back-end/index";
 
 const name = process.env.CONTAINER_NAME;
+// Allow additional time for integration tests.
+// TODO: Move when https://github.com/jestjs/jest/issues/11543 is resolved.
+jest.setTimeout(10000);
 
 beforeAll(async () => {
   execSync(`docker compose -p ${name} up -d test-db`, {

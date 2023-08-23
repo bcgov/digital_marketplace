@@ -25,7 +25,7 @@ import {
 } from "shared/lib/resources/affiliation";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
-  CreateTWUTeamMemberBodyValidationErrors,
+  CreateTWUProposalTeamMemberValidationErrors,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
 
@@ -205,7 +205,7 @@ export function getNonAddedMembers(state: Immutable<State>): Member[] {
   return filterAddedMembers(state.members, false);
 }
 
-export type Errors = CreateTWUTeamMemberBodyValidationErrors[];
+export type Errors = CreateTWUProposalTeamMemberValidationErrors[];
 
 /**
  * No need to set errors as the fields themselves can't result in errors.
