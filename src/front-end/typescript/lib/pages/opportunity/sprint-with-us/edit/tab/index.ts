@@ -228,6 +228,11 @@ export function makeSidebarState(
 }
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
-  const proposalTabs: TabId[] = ["proposals", "teamQuestions", "codeChallenge", "teamScenario"];
-  return proposalTabs.includes(tabId)
+  const proposalTabs: TabId[] = [
+    "proposals",
+    "teamQuestions",
+    "codeChallenge",
+    "teamScenario"
+  ];
+  return proposalTabs.includes(tabId);
 }
