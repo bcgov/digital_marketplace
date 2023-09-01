@@ -1,8 +1,5 @@
 name: CI
 on:
-  push:
-    branches:
-      - fix/pre-commit-errors
   pull_request:
     types: [opened]
     branches:
