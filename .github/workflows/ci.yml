@@ -39,6 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
+      - run: yarn
       - run: pip install pre-commit
       - run: pre-commit run --all-files -v
   commitlint:
