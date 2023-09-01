@@ -1,5 +1,3 @@
-const { join, relative } = require("path");
-
 const compressions = [
   ["brotli", "br"],
   ["gzip", "gz"]
@@ -18,7 +16,7 @@ const files = (ext) => [
       `${gruntConfig.frontEnd.build.dir}/**/*`, //compress all build assets
       `!${gruntConfig.frontEnd.build.dir}/**/*.woff2`, //woff2 fonts are already well-compressed
       ...compressions.map(
-        ([_, ext]) => `!${gruntConfig.frontEnd.build.dir}/**/*.${ext}`
+        ([, ext]) => `!${gruntConfig.frontEnd.build.dir}/**/*.${ext}`
       ) //don't recompress files
     ],
     dest: gruntConfig.frontEnd.build.dir,
