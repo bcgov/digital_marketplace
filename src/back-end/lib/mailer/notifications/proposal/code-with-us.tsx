@@ -353,9 +353,9 @@ export async function disqualifiedCWUProposalSubmissionT(
   opportunity: CWUOpportunity,
   proposal: CWUProposal | CWUProposalSlim
 ): Promise<Emails> {
-  const title = "Your Code With Us Proposal Has Been Disqualified";
+  const title = "Your Code With Us Proposal Has Been Deemed Non-Compliant";
   const description =
-    "The proposal that you submitted for the following Digital Marketplace opportunity has been disqualified:";
+    "The proposal that you submitted for the following Digital Marketplace opportunity was deemed non-compliant and will not be considered any further:";
   return [
     {
       to: recipient.email || [],
@@ -366,6 +366,10 @@ export async function disqualifiedCWUProposalSubmissionT(
         descriptionLists: [makeCWUOpportunityInformation(opportunity)],
         body: (
           <div>
+            <p>
+              We appreciate the time and effort you put into creating your
+              proposal. Thank you for your interest in this opportunity.
+            </p>
             <p>
               If you have any questions, please send an email to{" "}
               <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
