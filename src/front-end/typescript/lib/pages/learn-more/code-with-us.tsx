@@ -227,9 +227,7 @@ const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
               <div className="d-flex flex-row mt-5 flex-nowrap">
                 <Link
                   button
-                  dest={routeDest(
-                    adt("contentView", "code-with-us-opportunity-guide")
-                  )}
+                  dest={routeDest(adt("cwuMinistryGuide", null))}
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}

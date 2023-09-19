@@ -581,6 +581,18 @@ function initPage(
         }
       });
 
+    case "cwuMinistryGuide":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "contentView"],
+        pageRouteParams: "code-with-us-opportunity-guide",
+        pageInit: PageContentView.component.init,
+        pageGetMetadata: PageContentView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageContentView", value);
+        }
+      });
+
     case "contentView":
       return component.app.initPage({
         ...defaultPageInitParams,
