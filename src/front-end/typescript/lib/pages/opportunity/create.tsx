@@ -138,9 +138,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
           links={[
             {
               button: true,
-              dest: routeDest(
-                adt("contentView", "sprint-with-us-opportunity-guide")
-              ),
+              dest: routeDest(adt("swuMinistryGuide", null)),
               children: ["Read Guide"],
               color: "info" as TextColor,
               outline: true

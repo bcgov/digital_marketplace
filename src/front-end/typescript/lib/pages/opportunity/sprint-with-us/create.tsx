@@ -308,11 +308,7 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link
-            newTab
-            dest={routeDest(
-              adt("contentView", "sprint-with-us-opportunity-guide")
-            )}>
+          <Link newTab dest={routeDest(adt("swuMinistryGuide", null))}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Sprint With Us</em>{" "}

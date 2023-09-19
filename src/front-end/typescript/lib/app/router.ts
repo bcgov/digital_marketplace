@@ -602,6 +602,12 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/swu/ministry-guide"),
+      makeRoute() {
+        return adt("swuMinistryGuide", null);
+      }
+    },
+    {
       path: "(.*)",
       makeRoute({ path }) {
         return adt("notFound", { path });
@@ -841,6 +847,8 @@ const router: router_.Router<Route> = {
         return prefixPath("/cwu/ministry-guide");
       case "cwuVendorGuide":
         return prefixPath("/cwu/vendor-guide");
+      case "swuMinistryGuide":
+        return prefixPath("/swu/ministry-guide");
       case "notFound":
         return route.value.path || prefixPath("/not-found");
     }

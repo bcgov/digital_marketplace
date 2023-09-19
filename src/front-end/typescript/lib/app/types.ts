@@ -114,7 +114,8 @@ export type Route =
   | ADT<"twuMinistryGuide", null>
   | ADT<"twuVendorGuide", null>
   | ADT<"cwuMinistryGuide", null>
-  | ADT<"cwuVendorGuide", null>;
+  | ADT<"cwuVendorGuide", null>
+  | ADT<"swuMinistryGuide", null>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.

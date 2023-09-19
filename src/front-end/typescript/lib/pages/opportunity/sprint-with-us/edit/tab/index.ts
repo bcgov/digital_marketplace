@@ -218,9 +218,7 @@ export function makeSidebarState(
             text: "Read Guide",
             active: false,
             newTab: true,
-            dest: routeDest(
-              adt("contentView", "sprint-with-us-opportunity-guide")
-            )
+            dest: routeDest(adt("swuMinistryGuide", null))
           })
         ]
       : []
