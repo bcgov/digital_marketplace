@@ -47,7 +47,7 @@ export function cwuProposalStatusToTitleCase(
     case CWUProposalStatus.NotAwarded:
       return "Not Awarded";
     case CWUProposalStatus.Disqualified:
-      return "Disqualified";
+      return "Non-compliant";
     case CWUProposalStatus.Withdrawn:
       return "Withdrawn";
   }
@@ -92,6 +92,6 @@ export function cwuProposalStatusToPastTenseVerb(s: CWUProposalStatus): string {
     case CWUProposalStatus.Evaluated:
       return "Scored";
     default:
-      return "Update";
+      return "Updated";
   }
 }

@@ -59,7 +59,7 @@ export function twuProposalStatusToTitleCase(
     case TWUProposalStatus.NotAwarded:
       return "Not Awarded";
     case TWUProposalStatus.Disqualified:
-      return "Disqualified";
+      return "Non-compliant";
     case TWUProposalStatus.Withdrawn:
       return "Withdrawn";
   }
@@ -107,6 +107,6 @@ export function twuProposalStatusToPastTenseVerb(s: TWUProposalStatus): string {
     case TWUProposalStatus.EvaluatedChallenge:
       return "Scored";
     default:
-      return "Update";
+      return "Updated";
   }
 }
