@@ -569,6 +569,18 @@ function initPage(
         }
       });
 
+    case "twuVendorGuide":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "contentView"],
+        pageRouteParams: "team-with-us-proposal-guide",
+        pageInit: PageContentView.component.init,
+        pageGetMetadata: PageContentView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageContentView", value);
+        }
+      });
+
     case "contentView":
       return component.app.initPage({
         ...defaultPageInitParams,

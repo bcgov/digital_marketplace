@@ -454,8 +454,7 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link
-            dest={routeDest(adt("contentView", "team-with-us-proposal-guide"))}>
+          <Link dest={routeDest(adt("twuVendorGuide", null))}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Team With Us</em> proposal.
