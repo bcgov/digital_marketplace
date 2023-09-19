@@ -127,7 +127,7 @@ export function makeSidebarState(
         text: "Read Guide",
         active: false,
         newTab: true,
-        dest: routeDest(adt("contentView", "sprint-with-us-proposal-guide"))
+        dest: routeDest(adt("swuVendorGuide", null))
       })
     ]
   });

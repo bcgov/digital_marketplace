@@ -175,6 +175,7 @@ function pageToViewPageProps(
     case "cwuMinistryGuide":
     case "cwuVendorGuide":
     case "swuMinistryGuide":
+    case "swuVendorGuide":
     case "contentView":
       return makeViewPageProps(
         props,
