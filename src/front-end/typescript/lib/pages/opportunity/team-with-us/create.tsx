@@ -305,11 +305,7 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link
-            newTab
-            dest={routeDest(
-              adt("contentView", "team-with-us-opportunity-guide")
-            )}>
+          <Link newTab dest={routeDest(adt("twuMinistryGuide", null))}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Team With Us</em> opportunity.
