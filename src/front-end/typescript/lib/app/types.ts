@@ -113,7 +113,8 @@ export type Route =
   | ADT<"proposalList", PageProposalList.RouteParams>
   | ADT<"twuMinistryGuide", null>
   | ADT<"twuVendorGuide", null>
-  | ADT<"cwuMinistryGuide", null>;
+  | ADT<"cwuMinistryGuide", null>
+  | ADT<"cwuVendorGuide", null>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.

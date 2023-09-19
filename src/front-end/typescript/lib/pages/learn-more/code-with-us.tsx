@@ -123,9 +123,7 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
               <div className="d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center">
                 <Link
                   button
-                  dest={routeDest(
-                    adt("contentView", "code-with-us-proposal-guide")
-                  )}
+                  dest={routeDest(adt("cwuVendorGuide", null))}
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
