@@ -170,12 +170,9 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageLearnMoreSWU", value })
       );
 
-    case "twuMinistryGuide":
-    case "twuVendorGuide":
-    case "cwuMinistryGuide":
-    case "cwuVendorGuide":
-    case "swuMinistryGuide":
-    case "swuVendorGuide":
+    case "cwuGuide":
+    case "swuGuide":
+    case "twuGuide":
     case "contentView":
       return makeViewPageProps(
         props,

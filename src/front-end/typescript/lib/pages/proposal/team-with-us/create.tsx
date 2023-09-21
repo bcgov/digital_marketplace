@@ -42,6 +42,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { OrganizationSlim } from "shared/lib/resources/organization";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type ModalId = "submit" | "cancel";
 
@@ -454,7 +455,12 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link dest={routeDest(adt("twuVendorGuide", null))}>
+          <Link
+            dest={routeDest(
+              adt("twuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Vendor
+              })
+            )}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Team With Us</em> proposal.

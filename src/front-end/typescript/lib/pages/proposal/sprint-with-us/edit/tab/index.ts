@@ -1,6 +1,7 @@
 import * as MenuSidebar from "front-end/lib/components/sidebar/menu";
 import * as TabbedPage from "front-end/lib/components/sidebar/menu/tabbed-page";
 import { component } from "front-end/lib/framework";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 import * as ProposalTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab/proposal";
 import * as ScoresheetTab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab/scoresheet";
 import { routeDest } from "front-end/lib/views/link";
@@ -127,7 +128,11 @@ export function makeSidebarState(
         text: "Read Guide",
         active: false,
         newTab: true,
-        dest: routeDest(adt("swuVendorGuide", null))
+        dest: routeDest(
+          adt("swuGuide", {
+            guideAudience: GUIDE_AUDIENCE.Vendor
+          })
+        )
       })
     ]
   });

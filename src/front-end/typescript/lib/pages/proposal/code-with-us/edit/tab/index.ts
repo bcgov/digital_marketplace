@@ -8,6 +8,7 @@ import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import { AffiliationSlim } from "shared/lib/resources/affiliation";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 // Parent page types & functions.
 
@@ -107,7 +108,11 @@ export function makeSidebarState(
         text: "Read Guide",
         active: false,
         newTab: true,
-        dest: routeDest(adt("cwuVendorGuide", null))
+        dest: routeDest(
+          adt("cwuGuide", {
+            guideAudience: GUIDE_AUDIENCE.Vendor
+          })
+        )
       })
     ]
   });

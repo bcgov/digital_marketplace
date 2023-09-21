@@ -2,6 +2,7 @@ import { prefixPath } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import { component, router as router_ } from "front-end/lib/framework";
 import * as PageNotice from "front-end/lib/pages/notice";
+import * as PageGuide from "front-end/lib/pages/guide/view";
 import * as CWUOpportunityEditTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as SWUOpportunityEditTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import * as TWUOpportunityEditTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
@@ -578,39 +579,27 @@ const router: router_.Router<Route> = {
       }
     },
     {
-      path: prefixPath("/twu/ministry-guide"),
-      makeRoute() {
-        return adt("twuMinistryGuide", null);
+      path: prefixPath("/cwu/:guideAudience"),
+      makeRoute({ path, params }) {
+        return PageGuide.isGuideAudience(params.guideAudience)
+          ? adt("cwuGuide", { guideAudience: params.guideAudience })
+          : adt("notFound", { path });
       }
     },
     {
-      path: prefixPath("/twu/vendor-guide"),
-      makeRoute() {
-        return adt("twuVendorGuide", null);
+      path: prefixPath("/swu/:guideAudience"),
+      makeRoute({ path, params }) {
+        return PageGuide.isGuideAudience(params.guideAudience)
+          ? adt("swuGuide", { guideAudience: params.guideAudience })
+          : adt("notFound", { path });
       }
     },
     {
-      path: prefixPath("/cwu/ministry-guide"),
-      makeRoute() {
-        return adt("cwuMinistryGuide", null);
-      }
-    },
-    {
-      path: prefixPath("/cwu/vendor-guide"),
-      makeRoute() {
-        return adt("cwuVendorGuide", null);
-      }
-    },
-    {
-      path: prefixPath("/swu/ministry-guide"),
-      makeRoute() {
-        return adt("swuMinistryGuide", null);
-      }
-    },
-    {
-      path: prefixPath("/swu/vendor-guide"),
-      makeRoute() {
-        return adt("swuVendorGuide", null);
+      path: prefixPath("/twu/:guideAudience"),
+      makeRoute({ path, params }) {
+        return PageGuide.isGuideAudience(params.guideAudience)
+          ? adt("twuGuide", { guideAudience: params.guideAudience })
+          : adt("notFound", { path });
       }
     },
     {
@@ -845,18 +834,12 @@ const router: router_.Router<Route> = {
               return prefixPath(`/notice/${route.value.tag}`);
           }
         })();
-      case "twuMinistryGuide":
-        return prefixPath("/twu/ministry-guide");
-      case "twuVendorGuide":
-        return prefixPath("/twu/vendor-guide");
-      case "cwuMinistryGuide":
-        return prefixPath("/cwu/ministry-guide");
-      case "cwuVendorGuide":
-        return prefixPath("/cwu/vendor-guide");
-      case "swuMinistryGuide":
-        return prefixPath("/swu/ministry-guide");
-      case "swuVendorGuide":
-        return prefixPath("/swu/vendor-guide");
+      case "cwuGuide":
+        return prefixPath(`/cwu/${route.value.guideAudience}`);
+      case "swuGuide":
+        return prefixPath(`/swu/${route.value.guideAudience}`);
+      case "twuGuide":
+        return prefixPath(`/twu/${route.value.guideAudience}`);
       case "notFound":
         return route.value.path || prefixPath("/not-found");
     }

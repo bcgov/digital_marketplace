@@ -19,6 +19,7 @@ import * as PageContentCreate from "front-end/lib/pages/content/create";
 import * as PageContentEdit from "front-end/lib/pages/content/edit";
 import * as PageContentList from "front-end/lib/pages/content/list";
 import * as PageContentView from "front-end/lib/pages/content/view";
+import * as PageGuideView from "front-end/lib/pages/guide/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
@@ -557,72 +558,14 @@ function initPage(
         }
       });
 
-    case "twuMinistryGuide":
+    case "cwuGuide":
+    case "swuGuide":
+    case "twuGuide":
       return component.app.initPage({
         ...defaultPageInitParams,
         pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "team-with-us-opportunity-guide",
-        pageInit: PageContentView.component.init,
-        pageGetMetadata: PageContentView.component.getMetadata,
-        mapPageMsg(value) {
-          return adt("pageContentView", value);
-        }
-      });
-
-    case "twuVendorGuide":
-      return component.app.initPage({
-        ...defaultPageInitParams,
-        pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "team-with-us-proposal-guide",
-        pageInit: PageContentView.component.init,
-        pageGetMetadata: PageContentView.component.getMetadata,
-        mapPageMsg(value) {
-          return adt("pageContentView", value);
-        }
-      });
-
-    case "cwuMinistryGuide":
-      return component.app.initPage({
-        ...defaultPageInitParams,
-        pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "code-with-us-opportunity-guide",
-        pageInit: PageContentView.component.init,
-        pageGetMetadata: PageContentView.component.getMetadata,
-        mapPageMsg(value) {
-          return adt("pageContentView", value);
-        }
-      });
-
-    case "cwuVendorGuide":
-      return component.app.initPage({
-        ...defaultPageInitParams,
-        pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "code-with-us-proposal-guide",
-        pageInit: PageContentView.component.init,
-        pageGetMetadata: PageContentView.component.getMetadata,
-        mapPageMsg(value) {
-          return adt("pageContentView", value);
-        }
-      });
-
-    case "swuMinistryGuide":
-      return component.app.initPage({
-        ...defaultPageInitParams,
-        pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "sprint-with-us-opportunity-guide",
-        pageInit: PageContentView.component.init,
-        pageGetMetadata: PageContentView.component.getMetadata,
-        mapPageMsg(value) {
-          return adt("pageContentView", value);
-        }
-      });
-
-    case "swuVendorGuide":
-      return component.app.initPage({
-        ...defaultPageInitParams,
-        pageStatePath: ["pages", "contentView"],
-        pageRouteParams: "sprint-with-us-proposal-guide",
-        pageInit: PageContentView.component.init,
+        pageRouteParams: route.value,
+        pageInit: PageGuideView.init,
         pageGetMetadata: PageContentView.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageContentView", value);

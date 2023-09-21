@@ -16,6 +16,7 @@ import { Col, Container, Row } from "reactstrap";
 import { CONTACT_EMAIL, COPY, VENDOR_IDP_NAME } from "shared/config";
 import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 import { ADT, adt } from "shared/lib/types";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 export interface State {
   isVendorAccordionOpen: boolean;
@@ -122,7 +123,11 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
               <div className="d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center">
                 <Link
                   button
-                  dest={routeDest(adt("twuVendorGuide", null))}
+                  dest={routeDest(
+                    adt("twuGuide", {
+                      guideAudience: GUIDE_AUDIENCE.Vendor
+                    })
+                  )}
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
@@ -319,7 +324,11 @@ const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
               <div className="d-flex flex-row mt-5 flex-nowrap">
                 <Link
                   button
-                  dest={routeDest(adt("twuMinistryGuide", null))}
+                  dest={routeDest(
+                    adt("twuGuide", {
+                      guideAudience: GUIDE_AUDIENCE.Ministry
+                    })
+                  )}
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}

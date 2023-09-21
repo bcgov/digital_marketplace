@@ -32,6 +32,7 @@ import {
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type ModalId = "publish" | "cancel";
 
@@ -299,7 +300,13 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link newTab dest={routeDest(adt("cwuMinistryGuide", null))}>
+          <Link
+            newTab
+            dest={routeDest(
+              adt("cwuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Ministry
+              })
+            )}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Code With Us</em> opportunity.

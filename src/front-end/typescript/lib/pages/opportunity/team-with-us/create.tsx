@@ -28,6 +28,7 @@ import { TWUOpportunityStatus } from "shared/lib/resources/opportunity/team-with
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type TWUCreateSubmitStatus =
   | TWUOpportunityStatus.Published
@@ -305,7 +306,13 @@ export const component: component_.page.Component<
       getFooter: () => (
         <span>
           Need help?{" "}
-          <Link newTab dest={routeDest(adt("twuMinistryGuide", null))}>
+          <Link
+            newTab
+            dest={routeDest(
+              adt("twuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Ministry
+              })
+            )}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Team With Us</em> opportunity.
