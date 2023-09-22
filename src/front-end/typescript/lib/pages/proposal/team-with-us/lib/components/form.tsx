@@ -790,9 +790,17 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
           zero.
         </p>
         <Alert color="danger" fade={false} className="mb-5">
-          <strong>Important!</strong> Do not reference your organization{"'"}s
-          name, a team member{"'"}s name or specific company software in any of
-          your responses.
+          <div>
+            <strong>Important!</strong> Do not reference your organization{"'"}s
+            name, a team member{"'"}s name or specific company software in any
+            of your responses.
+          </div>
+          <br />
+          <div>
+            No points will be awarded for any Proponent answer to any question
+            in this step that references the Proponent{"'"}s organization name,
+            Resource name, or specific company software.
+          </div>
         </Alert>
       </Col>
       <Col xs="12">
