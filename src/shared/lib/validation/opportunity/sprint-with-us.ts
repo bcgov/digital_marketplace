@@ -419,7 +419,9 @@ export function validateMinimumTeamMembers(
   raw?: number | null
 ): Validation<number | null> {
   return mapValid(
-    optional(raw, (v) => validateNumber(v, 1, 5, "minimum team size", "a")),
+    optional(raw, (v) =>
+      validateNumber(v, 1, undefined, "minimum team size", "a")
+    ),
     (v) => v || null
   );
 }
