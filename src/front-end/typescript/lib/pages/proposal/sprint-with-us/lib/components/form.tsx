@@ -1042,7 +1042,7 @@ const TeamQuestionsView: component_.base.View<Props> = ({
           <div>
             No points will be awarded for any Proponent answer to any question
             in this step that references the Proponent{"'"}s organization name,
-            Resource name, or specific company software
+            Resource name, or specific company software.
           </div>
         </Alert>
       </Col>
