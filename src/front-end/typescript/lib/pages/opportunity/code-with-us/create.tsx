@@ -32,6 +32,7 @@ import {
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type ModalId = "publish" | "cancel";
 
@@ -302,7 +303,9 @@ export const component: component_.page.Component<
           <Link
             newTab
             dest={routeDest(
-              adt("contentView", "code-with-us-opportunity-guide")
+              adt("cwuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Ministry
+              })
             )}>
             Read the guide
           </Link>{" "}

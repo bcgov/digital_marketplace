@@ -16,6 +16,7 @@ import { Col, Container, Row } from "reactstrap";
 import { CONTACT_EMAIL, COPY, VENDOR_IDP_NAME } from "shared/config";
 import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 import { ADT, adt } from "shared/lib/types";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 export interface State {
   isVendorAccordionOpen: boolean;
@@ -123,7 +124,9 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
                 <Link
                   button
                   dest={routeDest(
-                    adt("contentView", "team-with-us-proposal-guide")
+                    adt("twuGuide", {
+                      guideAudience: GUIDE_AUDIENCE.Vendor
+                    })
                   )}
                   color="info"
                   outline
@@ -322,7 +325,9 @@ const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
                 <Link
                   button
                   dest={routeDest(
-                    adt("contentView", "team-with-us-opportunity-guide")
+                    adt("twuGuide", {
+                      guideAudience: GUIDE_AUDIENCE.Ministry
+                    })
                   )}
                   color="info"
                   outline
