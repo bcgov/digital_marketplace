@@ -69,7 +69,7 @@ export function swuProposalStatusToTitleCase(
     case SWUProposalStatus.NotAwarded:
       return "Not Awarded";
     case SWUProposalStatus.Disqualified:
-      return "Disqualified";
+      return "Non-compliant";
     case SWUProposalStatus.Withdrawn:
       return "Withdrawn";
   }
@@ -116,6 +116,6 @@ export function swuProposalStatusToPastTenseVerb(s: SWUProposalStatus): string {
     case SWUProposalStatus.Withdrawn:
       return "Withdrawn";
     default:
-      return "Update";
+      return "Updated";
   }
 }

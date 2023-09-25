@@ -130,7 +130,7 @@ const WhatToExpectView: component_.page.View<State, InnerMsg, Route> = ({
                   <InfoBlockView
                     className="mb-4"
                     title="Agile Phases"
-                    description="Don’t expect lengthy requirements. This is Agile. You will start with Inception to understand the business problem, then build a Proof of Concept to demonstrate feasability of the solution. Finally, you will build out the rest of the procut in Implementation."
+                    description="Don’t expect lengthy requirements. This is Agile. You will start with Inception to understand the business problem, then build a Proof of Concept to demonstrate feasability of the solution. Finally, you will build out the rest of the product in Implementation."
                   />
                   <InfoBlockView
                     title="Pricing & Incentives"

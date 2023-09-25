@@ -40,6 +40,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { AffiliationSlim } from "shared/lib/resources/affiliation";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type ModalId = "submit" | "cancel";
 
@@ -454,7 +455,11 @@ export const component: component_.page.Component<
         <span>
           Need help?{" "}
           <Link
-            dest={routeDest(adt("contentView", "code-with-us-proposal-guide"))}>
+            dest={routeDest(
+              adt("cwuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Vendor
+              })
+            )}>
             Read the guide
           </Link>{" "}
           to learn how to create and manage a <em>Code With Us</em> proposal.

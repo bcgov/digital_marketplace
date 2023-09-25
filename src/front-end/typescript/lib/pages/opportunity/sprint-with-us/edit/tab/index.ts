@@ -17,6 +17,7 @@ import {
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 // Parent page types & functions.
 
@@ -219,7 +220,9 @@ export function makeSidebarState(
             active: false,
             newTab: true,
             dest: routeDest(
-              adt("contentView", "sprint-with-us-opportunity-guide")
+              adt("swuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Ministry
+              })
             )
           })
         ]
@@ -228,6 +231,11 @@ export function makeSidebarState(
 }
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
-  const proposalTabs: TabId[] = ["proposals", "teamQuestions", "codeChallenge", "teamScenario"];
-  return proposalTabs.includes(tabId)
+  const proposalTabs: TabId[] = [
+    "proposals",
+    "teamQuestions",
+    "codeChallenge",
+    "teamScenario"
+  ];
+  return proposalTabs.includes(tabId);
 }

@@ -407,10 +407,12 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
             <Row style={styles.classes.description}>{description}</Row>
           ) : null}
           <Fragment>{children}</Fragment>
-          <Row style={{ ...styles.utilities.text.center }} >
-            <Link 
+          <Row style={{ ...styles.utilities.text.center }}>
+            <Link
               text="Unsubscribe"
-              url={makeUrl(`users/${VIEWER_USER_ROUTE_PARAM}?tab=notifications&unsubscribe`)}
+              url={makeUrl(
+                `users/${VIEWER_USER_ROUTE_PARAM}?tab=notifications&unsubscribe`
+              )}
             />
           </Row>
         </Container>

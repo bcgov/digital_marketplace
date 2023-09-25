@@ -55,8 +55,8 @@ import {
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  CreateTWUTeamMemberBody,
-  CreateTWUTeamMemberBodyValidationErrors,
+  CreateTWUProposalTeamMemberBody,
+  CreateTWUProposalTeamMemberValidationErrors,
   TWUProposal
 } from "shared/lib/resources/proposal/team-with-us";
 import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
@@ -194,17 +194,21 @@ export function validateServiceAreas(
  * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
  * @param organization - organization id
  */
-export function validateTWUProposalTeam(
+export async function validateTWUProposalTeamMembers(
   connection: db.Connection,
-  raw: CreateTWUTeamMemberBody[],
+  raw: CreateTWUProposalTeamMemberBody[],
   organization: Id
 ): Promise<
   ArrayValidation<
-    CreateTWUTeamMemberBody,
-    CreateTWUTeamMemberBodyValidationErrors
+    CreateTWUProposalTeamMemberBody,
+    CreateTWUProposalTeamMemberValidationErrors
   >
 > {
-  return validateArrayCustomAsync(
+  if (!raw.length) {
+    return invalid([{ members: ["Please select at least one team member."] }]);
+  }
+
+  return await validateArrayCustomAsync(
     raw,
     async (rawMember) => {
       const validatedMember = await validateMember(
@@ -228,8 +232,8 @@ export function validateTWUProposalTeam(
           ),
           hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
         }) as Validation<
-          CreateTWUTeamMemberBody,
-          CreateTWUTeamMemberBodyValidationErrors
+          CreateTWUProposalTeamMemberBody,
+          CreateTWUProposalTeamMemberValidationErrors
         >;
       }
     },

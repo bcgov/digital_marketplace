@@ -7,7 +7,7 @@ on:
       - master
 
 jobs:
-  unit-test:
+  test:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -16,9 +16,11 @@ jobs:
         with:
           node-version: "16"
           cache: "yarn"
+      - run: |
+          mv sample.env .env
+      - run: docker compose pull test-db
       - run: yarn
-      - run: npm run front-end:test
-      - run: npm run back-end:test
+      - run: npm t
   yarn-build:
     if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -37,6 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
+      - run: yarn
       - run: pip install pre-commit
       - run: pre-commit run --all-files -v
   commitlint:

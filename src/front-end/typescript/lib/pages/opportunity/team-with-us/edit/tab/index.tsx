@@ -16,6 +16,7 @@ import {
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 // Parent page types & functions.
 
@@ -204,7 +205,9 @@ export function makeSidebarState(
             active: false,
             newTab: true,
             dest: routeDest(
-              adt("contentView", "team-with-us-opportunity-guide")
+              adt("twuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Ministry
+              })
             )
           })
         ]

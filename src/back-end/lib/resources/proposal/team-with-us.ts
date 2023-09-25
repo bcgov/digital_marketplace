@@ -12,7 +12,7 @@ import {
 import {
   validateAttachments,
   validateOrganizationId,
-  validateTWUProposalTeam,
+  validateTWUProposalTeamMembers,
   validateTWUOpportunityId,
   validateTWUProposalId,
   validateDraftProposalOrganization
@@ -27,7 +27,7 @@ import {
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   CreateRequestBody as SharedCreateRequestBody,
-  CreateTWUTeamMemberBodyValidationErrors,
+  CreateTWUProposalTeamMemberValidationErrors,
   CreateValidationErrors,
   DeleteValidationErrors,
   isValidStatusChange,
@@ -378,7 +378,7 @@ const create: crud.Create<
       /**
        * Validate individual team members.
        */
-      const validatedTeamMembers = await validateTWUProposalTeam(
+      const validatedTeamMembers = await validateTWUProposalTeamMembers(
         connection,
         team,
         validatedOrganization.value.id
@@ -417,7 +417,7 @@ const create: crud.Create<
             undefined
           >(validatedResourceQuestionResponses, undefined),
           team: getInvalidValue<
-            CreateTWUTeamMemberBodyValidationErrors[],
+            CreateTWUProposalTeamMemberValidationErrors[],
             undefined
           >(validatedTeamMembers, undefined),
           organization: getInvalidValue(
@@ -654,7 +654,7 @@ const update: crud.Update<
             );
 
           // Validate team members
-          const validatedProposalTeam = await validateTWUProposalTeam(
+          const validatedProposalTeam = await validateTWUProposalTeamMembers(
             connection,
             team,
             validatedOrganization.value.id
@@ -740,14 +740,14 @@ const update: crud.Update<
                 validatedTWUProposal.value.resourceQuestionResponses,
                 twuOpportunity.resourceQuestions
               ),
-              await validateTWUProposalTeam(
+              await validateTWUProposalTeamMembers(
                 connection,
-                validatedTWUProposal.value.team.map(
+                validatedTWUProposal.value.team?.map(
                   ({ member, hourlyRate }) => ({
                     member: member.id,
                     hourlyRate
                   })
-                ),
+                ) ?? [],
                 validatedOrganization.value.id
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(

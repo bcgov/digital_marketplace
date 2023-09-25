@@ -6,13 +6,16 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   DEFAULT_CODE_CHALLENGE_WEIGHT,
   DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT,
-  DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE
+  DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE,
+  TWUOpportunitySlim
 } from "shared/lib/resources/opportunity/team-with-us";
 import { getId } from "..";
 import { buildUserSlim } from "../user";
-import { faker } from "@faker-js/faker";
+import { fakerEN_CA as faker } from "@faker-js/faker";
 import SKILLS from "shared/lib/data/skills";
-import { dateAt4PM } from "tests/utils/date";
+import { omit, pick } from "lodash";
+import { CreateTWUOpportunityParams } from "back-end/lib/db";
+import { setDateTo4PM } from "shared/lib";
 
 function buildTWUOpportunity(
   overrides: Partial<TWUOpportunity> = {}
@@ -50,15 +53,15 @@ function buildTWUOpportunity(
     ),
     serviceArea: TWUServiceArea.FullStackDeveloper,
     description: faker.lorem.paragraphs(),
-    proposalDeadline: dateAt4PM(proposalDeadline),
-    assignmentDate: dateAt4PM(assignmentDate),
-    startDate: dateAt4PM(
+    proposalDeadline: setDateTo4PM(proposalDeadline),
+    assignmentDate: setDateTo4PM(assignmentDate),
+    startDate: setDateTo4PM(
       faker.date.between({
         from: assignmentDate,
         to: completionDate
       })
     ),
-    completionDate: dateAt4PM(completionDate),
+    completionDate: setDateTo4PM(completionDate),
     maxBudget: faker.number.float({ min: 1, precision: 2 }),
     targetAllocation: faker.number.int({ min: 1, max: 100 }),
     questionsWeight: DEFAULT_QUESTIONS_WEIGHT,
@@ -82,4 +85,56 @@ function buildTWUOpportunity(
   };
 }
 
-export { buildTWUOpportunity };
+function buildTWUOpportunitySlim(
+  overrides: Partial<TWUOpportunity> = {}
+): TWUOpportunitySlim {
+  return {
+    ...pick(buildTWUOpportunity(overrides), [
+      "id",
+      "title",
+      "teaser",
+      "createdAt",
+      "createdBy",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "proposalDeadline",
+      "maxBudget",
+      "location",
+      "remoteOk",
+      "subscribed"
+    ])
+  };
+}
+
+function buildCreateTWUOpportunityParams(
+  overrides: Partial<CreateTWUOpportunityParams> = {}
+): CreateTWUOpportunityParams {
+  const opportunity = buildTWUOpportunity();
+
+  return {
+    ...omit(opportunity, [
+      "createdBy",
+      "createdAt",
+      "updatedAt",
+      "updatedBy",
+      "status",
+      "id",
+      "addenda",
+      "resourceQuestions",
+      "serviceArea"
+    ]),
+    status: TWUOpportunityStatus.Draft,
+    resourceQuestions: opportunity.resourceQuestions.map(
+      ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
+    ),
+    serviceArea: 1,
+    ...overrides
+  };
+}
+
+export {
+  buildTWUOpportunity,
+  buildTWUOpportunitySlim,
+  buildCreateTWUOpportunityParams
+};

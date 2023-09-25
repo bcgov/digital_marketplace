@@ -154,7 +154,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
-  const hourlyRate = proposal?.team.length ? proposal.team[0].hourlyRate : 0;
+  const hourlyRate = proposal?.team?.length ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -790,9 +790,17 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
           zero.
         </p>
         <Alert color="danger" fade={false} className="mb-5">
-          <strong>Important!</strong> Do not reference your organization{"'"}s
-          name, a team member{"'"}s name or specific company software in any of
-          your responses.
+          <div>
+            <strong>Important!</strong> Do not reference your organization{"'"}s
+            name, a team member{"'"}s name or specific company software in any
+            of your responses.
+          </div>
+          <br />
+          <div>
+            No points will be awarded for any Proponent answer to any question
+            in this step that references the Proponent{"'"}s organization name,
+            Resource name, or specific company software.
+          </div>
         </Alert>
       </Col>
       <Col xs="12">

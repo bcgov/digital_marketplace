@@ -71,7 +71,7 @@ interface UpdateSWUOpportunityWithNoteParams {
   attachments: FileRecord[];
 }
 
-interface CreateSWUOpportunityPhaseParams
+export interface CreateSWUOpportunityPhaseParams
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
   startDate: Date;
   completionDate: Date;

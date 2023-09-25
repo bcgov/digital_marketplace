@@ -6,6 +6,7 @@ import * as api from "front-end/lib/http/api";
 import * as PageContentEdit from "front-end/lib/pages/content/edit";
 import * as PageContentList from "front-end/lib/pages/content/list";
 import * as PageContentView from "front-end/lib/pages/content/view";
+import * as PageGuideView from "front-end/lib/pages/guide/view";
 import * as PageDashboard from "front-end/lib/pages/dashboard";
 import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
@@ -110,7 +111,10 @@ export type Route =
   | ADT<"proposalCWUView", PageProposalCWUView.RouteParams>
   | ADT<"proposalCWUExportOne", PageProposalCWUExportOne.RouteParams>
   | ADT<"proposalCWUExportAll", PageProposalCWUExportAll.RouteParams>
-  | ADT<"proposalList", PageProposalList.RouteParams>;
+  | ADT<"proposalList", PageProposalList.RouteParams>
+  | ADT<"cwuGuide", PageGuideView.RouteParams>
+  | ADT<"swuGuide", PageGuideView.RouteParams>
+  | ADT<"twuGuide", PageGuideView.RouteParams>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.

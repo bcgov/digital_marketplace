@@ -42,6 +42,7 @@ import { User, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { OrganizationSlim } from "shared/lib/resources/organization";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 type ModalId = "submit" | "cancel";
 
@@ -453,7 +454,9 @@ export const component: component_.page.Component<
           Need help?{" "}
           <Link
             dest={routeDest(
-              adt("contentView", "sprint-with-us-proposal-guide")
+              adt("swuGuide", {
+                guideAudience: GUIDE_AUDIENCE.Vendor
+              })
             )}>
             Read the guide
           </Link>{" "}

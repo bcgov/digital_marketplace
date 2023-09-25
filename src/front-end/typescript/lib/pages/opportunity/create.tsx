@@ -11,6 +11,7 @@ import * as cwu from "shared/lib/resources/opportunity/code-with-us";
 import * as swu from "shared/lib/resources/opportunity/sprint-with-us";
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 export interface State {
   empty: true;
@@ -84,7 +85,9 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
             {
               button: true,
               dest: routeDest(
-                adt("contentView", "code-with-us-opportunity-guide")
+                adt("cwuGuide", {
+                  guideAudience: GUIDE_AUDIENCE.Ministry
+                })
               ),
               children: ["Read Guide"],
               color: "info" as TextColor,
@@ -114,7 +117,9 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
             {
               button: true,
               dest: routeDest(
-                adt("contentView", "team-with-us-opportunity-guide")
+                adt("twuGuide", {
+                  guideAudience: GUIDE_AUDIENCE.Ministry
+                })
               ),
               children: ["Read Guide"],
               color: "info" as TextColor,
@@ -143,7 +148,9 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
             {
               button: true,
               dest: routeDest(
-                adt("contentView", "sprint-with-us-opportunity-guide")
+                adt("swuGuide", {
+                  guideAudience: GUIDE_AUDIENCE.Ministry
+                })
               ),
               children: ["Read Guide"],
               color: "info" as TextColor,
