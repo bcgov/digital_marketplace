@@ -248,6 +248,32 @@ export const approveAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
+export const updateAdminStatus = tryDb<[Id, MembershipType], Affiliation>(
+  async (connection, id, membershipType: MembershipType) => {
+    const now = new Date();
+    const [result] = await connection<RawAffiliation>("affiliations")
+      .update(
+        {
+          membershipType,
+          updatedAt: now
+        } as RawAffiliation,
+        "*"
+      )
+      .where({
+        id
+      })
+      .whereIn("organization", function () {
+        this.select("id").from("organizations").where({
+          active: true
+        });
+      });
+    if (!result) {
+      throw new Error("unable to update admin status");
+    }
+    return valid(await rawAffiliationToAffiliation(connection, result));
+  }
+);
+
 export const deleteAffiliation = tryDb<[Id], Affiliation>(
   async (connection, id) => {
     const now = new Date();
