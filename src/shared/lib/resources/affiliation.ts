@@ -94,3 +94,9 @@ export function memberIsOwner(
 ): boolean {
   return member.membershipType === MembershipType.Owner;
 }
+
+export function adminStatusToAffiliationMembershipType(
+  admin: boolean
+): MembershipType {
+  return admin ? MembershipType.Admin : MembershipType.Member;
+}
