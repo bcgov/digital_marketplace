@@ -239,7 +239,7 @@ export async function createAffiliation(
   );
 }
 
-export function updateAffiliation(
+export function approveAffiliation(
   session: Session,
   affiliation: Affiliation
 ): boolean {
@@ -247,6 +247,18 @@ export function updateAffiliation(
   return (
     isAdmin(session) || (!!session && session.user.id === affiliation.user.id)
   );
+}
+
+export async function updateAffiliationAdminStatus(
+  connection: Connection,
+  session: Session,
+  orgId: string
+): Promise<boolean> {
+  return session
+    ? isAdmin(session) ||
+        (await isUserOwnerOfOrg(connection, session.user, orgId)) ||
+        (await isUserAdminOfOrg(connection, session.user, orgId))
+    : false;
 }
 
 export async function deleteAffiliation(
