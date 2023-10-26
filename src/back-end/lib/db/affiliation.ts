@@ -300,10 +300,11 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
-export async function isUserOwnerOfOrg(
+async function isUserMembershipTypeOfOrg(
   connection: Connection,
   user: User,
-  orgId: Id
+  orgId: Id,
+  membershipType: MembershipType
 ): Promise<boolean> {
   if (!user) {
     return false;
@@ -312,11 +313,37 @@ export async function isUserOwnerOfOrg(
     .where({
       user: user.id,
       organization: orgId,
-      membershipType: MembershipType.Owner
+      membershipType
     })
     .first();
 
   return !!result;
+}
+
+export async function isUserOwnerOfOrg(
+  connection: Connection,
+  user: User,
+  orgId: Id
+): Promise<boolean> {
+  return await isUserMembershipTypeOfOrg(
+    connection,
+    user,
+    orgId,
+    MembershipType.Owner
+  );
+}
+
+export async function isUserAdminOfOrg(
+  connection: Connection,
+  user: User,
+  orgId: Id
+): Promise<boolean> {
+  return await isUserMembershipTypeOfOrg(
+    connection,
+    user,
+    orgId,
+    MembershipType.Admin
+  );
 }
 
 export async function readActiveOwnerCount(

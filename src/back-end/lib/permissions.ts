@@ -7,6 +7,7 @@ import {
   isSWUOpportunityAuthor,
   isTWUOpportunityAuthor,
   isTWUProposalAuthor,
+  isUserAdminOfOrg,
   isUserOwnerOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
@@ -171,7 +172,8 @@ export async function readOneOrganization(
   }
   return (
     isAdmin(session) ||
-    (await isUserOwnerOfOrg(connection, session.user, orgId))
+    (await isUserOwnerOfOrg(connection, session.user, orgId)) ||
+    (await isUserAdminOfOrg(connection, session.user, orgId))
   );
 }
 
