@@ -3,7 +3,7 @@ import {
   OrganizationSlim
 } from "shared/lib/resources/organization";
 import { User, usersHaveCapability } from "shared/lib/resources/user";
-import { BodyWithErrors, Id } from "shared/lib/types";
+import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
 export enum MembershipType {
@@ -47,6 +47,10 @@ export interface CreateRequestBody {
   membershipType: MembershipType;
 }
 
+export type UpdateRequestBody =
+  | ADT<"approve">
+  | ADT<"updateAdminStatus", boolean>;
+
 export interface CreateValidationErrors
   extends ErrorTypeFrom<CreateRequestBody>,
     BodyWithErrors {
@@ -55,7 +59,7 @@ export interface CreateValidationErrors
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
-  affiliation?: string[];
+  affiliation?: string[] | ADT<"parseFailure">;
 }
 
 export interface DeleteValidationErrors extends BodyWithErrors {
