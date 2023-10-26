@@ -220,7 +220,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.affiliations.update<Msg>()(
             msg.value.id,
-            null,
+            adt("approve"),
             (response) =>
               adt("onApproveAffiliationResponse", [
                 msg.value,
