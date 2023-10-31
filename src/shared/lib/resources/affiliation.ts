@@ -8,7 +8,8 @@ import { ErrorTypeFrom } from "shared/lib/validation";
 
 export enum MembershipType {
   Owner = "OWNER",
-  Member = "MEMBER"
+  Member = "MEMBER",
+  Admin = "ADMIN"
 }
 
 export enum MembershipStatus {
@@ -97,6 +98,12 @@ export function memberIsOwner(
   member: Pick<Affiliation, "membershipType">
 ): boolean {
   return member.membershipType === MembershipType.Owner;
+}
+
+export function memberIsAdmin(
+  member: Pick<Affiliation, "membershipType">
+): boolean {
+  return member.membershipType === MembershipType.Admin;
 }
 
 export function adminStatusToAffiliationMembershipType(
