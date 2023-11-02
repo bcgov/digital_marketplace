@@ -413,10 +413,17 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
       return valid([]);
     }
     const results =
-      ((await generateOrganizationQuery(connection).andWhere({
-        "organizations.active": true,
-        "affiliations.user": session.user.id
-      })) as RawOrganization[]) || [];
+      ((await generateOrganizationQuery(connection)
+        .clearWhere()
+        .where(function () {
+          this.where({
+            "affiliations.membershipType": MembershipType.Owner
+          }).orWhere({ "affiliations.membershipType": MembershipType.Admin });
+        })
+        .andWhere({
+          "organizations.active": true,
+          "affiliations.user": session.user.id
+        })) as RawOrganization[]) || [];
     return valid(
       await Promise.all(
         results.map(async (raw) => {

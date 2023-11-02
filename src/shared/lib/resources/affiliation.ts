@@ -8,7 +8,8 @@ import { ErrorTypeFrom } from "shared/lib/validation";
 
 export enum MembershipType {
   Owner = "OWNER",
-  Member = "MEMBER"
+  Member = "MEMBER",
+  Admin = "ADMIN"
 }
 
 export enum MembershipStatus {
