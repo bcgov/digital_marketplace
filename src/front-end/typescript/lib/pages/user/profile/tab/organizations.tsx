@@ -139,7 +139,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             (a) => a.membershipType === MembershipType.Owner
           ),
           affiliatedRecords: affiliations.filter(
-            (a) => a.membershipType === MembershipType.Member
+            (a) => a.membershipType !== MembershipType.Owner
           )
         }),
         [component_.cmd.dispatch(component_.page.readyMsg())]
