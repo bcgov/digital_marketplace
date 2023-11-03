@@ -10,11 +10,14 @@ import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/opportunity/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/code-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
-import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
+import {
+  iconLinkSymbol,
+  leftPlacement,
+  Props as LinkProps
+} from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
-import { compact } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount } from "shared/lib";
@@ -31,8 +34,11 @@ import { isAdmin, User } from "shared/lib/resources/user";
 
 type ModalId =
   | "publish"
+  | "submit"
   | "publishChanges"
+  | "submitChanges"
   | "saveChangesAndPublish"
+  | "saveChangesAndSubmit"
   | "delete"
   | "cancel"
   | "suspend";
@@ -71,6 +77,9 @@ export type InnerMsg =
   | ADT<"saveChangesAndPublish">
   | ADT<"onSaveChangesAndPublishPersistFormResult", Form.PersistResult>
   | ADT<"onSaveChangesAndPublishUpdateStatusResult", UpdateStatusResult>
+  | ADT<"saveChangesAndSubmit">
+  | ADT<"onSaveChangesAndSubmitPersistFormResult", Form.PersistResult>
+  | ADT<"onSaveChangesAndSubmitUpdateStatusResult", UpdateStatusResult>
   | ADT<"updateStatus", UpdateStatus>
   | ADT<"onUpdateStatusResult", [UpdateStatus, UpdateStatusResult]>
   | ADT<"delete">
@@ -459,6 +468,76 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         }
       );
     }
+    case "saveChangesAndSubmit": {
+      const form = state.form;
+      if (!form) return [state, []];
+      state = state.set("showModal", null);
+      return [
+        startSaveChangesAndUpdateStatusLoading(state),
+        [
+          persistForm(form, (result) =>
+            adt("onSaveChangesAndSubmitPersistFormResult", result)
+          )
+        ]
+      ];
+    }
+    case "onSaveChangesAndSubmitPersistFormResult": {
+      const [newState, cmds] = handlePersistFormResult(state, msg.value);
+      const opportunity = state.opportunity;
+      if (!opportunity) return [newState, cmds];
+      return [
+        newState,
+        [
+          ...cmds,
+          updateStatus(
+            opportunity.id,
+            CWUOpportunityStatus.UnderReview,
+            (result) => adt("onSaveChangesAndSubmitUpdateStatusResult", result)
+          )
+        ]
+      ];
+    }
+    case "onSaveChangesAndSubmitUpdateStatusResult": {
+      state = stopSaveChangesAndUpdateStatusLoading(state);
+      return handleUpdateStatusResult(
+        state,
+        msg.value,
+        (state1) => {
+          const opportunity = state1.opportunity;
+          if (!opportunity) return [state1, []];
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "success",
+                    toasts.statusChanged.success(
+                      CWUOpportunityStatus.UnderReview
+                    )
+                  )
+                )
+              )
+            ]
+          ];
+        },
+        (state1) => {
+          return [
+            state1,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt(
+                    "error",
+                    toasts.statusChanged.error(CWUOpportunityStatus.UnderReview)
+                  )
+                )
+              )
+            ]
+          ];
+        }
+      );
+    }
     case "updateStatus": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
@@ -701,6 +780,35 @@ export const component: Tab.Component<State, Msg> = {
           body: () =>
             "Are you sure you want to publish this opportunity? Once published, all subscribers will be notified."
         });
+      case "submit":
+      case "saveChangesAndSubmit":
+        return component_.page.modal.show({
+          title: "Submit Opportunity for Review?",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit for Review",
+              icon: "paper-plane",
+              color: "primary",
+              button: true,
+              msg:
+                state.showModal === "submit"
+                  ? (adt(
+                      "updateStatus",
+                      CWUOpportunityStatus.UnderReview
+                    ) as Msg)
+                  : adt("saveChangesAndSubmit")
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () =>
+            "Are you sure you want to submit this Code With Us opportunity for review? Once submitted, an" +
+            " administrator will review it and may reach out to you to request changes before publishing it."
+        });
       case "publishChanges":
         return component_.page.modal.show({
           title: "Publish Changes to Code With Us Opportunity?",
@@ -721,6 +829,28 @@ export const component: Tab.Component<State, Msg> = {
           ],
           body: () =>
             "Are you sure you want to publish your changes to this opportunity? Once published, all subscribers will be notified."
+        });
+      case "submitChanges":
+        return component_.page.modal.show({
+          title: "Submit Changes for Review?",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Changes",
+              icon: "paper-plane",
+              color: "primary",
+              button: true,
+              msg: adt("saveChanges") // This is the reason this is a different modal from 'saveChangesAndPublish'
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () =>
+            "Are you sure you want to submit your changes to this Code With Us opportunity for review? Once" +
+            " submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
       case "suspend":
         return component_.page.modal.show({
@@ -805,60 +935,110 @@ export const component: Tab.Component<State, Msg> = {
     const opp = state.opportunity;
     const form = state.form;
     if (!opp || !form) return component_.page.actions.none();
+    const viewerIsAdmin = isAdmin(state.viewerUser);
+    const isPublic = isCWUOpportunityPublic(opp);
+    const isDraft = opp.status === CWUOpportunityStatus.Draft;
+    const isUnderReview = opp.status === CWUOpportunityStatus.UnderReview;
     const oppStatus = opp.status;
     const isValid = () => Form.isValid(form);
     if (state.isEditing) {
       return component_.page.actions.links(
-        compact([
-          // Publish button
-          !isCWUOpportunityPublic(opp)
-            ? {
-                children: "Publish",
-                symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                button: true,
-                loading: isSaveChangesAndUpdateStatusLoading,
-                disabled: isSaveChangesAndUpdateStatusLoading || !isValid(),
-                color: "primary",
-                onClick: () =>
-                  dispatch(adt("showModal", "saveChangesAndPublish" as const))
-              }
-            : null,
-          // Save changes button
-          {
-            children: isCWUOpportunityPublic(opp)
-              ? "Publish Changes"
-              : "Save Changes",
-            disabled:
-              isSaveChangesLoading ||
-              (() => {
-                if (oppStatus === CWUOpportunityStatus.Draft) {
-                  // No validation required, always possible to save a draft.
-                  return false;
-                } else {
-                  return !isValid();
-                }
-              })(),
-            onClick: () =>
-              dispatch(
-                isCWUOpportunityPublic(opp)
-                  ? adt("showModal", "publishChanges" as const)
-                  : adt("saveChanges")
+        (() => {
+          const links: LinkProps[] = [];
+          if (!isPublic && viewerIsAdmin) {
+            // Allow admins to publish changes directly after editing a non-public opp.
+            links.push({
+              children: "Publish",
+              symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
+              button: true,
+              loading: isSaveChangesAndUpdateStatusLoading,
+              disabled: isSaveChangesAndUpdateStatusLoading || !isValid(),
+              color: "primary",
+              onClick: () =>
+                dispatch(adt("showModal", "saveChangesAndPublish" as const))
+            });
+          } else if (isDraft && !viewerIsAdmin) {
+            // Allow non-admin opp owners to submit changes directly to admins
+            // when editing a draft opp.
+            links.push({
+              children: "Submit for Review",
+              symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+              button: true,
+              loading: isSaveChangesAndUpdateStatusLoading,
+              disabled: isSaveChangesAndUpdateStatusLoading || !isValid(),
+              color: "primary",
+              onClick: () =>
+                dispatch(adt("showModal", "saveChangesAndSubmit" as const))
+            });
+          }
+          if (viewerIsAdmin) {
+            // Show the save button for admins.
+            links.push({
+              children: isCWUOpportunityPublic(opp)
+                ? "Publish Changes"
+                : "Save Changes",
+              disabled:
+                isSaveChangesLoading ||
+                (() => {
+                  if (isDraft) {
+                    // No validation required, always possible to save a draft.
+                    return false;
+                  } else {
+                    return !isValid();
+                  }
+                })(),
+              onClick: () =>
+                dispatch(
+                  isCWUOpportunityPublic(opp)
+                    ? adt("showModal", "publishChanges" as const)
+                    : adt("saveChanges")
+                ),
+              button: true,
+              loading: isSaveChangesLoading,
+              symbol_: leftPlacement(
+                iconLinkSymbol(
+                  isCWUOpportunityPublic(opp) ? "bullhorn" : "save"
+                )
               ),
-            button: true,
-            loading: isSaveChangesLoading,
-            symbol_: leftPlacement(
-              iconLinkSymbol(isCWUOpportunityPublic(opp) ? "bullhorn" : "save")
-            ),
-            color: isCWUOpportunityPublic(opp) ? "primary" : "success"
-          },
-          // Cancel link
-          {
+              color: isCWUOpportunityPublic(opp) ? "primary" : "success"
+            });
+          } else if (!viewerIsAdmin && (isDraft || isUnderReview)) {
+            // Show a save/submit button for non-admins only when the opp is a draft or under review.
+            links.push({
+              children: isUnderReview ? "Submit Changes" : "Save Changes",
+              disabled:
+                isSaveChangesLoading ||
+                (() => {
+                  if (isDraft) {
+                    // No validation required, always possible to save a draft.
+                    return false;
+                  } else {
+                    return !isValid();
+                  }
+                })(),
+              onClick: () =>
+                dispatch(
+                  isUnderReview
+                    ? adt("showModal", "submitChanges" as const)
+                    : adt("saveChanges")
+                ),
+              button: true,
+              loading: isSaveChangesLoading,
+              symbol_: leftPlacement(
+                iconLinkSymbol(isUnderReview ? "paper-plane" : "save")
+              ),
+              color: isUnderReview ? "primary" : "success"
+            });
+          }
+          // Add cancel link.
+          links.push({
             children: "Cancel",
             disabled: isLoading,
             onClick: () => dispatch(adt("cancelEditing")),
             color: "c-nav-fg-alt"
-          }
-        ])
+          });
+          return links;
+        })()
       );
     }
     switch (oppStatus) {
@@ -870,10 +1050,18 @@ export const component: Tab.Component<State, Msg> = {
             {
               links: [
                 {
-                  children: "Publish",
+                  children: viewerIsAdmin ? "Publish" : "Submit for Review",
                   disabled: !isValid(),
-                  symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                  onClick: () => dispatch(adt("showModal", "publish" as const))
+                  symbol_: leftPlacement(
+                    iconLinkSymbol(viewerIsAdmin ? "bullhorn" : "paper-plane")
+                  ),
+                  onClick: () =>
+                    dispatch(
+                      adt(
+                        "showModal",
+                        viewerIsAdmin ? "publish" : "submit"
+                      ) as Msg
+                    )
                 },
                 {
                   children: "Edit",
@@ -893,6 +1081,49 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
+      case CWUOpportunityStatus.UnderReview:
+        if (viewerIsAdmin) {
+          return component_.page.actions.dropdown({
+            text: "Actions",
+            loading: isLoading,
+            linkGroups: [
+              {
+                links: [
+                  {
+                    children: "Publish",
+                    disabled: !isValid(),
+                    symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
+                    onClick: () => dispatch(adt("showModal", "publish") as Msg)
+                  },
+                  {
+                    children: "Edit",
+                    symbol_: leftPlacement(iconLinkSymbol("edit")),
+                    onClick: () => dispatch(adt("startEditing"))
+                  }
+                ]
+              },
+              {
+                links: [
+                  {
+                    children: "Delete",
+                    symbol_: leftPlacement(iconLinkSymbol("trash")),
+                    onClick: () => dispatch(adt("showModal", "delete" as const))
+                  }
+                ]
+              }
+            ]
+          });
+        } else {
+          return component_.page.actions.links([
+            {
+              children: "Edit",
+              symbol_: leftPlacement(iconLinkSymbol("edit")),
+              onClick: () => dispatch(adt("startEditing")),
+              button: true,
+              color: "primary"
+            }
+          ]);
+        }
       case CWUOpportunityStatus.Published:
         return adt("dropdown", {
           text: "Actions",
