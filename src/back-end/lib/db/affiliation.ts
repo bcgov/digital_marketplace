@@ -300,51 +300,35 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
-async function isUserMembershipTypeOfOrg(
-  connection: Connection,
-  user: User,
-  orgId: Id,
+function makeIsUserTypeChecker(
   membershipType: MembershipType
-): Promise<boolean> {
-  if (!user) {
-    return false;
-  }
-  const result = await connection<RawAffiliation>("affiliations")
-    .where({
-      user: user.id,
-      organization: orgId,
-      membershipType
-    })
-    .first();
+): (connection: Connection, user: User, ordId: Id) => Promise<boolean> {
+  return async (connection: Connection, user: User, orgId: Id) => {
+    if (!user) {
+      return false;
+    }
+    const result = await connection<RawAffiliation>("affiliations")
+      .where({
+        user: user.id,
+        organization: orgId,
+        membershipType
+      })
+      .first();
 
-  return !!result;
+    return !!result;
+  };
 }
+const isUserAdminOfOrg = makeIsUserTypeChecker(MembershipType.Admin);
 
-export async function isUserOwnerOfOrg(
+export const isUserOwnerOfOrg = makeIsUserTypeChecker(MembershipType.Owner);
+
+export const isUserOwnerOrAdminOfOrg = async (
   connection: Connection,
   user: User,
   orgId: Id
-): Promise<boolean> {
-  return await isUserMembershipTypeOfOrg(
-    connection,
-    user,
-    orgId,
-    MembershipType.Owner
-  );
-}
-
-export async function isUserAdminOfOrg(
-  connection: Connection,
-  user: User,
-  orgId: Id
-): Promise<boolean> {
-  return await isUserMembershipTypeOfOrg(
-    connection,
-    user,
-    orgId,
-    MembershipType.Admin
-  );
-}
+) =>
+  (await isUserOwnerOfOrg(connection, user, orgId)) ||
+  (await isUserAdminOfOrg(connection, user, orgId));
 
 export async function readActiveOwnerCount(
   connection: Connection,
