@@ -545,7 +545,7 @@ function membersTableBodyRows(
             <CustomInput
               type="checkbox"
               id={`affiliations-admin-checkbox-${i}`}
-              onClick={(e) => {
+              onChange={(e) => {
                 if (e) {
                   e.stopPropagation();
                 }
