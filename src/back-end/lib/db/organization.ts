@@ -105,7 +105,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     possessOneServiceArea,
     numTeamMembers,
     active,
-    serviceAreas
+    serviceAreas,
+    viewerIsOrgAdmin
   } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
@@ -130,7 +131,8 @@ async function rawOrganizationSlimToOrganizationSlim(
     active,
     numTeamMembers:
       numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10),
-    serviceAreas
+    serviceAreas,
+    ...(viewerIsOrgAdmin ? { viewerIsOrgAdmin } : {})
   };
 }
 
@@ -180,18 +182,7 @@ function generateOrganizationQuery(connection: Connection) {
         })
         .as("numTeamMembers"),
       connection.raw(
-        `(
-        SELECT
-          coalesce(
-            json_agg(sa),
-            '[]' :: json
-          ) AS "serviceAreas"
-        FROM
-          "twuOrganizationServiceAreas" tosa
-          JOIN "serviceAreas" sa ON tosa."serviceArea" = sa.id
-        WHERE
-          tosa.organization = ?
-      )`,
+        '(select coalesce(json_agg(sa), \'[]\' :: json) as "serviceAreas" from "twuOrganizationServiceAreas" tosa join "serviceAreas" sa ON tosa."serviceArea" = sa.id where tosa.organization = ?)',
         connection.ref("organizations.id")
       )
     );
@@ -327,7 +318,20 @@ export const readManyOrganizations = tryDb<
   [Session, boolean?, number?, number?],
   ReadManyResponseBody
 >(async (connection, session, allowInactive = false, page, pageSize) => {
-  let query = generateOrganizationQuery(connection);
+  let query = generateOrganizationQuery(connection).select(
+    connection.raw('exists(?) as "viewerIsOrgAdmin"', [
+      connection
+        .select("user")
+        .from("affiliations")
+        .where({
+          organization: connection.ref("organizations.id"),
+          membershipStatus: MembershipStatus.Active,
+          membershipType: MembershipType.Admin,
+          user: session?.user.id
+        })
+        .first()
+    ])
+  );
 
   if (!allowInactive) {
     query = query.andWhere({ "organizations.active": true });
@@ -369,9 +373,13 @@ export const readManyOrganizations = tryDb<
         acceptedTWUTerms,
         acceptedSWUTerms,
         active,
-        serviceAreas
+        serviceAreas,
+        viewerIsOrgAdmin
       } = raw;
-      if (!isAdmin(session) && raw.owner !== session?.user.id) {
+      if (
+        !isAdmin(session) &&
+        !(raw.owner === session?.user.id || viewerIsOrgAdmin)
+      ) {
         return await rawOrganizationSlimToOrganizationSlim(connection, {
           id,
           legalName,
@@ -394,7 +402,8 @@ export const readManyOrganizations = tryDb<
           possessOneServiceArea: serviceAreas.length > 0,
           acceptedTWUTerms,
           acceptedSWUTerms,
-          serviceAreas
+          serviceAreas,
+          viewerIsOrgAdmin
         });
       }
     })
