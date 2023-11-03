@@ -13,6 +13,7 @@ export const FORMATTED_MAX_BUDGET = formatAmount(CWU_MAX_BUDGET, "$");
 
 export enum CWUOpportunityStatus {
   Draft = "DRAFT",
+  UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
   Evaluation = "EVALUATION",
   Awarded = "AWARDED",
@@ -157,6 +158,7 @@ export type CWUOpportunitySlim = Pick<
 
 export type CreateCWUOpportunityStatus =
   | CWUOpportunityStatus.Published
+  | CWUOpportunityStatus.UnderReview
   | CWUOpportunityStatus.Draft;
 
 export interface CreateRequestBody {
@@ -190,6 +192,7 @@ export interface CreateValidationErrors
 
 export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
+  | ADT<"submitForReview", string>
   | ADT<"publish", string>
   | ADT<"suspend", string>
   | ADT<"cancel", string>
@@ -268,12 +271,17 @@ export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
   }
 }
 
-export function canCWUOpportunityDetailsBeEdited(o: CWUOpportunity): boolean {
+export function canCWUOpportunityDetailsBeEdited(
+  o: CWUOpportunity,
+  adminsOnly: boolean
+): boolean {
   switch (o.status) {
     case CWUOpportunityStatus.Draft:
+    case CWUOpportunityStatus.UnderReview:
+      return true;
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Suspended:
-      return true;
+      return adminsOnly;
     default:
       return false;
   }

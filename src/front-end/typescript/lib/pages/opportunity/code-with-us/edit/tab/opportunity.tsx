@@ -1,9 +1,9 @@
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import {
-  Immutable,
+  component as component_,
   immutable,
-  component as component_
+  Immutable
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
@@ -26,7 +26,8 @@ import {
   isUnpublished,
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/code-with-us";
-import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
+import { adt, ADT, BodyWithErrors, Id } from "shared/lib/types";
+import { isAdmin, User } from "shared/lib/resources/user";
 
 type ModalId =
   | "publish"
@@ -49,6 +50,7 @@ export interface State extends Tab.Params {
 }
 
 type UpdateStatus =
+  | CWUOpportunityStatus.UnderReview
   | CWUOpportunityStatus.Published
   | CWUOpportunityStatus.Canceled
   | CWUOpportunityStatus.Suspended;
@@ -81,13 +83,18 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 function initForm(
   opportunity: CWUOpportunity,
+  viewerUser: User,
   activeTab?: Form.TabId,
   validate = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
+    viewerUser,
     activeTab,
-    canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(opportunity)
+    canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(
+      opportunity,
+      isAdmin(viewerUser)
+    )
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -189,6 +196,8 @@ function updateStatus(
 ): component_.Cmd<InnerMsg> {
   const updateAction = (() => {
     switch (newStatus) {
+      case CWUOpportunityStatus.UnderReview:
+        return "submitForReview";
       case CWUOpportunityStatus.Published:
         return "publish";
       case CWUOpportunityStatus.Suspended:
@@ -221,6 +230,7 @@ function handleUpdateStatusResult(
       const opportunity = result.value;
       const [newFormState, formCmds] = initForm(
         opportunity,
+        state.viewerUser,
         Form.getActiveTab(currentFormState)
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
@@ -255,6 +265,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         : undefined;
       const [formState, formCmds] = initForm(
         opportunity,
+        state.viewerUser,
         activeTab,
         validateForm
       );

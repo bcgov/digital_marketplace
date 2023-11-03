@@ -47,6 +47,7 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
+import { isAdmin, User } from "shared/lib/resources/user";
 
 type RemoteOk = "yes" | "no";
 
@@ -60,6 +61,7 @@ const newAttachmentMetadata: FileUploadMetadata = [];
 
 export interface State {
   opportunity?: CWUOpportunity;
+  viewerUser: User;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   // Overview Tab
   title: Immutable<ShortText.State>;
@@ -110,6 +112,7 @@ export type Msg =
 export interface Params {
   canRemoveExistingAttachments: boolean;
   opportunity?: CWUOpportunity;
+  viewerUser: User;
   activeTab?: TabId;
 }
 
@@ -137,6 +140,7 @@ export function setValidateDate(
 export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
+  viewerUser,
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
@@ -333,6 +337,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   return [
     {
       opportunity,
+      viewerUser,
       tabbedForm: immutable(tabbedFormState),
       title: immutable(titleState),
       teaser: immutable(teaserState),
@@ -563,7 +568,10 @@ export function persist(
     action.tag === "create" ||
     (action.tag === "update" &&
       !!state.opportunity &&
-      canCWUOpportunityDetailsBeEdited(state.opportunity));
+      canCWUOpportunityDetailsBeEdited(
+        state.opportunity,
+        isAdmin(state.viewerUser)
+      ));
   // Transform remoteOk
   if (!isRemoteOkChecked && !isCreateDraft) {
     return component_.cmd.dispatch(invalid(state));
