@@ -311,7 +311,8 @@ function makeIsUserTypeChecker(
       .where({
         user: user.id,
         organization: orgId,
-        membershipType
+        membershipType,
+        membershipStatus: MembershipStatus.Active
       })
       .first();
 

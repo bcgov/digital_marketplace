@@ -259,7 +259,8 @@ export async function updateAffiliationAdminStatus(
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
-    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
   );
 }
 

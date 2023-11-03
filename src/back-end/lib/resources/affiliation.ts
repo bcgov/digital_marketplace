@@ -357,11 +357,11 @@ const update: crud.Update<
           }
 
           if (
-            !permissions.updateAffiliationAdminStatus(
+            !(await permissions.updateAffiliationAdminStatus(
               connection,
               request.session,
               existingAffiliation.organization.id
-            )
+            ))
           ) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]
