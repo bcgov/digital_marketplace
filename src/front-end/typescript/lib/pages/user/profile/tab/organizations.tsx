@@ -21,6 +21,7 @@ import { Col, Row } from "reactstrap";
 import { compareStrings, find } from "shared/lib";
 import {
   AffiliationSlim,
+  memberIsAdmin,
   memberIsPending,
   MembershipType
 } from "shared/lib/resources/affiliation";
@@ -420,7 +421,16 @@ function affiliatedTableBodyRows(
       {
         children: (
           <div>
-            <span>{affiliation.organization.legalName}</span>
+            {memberIsAdmin(affiliation) ? (
+              <Link
+                dest={routeDest(
+                  adt("orgEdit", { orgId: affiliation.organization.id })
+                )}>
+                {affiliation.organization.legalName}
+              </Link>
+            ) : (
+              <span>{affiliation.organization.legalName}</span>
+            )}
             {isPending ? <PendingBadge className="ml-3" /> : null}
           </div>
         ),
