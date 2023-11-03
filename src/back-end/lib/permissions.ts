@@ -7,8 +7,8 @@ import {
   isSWUOpportunityAuthor,
   isTWUOpportunityAuthor,
   isTWUProposalAuthor,
-  isUserAdminOfOrg,
   isUserOwnerOfOrg,
+  isUserOwnerOrAdminOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
 } from "back-end/lib/db";
@@ -172,8 +172,7 @@ export async function readOneOrganization(
   }
   return (
     isAdmin(session) ||
-    (await isUserOwnerOfOrg(connection, session.user, orgId)) ||
-    (await isUserAdminOfOrg(connection, session.user, orgId))
+    (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId))
   );
 }
 
@@ -225,7 +224,8 @@ export async function readManyAffiliationsForOrganization(
   // Membership lists for organizations can only be read by admins or organization owner
   return (
     isAdmin(session) ||
-    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
   );
 }
 
@@ -237,7 +237,8 @@ export async function createAffiliation(
   // New affiliations can be created only by organization owners, or admins
   return (
     isAdmin(session) ||
-    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
   );
 }
 
@@ -256,11 +257,10 @@ export async function updateAffiliationAdminStatus(
   session: Session,
   orgId: string
 ): Promise<boolean> {
-  return session
-    ? isAdmin(session) ||
-        (await isUserOwnerOfOrg(connection, session.user, orgId)) ||
-        (await isUserAdminOfOrg(connection, session.user, orgId))
-    : false;
+  return (
+    isAdmin(session) ||
+    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+  );
 }
 
 export async function deleteAffiliation(
@@ -268,12 +268,12 @@ export async function deleteAffiliation(
   session: Session,
   affiliation: Affiliation
 ): Promise<boolean> {
-  // Affiliations can be deleted by the user who owns them, an owner of the org, or an admin
+  // Affiliations can be deleted by the user who owns them, an owner/admin of the org, or an admin
   return (
     isAdmin(session) ||
     (!!session && isOwnAccount(session, affiliation.user.id)) ||
     (!!session &&
-      (await isUserOwnerOfOrg(
+      (await isUserOwnerOrAdminOfOrg(
         connection,
         session.user,
         affiliation.organization.id
