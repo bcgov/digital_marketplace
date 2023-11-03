@@ -40,7 +40,11 @@ import {
   memberIsAdmin,
   UpdateValidationErrors
 } from "shared/lib/resources/affiliation";
-import { isAdmin, isVendor } from "shared/lib/resources/user";
+import {
+  isAdmin,
+  isVendor,
+  usersAreEquivalent
+} from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { validateUserEmail } from "shared/lib/validation/affiliation";
 
@@ -558,7 +562,11 @@ function membersTableBodyRows(
                       ) as Msg
                     );
               }}
-              disabled={isLoading || memberIsOwner(m)}
+              disabled={
+                isLoading ||
+                memberIsOwner(m) ||
+                usersAreEquivalent(state.viewerUser, m.user)
+              }
               checked={isAffiliationAdminStatusChecked(m)}
             />
           </div>

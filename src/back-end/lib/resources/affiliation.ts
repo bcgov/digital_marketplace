@@ -27,7 +27,8 @@ import {
   MembershipType,
   UpdateValidationErrors,
   UpdateRequestBody as SharedUpdateRequestBody,
-  adminStatusToAffiliationMembershipType
+  adminStatusToAffiliationMembershipType,
+  memberIsOwner
 } from "shared/lib/resources/affiliation";
 import { Organization } from "shared/lib/resources/organization";
 import { Session } from "shared/lib/resources/session";
@@ -350,9 +351,20 @@ const update: crud.Update<
           });
         }
         case "updateAdminStatus": {
-          if (existingAffiliation.membershipType === MembershipType.Owner) {
+          if (memberIsOwner(existingAffiliation)) {
             return invalid({
               affiliation: ["Owner membership type cannot be updated."]
+            });
+          }
+
+          if (
+            permissions.isOwnAccount(
+              request.session,
+              existingAffiliation.user.id
+            )
+          ) {
+            return invalid({
+              affiliation: ["Members cannot update their own admin status."]
             });
           }
 
