@@ -19,6 +19,7 @@ import {
   validateNumber,
   Validation
 } from "shared/lib/validation";
+
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
 export function validateCWUOpportunityStatus(
@@ -40,7 +41,8 @@ export function validateCreateCWUOpportunityStatus(
 ): Validation<CreateCWUOpportunityStatus> {
   return validateCWUOpportunityStatus(raw, [
     CWUOpportunityStatus.Draft,
-    CWUOpportunityStatus.Published
+    CWUOpportunityStatus.Published,
+    CWUOpportunityStatus.UnderReview
   ]) as Validation<CreateCWUOpportunityStatus>;
 }
 

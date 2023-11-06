@@ -377,6 +377,13 @@ const create: crud.Create<
             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
           );
         }
+        // If submitted for review, notify
+        if (dbResult.value.status === CWUOpportunityStatus.UnderReview) {
+          await cwuOpportunityNotifications.handleCWUSubmittedForReview(
+            connection,
+            dbResult.value
+          );
+        }
         // If published, notify subscribed users
         if (dbResult.value.status === CWUOpportunityStatus.Published) {
           cwuOpportunityNotifications.handleCWUPublished(
