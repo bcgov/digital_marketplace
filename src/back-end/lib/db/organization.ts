@@ -182,7 +182,7 @@ function generateOrganizationQuery(connection: Connection) {
         })
         .as("numTeamMembers"),
       connection.raw(
-        '(select coalesce(json_agg(sa), \'[]\' :: json) as "serviceAreas" from "twuOrganizationServiceAreas" tosa join "serviceAreas" sa ON tosa."serviceArea" = sa.id where tosa.organization = ?)',
+        '(select coalesce(json_agg(sa), \'[]\' :: json) as "serviceAreas" from "twuOrganizationServiceAreas" tosa join "serviceAreas" sa on tosa."serviceArea" = sa.id where tosa.organization = ?)',
         connection.ref("organizations.id")
       )
     );
@@ -318,23 +318,28 @@ export const readManyOrganizations = tryDb<
   [Session, boolean?, number?, number?],
   ReadManyResponseBody
 >(async (connection, session, allowInactive = false, page, pageSize) => {
-  let query = generateOrganizationQuery(connection).select(
-    connection.raw('exists(?) as "viewerIsOrgAdmin"', [
-      connection
-        .select("user")
-        .from("affiliations")
-        .where({
-          organization: connection.ref("organizations.id"),
-          membershipStatus: MembershipStatus.Active,
-          membershipType: MembershipType.Admin,
-          user: session?.user.id
-        })
-        .first()
-    ])
-  );
+  let query = generateOrganizationQuery(connection);
 
   if (!allowInactive) {
     query = query.andWhere({ "organizations.active": true });
+  }
+
+  // Used to render links for viewing organizations.
+  if (session) {
+    query = query.select(
+      connection.raw('exists(?) as "viewerIsOrgAdmin"', [
+        connection
+          .select("user")
+          .from("affiliations")
+          .where({
+            organization: connection.ref("organizations.id"),
+            membershipStatus: MembershipStatus.Active,
+            membershipType: MembershipType.Admin,
+            user: session.user.id
+          })
+          .first()
+      ])
+    );
   }
 
   // Default is to only have one page because we are requesting everything.
