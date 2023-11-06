@@ -37,7 +37,7 @@ import {
   MembershipType,
   Affiliation,
   CreateValidationErrors,
-  memberIsAdmin,
+  memberIsOrgAdmin,
   UpdateValidationErrors
 } from "shared/lib/resources/affiliation";
 import {
@@ -131,7 +131,9 @@ function resetAddTeamMemberEmails(
 function isAffiliationAdminStatusChecked(
   affiliationMember: AffiliationMember
 ): boolean {
-  return memberIsOwner(affiliationMember) || memberIsAdmin(affiliationMember);
+  return (
+    memberIsOwner(affiliationMember) || memberIsOrgAdmin(affiliationMember)
+  );
 }
 
 const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {

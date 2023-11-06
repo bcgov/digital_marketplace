@@ -100,7 +100,7 @@ export function memberIsOwner(
   return member.membershipType === MembershipType.Owner;
 }
 
-export function memberIsAdmin(
+export function memberIsOrgAdmin(
   member: Pick<Affiliation, "membershipType">
 ): boolean {
   return member.membershipType === MembershipType.Admin;

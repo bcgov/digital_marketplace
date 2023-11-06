@@ -21,7 +21,7 @@ import { Col, Row } from "reactstrap";
 import { compareStrings, find } from "shared/lib";
 import {
   AffiliationSlim,
-  memberIsAdmin,
+  memberIsOrgAdmin,
   memberIsPending,
   MembershipType
 } from "shared/lib/resources/affiliation";
@@ -421,7 +421,7 @@ function affiliatedTableBodyRows(
       {
         children: (
           <div>
-            {memberIsAdmin(affiliation) ? (
+            {memberIsOrgAdmin(affiliation) ? (
               <Link
                 dest={routeDest(
                   adt("orgEdit", { orgId: affiliation.organization.id })
