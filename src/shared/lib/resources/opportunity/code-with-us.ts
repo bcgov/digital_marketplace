@@ -223,6 +223,7 @@ export interface UpdateWithNoteValidationErrors
 
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
+  | ADT<"submitForReview", string[]>
   | ADT<"publish", string[]>
   | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
