@@ -14,6 +14,8 @@ export function cwuOpportunityStatusToColor(
   switch (s) {
     case CWUOpportunityStatus.Draft:
       return "secondary";
+    case CWUOpportunityStatus.UnderReview:
+      return "warning";
     case CWUOpportunityStatus.Published:
       return "success";
     case CWUOpportunityStatus.Evaluation:
@@ -25,7 +27,6 @@ export function cwuOpportunityStatusToColor(
     case CWUOpportunityStatus.Canceled:
       return "danger";
   }
-  return "white";
 }
 
 export function cwuOpportunityStatusToTitleCase(
@@ -34,6 +35,8 @@ export function cwuOpportunityStatusToTitleCase(
   switch (s) {
     case CWUOpportunityStatus.Draft:
       return "Draft";
+    case CWUOpportunityStatus.UnderReview:
+      return "Under Review";
     case CWUOpportunityStatus.Published:
       return "Published";
     case CWUOpportunityStatus.Evaluation:
