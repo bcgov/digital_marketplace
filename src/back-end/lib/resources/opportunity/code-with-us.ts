@@ -820,7 +820,8 @@ const update: crud.Update<
             !isValidStatusChange(
               validatedCWUOpportunity.value.status,
               CWUOpportunityStatus.Suspended
-            )
+            ) ||
+            !permissions.suspendCWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -842,7 +843,8 @@ const update: crud.Update<
             !isValidStatusChange(
               validatedCWUOpportunity.value.status,
               CWUOpportunityStatus.Canceled
-            )
+            ) ||
+            !permissions.cancelCWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -861,7 +863,9 @@ const update: crud.Update<
         }
         case "addAddendum": {
           if (
-            validatedCWUOpportunity.value.status === CWUOpportunityStatus.Draft
+            validatedCWUOpportunity.value.status ===
+              CWUOpportunityStatus.Draft ||
+            !permissions.addCWUAddendum(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -880,7 +884,6 @@ const update: crud.Update<
             body: adt("addAddendum", validatedAddendumText.value)
           } as ValidatedUpdateRequestBody);
         }
-
         case "addNote": {
           const { note, attachments: noteAttachments } = request.body.value;
           const validatedNote = opportunityValidation.validateNote(note); //TODO changed to validateNote from validateHistoryNote as note-taking was removed from shared

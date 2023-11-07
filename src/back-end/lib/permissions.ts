@@ -328,6 +328,18 @@ export async function deleteCWUOpportunity(
   );
 }
 
+export function addCWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
 // CWU Proposals.
 
 export async function readManyCWUProposals(
