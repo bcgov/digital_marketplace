@@ -605,6 +605,19 @@ nav.navbar .nav-link:hover {
   }
 }
 
+[class*="affiliations-admin-status"] {
+  .custom-control {
+    padding-left: 0;
+  }
+
+  .custom-control-label::before,
+  .custom-control-label::after {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
 .spinner-border-sm {
   border-width: 0.15em;
 }

@@ -63,7 +63,10 @@ export function userToUserSlim(u: User): UserSlim {
   };
 }
 
-export function usersAreEquivalent(a: User, b: User): boolean {
+export function usersAreEquivalent<T extends User | UserSlim>(
+  a: T,
+  b: T
+): boolean {
   return a.id === b.id;
 }
 

@@ -14,6 +14,7 @@ import {
   validateAffiliationId,
   validateOrganizationId
 } from "back-end/lib/validation";
+import { get, isBoolean } from "lodash";
 import { getString } from "shared/lib";
 import {
   Affiliation,
@@ -24,19 +25,24 @@ import {
   DeleteValidationErrors,
   MembershipStatus,
   MembershipType,
-  UpdateValidationErrors
+  UpdateValidationErrors,
+  UpdateRequestBody as SharedUpdateRequestBody,
+  adminStatusToAffiliationMembershipType,
+  memberIsOwner
 } from "shared/lib/resources/affiliation";
 import { Organization } from "shared/lib/resources/organization";
 import { Session } from "shared/lib/resources/session";
 import { UserStatus, UserType } from "shared/lib/resources/user";
-import { Id } from "shared/lib/types";
+import { ADT, adt, Id } from "shared/lib/types";
 import {
   allValid,
   getInvalidValue,
   getValidValue,
   invalid,
   isInvalid,
-  valid
+  isValid,
+  valid,
+  Validation
 } from "shared/lib/validation";
 import * as affiliationValidation from "shared/lib/validation/affiliation";
 
@@ -47,7 +53,11 @@ export interface ValidatedCreateRequestBody {
   membershipStatus: MembershipStatus;
 }
 
-type ValidatedUpdateRequestBody = Id;
+export type UpdateRequestBody = SharedUpdateRequestBody | null;
+
+type ValidatedUpdateRequestBody =
+  | ADT<"approve">
+  | ADT<"updateAdminStatus", MembershipType>;
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -282,15 +292,33 @@ const create: crud.Create<
 const update: crud.Update<
   Session,
   db.Connection,
-  null,
+  UpdateRequestBody,
   ValidatedUpdateRequestBody,
   UpdateValidationErrors
 > = (connection: db.Connection) => {
   return {
     async parseRequestBody(_request) {
-      return null;
+      const body = _request.body.tag === "json" ? _request.body.value : {};
+      const tag = getString(body, "tag");
+      const value: unknown = get(body, "value");
+      switch (tag) {
+        case "approve":
+          return adt("approve");
+        case "updateAdminStatus": {
+          if (isBoolean(value)) {
+            return adt("updateAdminStatus", value);
+          } else {
+            return null;
+          }
+        }
+        default:
+          return null;
+      }
     },
     async validateRequestBody(request) {
+      if (!request.body) {
+        return invalid({ affiliation: adt("parseFailure" as const) });
+      }
       const validatedAffiliation = await validateAffiliationId(
         connection,
         request.params.id
@@ -301,41 +329,102 @@ const update: crud.Update<
         });
       }
       const existingAffiliation = validatedAffiliation.value;
-      if (existingAffiliation.membershipStatus === MembershipStatus.Pending) {
-        if (
-          !permissions.updateAffiliation(request.session, existingAffiliation)
-        ) {
+      switch (request.body.tag) {
+        case "approve": {
+          if (
+            existingAffiliation.membershipStatus === MembershipStatus.Pending
+          ) {
+            if (
+              !permissions.approveAffiliation(
+                request.session,
+                existingAffiliation
+              )
+            ) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+            return valid(adt("approve" as const));
+          }
           return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
+            affiliation: ["Membership is not pending."]
           });
         }
-        return valid(existingAffiliation.id);
+        case "updateAdminStatus": {
+          if (memberIsOwner(existingAffiliation)) {
+            return invalid({
+              affiliation: ["Owner membership type cannot be updated."]
+            });
+          }
+
+          if (
+            permissions.isOwnAccount(
+              request.session,
+              existingAffiliation.user.id
+            )
+          ) {
+            return invalid({
+              affiliation: ["Members cannot update their own admin status."]
+            });
+          }
+
+          if (
+            !(await permissions.updateAffiliationAdminStatus(
+              connection,
+              request.session,
+              existingAffiliation.organization.id
+            ))
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
+          const membershipType = adminStatusToAffiliationMembershipType(
+            request.body.value
+          );
+          return valid(adt("updateAdminStatus" as const, membershipType));
+        }
+        default:
+          return invalid({ affiliation: adt("parseFailure" as const) });
       }
-      return invalid({
-        affiliation: ["Membership is not pending."]
-      });
     },
     respond: wrapRespond({
       valid: async (request) => {
-        const id = request.body;
-        const dbResult = await db.approveAffiliation(connection, id);
-        if (isInvalid(dbResult)) {
-          return basicResponse(
-            503,
-            request.session,
-            makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
-          );
+        const id = request.params.id;
+        let dbResult: Validation<Affiliation, null>;
+        switch (request.body.tag) {
+          case "approve":
+            dbResult = await db.approveAffiliation(connection, id);
+            if (isValid(dbResult)) {
+              affiliationNotifications.handleUserAcceptedInvitation(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "updateAdminStatus":
+            dbResult = await db.updateAdminStatus(
+              connection,
+              id,
+              request.body.value
+            );
+            break;
         }
-        // Notify organization admin that new member has joined
-        affiliationNotifications.handleUserAcceptedInvitation(
-          connection,
-          dbResult.value
-        );
-        return basicResponse(
-          200,
-          request.session,
-          makeJsonResponseBody(dbResult.value)
-        );
+        switch (dbResult.tag) {
+          case "valid":
+            return basicResponse(
+              200,
+              request.session,
+              makeJsonResponseBody(dbResult.value)
+            );
+          case "invalid":
+            return basicResponse(
+              503,
+              request.session,
+              makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
+            );
+        }
       },
       invalid: async (request) => {
         return basicResponse(

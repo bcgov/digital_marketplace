@@ -248,6 +248,32 @@ export const approveAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
+export const updateAdminStatus = tryDb<[Id, MembershipType], Affiliation>(
+  async (connection, id, membershipType: MembershipType) => {
+    const now = new Date();
+    const [result] = await connection<RawAffiliation>("affiliations")
+      .update(
+        {
+          membershipType,
+          updatedAt: now
+        } as RawAffiliation,
+        "*"
+      )
+      .where({
+        id
+      })
+      .whereIn("organization", function () {
+        this.select("id").from("organizations").where({
+          active: true
+        });
+      });
+    if (!result) {
+      throw new Error("unable to update admin status");
+    }
+    return valid(await rawAffiliationToAffiliation(connection, result));
+  }
+);
+
 export const deleteAffiliation = tryDb<[Id], Affiliation>(
   async (connection, id) => {
     const now = new Date();
@@ -274,24 +300,36 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
-export async function isUserOwnerOfOrg(
+function makeIsUserTypeChecker(
+  membershipType: MembershipType
+): (connection: Connection, user: User, ordId: Id) => Promise<boolean> {
+  return async (connection: Connection, user: User, orgId: Id) => {
+    if (!user) {
+      return false;
+    }
+    const result = await connection<RawAffiliation>("affiliations")
+      .where({
+        user: user.id,
+        organization: orgId,
+        membershipType,
+        membershipStatus: MembershipStatus.Active
+      })
+      .first();
+
+    return !!result;
+  };
+}
+const isUserAdminOfOrg = makeIsUserTypeChecker(MembershipType.Admin);
+
+export const isUserOwnerOfOrg = makeIsUserTypeChecker(MembershipType.Owner);
+
+export const isUserOwnerOrAdminOfOrg = async (
   connection: Connection,
   user: User,
   orgId: Id
-): Promise<boolean> {
-  if (!user) {
-    return false;
-  }
-  const result = await connection<RawAffiliation>("affiliations")
-    .where({
-      user: user.id,
-      organization: orgId,
-      membershipType: MembershipType.Owner
-    })
-    .first();
-
-  return !!result;
-}
+) =>
+  (await isUserOwnerOfOrg(connection, user, orgId)) ||
+  (await isUserAdminOfOrg(connection, user, orgId));
 
 export async function readActiveOwnerCount(
   connection: Connection,

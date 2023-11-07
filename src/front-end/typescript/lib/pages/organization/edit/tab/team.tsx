@@ -1,5 +1,6 @@
 import { makeStartLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
+import * as AcceptOrgAdminTerms from "front-end/lib/components/accept-org-admin-terms";
 import * as FormField from "front-end/lib/components/form-field";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as Table from "front-end/lib/components/table";
@@ -26,7 +27,7 @@ import Link, {
   leftPlacement
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import { Col, CustomInput, Row, Spinner } from "reactstrap";
 import CAPABILITIES from "shared/lib/data/capabilities";
 import {
   AffiliationMember,
@@ -35,9 +36,15 @@ import {
   membersHaveCapability,
   MembershipType,
   Affiliation,
-  CreateValidationErrors
+  CreateValidationErrors,
+  memberIsOrgAdmin,
+  UpdateValidationErrors
 } from "shared/lib/resources/affiliation";
-import { isAdmin, isVendor } from "shared/lib/resources/user";
+import {
+  isAdmin,
+  isVendor,
+  usersAreEquivalent
+} from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { validateUserEmail } from "shared/lib/validation/affiliation";
 
@@ -45,16 +52,19 @@ type ModalId =
   | ADT<"addTeamMembers">
   | ADT<"viewTeamMember", AffiliationMember>
   | ADT<"removeTeamMember", AffiliationMember>
-  | ADT<"approveAffiliation", AffiliationMember>;
+  | ADT<"approveAffiliation", AffiliationMember>
+  | ADT<"acceptOrgAdminStatusTerms", AffiliationMember>;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   addTeamMembersLoading: number;
   removeTeamMemberLoading: Id | null; //Id of affiliation, not user
   approveAffiliationLoading: Id | null; //Id of affiliation, not user
+  updateAdminStatusLoading: Id | null;
   membersTable: Immutable<Table.State>;
   capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
+  acceptOrgAdminTerms: Immutable<AcceptOrgAdminTerms.State>;
 }
 
 export type InnerMsg =
@@ -69,7 +79,13 @@ export type InnerMsg =
   | ADT<"membersTable", Table.Msg>
   | ADT<"addTeamMembersEmails", [number, ShortText.Msg]> //[index, msg]
   | ADT<"addTeamMembersEmailsAddField">
-  | ADT<"addTeamMembersEmailsRemoveField", number>; //index
+  | ADT<"addTeamMembersEmailsRemoveField", number> //index
+  | ADT<"onUpdateAdminStatus", AffiliationMember>
+  | ADT<
+      "onUpdateAdminStatusResponse",
+      api.ResponseValidation<Affiliation, UpdateValidationErrors>
+    >
+  | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -112,12 +128,28 @@ function resetAddTeamMemberEmails(
   ];
 }
 
+function isAffiliationAdminStatusChecked(
+  affiliationMember: AffiliationMember
+): boolean {
+  return (
+    memberIsOwner(affiliationMember) || memberIsOrgAdmin(affiliationMember)
+  );
+}
+
 const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   const [tableState, tableCmds] = Table.init({
     idNamespace: "organization-members"
   });
   const [addTeamMemberEmailState, addTeamMemberEmailCmds] =
     initAddTeamMemberEmailField();
+  const [acceptOrgAdminTermsState, acceptOrgAdminTermsCmds] =
+    AcceptOrgAdminTerms.init({
+      errors: [],
+      child: {
+        value: false,
+        id: "accept-org-admin-terms"
+      }
+    });
   return [
     {
       ...params,
@@ -125,9 +157,11 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       addTeamMembersLoading: 0,
       removeTeamMemberLoading: null,
       approveAffiliationLoading: null,
+      updateAdminStatusLoading: null,
       capabilities: determineCapabilities(params.affiliations),
       membersTable: immutable(tableState),
-      addTeamMembersEmails: [immutable(addTeamMemberEmailState)]
+      addTeamMembersEmails: [immutable(addTeamMemberEmailState)],
+      acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState)
     },
     [
       ...component_.cmd.mapMany(
@@ -137,6 +171,10 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...component_.cmd.mapMany(
         addTeamMemberEmailCmds,
         (msg) => adt("addTeamMembersEmails", [0, msg]) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        acceptOrgAdminTermsCmds,
+        (msg) => adt("acceptOrgAdminTerms", msg) as Msg
       )
     ]
   ];
@@ -160,9 +198,17 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "hideModal": {
       const existingShowModal = state.showModal;
       state = state.set("showModal", null);
-      if (existingShowModal && existingShowModal.tag === "addTeamMembers") {
-        return resetAddTeamMemberEmails(state);
-      }
+      if (existingShowModal)
+        switch (existingShowModal.tag) {
+          case "acceptOrgAdminStatusTerms": {
+            state = state.update("acceptOrgAdminTerms", (s) =>
+              AcceptOrgAdminTerms.setOrgAdminCheckbox(s, false)
+            );
+            break;
+          }
+          case "addTeamMembers":
+            return resetAddTeamMemberEmails(state);
+        }
       return [state, []];
     }
 
@@ -258,7 +304,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.affiliations.update<Msg>()(
             msg.value.id,
-            null,
+            adt("approve"),
             (response) =>
               adt("onApproveAffiliationResponse", [
                 api.isValid(response),
@@ -382,6 +428,55 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         []
       ];
 
+    case "onUpdateAdminStatus": {
+      const { id: memberId } = msg.value;
+      return [
+        state.set("updateAdminStatusLoading", memberId).set("showModal", null),
+        [
+          api.affiliations.update<Msg>()(
+            memberId,
+            adt(
+              "updateAdminStatus",
+              !isAffiliationAdminStatusChecked(msg.value)
+            ),
+            (response) => adt("onUpdateAdminStatusResponse", response) as Msg
+          )
+        ]
+      ];
+    }
+
+    case "onUpdateAdminStatusResponse": {
+      state = state.set("updateAdminStatusLoading", null);
+      const response = msg.value;
+      if (api.isValid(response)) {
+        state = state
+          .set(
+            "affiliations",
+            state.affiliations.map((affiliationMember) =>
+              affiliationMember.id === response.value.id
+                ? {
+                    ...affiliationMember,
+                    membershipType: response.value.membershipType
+                  }
+                : affiliationMember
+            )
+          )
+          .update("acceptOrgAdminTerms", (s) =>
+            AcceptOrgAdminTerms.setOrgAdminCheckbox(s, false)
+          );
+      }
+      return [state, []];
+    }
+
+    case "acceptOrgAdminTerms":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["acceptOrgAdminTerms"],
+        childUpdate: AcceptOrgAdminTerms.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("acceptOrgAdminTerms", value)
+      });
+
     default:
       return [state, []];
   }
@@ -400,6 +495,10 @@ function membersTableHeadCells(): Table.HeadCells {
       className: "text-center"
     },
     {
+      children: "Admin",
+      className: "text-center"
+    },
+    {
       children: null
     }
   ];
@@ -412,14 +511,17 @@ function membersTableBodyRows(
   const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
   const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
   const isApproveAffiliationLoading = !!state.approveAffiliationLoading;
+  const isAdminStatusLoading = !!state.updateAdminStatusLoading;
 
   const isLoading =
     isAddTeamMembersLoading ||
     isRemoveTeamMemberLoading ||
-    isApproveAffiliationLoading;
-  return state.affiliations.map((m) => {
+    isApproveAffiliationLoading ||
+    isAdminStatusLoading;
+  return state.affiliations.map((m, i) => {
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
     const isApproveLoading = state.approveAffiliationLoading === m.id;
+    const isAdminStatusLoading = state.updateAdminStatusLoading === m.id;
     return [
       {
         children: (
@@ -440,6 +542,38 @@ function membersTableBodyRows(
       {
         children: String(m.user.capabilities.length),
         className: "text-center align-middle"
+      },
+      {
+        children: isAdminStatusLoading ? (
+          <Spinner size="sm" color="secondary" />
+        ) : (
+          <div className={`affiliations-admin-status-${i}`}>
+            <CustomInput
+              type="checkbox"
+              id={`affiliations-admin-checkbox-${i}`}
+              onChange={(e) => {
+                if (e) {
+                  e.stopPropagation();
+                }
+                isAffiliationAdminStatusChecked(m)
+                  ? dispatch(adt("onUpdateAdminStatus", m) as Msg)
+                  : dispatch(
+                      adt(
+                        "showModal",
+                        adt("acceptOrgAdminStatusTerms", m) as ModalId
+                      ) as Msg
+                    );
+              }}
+              disabled={
+                isLoading ||
+                memberIsOwner(m) ||
+                usersAreEquivalent(state.viewerUser, m.user)
+              }
+              checked={isAffiliationAdminStatusChecked(m)}
+            />
+          </div>
+        ),
+        className: `text-center align-middle`
       },
       {
         showOnHover: !(isMemberLoading || isApproveLoading),
@@ -705,6 +839,38 @@ export const component: Tab.Component<State, Msg> = {
           ]
         });
       }
+
+      case "acceptOrgAdminStatusTerms":
+        return component_.page.modal.show({
+          title: "Please Confirm",
+          body: (dispatch) => (
+            <AcceptOrgAdminTerms.view
+              state={state.acceptOrgAdminTerms}
+              dispatch={component_.base.mapDispatch(
+                dispatch,
+                (msg) => adt("acceptOrgAdminTerms", msg) as Msg
+              )}
+            />
+          ),
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Share Admin Access",
+              icon: "user-check",
+              color: "primary",
+              msg: adt("onUpdateAdminStatus", state.showModal.value),
+              button: true,
+              disabled: !AcceptOrgAdminTerms.getOrgAdminCheckbox(
+                state.acceptOrgAdminTerms
+              )
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
     }
   },
   getActions: ({ state, dispatch }) => {

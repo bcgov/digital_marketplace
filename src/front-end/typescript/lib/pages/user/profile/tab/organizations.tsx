@@ -21,6 +21,7 @@ import { Col, Row } from "reactstrap";
 import { compareStrings, find } from "shared/lib";
 import {
   AffiliationSlim,
+  memberIsOrgAdmin,
   memberIsPending,
   MembershipType
 } from "shared/lib/resources/affiliation";
@@ -220,7 +221,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.affiliations.update<Msg>()(
             msg.value.id,
-            null,
+            adt("approve"),
             (response) =>
               adt("onApproveAffiliationResponse", [
                 msg.value,
@@ -420,7 +421,16 @@ function affiliatedTableBodyRows(
       {
         children: (
           <div>
-            <span>{affiliation.organization.legalName}</span>
+            {memberIsOrgAdmin(affiliation) ? (
+              <Link
+                dest={routeDest(
+                  adt("orgEdit", { orgId: affiliation.organization.id })
+                )}>
+                {affiliation.organization.legalName}
+              </Link>
+            ) : (
+              <span>{affiliation.organization.legalName}</span>
+            )}
             {isPending ? <PendingBadge className="ml-3" /> : null}
           </div>
         ),
