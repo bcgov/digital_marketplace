@@ -48,7 +48,6 @@ export function cwuOpportunityStatusToTitleCase(
     case CWUOpportunityStatus.Canceled:
       return "Cancelled"; // Use British spelling for copy.
   }
-  return "";
 }
 
 export function cwuOpportunityToPublicStatus(
@@ -95,6 +94,8 @@ export function cwuOpportunityStatusToPresentTenseVerb(
       return "Suspend";
     case CWUOpportunityStatus.Canceled:
       return "Cancel";
+    case CWUOpportunityStatus.UnderReview:
+      return "Submit";
     case CWUOpportunityStatus.Published:
       return "Publish";
     case CWUOpportunityStatus.Awarded:
@@ -103,7 +104,6 @@ export function cwuOpportunityStatusToPresentTenseVerb(
     case CWUOpportunityStatus.Draft:
       return "Update";
   }
-  return "";
 }
 
 export function cwuOpportunityStatusToPastTenseVerb(
@@ -114,6 +114,8 @@ export function cwuOpportunityStatusToPastTenseVerb(
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled";
+    case CWUOpportunityStatus.UnderReview:
+      return "Submitted";
     case CWUOpportunityStatus.Published:
       return "Published";
     case CWUOpportunityStatus.Awarded:
@@ -122,7 +124,6 @@ export function cwuOpportunityStatusToPastTenseVerb(
     case CWUOpportunityStatus.Draft:
       return "Updated";
   }
-  return "";
 }
 
 export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
