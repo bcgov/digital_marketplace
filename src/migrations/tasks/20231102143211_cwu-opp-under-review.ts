@@ -47,6 +47,10 @@ export async function down(connection: Knex): Promise<void> {
   '
   );
 
+  await connection("cwuOpportunityStatuses")
+    .where({ status: "UNDER_REVIEW" })
+    .update({ status: "DRAFT" });
+
   await connection.schema.raw(` \
     ALTER TABLE "cwuOpportunityStatuses" \
     ADD CONSTRAINT "cwuOpportunityStatuses_status_check" \
