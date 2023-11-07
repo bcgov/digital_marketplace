@@ -1125,65 +1125,75 @@ export const component: Tab.Component<State, Msg> = {
           ]);
         }
       case CWUOpportunityStatus.Published:
-        return adt("dropdown", {
-          text: "Actions",
-          loading: isLoading,
-          linkGroups: [
-            {
-              links: [
-                {
-                  children: "Edit",
-                  symbol_: leftPlacement(iconLinkSymbol("edit")),
-                  onClick: () => dispatch(adt("startEditing"))
-                }
-              ]
-            },
-            {
-              links: [
-                {
-                  children: "Suspend",
-                  symbol_: leftPlacement(iconLinkSymbol("pause-circle")),
-                  onClick: () => dispatch(adt("showModal", "suspend" as const))
-                },
-                {
-                  children: "Cancel",
-                  symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
-                  onClick: () => dispatch(adt("showModal", "cancel" as const))
-                }
-              ]
-            }
-          ]
-        });
+        if (viewerIsAdmin) {
+          return adt("dropdown", {
+            text: "Actions",
+            loading: isLoading,
+            linkGroups: [
+              {
+                links: [
+                  {
+                    children: "Edit",
+                    symbol_: leftPlacement(iconLinkSymbol("edit")),
+                    onClick: () => dispatch(adt("startEditing"))
+                  }
+                ]
+              },
+              {
+                links: [
+                  {
+                    children: "Suspend",
+                    symbol_: leftPlacement(iconLinkSymbol("pause-circle")),
+                    onClick: () =>
+                      dispatch(adt("showModal", "suspend" as const))
+                  },
+                  {
+                    children: "Cancel",
+                    symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
+                    onClick: () => dispatch(adt("showModal", "cancel" as const))
+                  }
+                ]
+              }
+            ]
+          });
+        } else {
+          return component_.page.actions.none();
+        }
       case CWUOpportunityStatus.Suspended:
-        return adt("dropdown", {
-          text: "Actions",
-          loading: isLoading,
-          linkGroups: [
-            {
-              links: [
-                {
-                  children: "Publish",
-                  symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                  onClick: () => dispatch(adt("showModal", "publish" as const))
-                },
-                {
-                  children: "Edit",
-                  symbol_: leftPlacement(iconLinkSymbol("edit")),
-                  onClick: () => dispatch(adt("startEditing"))
-                }
-              ]
-            },
-            {
-              links: [
-                {
-                  children: "Cancel",
-                  symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
-                  onClick: () => dispatch(adt("showModal", "cancel" as const))
-                }
-              ]
-            }
-          ]
-        });
+        if (viewerIsAdmin) {
+          return adt("dropdown", {
+            text: "Actions",
+            loading: isLoading,
+            linkGroups: [
+              {
+                links: [
+                  {
+                    children: "Publish",
+                    symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
+                    onClick: () =>
+                      dispatch(adt("showModal", "publish" as const))
+                  },
+                  {
+                    children: "Edit",
+                    symbol_: leftPlacement(iconLinkSymbol("edit")),
+                    onClick: () => dispatch(adt("startEditing"))
+                  }
+                ]
+              },
+              {
+                links: [
+                  {
+                    children: "Cancel",
+                    symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
+                    onClick: () => dispatch(adt("showModal", "cancel" as const))
+                  }
+                ]
+              }
+            ]
+          });
+        } else {
+          return component_.page.actions.none();
+        }
       case CWUOpportunityStatus.Evaluation:
         return adt("links", [
           {
