@@ -1,53 +1,24 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
-import {
-  immutable,
-  Immutable,
-  component as component_
-} from "front-end/lib/framework";
+import { Immutable, component as component_ } from "front-end/lib/framework";
 import React from "react";
-import { ADT, adt } from "shared/lib/types";
 
-export interface State {
-  orgAdmin: Immutable<Checkbox.State>;
-}
-
-export type Msg = ADT<"orgAdmin", Checkbox.Msg>;
-
+export type State = Checkbox.State;
+export type Msg = Checkbox.Msg;
 export type Params = Checkbox.Params;
 
-export const init: component_.base.Init<Params, State, Msg> = (orgAdmin) => {
-  const [orgAdminState, orgAdminCmds] = Checkbox.init(orgAdmin);
-  return [
-    {
-      orgAdmin: immutable(orgAdminState)
-    },
-    component_.cmd.mapMany(orgAdminCmds, (msg) => adt("orgAdmin", msg) as Msg)
-  ];
-};
-
-export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
-  switch (msg.tag) {
-    case "orgAdmin":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["orgAdmin"],
-        childUpdate: Checkbox.update,
-        childMsg: msg.value,
-        mapChildMsg: (v) => adt("orgAdmin", v) as Msg
-      });
-  }
-};
+export const init = Checkbox.init;
+export const update = Checkbox.update;
 
 export function setOrgAdminCheckbox(
   state: Immutable<State>,
   v: Checkbox.Value
 ): Immutable<State> {
-  return state.update("orgAdmin", (s) => FormField.setValue(s, v));
+  return FormField.setValue(state, v);
 }
 
 export function getOrgAdminCheckbox(state: Immutable<State>): Checkbox.Value {
-  return FormField.getValue(state.orgAdmin);
+  return FormField.getValue(state);
 }
 
 export type Props = component_.base.ComponentViewProps<State, Msg>;
@@ -66,11 +37,8 @@ export const view: component_.base.View<Props> = ({ state, dispatch }) => {
             "By checking the box, you confirm that you are making this user an agent of your organization for the purposes of responding to Competition Notices."
         }}
         className="font-weight-bold"
-        state={state.orgAdmin}
-        dispatch={component_.base.mapDispatch(
-          dispatch,
-          (v) => adt("orgAdmin", v) as Msg
-        )}
+        state={state}
+        dispatch={dispatch}
       />
     </div>
   );
