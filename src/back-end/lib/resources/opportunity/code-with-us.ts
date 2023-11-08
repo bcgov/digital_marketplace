@@ -756,6 +756,10 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
+          // Only admins can publish
+          if (!permissions.publishCWUOpportunity(request.session)) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
           // Perform validation on draft to ensure it's ready for publishing
           if (
             !allValid([

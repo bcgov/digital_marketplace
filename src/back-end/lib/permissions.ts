@@ -328,6 +328,9 @@ export async function deleteCWUOpportunity(
   );
 }
 
+export function publishCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
 export function addCWUAddendum(session: Session): boolean {
   return isAdmin(session);
 }

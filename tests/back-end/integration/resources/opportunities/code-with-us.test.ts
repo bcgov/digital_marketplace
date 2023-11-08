@@ -23,8 +23,21 @@ async function setup() {
     buildCreateUserParams({ type: UserType.Government }),
     connection
   );
+  const [testAdmin, testAdminSession] = await insertUserWithActiveSession(
+    buildCreateUserParams({ type: UserType.Admin }),
+    connection
+  );
   const appAgent = agent(app);
-  return { testUser, testSession, appAgent };
+  const adminAppAgent = agent(app);
+
+  return {
+    testUser,
+    testSession,
+    testAdmin,
+    testAdminSession,
+    appAgent,
+    adminAppAgent
+  };
 }
 
 afterEach(async () => {
@@ -32,7 +45,14 @@ afterEach(async () => {
 });
 
 test("code-with-us opportunity crud", async () => {
-  const { testUser, testSession, appAgent } = await setup();
+  const {
+    testUser,
+    testSession,
+    testAdmin,
+    testAdminSession,
+    appAgent,
+    adminAppAgent
+  } = await setup();
 
   const opportunity = buildCWUOpportunity();
   const body: CreateRequestBody = {
@@ -93,23 +113,46 @@ test("code-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
-  const publishResult = await appAgent
+  const submitForReviewResult = await appAgent
     .put(opportunityIdUrl)
-    .send(adt("publish"));
+    .send(adt("submitForReview"));
 
-  expect(publishResult.status).toEqual(200);
-  expect(publishResult.body).toMatchObject({
+  expect(submitForReviewResult.status).toEqual(200);
+  expect(submitForReviewResult.body).toMatchObject({
     ...editResult.body,
-    status: CWUOpportunityStatus.Published,
+    status: CWUOpportunityStatus.UnderReview,
     history: [
-      { type: { value: CWUOpportunityStatus.Published } },
+      { type: { value: CWUOpportunityStatus.UnderReview } },
       ...editResult.body.history
     ],
     updatedAt: expect.any(String)
   });
 
+  const publishRequest = adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("publish"));
+
+  const publishResult = await requestWithCookie(
+    publishRequest,
+    testAdminSession
+  );
+
+  expect(publishResult.status).toEqual(200);
+  expect(publishResult.body).toMatchObject({
+    ...submitForReviewResult.body,
+    status: CWUOpportunityStatus.Published,
+    history: [
+      { type: { value: CWUOpportunityStatus.Published } },
+      ...submitForReviewResult.body.history
+    ],
+    updatedAt: expect.any(String),
+    updatedBy: {
+      id: testAdmin.id
+    }
+  });
+
   const description = "New Addendum";
-  const addAddendumResult = await appAgent
+  const addAddendumResult = await adminAppAgent
     .put(opportunityIdUrl)
     .send(adt("addAddendum", description));
 
@@ -124,7 +167,7 @@ test("code-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
-  const suspendResult = await appAgent
+  const suspendResult = await adminAppAgent
     .put(opportunityIdUrl)
     .send(adt("suspend"));
 
@@ -139,7 +182,9 @@ test("code-with-us opportunity crud", async () => {
     updatedAt: expect.any(String)
   });
 
-  const cancelResult = await appAgent.put(opportunityIdUrl).send(adt("cancel"));
+  const cancelResult = await adminAppAgent
+    .put(opportunityIdUrl)
+    .send(adt("cancel"));
 
   expect(cancelResult.status).toBe(200);
   expect(cancelResult.body).toMatchObject({
