@@ -81,6 +81,7 @@ interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
   body:
     | ADT<"edit", ValidatedUpdateEditRequestBody>
+    | ADT<"submitForReview", string>
     | ADT<"publish", string>
     | ADT<"suspend", string>
     | ADT<"cancel", string>
@@ -377,6 +378,13 @@ const create: crud.Create<
             makeJsonResponseBody({ database: [db.ERROR_MESSAGE] })
           );
         }
+        // If submitted for review, notify
+        if (dbResult.value.status === CWUOpportunityStatus.UnderReview) {
+          await cwuOpportunityNotifications.handleCWUSubmittedForReview(
+            connection,
+            dbResult.value
+          );
+        }
         // If published, notify subscribed users
         if (dbResult.value.status === CWUOpportunityStatus.Published) {
           cwuOpportunityNotifications.handleCWUPublished(
@@ -434,6 +442,8 @@ const update: crud.Update<
             evaluationCriteria: getString(value, "evaluationCriteria"),
             attachments: getStringArray(value, "attachments")
           });
+        case "submitForReview":
+          return adt("submitForReview", getString(body, "value"));
         case "publish":
           return adt("publish", getString(body, "value", ""));
         case "suspend":
@@ -506,6 +516,7 @@ const update: crud.Update<
           if (
             ![
               CWUOpportunityStatus.Draft,
+              CWUOpportunityStatus.UnderReview,
               CWUOpportunityStatus.Published,
               CWUOpportunityStatus.Suspended
             ].includes(cwuOpportunity.status)
@@ -690,6 +701,52 @@ const update: crud.Update<
             });
           }
         }
+        case "submitForReview": {
+          if (
+            !isValidStatusChange(
+              cwuOpportunity.status,
+              CWUOpportunityStatus.UnderReview
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Perform validation on draft to ensure it's ready for publishing
+          if (
+            !allValid([
+              genericValidation.validateTitle(cwuOpportunity.title),
+              genericValidation.validateTeaser(cwuOpportunity.teaser),
+              genericValidation.validateRemoteOk(cwuOpportunity.remoteOk),
+              genericValidation.validateRemoteDesc(
+                cwuOpportunity.remoteDesc,
+                cwuOpportunity.remoteOk
+              ),
+              genericValidation.validateLocation(cwuOpportunity.location),
+              genericValidation.validateDescription(cwuOpportunity.description)
+            ])
+          ) {
+            return invalid({
+              opportunity: adt("submitForReview" as const, [
+                "This opportunity could not be submitted for review because it is incomplete. Please edit, complete and save the form below before trying to publish it again."
+              ])
+            });
+          }
+
+          const validatedSubmitNote = opportunityValidation.validateNote(
+            request.body.value
+          );
+          if (isInvalid(validatedSubmitNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitForReview" as const,
+                validatedSubmitNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitForReview", validatedSubmitNote.value)
+          } as ValidatedUpdateRequestBody);
+        }
         case "publish": {
           if (
             !isValidStatusChange(
@@ -697,6 +754,10 @@ const update: crud.Update<
               CWUOpportunityStatus.Published
             )
           ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          // Only admins can publish
+          if (!permissions.publishCWUOpportunity(request.session)) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
           // Perform validation on draft to ensure it's ready for publishing
@@ -763,7 +824,8 @@ const update: crud.Update<
             !isValidStatusChange(
               validatedCWUOpportunity.value.status,
               CWUOpportunityStatus.Suspended
-            )
+            ) ||
+            !permissions.suspendCWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -785,7 +847,8 @@ const update: crud.Update<
             !isValidStatusChange(
               validatedCWUOpportunity.value.status,
               CWUOpportunityStatus.Canceled
-            )
+            ) ||
+            !permissions.cancelCWUOpportunity(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -804,7 +867,9 @@ const update: crud.Update<
         }
         case "addAddendum": {
           if (
-            validatedCWUOpportunity.value.status === CWUOpportunityStatus.Draft
+            validatedCWUOpportunity.value.status ===
+              CWUOpportunityStatus.Draft ||
+            !permissions.addCWUAddendum(request.session)
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
@@ -823,7 +888,6 @@ const update: crud.Update<
             body: adt("addAddendum", validatedAddendumText.value)
           } as ValidatedUpdateRequestBody);
         }
-
         case "addNote": {
           const { note, attachments: noteAttachments } = request.body.value;
           const validatedNote = opportunityValidation.validateNote(note); //TODO changed to validateNote from validateHistoryNote as note-taking was removed from shared
@@ -880,6 +944,22 @@ const update: crud.Update<
               !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               cwuOpportunityNotifications.handleCWUUpdated(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "submitForReview":
+            dbResult = await db.updateCWUOpportunityStatus(
+              connection,
+              request.params.id,
+              CWUOpportunityStatus.UnderReview,
+              body.value,
+              session
+            );
+            //Notify of submission
+            if (isValid(dbResult)) {
+              cwuOpportunityNotifications.handleCWUSubmittedForReview(
                 connection,
                 dbResult.value
               );
