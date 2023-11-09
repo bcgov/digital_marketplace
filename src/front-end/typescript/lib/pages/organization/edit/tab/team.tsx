@@ -27,7 +27,8 @@ import Link, {
   leftPlacement
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row, Spinner } from "reactstrap";
+// import { Col, CustomInput, Row, Spinner } from "reactstrap";
+import { Col, Row } from "reactstrap";
 import CAPABILITIES from "shared/lib/data/capabilities";
 import {
   AffiliationMember,
@@ -42,8 +43,8 @@ import {
 } from "shared/lib/resources/affiliation";
 import {
   isAdmin,
-  isVendor,
-  usersAreEquivalent
+  isVendor
+  // usersAreEquivalent
 } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { validateUserEmail } from "shared/lib/validation/affiliation";
@@ -494,10 +495,10 @@ function membersTableHeadCells(): Table.HeadCells {
       children: "Capabilities",
       className: "text-center"
     },
-    {
-      children: "Admin",
-      className: "text-center"
-    },
+    // {
+    //   children: "Admin",
+    //   className: "text-center"
+    // },
     {
       children: null
     }
@@ -518,10 +519,11 @@ function membersTableBodyRows(
     isRemoveTeamMemberLoading ||
     isApproveAffiliationLoading ||
     isAdminStatusLoading;
-  return state.affiliations.map((m, i) => {
+  // return state.affiliations.map((m, i) => {
+  return state.affiliations.map((m, _) => {
     const isMemberLoading = state.removeTeamMemberLoading === m.id;
     const isApproveLoading = state.approveAffiliationLoading === m.id;
-    const isAdminStatusLoading = state.updateAdminStatusLoading === m.id;
+    // const isAdminStatusLoading = state.updateAdminStatusLoading === m.id;
     return [
       {
         children: (
@@ -543,38 +545,38 @@ function membersTableBodyRows(
         children: String(m.user.capabilities.length),
         className: "text-center align-middle"
       },
-      {
-        children: isAdminStatusLoading ? (
-          <Spinner size="sm" color="secondary" />
-        ) : (
-          <div className={`affiliations-admin-status-${i}`}>
-            <CustomInput
-              type="checkbox"
-              id={`affiliations-admin-checkbox-${i}`}
-              onChange={(e) => {
-                if (e) {
-                  e.stopPropagation();
-                }
-                isAffiliationAdminStatusChecked(m)
-                  ? dispatch(adt("onUpdateAdminStatus", m) as Msg)
-                  : dispatch(
-                      adt(
-                        "showModal",
-                        adt("acceptOrgAdminStatusTerms", m) as ModalId
-                      ) as Msg
-                    );
-              }}
-              disabled={
-                isLoading ||
-                memberIsOwner(m) ||
-                usersAreEquivalent(state.viewerUser, m.user)
-              }
-              checked={isAffiliationAdminStatusChecked(m)}
-            />
-          </div>
-        ),
-        className: `text-center align-middle`
-      },
+      // {
+      //   children: isAdminStatusLoading ? (
+      //     <Spinner size="sm" color="secondary" />
+      //   ) : (
+      //     <div className={`affiliations-admin-status-${i}`}>
+      //       <CustomInput
+      //         type="checkbox"
+      //         id={`affiliations-admin-checkbox-${i}`}
+      //         onChange={(e) => {
+      //           if (e) {
+      //             e.stopPropagation();
+      //           }
+      //           isAffiliationAdminStatusChecked(m)
+      //             ? dispatch(adt("onUpdateAdminStatus", m) as Msg)
+      //             : dispatch(
+      //                 adt(
+      //                   "showModal",
+      //                   adt("acceptOrgAdminStatusTerms", m) as ModalId
+      //                 ) as Msg
+      //               );
+      //         }}
+      //         disabled={
+      //           isLoading ||
+      //           memberIsOwner(m) ||
+      //           usersAreEquivalent(state.viewerUser, m.user)
+      //         }
+      //         checked={isAffiliationAdminStatusChecked(m)}
+      //       />
+      //     </div>
+      //   ),
+      //   className: `text-center align-middle`
+      // },
       {
         showOnHover: !(isMemberLoading || isApproveLoading),
         children: (
