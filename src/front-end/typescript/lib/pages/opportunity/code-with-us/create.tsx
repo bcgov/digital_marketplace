@@ -29,18 +29,23 @@ import {
   CWUOpportunityStatus,
   FORMATTED_MAX_BUDGET
 } from "shared/lib/resources/opportunity/code-with-us";
-import { UserType } from "shared/lib/resources/user";
+import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
-type ModalId = "publish" | "cancel";
+type CWUCreateSubmitStatus =
+  | CWUOpportunityStatus.Published
+  | CWUOpportunityStatus.UnderReview;
+
+type ModalId = ADT<"publish", CWUCreateSubmitStatus> | ADT<"cancel">;
 
 interface ValidState {
   showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
   showErrorAlert: "publish" | "save" | null;
+  viewerUser: User;
   form: Immutable<Form.State>;
 }
 
@@ -50,8 +55,8 @@ export type InnerMsg =
   | ADT<"dismissErrorAlert">
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"publish">
-  | ADT<"onPublishResponse", Form.PersistResult>
+  | ADT<"publish", CWUCreateSubmitStatus>
+  | ADT<"onPublishResponse", [CWUCreateSubmitStatus, Form.PersistResult]>
   | ADT<"saveDraft">
   | ADT<"onSaveDraftResponse", Form.PersistResult>
   | ADT<"form", Form.Msg>;
@@ -68,9 +73,10 @@ const init: component_.page.Init<
   Route
 > = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Government, UserType.Admin],
-  success() {
+  success({ shared }) {
     const [formState, formCmds] = Form.init({
-      canRemoveExistingAttachments: true //moot
+      canRemoveExistingAttachments: true, //moot
+      viewerUser: shared.sessionUser
     });
     return [
       valid(
@@ -79,6 +85,7 @@ const init: component_.page.Init<
           publishLoading: 0,
           saveDraftLoading: 0,
           showErrorAlert: null,
+          viewerUser: shared.sessionUser,
           form: immutable(formState)
         })
       ),
@@ -122,17 +129,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           startPublishLoading(state),
           [
             component_.cmd.map(
-              Form.persist(
-                state.form,
-                adt("create", CWUOpportunityStatus.Published)
-              ),
-              (result) => adt("onPublishResponse", result)
+              Form.persist(state.form, adt("create", msg.value)),
+              (result) => adt("onPublishResponse", [msg.value, result]) as Msg
             )
           ]
         ];
       }
       case "onPublishResponse": {
-        const result = msg.value;
+        const [intendedStatus, result] = msg.value;
+        const isPublish = intendedStatus === CWUOpportunityStatus.Published;
         switch (result.tag) {
           case "valid": {
             const [resultFormState, resultCmds, opportunity] = result.value;
@@ -153,7 +158,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ),
                 component_.cmd.dispatch(
                   component_.global.showToastMsg(
-                    adt("success", toasts.published.success(opportunity.id))
+                    adt(
+                      "success",
+                      isPublish
+                        ? toasts.published.success(opportunity.id)
+                        : toasts.statusChanged.success(intendedStatus)
+                    )
                   )
                 )
               ]
@@ -319,15 +329,27 @@ export const component: component_.page.Component<
     const isSaveDraftLoading = state.saveDraftLoading > 0;
     const isLoading = isPublishLoading || isSaveDraftLoading;
     const isValid = Form.isValid(state.form);
+    const isViewerAdmin = isAdmin(state.viewerUser);
     return adt("links", [
       {
-        children: "Publish",
+        children: isViewerAdmin ? "Publish" : "Submit for Review",
         symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
         button: true,
         loading: isPublishLoading,
         disabled: isLoading || !isValid,
         color: "primary",
-        onClick: () => dispatch(adt("showModal", "publish" as const))
+        onClick: () =>
+          dispatch(
+            adt(
+              "showModal",
+              adt(
+                "publish",
+                isViewerAdmin
+                  ? CWUOpportunityStatus.Published
+                  : CWUOpportunityStatus.UnderReview
+              )
+            ) as Msg
+          )
       },
       {
         children: "Save Draft",
@@ -342,7 +364,7 @@ export const component: component_.page.Component<
         children: "Cancel",
         color: "c-nav-fg-alt",
         disabled: isLoading,
-        onClick: () => dispatch(adt("showModal", "cancel" as const))
+        onClick: () => dispatch(adt("showModal", adt("cancel")) as Msg)
       }
     ]);
   }),
@@ -358,19 +380,35 @@ export const component: component_.page.Component<
       : []
   })),
   getModal: getModalValid<ValidState, Msg>((state) => {
-    switch (state.showModal) {
-      case "publish":
+    if (!state.showModal) {
+      return component_.page.modal.hide();
+    }
+    switch (state.showModal.tag) {
+      case "publish": {
+        const publishStatus = state.showModal.value;
         return component_.page.modal.show({
-          title: "Publish Code With Us Opportunity?",
+          title:
+            publishStatus === CWUOpportunityStatus.Published
+              ? "Publish Code With Us Opportunity?"
+              : "Submit Opportunity for Review?",
           body: () =>
-            "Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified.",
-          onCloseMsg: adt("hideModal"),
+            publishStatus === CWUOpportunityStatus.Published
+              ? "Are you sure you want to publish this opportunity? Once published, all subscribed users will be notified."
+              : "Are you sure you want to submit this Code With Us opportunity for review? Once submitted, an" +
+                " administrator will review it and may reach out to you to request changes before publishing it.",
+          onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Publish Opportunity",
-              icon: "bullhorn",
+              text:
+                publishStatus === CWUOpportunityStatus.Published
+                  ? "Publish Opportunity"
+                  : "Submit for Review",
+              icon:
+                publishStatus === CWUOpportunityStatus.Published
+                  ? ("bullhorn" as const)
+                  : ("paper-plane" as const),
               color: "primary",
-              msg: adt("publish") as Msg,
+              msg: adt("publish", publishStatus),
               button: true
             },
             {
@@ -380,6 +418,7 @@ export const component: component_.page.Component<
             }
           ]
         });
+      }
       case "cancel":
         return component_.page.modal.show({
           title: "Cancel New Code With Us Opportunity?",

@@ -8,6 +8,7 @@ import {
   isTWUOpportunityAuthor,
   isTWUProposalAuthor,
   isUserOwnerOfOrg,
+  isUserOwnerOrAdminOfOrg,
   userHasAcceptedCurrentTerms,
   userHasAcceptedPreviousTerms
 } from "back-end/lib/db";
@@ -171,7 +172,7 @@ export async function readOneOrganization(
   }
   return (
     isAdmin(session) ||
-    (await isUserOwnerOfOrg(connection, session.user, orgId))
+    (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId))
   );
 }
 
@@ -223,7 +224,8 @@ export async function readManyAffiliationsForOrganization(
   // Membership lists for organizations can only be read by admins or organization owner
   return (
     isAdmin(session) ||
-    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
   );
 }
 
@@ -235,11 +237,12 @@ export async function createAffiliation(
   // New affiliations can be created only by organization owners, or admins
   return (
     isAdmin(session) ||
-    (!!session && (await isUserOwnerOfOrg(connection, session.user, orgId)))
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
   );
 }
 
-export function updateAffiliation(
+export function approveAffiliation(
   session: Session,
   affiliation: Affiliation
 ): boolean {
@@ -249,17 +252,29 @@ export function updateAffiliation(
   );
 }
 
+export async function updateAffiliationAdminStatus(
+  connection: Connection,
+  session: Session,
+  orgId: string
+): Promise<boolean> {
+  return (
+    isAdmin(session) ||
+    (!!session &&
+      (await isUserOwnerOrAdminOfOrg(connection, session.user, orgId)))
+  );
+}
+
 export async function deleteAffiliation(
   connection: Connection,
   session: Session,
   affiliation: Affiliation
 ): Promise<boolean> {
-  // Affiliations can be deleted by the user who owns them, an owner of the org, or an admin
+  // Affiliations can be deleted by the user who owns them, an owner/admin of the org, or an admin
   return (
     isAdmin(session) ||
     (!!session && isOwnAccount(session, affiliation.user.id)) ||
     (!!session &&
-      (await isUserOwnerOfOrg(
+      (await isUserOwnerOrAdminOfOrg(
         connection,
         session.user,
         affiliation.organization.id
@@ -326,6 +341,21 @@ export async function deleteCWUOpportunity(
       ))) ||
     false
   );
+}
+
+export function publishCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+export function addCWUAddendum(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function cancelCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
+}
+
+export function suspendCWUOpportunity(session: Session): boolean {
+  return isAdmin(session);
 }
 
 // CWU Proposals.

@@ -14,6 +14,8 @@ export function cwuOpportunityStatusToColor(
   switch (s) {
     case CWUOpportunityStatus.Draft:
       return "secondary";
+    case CWUOpportunityStatus.UnderReview:
+      return "warning";
     case CWUOpportunityStatus.Published:
       return "success";
     case CWUOpportunityStatus.Evaluation:
@@ -33,6 +35,8 @@ export function cwuOpportunityStatusToTitleCase(
   switch (s) {
     case CWUOpportunityStatus.Draft:
       return "Draft";
+    case CWUOpportunityStatus.UnderReview:
+      return "Under Review";
     case CWUOpportunityStatus.Published:
       return "Published";
     case CWUOpportunityStatus.Evaluation:
@@ -90,6 +94,8 @@ export function cwuOpportunityStatusToPresentTenseVerb(
       return "Suspend";
     case CWUOpportunityStatus.Canceled:
       return "Cancel";
+    case CWUOpportunityStatus.UnderReview:
+      return "Submit";
     case CWUOpportunityStatus.Published:
       return "Publish";
     case CWUOpportunityStatus.Awarded:
@@ -108,6 +114,8 @@ export function cwuOpportunityStatusToPastTenseVerb(
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled";
+    case CWUOpportunityStatus.UnderReview:
+      return "Submitted";
     case CWUOpportunityStatus.Published:
       return "Published";
     case CWUOpportunityStatus.Awarded:

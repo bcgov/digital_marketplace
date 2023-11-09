@@ -22,6 +22,7 @@ export interface OrganizationAdmin {
   possessOneServiceArea?: boolean;
   numTeamMembers?: number;
   serviceAreas: TWUServiceAreaRecord[];
+  viewerIsOrgAdmin?: boolean;
 }
 
 export interface Organization extends OrganizationAdmin {

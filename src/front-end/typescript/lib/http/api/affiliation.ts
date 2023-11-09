@@ -32,7 +32,7 @@ export function readManyForOrganization<Msg>(
 }
 
 export function update<Msg>(): crud.UpdateAction<
-  null,
+  Resource.UpdateRequestBody,
   Resource.Affiliation,
   Resource.UpdateValidationErrors,
   Msg

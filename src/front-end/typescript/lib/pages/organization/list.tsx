@@ -26,7 +26,13 @@ import {
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
-import { isVendor, User, UserType } from "shared/lib/resources/user";
+import {
+  isAdmin,
+  isVendor,
+  User,
+  usersAreEquivalent,
+  UserType
+} from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
 
 type TableOrganization = OrganizationSlim;
@@ -181,22 +187,29 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
     const owner = {
       className: "text-nowrap",
       children: org.owner ? (
-        <Link dest={routeDest(adt("userProfile", { userId: org.owner.id }))}>
-          {org.owner.name}
-        </Link>
+        state.sessionUser &&
+        (usersAreEquivalent(org.owner, state.sessionUser) ||
+          isAdmin(state.sessionUser)) ? (
+          <Link dest={routeDest(adt("userProfile", { userId: org.owner.id }))}>
+            {org.owner.name}
+          </Link>
+        ) : (
+          org.owner.name
+        )
       ) : (
         EMPTY_STRING
       )
     };
     return [
       {
-        children: org.owner ? (
-          <Link dest={routeDest(adt("orgEdit", { orgId: org.id }))}>
-            {org.legalName}
-          </Link>
-        ) : (
-          org.legalName
-        )
+        children:
+          org.owner || org.viewerIsOrgAdmin ? (
+            <Link dest={routeDest(adt("orgEdit", { orgId: org.id }))}>
+              {org.legalName}
+            </Link>
+          ) : (
+            org.legalName
+          )
       },
       ...(showOwnerColumn(state) ? [owner] : [])
     ];

@@ -8,8 +8,140 @@ import React from "react";
 import { CONTACT_EMAIL } from "shared/config";
 import { formatAmount, formatDate, formatTime } from "shared/lib";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
-import { User } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { getValidValue } from "shared/lib/validation";
+
+export async function handleCWUSubmittedForReview(
+  connection: db.Connection,
+  opportunity: CWUOpportunity
+): Promise<void> {
+  // Notify all admin users of the submitted CWU
+  const adminUsers =
+    getValidValue(
+      await db.readManyUsersByRole(connection, UserType.Admin),
+      null
+    ) || [];
+  await Promise.all(
+    adminUsers.map(
+      async (admin) =>
+        await newCWUOpportunitySubmittedForReview(admin, opportunity)
+    )
+  );
+
+  // Notify the authoring gov user of the submission
+  const author =
+    opportunity.createdBy &&
+    getValidValue(
+      await db.readOneUser(connection, opportunity.createdBy.id),
+      null
+    );
+  if (author) {
+    await newCWUOpportunitySubmittedForReviewAuthor(author, opportunity);
+  }
+}
+
+/**
+ * wrapper
+ */
+export const newCWUOpportunitySubmittedForReview = makeSend(
+  newCWUOpportunitySubmittedForReviewT
+);
+
+/**
+ * Creates content for an email.
+ *
+ * @param recipient - object, someone to send it to, in this case the administrators of the system
+ * @param opportunity - object, a CWU opportunity
+ * @returns - object, an email template with content
+ */
+export async function newCWUOpportunitySubmittedForReviewT(
+  recipient: User,
+  opportunity: CWUOpportunity
+): Promise<Emails> {
+  const title = "A Code With Us Opportunity Has Been Submitted For Review";
+  const description =
+    "The following Digital Marketplace opportunity has been submitted for review:";
+  return [
+    {
+      summary:
+        "CWU opportunity submitted for review; sent to all administrators for the system.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              You can review and publish this opportunity by{" "}
+              <templates.Link
+                text="signing in"
+                url={templates.makeUrl("sign-in")}
+              />{" "}
+              and accessing it from the opportunity list.
+            </p>
+            <p>
+              You can also edit the opportunity prior to publishing. The
+              opportunity author will be notified when you publish, and the
+              opportunity will made visible to the public.
+            </p>
+          </div>
+        ),
+        callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
+      })
+    }
+  ];
+}
+
+/**
+ * wrapper
+ */
+export const newCWUOpportunitySubmittedForReviewAuthor = makeSend(
+  newCWUOpportunitySubmittedForReviewAuthorT
+);
+
+/**
+ * Creates content for an email.
+ *
+ * @param recipient - object, someone to send it to, in this case the author of the opportunity
+ * @param opportunity - object, a CWU opportunity
+ * @returns - object, an email template with content
+ */
+export async function newCWUOpportunitySubmittedForReviewAuthorT(
+  recipient: User,
+  opportunity: CWUOpportunity
+): Promise<Emails> {
+  const title = "Your Code With Us Opportunity Has Been Submitted For Review"; // Used for subject line and heading
+  const description =
+    "You have submitted the following Digital Marketplace opportunity for review:";
+  return [
+    {
+      summary:
+        "CWU opportunity submitted for review; sent to the submitting government user.",
+      to: recipient.email || "",
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              An administrator will review your opportunity. You will be
+              notified once the opportunity has been posted.
+            </p>
+            <p>
+              If you have any questions, please send an email to{" "}
+              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
+            </p>
+          </div>
+        ),
+        callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
+      })
+    }
+  ];
+}
 
 export async function handleCWUPublished(
   connection: db.Connection,
