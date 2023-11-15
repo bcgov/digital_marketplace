@@ -123,7 +123,8 @@ test("sprint-with-us proposal crud", async () => {
       "id",
       "legalName",
       "logoImageFile",
-      "active"
+      "active",
+      "viewerIsOrgAdmin"
     ])
   );
 
