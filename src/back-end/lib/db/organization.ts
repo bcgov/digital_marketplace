@@ -2,7 +2,9 @@ import { generateUuid } from "back-end/lib";
 import { Connection, tryDb } from "back-end/lib/db";
 import {
   createAffiliation,
-  readManyAffiliationsForOrganization
+  readManyAffiliationsForOrganization,
+  RawHistoryRecord as RawAffiliationHistoryRecord,
+  readOneAffiliationById
 } from "back-end/lib/db/affiliation";
 import { readOneFileById } from "back-end/lib/db/file";
 import { RawUser, rawUserToUser, readOneUserSlim } from "back-end/lib/db/user";
@@ -17,13 +19,15 @@ import {
 import { FileRecord } from "shared/lib/resources/file";
 import {
   Organization,
+  OrganizationEvent,
+  OrganizationHistoryRecord,
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
 import { Session } from "shared/lib/resources/session";
 import { User } from "shared/lib/resources/user";
-import { Id } from "shared/lib/types";
+import { ADT, Id, adt } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
 
 export type CreateOrganizationParams = Partial<
@@ -59,6 +63,18 @@ interface RawOrganizationSlim
   owner?: Id;
   numTeamMembers?: string;
 }
+
+interface RawHistoryRecord
+  extends Omit<OrganizationHistoryRecord, "createdBy" | "type" | "member"> {
+  id: Id;
+  createdBy: Id;
+  event: OrganizationEvent;
+  organization: Id;
+}
+
+type RawHistoryRecords =
+  | ADT<"organization", RawHistoryRecord>
+  | ADT<"affiliation", RawAffiliationHistoryRecord>;
 
 async function rawOrganizationToOrganization(
   connection: Connection,
@@ -134,6 +150,52 @@ async function rawOrganizationSlimToOrganizationSlim(
     serviceAreas,
     ...(viewerIsOrgAdmin ? { viewerIsOrgAdmin } : {})
   };
+}
+
+async function rawHistoryRecordToHistoryRecord(
+  connection: Connection,
+  raw: RawHistoryRecords
+): Promise<OrganizationHistoryRecord> {
+  const errorMsg = "unable to process organization history record";
+  const { tag, value } = raw;
+
+  const createdBy = getValidValue(
+    await readOneUserSlim(connection, raw.value.createdBy),
+    null
+  );
+
+  if (!createdBy) {
+    throw new Error(errorMsg);
+  }
+
+  // Get member information for affiliation events
+  if (tag === "affiliation") {
+    const { affiliation: affilationId, event: type, ...restOfRaw } = value;
+
+    const affiliation = getValidValue(
+      await readOneAffiliationById(connection, affilationId),
+      null
+    );
+
+    const member =
+      affiliation &&
+      getValidValue(
+        await readOneUserSlim(connection, affiliation.user.id),
+        null
+      );
+
+    if (!member) {
+      throw new Error(errorMsg);
+    }
+
+    return { ...restOfRaw, type, member, createdBy };
+  }
+
+  return (({ createdAt, event: type }) => ({
+    createdAt,
+    createdBy,
+    type
+  }))(value);
 }
 
 async function doesOrganizationMeetAllCapabilities(
@@ -281,6 +343,33 @@ export const readOneOrganization = tryDb<
         result
       );
       result.possessOneServiceArea = result.serviceAreas.length > 0;
+
+      const rawAffiliationHistory =
+        await connection<RawAffiliationHistoryRecord>("affiliationEvents")
+          .select<RawAffiliationHistoryRecord[]>("affiliationEvents.*")
+          .join(
+            "affiliations",
+            "affiliationEvents.affiliation",
+            "=",
+            "affiliations.id"
+          )
+          .where({ "affiliations.organization": result.id })
+          .orderBy("createdAt", "desc");
+
+      if (!rawAffiliationHistory) {
+        throw new Error("unable to read affiliation events");
+      }
+
+      // Merge affiliation and organization history records when they exist
+      result.history = await Promise.all(
+        rawAffiliationHistory.map(
+          async (raw) =>
+            await rawHistoryRecordToHistoryRecord(
+              connection,
+              adt("affiliation", raw)
+            )
+        )
+      );
     }
   }
   return valid(
