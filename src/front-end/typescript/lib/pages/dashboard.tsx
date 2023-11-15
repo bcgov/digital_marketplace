@@ -2,10 +2,10 @@ import {
   getAlertsValid,
   getActionsValid,
   makePageMetadata,
-  prefixPath,
   updateValid,
+  Intersperse,
   viewValid,
-  Intersperse
+  prefixPath
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -32,7 +32,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import { Col, Container, Row } from "reactstrap";
 import { compareDates, formatDate } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
@@ -53,6 +53,9 @@ import {
   twuProposalStatusToColor,
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
+import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
+
+type ProposalsTab = "my-proposals" | "org-proposals";
 
 interface ValidState {
   table: {
@@ -68,6 +71,7 @@ interface ValidState {
   viewerUser: User;
   isSWUQualified?: boolean;
   isTWUQualified?: boolean;
+  activeProposalsTab: ProposalsTab;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -93,7 +97,8 @@ type InitResponse =
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
-  | ADT<"onInitResponse", InitResponse>;
+  | ADT<"onInitResponse", InitResponse>
+  | ADT<"setActiveProposalsTab", ProposalsTab>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -238,7 +243,8 @@ const init: component_.page.Init<
   success({ shared }) {
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
-    const title = vendor ? "My Proposals" : "My Opportunities";
+    // const title = vendor ? "My Proposals" : "My Opportunities";
+    const title = "";
     const headCells: Table.HeadCells = [
       {
         children: vendor ? "Opportunity" : "Title",
@@ -266,6 +272,7 @@ const init: component_.page.Init<
         immutable({
           isSWUQualified: false,
           isTWUQualified: false,
+          activeProposalsTab: "my-proposals",
           viewerUser,
           table: {
             title,
@@ -353,6 +360,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               state
                 .set("isSWUQualified", isSWUQualified)
                 .set("isTWUQualified", isTWUQualified)
+                .set("activeProposalsTab", state.activeProposalsTab)
                 .setIn(
                   ["table", "bodyRows"],
                   makeVendorBodyRows(
@@ -370,20 +378,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             const [cwuOpportunities, swuOpportunities, twuOpportunities] =
               msg.value.value;
             return [
-              state.setIn(
-                ["table", "bodyRows"],
-                makePublicSectorBodyRows(
-                  cwuOpportunities,
-                  swuOpportunities,
-                  twuOpportunities,
-                  state.viewerUser
-                )
-              ),
+              state
+                .set("activeProposalsTab", state.activeProposalsTab)
+                .setIn(
+                  ["table", "bodyRows"],
+                  makePublicSectorBodyRows(
+                    cwuOpportunities,
+                    swuOpportunities,
+                    twuOpportunities,
+                    state.viewerUser
+                  )
+                ),
               [component_.cmd.dispatch(component_.page.readyMsg())]
             ];
           }
         }
       }
+      case "setActiveProposalsTab":
+        return [state.set("activeProposalsTab", msg.value), []];
       case "table":
         return component_.base.updateChild({
           state,
@@ -453,56 +465,116 @@ const Dashboard: component_.base.View<DashboardProps> = ({
 }) => {
   return (
     <div>
-      <Row className="mb-5">
-        <Col xs="12">
-          <h1 className="mb-0">Dashboard</h1>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs="12" md="9">
-          <div className="rounded-lg border bg-white p-4 p-sm-4h shadow-hover">
-            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
-              <div className="font-weight-bold mr-sm-3">{table.title}</div>
-              {table.link ? (
-                <span className="d-none d-sm-inline-flex ml-sm-auto font-size-small">
-                  <Link
-                    dest={routeDest(table.link.route)}
-                    iconSymbolSize={0.9}
-                    symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}>
-                    {table.link.text}
-                  </Link>
-                </span>
-              ) : null}
-            </div>
-            <Table.view
-              headCells={table.headCells}
-              bodyRows={table.bodyRows}
-              state={table.state}
-              dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-                adt("table" as const, msg)
-              )}
-            />
-          </div>
-        </Col>
-      </Row>
+      <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
+        <div className="font-weight-bold mr-sm-3">{table.title}</div>
+        {table.link ? (
+          <span className="d-none d-sm-inline-flex ml-sm-auto font-size-small">
+            <Link
+              dest={routeDest(table.link.route)}
+              iconSymbolSize={0.9}
+              symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}>
+              {table.link.text}
+            </Link>
+          </span>
+        ) : null}
+      </div>
+      <Table.view
+        headCells={table.headCells}
+        bodyRows={table.bodyRows}
+        state={table.state}
+        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+          adt("table" as const, msg)
+        )}
+      />
     </div>
   );
 };
 
 const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
-    if (state.table) {
-      return (
-        <Dashboard
-          dispatch={dispatch}
-          viewerUser={state.viewerUser}
-          table={state.table}
-        />
-      );
-    }
-    return <Welcome viewerUser={state.viewerUser} />;
+    // const isMyProposals = state.activeProposalsTab === "my-proposals";
+    return (
+      <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+        <Row className="mb-5">
+          <Col xs="12">
+            <h1 className="mb-0">Dashboard</h1>
+          </Col>
+        </Row>
+        <Row>
+          <Col xs="12" md="9">
+            <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+              <Proposals state={state} dispatch={dispatch} />
+              {/*{isMyProposals ? <UserProposals {...state} /> : null}*/}
+            </div>
+          </Col>
+        </Row>
+      </div>
+    );
   }
 );
+
+const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const activeTab = (() => {
+    switch (state.activeProposalsTab) {
+      case "my-proposals":
+        if (state.table) {
+          return (
+            <Dashboard
+              dispatch={dispatch}
+              viewerUser={state.viewerUser}
+              table={state.table}
+            />
+          );
+        } else {
+          return <Welcome viewerUser={state.viewerUser} />;
+        }
+      case "org-proposals":
+        // return <Dashboard {...props} />;
+        return "HELLO MY ORG";
+    }
+  })();
+  return (
+    <Container>
+      <ProposalTabs state={state} dispatch={dispatch} />
+      <Row>
+        <Col xs="12" md="12">
+          {activeTab}
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const ProposalTabs: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const activeTab = state.activeProposalsTab;
+  const getTabInfo = (tab: ProposalsTab) => ({
+    active: activeTab === tab,
+    onClick: () => dispatch(adt("setActiveProposalsTab", tab))
+  });
+  const tabs: Tab[] = [
+    {
+      ...getTabInfo("my-proposals"),
+      text: "My Proposals"
+    },
+    {
+      ...getTabInfo("org-proposals"),
+      text: "Org Proposals"
+    }
+  ];
+  return (
+    <Row className="mb-2">
+      <Col xs="12">
+        <TabbedNav tabs={tabs} />
+      </Col>
+    </Row>
+  );
+};
 
 export const component: component_.page.Component<
   RouteParams,
