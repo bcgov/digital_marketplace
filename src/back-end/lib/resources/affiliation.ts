@@ -31,7 +31,7 @@ import {
   memberIsOwner
 } from "shared/lib/resources/affiliation";
 import { Organization } from "shared/lib/resources/organization";
-import { Session } from "shared/lib/resources/session";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { UserStatus, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import {
@@ -55,9 +55,10 @@ export interface ValidatedCreateRequestBody {
 
 export type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-type ValidatedUpdateRequestBody =
-  | ADT<"approve">
-  | ADT<"updateAdminStatus", MembershipType>;
+type ValidatedUpdateRequestBody = {
+  session: AuthenticatedSession;
+  body: ADT<"approve"> | ADT<"updateAdminStatus", MembershipType>;
+};
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -319,6 +320,13 @@ const update: crud.Update<
       if (!request.body) {
         return invalid({ affiliation: adt("parseFailure" as const) });
       }
+
+      if (!permissions.isSignedIn(request.session)) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
+
       const validatedAffiliation = await validateAffiliationId(
         connection,
         request.params.id
@@ -344,7 +352,10 @@ const update: crud.Update<
                 permissions: [permissions.ERROR_MESSAGE]
               });
             }
-            return valid(adt("approve" as const));
+            return valid({
+              session: request.session,
+              body: adt("approve" as const)
+            });
           }
           return invalid({
             affiliation: ["Membership is not pending."]
@@ -383,7 +394,10 @@ const update: crud.Update<
           const membershipType = adminStatusToAffiliationMembershipType(
             request.body.value
           );
-          return valid(adt("updateAdminStatus" as const, membershipType));
+          return valid({
+            session: request.session,
+            body: adt("updateAdminStatus" as const, membershipType)
+          });
         }
         default:
           return invalid({ affiliation: adt("parseFailure" as const) });
@@ -391,9 +405,10 @@ const update: crud.Update<
     },
     respond: wrapRespond({
       valid: async (request) => {
+        const { body, session } = request.body;
         const id = request.params.id;
         let dbResult: Validation<Affiliation, null>;
-        switch (request.body.tag) {
+        switch (body.tag) {
           case "approve":
             dbResult = await db.approveAffiliation(connection, id);
             if (isValid(dbResult)) {
@@ -407,7 +422,8 @@ const update: crud.Update<
             dbResult = await db.updateAdminStatus(
               connection,
               id,
-              request.body.value
+              body.value,
+              session
             );
             break;
         }

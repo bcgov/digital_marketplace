@@ -8,12 +8,14 @@ import { readOneUser } from "back-end/lib/db/user";
 import { valid } from "shared/lib/http";
 import {
   Affiliation,
+  AffiliationEvent,
+  AffiliationHistoryRecord,
   AffiliationMember,
   AffiliationSlim,
   MembershipStatus,
   MembershipType
 } from "shared/lib/resources/affiliation";
-import { Session } from "shared/lib/resources/session";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
@@ -30,6 +32,14 @@ interface RawAffiliation {
   membershipStatus: MembershipStatus;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface RawHistoryRecord
+  extends Omit<AffiliationHistoryRecord, "createdBy" | "member" | "type"> {
+  id: Id;
+  createdBy: Id;
+  event: AffiliationEvent;
+  affiliation: Id;
 }
 
 async function rawAffiliationToAffiliation(
@@ -248,29 +258,64 @@ export const approveAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
-export const updateAdminStatus = tryDb<[Id, MembershipType], Affiliation>(
-  async (connection, id, membershipType: MembershipType) => {
+export const updateAdminStatus = tryDb<
+  [Id, MembershipType, AuthenticatedSession],
+  Affiliation
+>(
+  async (
+    connection,
+    id,
+    membershipType: MembershipType,
+    session: AuthenticatedSession
+  ) => {
     const now = new Date();
-    const [result] = await connection<RawAffiliation>("affiliations")
-      .update(
-        {
-          membershipType,
-          updatedAt: now
-        } as RawAffiliation,
-        "*"
-      )
-      .where({
-        id
-      })
-      .whereIn("organization", function () {
-        this.select("id").from("organizations").where({
-          active: true
+    return await connection.transaction(async (trx) => {
+      const [affiliation] = await connection<RawAffiliation>("affiliations")
+        .transacting(trx)
+        .update(
+          {
+            membershipType,
+            updatedAt: now
+          } as RawAffiliation,
+          "*"
+        )
+        .where({
+          id
+        })
+        .whereIn("organization", function () {
+          this.select("id").from("organizations").where({
+            active: true
+          });
         });
-      });
-    if (!result) {
-      throw new Error("unable to update admin status");
-    }
-    return valid(await rawAffiliationToAffiliation(connection, result));
+
+      if (!affiliation) {
+        throw new Error("unable to update admin status");
+      }
+
+      const [affiliationEvent] = await connection<RawHistoryRecord>(
+        "affiliationEvents"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            affiliation: affiliation.id,
+            event:
+              membershipType === MembershipType.Admin
+                ? AffiliationEvent.AdminStatusGranted
+                : AffiliationEvent.AdminStatusRevoked,
+            createdAt: now,
+            createdBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!affiliationEvent) {
+        throw new Error("unable to create affiliation event");
+      }
+
+      return valid(await rawAffiliationToAffiliation(connection, affiliation));
+    });
   }
 );
 
