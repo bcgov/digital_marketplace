@@ -73,6 +73,7 @@ export interface Values
     | "deactivatedBy"
     | "serviceAreas"
     | "viewerIsOrgAdmin"
+    | "history"
   > {
   newLogoImage?: File;
 }

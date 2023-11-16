@@ -2,7 +2,7 @@ import {
   Organization,
   OrganizationSlim
 } from "shared/lib/resources/organization";
-import { User, usersHaveCapability } from "shared/lib/resources/user";
+import { User, UserSlim, usersHaveCapability } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -16,6 +16,18 @@ export enum MembershipStatus {
   Active = "ACTIVE",
   Inactive = "INACTIVE",
   Pending = "PENDING"
+}
+
+export enum AffiliationEvent {
+  AdminStatusGranted = "ADMIN_STATUS_GRANTED",
+  AdminStatusRevoked = "ADMIN_STATUS_REVOKED"
+}
+
+export interface AffiliationHistoryRecord {
+  createdAt: Date;
+  createdBy: UserSlim;
+  type: AffiliationEvent;
+  member: UserSlim;
 }
 
 export interface Affiliation {
