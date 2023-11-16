@@ -243,8 +243,7 @@ const init: component_.page.Init<
   success({ shared }) {
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
-    // const title = vendor ? "My Proposals" : "My Opportunities";
-    const title = "";
+    const title = vendor ? "" : "My Opportunities";
     const headCells: Table.HeadCells = [
       {
         children: vendor ? "Opportunity" : "Title",
@@ -410,6 +409,61 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   }
 );
 
+const Header: component_.base.View = () => {
+  return (
+    <Row className="mb-5">
+      <Col xs="12">
+        <h1 className="mb-0">Dashboard</h1>
+      </Col>
+    </Row>
+  );
+};
+
+/**
+ * Will display Tabs only for Vendors. For both Vendors and Public Sector Users,
+ * will display tables only if there is data to show, otherwise Welcome
+ */
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state, dispatch }) => {
+    const vendor = isVendor(state.viewerUser);
+    if (vendor) {
+      return (
+        <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+          <Header />
+          <Row>
+            <Col xs="12" md="9">
+              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+                <Proposals state={state} dispatch={dispatch} />
+              </div>
+            </Col>
+          </Row>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+          <Header />
+          <Row>
+            <Col xs="12" md="9">
+              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+                {state.table ? (
+                  <Dashboard
+                    dispatch={dispatch}
+                    viewerUser={state.viewerUser}
+                    table={state.table}
+                  />
+                ) : (
+                  <Welcome viewerUser={state.viewerUser} />
+                )}
+              </div>
+            </Col>
+          </Row>
+        </div>
+      );
+    }
+  }
+);
+
 const Welcome: component_.base.View<Pick<ValidState, "viewerUser">> = ({
   viewerUser
 }) => {
@@ -490,29 +544,6 @@ const Dashboard: component_.base.View<DashboardProps> = ({
   );
 };
 
-const view: component_.page.View<State, InnerMsg, Route> = viewValid(
-  ({ state, dispatch }) => {
-    // const isMyProposals = state.activeProposalsTab === "my-proposals";
-    return (
-      <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
-        <Row className="mb-5">
-          <Col xs="12">
-            <h1 className="mb-0">Dashboard</h1>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs="12" md="9">
-            <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
-              <Proposals state={state} dispatch={dispatch} />
-              {/*{isMyProposals ? <UserProposals {...state} /> : null}*/}
-            </div>
-          </Col>
-        </Row>
-      </div>
-    );
-  }
-);
-
 const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
   state,
   dispatch
@@ -567,6 +598,7 @@ const ProposalTabs: component_.base.ComponentView<ValidState, Msg> = ({
       text: "Org Proposals"
     }
   ];
+
   return (
     <Row className="mb-2">
       <Col xs="12">
