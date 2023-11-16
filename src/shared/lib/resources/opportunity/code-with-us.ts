@@ -308,7 +308,6 @@ export function canCWUOpportunityDetailsBeEdited(
 
 export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Published,
-  CWUOpportunityStatus.UnderReview,
   CWUOpportunityStatus.Evaluation,
   CWUOpportunityStatus.Awarded
 ];
@@ -316,7 +315,8 @@ export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
 export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Draft,
   CWUOpportunityStatus.Canceled,
-  CWUOpportunityStatus.Suspended
+  CWUOpportunityStatus.Suspended,
+  CWUOpportunityStatus.UnderReview
 ];
 
 export function isCWUOpportunityAcceptingProposals(
