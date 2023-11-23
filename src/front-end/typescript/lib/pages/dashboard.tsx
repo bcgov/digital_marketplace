@@ -564,7 +564,10 @@ const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
         }
       case "org-proposals":
         // return <Dashboard {...props} />;
-        return "HELLO MY ORG";
+        return (
+          "Proposals belonging to your organization or organizations you are affiliated with will appear here" +
+          " after you have been granted an Admin role in those affiliated organizations."
+        );
     }
   })();
   return (

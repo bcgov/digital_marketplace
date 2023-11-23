@@ -1,5 +1,6 @@
 import {
   Connection,
+  getOrgIdsForOwnerOrAdmin,
   hasCWUAttachmentPermission,
   hasFilePermission,
   isCWUOpportunityAuthor,
@@ -81,6 +82,27 @@ export function isOwnSession(session: Session, id: string): boolean {
 
 export function isVendor(session: Session): boolean {
   return isSignedIn(session) && session?.user.type === UserType.Vendor;
+}
+
+/**
+ * Checks to see if the user is affiliated with any orgs as OWNER or ADMIN
+ *
+ * @param connection
+ * @param session
+ * @returns Promise<boolean> - true if no orgIds returned, false if null
+ */
+export async function isOrgOwnerOrAdmin(
+  connection: Connection,
+  session: Session
+): Promise<boolean> {
+  // sanity check
+  if (!isSignedIn(session)) {
+    return false;
+  }
+  // retrieve organizationIds for the current user who is either OWNER or ADMIN of
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+
+  return !!orgIds;
 }
 
 export function isAdmin(session: Session): boolean {
@@ -383,6 +405,9 @@ export function readOwnProposals(session: Session): boolean {
   return isVendor(session);
 }
 
+// export function readOrgProposals(session: Session, connection: Connection): boolean {
+//   return isOwnerOrAdminOfOrg(connection, session?.user, )
+// }
 export async function readOneCWUProposal(
   connection: Connection,
   session: Session,

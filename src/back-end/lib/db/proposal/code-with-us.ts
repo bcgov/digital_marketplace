@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateCWUOpportunityQuery,
@@ -38,7 +43,6 @@ import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
-
 export interface CreateCWUProposalParams {
   opportunity: Id;
   proposalText: string;
@@ -462,6 +466,9 @@ export const readOneCWUProponent = tryDb<[Id], CWUIndividualProponent>(
   }
 );
 
+/**
+ *
+ */
 export const readManyCWUProposals = tryDb<
   [AuthenticatedSession, Id],
   CWUProposalSlim[]
@@ -564,6 +571,47 @@ export const readOwnCWUProposals = tryDb<
   );
 });
 
+export const readOrgCWUProposals = tryDb<
+  [AuthenticatedSession],
+  CWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const results = orgIds
+    ? await generateCWUProposalQuery(connection).whereIn(
+        "proponentOrganization",
+        function () {
+          orgIds.map((orgId) => orgId.organization);
+        }
+      )
+    : await generateCWUProposalQuery(connection);
+
+  if (!results) {
+    throw new Error("unable to read proposals");
+  }
+
+  for (const proposal of results) {
+    proposal.submittedAt = await getCWUProposalSubmittedAt(
+      connection,
+      proposal
+    );
+    // Remove score unless in awarded / not awarded state
+    if (
+      proposal.status !== CWUProposalStatus.Awarded &&
+      proposal.status !== CWUProposalStatus.NotAwarded
+    ) {
+      delete proposal.score;
+    }
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (result) =>
+          await rawCWUProposalSlimToCWUProposalSlim(connection, result, session)
+      )
+    )
+  );
+});
 export const readOneProposalByOpportunityAndAuthor = tryDb<
   [Id, Session],
   CWUProposal | null

@@ -8,6 +8,7 @@ import {
   rawFileRecordToFileRecord,
   RawFileRecord
 } from "front-end/lib/http/api/file/lib";
+import qs from "querystring";
 
 const NAMESPACE = "proposals/code-with-us";
 
@@ -21,14 +22,20 @@ export function create<Msg>(): crud.CreateAction<
 }
 
 export function readMany<Msg>(
-  opportunityId?: Id
+  opportunityId?: Id,
+  orgProposals?: Id
 ): crud.ReadManyAction<Resource.CWUProposalSlim, string[], Msg> {
+  const params = {
+    opportunity:
+      opportunityId !== undefined
+        ? window.encodeURIComponent(opportunityId)
+        : "",
+    organizationProposals: orgProposals !== undefined ? "t" : "f"
+  };
   return crud.makeReadManyAction(
     NAMESPACE,
     rawCWUProposalSlimToCWUProposalSlim,
-    opportunityId !== undefined
-      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
-      : ""
+    qs.stringify(params)
   );
 }
 

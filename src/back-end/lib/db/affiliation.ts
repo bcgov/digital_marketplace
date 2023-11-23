@@ -34,6 +34,8 @@ interface RawAffiliation {
   updatedAt: Date;
 }
 
+type OrgIds = Partial<Pick<RawAffiliation, "organization">>[];
+
 export interface RawHistoryRecord
   extends Omit<AffiliationHistoryRecord, "createdBy" | "member" | "type"> {
   id: Id;
@@ -345,6 +347,11 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
+/**
+ *
+ * @param membershipType
+ * @returns boolean
+ */
 function makeIsUserTypeChecker(
   membershipType: MembershipType
 ): (connection: Connection, user: User, ordId: Id) => Promise<boolean> {
@@ -368,6 +375,15 @@ const isUserAdminOfOrg = makeIsUserTypeChecker(MembershipType.Admin);
 
 export const isUserOwnerOfOrg = makeIsUserTypeChecker(MembershipType.Owner);
 
+/**
+ * If you have the orgId and user you can check if they are either an ADMIN or
+ * OWNER of an organization
+ *
+ * @param connection
+ * @param user
+ * @param orgId
+ * @returns Promise<boolean>
+ */
 export const isUserOwnerOrAdminOfOrg = async (
   connection: Connection,
   user: User,
@@ -398,5 +414,33 @@ export async function readActiveOwnerCount(
     return result ? result.length : 0;
   } catch (exception) {
     return 0;
+  }
+}
+
+/**
+ * Checks to see if a user has a memberStatus that is active and a membershipType
+ * that is either Admin or Owner.
+ *
+ * @param connection - Knex connection
+ * @param userId - unique identifier for user
+ * @returns Promise<Promise<OrgIds> - Returns an object of organizationIds or null.
+ */
+export async function getOrgIdsForOwnerOrAdmin(
+  connection: Connection,
+  userId: Id
+): Promise<Promise<OrgIds> | null> {
+  try {
+    return await connection("affiliations")
+      .distinct<OrgIds>("organization")
+      .where("membershipStatus", "ACTIVE")
+      .andWhere(function () {
+        this.where("membershipType", "ADMIN").orWhere(
+          "membershipType",
+          "OWNER"
+        );
+      })
+      .andWhere("user", userId);
+  } catch (exception) {
+    return null;
   }
 }

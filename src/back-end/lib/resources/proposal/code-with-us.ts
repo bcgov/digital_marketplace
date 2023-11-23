@@ -120,6 +120,18 @@ async function parseProponentRequestBody(
 
 const routeNamespace = "proposals/code-with-us";
 
+/**
+ * Reads Many CWU Proposals
+ *
+ * @remarks
+ *
+ * validates that the CWU opp id exists in the database, checks permissions of
+ * the user, if the request comes with an opportunity number it will return a
+ * response for readManyCWUProposals otherwise it will return a response for
+ * readOwnCWUProposals
+ *
+ * @param connection
+ */
 const readMany: crud.ReadMany<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -154,6 +166,24 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         request.session,
         request.query.opportunity
       );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else if (request.query.organizationProposals) {
+      // create a permissions check for Owners and Admins
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const dbResult = await db.readOrgCWUProposals(
+        connection,
+        request.session
+      );
+
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
