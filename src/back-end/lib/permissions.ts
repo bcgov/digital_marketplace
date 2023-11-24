@@ -101,7 +101,6 @@ export async function isOrgOwnerOrAdmin(
   }
   // retrieve organizationIds for the current user who is either OWNER or ADMIN of
   const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
-
   return !!orgIds;
 }
 

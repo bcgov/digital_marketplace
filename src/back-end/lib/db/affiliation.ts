@@ -34,7 +34,7 @@ interface RawAffiliation {
   updatedAt: Date;
 }
 
-type OrgIds = Partial<Pick<RawAffiliation, "organization">>[];
+type OrgIds = Record<"organization", Id>[];
 
 export interface RawHistoryRecord
   extends Omit<AffiliationHistoryRecord, "createdBy" | "member" | "type"> {
@@ -428,19 +428,16 @@ export async function readActiveOwnerCount(
 export async function getOrgIdsForOwnerOrAdmin(
   connection: Connection,
   userId: Id
-): Promise<Promise<OrgIds> | null> {
-  try {
-    return await connection("affiliations")
-      .distinct<OrgIds>("organization")
-      .where("membershipStatus", "ACTIVE")
-      .andWhere(function () {
-        this.where("membershipType", "ADMIN").orWhere(
-          "membershipType",
-          "OWNER"
-        );
-      })
-      .andWhere("user", userId);
-  } catch (exception) {
-    return null;
+): Promise<Promise<OrgIds>> {
+  const result = await connection("affiliations")
+    .distinct<OrgIds>("organization")
+    .where("membershipStatus", "ACTIVE")
+    .andWhere(function () {
+      this.where("membershipType", "ADMIN").orWhere("membershipType", "OWNER");
+    })
+    .andWhere("user", userId);
+  if (!result) {
+    throw new Error("unable to process orgIds for Owner or Admin");
   }
+  return result;
 }

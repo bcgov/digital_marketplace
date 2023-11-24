@@ -576,14 +576,15 @@ export const readOrgCWUProposals = tryDb<
   CWUProposalSlim[]
 >(async (connection, session) => {
   const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
-  const results = orgIds
-    ? await generateCWUProposalQuery(connection).whereIn(
-        "proponentOrganization",
-        function () {
-          orgIds.map((orgId) => orgId.organization);
-        }
-      )
-    : await generateCWUProposalQuery(connection);
+  const orgs = orgIds.map((orgId) => orgId.organization);
+
+  const query = generateCWUProposalQuery(connection);
+
+  if (orgs) {
+    query.where("proponentOrganization", "IN", orgs);
+  }
+
+  const results = await query;
 
   if (!results) {
     throw new Error("unable to read proposals");

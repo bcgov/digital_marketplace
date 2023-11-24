@@ -183,7 +183,6 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         connection,
         request.session
       );
-
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
       }
