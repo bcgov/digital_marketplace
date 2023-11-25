@@ -651,6 +651,18 @@ export async function isSWUProposalAuthor(
   }
 }
 
+export async function isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isSWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
+}
+
 export const readManyProposalReferences = tryDb<[Id], SWUProposalReference[]>(
   async (connection, proposalId) => {
     const results = await connection<SWUProposalReference>(
