@@ -597,6 +597,18 @@ export async function isCWUProposalAuthor(
   }
 }
 
+export async function isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isCWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
+}
+
 export const createCWUProposal = tryDb<
   [CreateCWUProposalParams, AuthenticatedSession],
   CWUProposal
