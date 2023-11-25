@@ -530,6 +530,18 @@ export async function isTWUProposalAuthor(
   }
 }
 
+export async function isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isTWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
+}
+
 export const readManyProposalResourceQuestionResponses = tryDb<
   [Id, boolean?],
   RawTWUProposalResourceQuestionResponse[]
