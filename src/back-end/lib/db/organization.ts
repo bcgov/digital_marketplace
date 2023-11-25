@@ -121,8 +121,7 @@ async function rawOrganizationSlimToOrganizationSlim(
     possessOneServiceArea,
     numTeamMembers,
     active,
-    serviceAreas,
-    viewerIsOrgAdmin
+    serviceAreas
   } = raw;
   let fetchedLogoImageFile: FileRecord | undefined;
   if (logoImageFile) {
@@ -147,8 +146,7 @@ async function rawOrganizationSlimToOrganizationSlim(
     active,
     numTeamMembers:
       numTeamMembers === undefined ? undefined : parseInt(numTeamMembers, 10),
-    serviceAreas,
-    ...(viewerIsOrgAdmin ? { viewerIsOrgAdmin } : {})
+    serviceAreas
   };
 }
 
@@ -250,6 +248,40 @@ function generateOrganizationQuery(connection: Connection) {
     );
 }
 
+function viewerIsOrgAdminQuery(
+  session: Session | undefined,
+  connection: Connection,
+  query: ReturnType<typeof generateOrganizationQuery>
+) {
+  return session
+    ? query.select<RawOrganization>(
+        connection.raw('exists(?) as "viewerIsOrgAdmin"', [
+          connection
+            .select("user")
+            .from("affiliations")
+            .where({
+              organization: connection.ref("organizations.id"),
+              membershipStatus: MembershipStatus.Active,
+              membershipType: MembershipType.Admin,
+              user: session.user.id
+            })
+            .first()
+        ])
+      )
+    : query;
+}
+
+function generateOrganizationQueryWithViewerIsOrgAdminInfo(
+  connection: Connection,
+  session: Session | undefined
+) {
+  return viewerIsOrgAdminQuery(
+    session,
+    connection,
+    generateOrganizationQuery(connection)
+  );
+}
+
 /**
  * Return a single slimmed-down organization.
  * Only return ownership/RFQ data if admin/gov user, or if an owner of the organization.
@@ -322,7 +354,10 @@ export const readOneOrganization = tryDb<
   [Id, boolean?, Session?],
   Organization | null
 >(async (connection, id, allowInactive = false, session) => {
-  let query = generateOrganizationQuery(connection).where({
+  let query = generateOrganizationQueryWithViewerIsOrgAdminInfo(
+    connection,
+    session
+  ).where({
     "organizations.id": id
   });
 
@@ -330,9 +365,16 @@ export const readOneOrganization = tryDb<
     query = query.andWhere({ "organizations.active": true });
   }
 
-  const result = await query.first<RawOrganization>();
+  const resultWithViewerIsOrgAdmin = await query.first<
+    RawOrganization & { viewerIsOrgAdmin: boolean }
+  >();
+  const { viewerIsOrgAdmin, ...result } = resultWithViewerIsOrgAdmin;
   if (result) {
-    if (!session || (isVendor(session) && result.owner !== session.user?.id)) {
+    if (
+      !session ||
+      (isVendor(session) &&
+        !(result.owner === session.user?.id || viewerIsOrgAdmin))
+    ) {
       delete result.owner;
       delete result.numTeamMembers;
       delete result.acceptedTWUTerms;
@@ -407,28 +449,13 @@ export const readManyOrganizations = tryDb<
   [Session, boolean?, number?, number?],
   ReadManyResponseBody
 >(async (connection, session, allowInactive = false, page, pageSize) => {
-  let query = generateOrganizationQuery(connection);
+  let query = generateOrganizationQueryWithViewerIsOrgAdminInfo(
+    connection,
+    session
+  );
 
   if (!allowInactive) {
     query = query.andWhere({ "organizations.active": true });
-  }
-
-  // Used to render links for viewing organizations.
-  if (session) {
-    query = query.select(
-      connection.raw('exists(?) as "viewerIsOrgAdmin"', [
-        connection
-          .select("user")
-          .from("affiliations")
-          .where({
-            organization: connection.ref("organizations.id"),
-            membershipStatus: MembershipStatus.Active,
-            membershipType: MembershipType.Admin,
-            user: session.user.id
-          })
-          .first()
-      ])
-    );
   }
 
   // Default is to only have one page because we are requesting everything.
@@ -455,7 +482,9 @@ export const readManyOrganizations = tryDb<
 
   // Execute query, and the destructure results to only choose 'slim' fields that user has access to
   // Admin/owners get additional fields related to ownership/rfq status
-  const results = ((await query) as RawOrganization[]) || [];
+  const results =
+    ((await query) as (RawOrganization & { viewerIsOrgAdmin: boolean })[]) ||
+    [];
   const items = await Promise.all(
     results.map(async (raw) => {
       const {
@@ -496,8 +525,7 @@ export const readManyOrganizations = tryDb<
           possessOneServiceArea: serviceAreas.length > 0,
           acceptedTWUTerms,
           acceptedSWUTerms,
-          serviceAreas,
-          viewerIsOrgAdmin
+          serviceAreas
         });
       }
     })
