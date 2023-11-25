@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateCWUOpportunityQuery,
@@ -373,7 +378,8 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
           session,
           result.opportunity,
           result.id,
-          result.status
+          result.status,
+          result.proponentOrganization
         )
       ) {
         // Add score to proposal
@@ -582,7 +588,7 @@ export const readOneProposalByOpportunityAndAuthor = tryDb<
   );
 });
 
-export async function isCWUProposalAuthor(
+async function isCWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -1077,7 +1083,8 @@ export const readOneCWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.proponentOrganization
     )
   ) {
     // Add score to proposal

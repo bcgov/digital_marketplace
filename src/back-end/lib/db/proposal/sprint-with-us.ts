@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateSWUOpportunityQuery,
@@ -636,7 +641,7 @@ export const readOneSWUProposalByOpportunityAndAuthor = tryDb<
   return valid(result ? result : null);
 });
 
-export async function isSWUProposalAuthor(
+async function isSWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -722,7 +727,8 @@ export const readOneSWUProposal = tryDb<
         connection,
         session,
         result.opportunity,
-        result.id
+        result.id,
+        result.organization
       )
     ) {
       const rawProposalStatuses = await connection<RawHistoryRecord>(
@@ -747,7 +753,8 @@ export const readOneSWUProposal = tryDb<
       session,
       result.opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     );
     result.teamQuestionResponses =
       getValidValue(
@@ -1732,7 +1739,8 @@ export const readOneSWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     ))
   ) {
     await calculateScores(connection, session, opportunity, [result]);
