@@ -31,7 +31,7 @@ export function readMany<Msg>(
       opportunityId !== undefined
         ? window.encodeURIComponent(opportunityId)
         : "",
-    organizationProposals: orgProposals !== undefined ? "t" : "f"
+    organizationProposals: orgProposals !== undefined ? orgProposals : ""
   });
   return crud.makeReadManyAction(
     NAMESPACE,

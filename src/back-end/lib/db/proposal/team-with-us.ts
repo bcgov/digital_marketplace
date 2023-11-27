@@ -519,7 +519,7 @@ export const readOrgTWUProposals = tryDb<
   const results = await query;
 
   if (!results) {
-    throw new Error("unable to read TWU proposals");
+    throw new Error("unable to read TWU org proposals");
   }
 
   return valid(

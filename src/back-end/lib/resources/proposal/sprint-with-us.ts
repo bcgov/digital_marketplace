@@ -136,6 +136,23 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         return respond(503, [db.ERROR_MESSAGE]);
       }
       return respond(200, dbResult.value);
+    } else if (request.query.organizationProposals) {
+      // create a permissions check for Owners and Admins
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const dbResult = await db.readOrgSWUProposals(
+        connection,
+        request.session
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
     } else {
       if (
         !permissions.isSignedIn(request.session) ||

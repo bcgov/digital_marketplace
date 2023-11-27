@@ -591,7 +591,7 @@ export const readOrgCWUProposals = tryDb<
   const results = await query;
 
   if (!results) {
-    throw new Error("unable to read CWU proposals");
+    throw new Error("unable to read CWU org proposals");
   }
 
   for (const proposal of results) {

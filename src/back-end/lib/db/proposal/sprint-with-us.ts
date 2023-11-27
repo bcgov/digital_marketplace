@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateSWUOpportunityQuery,
@@ -612,6 +617,39 @@ export const readOwnSWUProposals = tryDb<
   return valid(
     await Promise.all(
       proposals.map(
+        async (result) =>
+          await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)
+      )
+    )
+  );
+});
+
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the CWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgSWUProposals = tryDb<
+  [AuthenticatedSession],
+  SWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const orgs = orgIds.map((orgId) => orgId.organization);
+  const query = generateSWUProposalQuery(connection);
+
+  if (orgs) {
+    query.where("organization", "IN", orgs);
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read SWU org proposals");
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
         async (result) =>
           await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)
       )
