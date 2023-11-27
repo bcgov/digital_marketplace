@@ -571,13 +571,17 @@ export const readOwnCWUProposals = tryDb<
   );
 });
 
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the CWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
 export const readOrgCWUProposals = tryDb<
   [AuthenticatedSession],
   CWUProposalSlim[]
 >(async (connection, session) => {
   const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
   const orgs = orgIds.map((orgId) => orgId.organization);
-
   const query = generateCWUProposalQuery(connection);
 
   if (orgs) {
@@ -587,7 +591,7 @@ export const readOrgCWUProposals = tryDb<
   const results = await query;
 
   if (!results) {
-    throw new Error("unable to read proposals");
+    throw new Error("unable to read CWU proposals");
   }
 
   for (const proposal of results) {
@@ -613,6 +617,7 @@ export const readOrgCWUProposals = tryDb<
     )
   );
 });
+
 export const readOneProposalByOpportunityAndAuthor = tryDb<
   [Id, Session],
   CWUProposal | null

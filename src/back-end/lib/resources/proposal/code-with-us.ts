@@ -126,9 +126,13 @@ const routeNamespace = "proposals/code-with-us";
  * @remarks
  *
  * validates that the CWU opp id exists in the database, checks permissions of
- * the user, if the request comes with an opportunity number it will return a
- * response for readManyCWUProposals otherwise it will return a response for
- * readOwnCWUProposals
+ * the user, if the request comes with the following parameters set:
+ *   - request.query.opportunity=<string> = (an opportunity number) it will
+ *   return all proposals associated with that opportunity
+ *   - request.query.organizationProposals=<string> = it will return a response
+ *   for all proposals associated with the organizations the requester has
+ *   access to.
+ *   - default behavior is to return the requester\'s own proposals
  *
  * @param connection
  */

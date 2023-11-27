@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateTWUOpportunityQuery,
@@ -489,6 +494,43 @@ export const readOwnTWUProposals = tryDb<
       proposals.map(
         async (result) =>
           await rawTWUProposalSlimToTWUProposalSlim(connection, result, session)
+      )
+    )
+  );
+});
+
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the TWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgTWUProposals = tryDb<
+  [AuthenticatedSession],
+  TWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const orgs = orgIds.map((orgId) => orgId.organization);
+  const query = generateTWUProposalQuery(connection);
+
+  if (orgs) {
+    query.where("organization", "IN", orgs);
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read TWU proposals");
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (results) =>
+          await rawTWUProposalSlimToTWUProposalSlim(
+            connection,
+            results,
+            session
+          )
       )
     )
   );

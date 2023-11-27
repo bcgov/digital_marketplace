@@ -16,15 +16,27 @@ export function create<Msg>(): crud.CreateAction<
   return crud.makeCreateAction(NAMESPACE, rawSWUProposalToSWUProposal);
 }
 
+/**
+ * Parses URL parameters prior to creating a read request for many SWU proposals
+ *
+ * @param opportunityId
+ * @param orgProposals
+ */
 export function readMany<Msg>(
-  opportunityId?: Id
+  opportunityId?: Id,
+  orgProposals?: Id
 ): crud.ReadManyAction<Resource.SWUProposalSlim, string[], Msg> {
+  const params = new URLSearchParams({
+    opportunity:
+      opportunityId !== undefined
+        ? window.encodeURIComponent(opportunityId)
+        : "",
+    organizationProposals: orgProposals !== undefined ? "t" : "f"
+  });
   return crud.makeReadManyAction(
     NAMESPACE,
     rawSWUProposalSlimToSWUProposalSlim,
-    opportunityId !== undefined
-      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
-      : ""
+    params.toString()
   );
 }
 

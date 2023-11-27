@@ -34,18 +34,26 @@ export function readOne<Msg>(
 }
 
 /**
+ * Parses URL parameters prior to creating a read request for many TWU proposals
  *
  * @param opportunityId
+ * @param orgProposals
  */
 export function readMany<Msg>(
-  opportunityId?: Id
+  opportunityId?: Id,
+  orgProposals?: Id
 ): crud.ReadManyAction<Resource.TWUProposalSlim, string[], Msg> {
+  const params = new URLSearchParams({
+    opportunity:
+      opportunityId !== undefined
+        ? window.encodeURIComponent(opportunityId)
+        : "",
+    organizationProposals: orgProposals !== undefined ? orgProposals : ""
+  });
   return crud.makeReadManyAction(
     NAMESPACE,
     rawTWUProposalSlimToTWUProposalSlim,
-    opportunityId !== undefined
-      ? `opportunity=${window.encodeURIComponent(opportunityId)}`
-      : ""
+    params.toString()
   );
 }
 
