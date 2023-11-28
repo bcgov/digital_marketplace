@@ -634,7 +634,19 @@ const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
             />
           );
         } else {
-          return <Welcome viewerUser={state.viewerUser} />;
+          return (
+            <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
+              <Row>
+                <Col xs="12">
+                  <p>
+                    Proposals belonging to your organizations or organizations
+                    you are affiliated with will appear here after you have been
+                    made an Admin in those organizations.
+                  </p>
+                </Col>
+              </Row>
+            </div>
+          );
         }
     }
   })();
