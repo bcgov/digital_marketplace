@@ -68,6 +68,16 @@ interface ValidState {
     bodyRows: Table.BodyRows;
     state: Immutable<Table.State>;
   };
+  orgTable: {
+    title: string;
+    link?: {
+      text: string;
+      route: Route;
+    };
+    headCells: Table.HeadCells;
+    bodyRows: Table.BodyRows;
+    state: Immutable<Table.State>;
+  };
   viewerUser: User;
   isSWUQualified?: boolean;
   isTWUQualified?: boolean;
@@ -83,7 +93,10 @@ type InitResponse =
         CWUP.CWUProposalSlim[],
         SWUP.SWUProposalSlim[],
         TWUP.TWUProposalSlim[],
-        OrganizationSlim[]
+        OrganizationSlim[],
+        CWUP.CWUProposalSlim[],
+        SWUP.SWUProposalSlim[],
+        TWUP.TWUProposalSlim[]
       ]
     >
   | ADT<
@@ -97,6 +110,7 @@ type InitResponse =
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
+  | ADT<"orgTable", Table.Msg>
   | ADT<"onInitResponse", InitResponse>
   | ADT<"setActiveProposalsTab", ProposalsTab>;
 
@@ -265,6 +279,9 @@ const init: component_.page.Init<
     const [tableState, tableCmds] = Table.init({
       idNamespace: "dashboard-table"
     });
+    const [orgTableState, orgTableCmds] = Table.init({
+      idNamespace: "org-dashboard-table"
+    });
     const bodyRows: Table.BodyRows = [];
     return [
       valid(
@@ -284,13 +301,30 @@ const init: component_.page.Init<
                   text: "View all opportunities",
                   route: adt("opportunities", null)
                 }
+          },
+          orgTable: {
+            title,
+            headCells,
+            bodyRows,
+            state: immutable(orgTableState),
+            link: vendor
+              ? undefined
+              : {
+                  text: "View all opportunities",
+                  route: adt("opportunities", null)
+                }
           }
         })
       ),
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
+        ...component_.cmd.mapMany(
+          orgTableCmds,
+          (msg) => adt("table", msg) as Msg
+        ),
+
         vendor
-          ? component_.cmd.join4(
+          ? component_.cmd.join7(
               api.proposals.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
@@ -303,10 +337,30 @@ const init: component_.page.Init<
               api.organizations.owned.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu, twu, orgs) =>
+              api.proposals.cwu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              api.proposals.swu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              api.proposals.twu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              (cwu, swu, twu, orgs, orgCwu, orgSwu, orgTwu) =>
                 adt(
                   "onInitResponse",
-                  adt("vendor", [cwu, swu, twu, orgs] as const)
+                  adt("vendor", [
+                    cwu,
+                    swu,
+                    twu,
+                    orgs,
+                    orgCwu,
+                    orgSwu,
+                    orgTwu
+                  ] as const)
                 ) as Msg
             )
           : component_.cmd.join3(
@@ -347,8 +401,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       case "onInitResponse": {
         switch (msg.value.tag) {
           case "vendor": {
-            const [cwuProposals, swuProposals, twuProposals, organizations] =
-              msg.value.value;
+            const [
+              cwuProposals,
+              swuProposals,
+              twuProposals,
+              organizations,
+              orgCwuProposals,
+              orgSwuProposals,
+              orgTwuProposals
+            ] = msg.value.value;
             const isSWUQualified = organizations.some(
               doesOrganizationMeetSWUQualification
             );
@@ -366,6 +427,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                     cwuProposals,
                     swuProposals,
                     twuProposals,
+                    state.viewerUser
+                  )
+                )
+                .setIn(
+                  ["orgTable", "bodyRows"],
+                  makeVendorBodyRows(
+                    orgCwuProposals,
+                    orgSwuProposals,
+                    orgTwuProposals,
                     state.viewerUser
                   )
                 ),
@@ -402,6 +472,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childUpdate: Table.update,
           childMsg: msg.value,
           mapChildMsg: (value) => ({ tag: "table", value })
+        });
+      case "orgTable":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["orgTable", "state"],
+          childUpdate: Table.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => ({ tag: "orgTable", value })
         });
       default:
         return [state, []];
@@ -563,11 +641,17 @@ const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
           return <Welcome viewerUser={state.viewerUser} />;
         }
       case "org-proposals":
-        // return <Dashboard {...props} />;
-        return (
-          "Proposals belonging to your organization or organizations you are affiliated with will appear here" +
-          " after you have been granted an Admin role in those affiliated organizations."
-        );
+        if (state.orgTable) {
+          return (
+            <Dashboard
+              dispatch={dispatch}
+              viewerUser={state.viewerUser}
+              table={state.orgTable}
+            />
+          );
+        } else {
+          return <Welcome viewerUser={state.viewerUser} />;
+        }
     }
   })();
   return (

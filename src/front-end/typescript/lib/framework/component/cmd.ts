@@ -289,3 +289,54 @@ export function join5<A, B, C, D, E, F>(
     (msgA, [msgB, msgC, msgD, msgE]) => merge(msgA, msgB, msgC, msgD, msgE)
   );
 }
+
+export function join6<A, B, C, D, E, F, G>(
+  cmdA: Cmd<A>,
+  cmdB: Cmd<B>,
+  cmdC: Cmd<C>,
+  cmdD: Cmd<D>,
+  cmdE: Cmd<E>,
+  cmdF: Cmd<F>,
+  merge: (msgA: A, msgB: B, msgC: C, msgD: D, msgE: E, msgF: F) => G
+): Cmd<G> {
+  return join(
+    cmdA,
+    join5(
+      cmdB,
+      cmdC,
+      cmdD,
+      cmdE,
+      cmdF,
+      (msgB, msgC, msgD, msgE, msgF) => [msgB, msgC, msgD, msgE, msgF] as const
+    ),
+    (msgA, [msgB, msgC, msgD, msgE, msgF]) =>
+      merge(msgA, msgB, msgC, msgD, msgE, msgF)
+  );
+}
+
+export function join7<A, B, C, D, E, F, G, H>(
+  cmdA: Cmd<A>,
+  cmdB: Cmd<B>,
+  cmdC: Cmd<C>,
+  cmdD: Cmd<D>,
+  cmdE: Cmd<E>,
+  cmdF: Cmd<F>,
+  cmdG: Cmd<G>,
+  merge: (msgA: A, msgB: B, msgC: C, msgD: D, msgE: E, msgF: F, msgG: G) => H
+): Cmd<H> {
+  return join(
+    cmdA,
+    join6(
+      cmdB,
+      cmdC,
+      cmdD,
+      cmdE,
+      cmdF,
+      cmdG,
+      (msgB, msgC, msgD, msgE, msgF, msgG) =>
+        [msgB, msgC, msgD, msgE, msgF, msgG] as const
+    ),
+    (msgA, [msgB, msgC, msgD, msgE, msgF, msgG]) =>
+      merge(msgA, msgB, msgC, msgD, msgE, msgF, msgG)
+  );
+}
