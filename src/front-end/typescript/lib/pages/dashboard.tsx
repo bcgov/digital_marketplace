@@ -110,7 +110,6 @@ type InitResponse =
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
-  | ADT<"orgTable", Table.Msg>
   | ADT<"onInitResponse", InitResponse>
   | ADT<"setActiveProposalsTab", ProposalsTab>;
 
@@ -279,9 +278,7 @@ const init: component_.page.Init<
     const [tableState, tableCmds] = Table.init({
       idNamespace: "dashboard-table"
     });
-    const [orgTableState, orgTableCmds] = Table.init({
-      idNamespace: "org-dashboard-table"
-    });
+
     const bodyRows: Table.BodyRows = [];
     return [
       valid(
@@ -306,7 +303,7 @@ const init: component_.page.Init<
             title,
             headCells,
             bodyRows,
-            state: immutable(orgTableState),
+            state: immutable(tableState),
             link: vendor
               ? undefined
               : {
@@ -318,11 +315,6 @@ const init: component_.page.Init<
       ),
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
-        ...component_.cmd.mapMany(
-          orgTableCmds,
-          (msg) => adt("table", msg) as Msg
-        ),
-
         vendor
           ? component_.cmd.join7(
               api.proposals.cwu.readMany()((response) =>
@@ -473,14 +465,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => ({ tag: "table", value })
         });
-      case "orgTable":
-        return component_.base.updateChild({
-          state,
-          childStatePath: ["orgTable", "state"],
-          childUpdate: Table.update,
-          childMsg: msg.value,
-          mapChildMsg: (value) => ({ tag: "orgTable", value })
-        });
       default:
         return [state, []];
     }
@@ -629,7 +613,7 @@ const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
   const activeTab = (() => {
     switch (state.activeProposalsTab) {
       case "my-proposals":
-        if (state.table) {
+        if (state.table.bodyRows.length > 0) {
           return (
             <Dashboard
               dispatch={dispatch}
@@ -641,7 +625,7 @@ const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
           return <Welcome viewerUser={state.viewerUser} />;
         }
       case "org-proposals":
-        if (state.orgTable) {
+        if (state.orgTable.bodyRows.length > 0) {
           return (
             <Dashboard
               dispatch={dispatch}
