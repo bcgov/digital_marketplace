@@ -169,6 +169,13 @@ export function getCWUProponentTypeTitleCase(
   }
 }
 
+export function getCWUProponentOrganizationId(
+  proposal: CWUProposal | CWUProposalSlim
+): Id | null {
+  const proponentId = getCWUProponentId(proposal);
+  return proponentId.tag === "organization" ? proponentId.value : null;
+}
+
 export type CWUProposalSlim = Omit<
   CWUProposal,
   "proposalText" | "additionalComments" | "history" | "attachments"

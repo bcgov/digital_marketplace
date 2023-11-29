@@ -347,7 +347,7 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
 
 function makeIsUserTypeChecker(
   membershipType: MembershipType
-): (connection: Connection, user: User, ordId: Id) => Promise<boolean> {
+): (connection: Connection, user: User, orgId: Id) => Promise<boolean> {
   return async (connection: Connection, user: User, orgId: Id) => {
     if (!user) {
       return false;

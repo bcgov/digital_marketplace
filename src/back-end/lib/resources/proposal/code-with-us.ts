@@ -41,6 +41,7 @@ import {
   getValidValue,
   invalid,
   isInvalid,
+  isValid,
   valid,
   Validation
 } from "shared/lib/validation";
@@ -476,7 +477,7 @@ const update: crud.Update<
         !(await permissions.editCWUProposal(
           connection,
           request.session,
-          request.params.id,
+          validatedCWUProposal.value,
           cwuOpportunity
         ))
       ) {
@@ -491,7 +492,7 @@ const update: crud.Update<
         !(await permissions.submitCWUProposal(
           connection,
           request.session,
-          request.params.id
+          validatedCWUProposal.value
         ))
       ) {
         return invalid({
@@ -830,22 +831,23 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
+      const validatedCWUProposal = await validateCWUProposalId(
+        connection,
+        request.params.id,
+        request.session
+      );
       if (
+        isValid(validatedCWUProposal) &&
         !(await permissions.deleteCWUProposal(
           connection,
           request.session,
-          request.params.id
+          validatedCWUProposal.value
         ))
       ) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
         });
       }
-      const validatedCWUProposal = await validateCWUProposalId(
-        connection,
-        request.params.id,
-        request.session
-      );
       if (isInvalid(validatedCWUProposal)) {
         return invalid({
           status: ["You can not delete a proposal that is not a draft."]

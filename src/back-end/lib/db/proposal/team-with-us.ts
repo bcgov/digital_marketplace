@@ -1,5 +1,10 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateTWUOpportunityQuery,
@@ -515,7 +520,7 @@ export const readOneTWUProposalByOpportunityAndAuthor = tryDb<
   return valid(result ? result : null);
 });
 
-export async function isTWUProposalAuthor(
+async function isTWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -528,6 +533,18 @@ export async function isTWUProposalAuthor(
   } catch (exception) {
     return false;
   }
+}
+
+export async function isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isTWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
 }
 
 export const readManyProposalResourceQuestionResponses = tryDb<
@@ -603,7 +620,8 @@ export const readOneTWUProposal = tryDb<
         connection,
         session,
         result.opportunity,
-        result.id
+        result.id,
+        result.organization
       )
     ) {
       const rawProposalStatuses = await connection<RawHistoryRecord>(
@@ -628,7 +646,8 @@ export const readOneTWUProposal = tryDb<
       session,
       result.opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     );
     result.resourceQuestionResponses =
       getValidValue(
@@ -1368,7 +1387,8 @@ export const readOneTWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     ))
   ) {
     await calculateScores(connection, session, opportunity, [result]);

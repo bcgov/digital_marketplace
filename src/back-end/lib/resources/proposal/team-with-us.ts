@@ -557,7 +557,7 @@ const update: crud.Update<
         !(await permissions.editTWUProposal(
           connection,
           request.session,
-          request.params.id,
+          validatedTWUProposal.value,
           twuOpportunity
         ))
       ) {
@@ -1223,14 +1223,7 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
-      if (
-        !permissions.isSignedIn(request.session) ||
-        !(await permissions.deleteTWUProposal(
-          connection,
-          request.session,
-          request.params.id
-        ))
-      ) {
+      if (!permissions.isSignedIn(request.session)) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
         });
@@ -1240,6 +1233,18 @@ const delete_: crud.Delete<
         request.params.id,
         request.session
       );
+      if (
+        isValid(validatedTWUProposal) &&
+        !(await permissions.deleteTWUProposal(
+          connection,
+          request.session,
+          validatedTWUProposal.value
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
       if (isInvalid(validatedTWUProposal)) {
         return invalid({
           notFound: ["The specified proposal was not found."]
