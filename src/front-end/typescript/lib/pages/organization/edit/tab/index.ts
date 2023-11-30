@@ -4,6 +4,7 @@ import { component } from "front-end/lib/framework";
 import * as OrganizationTab from "front-end/lib/pages/organization/edit/tab/organization";
 import * as QualificationTab from "front-end/lib/pages/organization/edit/tab/swu-qualification";
 import * as TWUQualificationTab from "front-end/lib/pages/organization/edit/tab/twu-qualification";
+import * as Changelog from "front-end/lib/pages/organization/edit/tab/changelog";
 import * as TeamTab from "front-end/lib/pages/organization/edit/tab/team";
 import { routeDest } from "front-end/lib/views/link";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
@@ -65,6 +66,12 @@ export interface Tabs {
     TWUQualificationTab.InnerMsg,
     InitResponse
   >;
+  changelog: TabbedPage.Tab<
+    Params,
+    Changelog.State,
+    Changelog.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -79,6 +86,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "team":
     case "swuQualification":
     case "twuQualification":
+    case "changelog":
       return raw;
     default:
       return null;
@@ -106,6 +114,12 @@ export function idToDefinition<K extends TabId>(
         component: TWUQualificationTab.component,
         icon: "shield",
         title: "TWU Qualification"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "changelog":
+      return {
+        component: Changelog.component,
+        icon: "history",
+        title: "Changelog"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "organization":
     default:
@@ -140,7 +154,8 @@ export function makeSidebarState(
       makeSidebarLink("organization", organization, activeTab),
       makeSidebarLink("team", organization, activeTab),
       makeSidebarLink("swuQualification", organization, activeTab),
-      makeSidebarLink("twuQualification", organization, activeTab)
+      makeSidebarLink("twuQualification", organization, activeTab),
+      makeSidebarLink("changelog", organization, activeTab)
     ]
   });
 }

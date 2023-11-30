@@ -618,7 +618,7 @@ const update: crud.Update<
         !(await permissions.editSWUProposal(
           connection,
           request.session,
-          request.params.id,
+          validatedSWUProposal.value,
           swuOpportunity
         ))
       ) {
@@ -1623,14 +1623,7 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
-      if (
-        !permissions.isSignedIn(request.session) ||
-        !(await permissions.deleteSWUProposal(
-          connection,
-          request.session,
-          request.params.id
-        ))
-      ) {
+      if (!permissions.isSignedIn(request.session)) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
         });
@@ -1640,6 +1633,18 @@ const delete_: crud.Delete<
         request.params.id,
         request.session
       );
+      if (
+        isValid(validatedSWUProposal) &&
+        !(await permissions.deleteSWUProposal(
+          connection,
+          request.session,
+          validatedSWUProposal.value
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
+      }
       if (isInvalid(validatedSWUProposal)) {
         return invalid({
           notFound: ["The specified proposal was not found."]

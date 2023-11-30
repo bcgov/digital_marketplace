@@ -4,10 +4,10 @@ import {
   hasCWUAttachmentPermission,
   hasFilePermission,
   isCWUOpportunityAuthor,
-  isCWUProposalAuthor,
+  isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg,
   isSWUOpportunityAuthor,
   isTWUOpportunityAuthor,
-  isTWUProposalAuthor,
+  isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg,
   isUserOwnerOfOrg,
   isUserOwnerOrAdminOfOrg,
   userHasAcceptedCurrentTerms,
@@ -15,7 +15,7 @@ import {
 } from "back-end/lib/db";
 import {
   hasSWUAttachmentPermission,
-  isSWUProposalAuthor
+  isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg
 } from "back-end/lib/db/proposal/sprint-with-us";
 import { Affiliation } from "shared/lib/resources/affiliation";
 import {
@@ -42,6 +42,7 @@ import {
 import {
   CWUProposal,
   CWUProposalStatus,
+  getCWUProponentOrganizationId,
   isCWUProposalStatusVisibleToGovernment
 } from "shared/lib/resources/proposal/code-with-us";
 import {
@@ -60,6 +61,7 @@ import {
   TWUProposal,
   TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
+import { Id } from "shared/lib/types";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
@@ -431,10 +433,15 @@ export async function readOneCWUProposal(
       )
     );
   } else if (isVendor(session)) {
-    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    // If a vendor, only proposals they or their org have authored will be returned (filtered at db layer)
     return (
       (session &&
-        (await isCWUProposalAuthor(connection, session.user, proposal.id))) ||
+        (await isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+          connection,
+          session.user,
+          proposal.id,
+          getCWUProponentOrganizationId(proposal)
+        ))) ||
       false
     );
   }
@@ -446,7 +453,8 @@ export async function readCWUProposalScore(
   session: Session,
   opportunityId: string,
   proposalId: string,
-  proposalStatus: CWUProposalStatus
+  proposalStatus: CWUProposalStatus,
+  orgId: Id | null | undefined
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
@@ -457,7 +465,12 @@ export async function readCWUProposalScore(
         opportunityId
       ))) ||
     (session &&
-      (await isCWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposalId,
+        orgId ?? null
+      )) &&
       (proposalStatus === CWUProposalStatus.Awarded ||
         proposalStatus === CWUProposalStatus.NotAwarded)) ||
     false
@@ -493,13 +506,18 @@ export async function createCWUProposal(
 export async function editCWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string,
+  proposal: CWUProposal,
   opportunity: CWUOpportunity
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
     (session &&
-      (await isCWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        getCWUProponentOrganizationId(proposal)
+      )) &&
       (await hasAcceptedPreviousTerms(connection, session))) ||
     (session &&
       (await isCWUOpportunityAuthor(
@@ -515,11 +533,16 @@ export async function editCWUProposal(
 export async function submitCWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string
+  proposal: CWUProposal
 ): Promise<boolean> {
   return (
     (session &&
-      (await isCWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        getCWUProponentOrganizationId(proposal)
+      )) &&
       (await hasAcceptedCurrentTerms(connection, session))) ||
     false
   );
@@ -528,11 +551,16 @@ export async function submitCWUProposal(
 export async function deleteCWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string
+  proposal: CWUProposal
 ): Promise<boolean> {
   return (
     (session &&
-      (await isCWUProposalAuthor(connection, session.user, proposalId))) ||
+      (await isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        getCWUProponentOrganizationId(proposal)
+      ))) ||
     false
   );
 }
@@ -630,10 +658,15 @@ export async function readOneSWUProposal(
       )
     );
   } else if (isVendor(session)) {
-    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    // If a vendor, only proposals they or their org have authored will be returned (filtered at db layer)
     return (
       (session &&
-        (await isSWUProposalAuthor(connection, session.user, proposal.id))) ||
+        (await isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+          connection,
+          session.user,
+          proposal.id,
+          proposal.organization?.id ?? null
+        ))) ||
       false
     );
   }
@@ -667,7 +700,8 @@ export async function readSWUProposalHistory(
   connection: Connection,
   session: Session,
   opportunityId: string,
-  proposalId: string
+  proposalId: string,
+  orgId: Id | null
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
@@ -678,7 +712,12 @@ export async function readSWUProposalHistory(
         opportunityId
       ))) ||
     (session &&
-      (await isSWUProposalAuthor(connection, session.user, proposalId))) ||
+      (await isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposalId,
+        orgId ?? null
+      ))) ||
     false
   );
 }
@@ -688,7 +727,8 @@ export async function readSWUProposalScore(
   session: Session,
   opportunityId: string,
   proposalId: string,
-  proposalStatus: SWUProposalStatus
+  proposalStatus: SWUProposalStatus,
+  orgId: Id | null
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
@@ -699,7 +739,12 @@ export async function readSWUProposalScore(
         opportunityId
       ))) ||
     (session &&
-      (await isSWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposalId,
+        orgId
+      )) &&
       (proposalStatus === SWUProposalStatus.Awarded ||
         proposalStatus === SWUProposalStatus.NotAwarded)) ||
     false
@@ -724,7 +769,11 @@ export async function submitSWUProposal(
     !!session &&
     isVendor(session) &&
     (await hasAcceptedCurrentTerms(connection, session)) &&
-    (await isUserOwnerOfOrg(connection, session.user, organization.id)) &&
+    (await isUserOwnerOrAdminOfOrg(
+      connection,
+      session.user,
+      organization.id
+    )) &&
     doesOrganizationMeetSWUQualification(organization)
   );
 }
@@ -732,13 +781,18 @@ export async function submitSWUProposal(
 export async function editSWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string,
+  proposal: SWUProposal,
   opportunity: SWUOpportunity
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
     (session &&
-      (await isSWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        proposal.organization?.id ?? null
+      )) &&
       (await hasAcceptedPreviousTerms(connection, session))) ||
     (session &&
       (await isSWUOpportunityAuthor(
@@ -754,11 +808,16 @@ export async function editSWUProposal(
 export async function deleteSWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string
+  proposal: SWUProposal
 ): Promise<boolean> {
   return (
     (session &&
-      (await isSWUProposalAuthor(connection, session.user, proposalId))) ||
+      (await isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        proposal.organization?.id ?? null
+      ))) ||
     false
   );
 }
@@ -849,13 +908,18 @@ export function suspendTWUOpportunity(session: Session): boolean {
 export async function editTWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string,
+  proposal: TWUProposal,
   opportunity: TWUOpportunity
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
     (session &&
-      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        proposal.organization?.id ?? null
+      )) &&
       (await hasAcceptedPreviousTerms(connection, session))) ||
     (session &&
       (await isTWUOpportunityAuthor(
@@ -895,10 +959,15 @@ export async function readOneTWUProposal(
       )
     );
   } else if (isVendor(session)) {
-    // If a vendor, only proposals they have authored will be returned (filtered at db layer)
+    // If a vendor, only proposals they or their org have authored will be returned (filtered at db layer)
     return (
       (session &&
-        (await isTWUProposalAuthor(connection, session.user, proposal.id))) ||
+        (await isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+          connection,
+          session.user,
+          proposal.id,
+          proposal.organization?.id ?? null
+        ))) ||
       false
     );
   }
@@ -928,7 +997,8 @@ export async function readTWUProposalHistory(
   connection: Connection,
   session: Session,
   opportunityId: string,
-  proposalId: string
+  proposalId: string,
+  orgId: Id | null
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
@@ -939,7 +1009,12 @@ export async function readTWUProposalHistory(
         opportunityId
       ))) ||
     (session &&
-      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+      (await isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposalId,
+        orgId
+      ))) ||
     false
   );
 }
@@ -949,7 +1024,8 @@ export async function readTWUProposalScore(
   session: Session,
   opportunityId: string,
   proposalId: string,
-  proposalStatus: TWUProposalStatus
+  proposalStatus: TWUProposalStatus,
+  orgId: Id | null
 ): Promise<boolean> {
   return (
     isAdmin(session) ||
@@ -960,7 +1036,12 @@ export async function readTWUProposalScore(
         opportunityId
       ))) ||
     (session &&
-      (await isTWUProposalAuthor(connection, session.user, proposalId)) &&
+      (await isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposalId,
+        orgId
+      )) &&
       (proposalStatus === TWUProposalStatus.Awarded ||
         proposalStatus === TWUProposalStatus.NotAwarded)) ||
     false
@@ -988,7 +1069,11 @@ export async function submitTWUProposal(
     !!session &&
     isVendor(session) &&
     (await hasAcceptedCurrentTerms(connection, session)) &&
-    (await isUserOwnerOfOrg(connection, session.user, organization.id)) &&
+    (await isUserOwnerOrAdminOfOrg(
+      connection,
+      session.user,
+      organization.id
+    )) &&
     doesOrganizationMeetTWUQualification(organization)
   );
 }
@@ -1003,11 +1088,16 @@ export async function submitTWUProposal(
 export async function deleteTWUProposal(
   connection: Connection,
   session: Session,
-  proposalId: string
+  proposal: TWUProposal
 ): Promise<boolean> {
   return (
     (session &&
-      (await isTWUProposalAuthor(connection, session.user, proposalId))) ||
+      (await isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+        connection,
+        session.user,
+        proposal.id,
+        proposal.organization?.id ?? null
+      ))) ||
     false
   );
 }

@@ -3,6 +3,7 @@ import {
   Connection,
   getOrgIdsForOwnerOrAdmin,
   Transaction,
+  isUserOwnerOrAdminOfOrg,
   tryDb
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
@@ -43,6 +44,7 @@ import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { ADT, adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid } from "shared/lib/validation";
+
 export interface CreateCWUProposalParams {
   opportunity: Id;
   proposalText: string;
@@ -377,7 +379,8 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
           session,
           result.opportunity,
           result.id,
-          result.status
+          result.status,
+          result.proponentOrganization
         )
       ) {
         // Add score to proposal
@@ -634,7 +637,7 @@ export const readOneProposalByOpportunityAndAuthor = tryDb<
   );
 });
 
-export async function isCWUProposalAuthor(
+async function isCWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -647,6 +650,18 @@ export async function isCWUProposalAuthor(
   } catch (exception) {
     return false;
   }
+}
+
+export async function isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isCWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
 }
 
 export const createCWUProposal = tryDb<
@@ -1117,7 +1132,8 @@ export const readOneCWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.proponentOrganization
     )
   ) {
     // Add score to proposal
