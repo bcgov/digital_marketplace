@@ -250,6 +250,7 @@ export interface CreateValidationErrors
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
     "proponent" | "attachments"
   > {
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   proponent?: CreateProponentValidationErrors;
   attachments?: string[][];
 }
@@ -280,6 +281,7 @@ export interface UpdateEditValidationErrors
   extends ErrorTypeFrom<
     Omit<UpdateEditRequestBody, "proponent" | "attachments">
   > {
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   proponent?: CreateProponentValidationErrors;
   attachments?: string[][];
 }
