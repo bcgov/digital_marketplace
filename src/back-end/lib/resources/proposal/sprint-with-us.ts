@@ -1600,8 +1600,12 @@ const delete_: crud.Delete<
         request.params.id,
         request.session
       );
+      if (isInvalid(validatedSWUProposal)) {
+        return invalid({
+          notFound: ["The specified proposal was not found."]
+        });
+      }
       if (
-        isValid(validatedSWUProposal) &&
         !(await permissions.deleteSWUProposal(
           connection,
           request.session,
@@ -1610,11 +1614,6 @@ const delete_: crud.Delete<
       ) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
-      if (isInvalid(validatedSWUProposal)) {
-        return invalid({
-          notFound: ["The specified proposal was not found."]
         });
       }
       if (validatedSWUProposal.value.status !== SWUProposalStatus.Draft) {
