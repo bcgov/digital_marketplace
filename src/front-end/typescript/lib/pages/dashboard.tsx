@@ -190,7 +190,16 @@ function makeVendorBodyRows(
           )
         },
         {
-          children: formatDate(p.value.createdAt)
+          children: (
+            <div className="small text-secondary">
+              <dl className="mb-0">
+                <dt>Date:</dt>
+                <dd>{formatDate(p.value.createdAt)}</dd>
+                <dt>By:</dt>
+                <dd>{p.value.createdBy?.name}</dd>
+              </dl>
+            </div>
+          )
         }
       ];
     });
@@ -240,7 +249,14 @@ function makePublicSectorBodyRows(
           )
         },
         {
-          children: formatDate(p.value.createdAt)
+          children: (
+            <div className="small text-secondary text-uppercase">
+              <dl className="mb-0">
+                <dt>Date:</dt>
+                <dd>{formatDate(p.value.createdAt)}</dd>
+              </dl>
+            </div>
+          )
         }
       ];
     });
@@ -261,7 +277,7 @@ const init: component_.page.Init<
       {
         children: vendor ? "Opportunity" : "Title",
         style: {
-          width: "100%",
+          width: "90%",
           minWidth: "200px"
         }
       },
@@ -270,9 +286,9 @@ const init: component_.page.Init<
         style: { width: "0px" }
       },
       {
-        children: "Date Created",
+        children: "Created",
         className: "text-nowrap",
-        style: { width: "0px" }
+        style: { width: "10%", minWidth: "100px" }
       }
     ];
     const [tableState, tableCmds] = Table.init({
