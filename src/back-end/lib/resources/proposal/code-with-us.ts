@@ -292,7 +292,18 @@ const create: crud.Create<
           database: [db.ERROR_MESSAGE]
         });
       }
-      if (dbResult.value) {
+      // Check for existing proposal on this opportunity, authored by this user
+      const dbResultProposal = await db.readOneProposalByOpportunityAndAuthor(
+        connection,
+        request.session,
+        opportunity
+      );
+      if (isInvalid(dbResultProposal)) {
+        return invalid({
+          database: [db.ERROR_MESSAGE]
+        });
+      }
+      if (dbResultProposal.value) {
         return invalid({
           conflict: ["You already have a proposal for this opportunity."]
         });
