@@ -1,5 +1,6 @@
 import {
   getActionsValid,
+  getAlertsValid,
   getMetadataValid,
   getModalValid,
   makePageMetadata,
@@ -547,6 +548,12 @@ export const component: component_.page.Component<
         : "Create Code With Us Proposal"
     );
   }, makePageMetadata("Create Code With Us Proposal")),
+
+  getAlerts: getAlertsValid<ValidState, Msg>((state) => {
+    return state.form
+      ? Form.getAlerts(state.form)
+      : component_.page.alerts.empty();
+  }),
 
   getActions: getActionsValid(({ state, dispatch }) => {
     const form = state.form;

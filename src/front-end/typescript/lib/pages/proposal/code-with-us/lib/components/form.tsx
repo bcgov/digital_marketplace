@@ -1152,3 +1152,35 @@ export const view: component_.base.View<Props> = (props) => {
     </TabbedFormComponent.view>
   );
 };
+
+export function getAlerts<Msg>(
+  state: Immutable<State>
+): component_.page.Alerts<Msg> {
+  return {
+    errors: (() => {
+      if (state.existingProposalForOrganizationError) {
+        return [
+          {
+            text: (
+              <span>
+                The selected organization already has a proposal with this
+                opportunity. You may access it{" "}
+                <Link
+                  dest={routeDest(
+                    adt("proposalCWUEdit", {
+                      proposalId: state.existingProposalForOrganizationError,
+                      opportunityId: state.opportunity.id
+                    })
+                  )}>
+                  here
+                </Link>
+                .
+              </span>
+            )
+          }
+        ];
+      }
+      return [];
+    })()
+  };
+}
