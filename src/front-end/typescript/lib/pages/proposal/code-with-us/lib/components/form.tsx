@@ -19,7 +19,8 @@ import { Alert, Col, Row } from "reactstrap";
 import { compareStrings, getString } from "shared/lib";
 import {
   AffiliationSlim,
-  MembershipType
+  memberIsOrgAdmin,
+  memberIsOwner
 } from "shared/lib/resources/affiliation";
 import { FileUploadMetadata } from "shared/lib/resources/file";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
@@ -258,7 +259,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: adt(
         "options",
         affiliations
-          .filter((a) => a.membershipType === MembershipType.Owner)
+          .filter((a) => memberIsOwner(a) || memberIsOrgAdmin(a))
           .sort((a, b) =>
             compareStrings(a.organization.legalName, b.organization.legalName)
           )
