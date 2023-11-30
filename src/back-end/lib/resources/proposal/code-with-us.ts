@@ -41,7 +41,6 @@ import {
   getValidValue,
   invalid,
   isInvalid,
-  isValid,
   valid,
   Validation
 } from "shared/lib/validation";
@@ -885,8 +884,12 @@ const delete_: crud.Delete<
         request.params.id,
         request.session
       );
+      if (isInvalid(validatedCWUProposal)) {
+        return invalid({
+          status: ["You can not delete a proposal that is not a draft."]
+        });
+      }
       if (
-        isValid(validatedCWUProposal) &&
         !(await permissions.deleteCWUProposal(
           connection,
           request.session,
@@ -895,11 +898,6 @@ const delete_: crud.Delete<
       ) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
-      if (isInvalid(validatedCWUProposal)) {
-        return invalid({
-          status: ["You can not delete a proposal that is not a draft."]
         });
       }
       if (validatedCWUProposal.value.status !== CWUProposalStatus.Draft) {
