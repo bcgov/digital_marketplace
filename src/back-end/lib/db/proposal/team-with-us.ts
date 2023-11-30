@@ -509,11 +509,12 @@ export const readOrgTWUProposals = tryDb<
   TWUProposalSlim[]
 >(async (connection, session) => {
   const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
-  const orgs = orgIds.map((orgId) => orgId.organization);
   const query = generateTWUProposalQuery(connection);
 
-  if (orgs) {
-    query.where("organization", "IN", orgs);
+  if (orgIds) {
+    query.where("organization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
   }
 
   const results = await query;

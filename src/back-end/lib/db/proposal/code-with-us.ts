@@ -466,9 +466,6 @@ export const readOneCWUProponent = tryDb<[Id], CWUIndividualProponent>(
   }
 );
 
-/**
- *
- */
 export const readManyCWUProposals = tryDb<
   [AuthenticatedSession, Id],
   CWUProposalSlim[]
@@ -581,11 +578,12 @@ export const readOrgCWUProposals = tryDb<
   CWUProposalSlim[]
 >(async (connection, session) => {
   const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
-  const orgs = orgIds.map((orgId) => orgId.organization);
   const query = generateCWUProposalQuery(connection);
 
-  if (orgs) {
-    query.where("proponentOrganization", "IN", orgs);
+  if (orgIds) {
+    query.where("proponentOrganization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
   }
 
   const results = await query;

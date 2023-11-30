@@ -34,7 +34,7 @@ interface RawAffiliation {
   updatedAt: Date;
 }
 
-type OrgIds = Record<"organization", Id>[];
+type OrgIds = Id[];
 
 export interface RawHistoryRecord
   extends Omit<AffiliationHistoryRecord, "createdBy" | "member" | "type"> {
@@ -423,19 +423,25 @@ export async function readActiveOwnerCount(
  *
  * @param connection - Knex connection
  * @param userId - unique identifier for user
- * @returns Promise<Promise<OrgIds> - Returns an object of organizationIds or null.
+ * @returns Promise<OrgIds> - Returns an object of organizationIds or null.
  */
 export async function getOrgIdsForOwnerOrAdmin(
   connection: Connection,
   userId: Id
-): Promise<Promise<OrgIds>> {
+): Promise<OrgIds> {
   const result = await connection("affiliations")
     .distinct<OrgIds>("organization")
     .where("membershipStatus", "ACTIVE")
     .andWhere(function () {
-      this.where("membershipType", "ADMIN").orWhere("membershipType", "OWNER");
+      this.where({
+        "affiliations.membershipType": MembershipType.Admin
+      }).orWhere({
+        "affiliations.membershipType": MembershipType.Owner
+      });
     })
-    .andWhere("user", userId);
+    .andWhere("user", userId)
+    .pluck("organization");
+
   if (!result) {
     throw new Error("unable to process orgIds for Owner or Admin");
   }

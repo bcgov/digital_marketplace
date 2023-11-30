@@ -404,9 +404,6 @@ export function readOwnProposals(session: Session): boolean {
   return isVendor(session);
 }
 
-// export function readOrgProposals(session: Session, connection: Connection): boolean {
-//   return isOwnerOrAdminOfOrg(connection, session?.user, )
-// }
 export async function readOneCWUProposal(
   connection: Connection,
   session: Session,
