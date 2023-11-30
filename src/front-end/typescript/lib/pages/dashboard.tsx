@@ -191,13 +191,11 @@ function makeVendorBodyRows(
         },
         {
           children: (
-            <div className="small text-secondary">
-              <dl className="mb-0">
-                <dt>Date:</dt>
-                <dd>{formatDate(p.value.createdAt)}</dd>
-                <dt>By:</dt>
-                <dd>{p.value.createdBy?.name}</dd>
-              </dl>
+            <div>
+              {formatDate(p.value.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {p.value.createdBy?.name}
+              </div>
             </div>
           )
         }
@@ -250,11 +248,11 @@ function makePublicSectorBodyRows(
         },
         {
           children: (
-            <div className="small text-secondary text-uppercase">
-              <dl className="mb-0">
-                <dt>Date:</dt>
-                <dd>{formatDate(p.value.createdAt)}</dd>
-              </dl>
+            <div>
+              {formatDate(p.value.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {p.value.createdBy?.name}
+              </div>
             </div>
           )
         }
@@ -288,7 +286,7 @@ const init: component_.page.Init<
       {
         children: "Created",
         className: "text-nowrap",
-        style: { width: "10%", minWidth: "100px" }
+        style: { width: "10%", minWidth: "125px" }
       }
     ];
     const [tableState, tableCmds] = Table.init({
