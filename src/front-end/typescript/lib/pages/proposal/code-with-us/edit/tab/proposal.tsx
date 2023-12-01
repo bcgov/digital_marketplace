@@ -783,6 +783,12 @@ export const component: Tab.Component<State, Msg> = {
     return adt("onInitResponse", response) as InnerMsg;
   },
 
+  getAlerts: (state) => {
+    return state.form
+      ? Form.getAlerts(state.form)
+      : component_.page.alerts.empty();
+  },
+
   getModal: (state) => {
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&

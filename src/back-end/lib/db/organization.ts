@@ -171,7 +171,7 @@ async function rawHistoryRecordToHistoryRecord(
     const { affiliation: affilationId, event: type, ...restOfRaw } = value;
 
     const affiliation = getValidValue(
-      await readOneAffiliationById(connection, affilationId),
+      await readOneAffiliationById(connection, affilationId, false),
       null
     );
 
@@ -553,7 +553,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
         })
         .andWhere({
           "organizations.active": true,
-          "affiliations.user": session.user.id
+          "affiliations.user": session.user.id,
+          "affiliations.membershipStatus": MembershipStatus.Active
         })) as RawOrganization[]) || [];
     return valid(
       await Promise.all(

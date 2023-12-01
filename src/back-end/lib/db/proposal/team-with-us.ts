@@ -500,6 +500,22 @@ export const readOwnTWUProposals = tryDb<
   );
 });
 
+const readOneTWUProposalWithIdsQuery = (
+  query: (
+    connection: Connection,
+    ...ids: Id[]
+  ) => Promise<Pick<RawTWUProposal, "id"> | undefined>
+) =>
+  tryDb<[Session, ...Id[]], Id | null>(async (connection, session, ...ids) => {
+    if (!session) {
+      return valid(null);
+    }
+
+    const result = (await query(connection, session.user.id, ...ids))?.id;
+
+    return valid(result ? result : null);
+  });
+
 /**
  * Should a request come from an organization Owner or organization Admin,
  * this modifies the TWU Proposal query to read the proposals for the
@@ -542,22 +558,28 @@ export const readOrgTWUProposals = tryDb<
  * Used as confirmation that the person creating a proposal is not the same
  * person as who created the opportunity. Returns `valid(null)` on success.
  */
-export const readOneTWUProposalByOpportunityAndAuthor = tryDb<
-  [Id, Session],
-  Id | null
->(async (connection, opportunityId, session) => {
-  if (!session) {
-    return valid(null);
-  }
-  const result = (
-    await connection<{ id: Id }>("twuProposals")
-      .where({ opportunity: opportunityId, createdBy: session.user.id })
-      .select("id")
-      .first()
-  )?.id;
+export const readOneTWUProposalByOpportunityAndAuthor =
+  readOneTWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId) =>
+      await connection<RawTWUProposal, { id: Id }>("twuProposals")
+        .where({ opportunity: opportunityId, createdBy: userId })
+        .select("id")
+        .first()
+  );
 
-  return valid(result ? result : null);
-});
+/**
+ * Used as confirmation that the organization does not have more than one
+ * proposal associated with the opportunity. Returns `valid(null)` on success.
+ */
+export const readOneTWUProposalByOpportunityAndOrgAuthor =
+  readOneTWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId, organizationId) =>
+      await connection<RawTWUProposal, { id: Id }>("twuProposals")
+        .where({ opportunity: opportunityId, organization: organizationId })
+        .andWhereNot({ createdBy: userId })
+        .select("id")
+        .first()
+  );
 
 async function isTWUProposalAuthor(
   connection: Connection,
