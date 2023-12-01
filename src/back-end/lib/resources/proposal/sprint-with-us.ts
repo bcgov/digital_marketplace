@@ -98,6 +98,22 @@ type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "proposals/sprint-with-us";
 
+/**
+ * Reads Many SWU Proposals
+ *
+ * @remarks
+ *
+ * validates that the SWU opp id exists in the database, checks permissions of
+ * the user, if the request comes with the following parameters set:
+ *   - request.query.opportunity=<string> = (an opportunity number) it will
+ *   return all proposals associated with that opportunity
+ *   - request.query.organizationProposals=<string> = it will return a response
+ *   for all proposals associated with the organizations the requester has
+ *   access to.
+ *   - default behavior is to return the requester\'s own proposals
+ *
+ * @param connection
+ */
 const readMany: crud.ReadMany<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -131,6 +147,23 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         connection,
         request.session,
         request.query.opportunity
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else if (request.query.organizationProposals) {
+      // create a permissions check for Owners and Admins
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const dbResult = await db.readOrgSWUProposals(
+        connection,
+        request.session
       );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);

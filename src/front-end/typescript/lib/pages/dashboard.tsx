@@ -2,10 +2,10 @@ import {
   getAlertsValid,
   getActionsValid,
   makePageMetadata,
-  prefixPath,
   updateValid,
+  Intersperse,
   viewValid,
-  Intersperse
+  prefixPath
 } from "front-end/lib";
 import { isSignedIn } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
@@ -32,7 +32,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import { Col, Container, Row } from "reactstrap";
 import { compareDates, formatDate } from "shared/lib";
 import * as CWUO from "shared/lib/resources/opportunity/code-with-us";
 import * as SWUO from "shared/lib/resources/opportunity/sprint-with-us";
@@ -53,6 +53,9 @@ import {
   twuProposalStatusToColor,
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
+import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
+
+type ProposalsTab = "my-proposals" | "org-proposals";
 
 interface ValidState {
   table: {
@@ -65,9 +68,20 @@ interface ValidState {
     bodyRows: Table.BodyRows;
     state: Immutable<Table.State>;
   };
+  orgTable: {
+    title: string;
+    link?: {
+      text: string;
+      route: Route;
+    };
+    headCells: Table.HeadCells;
+    bodyRows: Table.BodyRows;
+    state: Immutable<Table.State>;
+  };
   viewerUser: User;
   isSWUQualified?: boolean;
   isTWUQualified?: boolean;
+  activeProposalsTab: ProposalsTab;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -79,7 +93,10 @@ type InitResponse =
         CWUP.CWUProposalSlim[],
         SWUP.SWUProposalSlim[],
         TWUP.TWUProposalSlim[],
-        OrganizationSlim[]
+        OrganizationSlim[],
+        CWUP.CWUProposalSlim[],
+        SWUP.SWUProposalSlim[],
+        TWUP.TWUProposalSlim[]
       ]
     >
   | ADT<
@@ -93,7 +110,8 @@ type InitResponse =
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
-  | ADT<"onInitResponse", InitResponse>;
+  | ADT<"onInitResponse", InitResponse>
+  | ADT<"setActiveProposalsTab", ProposalsTab>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -172,7 +190,14 @@ function makeVendorBodyRows(
           )
         },
         {
-          children: formatDate(p.value.createdAt)
+          children: (
+            <div>
+              {formatDate(p.value.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {p.value.createdBy?.name}
+              </div>
+            </div>
+          )
         }
       ];
     });
@@ -222,7 +247,14 @@ function makePublicSectorBodyRows(
           )
         },
         {
-          children: formatDate(p.value.createdAt)
+          children: (
+            <div>
+              {formatDate(p.value.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {p.value.createdBy?.name}
+              </div>
+            </div>
+          )
         }
       ];
     });
@@ -238,12 +270,12 @@ const init: component_.page.Init<
   success({ shared }) {
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
-    const title = vendor ? "My Proposals" : "My Opportunities";
+    const title = vendor ? "" : "My Opportunities";
     const headCells: Table.HeadCells = [
       {
         children: vendor ? "Opportunity" : "Title",
         style: {
-          width: "100%",
+          width: "90%",
           minWidth: "200px"
         }
       },
@@ -252,22 +284,36 @@ const init: component_.page.Init<
         style: { width: "0px" }
       },
       {
-        children: "Date Created",
+        children: "Created",
         className: "text-nowrap",
-        style: { width: "0px" }
+        style: { width: "10%", minWidth: "125px" }
       }
     ];
     const [tableState, tableCmds] = Table.init({
       idNamespace: "dashboard-table"
     });
+
     const bodyRows: Table.BodyRows = [];
     return [
       valid(
         immutable({
           isSWUQualified: false,
           isTWUQualified: false,
+          activeProposalsTab: "my-proposals",
           viewerUser,
           table: {
+            title,
+            headCells,
+            bodyRows,
+            state: immutable(tableState),
+            link: vendor
+              ? undefined
+              : {
+                  text: "View all opportunities",
+                  route: adt("opportunities", null)
+                }
+          },
+          orgTable: {
             title,
             headCells,
             bodyRows,
@@ -284,7 +330,7 @@ const init: component_.page.Init<
       [
         ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
         vendor
-          ? component_.cmd.join4(
+          ? component_.cmd.join7(
               api.proposals.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
@@ -297,10 +343,30 @@ const init: component_.page.Init<
               api.organizations.owned.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu, twu, orgs) =>
+              api.proposals.cwu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              api.proposals.swu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              api.proposals.twu.readMany(
+                "",
+                "orgProposals"
+              )((response) => api.getValidValue(response, [])),
+              (cwu, swu, twu, orgs, orgCwu, orgSwu, orgTwu) =>
                 adt(
                   "onInitResponse",
-                  adt("vendor", [cwu, swu, twu, orgs] as const)
+                  adt("vendor", [
+                    cwu,
+                    swu,
+                    twu,
+                    orgs,
+                    orgCwu,
+                    orgSwu,
+                    orgTwu
+                  ] as const)
                 ) as Msg
             )
           : component_.cmd.join3(
@@ -341,8 +407,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       case "onInitResponse": {
         switch (msg.value.tag) {
           case "vendor": {
-            const [cwuProposals, swuProposals, twuProposals, organizations] =
-              msg.value.value;
+            const [
+              cwuProposals,
+              swuProposals,
+              twuProposals,
+              organizations,
+              orgCwuProposals,
+              orgSwuProposals,
+              orgTwuProposals
+            ] = msg.value.value;
             const isSWUQualified = organizations.some(
               doesOrganizationMeetSWUQualification
             );
@@ -353,12 +426,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               state
                 .set("isSWUQualified", isSWUQualified)
                 .set("isTWUQualified", isTWUQualified)
+                .set("activeProposalsTab", state.activeProposalsTab)
                 .setIn(
                   ["table", "bodyRows"],
                   makeVendorBodyRows(
                     cwuProposals,
                     swuProposals,
                     twuProposals,
+                    state.viewerUser
+                  )
+                )
+                .setIn(
+                  ["orgTable", "bodyRows"],
+                  makeVendorBodyRows(
+                    orgCwuProposals,
+                    orgSwuProposals,
+                    orgTwuProposals,
                     state.viewerUser
                   )
                 ),
@@ -370,20 +453,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             const [cwuOpportunities, swuOpportunities, twuOpportunities] =
               msg.value.value;
             return [
-              state.setIn(
-                ["table", "bodyRows"],
-                makePublicSectorBodyRows(
-                  cwuOpportunities,
-                  swuOpportunities,
-                  twuOpportunities,
-                  state.viewerUser
-                )
-              ),
+              state
+                .set("activeProposalsTab", state.activeProposalsTab)
+                .setIn(
+                  ["table", "bodyRows"],
+                  makePublicSectorBodyRows(
+                    cwuOpportunities,
+                    swuOpportunities,
+                    twuOpportunities,
+                    state.viewerUser
+                  )
+                ),
               [component_.cmd.dispatch(component_.page.readyMsg())]
             ];
           }
         }
       }
+      case "setActiveProposalsTab":
+        return [state.set("activeProposalsTab", msg.value), []];
       case "table":
         return component_.base.updateChild({
           state,
@@ -394,6 +481,61 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         });
       default:
         return [state, []];
+    }
+  }
+);
+
+const Header: component_.base.View = () => {
+  return (
+    <Row className="mb-5">
+      <Col xs="12">
+        <h1 className="mb-0">Dashboard</h1>
+      </Col>
+    </Row>
+  );
+};
+
+/**
+ * Will display Tabs only for Vendors. For both Vendors and Public Sector Users,
+ * will display tables only if there is data to show, otherwise Welcome
+ */
+const view: component_.page.View<State, InnerMsg, Route> = viewValid(
+  ({ state, dispatch }) => {
+    const vendor = isVendor(state.viewerUser);
+    if (vendor) {
+      return (
+        <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+          <Header />
+          <Row>
+            <Col xs="12" md="9">
+              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+                <Proposals state={state} dispatch={dispatch} />
+              </div>
+            </Col>
+          </Row>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
+          <Header />
+          <Row>
+            <Col xs="12" md="9">
+              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+                {state.table ? (
+                  <Dashboard
+                    dispatch={dispatch}
+                    viewerUser={state.viewerUser}
+                    table={state.table}
+                  />
+                ) : (
+                  <Welcome viewerUser={state.viewerUser} />
+                )}
+              </div>
+            </Col>
+          </Row>
+        </div>
+      );
     }
   }
 );
@@ -453,56 +595,115 @@ const Dashboard: component_.base.View<DashboardProps> = ({
 }) => {
   return (
     <div>
-      <Row className="mb-5">
-        <Col xs="12">
-          <h1 className="mb-0">Dashboard</h1>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs="12" md="9">
-          <div className="rounded-lg border bg-white p-4 p-sm-4h shadow-hover">
-            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
-              <div className="font-weight-bold mr-sm-3">{table.title}</div>
-              {table.link ? (
-                <span className="d-none d-sm-inline-flex ml-sm-auto font-size-small">
-                  <Link
-                    dest={routeDest(table.link.route)}
-                    iconSymbolSize={0.9}
-                    symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}>
-                    {table.link.text}
-                  </Link>
-                </span>
-              ) : null}
-            </div>
-            <Table.view
-              headCells={table.headCells}
-              bodyRows={table.bodyRows}
-              state={table.state}
-              dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-                adt("table" as const, msg)
-              )}
-            />
-          </div>
-        </Col>
-      </Row>
+      <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
+        <div className="font-weight-bold mr-sm-3">{table.title}</div>
+        {table.link ? (
+          <span className="d-none d-sm-inline-flex ml-sm-auto font-size-small">
+            <Link
+              dest={routeDest(table.link.route)}
+              iconSymbolSize={0.9}
+              symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}>
+              {table.link.text}
+            </Link>
+          </span>
+        ) : null}
+      </div>
+      <Table.view
+        headCells={table.headCells}
+        bodyRows={table.bodyRows}
+        state={table.state}
+        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+          adt("table" as const, msg)
+        )}
+      />
     </div>
   );
 };
 
-const view: component_.page.View<State, InnerMsg, Route> = viewValid(
-  ({ state, dispatch }) => {
-    if (state.table) {
-      return (
-        <Dashboard
-          dispatch={dispatch}
-          viewerUser={state.viewerUser}
-          table={state.table}
-        />
-      );
+const Proposals: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const activeTab = (() => {
+    switch (state.activeProposalsTab) {
+      case "my-proposals":
+        if (state.table.bodyRows.length > 0) {
+          return (
+            <Dashboard
+              dispatch={dispatch}
+              viewerUser={state.viewerUser}
+              table={state.table}
+            />
+          );
+        } else {
+          return <Welcome viewerUser={state.viewerUser} />;
+        }
+      case "org-proposals":
+        if (state.orgTable.bodyRows.length > 0) {
+          return (
+            <Dashboard
+              dispatch={dispatch}
+              viewerUser={state.viewerUser}
+              table={state.orgTable}
+            />
+          );
+        } else {
+          return (
+            <div className="d-flex flex-column justify-content-center align-items-stretch flex-grow-1">
+              <Row>
+                <Col xs="12">
+                  <p>
+                    Proposals belonging to your organizations or organizations
+                    you are affiliated with will appear here after you have been
+                    made an Admin in those organizations.
+                  </p>
+                </Col>
+              </Row>
+            </div>
+          );
+        }
     }
-    return <Welcome viewerUser={state.viewerUser} />;
-  }
-);
+  })();
+  return (
+    <Container>
+      <ProposalTabs state={state} dispatch={dispatch} />
+      <Row>
+        <Col xs="12" md="12">
+          {activeTab}
+        </Col>
+      </Row>
+    </Container>
+  );
+};
+
+const ProposalTabs: component_.base.ComponentView<ValidState, Msg> = ({
+  state,
+  dispatch
+}) => {
+  const activeTab = state.activeProposalsTab;
+  const getTabInfo = (tab: ProposalsTab) => ({
+    active: activeTab === tab,
+    onClick: () => dispatch(adt("setActiveProposalsTab", tab))
+  });
+  const tabs: Tab[] = [
+    {
+      ...getTabInfo("my-proposals"),
+      text: "My Proposals"
+    },
+    {
+      ...getTabInfo("org-proposals"),
+      text: "Org Proposals"
+    }
+  ];
+
+  return (
+    <Row className="mb-2">
+      <Col xs="12">
+        <TabbedNav tabs={tabs} />
+      </Col>
+    </Row>
+  );
+};
 
 export const component: component_.page.Component<
   RouteParams,
