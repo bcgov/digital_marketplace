@@ -624,22 +624,40 @@ export const readOwnSWUProposals = tryDb<
   );
 });
 
-export const readOneSWUProposalByOpportunityAndAuthor = tryDb<
-  [Id, Session],
-  Id | null
->(async (connection, opportunityId, session) => {
-  if (!session) {
-    return valid(null);
-  }
-  const result = (
-    await connection<{ id: Id }>("swuProposals")
-      .where({ opportunity: opportunityId, createdBy: session.user.id })
-      .select("id")
-      .first()
-  )?.id;
+export const readOneSWUProposalWithIdsQuery = (
+  query: (
+    connection: Connection,
+    ...ids: Id[]
+  ) => Promise<Pick<RawSWUProposal, "id"> | undefined>
+) =>
+  tryDb<[Session, ...Id[]], Id | null>(async (connection, session, ...ids) => {
+    if (!session) {
+      return valid(null);
+    }
 
-  return valid(result ? result : null);
-});
+    const result = (await query(connection, session.user.id, ...ids))?.id;
+
+    return valid(result ? result : null);
+  });
+
+export const readOneSWUProposalByOpportunityAndAuthor =
+  readOneSWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId) =>
+      await connection<RawSWUProposal, { id: Id }>("swuProposals")
+        .where({ opportunity: opportunityId, createdBy: userId })
+        .select("id")
+        .first()
+  );
+
+export const readOneSWUProposalByOpportunityAndOrgAuthor =
+  readOneSWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId, organizationId) =>
+      await connection<RawSWUProposal>("swuProposals")
+        .where({ opportunity: opportunityId, organization: organizationId })
+        .andWhereNot({ createdBy: userId })
+        .select("id")
+        .first()
+  );
 
 async function isSWUProposalAuthor(
   connection: Connection,

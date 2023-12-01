@@ -262,17 +262,42 @@ const create: crud.Create<
       }
 
       // Check for existing proposal on this opportunity, authored by this user
-      const dbResult = await db.readOneSWUProposalByOpportunityAndAuthor(
-        connection,
-        opportunity,
-        request.session
-      );
-      if (isInvalid(dbResult)) {
+      if (organization) {
+        const dbResultOrgProposal =
+          await db.readOneSWUProposalByOpportunityAndOrgAuthor(
+            connection,
+            request.session,
+            opportunity,
+            organization
+          );
+        if (isInvalid(dbResultOrgProposal)) {
+          return invalid({
+            database: [db.ERROR_MESSAGE]
+          });
+        }
+        if (dbResultOrgProposal.value) {
+          return invalid({
+            existingOrganizationProposal: {
+              proposalId: dbResultOrgProposal.value,
+              errors: ["Please select a different organization."]
+            }
+          });
+        }
+      }
+
+      // Check for existing proposal on this opportunity, authored by this user
+      const dbResultProposal =
+        await db.readOneSWUProposalByOpportunityAndAuthor(
+          connection,
+          request.session,
+          opportunity
+        );
+      if (isInvalid(dbResultProposal)) {
         return invalid({
           database: [db.ERROR_MESSAGE]
         });
       }
-      if (dbResult.value) {
+      if (dbResultProposal.value) {
         return invalid({
           conflict: ["You already have a proposal for this opportunity."]
         });
@@ -633,6 +658,32 @@ const update: crud.Update<
                 ]
               })
             });
+          }
+
+          // Check for existing proposal on this opportunity, authored by this user
+          if (validatedOrganization.value) {
+            const dbResult =
+              await db.readOneSWUProposalByOpportunityAndOrgAuthor(
+                connection,
+                request.session,
+                swuOpportunity.id,
+                validatedOrganization.value.id
+              );
+            if (isInvalid(dbResult)) {
+              return invalid({
+                database: [db.ERROR_MESSAGE]
+              });
+            }
+            if (dbResult.value && dbResult.value !== request.params.id) {
+              return invalid({
+                proposal: adt("edit" as const, {
+                  existingOrganizationProposal: {
+                    proposalId: dbResult.value,
+                    errors: ["Please select a different organization."]
+                  }
+                })
+              });
+            }
           }
 
           // Attachments must be validated for both drafts and published opportunities
