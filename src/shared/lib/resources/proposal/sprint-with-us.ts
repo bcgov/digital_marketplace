@@ -305,6 +305,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   references?: CreateSWUProposalReferenceValidationErrors[];
   teamQuestionResponses?: CreateSWUProposalTeamQuestionResponseValidationErrors[];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   opportunity?: string[];
   status?: string[];
   totalProposedCost?: string[];
@@ -365,6 +366,7 @@ export interface UpdateEditValidationErrors {
   implementationPhase?: CreateSWUProposalPhaseValidationErrors;
   references?: CreateSWUProposalReferenceValidationErrors[];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
