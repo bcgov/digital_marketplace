@@ -388,9 +388,7 @@ export function setErrors(
     ? errors.existingOrganizationProposal.errors
     : [];
   return state
-    .update("organization", (s) =>
-      FormField.setErrors(s, organizationErrors || [])
-    )
+    .update("organization", (s) => FormField.setErrors(s, organizationErrors))
     .update("team", (s) =>
       Team.setErrors(s, {
         inceptionPhase: errors?.inceptionPhase,

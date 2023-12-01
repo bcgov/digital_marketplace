@@ -624,7 +624,7 @@ export const readOwnSWUProposals = tryDb<
   );
 });
 
-export const readOneSWUProposalWithIdsQuery = (
+const readOneSWUProposalWithIdsQuery = (
   query: (
     connection: Connection,
     ...ids: Id[]
@@ -652,7 +652,7 @@ export const readOneSWUProposalByOpportunityAndAuthor =
 export const readOneSWUProposalByOpportunityAndOrgAuthor =
   readOneSWUProposalWithIdsQuery(
     async (connection, userId, opportunityId, organizationId) =>
-      await connection<RawSWUProposal>("swuProposals")
+      await connection<RawSWUProposal, { id: Id }>("swuProposals")
         .where({ opportunity: opportunityId, organization: organizationId })
         .andWhereNot({ createdBy: userId })
         .select("id")

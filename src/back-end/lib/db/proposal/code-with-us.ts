@@ -570,7 +570,7 @@ export const readOwnCWUProposals = tryDb<
   );
 });
 
-export const readOneProposalWithIdsQuery = (
+const readOneProposalWithIdsQuery = (
   query: (
     connection: Connection,
     ...ids: Id[]
