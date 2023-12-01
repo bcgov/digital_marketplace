@@ -208,6 +208,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
   resourceQuestionResponses?: CreateTWUProposalResourceQuestionResponseValidationErrors[];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   opportunity?: string[];
   status?: string[];
   team?: CreateTWUProposalTeamMemberValidationErrors[];
@@ -257,6 +258,7 @@ export interface UpdateResourceQuestionScoreValidationErrors {
 export interface UpdateEditValidationErrors {
   attachments?: string[][];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
