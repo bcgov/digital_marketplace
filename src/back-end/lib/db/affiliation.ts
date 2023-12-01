@@ -132,8 +132,8 @@ export const readOneAffiliation = tryDb<[Id, Id], Affiliation | null>(
   }
 );
 
-export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(
-  async (connection, id) => {
+export const readOneAffiliationById = tryDb<[Id, boolean?], Affiliation | null>(
+  async (connection, id, activeOnly = true) => {
     const result = await connection<RawAffiliation>("affiliations")
       .join(
         "organizations",
@@ -144,7 +144,9 @@ export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(
       .select<RawAffiliation>("affiliations.*")
       .where({ "affiliations.id": id })
       .andWhereNot({
-        "affiliations.membershipStatus": MembershipStatus.Inactive,
+        ...(activeOnly
+          ? { "affiliations.membershipStatus": MembershipStatus.Inactive }
+          : {}),
         "organizations.active": false
       })
       .first();
