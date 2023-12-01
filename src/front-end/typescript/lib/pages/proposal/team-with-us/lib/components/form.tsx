@@ -1172,6 +1172,31 @@ export function getAlerts<Msg>(
       } else {
         return [];
       }
+    })(),
+    errors: (() => {
+      if (state.existingProposalForOrganizationError) {
+        return [
+          {
+            text: (
+              <span>
+                The selected organization already has a proposal with this
+                opportunity. You may access it{" "}
+                <Link
+                  dest={routeDest(
+                    adt("proposalTWUEdit", {
+                      proposalId: state.existingProposalForOrganizationError,
+                      opportunityId: state.opportunity.id
+                    })
+                  )}>
+                  here
+                </Link>
+                .
+              </span>
+            )
+          }
+        ];
+      }
+      return [];
     })()
   };
 }
