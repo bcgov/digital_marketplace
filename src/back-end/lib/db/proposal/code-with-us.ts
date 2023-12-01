@@ -1,6 +1,7 @@
 import { generateUuid } from "back-end/lib";
 import {
   Connection,
+  getOrgIdsForOwnerOrAdmin,
   Transaction,
   isUserOwnerOrAdminOfOrg,
   tryDb
@@ -544,6 +545,54 @@ export const readOwnCWUProposals = tryDb<
 
   if (!results) {
     throw new Error("unable to read proposals");
+  }
+
+  for (const proposal of results) {
+    proposal.submittedAt = await getCWUProposalSubmittedAt(
+      connection,
+      proposal
+    );
+    // Remove score unless in awarded / not awarded state
+    if (
+      proposal.status !== CWUProposalStatus.Awarded &&
+      proposal.status !== CWUProposalStatus.NotAwarded
+    ) {
+      delete proposal.score;
+    }
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (result) =>
+          await rawCWUProposalSlimToCWUProposalSlim(connection, result, session)
+      )
+    )
+  );
+});
+
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the CWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgCWUProposals = tryDb<
+  [AuthenticatedSession],
+  CWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const query = generateCWUProposalQuery(connection);
+
+  if (orgIds) {
+    query.where("proponentOrganization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read CWU org proposals");
   }
 
   for (const proposal of results) {

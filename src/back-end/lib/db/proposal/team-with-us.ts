@@ -1,6 +1,7 @@
 import { generateUuid } from "back-end/lib";
 import {
   Connection,
+  getOrgIdsForOwnerOrAdmin,
   Transaction,
   isUserOwnerOrAdminOfOrg,
   tryDb
@@ -494,6 +495,44 @@ export const readOwnTWUProposals = tryDb<
       proposals.map(
         async (result) =>
           await rawTWUProposalSlimToTWUProposalSlim(connection, result, session)
+      )
+    )
+  );
+});
+
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the TWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgTWUProposals = tryDb<
+  [AuthenticatedSession],
+  TWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const query = generateTWUProposalQuery(connection);
+
+  if (orgIds) {
+    query.where("organization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read TWU org proposals");
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (results) =>
+          await rawTWUProposalSlimToTWUProposalSlim(
+            connection,
+            results,
+            session
+          )
       )
     )
   );
