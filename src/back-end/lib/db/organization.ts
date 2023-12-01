@@ -553,7 +553,8 @@ export const readOwnedOrganizations = tryDb<[Session], OrganizationSlim[]>(
         })
         .andWhere({
           "organizations.active": true,
-          "affiliations.user": session.user.id
+          "affiliations.user": session.user.id,
+          "affiliations.membershipStatus": MembershipStatus.Active
         })) as RawOrganization[]) || [];
     return valid(
       await Promise.all(
