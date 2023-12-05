@@ -306,14 +306,14 @@ parameters:
   description: The number of weekly backup files to be retained.  Used for the `rolling`
     backup strategy.
   required: false
-  value: '4'
+  value: '3'
 
 - name: MONTHLY_BACKUPS
   displayName: Number of Monthly Backups to Retain
   description: The number of monthly backup files to be retained.  Used for the `rolling`
     backup strategy.
   required: false
-  value: '1'
+  value: '0'
 
 - name: BACKUP_PERIOD
   displayName: Period (d,m,s) between backups in a format used by the sleep command
