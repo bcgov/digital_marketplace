@@ -985,17 +985,28 @@ export const component: Tab.Component<State, Msg> = {
       case "orgProposalChangeDetected":
         return component_.page.modal.show({
           title: "Proposal Changes Detected",
-          body: () =>
-            "Changes have been made to this proposal, please save your changes offline and refresh the page.",
+          body: () => (
+            <>
+              <p>
+                Someone else in your organization has submitted changes to this
+                proposal since you started editing it.
+              </p>
+              <p>Your options are:</p>
+              <ol>
+                <li>
+                  Save your changes to a document offline, cancel editing, and
+                  re-enter your changes.
+                </li>
+                <li>
+                  Keep working, and when you submit, your version{" "}
+                  <strong>will</strong> overwrite the previously submitted
+                  changes.
+                </li>
+              </ol>
+            </>
+          ),
           onCloseMsg: adt("hideModal") as Msg,
-          actions: [
-            {
-              text: "<Action>",
-              color: "info",
-              msg: adt("hideModal"),
-              button: true
-            }
-          ]
+          actions: []
         });
       case null:
         return component_.page.modal.hide();
