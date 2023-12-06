@@ -218,9 +218,13 @@ async function getCWUProposalSubmittedAt(
   connection: Connection,
   proposal: RawCWUProposal | RawCWUProposalSlim
 ): Promise<Date | undefined> {
+  const conditions = {
+    proposal: proposal.id,
+    status: CWUProposalStatus.Submitted
+  };
   return (
     await connection<{ submittedAt: Date }>("cwuProposalStatuses")
-      .where({ proposal: proposal.id, status: CWUProposalStatus.Submitted })
+      .where(conditions)
       .orderBy("createdAt", "desc")
       .select("createdAt as submittedAt")
       .first()
@@ -344,7 +348,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
     if (result) {
       result.attachments = (
         await connection<{ file: Id }>("cwuProposalAttachments")
-          .where({ proposal: result.id })
+          .where("proposal", result.id)
           .select("file")
       ).map((row) => row.file);
 
@@ -354,7 +358,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
       ) {
         const rawProposalStasuses =
           await connection<RawCWUProposalHistoryRecord>("cwuProposalStatuses")
-            .where({ proposal: result.id })
+            .where("proposal", result.id)
             .orderBy("createdAt", "desc");
 
         result.history = await Promise.all(
@@ -386,7 +390,7 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
         // Add score to proposal
         result.score = (
           await connection<{ score: number }>("cwuProposals")
-            .where({ id })
+            .where("id", id)
             .select("score")
             .first()
         )?.score;
@@ -906,7 +910,7 @@ export const updateCWUProposalScore = tryDb<
         "cwuProposalStatuses"
       )
         .whereNotNull("status")
-        .andWhere({ proposal: proposalId })
+        .andWhere("proposal", proposalId)
         .orderBy("createdAt", "desc")
         .select("status")
         .first();
@@ -1011,7 +1015,7 @@ export const awardCWUProposal = tryDb<
         (
           await connection<{ id: Id }>("cwuProposals")
             .transacting(trx)
-            .andWhere({ opportunity: proposalRecord.opportunity })
+            .andWhere("opportunity", proposalRecord.opportunity)
             .andWhereNot({ id: proposalId })
             .select("id")
         )?.map((result) => result.id) || [];
@@ -1021,7 +1025,7 @@ export const awardCWUProposal = tryDb<
         const currentStatus = (
           await connection<{ status: CWUProposalStatus }>("cwuProposalStatuses")
             .whereNotNull("status")
-            .andWhere({ proposal: id })
+            .andWhere("proposal", id)
             .select("status")
             .orderBy("createdAt", "desc")
             .first()
@@ -1160,7 +1164,7 @@ export const readOneCWUAwardedProposal = tryDb<
     // Add score to proposal
     result.score = (
       await connection<{ score: number }>("cwuProposals")
-        .where({ id: result.id })
+        .where("id", result.id)
         .select("score")
         .first()
     )?.score;

@@ -1,6 +1,6 @@
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
-import Knex from "knex";
+import { Knex } from "knex";
 import { invalid, Validation } from "shared/lib/validation";
 
 const logger = makeDomainLogger(consoleAdapter, "back-end");

@@ -418,9 +418,13 @@ async function getSWUProposalSubmittedAt(
   connection: Connection,
   proposal: RawSWUProposal | RawSWUProposalSlim
 ): Promise<Date | undefined> {
+  const conditions = {
+    proposal: proposal.id,
+    status: SWUProposalStatus.Submitted
+  };
   return (
     await connection<{ submittedAt: Date }>("swuProposalStatuses")
-      .where({ proposal: proposal.id, status: SWUProposalStatus.Submitted })
+      .where(conditions)
       .orderBy("createdAt", "desc")
       .select("createdAt as submittedAt")
       .first()
@@ -726,7 +730,7 @@ export const readManyProposalReferences = tryDb<[Id], SWUProposalReference[]>(
     const results = await connection<SWUProposalReference>(
       "swuProposalReferences"
     )
-      .where({ proposal: proposalId })
+      .where("proposal", proposalId)
       .select("name", "company", "phone", "email", "order");
 
     if (!results) {
@@ -770,7 +774,7 @@ export const readOneSWUProposal = tryDb<
     // Fetch attachments
     result.attachments = (
       await connection<{ file: Id }>("swuProposalAttachments")
-        .where({ proposal: result.id })
+        .where("proposal", result.id)
         .select("file")
     ).map((row) => row.file);
 
@@ -787,7 +791,7 @@ export const readOneSWUProposal = tryDb<
       const rawProposalStatuses = await connection<RawHistoryRecord>(
         "swuProposalStatuses"
       )
-        .where({ proposal: result.id })
+        .where("proposal", result.id)
         .orderBy("createdAt", "desc")
         .select("createdAt", "note", "createdBy", "status", "event");
       result.history = await Promise.all(
@@ -826,26 +830,35 @@ export const readOneSWUProposal = tryDb<
     }
 
     // Retrieve phases for proposal
+    const inceptionConditions = {
+      proposal: result.id,
+      phase: SWUProposalPhaseType.Inception
+    };
     result.inceptionPhase = (
       await connection<{ id: Id }>("swuProposalPhases")
-        .where({ proposal: result.id, phase: SWUProposalPhaseType.Inception })
+        .where(inceptionConditions)
         .select("id")
         .first()
     )?.id;
 
+    const prototypeConditions = {
+      proposal: result.id,
+      phase: SWUProposalPhaseType.Prototype
+    };
     result.prototypePhase = (
       await connection<{ id: Id }>("swuProposalPhases")
-        .where({ proposal: result.id, phase: SWUProposalPhaseType.Prototype })
+        .where(prototypeConditions)
         .select("id")
         .first()
     )?.id;
 
+    const implementationConditions = {
+      proposal: result.id,
+      phase: SWUProposalPhaseType.Implementation
+    };
     const implementationPhaseId = (
       await connection<{ id: Id }>("swuProposalPhases")
-        .where({
-          proposal: result.id,
-          phase: SWUProposalPhaseType.Implementation
-        })
+        .where(implementationConditions)
         .select("id")
         .first()
     )?.id;
@@ -1112,17 +1125,17 @@ async function updateSWUProposalPhase(
   type: SWUProposalPhaseType,
   phase?: CreateSWUProposalPhaseBody
 ): Promise<void> {
+  const conditions = { proposal: proposalId, phase: type };
   // If no phase was passed in, remove any existing phase of that type (members will be handled by database cascade)
   if (!phase) {
     await connection<RawProposalPhase>("swuProposalPhases")
-      .where({ proposal: proposalId, phase: type })
+      .where(conditions)
       .delete("*");
     return;
   }
-
   const existingPhaseId = (
     await connection<{ id: Id }>("swuProposalPhases")
-      .where({ proposal: proposalId, phase: type })
+      .where(conditions)
       .select("id")
       .first()
   )?.id;
@@ -1273,7 +1286,7 @@ export const updateSWUProposalTeamQuestionScores = tryDb<
         updatedBy: Id;
       }>("swuProposals")
         .transacting(trx)
-        .where({ id: proposalId })
+        .where("id", proposalId)
         .update({
           updatedAt: now,
           updatedBy: session.user.id
@@ -1373,7 +1386,7 @@ export const updateSWUProposalCodeChallengeScore = tryDb<
         updatedBy: Id;
       }>("swuProposals")
         .transacting(trx)
-        .where({ id: proposalId })
+        .where("id", proposalId)
         .update({
           challengeScore: score,
           updatedAt: now,
@@ -1454,7 +1467,7 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<
         updatedBy: Id;
       }>("swuProposals")
         .transacting(trx)
-        .where({ id: proposalId })
+        .where("id", proposalId)
         .update({
           scenarioScore,
           priceScore,
@@ -1550,7 +1563,7 @@ async function calculatePriceScore(
   // Get the price score weight from the opportunity corresponding to this proposal
   const priceScoreWeight = (
     await connection<{ priceWeight: number }>("swuProposals as proposals")
-      .where({ "proposals.id": proposalId })
+      .where("proposals.id", proposalId)
       .join(
         "swuOpportunities as opportunities",
         "proposals.opportunity",
@@ -1658,7 +1671,7 @@ export const awardSWUProposal = tryDb<
         (
           await connection<{ id: Id }>("swuProposals")
             .transacting(trx)
-            .andWhere({ opportunity: proposalRecord.opportunity })
+            .andWhere("opportunity", proposalRecord.opportunity)
             .andWhereNot({ id: proposalId })
             .select("id")
         )?.map((result) => result.id) || [];
@@ -2045,7 +2058,7 @@ export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(
     const authorId =
       (
         await connection<{ createdBy: Id }>("swuProposals as proposals")
-          .where({ id })
+          .where("id", id)
           .select<{ createdBy: Id }>("createdBy")
           .first()
       )?.createdBy || null;

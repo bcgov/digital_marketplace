@@ -9,7 +9,7 @@ import {
 import { RawSWUOpportunitySubscriber } from "back-end/lib/db/subscribers/sprint-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import * as swuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
-import { QueryBuilder } from "knex";
+import { Knex } from "knex";
 import { valid } from "shared/lib/http";
 import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
@@ -394,7 +394,7 @@ export function generateSWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query: QueryBuilder = connection<RawSWUOpportunity>(
+  const query: Knex.QueryBuilder = connection<RawSWUOpportunity>(
     "swuOpportunities as opportunities"
   )
     // Join on latest SWU status
@@ -498,7 +498,7 @@ export const readManyAddendum = tryDb<[Id], Addendum[]>(
   async (connection, opportunityId) => {
     const results = await connection<RawSWUOpportunityAddendum>(
       "swuOpportunityAddenda"
-    ).where({ opportunity: opportunityId });
+    ).where("opportunity", opportunityId);
 
     if (!results) {
       throw new Error("unable to read addenda");
@@ -742,17 +742,18 @@ export const readOneSWUOpportunity = tryDb<
     // Query for attachment file ids
     result.attachments = (
       await connection<{ file: Id }>("swuOpportunityAttachments")
-        .where({ opportunityVersion: result.versionId })
+        .where("opportunityVersion", result.versionId)
         .select("file")
     ).map((row) => row.file);
 
     // Get published date if applicable
+    const conditions = {
+      opportunity: result.id,
+      status: SWUOpportunityStatus.Published
+    };
     result.publishedAt = (
       await connection<{ createdAt: Date }>("swuOpportunityStatuses")
-        .where({
-          opportunity: result.id,
-          status: SWUOpportunityStatus.Published
-        })
+        .where(conditions)
         .select("createdAt")
         .orderBy("createdAt", "desc")
         .first()
@@ -808,7 +809,7 @@ export const readOneSWUOpportunity = tryDb<
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>(
         "swuOpportunityStatuses"
       )
-        .where({ opportunity: result.id })
+        .where("opportunity", result.id)
         .orderBy("createdAt", "desc");
 
       if (!rawHistory) {
@@ -821,7 +822,7 @@ export const readOneSWUOpportunity = tryDb<
           async (raw) =>
             (raw.attachments = (
               await connection<{ file: Id }>("swuOpportunityNoteAttachments")
-                .where({ event: raw.id })
+                .where("event", raw.id)
                 .select("file")
             ).map((row) => row.file))
         )
@@ -836,10 +837,13 @@ export const readOneSWUOpportunity = tryDb<
 
       if (publicOpportunityStatuses.includes(result.status)) {
         // Retrieve opportunity views
+        const conditions = {
+          name: getSWUOpportunityViewsCounterName(result.id)
+        };
         const numViews =
           (
             await connection<{ count: number }>("viewCounters")
-              .where({ name: getSWUOpportunityViewsCounterName(result.id) })
+              .where(conditions)
               .first()
           )?.count || 0;
 
@@ -866,32 +870,35 @@ export const readOneSWUOpportunity = tryDb<
     }
 
     // Retrieve phases for the opportunity version
+    const inceptionConditions = {
+      opportunityVersion: result.versionId,
+      phase: SWUOpportunityPhaseType.Inception
+    };
     result.inceptionPhase = (
       await connection<{ id: Id }>("swuOpportunityPhases")
-        .where({
-          opportunityVersion: result.versionId,
-          phase: SWUOpportunityPhaseType.Inception
-        })
+        .where(inceptionConditions)
         .select("id")
         .first()
     )?.id;
 
+    const prototypeConditions = {
+      opportunityVersion: result.versionId,
+      phase: SWUOpportunityPhaseType.Prototype
+    };
     result.prototypePhase = (
       await connection<{ id: Id }>("swuOpportunityPhases")
-        .where({
-          opportunityVersion: result.versionId,
-          phase: SWUOpportunityPhaseType.Prototype
-        })
+        .where(prototypeConditions)
         .select("id")
         .first()
     )?.id;
 
+    const implementationConditions = {
+      opportunityVersion: result.versionId,
+      phase: SWUOpportunityPhaseType.Implementation
+    };
     const implementationPhaseId = (
       await connection<{ id: Id }>("swuOpportunityPhases")
-        .where({
-          opportunityVersion: result.versionId,
-          phase: SWUOpportunityPhaseType.Implementation
-        })
+        .where(implementationConditions)
         .select("id")
         .first()
     )?.id;
@@ -1375,14 +1382,15 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
         rawOpportunity.attachments = [];
         rawOpportunity.addenda = [];
         rawOpportunity.teamQuestions = [];
+        const conditions = {
+          opportunityVersion: rawOpportunity.versionId,
+          phase: SWUOpportunityPhaseType.Implementation
+        };
         // We also need to get the implementation phase for this opportunity to convert it from raw
         rawOpportunity.implementationPhase =
           (
             await connection<{ id: Id }>("swuOpportunityPhases")
-              .where({
-                opportunityVersion: rawOpportunity.versionId,
-                phase: SWUOpportunityPhaseType.Implementation
-              })
+              .where(conditions)
               .select("id")
               .first()
           )?.id || "";
@@ -1453,7 +1461,7 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
     const authorId =
       (
         await connection<{ createdBy: Id }>("swuOpportunities as opportunities")
-          .where({ id })
+          .where("id", id)
           .select<{ createdBy: Id }>("createdBy")
           .first()
       )?.createdBy || null;
