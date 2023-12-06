@@ -321,7 +321,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set("proposal", proposalResult.value),
         [
           ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
-          component_.cmd.dispatch(adt("checkStatus"))
+          component_.cmd.dispatch(adt("checkStatus") as Msg)
         ]
       ];
     }
@@ -749,7 +749,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [
           component_.cmd.delayedDispatch(
             PROPOSAL_POLL_DURATION,
-            adt("checkStatus")
+            adt("checkStatus") as Msg
           )
         ]
       ];
