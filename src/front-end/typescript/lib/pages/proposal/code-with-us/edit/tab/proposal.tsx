@@ -1,4 +1,4 @@
-import { EMPTY_STRING } from "front-end/config";
+import { EMPTY_STRING, PROPOSAL_POLL_DURATION } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
@@ -41,7 +41,8 @@ type ModalId =
   | "saveChangesAndSubmit"
   | "withdrawBeforeDeadline"
   | "withdrawAfterDeadline"
-  | "delete";
+  | "delete"
+  | "orgProposalChangeDetected";
 
 export interface State extends Tab.Params {
   proposal: CWUProposal | null;
@@ -110,7 +111,9 @@ export type InnerMsg =
   | ADT<
       "onDeleteResponse",
       api.ResponseValidation<CWUProposal, DeleteValidationErrors>
-    >;
+    >
+  | ADT<"checkStatus">
+  | ADT<"onCheckStatusResponse", api.ResponseValidation<CWUProposal, string[]>>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -174,10 +177,12 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       submitTerms: immutable(submitTermsState)
     },
-    component_.cmd.mapMany(
-      submitTermsCmds,
-      (msg) => adt("submitTerms", msg) as Msg
-    )
+    [
+      ...component_.cmd.mapMany(
+        submitTermsCmds,
+        (msg) => adt("submitTerms", msg) as Msg
+      )
+    ]
   ];
 };
 
@@ -314,7 +319,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set("form", formState)
           .set("affiliations", affiliationsResult.value)
           .set("proposal", proposalResult.value),
-        component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg)
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(adt("checkStatus"))
+        ]
       ];
     }
     case "cancelEditing": {
@@ -705,6 +713,47 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         ]
       ];
     }
+    case "checkStatus": {
+      const proposal = state.proposal;
+      return [
+        state,
+        proposal && state.isEditing
+          ? [
+              api.proposals.cwu.readOne<Msg>(proposal.opportunity.id)(
+                proposal.id,
+                (result) => adt("onCheckStatusResponse", result)
+              )
+            ]
+          : []
+      ];
+    }
+    case "onCheckStatusResponse": {
+      const incomingProposal = api.getValidValue(msg.value, null);
+      if (!incomingProposal || !state.proposal) {
+        return [state, []];
+      }
+
+      if (incomingProposal.updatedAt > state.proposal.updatedAt) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              adt("showModal", "orgProposalChangeDetected" as const)
+            )
+          ]
+        ];
+      }
+
+      return [
+        state,
+        [
+          component_.cmd.delayedDispatch(
+            PROPOSAL_POLL_DURATION,
+            adt("checkStatus")
+          )
+        ]
+      ];
+    }
     default:
       return [state, []];
   }
@@ -930,6 +979,21 @@ export const component: Tab.Component<State, Msg> = {
               text: "Cancel",
               color: "secondary",
               msg: adt("hideModal")
+            }
+          ]
+        });
+      case "orgProposalChangeDetected":
+        return component_.page.modal.show({
+          title: "Proposal Changes Detected",
+          body: () =>
+            "Changes have been made to this proposal, please save your changes offline and refresh the page.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "<Action>",
+              color: "info",
+              msg: adt("hideModal"),
+              button: true
             }
           ]
         });
