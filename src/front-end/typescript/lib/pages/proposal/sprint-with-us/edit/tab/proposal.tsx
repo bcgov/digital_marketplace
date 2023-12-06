@@ -1,4 +1,7 @@
-import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
+import {
+  PROPOSAL_POLL_DURATION,
+  SWU_PROPOSAL_EVALUATION_CONTENT_ID
+} from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
@@ -40,7 +43,8 @@ type ModalId =
   | "saveChangesAndSubmit"
   | "withdrawBeforeDeadline"
   | "withdrawAfterDeadline"
-  | "delete";
+  | "delete"
+  | "orgProposalChangeDetected";
 
 export interface State extends Tab.Params {
   organizations: OrganizationSlim[];
@@ -103,7 +107,9 @@ export type InnerMsg =
   | ADT<
       "onDeleteResponse",
       api.ResponseValidation<SWUProposal, DeleteValidationErrors>
-    >;
+    >
+  | ADT<"checkStatus">
+  | ADT<"onCheckStatusResponse", api.ResponseValidation<SWUProposal, string[]>>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -284,7 +290,10 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         result.value,
         result.value.status === SWUProposalStatus.Draft
       );
-      return [newState.set("isEditing", true), cmds];
+      return [
+        newState.set("isEditing", true),
+        [...cmds, component_.cmd.dispatch(adt("checkStatus") as Msg)]
+      ];
     }
     case "cancelEditing": {
       const [newState, cmds] = resetProposal(state, state.proposal);
@@ -670,6 +679,46 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         ]
       ];
     }
+    case "checkStatus": {
+      return [
+        state,
+        state.isEditing
+          ? [
+              api.proposals.swu.readOne<Msg>(state.proposal.opportunity.id)(
+                state.proposal.id,
+                (result) => adt("onCheckStatusResponse", result)
+              )
+            ]
+          : []
+      ];
+    }
+    case "onCheckStatusResponse": {
+      const incomingProposal = api.getValidValue(msg.value, null);
+      if (!incomingProposal) {
+        return [state, []];
+      }
+
+      if (incomingProposal.updatedAt > state.proposal.updatedAt) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              adt("showModal", "orgProposalChangeDetected" as const) as Msg
+            )
+          ]
+        ];
+      }
+
+      return [
+        state,
+        [
+          component_.cmd.delayedDispatch(
+            PROPOSAL_POLL_DURATION,
+            adt("checkStatus") as Msg
+          )
+        ]
+      ];
+    }
     default:
       return [state, []];
   }
@@ -888,6 +937,21 @@ export const component: Tab.Component<State, Msg> = {
               text: "Cancel",
               color: "secondary",
               msg: adt("hideModal")
+            }
+          ]
+        });
+      case "orgProposalChangeDetected":
+        return component_.page.modal.show({
+          title: "Proposal Changes Detected",
+          body: () =>
+            "Changes have been made to this proposal, please save your changes offline and refresh the page.",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "<Action>",
+              color: "info",
+              msg: adt("hideModal"),
+              button: true
             }
           ]
         });
