@@ -18,7 +18,7 @@ export const readOpportunityMetrics = tryDb<[], OpportunityMetrics>(
 
     totals.totalCount += cwuResult?.length || 0;
     totals.totalAwarded += cwuResult.reduce(
-      (acc: number, val: any) => acc + val.reward,
+      (acc: number, val: Record<string, number>) => acc + val.reward,
       0
     );
 
@@ -28,7 +28,7 @@ export const readOpportunityMetrics = tryDb<[], OpportunityMetrics>(
 
     totals.totalCount += swuResult?.length || 0;
     totals.totalAwarded += swuResult.reduce(
-      (acc: number, val: any) => acc + val.totalMaxBudget,
+      (acc: number, val: Record<string, number>) => acc + val.totalMaxBudget,
       0
     );
 
