@@ -17,7 +17,10 @@ export const readOpportunityMetrics = tryDb<[], OpportunityMetrics>(
     });
 
     totals.totalCount += cwuResult?.length || 0;
-    totals.totalAwarded += cwuResult.reduce((acc, val) => acc + val.reward, 0);
+    totals.totalAwarded += cwuResult.reduce(
+      (acc: number, val: any) => acc + val.reward,
+      0
+    );
 
     const swuResult = await swuQuery(connection).where({
       "statuses.status": SWUOpportunityStatus.Awarded
@@ -25,7 +28,7 @@ export const readOpportunityMetrics = tryDb<[], OpportunityMetrics>(
 
     totals.totalCount += swuResult?.length || 0;
     totals.totalAwarded += swuResult.reduce(
-      (acc, val) => acc + val.totalMaxBudget,
+      (acc: number, val: any) => acc + val.totalMaxBudget,
       0
     );
 

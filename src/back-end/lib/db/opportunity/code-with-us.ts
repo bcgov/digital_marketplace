@@ -243,7 +243,7 @@ async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(
 function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(
   result: T,
   session: Session
-) {
+): T {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (
     !session ||
@@ -631,7 +631,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(
     const results = await Promise.all(
       (
         await query
-      ).map(async (result) => {
+      ).map(async (result: RawCWUOpportunity | RawCWUOpportunitySlim) => {
         if (session) {
           result.subscribed = await isSubscribed(
             connection,

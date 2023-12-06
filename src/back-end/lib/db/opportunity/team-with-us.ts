@@ -536,7 +536,7 @@ export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
     const results = await Promise.all(
       (
         await query
-      ).map(async (result) => {
+      ).map(async (result: RawTWUOpportunity | RawTWUOpportunitySlim) => {
         if (session) {
           result.subscribed = await isSubscribed(
             connection,
