@@ -1,6 +1,6 @@
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
-import Knex from "knex";
+import { Knex } from "knex";
 import { MembershipType } from "shared/lib/resources/affiliation";
 import { UserStatus, UserType } from "shared/lib/resources/user";
 
