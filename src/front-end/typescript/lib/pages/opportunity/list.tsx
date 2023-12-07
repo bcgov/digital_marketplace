@@ -357,7 +357,11 @@ function doesOppHaveStatus(
         TWUO.TWUOpportunityStatus.Draft
       ].includes(opp.value.status)) ||
     (oppStatus === "under_review" &&
-      SWUO.SWUOpportunityStatus.UnderReview === opp.value.status) ||
+      [
+        CWUO.CWUOpportunityStatus.UnderReview,
+        SWUO.SWUOpportunityStatus.UnderReview,
+        TWUO.TWUOpportunityStatus.UnderReview
+      ].includes(opp.value.status)) ||
     (oppStatus === "published" &&
       [
         CWUO.CWUOpportunityStatus.Published,
