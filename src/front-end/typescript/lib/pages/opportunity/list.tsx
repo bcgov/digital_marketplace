@@ -328,7 +328,6 @@ function filter(
       return false;
     }
     if (
-      oppStatus &&
       isOpportunityStatusOptionValue(oppStatus) &&
       !doesOppHaveStatus(o, oppStatus)
     ) {
