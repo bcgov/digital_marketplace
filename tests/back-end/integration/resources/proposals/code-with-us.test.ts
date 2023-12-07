@@ -186,30 +186,31 @@ test("code-with-us proposal crud", async () => {
   const deleteProposalId = createResult.body.id;
   const deleteProposalIdUrl = `/api/proposals/code-with-us/${deleteProposalId}`;
 
-  /**
-   * Read the Proposal created above
-   */
-  const readBeforeDeleteResult = await userAppAgent.get(deleteProposalIdUrl);
-  expect(readBeforeDeleteResult.status).toEqual(200);
-  expect(readBeforeDeleteResult.body).toHaveProperty("additionalComments");
-  expect(readBeforeDeleteResult.body).toEqual(createResult.body);
+  const readManyBeforeDeleteResult = await userAppAgent.get(
+    "/api/proposals/code-with-us"
+  );
 
-  /**
-   * Delete the proposal created above
-   */
+  expect(readManyBeforeDeleteResult.status).toEqual(200);
+  expect(readManyBeforeDeleteResult.body).toHaveLength(1);
+  expect(readManyBeforeDeleteResult.body).toEqual([
+    omit(createResult.body, [
+      "proposalText",
+      "additionalComments",
+      "history",
+      "attachments"
+    ])
+  ]);
+
   const deleteResult = await userAppAgent.delete(deleteProposalIdUrl);
 
   expect(deleteResult.status).toEqual(200);
   expect(deleteResult.body).toEqual(createResult.body);
 
-  /**
-   * Read the result deleted above (should be length of zero)
-   */
-  const readAfterDeleteResult = await userAppAgent.get(
+  const readManyAfterDeleteResult = await userAppAgent.get(
     "/api/proposals/code-with-us"
   );
 
-  expect(readAfterDeleteResult.body).toHaveLength(0);
+  expect(readManyAfterDeleteResult.body).toHaveLength(0);
 
   /**
    * Create an Individual proponent body
@@ -238,6 +239,7 @@ test("code-with-us proposal crud", async () => {
 
   const proposalId = recreateResult.body.id;
   const proposalIdUrl = `/api/proposals/code-with-us/${proposalId}`;
+
   const readResult = await userAppAgent.get(proposalIdUrl);
 
   expect(readResult.status).toEqual(200);
