@@ -153,9 +153,10 @@ test("code-with-us proposal crud", async () => {
 
   /**
    * Make sure response from the above request is good
-   * by looking at status and object length
+   * by looking at status and object matching (requires permission)
    */
   const createResult = await requestWithCookie(createRequest, testUserSession);
+
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
@@ -188,10 +189,10 @@ test("code-with-us proposal crud", async () => {
   /**
    * Read the Proposal created above
    */
-  const readOneBeforeDeleteResult = await userAppAgent.get(deleteProposalIdUrl);
-  expect(readOneBeforeDeleteResult.status).toEqual(200);
-  expect(readOneBeforeDeleteResult.body).toHaveProperty("additionalComments");
-  expect(readOneBeforeDeleteResult.body).toEqual(createResult.body);
+  const readBeforeDeleteResult = await userAppAgent.get(deleteProposalIdUrl);
+  expect(readBeforeDeleteResult.status).toEqual(200);
+  expect(readBeforeDeleteResult.body).toHaveProperty("additionalComments");
+  expect(readBeforeDeleteResult.body).toEqual(createResult.body);
 
   /**
    * Delete the proposal created above
@@ -202,7 +203,7 @@ test("code-with-us proposal crud", async () => {
   expect(deleteResult.body).toEqual(createResult.body);
 
   /**
-   * Read the result deleted above
+   * Read the result deleted above (should be length of zero)
    */
   const readAfterDeleteResult = await userAppAgent.get(
     "/api/proposals/code-with-us"
@@ -237,7 +238,6 @@ test("code-with-us proposal crud", async () => {
 
   const proposalId = recreateResult.body.id;
   const proposalIdUrl = `/api/proposals/code-with-us/${proposalId}`;
-
   const readResult = await userAppAgent.get(proposalIdUrl);
 
   expect(readResult.status).toEqual(200);

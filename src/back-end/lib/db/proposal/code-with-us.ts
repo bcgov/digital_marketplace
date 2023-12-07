@@ -718,7 +718,7 @@ export const createCWUProposal = tryDb<
           );
         createProposalParamsWithProponent = {
           ...restOfProposal,
-          proponentIndividual: proponentId
+          proponentIndividual: proponentId.id
         };
       } else {
         createProposalParamsWithProponent = {
