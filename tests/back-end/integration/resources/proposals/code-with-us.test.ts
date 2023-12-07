@@ -143,10 +143,18 @@ test("code-with-us proposal crud", async () => {
     attachments: [],
     status: CWUProposalStatus.Draft
   };
+
+  /**
+   * Create a draft (request) CWU Proposal by an organization
+   */
   const createRequest = userAppAgent
     .post("/api/proposals/code-with-us")
     .send(body);
 
+  /**
+   * Make sure response from the above request is good
+   * by looking at status and object length
+   */
   const createResult = await requestWithCookie(createRequest, testUserSession);
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
@@ -177,32 +185,34 @@ test("code-with-us proposal crud", async () => {
   const deleteProposalId = createResult.body.id;
   const deleteProposalIdUrl = `/api/proposals/code-with-us/${deleteProposalId}`;
 
-  const readManyBeforeDeleteResult = await userAppAgent.get(
-    "/api/proposals/code-with-us"
-  );
+  /**
+   * Read the Proposal created above
+   */
+  const readOneBeforeDeleteResult = await userAppAgent.get(deleteProposalIdUrl);
+  expect(readOneBeforeDeleteResult.status).toEqual(200);
+  expect(readOneBeforeDeleteResult.body).toHaveProperty("additionalComments");
+  expect(readOneBeforeDeleteResult.body).toEqual(createResult.body);
 
-  expect(readManyBeforeDeleteResult.status).toEqual(200);
-  expect(readManyBeforeDeleteResult.body).toHaveLength(1);
-  expect(readManyBeforeDeleteResult.body).toEqual([
-    omit(createResult.body, [
-      "proposalText",
-      "additionalComments",
-      "history",
-      "attachments"
-    ])
-  ]);
-
+  /**
+   * Delete the proposal created above
+   */
   const deleteResult = await userAppAgent.delete(deleteProposalIdUrl);
 
   expect(deleteResult.status).toEqual(200);
   expect(deleteResult.body).toEqual(createResult.body);
 
-  const readManyAfterDeleteResult = await userAppAgent.get(
+  /**
+   * Read the result deleted above
+   */
+  const readAfterDeleteResult = await userAppAgent.get(
     "/api/proposals/code-with-us"
   );
 
-  expect(readManyAfterDeleteResult.body).toHaveLength(0);
+  expect(readAfterDeleteResult.body).toHaveLength(0);
 
+  /**
+   * Create an Individual proponent body
+   */
   const createIndividualProponentBody: CreateRequestBody = {
     ...body,
     proponent: adt("individual", {
