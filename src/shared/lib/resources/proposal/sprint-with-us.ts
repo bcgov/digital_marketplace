@@ -607,6 +607,7 @@ export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
  * @see const includeTotalScore in {@link calculateScores} 'src/back-end/lib/db/proposal/sprint-with-us.ts'
  *
  * @param proposal SWUProposal
+ * @returns boolean
  */
 export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
   return (

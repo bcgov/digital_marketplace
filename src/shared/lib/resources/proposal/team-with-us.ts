@@ -413,11 +413,12 @@ export function calculateProposalResourceQuestionScore(
  * @remarks
  * Covers an edge case where proposal.totalScore can be undefined while
  * proposal.rank is defined, when a vendor is screened in but all scores
- * (TQ, CC, TS, P) have not been entered.
+ * (Qu, Ch, Pr) have not been entered.
  *
  * @see const includeTotalScore in {@link calculateScores} 'src/back-end/lib/db/proposal/team-with-us.ts'
  *
- * @param proposal SWUProposal
+ * @param proposal TWUProposal
+ * @returns boolean
  */
 export function showScoreAndRankToProponent(proposal: TWUProposal): boolean {
   return (
