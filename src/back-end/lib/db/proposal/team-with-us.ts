@@ -1599,9 +1599,9 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
     const proposalScoring = proposalScorings.find((s) => s.id === proposal.id);
     if (proposalScoring) {
       const includeTotalScore =
-        proposalScoring.questionsScore !== null &&
-        proposalScoring.challengeScore !== null &&
-        proposalScoring.priceScore !== null;
+        proposalScoring.questionsScore === null &&
+        proposalScoring.challengeScore === null &&
+        proposalScoring.priceScore === null;
       if (
         session.user.type !== UserType.Vendor ||
         proposal.status === TWUProposalStatus.Awarded ||
@@ -1612,8 +1612,8 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
         proposal.priceScore = proposalScoring.priceScore || undefined;
         proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore
-          ? proposalScoring.totalScore || undefined
-          : undefined;
+          ? undefined
+          : proposalScoring.totalScore || undefined;
       }
     }
   });
