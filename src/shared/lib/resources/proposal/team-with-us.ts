@@ -406,9 +406,21 @@ export function calculateProposalResourceQuestionScore(
   return (actualScore / maxPossibleScore) * 100;
 }
 
+/**
+ * Returns true if the proposal has a rank, and is either awarded or not awarded.
+ * Used to determine if the scoreSheet should be presented to the user.
+ *
+ * @remarks
+ * Covers an edge case where proposal.totalScore can be undefined while
+ * proposal.rank is defined, when a vendor is screened in but all scores
+ * (TQ, CC, TS, P) have not been entered.
+ *
+ * @see const includeTotalScore in {@link calculateScores} 'src/back-end/lib/db/proposal/team-with-us.ts'
+ *
+ * @param proposal SWUProposal
+ */
 export function showScoreAndRankToProponent(proposal: TWUProposal): boolean {
   return (
-    proposal.totalScore !== undefined &&
     proposal.rank !== undefined &&
     (proposal.status === TWUProposalStatus.Awarded ||
       proposal.status === TWUProposalStatus.NotAwarded)
