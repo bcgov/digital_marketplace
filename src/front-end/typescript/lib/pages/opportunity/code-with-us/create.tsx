@@ -33,6 +33,7 @@ import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { CWU_TERMS_AND_CONDITIONS_CONTENT_ID } from "front-end/config";
 
 type CWUCreateSubmitStatus =
   | CWUOpportunityStatus.Published
@@ -308,19 +309,33 @@ export const component: component_.page.Component<
         </div>
       ),
       getFooter: () => (
-        <span>
-          Need help?{" "}
-          <Link
-            newTab
-            dest={routeDest(
-              adt("cwuGuide", {
-                guideAudience: GUIDE_AUDIENCE.Ministry
-              })
-            )}>
-            Read the guide
-          </Link>{" "}
-          to learn how to create and manage a <em>Code With Us</em> opportunity.
-        </span>
+        <div>
+          <p>
+            Need help?{" "}
+            <Link
+              newTab
+              dest={routeDest(
+                adt("cwuGuide", {
+                  guideAudience: GUIDE_AUDIENCE.Ministry
+                })
+              )}>
+              Read the guide
+            </Link>{" "}
+            to learn how to create and manage a <em>Code With Us</em>{" "}
+            opportunity.
+          </p>
+          <p>
+            Familiarize yourself with <em>Code With Us</em>{" "}
+            <Link
+              newTab
+              dest={routeDest(
+                adt("contentView", CWU_TERMS_AND_CONDITIONS_CONTENT_ID)
+              )}>
+              Terms and Conditions
+            </Link>
+            {"."}
+          </p>
+        </div>
       )
     })
   }),
