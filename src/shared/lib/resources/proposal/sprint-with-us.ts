@@ -595,6 +595,20 @@ export function swuProposalTotalProposedCost(proposal: SWUProposal): number {
   ]);
 }
 
+/**
+ * Returns true if the proposal has a score and a rank, and is either awarded or
+ * not awarded. Used to determine if a scoreSheet should be presented to the user.
+ *
+ * @remarks
+ * proposal.totalScore is only undefined when all available scores are empty;
+ * when all of (TQ, CC, TS, P) have not been entered. proposal.totalScore can be
+ * still be defined if some, but not all scores are entered.
+ *
+ * @see const includeTotalScore in {@link calculateScores} 'src/back-end/lib/db/proposal/sprint-with-us.ts'
+ *
+ * @param proposal SWUProposal
+ * @returns boolean
+ */
 export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
   return (
     proposal.totalScore !== undefined &&

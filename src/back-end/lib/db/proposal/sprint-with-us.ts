@@ -1946,10 +1946,10 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
     const proposalScoring = proposalScorings.find((s) => s.id === proposal.id);
     if (proposalScoring) {
       const includeTotalScore =
-        proposalScoring.questionsScore !== null &&
-        proposalScoring.challengeScore !== null &&
-        proposalScoring.scenarioScore !== null &&
-        proposalScoring.priceScore !== null;
+        proposalScoring.questionsScore === null &&
+        proposalScoring.challengeScore === null &&
+        proposalScoring.scenarioScore === null &&
+        proposalScoring.priceScore === null;
       if (
         session.user.type !== UserType.Vendor ||
         proposal.status === SWUProposalStatus.Awarded ||
@@ -1961,8 +1961,8 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
         proposal.priceScore = proposalScoring.priceScore || undefined;
         proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore
-          ? proposalScoring.totalScore || undefined
-          : undefined;
+          ? undefined
+          : proposalScoring.totalScore || undefined;
       }
     }
   });
