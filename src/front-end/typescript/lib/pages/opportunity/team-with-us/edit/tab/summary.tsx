@@ -186,7 +186,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     [
       {
         icon: "alarm-clock",
-        name: "Proposals Due",
+        name: "Proposals Deadline",
         value: formatDate(proposalDeadline)
       },
       {

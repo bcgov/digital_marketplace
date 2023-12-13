@@ -174,7 +174,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   const reportCards: ReportCard[] = [
     {
       icon: "alarm-clock",
-      name: "Proposals Due",
+      name: "Proposals Deadline",
       value: formatDate(opportunity.proposalDeadline)
     },
     {
