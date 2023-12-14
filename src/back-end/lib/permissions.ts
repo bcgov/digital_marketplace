@@ -369,8 +369,26 @@ export async function deleteCWUOpportunity(
 export function publishCWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
-export function addCWUAddendum(session: Session): boolean {
-  return isAdmin(session);
+
+/**
+ * Checks for authentication and specific roles. Admins can add addenda to
+ * any opportunity (true) and Government users can read only add to their own
+ * (true). Returns false if either one of those two conditions are not met.
+ *
+ * @param connection
+ * @param session
+ * @param opportunity
+ */
+export async function addCWUAddendum(
+  connection: Connection,
+  session: Session,
+  opportunity: Id
+): Promise<boolean> {
+  return !!(
+    isAdmin(session) ||
+    (session &&
+      (await isCWUOpportunityAuthor(connection, session.user, opportunity)))
+  );
 }
 
 export function cancelCWUOpportunity(session: Session): boolean {
@@ -617,8 +635,25 @@ export async function deleteSWUOpportunity(
   );
 }
 
-export function addSWUAddendum(session: Session): boolean {
-  return isAdmin(session);
+/**
+ * Checks for authentication and specific roles. Admins can add addenda to
+ * any opportunity (true) and Government users can read only add to their own
+ * (true). Returns false if either one of those two conditions are not met.
+ *
+ * @param connection
+ * @param session
+ * @param opportunity
+ */
+export async function addSWUAddendum(
+  connection: Connection,
+  session: Session,
+  opportunity: Id
+): Promise<boolean> {
+  return !!(
+    isAdmin(session) ||
+    (session &&
+      (await isSWUOpportunityAuthor(connection, session.user, opportunity)))
+  );
 }
 
 export function cancelSWUOpportunity(session: Session): boolean {
@@ -882,8 +917,25 @@ export async function deleteTWUOpportunity(
   );
 }
 
-export function addTWUAddendum(session: Session): boolean {
-  return isAdmin(session);
+/**
+ * Checks for authentication and specific roles. Admins can add addenda to
+ * any opportunity (true) and Government users can read only add to their own
+ * (true). Returns false if either one of those two conditions are not met.
+ *
+ * @param connection
+ * @param session
+ * @param opportunity
+ */
+export async function addTWUAddendum(
+  connection: Connection,
+  session: Session,
+  opportunity: Id
+): Promise<boolean> {
+  return !!(
+    isAdmin(session) ||
+    (session &&
+      (await isTWUOpportunityAuthor(connection, session.user, opportunity)))
+  );
 }
 
 export function cancelTWUOpportunity(session: Session): boolean {
