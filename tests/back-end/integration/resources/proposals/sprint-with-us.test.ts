@@ -492,6 +492,7 @@ test("sprint-with-us proposal crud", async () => {
       ...resubmitResult.body.history
     ],
     challengeScore,
+    totalScore: 50,
     status: SWUProposalStatus.EvaluatedCodeChallenge,
     updatedBy: expect.objectContaining({ id: testAdmin.id }),
     updatedAt: expect.any(String),
