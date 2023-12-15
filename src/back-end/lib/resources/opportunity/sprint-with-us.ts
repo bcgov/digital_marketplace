@@ -1519,7 +1519,11 @@ const update: crud.Update<
           if (
             validatedSWUOpportunity.value.status ===
               SWUOpportunityStatus.Draft ||
-            !permissions.addSWUAddendum(request.session)
+            !(await permissions.addSWUAddendum(
+              connection,
+              request.session,
+              validatedSWUOpportunity.value.id
+            ))
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
