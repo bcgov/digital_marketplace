@@ -372,7 +372,7 @@ export function publishCWUOpportunity(session: Session): boolean {
 
 /**
  * Checks for authentication and specific roles. Admins can add addenda to
- * any opportunity (true) and Government users can read only add to their own
+ * any opportunity (true) and Government users can only add to their own
  * (true). Returns false if either one of those two conditions are not met.
  *
  * @param connection
@@ -637,7 +637,7 @@ export async function deleteSWUOpportunity(
 
 /**
  * Checks for authentication and specific roles. Admins can add addenda to
- * any opportunity (true) and Government users can read only add to their own
+ * any opportunity (true) and Government users can only add to their own
  * (true). Returns false if either one of those two conditions are not met.
  *
  * @param connection
@@ -919,7 +919,7 @@ export async function deleteTWUOpportunity(
 
 /**
  * Checks for authentication and specific roles. Admins can add addenda to
- * any opportunity (true) and Government users can read only add to their own
+ * any opportunity (true) and Government users can only add to their own
  * (true). Returns false if either one of those two conditions are not met.
  *
  * @param connection
