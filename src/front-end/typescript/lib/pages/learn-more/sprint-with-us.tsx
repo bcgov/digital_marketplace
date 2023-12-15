@@ -3,11 +3,16 @@ import { Route, SharedState } from "front-end/lib/app/types";
 import { component as component_ } from "front-end/lib/framework";
 import Accordion from "front-end/lib/views/accordion";
 import HowItWorksItem from "front-end/lib/views/how-it-works-item";
-import Link, { routeDest } from "front-end/lib/views/link";
+import Link, {
+  iconLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import React from "react";
 import { Col, Container, Row } from "reactstrap";
 import { COPY, VENDOR_IDP_NAME } from "shared/config";
 import { ADT, adt } from "shared/lib/types";
+import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 
 export interface State {
   isWhatToExpectAccordionOpen: boolean;
@@ -244,6 +249,29 @@ export const HowToApplyView: component_.page.View<State, InnerMsg, Route> = ({
                   </div>
                 }
               />
+              <div className="d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center">
+                <Link
+                  button
+                  dest={routeDest(
+                    adt("swuGuide", {
+                      guideAudience: GUIDE_AUDIENCE.Vendor
+                    })
+                  )}
+                  color="info"
+                  outline
+                  symbol_={leftPlacement(iconLinkSymbol("book-user"))}
+                  className="mb-4 mb-sm-0 mr-0 mr-sm-4 text-nowrap">
+                  Read the Guide
+                </Link>
+                <Link
+                  button
+                  dest={routeDest(adt("opportunities", null))}
+                  color="primary"
+                  symbol_={leftPlacement(iconLinkSymbol("search"))}
+                  className="text-nowrap">
+                  Browse Opportunities
+                </Link>
+              </div>
             </Accordion>
           </Col>
         </Row>
