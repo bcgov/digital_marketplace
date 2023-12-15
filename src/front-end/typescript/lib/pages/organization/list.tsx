@@ -202,14 +202,13 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
     };
     return [
       {
-        children:
-          org.owner || org.viewerIsOrgAdmin ? (
-            <Link dest={routeDest(adt("orgEdit", { orgId: org.id }))}>
-              {org.legalName}
-            </Link>
-          ) : (
-            org.legalName
-          )
+        children: org.owner ? (
+          <Link dest={routeDest(adt("orgEdit", { orgId: org.id }))}>
+            {org.legalName}
+          </Link>
+        ) : (
+          org.legalName
+        )
       },
       ...(showOwnerColumn(state) ? [owner] : [])
     ];

@@ -8,12 +8,14 @@ import { readOneUser } from "back-end/lib/db/user";
 import { valid } from "shared/lib/http";
 import {
   Affiliation,
+  AffiliationEvent,
+  AffiliationHistoryRecord,
   AffiliationMember,
   AffiliationSlim,
   MembershipStatus,
   MembershipType
 } from "shared/lib/resources/affiliation";
-import { Session } from "shared/lib/resources/session";
+import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
@@ -30,6 +32,16 @@ interface RawAffiliation {
   membershipStatus: MembershipStatus;
   createdAt: Date;
   updatedAt: Date;
+}
+
+type OrgIds = Id[];
+
+export interface RawHistoryRecord
+  extends Omit<AffiliationHistoryRecord, "createdBy" | "member" | "type"> {
+  id: Id;
+  createdBy: Id;
+  event: AffiliationEvent;
+  affiliation: Id;
 }
 
 async function rawAffiliationToAffiliation(
@@ -122,8 +134,8 @@ export const readOneAffiliation = tryDb<[Id, Id], Affiliation | null>(
   }
 );
 
-export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(
-  async (connection, id) => {
+export const readOneAffiliationById = tryDb<[Id, boolean?], Affiliation | null>(
+  async (connection, id, activeOnly = true) => {
     const result = await connection<RawAffiliation>("affiliations")
       .join(
         "organizations",
@@ -134,7 +146,9 @@ export const readOneAffiliationById = tryDb<[Id], Affiliation | null>(
       .select<RawAffiliation>("affiliations.*")
       .where({ "affiliations.id": id })
       .andWhereNot({
-        "affiliations.membershipStatus": MembershipStatus.Inactive,
+        ...(activeOnly
+          ? { "affiliations.membershipStatus": MembershipStatus.Inactive }
+          : {}),
         "organizations.active": false
       })
       .first();
@@ -248,29 +262,64 @@ export const approveAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
-export const updateAdminStatus = tryDb<[Id, MembershipType], Affiliation>(
-  async (connection, id, membershipType: MembershipType) => {
+export const updateAdminStatus = tryDb<
+  [Id, MembershipType, AuthenticatedSession],
+  Affiliation
+>(
+  async (
+    connection,
+    id,
+    membershipType: MembershipType,
+    session: AuthenticatedSession
+  ) => {
     const now = new Date();
-    const [result] = await connection<RawAffiliation>("affiliations")
-      .update(
-        {
-          membershipType,
-          updatedAt: now
-        } as RawAffiliation,
-        "*"
-      )
-      .where({
-        id
-      })
-      .whereIn("organization", function () {
-        this.select("id").from("organizations").where({
-          active: true
+    return await connection.transaction(async (trx) => {
+      const [affiliation] = await connection<RawAffiliation>("affiliations")
+        .transacting(trx)
+        .update(
+          {
+            membershipType,
+            updatedAt: now
+          } as RawAffiliation,
+          "*"
+        )
+        .where({
+          id
+        })
+        .whereIn("organization", function () {
+          this.select("id").from("organizations").where({
+            active: true
+          });
         });
-      });
-    if (!result) {
-      throw new Error("unable to update admin status");
-    }
-    return valid(await rawAffiliationToAffiliation(connection, result));
+
+      if (!affiliation) {
+        throw new Error("unable to update admin status");
+      }
+
+      const [affiliationEvent] = await connection<RawHistoryRecord>(
+        "affiliationEvents"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            affiliation: affiliation.id,
+            event:
+              membershipType === MembershipType.Admin
+                ? AffiliationEvent.AdminStatusGranted
+                : AffiliationEvent.AdminStatusRevoked,
+            createdAt: now,
+            createdBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!affiliationEvent) {
+        throw new Error("unable to create affiliation event");
+      }
+
+      return valid(await rawAffiliationToAffiliation(connection, affiliation));
+    });
   }
 );
 
@@ -300,9 +349,14 @@ export const deleteAffiliation = tryDb<[Id], Affiliation>(
   }
 );
 
+/**
+ *
+ * @param membershipType
+ * @returns boolean
+ */
 function makeIsUserTypeChecker(
   membershipType: MembershipType
-): (connection: Connection, user: User, ordId: Id) => Promise<boolean> {
+): (connection: Connection, user: User, orgId: Id) => Promise<boolean> {
   return async (connection: Connection, user: User, orgId: Id) => {
     if (!user) {
       return false;
@@ -323,6 +377,15 @@ const isUserAdminOfOrg = makeIsUserTypeChecker(MembershipType.Admin);
 
 export const isUserOwnerOfOrg = makeIsUserTypeChecker(MembershipType.Owner);
 
+/**
+ * If you have the orgId and user you can check if they are either an ADMIN or
+ * OWNER of an organization
+ *
+ * @param connection
+ * @param user
+ * @param orgId
+ * @returns Promise<boolean>
+ */
 export const isUserOwnerOrAdminOfOrg = async (
   connection: Connection,
   user: User,
@@ -354,4 +417,35 @@ export async function readActiveOwnerCount(
   } catch (exception) {
     return 0;
   }
+}
+
+/**
+ * Checks to see if a user has a memberStatus that is active and a membershipType
+ * that is either Admin or Owner.
+ *
+ * @param connection - Knex connection
+ * @param userId - unique identifier for user
+ * @returns Promise<OrgIds> - Returns an object of organizationIds or null.
+ */
+export async function getOrgIdsForOwnerOrAdmin(
+  connection: Connection,
+  userId: Id
+): Promise<OrgIds> {
+  const result = await connection("affiliations")
+    .distinct<OrgIds>("organization")
+    .where("membershipStatus", "ACTIVE")
+    .andWhere(function () {
+      this.where({
+        "affiliations.membershipType": MembershipType.Admin
+      }).orWhere({
+        "affiliations.membershipType": MembershipType.Owner
+      });
+    })
+    .andWhere("user", userId)
+    .pluck("organization");
+
+  if (!result) {
+    throw new Error("unable to process orgIds for Owner or Admin");
+  }
+  return result;
 }

@@ -99,6 +99,22 @@ type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "proposals/team-with-us";
 
+/**
+ * Reads Many TWU Proposals
+ *
+ * @remarks
+ *
+ * validates that the TWU opp id exists in the database, checks permissions of
+ * the user, if the request comes with the following parameters set:
+ *   - request.query.opportunity=<string> = (an opportunity number) it will
+ *   return all proposals associated with that opportunity
+ *   - request.query.organizationProposals=<string> = it will return a response
+ *   for all proposals associated with the organizations the requester has
+ *   access to.
+ *   - default behavior is to return the requester\'s own proposals
+ *
+ * @param connection
+ */
 const readMany: crud.ReadMany<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -132,6 +148,23 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         connection,
         request.session,
         request.query.opportunity
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else if (request.query.organizationProposals) {
+      // create a permissions check for Owners and Admins
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const dbResult = await db.readOrgTWUProposals(
+        connection,
+        request.session
       );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
@@ -297,21 +330,46 @@ const create: crud.Create<
         });
       }
 
+      // Check for existing proposal on this opportunity, authored by this user
+      if (organization) {
+        const dbResultOrgProposal =
+          await db.readOneTWUProposalByOpportunityAndOrgAuthor(
+            connection,
+            request.session,
+            opportunity,
+            organization
+          );
+        if (isInvalid(dbResultOrgProposal)) {
+          return invalid({
+            database: [db.ERROR_MESSAGE]
+          });
+        }
+        if (dbResultOrgProposal.value) {
+          return invalid({
+            existingOrganizationProposal: {
+              proposalId: dbResultOrgProposal.value,
+              errors: ["Please select a different organization."]
+            }
+          });
+        }
+      }
+
       /**
        * Check for existing proposal on this opportunity, authored by this user
        * If the person is not the author, dbResult will be valid(null)
        */
-      const dbResult = await db.readOneTWUProposalByOpportunityAndAuthor(
-        connection,
-        opportunity,
-        request.session
-      );
-      if (isInvalid(dbResult)) {
+      const dbResultProposal =
+        await db.readOneTWUProposalByOpportunityAndAuthor(
+          connection,
+          request.session,
+          opportunity
+        );
+      if (isInvalid(dbResultProposal)) {
         return invalid({
           database: [db.ERROR_MESSAGE]
         });
       }
-      if (dbResult.value) {
+      if (dbResultProposal.value) {
         return invalid({
           conflict: ["You already have a proposal for this opportunity."]
         });
@@ -557,7 +615,7 @@ const update: crud.Update<
         !(await permissions.editTWUProposal(
           connection,
           request.session,
-          request.params.id,
+          validatedTWUProposal.value,
           twuOpportunity
         ))
       ) {
@@ -598,6 +656,32 @@ const update: crud.Update<
                 ]
               })
             });
+          }
+
+          // Check for existing proposal on this opportunity, authored by this user
+          if (validatedOrganization.value) {
+            const dbResult =
+              await db.readOneTWUProposalByOpportunityAndOrgAuthor(
+                connection,
+                request.session,
+                twuOpportunity.id,
+                validatedOrganization.value.id
+              );
+            if (isInvalid(dbResult)) {
+              return invalid({
+                database: [db.ERROR_MESSAGE]
+              });
+            }
+            if (dbResult.value && dbResult.value !== request.params.id) {
+              return invalid({
+                proposal: adt("edit" as const, {
+                  existingOrganizationProposal: {
+                    proposalId: dbResult.value,
+                    errors: ["Please select a different organization."]
+                  }
+                })
+              });
+            }
           }
 
           // Attachments must be validated for both drafts and published opportunities
@@ -1223,14 +1307,7 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
-      if (
-        !permissions.isSignedIn(request.session) ||
-        !(await permissions.deleteTWUProposal(
-          connection,
-          request.session,
-          request.params.id
-        ))
-      ) {
+      if (!permissions.isSignedIn(request.session)) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
         });
@@ -1243,6 +1320,17 @@ const delete_: crud.Delete<
       if (isInvalid(validatedTWUProposal)) {
         return invalid({
           notFound: ["The specified proposal was not found."]
+        });
+      }
+      if (
+        !(await permissions.deleteTWUProposal(
+          connection,
+          request.session,
+          validatedTWUProposal.value
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
         });
       }
       if (validatedTWUProposal.value.status !== TWUProposalStatus.Draft) {

@@ -118,6 +118,7 @@ export interface State
   isReviewPrototypePhaseAccordionOpen: boolean;
   isReviewImplementationPhaseAccordionOpen: boolean;
   openReviewTeamQuestionResponseAccordions: Set<number>;
+  existingProposalForOrganizationError: Id | null;
 }
 
 export type Msg =
@@ -340,7 +341,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       implementationCost: immutable(implementationCostState),
       totalCost: immutable(totalCostState),
       teamQuestions: immutable(teamQuestionsState),
-      references: immutable(referencesState)
+      references: immutable(referencesState),
+      existingProposalForOrganizationError: null
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
@@ -380,10 +382,13 @@ export function setErrors(
   state: Immutable<State>,
   errors?: Errors
 ): Immutable<State> {
+  const organizationErrors = errors?.organization
+    ? errors.organization
+    : errors?.existingOrganizationProposal
+    ? errors.existingOrganizationProposal.errors
+    : [];
   return state
-    .update("organization", (s) =>
-      FormField.setErrors(s, errors?.organization || [])
-    )
+    .update("organization", (s) => FormField.setErrors(s, organizationErrors))
     .update("team", (s) =>
       Team.setErrors(s, {
         inceptionPhase: errors?.inceptionPhase,
@@ -415,6 +420,12 @@ export function setErrors(
     )
     .update("references", (s) =>
       References.setErrors(s, errors?.references || [])
+    )
+    .set(
+      "existingProposalForOrganizationError",
+      errors?.existingOrganizationProposal
+        ? errors.existingOrganizationProposal.proposalId
+        : null
     );
 }
 
@@ -1536,6 +1547,31 @@ export function getAlerts<Msg>(
       } else {
         return [];
       }
+    })(),
+    errors: (() => {
+      if (state.existingProposalForOrganizationError) {
+        return [
+          {
+            text: (
+              <span>
+                The selected organization already has a proposal with this
+                opportunity. You may access it{" "}
+                <Link
+                  dest={routeDest(
+                    adt("proposalSWUEdit", {
+                      proposalId: state.existingProposalForOrganizationError,
+                      opportunityId: state.opportunity.id
+                    })
+                  )}>
+                  here
+                </Link>
+                .
+              </span>
+            )
+          }
+        ];
+      }
+      return [];
     })()
   };
 }

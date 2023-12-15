@@ -1,4 +1,7 @@
-import { EMPTY_STRING } from "front-end/config";
+import {
+  CWU_TERMS_AND_CONDITIONS_CONTENT_ID,
+  EMPTY_STRING
+} from "front-end/config";
 import {
   makePageMetadata,
   makeStartLoading,
@@ -37,8 +40,9 @@ import {
 import { CWUProposalSlim } from "shared/lib/resources/proposal/code-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
+import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "attachments" | "addenda";
+type InfoTab = "details" | "terms" | "attachments" | "addenda";
 
 export interface State {
   toggleWatchLoading: number;
@@ -46,6 +50,7 @@ export interface State {
   existingProposal: CWUProposalSlim | null;
   viewerUser: User | null;
   activeInfoTab: InfoTab;
+  termsContent: string;
   routePath: string;
 }
 
@@ -56,7 +61,8 @@ export type InnerMsg =
       [
         string,
         api.ResponseValidation<CWUOpportunity, string[]>,
-        CWUProposalSlim | null
+        CWUProposalSlim | null,
+        api.ResponseValidation<Content, string[]>
       ]
     >
   | ADT<"toggleWatch">
@@ -85,7 +91,8 @@ const init: component_.page.Init<
       opportunity: null,
       existingProposal: null,
       activeInfoTab: "details",
-      routePath
+      routePath,
+      termsContent: ""
     },
     [
       api.counters.update<Msg>()(
@@ -93,7 +100,7 @@ const init: component_.page.Init<
         null,
         () => adt("noop")
       ),
-      component_.cmd.join(
+      component_.cmd.join3(
         api.opportunities.cwu.readOne()(opportunityId, (response) => response),
         viewerUser && isVendor(viewerUser)
           ? api.proposals.cwu.readExistingProposalForOpportunity(
@@ -101,11 +108,17 @@ const init: component_.page.Init<
               (response) => response
             )
           : component_.cmd.dispatch(null),
-        (opportunityResponse, proposalResponse) =>
+
+        api.content.readOne()(
+          CWU_TERMS_AND_CONDITIONS_CONTENT_ID,
+          (response) => response
+        ),
+        (opportunityResponse, proposalResponse, contentResponse) =>
           adt("onInitResponse", [
             routePath,
             opportunityResponse,
-            proposalResponse
+            proposalResponse,
+            contentResponse
           ]) as Msg
       )
     ]
@@ -121,7 +134,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "onInitResponse": {
-      const [routePath, opportunityResponse, proposalResponse] = msg.value;
+      const [
+        routePath,
+        opportunityResponse,
+        proposalResponse,
+        contentResponse
+      ] = msg.value;
       if (!api.isValid(opportunityResponse)) {
         return [
           state,
@@ -138,6 +156,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       }
       if (proposalResponse) {
         state = state.set("existingProposal", proposalResponse);
+      }
+      if (contentResponse && api.isValid(contentResponse)) {
+        state = state.set("termsContent", contentResponse.value.body);
       }
       return [state, [component_.cmd.dispatch(component_.page.readyMsg())]];
     }
@@ -426,6 +447,19 @@ const InfoAttachments: component_.base.ComponentView<State, Msg> = ({
   );
 };
 
+const InfoTerms: component_.base.ComponentView<State, Msg> = ({ state }) => {
+  return (
+    <Row>
+      <Col xs="12">
+        <h3 className="mb-0">Terms and Conditions</h3>
+      </Col>
+      <Col xs="12" className="mt-4">
+        <Markdown source={state.termsContent} openLinksInNewTabs />
+      </Col>
+    </Row>
+  );
+};
+
 const InfoAddenda: component_.base.ComponentView<State, Msg> = ({ state }) => {
   if (!state.opportunity) return null;
   const addenda = state.opportunity.addenda;
@@ -462,6 +496,10 @@ const InfoTabs: component_.base.ComponentView<State, Msg> = ({
       text: "Details"
     },
     {
+      ...getTabInfo("terms"),
+      text: "Terms and Conditions"
+    },
+    {
       ...getTabInfo("attachments"),
       text: "Attachments",
       count: opp.attachments.length
@@ -488,6 +526,8 @@ const Info: component_.base.ComponentView<State, Msg> = (props) => {
     switch (state.activeInfoTab) {
       case "details":
         return <InfoDetails {...props} />;
+      case "terms":
+        return <InfoTerms {...props} />;
       case "attachments":
         return <InfoAttachments {...props} />;
       case "addenda":

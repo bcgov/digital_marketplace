@@ -208,6 +208,7 @@ export interface CreateValidationErrors extends BodyWithErrors {
   attachments?: string[][];
   resourceQuestionResponses?: CreateTWUProposalResourceQuestionResponseValidationErrors[];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   opportunity?: string[];
   status?: string[];
   team?: CreateTWUProposalTeamMemberValidationErrors[];
@@ -257,6 +258,7 @@ export interface UpdateResourceQuestionScoreValidationErrors {
 export interface UpdateEditValidationErrors {
   attachments?: string[][];
   organization?: string[];
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
 }
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -404,6 +406,21 @@ export function calculateProposalResourceQuestionScore(
   return (actualScore / maxPossibleScore) * 100;
 }
 
+/**
+ * Returns true if the proposal has a score and a rank, and is either awarded or
+ * not awarded. Used to determine if the scoreSheet should be presented to the
+ * user.
+ *
+ * @remarks
+ * proposal.totalScore is only undefined when all available scores are empty;
+ * when all of (Qu, Ch, Pr) have not been entered. proposal.totalScore can be
+ * still be defined if some, but not all scores are entered.
+ *
+ * @see const includeTotalScore in {@link calculateScores} 'src/back-end/lib/db/proposal/team-with-us.ts'
+ *
+ * @param proposal TWUProposal
+ * @returns boolean
+ */
 export function showScoreAndRankToProponent(proposal: TWUProposal): boolean {
   return (
     proposal.totalScore !== undefined &&

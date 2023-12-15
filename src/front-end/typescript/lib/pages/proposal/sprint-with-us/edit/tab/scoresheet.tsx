@@ -169,6 +169,9 @@ const NotAvailable: component_.base.View<Pick<State, "proposal">> = ({
         </div>
       );
     }
+    case SWUProposalStatus.NotAwarded: {
+      return <div>The proposal has been awarded</div>;
+    }
     default:
       return (
         <div>

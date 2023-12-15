@@ -19,7 +19,8 @@ import { Alert, Col, Row } from "reactstrap";
 import { compareStrings, getString } from "shared/lib";
 import {
   AffiliationSlim,
-  MembershipType
+  memberIsOrgAdmin,
+  memberIsOwner
 } from "shared/lib/resources/affiliation";
 import { FileUploadMetadata } from "shared/lib/resources/file";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
@@ -75,6 +76,7 @@ export interface State {
   showEvaluationCriteria: boolean;
   proposalText: Immutable<RichMarkdownEditor.State>;
   additionalComments: Immutable<RichMarkdownEditor.State>;
+  existingProposalForOrganizationError: Id | null;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
 }
@@ -258,7 +260,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       options: adt(
         "options",
         affiliations
-          .filter((a) => a.membershipType === MembershipType.Owner)
+          .filter((a) => memberIsOwner(a) || memberIsOrgAdmin(a))
           .sort((a, b) =>
             compareStrings(a.organization.legalName, b.organization.legalName)
           )
@@ -311,7 +313,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       organization: immutable(organizationState),
       proposalText: immutable(proposalTextState),
       additionalComments: immutable(additionalCommentsState),
-      attachments: immutable(attachmentsState)
+      attachments: immutable(attachmentsState),
+      existingProposalForOrganizationError: null
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
@@ -583,8 +586,10 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
       ? errors.proponent.value
       : {};
   const organizationErrors =
-    errors && errors.proponent && errors.proponent.tag === "organization"
+    errors?.proponent?.tag === "organization"
       ? errors.proponent.value
+      : errors?.existingOrganizationProposal
+      ? errors.existingOrganizationProposal.errors
       : [];
   return state
     .update("proposalText", (s) =>
@@ -623,7 +628,13 @@ function setErrors(state: Immutable<State>, errors?: Errors): Immutable<State> {
     .update("country", (s) =>
       FormField.setErrors(s, individualProponentErrors.country || [])
     )
-    .update("organization", (s) => FormField.setErrors(s, organizationErrors));
+    .update("organization", (s) => FormField.setErrors(s, organizationErrors))
+    .set(
+      "existingProposalForOrganizationError",
+      errors?.existingOrganizationProposal
+        ? errors.existingOrganizationProposal.proposalId
+        : null
+    );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
@@ -1141,3 +1152,35 @@ export const view: component_.base.View<Props> = (props) => {
     </TabbedFormComponent.view>
   );
 };
+
+export function getAlerts<Msg>(
+  state: Immutable<State>
+): component_.page.Alerts<Msg> {
+  return {
+    errors: (() => {
+      if (state.existingProposalForOrganizationError) {
+        return [
+          {
+            text: (
+              <span>
+                The selected organization already has a proposal with this
+                opportunity. You may access it{" "}
+                <Link
+                  dest={routeDest(
+                    adt("proposalCWUEdit", {
+                      proposalId: state.existingProposalForOrganizationError,
+                      opportunityId: state.opportunity.id
+                    })
+                  )}>
+                  here
+                </Link>
+                .
+              </span>
+            )
+          }
+        ];
+      }
+      return [];
+    })()
+  };
+}

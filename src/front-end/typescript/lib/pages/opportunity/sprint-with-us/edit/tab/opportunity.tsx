@@ -669,7 +669,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const reportCards: ReportCard[] = [
     {
       icon: "alarm-clock",
-      name: "Proposals Due",
+      name: "Proposals Deadline",
       value: formatDate(opportunity.proposalDeadline)
     },
     {

@@ -9,6 +9,7 @@ import {
 } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation/index";
 import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
+import { AffiliationEvent } from "shared/lib/resources/affiliation";
 
 export { ReadManyResponseValidationErrors } from "shared/lib/types";
 
@@ -22,7 +23,16 @@ export interface OrganizationAdmin {
   possessOneServiceArea?: boolean;
   numTeamMembers?: number;
   serviceAreas: TWUServiceAreaRecord[];
-  viewerIsOrgAdmin?: boolean;
+}
+
+// Populate this as needed
+export enum OrganizationEvent {}
+
+export interface OrganizationHistoryRecord {
+  createdAt: Date;
+  createdBy: UserSlim;
+  type: OrganizationEvent | AffiliationEvent;
+  member?: UserSlim;
 }
 
 export interface Organization extends OrganizationAdmin {
@@ -45,6 +55,7 @@ export interface Organization extends OrganizationAdmin {
   active: boolean;
   deactivatedOn?: Date;
   deactivatedBy?: Id;
+  history?: OrganizationHistoryRecord[];
 }
 
 export interface OrganizationSlim extends OrganizationAdmin {

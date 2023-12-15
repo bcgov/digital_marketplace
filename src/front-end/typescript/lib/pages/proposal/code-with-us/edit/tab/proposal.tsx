@@ -1,4 +1,4 @@
-import { EMPTY_STRING } from "front-end/config";
+import { EMPTY_STRING, PROPOSAL_POLL_DURATION } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
@@ -41,7 +41,8 @@ type ModalId =
   | "saveChangesAndSubmit"
   | "withdrawBeforeDeadline"
   | "withdrawAfterDeadline"
-  | "delete";
+  | "delete"
+  | "orgProposalChangeDetected";
 
 export interface State extends Tab.Params {
   proposal: CWUProposal | null;
@@ -110,7 +111,9 @@ export type InnerMsg =
   | ADT<
       "onDeleteResponse",
       api.ResponseValidation<CWUProposal, DeleteValidationErrors>
-    >;
+    >
+  | ADT<"checkStatus">
+  | ADT<"onCheckStatusResponse", api.ResponseValidation<CWUProposal, string[]>>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -174,10 +177,12 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       submitTerms: immutable(submitTermsState)
     },
-    component_.cmd.mapMany(
-      submitTermsCmds,
-      (msg) => adt("submitTerms", msg) as Msg
-    )
+    [
+      ...component_.cmd.mapMany(
+        submitTermsCmds,
+        (msg) => adt("submitTerms", msg) as Msg
+      )
+    ]
   ];
 };
 
@@ -314,7 +319,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set("form", formState)
           .set("affiliations", affiliationsResult.value)
           .set("proposal", proposalResult.value),
-        component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg)
+        [
+          ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
+          component_.cmd.dispatch(adt("checkStatus") as Msg)
+        ]
       ];
     }
     case "cancelEditing": {
@@ -705,6 +713,47 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         ]
       ];
     }
+    case "checkStatus": {
+      const proposal = state.proposal;
+      return [
+        state,
+        proposal && state.isEditing
+          ? [
+              api.proposals.cwu.readOne<Msg>(proposal.opportunity.id)(
+                proposal.id,
+                (result) => adt("onCheckStatusResponse", result)
+              )
+            ]
+          : []
+      ];
+    }
+    case "onCheckStatusResponse": {
+      const incomingProposal = api.getValidValue(msg.value, null);
+      if (!incomingProposal || !state.proposal) {
+        return [state, []];
+      }
+
+      if (incomingProposal.updatedAt > state.proposal.updatedAt) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              adt("showModal", "orgProposalChangeDetected" as const)
+            )
+          ]
+        ];
+      }
+
+      return [
+        state,
+        [
+          component_.cmd.delayedDispatch(
+            PROPOSAL_POLL_DURATION,
+            adt("checkStatus") as Msg
+          )
+        ]
+      ];
+    }
     default:
       return [state, []];
   }
@@ -719,7 +768,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const reportCards: Array<ReportCard | null> = [
     {
       icon: "alarm-clock",
-      name: "Proposals Due",
+      name: "Proposals Deadline",
       value: formatDateAtTime(proposal.opportunity.proposalDeadline, true)
     },
     showScoreAndRanking
@@ -781,6 +830,12 @@ export const component: Tab.Component<State, Msg> = {
 
   onInitResponse(response) {
     return adt("onInitResponse", response) as InnerMsg;
+  },
+
+  getAlerts: (state) => {
+    return state.form
+      ? Form.getAlerts(state.form)
+      : component_.page.alerts.empty();
   },
 
   getModal: (state) => {
@@ -926,6 +981,32 @@ export const component: Tab.Component<State, Msg> = {
               msg: adt("hideModal")
             }
           ]
+        });
+      case "orgProposalChangeDetected":
+        return component_.page.modal.show({
+          title: "Proposal Changes Detected",
+          body: () => (
+            <>
+              <p>
+                Someone else in your organization has submitted changes to this
+                proposal since you started editing it.
+              </p>
+              <p>Your options are:</p>
+              <ol>
+                <li>
+                  Save your changes to a document offline, cancel editing, and
+                  re-enter your changes.
+                </li>
+                <li>
+                  Keep working, and when you submit, your version{" "}
+                  <strong>will</strong> overwrite the previously submitted
+                  changes.
+                </li>
+              </ol>
+            </>
+          ),
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: []
         });
       case null:
         return component_.page.modal.hide();

@@ -169,6 +169,13 @@ export function getCWUProponentTypeTitleCase(
   }
 }
 
+export function getCWUProponentOrganizationId(
+  proposal: CWUProposal | CWUProposalSlim
+): Id | null {
+  const proponentId = getCWUProponentId(proposal);
+  return proponentId.tag === "organization" ? proponentId.value : null;
+}
+
 export type CWUProposalSlim = Omit<
   CWUProposal,
   "proposalText" | "additionalComments" | "history" | "attachments"
@@ -243,6 +250,7 @@ export interface CreateValidationErrors
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
     "proponent" | "attachments"
   > {
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   proponent?: CreateProponentValidationErrors;
   attachments?: string[][];
 }
@@ -273,6 +281,7 @@ export interface UpdateEditValidationErrors
   extends ErrorTypeFrom<
     Omit<UpdateEditRequestBody, "proponent" | "attachments">
   > {
+  existingOrganizationProposal?: { proposalId: Id; errors: string[] };
   proponent?: CreateProponentValidationErrors;
   attachments?: string[][];
 }

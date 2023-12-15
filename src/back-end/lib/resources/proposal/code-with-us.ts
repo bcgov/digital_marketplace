@@ -120,6 +120,22 @@ async function parseProponentRequestBody(
 
 const routeNamespace = "proposals/code-with-us";
 
+/**
+ * Reads Many CWU Proposals
+ *
+ * @remarks
+ *
+ * validates that the CWU opp id exists in the database, checks permissions of
+ * the user, if the request comes with the following parameters set:
+ *   - request.query.opportunity=<string> = (an opportunity number) it will
+ *   return all proposals associated with that opportunity
+ *   - request.query.organizationProposals=<string> = it will return a response
+ *   for all proposals associated with the organizations the requester has
+ *   access to.
+ *   - default behavior is to return the requester\'s own proposals
+ *
+ * @param connection
+ */
 const readMany: crud.ReadMany<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -153,6 +169,23 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         connection,
         request.session,
         request.query.opportunity
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else if (request.query.organizationProposals) {
+      // create a permissions check for Owners and Admins
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const dbResult = await db.readOrgCWUProposals(
+        connection,
+        request.session
       );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
@@ -280,18 +313,42 @@ const create: crud.Create<
         });
       }
 
+      // Check for existing proposal on this opportunity, authored by this org
+      if (proponent.tag === "organization") {
+        const dbResultOrgProposal =
+          await db.readOneProposalByOpportunityAndOrgAuthor(
+            connection,
+            request.session,
+            opportunity,
+            proponent.value
+          );
+        if (isInvalid(dbResultOrgProposal)) {
+          return invalid({
+            database: [db.ERROR_MESSAGE]
+          });
+        }
+        if (dbResultOrgProposal.value) {
+          return invalid({
+            existingOrganizationProposal: {
+              proposalId: dbResultOrgProposal.value.id,
+              errors: ["Please select a different organization."]
+            }
+          });
+        }
+      }
+
       // Check for existing proposal on this opportunity, authored by this user
-      const dbResult = await db.readOneProposalByOpportunityAndAuthor(
+      const dbResultProposal = await db.readOneProposalByOpportunityAndAuthor(
         connection,
-        opportunity,
-        request.session
+        request.session,
+        opportunity
       );
-      if (isInvalid(dbResult)) {
+      if (isInvalid(dbResultProposal)) {
         return invalid({
           database: [db.ERROR_MESSAGE]
         });
       }
-      if (dbResult.value) {
+      if (dbResultProposal.value) {
         return invalid({
           conflict: ["You already have a proposal for this opportunity."]
         });
@@ -476,7 +533,7 @@ const update: crud.Update<
         !(await permissions.editCWUProposal(
           connection,
           request.session,
-          request.params.id,
+          validatedCWUProposal.value,
           cwuOpportunity
         ))
       ) {
@@ -491,7 +548,7 @@ const update: crud.Update<
         !(await permissions.submitCWUProposal(
           connection,
           request.session,
-          request.params.id
+          validatedCWUProposal.value
         ))
       ) {
         return invalid({
@@ -505,6 +562,31 @@ const update: crud.Update<
         case "edit": {
           const { proposalText, additionalComments, proponent, attachments } =
             request.body.value;
+
+          // Check for existing proposal on this opportunity, authored by this org
+          if (proponent.tag === "organization") {
+            const dbResult = await db.readOneProposalByOpportunityAndOrgAuthor(
+              connection,
+              request.session,
+              cwuOpportunity.id,
+              proponent.value
+            );
+            if (isInvalid(dbResult)) {
+              return invalid({
+                database: [db.ERROR_MESSAGE]
+              });
+            }
+            if (dbResult.value && dbResult.value.id !== request.params.id) {
+              return invalid({
+                proposal: adt("edit" as const, {
+                  existingOrganizationProposal: {
+                    proposalId: dbResult.value.id,
+                    errors: ["Please select a different organization."]
+                  }
+                })
+              });
+            }
+          }
 
           // Attachments must be validated for both drafts and published opportunities.
           const validatedAttachments = await validateAttachments(
@@ -830,17 +912,6 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
-      if (
-        !(await permissions.deleteCWUProposal(
-          connection,
-          request.session,
-          request.params.id
-        ))
-      ) {
-        return invalid({
-          permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
       const validatedCWUProposal = await validateCWUProposalId(
         connection,
         request.params.id,
@@ -849,6 +920,17 @@ const delete_: crud.Delete<
       if (isInvalid(validatedCWUProposal)) {
         return invalid({
           status: ["You can not delete a proposal that is not a draft."]
+        });
+      }
+      if (
+        !(await permissions.deleteCWUProposal(
+          connection,
+          request.session,
+          validatedCWUProposal.value
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
         });
       }
       if (validatedCWUProposal.value.status !== CWUProposalStatus.Draft) {

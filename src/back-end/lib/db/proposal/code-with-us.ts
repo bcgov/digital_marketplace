@@ -1,5 +1,11 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateCWUOpportunityQuery,
@@ -373,7 +379,8 @@ export const readOneCWUProposal = tryDb<[Id, Session], CWUProposal | null>(
           session,
           result.opportunity,
           result.id,
-          result.status
+          result.status,
+          result.proponentOrganization
         )
       ) {
         // Add score to proposal
@@ -564,25 +571,94 @@ export const readOwnCWUProposals = tryDb<
   );
 });
 
-export const readOneProposalByOpportunityAndAuthor = tryDb<
-  [Id, Session],
-  CWUProposal | null
->(async (connection, oppId, session) => {
-  if (!session) {
-    return valid(null);
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the CWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgCWUProposals = tryDb<
+  [AuthenticatedSession],
+  CWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const query = generateCWUProposalQuery(connection);
+
+  if (orgIds) {
+    query.where("proponentOrganization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
   }
-  const result = await connection<RawCWUProposal>("cwuProposals")
-    .where({ opportunity: oppId, createdBy: session.user.id })
-    .first();
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read CWU org proposals");
+  }
+
+  for (const proposal of results) {
+    proposal.submittedAt = await getCWUProposalSubmittedAt(
+      connection,
+      proposal
+    );
+    // Remove score unless in awarded / not awarded state
+    if (
+      proposal.status !== CWUProposalStatus.Awarded &&
+      proposal.status !== CWUProposalStatus.NotAwarded
+    ) {
+      delete proposal.score;
+    }
+  }
 
   return valid(
-    result
-      ? await rawCWUProposalToCWUProposal(connection, session, result)
-      : null
+    await Promise.all(
+      results.map(
+        async (result) =>
+          await rawCWUProposalSlimToCWUProposalSlim(connection, result, session)
+      )
+    )
   );
 });
 
-export async function isCWUProposalAuthor(
+const readOneProposalWithIdsQuery = (
+  query: (
+    connection: Connection,
+    ...ids: Id[]
+  ) => Promise<RawCWUProposal | undefined>
+) =>
+  tryDb<[Session, ...Id[]], CWUProposal | null>(
+    async (connection, session, ...ids) => {
+      if (!session) {
+        return valid(null);
+      }
+
+      const result = await query(connection, session.user.id, ...ids);
+
+      return valid(
+        result
+          ? await rawCWUProposalToCWUProposal(connection, session, result)
+          : null
+      );
+    }
+  );
+
+export const readOneProposalByOpportunityAndAuthor =
+  readOneProposalWithIdsQuery(
+    async (connection: Connection, userId, oppId) =>
+      await connection<RawCWUProposal>("cwuProposals")
+        .where({ opportunity: oppId, createdBy: userId })
+        .first()
+  );
+
+export const readOneProposalByOpportunityAndOrgAuthor =
+  readOneProposalWithIdsQuery(
+    async (connection: Connection, userId, oppId, orgId) =>
+      await connection<RawCWUProposal>("cwuProposals")
+        .where({ opportunity: oppId, proponentOrganization: orgId })
+        .andWhereNot({ createdBy: userId })
+        .first()
+  );
+
+async function isCWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -595,6 +671,18 @@ export async function isCWUProposalAuthor(
   } catch (exception) {
     return false;
   }
+}
+
+export async function isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isCWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
 }
 
 export const createCWUProposal = tryDb<
@@ -1065,7 +1153,8 @@ export const readOneCWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.proponentOrganization
     )
   ) {
     // Add score to proposal

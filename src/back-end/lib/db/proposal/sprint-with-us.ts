@@ -1,5 +1,11 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateSWUOpportunityQuery,
@@ -619,24 +625,76 @@ export const readOwnSWUProposals = tryDb<
   );
 });
 
-export const readOneSWUProposalByOpportunityAndAuthor = tryDb<
-  [Id, Session],
-  Id | null
->(async (connection, opportunityId, session) => {
-  if (!session) {
-    return valid(null);
-  }
-  const result = (
-    await connection<{ id: Id }>("swuProposals")
-      .where({ opportunity: opportunityId, createdBy: session.user.id })
-      .select("id")
-      .first()
-  )?.id;
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the CWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgSWUProposals = tryDb<
+  [AuthenticatedSession],
+  SWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const query = generateSWUProposalQuery(connection);
 
-  return valid(result ? result : null);
+  if (orgIds) {
+    query.where("organization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read SWU org proposals");
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (result) =>
+          await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)
+      )
+    )
+  );
 });
 
-export async function isSWUProposalAuthor(
+const readOneSWUProposalWithIdsQuery = (
+  query: (
+    connection: Connection,
+    ...ids: Id[]
+  ) => Promise<Pick<RawSWUProposal, "id"> | undefined>
+) =>
+  tryDb<[Session, ...Id[]], Id | null>(async (connection, session, ...ids) => {
+    if (!session) {
+      return valid(null);
+    }
+
+    const result = (await query(connection, session.user.id, ...ids))?.id;
+
+    return valid(result ? result : null);
+  });
+
+export const readOneSWUProposalByOpportunityAndAuthor =
+  readOneSWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId) =>
+      await connection<RawSWUProposal, { id: Id }>("swuProposals")
+        .where({ opportunity: opportunityId, createdBy: userId })
+        .select("id")
+        .first()
+  );
+
+export const readOneSWUProposalByOpportunityAndOrgAuthor =
+  readOneSWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId, organizationId) =>
+      await connection<RawSWUProposal, { id: Id }>("swuProposals")
+        .where({ opportunity: opportunityId, organization: organizationId })
+        .andWhereNot({ createdBy: userId })
+        .select("id")
+        .first()
+  );
+
+async function isSWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -649,6 +707,18 @@ export async function isSWUProposalAuthor(
   } catch (exception) {
     return false;
   }
+}
+
+export async function isSWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isSWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
 }
 
 export const readManyProposalReferences = tryDb<[Id], SWUProposalReference[]>(
@@ -710,7 +780,8 @@ export const readOneSWUProposal = tryDb<
         connection,
         session,
         result.opportunity,
-        result.id
+        result.id,
+        result.organization
       )
     ) {
       const rawProposalStatuses = await connection<RawHistoryRecord>(
@@ -735,7 +806,8 @@ export const readOneSWUProposal = tryDb<
       session,
       result.opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     );
     result.teamQuestionResponses =
       getValidValue(
@@ -1720,7 +1792,8 @@ export const readOneSWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     ))
   ) {
     await calculateScores(connection, session, opportunity, [result]);
@@ -1873,10 +1946,10 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
     const proposalScoring = proposalScorings.find((s) => s.id === proposal.id);
     if (proposalScoring) {
       const includeTotalScore =
-        proposalScoring.questionsScore !== null &&
-        proposalScoring.challengeScore !== null &&
-        proposalScoring.scenarioScore !== null &&
-        proposalScoring.priceScore !== null;
+        proposalScoring.questionsScore === null &&
+        proposalScoring.challengeScore === null &&
+        proposalScoring.scenarioScore === null &&
+        proposalScoring.priceScore === null;
       if (
         session.user.type !== UserType.Vendor ||
         proposal.status === SWUProposalStatus.Awarded ||
@@ -1888,8 +1961,8 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
         proposal.priceScore = proposalScoring.priceScore || undefined;
         proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore
-          ? proposalScoring.totalScore || undefined
-          : undefined;
+          ? undefined
+          : proposalScoring.totalScore || undefined;
       }
     }
   });

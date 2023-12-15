@@ -165,7 +165,8 @@ test("code-with-us proposal crud", async () => {
         "numTeamMembers",
         "owner",
         "possessAllCapabilities",
-        "possessOneServiceArea"
+        "possessOneServiceArea",
+        "history"
       ]),
       createdAt: expect.any(String),
       updatedAt: expect.any(String)

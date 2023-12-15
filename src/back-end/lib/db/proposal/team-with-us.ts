@@ -1,5 +1,11 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  getOrgIdsForOwnerOrAdmin,
+  Transaction,
+  isUserOwnerOrAdminOfOrg,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateTWUOpportunityQuery,
@@ -494,28 +500,88 @@ export const readOwnTWUProposals = tryDb<
   );
 });
 
+const readOneTWUProposalWithIdsQuery = (
+  query: (
+    connection: Connection,
+    ...ids: Id[]
+  ) => Promise<Pick<RawTWUProposal, "id"> | undefined>
+) =>
+  tryDb<[Session, ...Id[]], Id | null>(async (connection, session, ...ids) => {
+    if (!session) {
+      return valid(null);
+    }
+
+    const result = (await query(connection, session.user.id, ...ids))?.id;
+
+    return valid(result ? result : null);
+  });
+
+/**
+ * Should a request come from an organization Owner or organization Admin,
+ * this modifies the TWU Proposal query to read the proposals for the
+ * organizations that the requester has permission to access.
+ */
+export const readOrgTWUProposals = tryDb<
+  [AuthenticatedSession],
+  TWUProposalSlim[]
+>(async (connection, session) => {
+  const orgIds = await getOrgIdsForOwnerOrAdmin(connection, session.user.id);
+  const query = generateTWUProposalQuery(connection);
+
+  if (orgIds) {
+    query.where("organization", "IN", orgIds).andWhereNot({
+      "proposals.createdBy": session.user.id
+    });
+  }
+
+  const results = await query;
+
+  if (!results) {
+    throw new Error("unable to read TWU org proposals");
+  }
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (results) =>
+          await rawTWUProposalSlimToTWUProposalSlim(
+            connection,
+            results,
+            session
+          )
+      )
+    )
+  );
+});
+
 /**
  * Used as confirmation that the person creating a proposal is not the same
  * person as who created the opportunity. Returns `valid(null)` on success.
  */
-export const readOneTWUProposalByOpportunityAndAuthor = tryDb<
-  [Id, Session],
-  Id | null
->(async (connection, opportunityId, session) => {
-  if (!session) {
-    return valid(null);
-  }
-  const result = (
-    await connection<{ id: Id }>("twuProposals")
-      .where({ opportunity: opportunityId, createdBy: session.user.id })
-      .select("id")
-      .first()
-  )?.id;
+export const readOneTWUProposalByOpportunityAndAuthor =
+  readOneTWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId) =>
+      await connection<RawTWUProposal, { id: Id }>("twuProposals")
+        .where({ opportunity: opportunityId, createdBy: userId })
+        .select("id")
+        .first()
+  );
 
-  return valid(result ? result : null);
-});
+/**
+ * Used as confirmation that the organization does not have more than one
+ * proposal associated with the opportunity. Returns `valid(null)` on success.
+ */
+export const readOneTWUProposalByOpportunityAndOrgAuthor =
+  readOneTWUProposalWithIdsQuery(
+    async (connection, userId, opportunityId, organizationId) =>
+      await connection<RawTWUProposal, { id: Id }>("twuProposals")
+        .where({ opportunity: opportunityId, organization: organizationId })
+        .andWhereNot({ createdBy: userId })
+        .select("id")
+        .first()
+  );
 
-export async function isTWUProposalAuthor(
+async function isTWUProposalAuthor(
   connection: Connection,
   user: User,
   id: Id
@@ -528,6 +594,18 @@ export async function isTWUProposalAuthor(
   } catch (exception) {
     return false;
   }
+}
+
+export async function isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg(
+  connection: Connection,
+  user: User,
+  proposalId: Id,
+  orgId: Id | null
+) {
+  return (
+    (await isTWUProposalAuthor(connection, user, proposalId)) ||
+    (!!orgId && (await isUserOwnerOrAdminOfOrg(connection, user, orgId)))
+  );
 }
 
 export const readManyProposalResourceQuestionResponses = tryDb<
@@ -603,7 +681,8 @@ export const readOneTWUProposal = tryDb<
         connection,
         session,
         result.opportunity,
-        result.id
+        result.id,
+        result.organization
       )
     ) {
       const rawProposalStatuses = await connection<RawHistoryRecord>(
@@ -628,7 +707,8 @@ export const readOneTWUProposal = tryDb<
       session,
       result.opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     );
     result.resourceQuestionResponses =
       getValidValue(
@@ -1368,7 +1448,8 @@ export const readOneTWUAwardedProposal = tryDb<
       session,
       opportunity,
       result.id,
-      result.status
+      result.status,
+      result.organization
     ))
   ) {
     await calculateScores(connection, session, opportunity, [result]);
@@ -1518,9 +1599,9 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
     const proposalScoring = proposalScorings.find((s) => s.id === proposal.id);
     if (proposalScoring) {
       const includeTotalScore =
-        proposalScoring.questionsScore !== null &&
-        proposalScoring.challengeScore !== null &&
-        proposalScoring.priceScore !== null;
+        proposalScoring.questionsScore === null &&
+        proposalScoring.challengeScore === null &&
+        proposalScoring.priceScore === null;
       if (
         session.user.type !== UserType.Vendor ||
         proposal.status === TWUProposalStatus.Awarded ||
@@ -1531,8 +1612,8 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
         proposal.priceScore = proposalScoring.priceScore || undefined;
         proposal.rank = proposalScoring.rank || undefined;
         proposal.totalScore = includeTotalScore
-          ? proposalScoring.totalScore || undefined
-          : undefined;
+          ? undefined
+          : proposalScoring.totalScore || undefined;
       }
     }
   });

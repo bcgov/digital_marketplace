@@ -1013,7 +1013,11 @@ const update: crud.Update<
         case "addAddendum": {
           if (
             twuOpportunity.status === TWUOpportunityStatus.Draft ||
-            !permissions.addTWUAddendum(request.session)
+            !(await permissions.addTWUAddendum(
+              connection,
+              request.session,
+              twuOpportunity.id
+            ))
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }

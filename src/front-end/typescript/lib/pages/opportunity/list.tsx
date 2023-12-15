@@ -57,6 +57,26 @@ interface CategorizedOpportunities {
 
 type OpportunityCategory = keyof CategorizedOpportunities;
 
+const opportunityStatusOptions = [
+  { label: "Draft", value: "draft" } as const,
+  { label: "Under Review", value: "under_review" } as const,
+  { label: "Published", value: "published" } as const,
+  { label: "Suspended", value: "suspended" } as const,
+  { label: "Evaluation", value: "evaluation" } as const,
+  { label: "Awarded", value: "awarded" } as const
+];
+
+type OpportunityStatusOptionValue =
+  typeof opportunityStatusOptions[number]["value"];
+
+function isOpportunityStatusOptionValue(
+  oppStatusValue: string | undefined
+): oppStatusValue is OpportunityStatusOptionValue {
+  return opportunityStatusOptions.some(
+    (oppOption) => oppOption.value === oppStatusValue
+  );
+}
+
 export interface State {
   viewerUser?: User;
   toggleWatchLoading: [OpportunityCategory, Id] | null;
@@ -214,14 +234,7 @@ const init: component_.page.Init<
     child: {
       value: null,
       id: "opportunity-filter-status",
-      options: adt("options", [
-        { label: "Draft", value: "draft" },
-        { label: "Under Review", value: "under_Review" },
-        { label: "Published", value: "published" },
-        { label: "Suspended", value: "suspended" },
-        { label: "Evaluation", value: "evaluation" },
-        { label: "Awarded", value: "awarded" }
-      ])
+      options: adt("options", opportunityStatusOptions)
     }
   });
   const [remoteOkFilterState, remoteOkFilterCmds] = Checkbox.init({
@@ -314,7 +327,10 @@ function filter(
     if (remoteOk && !o.value.remoteOk) {
       return false;
     }
-    if (oppStatus && !doesOppHaveStatus(o, oppStatus)) {
+    if (
+      isOpportunityStatusOptionValue(oppStatus) &&
+      !doesOppHaveStatus(o, oppStatus)
+    ) {
       return false;
     }
     if (
@@ -328,7 +344,10 @@ function filter(
   });
 }
 
-function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
+function doesOppHaveStatus(
+  opp: Opportunity,
+  oppStatus: OpportunityStatusOptionValue
+): boolean {
   return (
     (oppStatus === "draft" &&
       [
@@ -337,7 +356,11 @@ function doesOppHaveStatus(opp: Opportunity, oppStatus: string): boolean {
         TWUO.TWUOpportunityStatus.Draft
       ].includes(opp.value.status)) ||
     (oppStatus === "under_review" &&
-      SWUO.SWUOpportunityStatus.UnderReview === opp.value.status) ||
+      [
+        CWUO.CWUOpportunityStatus.UnderReview,
+        SWUO.SWUOpportunityStatus.UnderReview,
+        TWUO.TWUOpportunityStatus.UnderReview
+      ].includes(opp.value.status)) ||
     (oppStatus === "published" &&
       [
         CWUO.CWUOpportunityStatus.Published,

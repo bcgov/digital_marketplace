@@ -869,7 +869,11 @@ const update: crud.Update<
           if (
             validatedCWUOpportunity.value.status ===
               CWUOpportunityStatus.Draft ||
-            !permissions.addCWUAddendum(request.session)
+            !(await permissions.addCWUAddendum(
+              connection,
+              request.session,
+              validatedCWUOpportunity.value.id
+            ))
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
