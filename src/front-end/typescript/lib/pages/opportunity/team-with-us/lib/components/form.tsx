@@ -58,6 +58,7 @@ const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
 export type TabId =
   | "Overview"
+  | "Resource Details"
   | "Description"
   | "Resource Questions"
   | "Scoring"
@@ -82,6 +83,7 @@ export interface State {
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
+  // Resource Details Tab
   serviceArea: Immutable<Select.State>;
   targetAllocation: Immutable<Select.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
@@ -112,6 +114,7 @@ export type Msg =
   | ADT<"startDate", DateField.Msg>
   | ADT<"completionDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
+  // Resource Details Tab
   | ADT<"serviceArea", Select.Msg>
   | ADT<"targetAllocation", Select.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
@@ -220,6 +223,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Overview",
+      "Resource Details",
       "Description",
       "Resource Questions",
       "Scoring",
@@ -675,7 +679,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
 
 /**
  * Certain form fields belong to different tabs on the page.
- * This checks that all fields in the 'Overview' tab (1 of 5) are valid, meaning
+ * This checks that all fields in the 'Overview' tab (1 of 6) are valid, meaning
  * the state is an ADT.
  *
  * @param state
@@ -693,16 +697,25 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
     FormField.isValid(state.assignmentDate) &&
     FormField.isValid(state.startDate) &&
     FormField.isValid(state.completionDate) &&
+    FormField.isValid(state.maxBudget)
+  );
+}
+
+/**
+ * Checks that all fields in the 'Resource Details' tab (2 of 6) are valid.
+ * @param state
+ */
+export function isResourceDetailsTabValid(state: Immutable<State>): boolean {
+  return (
     FormField.isValid(state.serviceArea) &&
     FormField.isValid(state.mandatorySkills) &&
     FormField.isValid(state.optionalSkills) &&
-    FormField.isValid(state.maxBudget) &&
     FormField.isValid(state.targetAllocation)
   );
 }
 
 /**
- * Checks that all fields in the 'Description' tab (2 of 5) are valid.
+ * Checks that all fields in the 'Description' tab (3 of 6) are valid.
  *
  * @param state
  * @returns
@@ -712,7 +725,7 @@ export function isDescriptionTabValid(state: Immutable<State>): boolean {
 }
 
 /**
- * Checks that all fields in the 'Resource Questions' tab (3 of 5) are valid.
+ * Checks that all fields in the 'Resource Questions' tab (4 of 6) are valid.
  *
  * @param state
  * @returns
@@ -722,7 +735,7 @@ export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
 }
 
 /**
- * Checks that all fields in the 'Scoring' tab (4 of 5) are valid.
+ * Checks that all fields in the 'Scoring' tab (5 of 6) are valid.
  *
  * @param state
  * @returns
@@ -737,7 +750,7 @@ export function isScoringTabValid(state: Immutable<State>): boolean {
 }
 
 /**
- * Checks that all fields in the 'Attachments' tab (5 of 5) are valid.
+ * Checks that all fields in the 'Attachments' tab (6 of 6) are valid.
  *
  * @param state
  * @returns
@@ -747,7 +760,7 @@ export function isAttachmentsTabValid(state: Immutable<State>): boolean {
 }
 
 /**
- * Checks if all (5) tabs have valid content
+ * Checks if all (6) tabs have valid content
  *
  * @param state
  * @returns boolean
@@ -755,6 +768,7 @@ export function isAttachmentsTabValid(state: Immutable<State>): boolean {
 export function isValid(state: Immutable<State>): boolean {
   return (
     isOverviewTabValid(state) &&
+    isResourceDetailsTabValid(state) &&
     isDescriptionTabValid(state) &&
     isResourceQuestionsTabValid(state) &&
     isScoringTabValid(state) &&
@@ -1400,7 +1414,17 @@ const OverviewView: component_.base.View<Props> = ({
           )}
         />
       </Col>
+    </Row>
+  );
+};
 
+const ResourceDetailsView: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  disabled
+}) => {
+  return (
+    <Row>
       <Col md="6" xs="12">
         <Select.view
           extraChildProps={{}}
@@ -1462,7 +1486,6 @@ const OverviewView: component_.base.View<Props> = ({
     </Row>
   );
 };
-
 const DescriptionView: component_.base.View<Props> = ({
   state,
   dispatch,
@@ -1622,6 +1645,8 @@ export const view: component_.base.View<Props> = (props) => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Overview":
         return <OverviewView {...props} />;
+      case "Resource Details":
+        return <ResourceDetailsView {...props} />;
       case "Description":
         return <DescriptionView {...props} />;
       case "Resource Questions":
@@ -1641,6 +1666,8 @@ export const view: component_.base.View<Props> = (props) => {
         switch (tab) {
           case "Overview":
             return isOverviewTabValid(state);
+          case "Resource Details":
+            return isResourceDetailsTabValid(state);
           case "Description":
             return isDescriptionTabValid(state);
           case "Resource Questions":
