@@ -223,6 +223,17 @@ export interface TWUResourceQuestion {
   createdBy?: UserSlim;
 }
 
+/**
+ * User-defined type guard to narrow raw input to a TWUResource.
+ * @see {@link createResouce in
+ * src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx}
+ */
+export interface TWUResource {
+  serviceArea: TWUServiceArea;
+  targetAllocation: number;
+  order: number;
+}
+
 export function getQuestionByOrder(
   opp: TWUOpportunity,
   order: number
