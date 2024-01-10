@@ -49,7 +49,7 @@ export interface TWUOpportunityHistoryRecord {
 }
 
 /**
- * User-defined type guard to narrow raw input to a TWUOpportunityStatus.
+ * Type guard to narrow raw input to a TWUOpportunityStatus.
  *
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
  *
@@ -80,7 +80,7 @@ export function parseTWUOpportunityStatus(
 }
 
 /**
- * User-defined type guard to narrow raw input to a TWUServiceArea.
+ * Type guard to narrow raw input to a TWUServiceArea.
  *
  * @see {@link https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates}
  *
@@ -180,14 +180,13 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: TWUServiceArea;
+  resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
   startDate: Date;
   completionDate: Date;
   maxBudget: number;
-  targetAllocation: number;
   questionsWeight: number;
   challengeWeight: number;
   priceWeight: number;
@@ -224,7 +223,7 @@ export interface TWUResourceQuestion {
 }
 
 /**
- * User-defined type guard to narrow raw input to a TWUResource.
+ * Type guard to narrow raw input to a TWUResource.
  * @see {@link createResouce in
  * src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx}
  */
@@ -286,10 +285,9 @@ export interface CreateRequestBody {
   startDate: string;
   completionDate: string;
   maxBudget: number;
-  targetAllocation: number;
   mandatorySkills: string[];
   optionalSkills: string[];
-  serviceArea: TWUServiceArea;
+  resources: TWUResource[];
   description: string;
   questionsWeight: number;
   challengeWeight: number;
@@ -304,11 +302,22 @@ export interface CreateTWUResourceQuestionValidationErrors
   parseFailure?: string[];
 }
 
+export interface CreateTWUResourceValidationErrors
+  extends ErrorTypeFrom<TWUResource> {
+  // resources: TWUResource[];
+  parseFailure?: string[];
+}
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
-    "mandatorySkills" | "optionalSkills" | "resourceQuestions" | "attachments"
+    | "resources"
+    | "mandatorySkills"
+    | "optionalSkills"
+    | "resourceQuestions"
+    | "attachments"
   > {
+  resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];
@@ -327,10 +336,7 @@ export type UpdateRequestBody =
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>;
 
-export type UpdateEditRequestBody = Omit<
-  CreateRequestBody,
-  "status" | "serviceArea"
-> & { serviceArea: string };
+export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
 export interface UpdateWithNoteRequestBody {
   note: string;
@@ -360,8 +366,13 @@ export interface UpdateValidationErrors extends BodyWithErrors {
 export interface UpdateEditValidationErrors
   extends Omit<
     ErrorTypeFrom<UpdateEditRequestBody>,
-    "mandatorySkills" | "optionalSkills" | "resourceQuestions" | "attachments"
+    | "resources"
+    | "mandatorySkills"
+    | "optionalSkills"
+    | "resourceQuestions"
+    | "attachments"
   > {
+  resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];

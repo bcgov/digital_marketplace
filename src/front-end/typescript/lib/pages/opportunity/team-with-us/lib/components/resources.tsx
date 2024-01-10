@@ -9,12 +9,16 @@ import {
 } from "front-end/lib/framework";
 import * as Select from "front-end/lib/components/form-field/select";
 import {
+  CreateTWUResourceValidationErrors,
+  parseTWUServiceArea,
   TWUResource,
   TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { invalid, valid } from "shared/lib/validation";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import { arrayFromRange } from "shared/lib";
+import * as FormField from "front-end/lib/components/form-field";
+import { getNumberSelectValue } from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 
 interface Resource {
   serviceArea: Immutable<Select.State>;
@@ -140,6 +144,67 @@ function createResource(
       )
     ]
   ];
+}
+export type Errors = CreateTWUResourceValidationErrors[];
+export function setErrors(
+  state: Immutable<State>,
+  errors: Errors = []
+): Immutable<State> {
+  return errors.reduce((acc, e, i) => {
+    return acc
+      .updateIn(["resources", i, "serviceArea"], (s) =>
+        FormField.setErrors(s as Immutable<Select.State>, e.serviceArea || [])
+      )
+      .updateIn(["resources", i, "targetAllocation"], (s) =>
+        FormField.setErrors(
+          s as Immutable<Select.State>,
+          e.targetAllocation || []
+        )
+      );
+  }, state);
+}
+
+export function validate(state: Immutable<State>): Immutable<State> {
+  return state.resources.reduce((acc, q, i) => {
+    return acc
+      .updateIn(["resources", i, "serviceArea"], (s) =>
+        FormField.validate(s as Immutable<Select.State>)
+      )
+      .updateIn(["resources", i, "targetAllocation"], (s) =>
+        FormField.validate(s as Immutable<Select.State>)
+      );
+  }, state);
+}
+
+export function isValid(state: Immutable<State>): boolean {
+  if (!state.resources.length) {
+    return false;
+  }
+  return state.resources.reduce((acc, r) => {
+    return (
+      acc &&
+      FormField.isValid(r.serviceArea) &&
+      FormField.isValid(r.targetAllocation)
+    );
+  }, true as boolean);
+}
+
+export type Values = TWUResource[];
+
+export function getValues(state: Immutable<State>): Values {
+  return state.resources.reduce<Values>((acc, r, order) => {
+    if (!acc) {
+      return acc;
+    }
+    acc.push({
+      serviceArea:
+        parseTWUServiceArea(Select.getValue(r.serviceArea)) ??
+        TWUServiceArea.FullStackDeveloper,
+      targetAllocation: getNumberSelectValue(r.targetAllocation) || 0,
+      order: order
+    });
+    return acc;
+  }, []);
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {

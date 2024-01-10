@@ -17,10 +17,11 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
+import * as Resources from "front-end/lib/pages/opportunity/team-with-us/lib/components/resources";
 import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { arrayFromRange, getNumber } from "shared/lib";
+import { getNumber } from "shared/lib";
 import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
 import {
@@ -34,9 +35,7 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUServiceArea,
-  UpdateEditValidationErrors,
-  parseTWUServiceArea
+  UpdateEditValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -49,7 +48,6 @@ import {
   Validation
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
-import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib/index";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 
 type RemoteOk = "yes" | "no";
@@ -84,8 +82,7 @@ export interface State {
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
   // Resource Details Tab
-  serviceArea: Immutable<Select.State>;
-  targetAllocation: Immutable<Select.State>;
+  resources: Immutable<Resources.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
   optionalSkills: Immutable<SelectMulti.State>;
   // Description Tab
@@ -115,8 +112,7 @@ export type Msg =
   | ADT<"completionDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
   // Resource Details Tab
-  | ADT<"serviceArea", Select.Msg>
-  | ADT<"targetAllocation", Select.Msg>
+  | ADT<"resources", Resources.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
   | ADT<"optionalSkills", SelectMulti.Msg>
   // Description Tab
@@ -162,21 +158,6 @@ export function setValidateDate(
 }
 
 /**
- * Local helper function to obtain and modify the key of
- * (enum) TWUServiceArea if given the value.
- *
- * @see {@link TWUServiceArea}
- *
- * @param v - a value from the key/value pair of TWUServiceArea
- * @returns - a single label/value pair for a select list
- */
-function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
-  return {
-    label: twuServiceAreaToTitleCase(v),
-    value: v
-  };
-}
-/**
  * Initializes components on the page
  */
 export const init: component_.base.Init<Params, State, Msg> = ({
@@ -200,25 +181,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     "priceWeight",
     DEFAULT_PRICE_WEIGHT
   );
-  const selectedTargetAllocationOption = opportunity?.targetAllocation
-    ? {
-        label: String(opportunity.targetAllocation),
-        value: String(opportunity.targetAllocation)
-      }
-    : null;
-
-  /**
-   * Sets a single key/value pair for service area, or null
-   *
-   * @see {@link getSingleKeyValueOption}
-   */
-  const serviceArea: Select.Option | null = (() => {
-    const v = opportunity?.serviceArea ? opportunity.serviceArea : null;
-    if (!v) {
-      return null;
-    }
-    return getSingleKeyValueOption(v as TWUServiceArea);
-  })();
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
@@ -357,45 +319,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       min: 1
     }
   });
-  const [serviceAreaState, serviceAreaCmds] = Select.init({
-    errors: [],
-    validate: (option) => {
-      if (!option) {
-        return invalid(["Please select a Service Area."]);
-      }
-      return valid(option);
-    },
-    child: {
-      value: serviceArea,
-      id: "twu-service-area",
-      options: Select.objectToOptions(TWUServiceArea)
-    }
-  });
-  const [targetAllocationState, targetAllocationCmds] = Select.init({
-    errors: [],
-    validate: (option) => {
-      if (!option) {
-        return invalid(["Please select a Resource Target Allocation."]);
-      }
-      return valid(option);
-    },
-    child: {
-      value: selectedTargetAllocationOption ?? null,
-      id: "twu-opportunity-target-allocation",
-      options: adt(
-        "options",
-        [
-          ...arrayFromRange<Select.Option>(10, {
-            offset: 1,
-            step: 10,
-            cb: (number) => {
-              const value = String(number);
-              return { value, label: value };
-            }
-          })
-        ].reverse()
-      )
-    }
+  const [resourcesState, resourcesCmds] = Resources.init({
+    resources: opportunity?.resources || []
   });
   const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
     errors: [],
@@ -521,8 +446,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       startDate: immutable(startDateState),
       completionDate: immutable(completionDateState),
       maxBudget: immutable(maxBudgetState),
-      serviceArea: immutable(serviceAreaState),
-      targetAllocation: immutable(targetAllocationState),
+      resources: immutable(resourcesState),
       mandatorySkills: immutable(mandatorySkillsState),
       optionalSkills: immutable(optionalSkillsState),
       description: immutable(descriptionState),
@@ -555,12 +479,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         adt("completionDate", msg)
       ),
       ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
-      ...component_.cmd.mapMany(serviceAreaCmds, (msg) =>
-        adt("serviceArea", msg)
-      ),
-      ...component_.cmd.mapMany(targetAllocationCmds, (msg) =>
-        adt("targetAllocation", msg)
-      ),
+      ...component_.cmd.mapMany(resourcesCmds, (msg) => adt("resources", msg)),
       ...component_.cmd.mapMany(mandatorySkillsCmds, (msg) =>
         adt("mandatorySkills", msg)
       ),
@@ -622,11 +541,8 @@ export function setErrors(
       .update("maxBudget", (s) =>
         FormField.setErrors(s, errors.maxBudget || [])
       )
-      .update("serviceArea", (s) =>
-        FormField.setErrors(s, errors.serviceArea || [])
-      )
-      .update("targetAllocation", (s) =>
-        FormField.setErrors(s, errors.targetAllocation || [])
+      .update("resources", (s) =>
+        Resources.setErrors(s, errors.resources || [])
       )
       .update("mandatorySkills", (s) =>
         FormField.setErrors(s, flatten(errors.mandatorySkills || []))
@@ -664,8 +580,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("startDate", (s) => FormField.validate(s))
     .update("completionDate", (s) => FormField.validate(s))
     .update("maxBudget", (s) => FormField.validate(s))
-    .update("serviceArea", (s) => FormField.validate(s))
-    .update("targetAllocation", (s) => FormField.validate(s))
+    .update("resources", (s) => Resources.validate(s))
     .update("mandatorySkills", (s) => FormField.validate(s))
     .update("optionalSkills", (s) => FormField.validate(s))
     .update("description", (s) => FormField.validate(s))
@@ -707,10 +622,9 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
  */
 export function isResourceDetailsTabValid(state: Immutable<State>): boolean {
   return (
-    FormField.isValid(state.serviceArea) &&
+    Resources.isValid(state.resources) &&
     FormField.isValid(state.mandatorySkills) &&
-    FormField.isValid(state.optionalSkills) &&
-    FormField.isValid(state.targetAllocation)
+    FormField.isValid(state.optionalSkills)
   );
 }
 
@@ -802,10 +716,10 @@ export function getValues(state: Immutable<State>): Values {
   const challengeWeight = FormField.getValue(state.challengeWeight) || 0;
   const priceWeight = FormField.getValue(state.priceWeight) || 0;
   const maxBudget = FormField.getValue(state.maxBudget) || 0;
-  const targetAllocation = getNumberSelectValue(state.targetAllocation) || 0;
   const resourceQuestions = ResourceQuestions.getValues(
     state.resourceQuestions
   );
+  const resources = Resources.getValues(state.resources);
   return {
     title: FormField.getValue(state.title),
     teaser: FormField.getValue(state.teaser),
@@ -817,10 +731,7 @@ export function getValues(state: Immutable<State>): Values {
     startDate: DateField.getValueAsString(state.startDate),
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
-    serviceArea:
-      parseTWUServiceArea(Select.getValue(state.serviceArea)) ??
-      TWUServiceArea.FullStackDeveloper,
-    targetAllocation,
+    resources,
     mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
     optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
     description: FormField.getValue(state.description),
@@ -1144,22 +1055,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("maxBudget", value)
       });
 
-    case "serviceArea":
+    case "resources":
       return component_.base.updateChild({
         state,
-        childStatePath: ["serviceArea"],
-        childUpdate: Select.update,
+        childStatePath: ["resources"],
+        childUpdate: Resources.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("serviceArea", value)
-      });
-
-    case "targetAllocation":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["targetAllocation"],
-        childUpdate: Select.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("targetAllocation", value)
+        mapChildMsg: (value) => adt("resources", value)
       });
 
     case "mandatorySkills":
@@ -1425,36 +1327,13 @@ const ResourceDetailsView: component_.base.View<Props> = ({
 }) => {
   return (
     <Row>
-      <Col md="6" xs="12">
-        <Select.view
-          extraChildProps={{}}
-          label="Service Area"
-          placeholder="Service Area"
-          help="Each TWU Opportunity must be matched to one and only one Service Area."
-          required
-          disabled={disabled}
-          state={state.serviceArea}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("serviceArea" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col md="6" xs="12">
-        <Select.view
-          extraChildProps={{ prefix: "%" }}
-          label="Resource Target Allocation"
-          placeholder="% Allocation"
-          help="Indicate the desired Full-Time Equivalency (FTE) allocation in terms of a 40-hour work week. For example, a resource working 20 hours a week would be allocated at 50% FTE."
-          required
-          disabled={disabled}
-          state={state.targetAllocation}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("targetAllocation" as const, value)
-          )}
-        />
-      </Col>
-
+      <Resources.view
+        state={state.resources}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("resources" as const, value)
+        )}
+        disabled={disabled}
+      />
       <Col xs="12">
         <SelectMulti.view
           extraChildProps={{}}
