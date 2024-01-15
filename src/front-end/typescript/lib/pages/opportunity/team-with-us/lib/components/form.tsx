@@ -1327,13 +1327,15 @@ const ResourceDetailsView: component_.base.View<Props> = ({
 }) => {
   return (
     <Row>
-      <Resources.view
-        state={state.resources}
-        dispatch={component_.base.mapDispatch(dispatch, (value) =>
-          adt("resources" as const, value)
-        )}
-        disabled={disabled}
-      />
+      <Col xs="12">
+        <Resources.view
+          state={state.resources}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("resources" as const, value)
+          )}
+          disabled={disabled}
+        />
+      </Col>
       <Col xs="12">
         <SelectMulti.view
           extraChildProps={{}}

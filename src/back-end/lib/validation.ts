@@ -139,11 +139,24 @@ export async function validateTWUOpportunityId(
 }
 
 /**
- * Takes a string from a validates it is a valid Team With Us service area in the database.
+ * Takes one string and proves that it as a valid TWU service area in the db.
  *
  * @param raw - string argument
  * @param connection - Knex connection wrapper
- * @returns
+ * @returns valid | invalid number (key value)
+ *
+ * @example
+ * raw = "FULL_STACK_DEVELOPER"
+ * returns
+ * {
+ *   tag: "valid",
+ *   value: 1
+ * }
+ * or
+ * {
+ *   tag: "invalid",
+ *   value: ["The specified service area was not found"]
+ * }
  */
 export async function validateServiceArea(
   connection: db.Connection,
@@ -173,11 +186,30 @@ export async function validateServiceArea(
 }
 
 /**
- * Validates a list of service areas in the db.
+ * Takes a list of service areas and proves that each of them exists in the db.
  *
  * @param raw - string array argument
  * @param connection - Knex connection wrapper
- * @returns
+ * @returns valid | invalid
+ *
+ * @example
+ * raw = ["FULL_STACK_DEVELOPER", "DATA_PROFESSIONAL"]
+ * returns
+ * {
+ *   tag: "valid",
+ *   value: [1,2]
+ * }
+ * or
+ * raw = ["FULL_STACK_DEVELOPER", "DATA_PROFESSIONAL, "NOT_A_SERVICE_AREA"]
+ *{
+ *   tag: "invalid",
+ *   value:
+ *   [
+ *    [],
+ *    [],
+ *    ['"NOT_A_SERVICE_AREA" is not a valid service area.' ]
+ *   ]
+ * }
  */
 export function validateServiceAreas(
   connection: db.Connection,

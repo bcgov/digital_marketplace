@@ -10,8 +10,7 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
-  validateTWUOpportunityId,
-  validateServiceArea
+  validateTWUOpportunityId
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { addDays, getNumber, getString, getStringArray } from "shared/lib";
@@ -21,12 +20,15 @@ import {
   CreateTWUOpportunityStatus,
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors,
+  CreateTWUResourceValidationErrors,
   CreateValidationErrors,
   DeleteValidationErrors,
   isValidStatusChange,
   TWUOpportunity,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
+  TWUResource,
+  TWUServiceArea,
   UpdateRequestBody,
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/team-with-us";
@@ -59,14 +61,14 @@ interface ValidatedCreateRequestBody
     | "history"
     | "publishedAt"
     | "subscribed"
+    | "resources"
     | "resourceQuestions"
     | "challengeEndDate"
-    | "serviceArea"
   > {
+  resources: TWUResource[];
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
-  serviceArea: number;
 }
 
 interface ValidatedUpdateRequestBody {
@@ -83,15 +85,11 @@ interface ValidatedUpdateRequestBody {
 
 type ValidatedUpdateEditRequestBody = Omit<
   ValidatedCreateRequestBody,
-  "status" | "session" | "serviceArea"
-> & { serviceArea: number };
+  "status" | "session"
+>;
 
-type CreateRequestBody = Omit<
-  SharedCreateRequestBody,
-  "status" | "serviceArea"
-> & {
+type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
-  serviceArea: string;
 };
 
 type ValidatedDeleteRequestBody = Id;
@@ -181,6 +179,7 @@ const create: crud.Create<
   CreateValidationErrors
 > = (connection: db.Connection) => {
   return {
+    // obtain values from each part of the incoming request body
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
@@ -192,8 +191,7 @@ const create: crud.Create<
         location: getString(body, "location"),
         mandatorySkills: getStringArray(body, "mandatorySkills"),
         optionalSkills: getStringArray(body, "optionalSkills"),
-        serviceArea: getString(body, "serviceArea"),
-        targetAllocation: getNumber(body, "targetAllocation"),
+        resources: get(body, "resources"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
@@ -208,6 +206,7 @@ const create: crud.Create<
         resourceQuestions: get(body, "resourceQuestions")
       };
     },
+    // ensure the accuracy of values coming in from the request body
     async validateRequestBody(request) {
       const {
         title,
@@ -217,8 +216,7 @@ const create: crud.Create<
         location,
         mandatorySkills,
         optionalSkills,
-        serviceArea,
-        targetAllocation,
+        resources,
         description,
         proposalDeadline,
         assignmentDate,
@@ -266,15 +264,46 @@ const create: crud.Create<
       }
 
       // Service areas are required for drafts
-      const validatedServiceArea = await validateServiceArea(
-        connection,
-        serviceArea
-      );
-      if (isInvalid(validatedServiceArea)) {
-        return invalid({
-          serviceArea: validatedServiceArea.value
-        });
-      }
+
+      // iterate through resources, extracting the string value from serviceArea
+      // store the result in a string array
+      // TODO: obtain an array of serviceArea values to pass to `validatedServiceAreas`
+      // const serviceAreas: string[] = resources.map((resources) =>
+      //   getString(resources, "serviceArea")
+      // );
+
+      // TODO: prove that the service area being passed exists in the database
+      // const validatedServiceAreas = await validateServiceAreas(
+      //   connection,
+      //   serviceAreas
+      // );
+      /**
+       * `validateServiceAreas` returns a Promise<ArrayValidation<ServiceAreaId>>
+       * {
+       *   tag: "valid",
+       *     value: [1,2]
+       * }
+       * or
+       * {
+       *   tag: "invalid",
+       *     value:
+       *   [
+       *     [],
+       *     [],
+       *     ['"NOT_A_SERVICE_AREA" is not a valid service area."']
+       *   ]
+       * }
+       */
+
+      // if  (isInvalid(validatedServiceAreas)) {
+      //   return invalid({
+      //     resources: [{
+      //       serviceArea: validatedServiceAreas.value,
+      //       targetAllocation: "?",
+      //       order: "?"
+      //     }]
+      //   });
+      // }
 
       const now = new Date();
       const validatedProposalDeadline =
@@ -295,7 +324,7 @@ const create: crud.Create<
           getValidValue(validatedStartDate, now)
         );
 
-      // Do not validate other fields if the opportunity a draft
+      // Validate the following fields if the opportunity is saved as a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);
         return valid({
@@ -320,7 +349,14 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          serviceArea: validatedServiceArea.value
+          resources: resources
+            ? resources.map((v) => ({
+                // TODO: likely needs to return a TWUResource type, not a string
+                serviceArea: getString(v, "serviceArea") as TWUServiceArea,
+                targetAllocation: getNumber(v, "targetAllocation"),
+                order: getNumber(v, "order")
+              }))
+            : []
         });
       }
 
@@ -338,8 +374,8 @@ const create: crud.Create<
         genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
         opportunityValidation.validateOptionalSkills(optionalSkills);
-      const validatedTargetAllocation =
-        opportunityValidation.validateTargetAllocation(targetAllocation);
+      const validatedResources =
+        opportunityValidation.validateResources(resources);
       const validatedDescription =
         genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -361,8 +397,7 @@ const create: crud.Create<
           validatedMaxBudget,
           validatedMandatorySkills,
           validatedOptionalSkills,
-          validatedServiceArea,
-          validatedTargetAllocation,
+          validatedResources,
           validatedDescription,
           validatedQuestionsWeight,
           validatedChallengeWeight,
@@ -373,8 +408,7 @@ const create: crud.Create<
           validatedStartDate,
           validatedCompletionDate,
           validatedAttachments,
-          validatedStatus,
-          validatedServiceArea
+          validatedStatus
         ])
       ) {
         // Ensure that score weights total 100%
@@ -399,8 +433,7 @@ const create: crud.Create<
           maxBudget: validatedMaxBudget.value,
           mandatorySkills: validatedMandatorySkills.value,
           optionalSkills: validatedOptionalSkills.value,
-          serviceArea: validatedServiceArea.value,
-          targetAllocation: validatedTargetAllocation.value,
+          resources: validatedResources.value,
           description: validatedDescription.value,
           questionsWeight: validatedQuestionsWeight.value,
           challengeWeight: validatedChallengeWeight.value,
@@ -429,10 +462,10 @@ const create: crud.Create<
             validatedOptionalSkills,
             undefined
           ),
-          targetAllocation: getInvalidValue(
-            validatedTargetAllocation,
+          resources: getInvalidValue<
+            CreateTWUResourceValidationErrors[],
             undefined
-          ),
+          >(validatedResources, undefined),
           description: getInvalidValue(validatedDescription, undefined),
           questionsWeight: getInvalidValue(validatedQuestionsWeight, undefined),
           challengeWeight: getInvalidValue(validatedChallengeWeight, undefined),
@@ -525,8 +558,7 @@ const update: crud.Update<
             location: getString(value, "location"),
             mandatorySkills: getStringArray(value, "mandatorySkills"),
             optionalSkills: getStringArray(value, "optionalSkills"),
-            serviceArea: getString(value, "serviceArea"),
-            targetAllocation: getNumber<number>(value, "targetAllocation"),
+            resources: get(value, "resources"),
             description: getString(value, "description"),
             proposalDeadline: getString(value, "proposalDeadline"),
             assignmentDate: getString(value, "assignmentDate"),
@@ -594,8 +626,7 @@ const update: crud.Update<
             location,
             mandatorySkills,
             optionalSkills,
-            serviceArea,
-            targetAllocation,
+            resources,
             description,
             proposalDeadline,
             assignmentDate,
@@ -631,19 +662,6 @@ const update: crud.Update<
             return invalid({
               opportunity: adt("edit" as const, {
                 attachments: validatedAttachments.value
-              })
-            });
-          }
-
-          // Service areas are required for drafts
-          const validatedServiceArea = await validateServiceArea(
-            connection,
-            serviceArea
-          );
-          if (isInvalid(validatedServiceArea)) {
-            return invalid({
-              opportunity: adt("edit" as const, {
-                serviceArea: validatedServiceArea.value
               })
             });
           }
@@ -697,8 +715,7 @@ const update: crud.Update<
                 completionDate: getValidValue(
                   validatedCompletionDate,
                   defaultDate
-                ),
-                serviceArea: validatedServiceArea.value
+                )
               })
             });
           }
@@ -719,8 +736,8 @@ const update: crud.Update<
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
-          const validatedTargetAllocation =
-            opportunityValidation.validateTargetAllocation(targetAllocation);
+          const validatedResources =
+            opportunityValidation.validateResources(resources);
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
@@ -742,8 +759,7 @@ const update: crud.Update<
               validatedMaxBudget,
               validatedMandatorySkills,
               validatedOptionalSkills,
-              validatedServiceArea,
-              validatedTargetAllocation,
+              validatedResources,
               validatedDescription,
               validatedQuestionsWeight,
               validatedChallengeWeight,
@@ -767,8 +783,7 @@ const update: crud.Update<
                 maxBudget: validatedMaxBudget.value,
                 mandatorySkills: validatedMandatorySkills.value,
                 optionalSkills: validatedOptionalSkills.value,
-                serviceArea: validatedServiceArea.value,
-                targetAllocation: validatedTargetAllocation.value,
+                resources: validatedResources.value,
                 description: validatedDescription.value,
                 questionsWeight: validatedQuestionsWeight.value,
                 challengeWeight: validatedChallengeWeight.value,
@@ -798,10 +813,10 @@ const update: crud.Update<
                   validatedOptionalSkills,
                   undefined
                 ),
-                targetAllocation: getInvalidValue(
-                  validatedTargetAllocation,
+                resources: getInvalidValue<
+                  CreateTWUResourceValidationErrors[],
                   undefined
-                ),
+                >(validatedResources, undefined),
                 description: getInvalidValue(validatedDescription, undefined),
                 questionsWeight: getInvalidValue(
                   validatedQuestionsWeight,
@@ -860,9 +875,7 @@ const update: crud.Update<
               opportunityValidation.validateOptionalSkills(
                 twuOpportunity.optionalSkills
               ),
-              opportunityValidation.validateTargetAllocation(
-                twuOpportunity.targetAllocation
-              ),
+              opportunityValidation.validateResources(twuOpportunity.resources),
               genericValidation.validateDescription(twuOpportunity.description),
               opportunityValidation.validateQuestionsWeight(
                 twuOpportunity.questionsWeight

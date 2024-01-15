@@ -6,8 +6,8 @@ import {
   TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  Organization,
-  doesOrganizationProvideServiceArea
+  Organization
+  // doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
   CreateTWUProposalStatus,
@@ -178,8 +178,8 @@ export function validateTWUProposalOrganizationServiceAreas(
   organization?: Organization
 ): ArrayValidation<TWUServiceArea, string> {
   if (
-    organization &&
-    doesOrganizationProvideServiceArea(organization, opportunity.serviceArea)
+    organization
+    // doesOrganizationProvideServiceArea(organization, opportunity.serviceArea)
   ) {
     return valid(
       organization.serviceAreas.map(({ serviceArea }) => serviceArea)

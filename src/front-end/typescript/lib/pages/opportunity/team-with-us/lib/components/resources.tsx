@@ -285,7 +285,7 @@ const ResourceView: component_.base.View<ResourceViewProps> = (props) => {
       <Row>
         <Col xs="12">
           <div className="d-flex align-items-center mb-4">
-            <h3 className="mb-0">Question {index + 1}</h3>
+            <h3 className="mb-0">Resource {index + 1}</h3>
             {disabled ? null : (
               <Link
                 button

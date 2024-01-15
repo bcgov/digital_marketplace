@@ -27,7 +27,8 @@ import { Alert, Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
-  TWUOpportunity
+  TWUOpportunity,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   OrganizationSlim,
@@ -151,7 +152,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     .filter(
       (o) =>
         doesOrganizationMeetTWUQualification(o) &&
-        doesOrganizationProvideServiceArea(o, opportunity.serviceArea)
+        doesOrganizationProvideServiceArea(
+          o,
+          "FULL_STACK_DEVELOPER" as TWUServiceArea
+        )
     )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
   // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world

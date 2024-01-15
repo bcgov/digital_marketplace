@@ -87,7 +87,9 @@ export function parseTWUOpportunityStatus(
  * @param raw - a string value
  * @returns boolean
  */
-function isTWUServiceArea(raw: string | TWUServiceArea): raw is TWUServiceArea {
+export function isTWUServiceArea(
+  raw: string | TWUServiceArea
+): raw is TWUServiceArea {
   return Object.values(TWUServiceArea).includes(raw as TWUServiceArea);
 }
 
@@ -224,8 +226,7 @@ export interface TWUResourceQuestion {
 
 /**
  * Type guard to narrow raw input to a TWUResource.
- * @see {@link createResouce in
- * src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx}
+ * @see {@link createResouce `src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx`}
  */
 export interface TWUResource {
   serviceArea: TWUServiceArea;
@@ -304,7 +305,6 @@ export interface CreateTWUResourceQuestionValidationErrors
 
 export interface CreateTWUResourceValidationErrors
   extends ErrorTypeFrom<TWUResource> {
-  // resources: TWUResource[];
   parseFailure?: string[];
 }
 

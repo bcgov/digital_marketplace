@@ -16,7 +16,7 @@ import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
+// import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import { map } from "lodash";
 
 export interface State extends Tab.Params {
@@ -163,8 +163,8 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     proposalDeadline,
     startDate,
     completionDate,
-    serviceArea,
-    targetAllocation,
+    // serviceArea,
+    // targetAllocation,
     maxBudget,
     location
   } = opportunity;
@@ -202,12 +202,14 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       {
         icon: "laptop-code-outline",
         name: "Service Area",
-        value: twuServiceAreaToTitleCase(serviceArea)
+        // value: twuServiceAreaToTitleCase(serviceArea)
+        value: "TODO"
       },
       {
         icon: "balance-scale",
         name: "Resource Target Allocation",
-        value: targetAllocation.toString().concat("%")
+        // value: targetAllocation.toString().concat("%")
+        value: "TODO"
       }
     ],
     (rc: ReportCard): ReportCard => ({

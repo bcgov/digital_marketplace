@@ -25,6 +25,7 @@ import {
   TWUOpportunityHistoryRecord,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
+  TWUResource,
   TWUResourceQuestion,
   TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
@@ -56,11 +57,11 @@ export interface CreateTWUOpportunityParams
     | "id"
     | "addenda"
     | "resourceQuestions"
-    | "serviceArea"
+    | "resources"
   > {
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
-  serviceArea: number;
+  resources: TWUResource[];
 }
 
 interface UpdateTWUOpportunityParams
@@ -83,11 +84,10 @@ interface TWUOpportunityVersionRecord
 interface TWUResourceRecord
   extends Pick<
     TWUOpportunity,
-    "targetAllocation" | "optionalSkills" | "mandatorySkills"
+    "resources" | "optionalSkills" | "mandatorySkills"
   > {
   id: Id;
   opportunityVersion: Id;
-  serviceArea: number;
 }
 
 interface TWUOpportunityStatusRecord {
@@ -831,10 +831,9 @@ export const createTWUOpportunity = tryDb<
       attachments,
       status,
       resourceQuestions,
-      targetAllocation,
+      resources,
       mandatorySkills,
       optionalSkills,
-      serviceArea,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -855,24 +854,24 @@ export const createTWUOpportunity = tryDb<
       throw new Error("unable to create opportunity version");
     }
 
-    const [twuResourceRecord] = await connection<TWUResourceRecord>(
-      "twuResources"
-    )
-      .transacting(trx)
-      .insert(
-        {
-          id: generateUuid(),
-          opportunityVersion: opportunityVersionRecord.id,
-          serviceArea,
-          targetAllocation,
-          mandatorySkills,
-          optionalSkills
-        },
-        "*"
-      );
-
-    if (!twuResourceRecord) {
-      throw new Error("unable to create resource");
+    for (const twuResourceRecord of resources) {
+      await connection<TWUResourceRecord & { opportunityVersion: Id }>(
+        "twuResources"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            ...twuResourceRecord,
+            id: generateUuid(),
+            opportunityVersion: opportunityVersionRecord.id,
+            mandatorySkills,
+            optionalSkills
+          },
+          "*"
+        );
+      if (!twuResourceRecord) {
+        throw new Error("unable to create resource");
+      }
     }
 
     // Create initial opportunity status
@@ -938,10 +937,9 @@ export const updateTWUOpportunityVersion = tryDb<
   const {
     attachments,
     resourceQuestions,
-    targetAllocation,
     mandatorySkills,
     optionalSkills,
-    serviceArea,
+    resources,
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
@@ -964,24 +962,24 @@ export const updateTWUOpportunityVersion = tryDb<
       throw new Error("unable to update opportunity");
     }
 
-    const [twuResourceRecord] = await connection<TWUResourceRecord>(
-      "twuResources"
-    )
-      .transacting(trx)
-      .insert(
-        {
-          id: generateUuid(),
-          opportunityVersion: versionRecord.id,
-          serviceArea,
-          targetAllocation,
-          mandatorySkills,
-          optionalSkills
-        },
-        "*"
-      );
-
-    if (!twuResourceRecord) {
-      throw new Error("unable to update resource");
+    for (const twuResourceRecord of resources) {
+      await connection<TWUResourceRecord & { opportunityVersion: Id }>(
+        "twuResources"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            ...twuResourceRecord,
+            id: generateUuid(),
+            opportunityVersion: versionRecord.id,
+            mandatorySkills,
+            optionalSkills
+          },
+          "*"
+        );
+      if (!twuResourceRecord) {
+        throw new Error("unable to update resource");
+      }
     }
 
     // Create attachments

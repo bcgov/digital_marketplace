@@ -32,7 +32,8 @@ import { getTWUOpportunityViewsCounterName } from "shared/lib/resources/counter"
 import {
   TWUOpportunity,
   DEFAULT_OPPORTUNITY_TITLE,
-  isTWUOpportunityAcceptingProposals
+  isTWUOpportunityAcceptingProposals,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
@@ -194,7 +195,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             if (
               doesOrganizationProvideServiceArea(
                 organization,
-                opportunity.serviceArea
+                // opportunity.serviceArea
+                "FULL_STACK_DEVELOPER" as TWUServiceArea
               )
             ) {
               return "qualifiedCorrectServiceArea";
@@ -375,7 +377,9 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 <OpportunityInfo
                   icon="laptop-code-outline"
                   name="Service Area"
-                  value={startCase(lowerCase(opp.serviceArea)) || EMPTY_STRING}
+                  value={
+                    startCase(lowerCase("FULL_STACK_DEVELOPER")) || EMPTY_STRING
+                  }
                 />
               </Col>
               <Col
@@ -384,7 +388,8 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 <OpportunityInfo
                   icon="balance-scale"
                   name="Resource Target Allocation"
-                  value={opp.targetAllocation.toString().concat("%")}
+                  // value={opp.targetAllocation.toString().concat("%")}
+                  value={"80"}
                 />
               </Col>
             </Row>
