@@ -75,7 +75,6 @@ function createResource(
     }
     return getSingleKeyValueOption(v as TWUServiceArea);
   })();
-
   const selectedTargetAllocationOption = resource?.targetAllocation
     ? {
         label: String(resource.targetAllocation),
@@ -164,8 +163,9 @@ export function setErrors(
   }, state);
 }
 
+// TODO: confirm this is working as expected
 export function validate(state: Immutable<State>): Immutable<State> {
-  return state.resources.reduce((acc, q, i) => {
+  return state.resources.reduce((acc, r, i) => {
     return acc
       .updateIn(["resources", i, "serviceArea"], (s) =>
         FormField.validate(s as Immutable<Select.State>)
@@ -249,7 +249,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const rIndex = msg.value.rIndex;
       return component_.base.updateChild({
         state,
-        childStatePath: ["resources", `${rIndex}`, "resource"],
+        childStatePath: ["resources", `${rIndex}`, "serviceArea"],
         childUpdate: Select.update,
         childMsg: componentMessage,
         mapChildMsg: (value) => adt("serviceArea", { rIndex, childMsg: value })
