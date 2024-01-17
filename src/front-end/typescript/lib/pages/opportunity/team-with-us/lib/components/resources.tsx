@@ -16,13 +16,17 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { invalid, valid } from "shared/lib/validation";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
-import { arrayFromRange } from "shared/lib";
+import {
+  arrayFromRange,
+  arrayContainsGreaterThan1Check as isRemovalPermitted
+} from "shared/lib";
 import * as FormField from "front-end/lib/components/form-field";
 import { getNumberSelectValue } from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 
 interface Resource {
   serviceArea: Immutable<Select.State>;
   targetAllocation: Immutable<Select.State>;
+  removeable: boolean;
 }
 
 export interface State {
@@ -126,7 +130,8 @@ function createResource(
   return [
     {
       serviceArea: immutable(serviceAreaState),
-      targetAllocation: immutable(targetAllocationState)
+      targetAllocation: immutable(targetAllocationState),
+      removeable: true
     },
     [
       ...component_.cmd.mapMany(
@@ -144,6 +149,7 @@ function createResource(
     ]
   ];
 }
+
 export type Errors = CreateTWUResourceValidationErrors[];
 export function setErrors(
   state: Immutable<State>,
@@ -222,7 +228,10 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
     : [[defaultResource], defaultCmds];
   return [
     {
-      resources
+      resources: resources.map((resource, _, currentResources) => ({
+        ...resource,
+        removeable: isRemovalPermitted(currentResources)
+      }))
     },
     cmds
   ];
@@ -232,16 +241,33 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "addResource": {
       const [resource, cmds] = createResource(state.resources.length);
-      return [state.set("resources", [...state.resources, resource]), cmds];
+      const currentResources = [...state.resources, resource];
+      return [
+        state.set(
+          "resources",
+          currentResources.map((resource) => ({
+            ...resource,
+            removeable: isRemovalPermitted(currentResources)
+          }))
+        ),
+        cmds
+      ];
     }
 
     case "deleteResource": {
       return [
         state.set(
           "resources",
-          state.resources.reduce((acc, r, index) => {
-            return index === msg.value ? acc : [...acc, r];
-          }, [] as Resource[])
+          state.resources
+            .reduce((acc, r, index) => {
+              return index === msg.value ? acc : [...acc, r];
+            }, [] as Resource[])
+            .map((resource, _, resources) => {
+              return {
+                ...resource,
+                removeable: isRemovalPermitted(resources)
+              };
+            })
         ),
         []
       ];
@@ -289,18 +315,20 @@ const ResourceView: component_.base.View<ResourceViewProps> = (props) => {
         <Col xs="12">
           <div className="d-flex align-items-center mb-4">
             <h3 className="mb-0">Resource {index + 1}</h3>
-            {disabled ? null : (
-              <Link
-                button
-                outline
-                size="sm"
-                color="info"
-                className="ml-4"
-                symbol_={leftPlacement(iconLinkSymbol("trash"))}
-                onClick={() => dispatch(adt("deleteResource", index))}>
-                Delete
-              </Link>
-            )}
+            {state.removeable ? (
+              disabled ? null : (
+                <Link
+                  button
+                  outline
+                  size="sm"
+                  color="info"
+                  className="ml-4"
+                  symbol_={leftPlacement(iconLinkSymbol("trash"))}
+                  onClick={() => dispatch(adt("deleteResource", index))}>
+                  Delete
+                </Link>
+              )
+            ) : null}
           </div>
         </Col>
       </Row>
