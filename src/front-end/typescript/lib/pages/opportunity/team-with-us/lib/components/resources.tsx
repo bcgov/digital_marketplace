@@ -208,15 +208,18 @@ export function getValues(state: Immutable<State>): Values {
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const [resources, cmds] = params.resources
-    .map((resource, index) => createResource(index, resource))
-    .reduce(
-      ([accResources, accCmds], [r, cs]) => [
-        [...accResources, r],
-        [...accCmds, ...cs]
-      ],
-      [[], []] as component_.base.InitReturnValue<Resource[], Msg>
-    );
+  const [defaultResource, defaultCmds] = createResource(0);
+  const [resources, cmds] = params.resources.length
+    ? params.resources
+        .map((resource, index) => createResource(index, resource))
+        .reduce(
+          ([accResources, accCmds], [r, cs]) => [
+            [...accResources, r],
+            [...accCmds, ...cs]
+          ],
+          [[], []] as component_.base.InitReturnValue<Resource[], Msg>
+        )
+    : [[defaultResource], defaultCmds];
   return [
     {
       resources
