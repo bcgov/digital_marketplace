@@ -32,6 +32,16 @@ import {
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
 
+/**
+ * @remarks
+ *
+ * Summary: This file holds validation functions that can be shared between the front and back-end for
+ * Team With Us Opportunities. As a rule of thumb, and a point of distinction between other validation files
+ * there are no database calls in this file.
+ *
+ * @see {@link src/back-end/lib/validation.ts}
+ */
+
 export function validateTWUOpportunityStatus(
   raw: string,
   isOneOf: TWUOpportunityStatus[]
