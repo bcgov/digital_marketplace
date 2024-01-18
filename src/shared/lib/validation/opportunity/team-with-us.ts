@@ -6,13 +6,13 @@ import {
   CreateTWUResourceQuestionValidationErrors,
   CreateTWUResourceValidationErrors,
   isTWUOpportunityClosed,
-  isTWUServiceArea,
   MAX_RESOURCE_QUESTION_WORD_LIMIT,
   MAX_RESOURCE_QUESTIONS,
   parseTWUOpportunityStatus,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUResource
+  TWUResource,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -93,46 +93,6 @@ export function validateOrder(raw: number): Validation<number> {
   return validateNumber(raw, 0, MAX_RESOURCE_QUESTIONS, "Order", "an");
 }
 
-export function validateResources(
-  raw: any
-): ArrayValidation<TWUResource, CreateTWUResourceValidationErrors> {
-  if (!Array.isArray(raw)) {
-    return invalid([
-      { parseFailure: ["Please provide an array of resources"] }
-    ]);
-  }
-  return validateArrayCustom(raw, validateResource, {});
-}
-
-export function validateResource(
-  raw: any
-): Validation<TWUResource, CreateTWUResourceValidationErrors> {
-  // prove that it's part of the enumerated values
-  const validatedServiceArea = isTWUServiceArea(getString(raw, "serviceArea"))
-    ? validateGenericString(getString(raw, "serviceArea"), "serviceArea")
-    : validateGenericString("", "serviceArea");
-  const validatedTargetAllocation = validateTargetAllocation(
-    getNumber(raw, "targetAllocation")
-  );
-  const validatedOrder = validateOrder(getNumber(raw, "order"));
-
-  if (
-    allValid([validatedServiceArea, validatedTargetAllocation, validatedOrder])
-  ) {
-    return valid({
-      serviceArea: validatedServiceArea.value,
-      targetAllocation: validatedTargetAllocation.value,
-      order: validatedOrder.value
-    } as TWUResource);
-  } else {
-    return invalid({
-      serviceArea: getInvalidValue(validatedServiceArea, undefined),
-      targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
-      order: getInvalidValue(validatedOrder, undefined)
-    });
-  }
-}
-
 export function validateResourceQuestion(
   raw: any
 ): Validation<
@@ -189,6 +149,47 @@ export function validateResourceQuestions(
     ]);
   }
   return validateArrayCustom(raw, validateResourceQuestion, {});
+}
+
+export function validateResources(
+  raw: any
+): ArrayValidation<TWUResource, CreateTWUResourceValidationErrors> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of resources"] }
+    ]);
+  }
+  return validateArrayCustom(raw, validateResource, {});
+}
+
+function validateResource(
+  raw: any
+): Validation<TWUResource, CreateTWUResourceValidationErrors> {
+  const validatedServiceArea = validateNumber(
+    getNumber(raw, "serviceArea"),
+    0,
+    Object.keys(TWUServiceArea).length - 1
+  );
+  const validatedTargetAllocation = validateTargetAllocation(
+    getNumber(raw, "targetAllocation")
+  );
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([validatedServiceArea, validatedTargetAllocation, validatedOrder])
+  ) {
+    return valid({
+      serviceArea: validatedServiceArea.value,
+      targetAllocation: validatedTargetAllocation.value,
+      order: validatedOrder.value
+    } as TWUResource);
+  } else {
+    return invalid({
+      serviceArea: getInvalidValue(validatedServiceArea, undefined),
+      targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
 }
 
 export function validateMaxBudget(raw: string | number): Validation<number> {

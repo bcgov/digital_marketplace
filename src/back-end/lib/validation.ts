@@ -143,7 +143,7 @@ export async function validateTWUOpportunityId(
  *
  * @param raw - string argument
  * @param connection - Knex connection wrapper
- * @returns valid | invalid number (key value)
+ * @returns Validation - valid serviceAreaId (key value) | invalid string (error messages)
  *
  * @example
  * raw = "FULL_STACK_DEVELOPER"
@@ -190,7 +190,8 @@ export async function validateServiceArea(
  *
  * @param raw - string array argument
  * @param connection - Knex connection wrapper
- * @returns valid | invalid
+ * @returns ArrayValidation - valid [array of integers] reflecting key values of serviceArea | invalid [array of
+ * strings] reflecting error messages
  *
  * @example
  * raw = ["FULL_STACK_DEVELOPER", "DATA_PROFESSIONAL"]

@@ -4,6 +4,7 @@ import { FileRecord } from "shared/lib/resources/file";
 import { UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 
 export { Addendum } from "shared/lib/resources/addendum";
 
@@ -229,7 +230,7 @@ export interface TWUResourceQuestion {
  * @see {@link createResouce `src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx`}
  */
 export interface TWUResource {
-  serviceArea: TWUServiceArea;
+  serviceArea: TWUServiceArea | ServiceAreaId;
   targetAllocation: number;
   order: number;
 }
