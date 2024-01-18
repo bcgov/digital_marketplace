@@ -113,6 +113,7 @@ interface RawTWUOpportunity
   addenda: RawAddendum[];
   history?: RawTWUOpportunityHistoryRecord[];
   resourceQuestions: RawTWUResourceQuestion[];
+  // resources: TWUResource[];
 }
 
 /**
@@ -150,5 +151,8 @@ function rawTWUOpportunityToTWUOpportunity(
     resourceQuestions: raw.resourceQuestions
       .map((tq) => rawTWUResourceQuestionToTWUResourceQuestion(tq))
       .sort((a, b) => compareNumbers(a.order, b.order))
+    // resources: raw.resources
+    //   .map((r) => rawTWUResourceToTWUResource(r))
+    //   .sort((a,b) => compareNumbers(a.order, b.order)
   };
 }

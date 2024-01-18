@@ -26,8 +26,7 @@ import {
   TWUOpportunitySlim,
   TWUOpportunityStatus,
   TWUResource,
-  TWUResourceQuestion,
-  TWUServiceArea
+  TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -117,7 +116,6 @@ export interface RawTWUOpportunitySlim
   createdBy?: Id;
   updatedBy?: Id;
   versionId: Id;
-  serviceArea: TWUServiceArea;
 }
 
 interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
@@ -216,7 +214,6 @@ async function rawTWUOpportunitySlimToTWUOpportunitySlim(
     createdBy: createdById,
     updatedBy: updatedById,
     versionId,
-    serviceArea,
     ...restOfRaw
   } = raw;
   const createdBy =
@@ -854,7 +851,7 @@ export const createTWUOpportunity = tryDb<
       throw new Error("unable to create opportunity version");
     }
 
-    for (const twuResourceRecord of resources) {
+    for (const twuResourceRecord of opportunity.resources) {
       await connection<TWUResourceRecord & { opportunityVersion: Id }>(
         "twuResources"
       )

@@ -322,10 +322,6 @@ const create: crud.Create<
         };
       });
 
-      const validatedResources = opportunityValidation.validateResources(
-        resourcesWithServiceAreaKeys
-      );
-
       const now = new Date();
       const validatedProposalDeadline =
         opportunityValidation.validateProposalDeadline(proposalDeadline);
@@ -370,10 +366,15 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          resources: getValidValue(validatedResources, [])
+          resources: resourcesWithServiceAreaKeys
+            ? resourcesWithServiceAreaKeys.map((v) => ({
+                serviceArea: getNumber(v, "serviceArea"),
+                targetAllocation: getNumber(v, "targetAllocation"),
+                order: getNumber(v, "order")
+              }))
+            : []
         });
       }
-
       const validatedTitle = genericValidation.validateTitle(title);
       const validatedTeaser = genericValidation.validateTeaser(teaser);
       const validatedRemoteOk = genericValidation.validateRemoteOk(remoteOk);
@@ -384,6 +385,9 @@ const create: crud.Create<
       const validatedLocation = genericValidation.validateLocation(location);
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
+      const validatedResources = opportunityValidation.validateResources(
+        resourcesWithServiceAreaKeys
+      );
       const validatedMandatorySkills =
         genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
@@ -676,6 +680,66 @@ const update: crud.Update<
               })
             });
           }
+          /**
+           * Ensure that serviceArea string exists in the db and is passed to the db as a number
+           *
+           * obtain an array of serviceAreas by iterating through resources, extracting the string value
+           * and storing the result in a string array so that it can be passed to validateServiceAreas
+           */
+          const serviceAreas: string[] = resources.map((resources) =>
+            getString(resources, "serviceArea")
+          );
+
+          /**
+           * Verify each value in the array of serviceArea strings exists in the db
+           *
+           * @example
+           * `validateServiceAreas` will look like either
+           * {
+           *   tag: "valid",
+           *   value: [1,2]
+           * }
+           * OR
+           * {
+           *   tag: "invalid",
+           *   value: [
+           *     [],
+           *     ['"NOT_A_SERVICE_AREA" is not a valid service area."']
+           *   ]
+           * }
+           */
+          const validatedServiceAreas = await validateServiceAreas(
+            connection,
+            serviceAreas
+          );
+
+          if (isInvalid<string[][]>(validatedServiceAreas)) {
+            resources.map((resources, index) => {
+              return invalid({
+                ...resources,
+                serviceArea: validatedServiceAreas.value[index]
+              });
+            });
+          }
+
+          /**
+           * Massage the array back into the resources object
+           *
+           * @example
+           * resourcesWithServiceAreaKeys will look like:
+           * [
+           *   { serviceArea: 1, targetAllocation: 50, order: 0 },
+           *   { serviceArea: 3, targetAllocation: 60, order: 1 }
+           * ]
+           */
+          const resourcesWithServiceAreaKeys = resources.map(
+            (resources, index) => {
+              return {
+                ...resources,
+                serviceArea: validatedServiceAreas.value[index]
+              };
+            }
+          );
 
           /**
            * If the existing proposal deadline is in the past,
@@ -705,7 +769,7 @@ const update: crud.Update<
               getValidValue(validatedStartDate, now)
             );
 
-          // Do not validate other fields if the opportunity is a draft.
+          // Only the following fields need validation if the opportunity is a draft.
           if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
             const defaultDate = addDays(new Date(), 14);
             return valid({
@@ -747,8 +811,9 @@ const update: crud.Update<
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
-          const validatedResources =
-            opportunityValidation.validateResources(resources);
+          const validatedResources = opportunityValidation.validateResources(
+            resourcesWithServiceAreaKeys
+          );
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
