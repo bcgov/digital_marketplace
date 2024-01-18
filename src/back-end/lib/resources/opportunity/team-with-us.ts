@@ -264,7 +264,8 @@ const create: crud.Create<
       }
 
       /**
-       * Ensure that serviceArea exists in the db and is passed to the db as a number
+       * Ensure that serviceArea string exists in the db and is passed to the db as a number
+       *
        * obtain an array of serviceAreas by iterating through resources, extracting the string value
        * and storing the result in a string array so that it can be passed to validateServiceAreas
        */
@@ -273,8 +274,9 @@ const create: crud.Create<
       );
 
       /**
-       * Take the array of serviceArea strings and verify that they exist in the db
+       * Verify each value in the array of serviceArea strings exists in the db
        *
+       * @example
        * `validateServiceAreas` will look like either
        * {
        *   tag: "valid",
@@ -306,6 +308,7 @@ const create: crud.Create<
       /**
        * Massage the array back into the resources object
        *
+       * @example
        * resourcesWithServiceAreaKeys will look like:
        * [
        *   { serviceArea: 1, targetAllocation: 50, order: 0 },

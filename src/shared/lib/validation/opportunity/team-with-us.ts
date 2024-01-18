@@ -165,6 +165,7 @@ export function validateResources(
 function validateResource(
   raw: any
 ): Validation<TWUResource, CreateTWUResourceValidationErrors> {
+  // ensure that the key is not greater than the number of enumerated values
   const validatedServiceArea = validateNumber(
     getNumber(raw, "serviceArea"),
     0,
