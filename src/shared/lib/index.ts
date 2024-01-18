@@ -355,3 +355,17 @@ export function intersperse<A>(collection: A[], separator: A): A[] {
     []
   );
 }
+
+/**
+ * Closure checks if the array's length is greater than n.
+ * If it is, return true. Otherwise, return false.
+ *
+ * @param n number
+ * @returns closure
+ */
+function makeArrayContainsGreaterThanNCheck<T>(n: number) {
+  return (arr: T[]) => arr.length > n;
+}
+
+export const arrayContainsGreaterThan1Check =
+  makeArrayContainsGreaterThanNCheck(1);
