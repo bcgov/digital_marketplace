@@ -3,6 +3,7 @@ import {
   Connection,
   RawTWUOpportunitySubscriber,
   readOneOrganizationContactEmail,
+  readOneServiceAreaByServiceAreaId,
   readOneTWUAwardedProposal,
   readSubmittedTWUProposalCount,
   Transaction,
@@ -26,7 +27,9 @@ import {
   TWUOpportunitySlim,
   TWUOpportunityStatus,
   TWUResource,
-  TWUResourceQuestion
+  TWUResourceEnum,
+  TWUResourceQuestion,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -46,6 +49,9 @@ import { ServiceAreaId } from "shared/lib/resources/service-area";
  * with Team With Us Opportunities
  */
 
+/**
+ * serviceArea is intentionally a number value here, not an enum (backwards compatibility)
+ */
 export interface CreateTWUOpportunityParams
   extends Omit<
     TWUOpportunity,
@@ -81,6 +87,9 @@ interface TWUOpportunityVersionRecord
   opportunity: Id;
 }
 
+/**
+ * serviceArea is intentionally a number value here, not an enum (backwards compatibility)
+ */
 interface TWUResourceRecord
   extends Pick<TWUOpportunity, "optionalSkills" | "mandatorySkills"> {
   id: Id;
@@ -99,6 +108,14 @@ interface TWUOpportunityStatusRecord {
   note: string;
 }
 
+/**
+ * Raw is a naming convention typically used to indicate that it handles data
+ * after a read action from the database
+ *
+ * @example
+ * resources, for instance only needs to be an array of ids to feed a subsequent db query
+ * for resources that match the array of ids passed to it.
+ */
 export interface RawTWUOpportunity
   extends Omit<
     TWUOpportunity,
@@ -118,6 +135,10 @@ export interface RawTWUOpportunity
   versionId?: Id;
 }
 
+/**
+ * @privateRemarks
+ * removed serviceArea 01/01/2024
+ */
 export interface RawTWUOpportunitySlim
   extends Omit<TWUOpportunitySlim, "createdBy" | "updatedBy"> {
   createdBy?: Id;
@@ -135,9 +156,10 @@ interface RawResourceQuestion extends Omit<TWUResourceQuestion, "createdBy"> {
 }
 
 /**
- * Raw is a reference to data that's read from the db and has yet to be massaged into a relevant type or interface
+ * Raw is a naming convention that references data that's read from the db and has yet to be massaged into a relevant
+ * type or interface
  * object
- * @TODO - seems to slim
+ * @TODO - seems too slim
  */
 interface RawResource {
   id: Id;
@@ -335,10 +357,19 @@ export const readOneResource = tryDb<[Id], TWUResourceRecord | null>(
   }
 );
 
+/**
+ * `Raw` naming convention typically indicates data that's been derived from a read action on the db,
+ * in this particular case, the 'raw' data is the `id` or primary key of a TWUResource obtained from
+ * a previous query.
+ *
+ * @param connection
+ * @param raw
+ * @returns TWUResourceRecord - the shape of the database table
+ */
 async function rawResourceToResource(
   connection: Connection,
   raw: RawResource
-): Promise<TWUResourceRecord> {
+): Promise<TWUResourceEnum> {
   const { id: id } = raw;
   const resource = id
     ? getValidValue(await readOneResource(connection, id), undefined)
@@ -347,13 +378,24 @@ async function rawResourceToResource(
   if (!resource) {
     throw new Error("unable to process resource");
   }
+
+  // massage the serviceAreaId number back to an enumerated value
+  const serviceArea = resource.serviceArea
+    ? getValidValue(
+        await readOneServiceAreaByServiceAreaId(
+          connection,
+          resource.serviceArea
+        ),
+        undefined
+      )
+    : undefined;
+
   return {
-    id: resource.id,
-    serviceArea: resource.serviceArea,
+    serviceArea: serviceArea as TWUServiceArea,
     targetAllocation: resource.targetAllocation,
-    opportunityVersion: resource.opportunityVersion,
-    mandatorySkills: resource.mandatorySkills,
-    optionalSkills: resource.optionalSkills,
+    // opportunityVersion: resource.opportunityVersion,
+    // mandatorySkills: resource.mandatorySkills,
+    // optionalSkills: resource.optionalSkills,
     order: resource.order
   };
 }
@@ -567,7 +609,7 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
 /**
  * Reads TWUResources from the database, when given opportunityVersion id that's connected to the Resources
  */
-export const readManyResources = tryDb<[Id], TWUResource[]>(
+export const readManyResources = tryDb<[Id], TWUResourceEnum[]>(
   async (connection, opportunityVersionId) => {
     const results = await connection<RawResource>("twuResources")
       .where({ opportunityVersion: opportunityVersionId })

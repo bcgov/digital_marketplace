@@ -48,6 +48,10 @@ import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
 
+/**
+ * @remarks
+ * serviceArea is intentionally declared as a number here, not an enum (backwards compatiblility)
+ */
 interface ValidatedCreateRequestBody
   extends Omit<
     TWUOpportunity,
@@ -83,11 +87,21 @@ interface ValidatedUpdateRequestBody {
     | ADT<"addAddendum", string>;
 }
 
+/**
+ * @remarks
+ * serviceArea is intentionally a number here (via TWUResource[]), not an enum (backwards compatibility)
+ * @see ValidatedCreateRequestBody
+ */
 type ValidatedUpdateEditRequestBody = Omit<
   ValidatedCreateRequestBody,
   "status" | "session"
 >;
 
+/**
+ * @remarks
+ * serviceArea is intentionally an enum here, not a number (backwards compatibility)
+ * @see SharedCreateRequestBody
+ */
 type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
 };
@@ -732,14 +746,14 @@ const update: crud.Update<
            *   { serviceArea: 3, targetAllocation: 60, order: 1 }
            * ]
            */
-          const resourcesWithServiceAreaKeys = resources.map(
-            (resources, index) => {
-              return {
-                ...resources,
-                serviceArea: validatedServiceAreas.value[index]
-              };
-            }
-          );
+          // const resourcesWithServiceAreaKeys = resources.map(
+          //   (resources, index) => {
+          //     return {
+          //       ...resources,
+          //       serviceArea: validatedServiceAreas.value[index]
+          //     };
+          //   }
+          // );
 
           /**
            * If the existing proposal deadline is in the past,
@@ -811,9 +825,11 @@ const update: crud.Update<
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
-          const validatedResources = opportunityValidation.validateResources(
-            resourcesWithServiceAreaKeys
-          );
+          // const validatedResources = opportunityValidation.validateResources(
+          //   resourcesWithServiceAreaKeys
+          // );
+          const validatedResources =
+            opportunityValidation.validateResources(resources);
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =

@@ -5,6 +5,7 @@ import { UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
+// import { ServiceAreaId } from "shared/lib/resources/service-area";
 
 export { Addendum } from "shared/lib/resources/addendum";
 
@@ -169,6 +170,10 @@ export const editableOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Suspended
 ];
 
+/**
+ * @remarks
+ * @TODO serviceArea needs to enum value (TWUResourceEnum[]) to be backwards compatible
+ */
 export interface TWUOpportunity {
   id: Id;
   createdAt: Date;
@@ -183,7 +188,8 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
-  resources: TWUResource[];
+  resources: TWUResourceEnum[];
+  // resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
@@ -230,12 +236,15 @@ export interface TWUResourceQuestion {
  * @see {@link createResouce `src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx`}
  */
 export interface TWUResource {
-  // TODO: remove union type, change this to serviceAreaId
   serviceArea: ServiceAreaId;
   targetAllocation: number;
   // mandatorySkills: string[];
   // optionalSkills: string[];
   order: number;
+}
+
+export interface TWUResourceEnum extends Omit<TWUResource, "serviceArea"> {
+  serviceArea: TWUServiceArea;
 }
 
 export function getQuestionByOrder(
@@ -279,6 +288,11 @@ export type CreateTWUResourceQuestionBody = Omit<
   "createdAt" | "createdBy"
 >;
 
+/**
+ * @remarks
+ * serviceArea is intentionally an enum here, not a number (backwards compatibility)
+ * @see TWUResourceEnum
+ */
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -292,7 +306,7 @@ export interface CreateRequestBody {
   maxBudget: number;
   mandatorySkills: string[];
   optionalSkills: string[];
-  resources: TWUResource[];
+  resources: TWUResourceEnum[];
   description: string;
   questionsWeight: number;
   challengeWeight: number;
@@ -308,7 +322,7 @@ export interface CreateTWUResourceQuestionValidationErrors
 }
 
 export interface CreateTWUResourceValidationErrors
-  extends ErrorTypeFrom<TWUResource> {
+  extends ErrorTypeFrom<TWUResourceEnum> {
   parseFailure?: string[];
 }
 

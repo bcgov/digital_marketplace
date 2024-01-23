@@ -10,9 +10,9 @@ import {
 import * as Select from "front-end/lib/components/form-field/select";
 import {
   CreateTWUResourceValidationErrors,
-  parseTWUServiceArea,
-  TWUResource,
-  TWUServiceArea
+  TWUServiceArea,
+  TWUResourceEnum,
+  parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { invalid, valid } from "shared/lib/validation";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
@@ -40,7 +40,7 @@ export type Msg =
   | ADT<"targetAllocation", { childMsg: Select.Msg; rIndex: number }>;
 
 export interface Params {
-  resources: TWUResource[];
+  resources: TWUResourceEnum[];
 }
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
@@ -65,7 +65,7 @@ function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
 
 function createResource(
   rIndex: number,
-  resource?: TWUResource
+  resource?: TWUResourceEnum
 ): component_.base.InitReturnValue<Resource, Msg> {
   /**
    * Sets a single key/value pair for service area, or null
@@ -77,7 +77,7 @@ function createResource(
     if (!v) {
       return null;
     }
-    return getSingleKeyValueOption(v as TWUServiceArea);
+    return getSingleKeyValueOption(v as unknown as TWUServiceArea);
   })();
   const selectedTargetAllocationOption = resource?.targetAllocation
     ? {
@@ -195,7 +195,7 @@ export function isValid(state: Immutable<State>): boolean {
   }, true as boolean);
 }
 
-export type Values = TWUResource[];
+export type Values = TWUResourceEnum[];
 
 export function getValues(state: Immutable<State>): Values {
   return state.resources.reduce<Values>((acc, r, order) => {

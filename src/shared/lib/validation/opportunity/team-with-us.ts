@@ -171,6 +171,7 @@ function validateResource(
     0,
     Object.keys(TWUServiceArea).length - 1
   );
+  // const validatedServiceArea = validateGenericString(getString(raw, "serviceArea"), "serviceArea", 1)
   const validatedTargetAllocation = validateTargetAllocation(
     getNumber(raw, "targetAllocation")
   );
