@@ -37,6 +37,7 @@ import {
   TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
+import { ServiceAreaId } from "shared/lib/resources/service-area";
 
 /**
  * @remarks
@@ -81,12 +82,12 @@ interface TWUOpportunityVersionRecord
 }
 
 interface TWUResourceRecord
-  extends Pick<
-    TWUOpportunity,
-    "resources" | "optionalSkills" | "mandatorySkills"
-  > {
+  extends Pick<TWUOpportunity, "optionalSkills" | "mandatorySkills"> {
   id: Id;
   opportunityVersion: Id;
+  serviceArea: ServiceAreaId;
+  targetAllocation: number;
+  order: number;
 }
 
 interface TWUOpportunityStatusRecord {
@@ -101,13 +102,19 @@ interface TWUOpportunityStatusRecord {
 export interface RawTWUOpportunity
   extends Omit<
     TWUOpportunity,
-    "createdBy" | "updatedBy" | "attachments" | "addenda" | "resourceQuestions"
+    | "createdBy"
+    | "updatedBy"
+    | "attachments"
+    | "addenda"
+    | "resourceQuestions"
+    | "resources"
   > {
   createdBy?: Id;
   updatedBy?: Id;
   attachments: Id[];
   addenda: Id[];
   resourceQuestions: Id[];
+  resources: Id[];
   versionId?: Id;
 }
 
@@ -125,6 +132,15 @@ interface RawTWUOpportunityAddendum extends Omit<Addendum, "createdBy"> {
 interface RawResourceQuestion extends Omit<TWUResourceQuestion, "createdBy"> {
   createdBy?: Id;
   opportunityVersion: Id;
+}
+
+/**
+ * Raw is a reference to data that's read from the db and has yet to be massaged into a relevant type or interface
+ * object
+ * @TODO - seems to slim
+ */
+interface RawResource {
+  id: Id;
 }
 
 interface RawTWUOpportunityHistoryRecord
@@ -155,6 +171,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     createdBy: createdById,
     updatedBy: updatedById,
     attachments: attachmentIds,
+    resources: resourceIds,
     versionId,
     ...restOfRaw
   } = raw;
@@ -183,7 +200,12 @@ async function rawTWUOpportunityToTWUOpportunity(
     undefined
   );
 
-  if (!addenda || !resourceQuestions) {
+  const resources = getValidValue(
+    await readManyResources(connection, raw.versionId ?? ""),
+    undefined
+  );
+  console.log("LINE 219 rawTWUOpportunityToTWUOpportunity: ", resources);
+  if (!addenda || !resourceQuestions || !resources) {
     throw new Error("unable to process opportunity");
   }
 
@@ -193,7 +215,8 @@ async function rawTWUOpportunityToTWUOpportunity(
     updatedBy: updatedBy || undefined,
     attachments,
     addenda,
-    resourceQuestions
+    resourceQuestions,
+    resources
   };
 }
 
@@ -292,6 +315,50 @@ async function rawResourceQuestionToResourceQuestion(
 }
 
 /**
+ * Reads a TWU resource from the database, if given id of the resource
+ */
+export const readOneResource = tryDb<[Id], TWUResourceRecord | null>(
+  async (connection, id) => {
+    const result = await connection<TWUResourceRecord>("twuResources")
+      .where({ id })
+      .select(
+        "id",
+        "serviceArea",
+        "targetAllocation",
+        "opportunityVersion",
+        "mandatorySkills",
+        "optionalSkills",
+        "order"
+      )
+      .first();
+    return valid(result ? result : null);
+  }
+);
+
+async function rawResourceToResource(
+  connection: Connection,
+  raw: RawResource
+): Promise<TWUResourceRecord> {
+  const { id: id } = raw;
+  const resource = id
+    ? getValidValue(await readOneResource(connection, id), undefined)
+    : undefined;
+
+  if (!resource) {
+    throw new Error("unable to process resource");
+  }
+  return {
+    id: resource.id,
+    serviceArea: resource.serviceArea,
+    targetAllocation: resource.targetAllocation,
+    opportunityVersion: resource.opportunityVersion,
+    mandatorySkills: resource.mandatorySkills,
+    optionalSkills: resource.optionalSkills,
+    order: resource.order
+  };
+}
+
+/**
  * Safety Check. Prior to putting data in the db, receives a TWU
  * opportunity history record from user input, ensures that values such as
  * userId are accurate and valid.
@@ -325,7 +392,7 @@ async function rawHistoryRecordToHistoryRecord(
 }
 
 /**
- * Retrieves the latest version of a TWU opportunity from the db. Will return
+ * Retrieves the latest versions of a TWU opportunities from the db. Will return
  * either a query for the full record of a TWU opp, or a query that retrieves a
  * slimmed down version of it
  *
@@ -365,9 +432,6 @@ export function generateTWUOpportunityQuery(
     .join("twuResources as tr", function () {
       this.on("tr.opportunityVersion", "=", "versions.id");
     })
-    .join("serviceAreas as sa", function () {
-      this.on("tr.serviceArea", "=", "sa.id");
-    })
     .select<RawTWUOpportunitySlim[]>(
       "opportunities.id",
       "opportunities.createdAt",
@@ -385,17 +449,14 @@ export function generateTWUOpportunityQuery(
       "versions.location",
       "versions.maxBudget",
       "versions.proposalDeadline",
-      "statuses.status",
-      "sa.serviceArea"
+      "statuses.status"
+      // "sa.serviceArea"
     );
 
   if (full) {
     query.select<RawTWUOpportunity[]>(
       "versions.remoteDesc",
       "versions.maxBudget",
-      "tr.targetAllocation",
-      "tr.mandatorySkills",
-      "tr.optionalSkills",
       "versions.description",
       "versions.assignmentDate",
       "versions.questionsWeight",
@@ -405,7 +466,6 @@ export function generateTWUOpportunityQuery(
       "versions.completionDate"
     );
   }
-
   return query;
 }
 
@@ -504,10 +564,31 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
   }
 );
 
+/**
+ * Reads TWUResources from the database, when given opportunityVersion id that's connected to the Resources
+ */
+export const readManyResources = tryDb<[Id], TWUResource[]>(
+  async (connection, opportunityVersionId) => {
+    const results = await connection<RawResource>("twuResources")
+      .where({ opportunityVersion: opportunityVersionId })
+      .orderBy("order", "asc");
+    if (!results) {
+      throw new Error("unable to read resources");
+    }
+    return valid(
+      await Promise.all(
+        results.map(async (raw) => await rawResourceToResource(connection, raw))
+      )
+    );
+  }
+);
+
 export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
   async (connection, session) => {
+    // broad query returning many TWU Opportunities
     let query = generateTWUOpportunityQuery(connection);
 
+    // gets further refined with WHERE clauses
     if (!session || session.user.type === UserType.Vendor) {
       // Anonymous users and vendors can only see public opportunities
       query = query.whereIn(
@@ -627,10 +708,12 @@ export const readOneTWUOpportunity = tryDb<
   [Id, Session],
   TWUOpportunity | null
 >(async (connection, id, session) => {
+  // returns one row based on opportunity id
   let query = generateTWUOpportunityQuery(connection, true).where({
     "opportunities.id": id
   });
 
+  // further refines query with where conditions
   if (!session || session.user.type === UserType.Vendor) {
     // Anonymous users and vendors can only see public opportunities
     query = query.whereIn(
@@ -657,9 +740,9 @@ export const readOneTWUOpportunity = tryDb<
       ...privateOpportunityStatuses
     ]);
   }
-
+  // 'First' is similar to select, but only retrieves & resolves with the first record from the query
   let result = await query.first<RawTWUOpportunity>();
-
+  // console.log("LINE 708 readOneTWUOpporutunity after query: ", result)
   if (result) {
     // Process based on user type
     result = processForRole(result, session);
@@ -670,6 +753,13 @@ export const readOneTWUOpportunity = tryDb<
         .where({ opportunityVersion: result.versionId })
         .select("file")
     ).map((row) => row.file);
+
+    // Query for resources
+    result.resources = (
+      await connection("twuResources")
+        .where({ opportunityVersion: result.versionId })
+        .select("id")
+    ).map((row) => row.id);
 
     // Get published date if applicable
     result.publishedAt = (
@@ -793,7 +883,49 @@ export const readOneTWUOpportunity = tryDb<
       }
     }
   }
-
+  // console.log("LINE 793 readOneTwuOpportunity after initial query: ",result)
+  /**
+   * LINE 793 readOneTwuOpportunity after initial query:  {
+   *   id: '962e8ac7-1ebf-48c3-80c7-6329ee4fd361',
+   *   createdAt: 2024-01-18T23:48:09.782Z,
+   *   createdBy: '5a5db155-0d29-4bb6-abe3-545ac3166dea',
+   *   versionId: 'd79b79e8-438b-4c0b-8c2a-11d62458de9f',
+   *   updatedAt: 2024-01-18T23:48:09.782Z,
+   *   updatedBy: '5a5db155-0d29-4bb6-abe3-545ac3166dea',
+   *   title: 'testing many Team questions for data structure',
+   *   teaser: 'fdsa',
+   *   remoteOk: false,
+   *   location: 'Victoria',
+   *   maxBudget: 1234,
+   *   proposalDeadline: 2024-02-02T00:00:00.000Z,
+   *   status: 'DRAFT',
+   *   remoteDesc: '',
+   *   description: 'fdsa',
+   *   assignmentDate: 2024-02-03T00:00:00.000Z,
+   *   questionsWeight: 25,
+   *   challengeWeight: 50,
+   *   priceWeight: 25,
+   *   startDate: 2024-02-04T00:00:00.000Z,
+   *   completionDate: 2024-02-05T00:00:00.000Z,
+   *   attachments: [],
+   *   resources: [
+   *     '33210a8f-e352-494e-94f5-763909940d05',
+   *     '70b924dd-b1a5-4fef-9e53-5759f6728456'
+   *   ],
+   *   publishedAt: undefined,
+   *   subscribed: false,
+   *   history: [
+   *     {
+   *       id: '171d0f08-f9ff-47ca-a1da-a841386cfbbe',
+   *       createdAt: 2024-01-18T23:48:09.782Z,
+   *       opportunity: '962e8ac7-1ebf-48c3-80c7-6329ee4fd361',
+   *       note: null,
+   *       createdBy: [Object],
+   *       type: [Object]
+   *     }
+   *   ]
+   * }
+   */
   return valid(
     result ? await rawTWUOpportunityToTWUOpportunity(connection, result) : null
   );
@@ -851,14 +983,14 @@ export const createTWUOpportunity = tryDb<
       throw new Error("unable to create opportunity version");
     }
 
-    for (const twuResourceRecord of opportunity.resources) {
+    for (const twuResource of opportunity.resources) {
       await connection<TWUResourceRecord & { opportunityVersion: Id }>(
         "twuResources"
       )
         .transacting(trx)
         .insert(
           {
-            ...twuResourceRecord,
+            ...twuResource,
             id: generateUuid(),
             opportunityVersion: opportunityVersionRecord.id,
             mandatorySkills,
@@ -866,7 +998,7 @@ export const createTWUOpportunity = tryDb<
           },
           "*"
         );
-      if (!twuResourceRecord) {
+      if (!twuResource) {
         throw new Error("unable to create resource");
       }
     }

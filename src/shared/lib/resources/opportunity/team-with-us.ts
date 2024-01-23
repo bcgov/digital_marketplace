@@ -230,8 +230,11 @@ export interface TWUResourceQuestion {
  * @see {@link createResouce `src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx`}
  */
 export interface TWUResource {
-  serviceArea: TWUServiceArea | ServiceAreaId;
+  // TODO: remove union type, change this to serviceAreaId
+  serviceArea: ServiceAreaId;
   targetAllocation: number;
+  // mandatorySkills: string[];
+  // optionalSkills: string[];
   order: number;
 }
 

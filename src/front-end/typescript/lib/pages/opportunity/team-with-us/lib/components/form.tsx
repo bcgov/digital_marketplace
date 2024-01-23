@@ -331,11 +331,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       return mapInvalid(validated1, (es) => flatten(es));
     },
     child: {
-      value:
-        opportunity?.mandatorySkills.map((value) => ({
-          value,
-          label: value
-        })) || [],
+      value: [],
+      // opportunity?.mandatorySkills.map((value) => ({
+      //   value,
+      //   label: value
+      // })) || [],
       id: "twu-opportunity-mandatory-skills",
       creatable: true,
       options: SelectMulti.stringsToOptions(SKILLS)
