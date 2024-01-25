@@ -50,7 +50,7 @@ import { ServiceAreaId } from "shared/lib/resources/service-area";
  */
 
 /**
- * serviceArea is intentionally a number value here, not an enum (backwards compatibility)
+ * serviceArea is intentionally a number value for CreateTWUOpportunityParams, not an enum (backwards compatibility)
  */
 export interface CreateTWUOpportunityParams
   extends Omit<
@@ -226,7 +226,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     await readManyResources(connection, raw.versionId ?? ""),
     undefined
   );
-  console.log("LINE 219 rawTWUOpportunityToTWUOpportunity: ", resources);
+  // console.log("LINE 219 rawTWUOpportunityToTWUOpportunity: ", resources);
   if (!addenda || !resourceQuestions || !resources) {
     throw new Error("unable to process opportunity");
   }
@@ -379,7 +379,7 @@ async function rawResourceToResource(
     throw new Error("unable to process resource");
   }
 
-  // massage the serviceAreaId number back to an enumerated value
+  // convert the serviceAreaId number back to an enumerated value
   const serviceArea = resource.serviceArea
     ? getValidValue(
         await readOneServiceAreaByServiceAreaId(

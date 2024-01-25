@@ -172,7 +172,6 @@ export const editableOpportunityStatuses: readonly TWUOpportunityStatus[] = [
 
 /**
  * @remarks
- * @TODO serviceArea needs to enum value (TWUResourceEnum[]) to be backwards compatible
  */
 export interface TWUOpportunity {
   id: Id;
@@ -322,7 +321,7 @@ export interface CreateTWUResourceQuestionValidationErrors
 }
 
 export interface CreateTWUResourceValidationErrors
-  extends ErrorTypeFrom<TWUResourceEnum> {
+  extends ErrorTypeFrom<TWUResource> {
   parseFailure?: string[];
 }
 

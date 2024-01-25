@@ -50,7 +50,7 @@ import { ADT, adt, Id } from "shared/lib/types";
 
 /**
  * @remarks
- * serviceArea is intentionally declared as a number here, not an enum (backwards compatiblility)
+ * serviceArea is intentionally declared as a number here, not an enum (backwards compatibility)
  */
 interface ValidatedCreateRequestBody
   extends Omit<
@@ -188,9 +188,9 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
 const create: crud.Create<
   Session,
   db.Connection,
-  CreateRequestBody,
-  ValidatedCreateRequestBody,
-  CreateValidationErrors
+  CreateRequestBody, // enum
+  ValidatedCreateRequestBody, // number
+  CreateValidationErrors // enum
 > = (connection: db.Connection) => {
   return {
     // obtain values from each part of the incoming request body
@@ -310,7 +310,7 @@ const create: crud.Create<
         serviceAreas
       );
 
-      if (isInvalid<string[][]>(validatedServiceAreas)) {
+      if (isInvalid(validatedServiceAreas)) {
         resources.map((resources, index) => {
           return invalid({
             ...resources,
@@ -568,9 +568,9 @@ const create: crud.Create<
 const update: crud.Update<
   Session,
   db.Connection,
-  UpdateRequestBody,
-  ValidatedUpdateRequestBody,
-  UpdateValidationErrors
+  UpdateRequestBody, // enum
+  ValidatedUpdateRequestBody, // number
+  UpdateValidationErrors // enum
 > = (connection: db.Connection) => {
   return {
     async parseRequestBody(request) {
@@ -630,6 +630,8 @@ const update: crud.Update<
           notFound: ["The specified opportunity does not exist."]
         });
       }
+      // maybe here be dragons
+      // resources back as an enum
       const twuOpportunity = validatedTWUOpportunity.value;
 
       if (
@@ -737,7 +739,7 @@ const update: crud.Update<
           }
 
           /**
-           * Massage the array back into the resources object
+           * Massage the array back into the TWUResources object
            *
            * @example
            * resourcesWithServiceAreaKeys will look like:
@@ -746,14 +748,15 @@ const update: crud.Update<
            *   { serviceArea: 3, targetAllocation: 60, order: 1 }
            * ]
            */
-          // const resourcesWithServiceAreaKeys = resources.map(
-          //   (resources, index) => {
-          //     return {
-          //       ...resources,
-          //       serviceArea: validatedServiceAreas.value[index]
-          //     };
-          //   }
-          // );
+
+          const resourcesWithServiceAreaKeys = resources.map(
+            (resources, index) => {
+              return {
+                ...resources,
+                serviceArea: validatedServiceAreas.value[index]
+              };
+            }
+          );
 
           /**
            * If the existing proposal deadline is in the past,
@@ -804,7 +807,14 @@ const update: crud.Update<
                 completionDate: getValidValue(
                   validatedCompletionDate,
                   defaultDate
-                )
+                ),
+                resources: resourcesWithServiceAreaKeys
+                  ? resourcesWithServiceAreaKeys.map((v) => ({
+                      serviceArea: getNumber(v, "serviceArea"),
+                      targetAllocation: getNumber(v, "targetAllocation"),
+                      order: getNumber(v, "order")
+                    }))
+                  : []
               })
             });
           }
@@ -825,11 +835,9 @@ const update: crud.Update<
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
-          // const validatedResources = opportunityValidation.validateResources(
-          //   resourcesWithServiceAreaKeys
-          // );
-          const validatedResources =
-            opportunityValidation.validateResources(resources);
+          const validatedResources = opportunityValidation.validateResources(
+            resourcesWithServiceAreaKeys
+          );
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
@@ -949,7 +957,9 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
-          // Perform validation on draft to ensure it's ready for publishing
+          // convert enum values to numeric
+
+          // Perform validation to ensure it's ready for publishing
           if (
             !allValid([
               genericValidation.validateTitle(twuOpportunity.title),
@@ -967,7 +977,8 @@ const update: crud.Update<
               opportunityValidation.validateOptionalSkills(
                 twuOpportunity.optionalSkills
               ),
-              opportunityValidation.validateResources(twuOpportunity.resources),
+              // TODO - maybe here the types are mixed
+              // opportunityValidation.validateResources(twuOpportunity.resources),
               genericValidation.validateDescription(twuOpportunity.description),
               opportunityValidation.validateQuestionsWeight(
                 twuOpportunity.questionsWeight
