@@ -11,8 +11,7 @@ import {
   parseTWUOpportunityStatus,
   TWUOpportunity,
   TWUOpportunityStatus,
-  TWUResource,
-  TWUServiceArea
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -153,7 +152,10 @@ export function validateResourceQuestions(
 
 export function validateResources(
   raw: any
-): ArrayValidation<TWUResource, CreateTWUResourceValidationErrors> {
+): ArrayValidation<
+  ValidatedCreateTWUResourceBody,
+  CreateTWUResourceValidationErrors
+> {
   if (!Array.isArray(raw)) {
     return invalid([
       { parseFailure: ["Please provide an array of resources"] }
@@ -162,16 +164,23 @@ export function validateResources(
   return validateArrayCustom(raw, validateResource, {});
 }
 
-function validateResource(
-  raw: any
-): Validation<TWUResource, CreateTWUResourceValidationErrors> {
+/**
+ * Validation ignoring serviceArea since as it has been pre-validated.
+ *
+ * @param raw CreateTWUResourceBody with validated serviceArea
+ * @returns Validated create TWU Resource body or target allocation and order
+ * errors.
+ */
+function validateResource(raw: {
+  serviceArea: number;
+  targetAllocation: any;
+  order: any;
+}): Validation<
+  ValidatedCreateTWUResourceBody,
+  CreateTWUResourceValidationErrors
+> {
   // ensure that the key is not greater than the number of enumerated values
-  const validatedServiceArea = validateNumber(
-    getNumber(raw, "serviceArea"),
-    0,
-    Object.keys(TWUServiceArea).length - 1
-  );
-  // const validatedServiceArea = validateGenericString(getString(raw, "serviceArea"), "serviceArea", 1)
+  const validatedServiceArea = valid(raw.serviceArea);
   const validatedTargetAllocation = validateTargetAllocation(
     getNumber(raw, "targetAllocation")
   );
@@ -184,10 +193,10 @@ function validateResource(
       serviceArea: validatedServiceArea.value,
       targetAllocation: validatedTargetAllocation.value,
       order: validatedOrder.value
-    } as TWUResource);
+    } as ValidatedCreateTWUResourceBody);
   } else {
     return invalid({
-      serviceArea: getInvalidValue(validatedServiceArea, undefined),
+      serviceArea: [""],
       targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
       order: getInvalidValue(validatedOrder, undefined)
     });

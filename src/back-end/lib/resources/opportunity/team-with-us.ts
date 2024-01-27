@@ -28,9 +28,10 @@ import {
   TWUOpportunity,
   TWUOpportunitySlim,
   TWUOpportunityStatus,
-  TWUResource,
   UpdateRequestBody,
-  UpdateValidationErrors
+  UpdateValidationErrors,
+  CreateTWUResourceBody,
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -69,7 +70,7 @@ interface ValidatedCreateRequestBody
     | "resourceQuestions"
     | "challengeEndDate"
   > {
-  resources: TWUResource[];
+  resources: ValidatedCreateTWUResourceBody[];
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
@@ -97,12 +98,11 @@ type ValidatedUpdateEditRequestBody = Omit<
   "status" | "session"
 >;
 
-/**
- * @remarks
- * serviceArea is intentionally an enum here, not a number (backwards compatibility)
- * @see SharedCreateRequestBody
- */
-type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
+type CreateRequestBody = Omit<
+  SharedCreateRequestBody,
+  "status" | "resources"
+> & {
+  resources: CreateTWUResourceBody[];
   status: string;
 };
 
@@ -278,16 +278,6 @@ const create: crud.Create<
       }
 
       /**
-       * Ensure that serviceArea string exists in the db and is passed to the db as a number
-       *
-       * obtain an array of serviceAreas by iterating through resources, extracting the string value
-       * and storing the result in a string array so that it can be passed to validateServiceAreas
-       */
-      const serviceAreas: string[] = resources.map((resources) =>
-        getString(resources, "serviceArea")
-      );
-
-      /**
        * Verify each value in the array of serviceArea strings exists in the db
        *
        * @example
@@ -307,15 +297,16 @@ const create: crud.Create<
        */
       const validatedServiceAreas = await validateServiceAreas(
         connection,
-        serviceAreas
+        resources.map((resource) => resource.serviceArea)
       );
 
-      if (isInvalid(validatedServiceAreas)) {
-        resources.map((resources, index) => {
-          return invalid({
-            ...resources,
+      if (isInvalid<string[][]>(validatedServiceAreas)) {
+        return invalid({
+          resources: resources.map((_, index) => ({
+            targetAllocation: [],
+            order: [],
             serviceArea: validatedServiceAreas.value[index]
-          });
+          }))
         });
       }
 
@@ -329,9 +320,9 @@ const create: crud.Create<
        *   { serviceArea: 3, targetAllocation: 60, order: 1 }
        * ]
        */
-      const resourcesWithServiceAreaKeys = resources.map((resources, index) => {
+      const resourcesWithServiceAreaKeys = resources.map((resource, index) => {
         return {
-          ...resources,
+          ...resource,
           serviceArea: validatedServiceAreas.value[index]
         };
       });
@@ -380,13 +371,14 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          resources: resourcesWithServiceAreaKeys
-            ? resourcesWithServiceAreaKeys.map((v) => ({
-                serviceArea: getNumber(v, "serviceArea"),
-                targetAllocation: getNumber(v, "targetAllocation"),
-                order: getNumber(v, "order")
-              }))
-            : []
+          resources:
+            resourcesWithServiceAreaKeys.length > 0
+              ? resourcesWithServiceAreaKeys.map((v) => ({
+                  serviceArea: getNumber(v, "serviceArea"),
+                  targetAllocation: getNumber(v, "targetAllocation"),
+                  order: getNumber(v, "order")
+                }))
+              : []
         });
       }
       const validatedTitle = genericValidation.validateTitle(title);
@@ -696,15 +688,6 @@ const update: crud.Update<
               })
             });
           }
-          /**
-           * Ensure that serviceArea string exists in the db and is passed to the db as a number
-           *
-           * obtain an array of serviceAreas by iterating through resources, extracting the string value
-           * and storing the result in a string array so that it can be passed to validateServiceAreas
-           */
-          const serviceAreas: string[] = resources.map((resources) =>
-            getString(resources, "serviceArea")
-          );
 
           /**
            * Verify each value in the array of serviceArea strings exists in the db
@@ -726,15 +709,18 @@ const update: crud.Update<
            */
           const validatedServiceAreas = await validateServiceAreas(
             connection,
-            serviceAreas
+            resources.map((resource) => resource.serviceArea)
           );
 
           if (isInvalid<string[][]>(validatedServiceAreas)) {
-            resources.map((resources, index) => {
-              return invalid({
-                ...resources,
-                serviceArea: validatedServiceAreas.value[index]
-              });
+            return invalid({
+              opportunity: adt("edit" as const, {
+                resources: resources.map((_, index) => ({
+                  targetAllocation: [],
+                  order: [],
+                  serviceArea: validatedServiceAreas.value[index]
+                }))
+              })
             });
           }
 
@@ -750,9 +736,9 @@ const update: crud.Update<
            */
 
           const resourcesWithServiceAreaKeys = resources.map(
-            (resources, index) => {
+            (resource, index) => {
               return {
-                ...resources,
+                ...resource,
                 serviceArea: validatedServiceAreas.value[index]
               };
             }
@@ -791,31 +777,35 @@ const update: crud.Update<
             const defaultDate = addDays(new Date(), 14);
             return valid({
               session: request.session,
-              body: adt("edit" as const, {
-                ...request.body.value,
-                attachments: validatedAttachments.value,
-                // Coerce validated dates to default values.
-                proposalDeadline: getValidValue(
-                  validatedProposalDeadline,
-                  defaultDate
-                ),
-                assignmentDate: getValidValue(
-                  validatedAssignmentDate,
-                  defaultDate
-                ),
-                startDate: getValidValue(validatedStartDate, defaultDate),
-                completionDate: getValidValue(
-                  validatedCompletionDate,
-                  defaultDate
-                ),
-                resources: resourcesWithServiceAreaKeys
-                  ? resourcesWithServiceAreaKeys.map((v) => ({
-                      serviceArea: getNumber(v, "serviceArea"),
-                      targetAllocation: getNumber(v, "targetAllocation"),
-                      order: getNumber(v, "order")
-                    }))
-                  : []
-              })
+              body: adt(
+                "edit" as const,
+                {
+                  ...request.body.value,
+                  attachments: validatedAttachments.value,
+                  // Coerce validated dates to default values.
+                  proposalDeadline: getValidValue(
+                    validatedProposalDeadline,
+                    defaultDate
+                  ),
+                  assignmentDate: getValidValue(
+                    validatedAssignmentDate,
+                    defaultDate
+                  ),
+                  startDate: getValidValue(validatedStartDate, defaultDate),
+                  completionDate: getValidValue(
+                    validatedCompletionDate,
+                    defaultDate
+                  ),
+                  resources:
+                    resourcesWithServiceAreaKeys.length > 0
+                      ? resourcesWithServiceAreaKeys.map((v) => ({
+                          serviceArea: getNumber(v, "serviceArea"),
+                          targetAllocation: getNumber(v, "targetAllocation"),
+                          order: getNumber(v, "order")
+                        }))
+                      : []
+                } as ValidatedUpdateEditRequestBody
+              )
             });
           }
 

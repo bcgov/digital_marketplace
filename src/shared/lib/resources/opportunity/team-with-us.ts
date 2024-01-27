@@ -4,8 +4,6 @@ import { FileRecord } from "shared/lib/resources/file";
 import { UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
-import { ServiceAreaId } from "shared/lib/resources/service-area";
-// import { ServiceAreaId } from "shared/lib/resources/service-area";
 
 export { Addendum } from "shared/lib/resources/addendum";
 
@@ -230,12 +228,8 @@ export interface TWUResourceQuestion {
   createdBy?: UserSlim;
 }
 
-/**
- * Type guard to narrow raw input to a TWUResource.
- * @see {@link createResouce `src/front-end/typescript/lib/pages/opportunity/team-with-us/lib/components/resources.tsx`}
- */
 export interface TWUResource {
-  serviceArea: ServiceAreaId;
+  serviceArea: TWUServiceArea;
   targetAllocation: number;
   // mandatorySkills: string[];
   // optionalSkills: string[];
@@ -288,10 +282,24 @@ export type CreateTWUResourceQuestionBody = Omit<
 >;
 
 /**
- * @remarks
- * serviceArea is intentionally an enum here, not a number (backwards compatibility)
- * @see TWUResourceEnum
+ * Resource's TWUServiceArea enum cannot be guaranteed until parsing is
+ * complete.
  */
+export type CreateTWUResourceBody = Omit<TWUResource, "serviceArea"> & {
+  serviceArea: string;
+};
+
+/**
+ * Resource Validated by the DB and serviceArea is a guaranteed to be a
+ * serviceArea id.
+ */
+export type ValidatedCreateTWUResourceBody = Omit<
+  CreateTWUResourceBody,
+  "serviceArea"
+> & {
+  serviceArea: number;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -305,7 +313,7 @@ export interface CreateRequestBody {
   maxBudget: number;
   mandatorySkills: string[];
   optionalSkills: string[];
-  resources: TWUResourceEnum[];
+  resources: CreateTWUResourceBody[];
   description: string;
   questionsWeight: number;
   challengeWeight: number;
@@ -321,7 +329,7 @@ export interface CreateTWUResourceQuestionValidationErrors
 }
 
 export interface CreateTWUResourceValidationErrors
-  extends ErrorTypeFrom<TWUResource> {
+  extends ErrorTypeFrom<CreateTWUResourceBody> {
   parseFailure?: string[];
 }
 

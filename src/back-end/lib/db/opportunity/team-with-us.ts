@@ -27,9 +27,8 @@ import {
   TWUOpportunitySlim,
   TWUOpportunityStatus,
   TWUResource,
-  TWUResourceEnum,
   TWUResourceQuestion,
-  TWUServiceArea
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -67,7 +66,7 @@ export interface CreateTWUOpportunityParams
   > {
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
-  resources: TWUResource[];
+  resources: ValidatedCreateTWUResourceBody[];
 }
 
 interface UpdateTWUOpportunityParams
@@ -369,7 +368,7 @@ export const readOneResource = tryDb<[Id], TWUResourceRecord | null>(
 async function rawResourceToResource(
   connection: Connection,
   raw: RawResource
-): Promise<TWUResourceEnum> {
+): Promise<TWUResource> {
   const { id: id } = raw;
   const resource = id
     ? getValidValue(await readOneResource(connection, id), undefined)
@@ -390,8 +389,12 @@ async function rawResourceToResource(
       )
     : undefined;
 
+  if (!serviceArea) {
+    throw new Error("unable to process resource");
+  }
+
   return {
-    serviceArea: serviceArea as TWUServiceArea,
+    serviceArea,
     targetAllocation: resource.targetAllocation,
     // opportunityVersion: resource.opportunityVersion,
     // mandatorySkills: resource.mandatorySkills,
@@ -609,7 +612,7 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
 /**
  * Reads TWUResources from the database, when given opportunityVersion id that's connected to the Resources
  */
-export const readManyResources = tryDb<[Id], TWUResourceEnum[]>(
+export const readManyResources = tryDb<[Id], TWUResource[]>(
   async (connection, opportunityVersionId) => {
     const results = await connection<RawResource>("twuResources")
       .where({ opportunityVersion: opportunityVersionId })
