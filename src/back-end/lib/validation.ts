@@ -51,8 +51,11 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import {
+  CreateTWUResourceBody,
+  CreateTWUResourceValidationErrors,
   parseTWUServiceArea,
-  TWUOpportunity
+  TWUOpportunity,
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   CreateTWUProposalTeamMemberBody,
@@ -61,6 +64,10 @@ import {
 } from "shared/lib/resources/proposal/team-with-us";
 import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
+import {
+  validateTargetAllocation,
+  validateOrder
+} from "shared/lib/validation/opportunity/team-with-us";
 
 /**
  * TWU - Team With Us Validation
@@ -217,6 +224,60 @@ export function validateServiceAreas(
   raw: string[]
 ): Promise<ArrayValidation<ServiceAreaId>> {
   return validateArrayAsync(raw, (v) => validateServiceArea(connection, v));
+}
+
+async function validateTWUResource(
+  connection: db.Connection,
+  raw: CreateTWUResourceBody
+): Promise<
+  Validation<ValidatedCreateTWUResourceBody, CreateTWUResourceValidationErrors>
+> {
+  const validatedServiceArea = await validateServiceArea(
+    connection,
+    getString(raw, "serviceArea")
+  );
+  const validatedTargetAllocation = validateTargetAllocation(
+    getNumber(raw, "targetAllocation")
+  );
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([validatedServiceArea, validatedTargetAllocation, validatedOrder])
+  ) {
+    return valid({
+      serviceArea: validatedServiceArea.value,
+      targetAllocation: validatedTargetAllocation.value,
+      order: validatedOrder.value
+    } as ValidatedCreateTWUResourceBody);
+  } else {
+    return invalid({
+      serviceArea: getInvalidValue(validatedServiceArea, undefined),
+      targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+}
+
+export async function validateTWUResources(
+  connection: db.Connection,
+  raw: CreateTWUResourceBody[]
+): Promise<
+  ArrayValidation<
+    ValidatedCreateTWUResourceBody,
+    CreateTWUResourceValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of resources"] }
+    ]);
+  }
+
+  return await validateArrayCustomAsync(
+    raw,
+    (v) => validateTWUResource(connection, v),
+    {}
+  );
 }
 
 /**

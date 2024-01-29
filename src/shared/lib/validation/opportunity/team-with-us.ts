@@ -4,14 +4,12 @@ import {
   CreateTWUOpportunityStatus,
   CreateTWUResourceQuestionBody,
   CreateTWUResourceQuestionValidationErrors,
-  CreateTWUResourceValidationErrors,
   isTWUOpportunityClosed,
   MAX_RESOURCE_QUESTION_WORD_LIMIT,
   MAX_RESOURCE_QUESTIONS,
   parseTWUOpportunityStatus,
   TWUOpportunity,
-  TWUOpportunityStatus,
-  ValidatedCreateTWUResourceBody
+  TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   allValid,
@@ -148,59 +146,6 @@ export function validateResourceQuestions(
     ]);
   }
   return validateArrayCustom(raw, validateResourceQuestion, {});
-}
-
-export function validateResources(
-  raw: any
-): ArrayValidation<
-  ValidatedCreateTWUResourceBody,
-  CreateTWUResourceValidationErrors
-> {
-  if (!Array.isArray(raw)) {
-    return invalid([
-      { parseFailure: ["Please provide an array of resources"] }
-    ]);
-  }
-  return validateArrayCustom(raw, validateResource, {});
-}
-
-/**
- * Validation ignoring serviceArea since as it has been pre-validated.
- *
- * @param raw CreateTWUResourceBody with validated serviceArea
- * @returns Validated create TWU Resource body or target allocation and order
- * errors.
- */
-function validateResource(raw: {
-  serviceArea: number;
-  targetAllocation: any;
-  order: any;
-}): Validation<
-  ValidatedCreateTWUResourceBody,
-  CreateTWUResourceValidationErrors
-> {
-  // ensure that the key is not greater than the number of enumerated values
-  const validatedServiceArea = valid(raw.serviceArea);
-  const validatedTargetAllocation = validateTargetAllocation(
-    getNumber(raw, "targetAllocation")
-  );
-  const validatedOrder = validateOrder(getNumber(raw, "order"));
-
-  if (
-    allValid([validatedServiceArea, validatedTargetAllocation, validatedOrder])
-  ) {
-    return valid({
-      serviceArea: validatedServiceArea.value,
-      targetAllocation: validatedTargetAllocation.value,
-      order: validatedOrder.value
-    } as ValidatedCreateTWUResourceBody);
-  } else {
-    return invalid({
-      serviceArea: [""],
-      targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
-      order: getInvalidValue(validatedOrder, undefined)
-    });
-  }
 }
 
 export function validateMaxBudget(raw: string | number): Validation<number> {

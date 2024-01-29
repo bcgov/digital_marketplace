@@ -10,8 +10,8 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
-  validateServiceAreas,
-  validateTWUOpportunityId
+  validateTWUOpportunityId,
+  validateTWUResources
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { addDays, getNumber, getString, getStringArray } from "shared/lib";
@@ -277,55 +277,15 @@ const create: crud.Create<
         });
       }
 
-      /**
-       * Verify each value in the array of serviceArea strings exists in the db
-       *
-       * @example
-       * `validateServiceAreas` will look like either
-       * {
-       *   tag: "valid",
-       *   value: [1,2]
-       * }
-       * OR
-       * {
-       *   tag: "invalid",
-       *   value: [
-       *     [],
-       *     ['"NOT_A_SERVICE_AREA" is not a valid service area."']
-       *   ]
-       * }
-       */
-      const validatedServiceAreas = await validateServiceAreas(
+      const validatedResources = await validateTWUResources(
         connection,
-        resources.map((resource) => resource.serviceArea)
+        resources
       );
-
-      if (isInvalid<string[][]>(validatedServiceAreas)) {
+      if (isInvalid<CreateTWUResourceValidationErrors[]>(validatedResources)) {
         return invalid({
-          resources: resources.map((_, index) => ({
-            targetAllocation: [],
-            order: [],
-            serviceArea: validatedServiceAreas.value[index]
-          }))
+          resources: validatedResources.value
         });
       }
-
-      /**
-       * Massage the array back into the resources object
-       *
-       * @example
-       * resourcesWithServiceAreaKeys will look like:
-       * [
-       *   { serviceArea: 1, targetAllocation: 50, order: 0 },
-       *   { serviceArea: 3, targetAllocation: 60, order: 1 }
-       * ]
-       */
-      const resourcesWithServiceAreaKeys = resources.map((resource, index) => {
-        return {
-          ...resource,
-          serviceArea: validatedServiceAreas.value[index]
-        };
-      });
 
       const now = new Date();
       const validatedProposalDeadline =
@@ -371,14 +331,7 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          resources:
-            resourcesWithServiceAreaKeys.length > 0
-              ? resourcesWithServiceAreaKeys.map((v) => ({
-                  serviceArea: getNumber(v, "serviceArea"),
-                  targetAllocation: getNumber(v, "targetAllocation"),
-                  order: getNumber(v, "order")
-                }))
-              : []
+          resources: validatedResources.value
         });
       }
       const validatedTitle = genericValidation.validateTitle(title);
@@ -391,9 +344,6 @@ const create: crud.Create<
       const validatedLocation = genericValidation.validateLocation(location);
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
-      const validatedResources = opportunityValidation.validateResources(
-        resourcesWithServiceAreaKeys
-      );
       const validatedMandatorySkills =
         genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
@@ -689,60 +639,19 @@ const update: crud.Update<
             });
           }
 
-          /**
-           * Verify each value in the array of serviceArea strings exists in the db
-           *
-           * @example
-           * `validateServiceAreas` will look like either
-           * {
-           *   tag: "valid",
-           *   value: [1,2]
-           * }
-           * OR
-           * {
-           *   tag: "invalid",
-           *   value: [
-           *     [],
-           *     ['"NOT_A_SERVICE_AREA" is not a valid service area."']
-           *   ]
-           * }
-           */
-          const validatedServiceAreas = await validateServiceAreas(
+          const validatedResources = await validateTWUResources(
             connection,
-            resources.map((resource) => resource.serviceArea)
+            resources
           );
-
-          if (isInvalid<string[][]>(validatedServiceAreas)) {
+          if (
+            isInvalid<CreateTWUResourceValidationErrors[]>(validatedResources)
+          ) {
             return invalid({
               opportunity: adt("edit" as const, {
-                resources: resources.map((_, index) => ({
-                  targetAllocation: [],
-                  order: [],
-                  serviceArea: validatedServiceAreas.value[index]
-                }))
+                resources: validatedResources.value
               })
             });
           }
-
-          /**
-           * Massage the array back into the TWUResources object
-           *
-           * @example
-           * resourcesWithServiceAreaKeys will look like:
-           * [
-           *   { serviceArea: 1, targetAllocation: 50, order: 0 },
-           *   { serviceArea: 3, targetAllocation: 60, order: 1 }
-           * ]
-           */
-
-          const resourcesWithServiceAreaKeys = resources.map(
-            (resource, index) => {
-              return {
-                ...resource,
-                serviceArea: validatedServiceAreas.value[index]
-              };
-            }
-          );
 
           /**
            * If the existing proposal deadline is in the past,
@@ -777,35 +686,25 @@ const update: crud.Update<
             const defaultDate = addDays(new Date(), 14);
             return valid({
               session: request.session,
-              body: adt(
-                "edit" as const,
-                {
-                  ...request.body.value,
-                  attachments: validatedAttachments.value,
-                  // Coerce validated dates to default values.
-                  proposalDeadline: getValidValue(
-                    validatedProposalDeadline,
-                    defaultDate
-                  ),
-                  assignmentDate: getValidValue(
-                    validatedAssignmentDate,
-                    defaultDate
-                  ),
-                  startDate: getValidValue(validatedStartDate, defaultDate),
-                  completionDate: getValidValue(
-                    validatedCompletionDate,
-                    defaultDate
-                  ),
-                  resources:
-                    resourcesWithServiceAreaKeys.length > 0
-                      ? resourcesWithServiceAreaKeys.map((v) => ({
-                          serviceArea: getNumber(v, "serviceArea"),
-                          targetAllocation: getNumber(v, "targetAllocation"),
-                          order: getNumber(v, "order")
-                        }))
-                      : []
-                } as ValidatedUpdateEditRequestBody
-              )
+              body: adt("edit" as const, {
+                ...request.body.value,
+                attachments: validatedAttachments.value,
+                // Coerce validated dates to default values.
+                proposalDeadline: getValidValue(
+                  validatedProposalDeadline,
+                  defaultDate
+                ),
+                assignmentDate: getValidValue(
+                  validatedAssignmentDate,
+                  defaultDate
+                ),
+                startDate: getValidValue(validatedStartDate, defaultDate),
+                completionDate: getValidValue(
+                  validatedCompletionDate,
+                  defaultDate
+                ),
+                resources: validatedResources.value
+              })
             });
           }
 
@@ -825,9 +724,6 @@ const update: crud.Update<
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
             opportunityValidation.validateOptionalSkills(optionalSkills);
-          const validatedResources = opportunityValidation.validateResources(
-            resourcesWithServiceAreaKeys
-          );
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
