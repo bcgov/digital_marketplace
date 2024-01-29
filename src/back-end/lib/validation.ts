@@ -1,4 +1,4 @@
-import { Content } from "back-end/../shared/lib/resources/content";
+import { Content } from "shared/lib/resources/content";
 import * as db from "back-end/lib/db";
 import { get, union } from "lodash";
 import { getNumber, getString } from "shared/lib";
