@@ -73,9 +73,6 @@ test("team-with-us opportunity crud", async () => {
       "remoteDesc",
       "location",
       "maxBudget",
-      // "targetAllocation",
-      "mandatorySkills",
-      "optionalSkills",
       "description",
       "questionsWeight",
       "challengeWeight",
@@ -96,6 +93,8 @@ test("team-with-us opportunity crud", async () => {
     resources: opportunity.resources.map((resource) => ({
       serviceArea: 2,
       targetAllocation: resource.targetAllocation,
+      mandatorySkills: resource.mandatorySkills,
+      optionalSkills: resource.optionalSkills,
       order: resource.order
     }))
   };

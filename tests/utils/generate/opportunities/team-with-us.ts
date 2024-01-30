@@ -28,11 +28,7 @@ function buildTWUOpportunity(
     assignmentDate = faker.date.soon({ refDate: proposalDeadline }),
     completionDate = overrides.completionDate
       ? overrides.completionDate
-      : faker.date.future({ refDate: assignmentDate }),
-    mandatorySkills = faker.helpers.arrayElements(SKILLS, {
-      min: 1,
-      max: 6
-    })
+      : faker.date.future({ refDate: assignmentDate })
   } = overrides;
 
   return {
@@ -46,11 +42,6 @@ function buildTWUOpportunity(
     remoteOk,
     remoteDesc: remoteOk ? faker.lorem.paragraph() : "",
     location: faker.location.city(),
-    mandatorySkills,
-    optionalSkills: faker.helpers.arrayElements(
-      SKILLS.filter((skill) => !mandatorySkills.includes(skill)),
-      { min: 1, max: 6 }
-    ),
     description: faker.lorem.paragraphs(),
     proposalDeadline: setDateTo4PM(proposalDeadline),
     assignmentDate: setDateTo4PM(assignmentDate),
@@ -82,6 +73,14 @@ function buildTWUOpportunity(
     resources: [...Array(faker.number.int({ min: 0, max: 3 }))].map((_, i) => ({
       serviceArea: TWUServiceArea.DataProfessional,
       targetAllocation: faker.number.int({ min: 1, max: 100 }),
+      mandatorySkills: faker.helpers.arrayElements(SKILLS, {
+        min: 1,
+        max: 6
+      }),
+      optionalSkills: faker.helpers.arrayElements(SKILLS, {
+        min: 0,
+        max: 6
+      }),
       order: i
     })),
     ...overrides
@@ -131,10 +130,12 @@ function buildCreateTWUOpportunityParams(
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
-    resources: opportunity.resources.map((sa) => ({
-      serviceArea: sa.serviceArea as string,
-      targetAllocation: sa.targetAllocation,
-      order: sa.order
+    resources: opportunity.resources.map((resource) => ({
+      serviceArea: resource.serviceArea as string,
+      targetAllocation: resource.targetAllocation,
+      mandatorySkills: resource.mandatorySkills,
+      optionalSkills: resource.optionalSkills,
+      order: resource.order
     })),
     ...overrides
   };
