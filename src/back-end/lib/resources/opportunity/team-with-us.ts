@@ -203,8 +203,6 @@ const create: crud.Create<
         remoteOk: get(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
-        mandatorySkills: getStringArray(body, "mandatorySkills"),
-        optionalSkills: getStringArray(body, "optionalSkills"),
         resources: get(body, "resources"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
@@ -228,8 +226,6 @@ const create: crud.Create<
         remoteOk,
         remoteDesc,
         location,
-        mandatorySkills,
-        optionalSkills,
         resources,
         description,
         proposalDeadline,
@@ -344,10 +340,6 @@ const create: crud.Create<
       const validatedLocation = genericValidation.validateLocation(location);
       const validatedMaxBudget =
         opportunityValidation.validateMaxBudget(maxBudget);
-      const validatedMandatorySkills =
-        genericValidation.validateMandatorySkills(mandatorySkills);
-      const validatedOptionalSkills =
-        opportunityValidation.validateOptionalSkills(optionalSkills);
       const validatedDescription =
         genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -366,8 +358,6 @@ const create: crud.Create<
           validatedRemoteDesc,
           validatedLocation,
           validatedMaxBudget,
-          validatedMandatorySkills,
-          validatedOptionalSkills,
           validatedResources,
           validatedDescription,
           validatedQuestionsWeight,
@@ -402,8 +392,6 @@ const create: crud.Create<
           remoteDesc: validatedRemoteDesc.value,
           location: validatedLocation.value,
           maxBudget: validatedMaxBudget.value,
-          mandatorySkills: validatedMandatorySkills.value,
-          optionalSkills: validatedOptionalSkills.value,
           resources: validatedResources.value,
           description: validatedDescription.value,
           questionsWeight: validatedQuestionsWeight.value,
@@ -425,14 +413,6 @@ const create: crud.Create<
           remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
           location: getInvalidValue(validatedLocation, undefined),
           maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-          mandatorySkills: getInvalidValue<string[][], undefined>(
-            validatedMandatorySkills,
-            undefined
-          ),
-          optionalSkills: getInvalidValue<string[][], undefined>(
-            validatedOptionalSkills,
-            undefined
-          ),
           resources: getInvalidValue<
             CreateTWUResourceValidationErrors[],
             undefined
@@ -527,8 +507,6 @@ const update: crud.Update<
             remoteOk: get(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
-            mandatorySkills: getStringArray(value, "mandatorySkills"),
-            optionalSkills: getStringArray(value, "optionalSkills"),
             resources: get(value, "resources"),
             description: getString(value, "description"),
             proposalDeadline: getString(value, "proposalDeadline"),
@@ -597,8 +575,6 @@ const update: crud.Update<
             remoteOk,
             remoteDesc,
             location,
-            mandatorySkills,
-            optionalSkills,
             resources,
             description,
             proposalDeadline,
@@ -720,10 +696,6 @@ const update: crud.Update<
             genericValidation.validateLocation(location);
           const validatedMaxBudget =
             opportunityValidation.validateMaxBudget(maxBudget);
-          const validatedMandatorySkills =
-            genericValidation.validateMandatorySkills(mandatorySkills);
-          const validatedOptionalSkills =
-            opportunityValidation.validateOptionalSkills(optionalSkills);
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
@@ -743,8 +715,6 @@ const update: crud.Update<
               validatedRemoteDesc,
               validatedLocation,
               validatedMaxBudget,
-              validatedMandatorySkills,
-              validatedOptionalSkills,
               validatedResources,
               validatedDescription,
               validatedQuestionsWeight,
@@ -767,8 +737,6 @@ const update: crud.Update<
                 remoteDesc: validatedRemoteDesc.value,
                 location: validatedLocation.value,
                 maxBudget: validatedMaxBudget.value,
-                mandatorySkills: validatedMandatorySkills.value,
-                optionalSkills: validatedOptionalSkills.value,
                 resources: validatedResources.value,
                 description: validatedDescription.value,
                 questionsWeight: validatedQuestionsWeight.value,
@@ -791,14 +759,6 @@ const update: crud.Update<
                 remoteDesc: getInvalidValue(validatedRemoteDesc, undefined),
                 location: getInvalidValue(validatedLocation, undefined),
                 maxBudget: getInvalidValue(validatedMaxBudget, undefined),
-                mandatorySkills: getInvalidValue<string[][], undefined>(
-                  validatedMandatorySkills,
-                  undefined
-                ),
-                optionalSkills: getInvalidValue<string[][], undefined>(
-                  validatedOptionalSkills,
-                  undefined
-                ),
                 resources: getInvalidValue<
                   CreateTWUResourceValidationErrors[],
                   undefined
@@ -857,14 +817,6 @@ const update: crud.Update<
               ),
               genericValidation.validateLocation(twuOpportunity.location),
               opportunityValidation.validateMaxBudget(twuOpportunity.maxBudget),
-              genericValidation.validateMandatorySkills(
-                twuOpportunity.mandatorySkills
-              ),
-              opportunityValidation.validateOptionalSkills(
-                twuOpportunity.optionalSkills
-              ),
-              // TODO - maybe here the types are mixed
-              // opportunityValidation.validateResources(twuOpportunity.resources),
               genericValidation.validateDescription(twuOpportunity.description),
               opportunityValidation.validateQuestionsWeight(
                 twuOpportunity.questionsWeight

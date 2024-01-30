@@ -89,11 +89,12 @@ interface TWUOpportunityVersionRecord
 /**
  * serviceArea is intentionally a number value here, not an enum (backwards compatibility)
  */
-interface TWUResourceRecord
-  extends Pick<TWUOpportunity, "optionalSkills" | "mandatorySkills"> {
+interface TWUResourceRecord {
   id: Id;
-  opportunityVersion: Id;
   serviceArea: ServiceAreaId;
+  opportunityVersion: Id;
+  mandatorySkills: string[];
+  optionalSkills: string[];
   targetAllocation: number;
   order: number;
 }
@@ -396,9 +397,8 @@ async function rawResourceToResource(
   return {
     serviceArea,
     targetAllocation: resource.targetAllocation,
-    // opportunityVersion: resource.opportunityVersion,
-    // mandatorySkills: resource.mandatorySkills,
-    // optionalSkills: resource.optionalSkills,
+    mandatorySkills: resource.mandatorySkills,
+    optionalSkills: resource.optionalSkills,
     order: resource.order
   };
 }
@@ -1006,8 +1006,6 @@ export const createTWUOpportunity = tryDb<
       status,
       resourceQuestions,
       resources,
-      mandatorySkills,
-      optionalSkills,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -1037,9 +1035,7 @@ export const createTWUOpportunity = tryDb<
           {
             ...twuResource,
             id: generateUuid(),
-            opportunityVersion: opportunityVersionRecord.id,
-            mandatorySkills,
-            optionalSkills
+            opportunityVersion: opportunityVersionRecord.id
           },
           "*"
         );
@@ -1108,14 +1104,8 @@ export const updateTWUOpportunityVersion = tryDb<
   TWUOpportunity
 >(async (connection, opportunity, session) => {
   const now = new Date();
-  const {
-    attachments,
-    resourceQuestions,
-    mandatorySkills,
-    optionalSkills,
-    resources,
-    ...restOfOpportunity
-  } = opportunity;
+  const { attachments, resourceQuestions, resources, ...restOfOpportunity } =
+    opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
       "twuOpportunityVersions"
@@ -1145,9 +1135,7 @@ export const updateTWUOpportunityVersion = tryDb<
           {
             ...twuResourceRecord,
             id: generateUuid(),
-            opportunityVersion: versionRecord.id,
-            mandatorySkills,
-            optionalSkills
+            opportunityVersion: versionRecord.id
           },
           "*"
         );

@@ -183,8 +183,8 @@ export interface TWUOpportunity {
   remoteOk: boolean;
   remoteDesc: string;
   location: string;
-  mandatorySkills: string[];
-  optionalSkills: string[];
+  // mandatorySkills: string[];
+  // optionalSkills: string[];
   resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
@@ -230,8 +230,8 @@ export interface TWUResourceQuestion {
 export interface TWUResource {
   serviceArea: TWUServiceArea;
   targetAllocation: number;
-  // mandatorySkills: string[];
-  // optionalSkills: string[];
+  mandatorySkills: string[];
+  optionalSkills: string[];
   order: number;
 }
 
@@ -306,8 +306,6 @@ export interface CreateRequestBody {
   startDate: string;
   completionDate: string;
   maxBudget: number;
-  mandatorySkills: string[];
-  optionalSkills: string[];
   resources: CreateTWUResourceBody[];
   description: string;
   questionsWeight: number;

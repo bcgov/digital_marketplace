@@ -1,7 +1,7 @@
 import { Content } from "shared/lib/resources/content";
 import * as db from "back-end/lib/db";
 import { get, union } from "lodash";
-import { getNumber, getString } from "shared/lib";
+import { getNumber, getString, getStringArray } from "shared/lib";
 import {
   Affiliation,
   MembershipStatus
@@ -68,6 +68,10 @@ import {
   validateTargetAllocation,
   validateOrder
 } from "shared/lib/validation/opportunity/team-with-us";
+import {
+  validateMandatorySkills,
+  validateOptionalSkills
+} from "shared/lib/validation/opportunity/utility";
 
 /**
  * TWU - Team With Us Validation
@@ -248,20 +252,36 @@ async function validateTWUResource(
   );
   const validatedOrder = validateOrder(getNumber(raw, "order"));
 
+  const validatedMandatorySkills = validateMandatorySkills(
+    getStringArray(raw, "mandatorySkills")
+  );
+  const validatedOptionalSkills = validateOptionalSkills(
+    getStringArray(raw, "optionalSkills")
+  );
   if (
-    allValid([validatedServiceArea, validatedTargetAllocation, validatedOrder])
+    allValid([
+      validatedServiceArea,
+      validatedTargetAllocation,
+      validatedMandatorySkills,
+      validatedOptionalSkills,
+      validatedOrder
+    ])
   ) {
     return valid({
       serviceArea: validatedServiceArea.value,
       targetAllocation: validatedTargetAllocation.value,
+      mandatorySkills: validatedMandatorySkills.value,
+      optionalSkills: validatedOptionalSkills.value,
       order: validatedOrder.value
     } as ValidatedCreateTWUResourceBody);
   } else {
     return invalid({
       serviceArea: getInvalidValue(validatedServiceArea, undefined),
       targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
+      mandatorySkills: getInvalidValue(validatedMandatorySkills, undefined),
+      optionalSkills: getInvalidValue(validatedOptionalSkills, undefined),
       order: getInvalidValue(validatedOrder, undefined)
-    });
+    } as CreateTWUResourceValidationErrors);
   }
 }
 
