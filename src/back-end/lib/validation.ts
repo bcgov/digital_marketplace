@@ -226,6 +226,13 @@ export function validateServiceAreas(
   return validateArrayAsync(raw, (v) => validateServiceArea(connection, v));
 }
 
+/**
+ * Takes a resource and validates it.
+ *
+ * @param connection
+ * @param raw
+ * @returns Validation - valid ValidatedCreateTWUResourceBody | invalid CreateTWUResourceValidationErrors
+ */
 async function validateTWUResource(
   connection: db.Connection,
   raw: CreateTWUResourceBody
@@ -258,6 +265,14 @@ async function validateTWUResource(
   }
 }
 
+/**
+ * Takes a list of resources and validates each one.
+ *
+ * @param connection
+ * @param raw
+ * @returns ArrayValidation - valid [array of ValidatedCreateTWUResourceBody] | invalid [array of
+ * CreateTWUResourceValidationErrors]
+ */
 export async function validateTWUResources(
   connection: db.Connection,
   raw: CreateTWUResourceBody[]

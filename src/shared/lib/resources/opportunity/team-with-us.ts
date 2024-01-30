@@ -185,8 +185,7 @@ export interface TWUOpportunity {
   location: string;
   mandatorySkills: string[];
   optionalSkills: string[];
-  resources: TWUResourceEnum[];
-  // resources: TWUResource[];
+  resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
   assignmentDate: Date;
@@ -234,10 +233,6 @@ export interface TWUResource {
   // mandatorySkills: string[];
   // optionalSkills: string[];
   order: number;
-}
-
-export interface TWUResourceEnum extends Omit<TWUResource, "serviceArea"> {
-  serviceArea: TWUServiceArea;
 }
 
 export function getQuestionByOrder(

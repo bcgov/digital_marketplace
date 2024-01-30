@@ -11,7 +11,7 @@ import * as Select from "front-end/lib/components/form-field/select";
 import {
   CreateTWUResourceValidationErrors,
   TWUServiceArea,
-  TWUResourceEnum,
+  TWUResource,
   parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { invalid, valid } from "shared/lib/validation";
@@ -40,7 +40,7 @@ export type Msg =
   | ADT<"targetAllocation", { childMsg: Select.Msg; rIndex: number }>;
 
 export interface Params {
-  resources: TWUResourceEnum[];
+  resources: TWUResource[];
 }
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
@@ -65,7 +65,7 @@ function getSingleKeyValueOption(v: TWUServiceArea): Select.Option {
 
 function createResource(
   rIndex: number,
-  resource?: TWUResourceEnum
+  resource?: TWUResource
 ): component_.base.InitReturnValue<Resource, Msg> {
   /**
    * Sets a single key/value pair for service area, or null
@@ -195,7 +195,7 @@ export function isValid(state: Immutable<State>): boolean {
   }, true as boolean);
 }
 
-export type Values = TWUResourceEnum[];
+export type Values = TWUResource[];
 
 export function getValues(state: Immutable<State>): Values {
   return state.resources.reduce<Values>((acc, r, order) => {
