@@ -246,7 +246,7 @@ export const view: component.base.View<Props> = (props) => {
       }
     }
   } as SelectProps;
-  const selectProps = (() => {
+  const { id, ...selectProps } = (() => {
     if (props.multi) {
       return {
         ...baseProps,
@@ -280,9 +280,9 @@ export const view: component.base.View<Props> = (props) => {
     }
   })();
   if (props.creatable) {
-    return <SelectCreatable {...selectProps} />;
+    return <SelectCreatable inputId={id} {...selectProps} />;
   } else {
-    return <Select {...selectProps} />;
+    return <Select inputId={id} {...selectProps} />;
   }
 };
 
