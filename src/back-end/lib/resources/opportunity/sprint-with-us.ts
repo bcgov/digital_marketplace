@@ -488,7 +488,7 @@ const create: crud.Create<
       const validatedMandatorySkills =
         genericValidation.validateMandatorySkills(mandatorySkills);
       const validatedOptionalSkills =
-        opportunityValidation.validateOptionalSkills(optionalSkills);
+        genericValidation.validateOptionalSkills(optionalSkills);
       const validatedDescription =
         genericValidation.validateDescription(description);
       const validatedQuestionsWeight =
@@ -1077,7 +1077,7 @@ const update: crud.Update<
           const validatedMandatorySkills =
             genericValidation.validateMandatorySkills(mandatorySkills);
           const validatedOptionalSkills =
-            opportunityValidation.validateOptionalSkills(optionalSkills);
+            genericValidation.validateOptionalSkills(optionalSkills);
           const validatedDescription =
             genericValidation.validateDescription(description);
           const validatedQuestionsWeight =
@@ -1295,7 +1295,7 @@ const update: crud.Update<
               genericValidation.validateMandatorySkills(
                 validatedSWUOpportunity.value.mandatorySkills
               ),
-              opportunityValidation.validateOptionalSkills(
+              genericValidation.validateOptionalSkills(
                 validatedSWUOpportunity.value.optionalSkills
               ),
               genericValidation.validateDescription(

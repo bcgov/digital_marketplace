@@ -1,4 +1,3 @@
-import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
   CreateTWUOpportunityStatus,
@@ -16,9 +15,7 @@ import {
   ArrayValidation,
   getInvalidValue,
   invalid,
-  mapValid,
   valid,
-  validateArray,
   validateArrayCustom,
   validateDate,
   validateGenericString,
@@ -150,15 +147,6 @@ export function validateResourceQuestions(
 
 export function validateMaxBudget(raw: string | number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Maximum Budget");
-}
-
-export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Optional Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
-  );
 }
 
 export function validateProposalDeadline(
