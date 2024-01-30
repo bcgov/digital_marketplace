@@ -149,8 +149,8 @@ test("team-with-us proposal crud", async () => {
 
   const opportunityParams = buildCreateTWUOpportunityParams({
     status: TWUOpportunityStatus.Published,
-    proposalDeadline: faker.date.soon(),
-    serviceArea: serviceAreaId
+    proposalDeadline: faker.date.soon()
+    // serviceArea: serviceAreaId
   });
   const opportunity = await insertTWUOpportunity(
     connection,

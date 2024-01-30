@@ -51,7 +51,6 @@ function buildTWUOpportunity(
       SKILLS.filter((skill) => !mandatorySkills.includes(skill)),
       { min: 1, max: 6 }
     ),
-    serviceArea: TWUServiceArea.FullStackDeveloper,
     description: faker.lorem.paragraphs(),
     proposalDeadline: setDateTo4PM(proposalDeadline),
     assignmentDate: setDateTo4PM(assignmentDate),
@@ -63,7 +62,6 @@ function buildTWUOpportunity(
     ),
     completionDate: setDateTo4PM(completionDate),
     maxBudget: faker.number.float({ min: 1, precision: 2 }),
-    targetAllocation: faker.number.int({ min: 1, max: 100 }),
     questionsWeight: DEFAULT_QUESTIONS_WEIGHT,
     challengeWeight: DEFAULT_CODE_CHALLENGE_WEIGHT,
     priceWeight: DEFAULT_PRICE_WEIGHT,
@@ -81,6 +79,11 @@ function buildTWUOpportunity(
         createdBy
       })
     ),
+    resources: [...Array(faker.number.int({ min: 0, max: 3 }))].map((_, i) => ({
+      serviceArea: TWUServiceArea.DataProfessional,
+      targetAllocation: faker.number.int({ min: 1, max: 100 }),
+      order: i
+    })),
     ...overrides
   };
 }
@@ -112,7 +115,7 @@ function buildCreateTWUOpportunityParams(
 ): CreateTWUOpportunityParams {
   const opportunity = buildTWUOpportunity();
 
-  return {
+  return <CreateTWUOpportunityParams>{
     ...omit(opportunity, [
       "createdBy",
       "createdAt",
@@ -122,13 +125,17 @@ function buildCreateTWUOpportunityParams(
       "id",
       "addenda",
       "resourceQuestions",
-      "serviceArea"
+      "resources"
     ]),
     status: TWUOpportunityStatus.Draft,
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
-    serviceArea: 1,
+    resources: opportunity.resources.map((sa) => ({
+      serviceArea: sa.serviceArea as string,
+      targetAllocation: sa.targetAllocation,
+      order: sa.order
+    })),
     ...overrides
   };
 }

@@ -13,12 +13,12 @@ import {
   CreateRequestBody,
   TWUOpportunityEvent,
   TWUOpportunityStatus,
-  TWUResourceQuestion
+  TWUResourceQuestion,
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { omit, pick } from "lodash";
 import { getISODateString } from "shared/lib";
 import { adt } from "shared/lib/types";
-
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
     buildCreateUserParams({ type: UserType.Government }),
@@ -44,6 +44,15 @@ afterEach(async () => {
   await clearTestDatabase(connection);
 });
 
+/**
+ * A convenience type for this test to reconcile the difference between the data type of 'serviceArea' (enum) in the
+ * request body and the required data type of `serviceArea` (number) in the database. Outside of these tests, this
+ * conversion is taken care of during the validation phase.
+ */
+type TWUCreateRequestBody = Omit<CreateRequestBody, "resources"> & {
+  resources: ValidatedCreateTWUResourceBody[];
+};
+
 test("team-with-us opportunity crud", async () => {
   const {
     testUser,
@@ -54,8 +63,9 @@ test("team-with-us opportunity crud", async () => {
     adminAppAgent
   } = await setup();
 
+  // returns enum
   const opportunity = buildTWUOpportunity();
-  const body: CreateRequestBody = {
+  const body: TWUCreateRequestBody = {
     ...pick(opportunity, [
       "title",
       "teaser",
@@ -63,14 +73,14 @@ test("team-with-us opportunity crud", async () => {
       "remoteDesc",
       "location",
       "maxBudget",
-      "targetAllocation",
+      // "targetAllocation",
       "mandatorySkills",
       "optionalSkills",
-      "serviceArea",
       "description",
       "questionsWeight",
       "challengeWeight",
-      "priceWeight"
+      "priceWeight",
+      "resources"
     ]),
     proposalDeadline: getISODateString(opportunity, "proposalDeadline"),
     assignmentDate: getISODateString(opportunity, "assignmentDate"),
@@ -81,7 +91,13 @@ test("team-with-us opportunity crud", async () => {
     status: TWUOpportunityStatus.Draft,
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...restOfQuestion }) => restOfQuestion
-    )
+    ),
+    // needs to be converted to number type before going to the db
+    resources: opportunity.resources.map((resource) => ({
+      serviceArea: 2,
+      targetAllocation: resource.targetAllocation,
+      order: resource.order
+    }))
   };
 
   const createRequest = userAppAgent
