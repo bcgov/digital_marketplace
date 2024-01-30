@@ -18,7 +18,8 @@ import { invalid, valid } from "shared/lib/validation";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import {
   arrayFromRange,
-  arrayContainsGreaterThan1Check as isRemovalPermitted
+  arrayContainsGreaterThan1Check as isRemovalPermitted,
+  getStringArray
 } from "shared/lib";
 import * as FormField from "front-end/lib/components/form-field";
 import { getNumberSelectValue } from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
@@ -207,6 +208,8 @@ export function getValues(state: Immutable<State>): Values {
         parseTWUServiceArea(Select.getValue(r.serviceArea)) ??
         TWUServiceArea.FullStackDeveloper,
       targetAllocation: getNumberSelectValue(r.targetAllocation) || 0,
+      mandatorySkills: getStringArray(r, "mandatorySkills"),
+      optionalSkills: getStringArray(r, "optionalSkills"),
       order: order
     });
     return acc;

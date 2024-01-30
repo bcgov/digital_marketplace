@@ -8,7 +8,7 @@ import Link, { emailDest, routeDest } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
-import Skills from "front-end/lib/views/skills";
+// import Skills from "front-end/lib/views/skills";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
@@ -157,8 +157,8 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
   const {
-    mandatorySkills,
-    optionalSkills,
+    // mandatorySkills,
+    // optionalSkills,
     assignmentDate,
     proposalDeadline,
     startDate,
@@ -238,11 +238,11 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       <Row className="mt-3">
         <Col xs="12" sm="6">
           <div className="font-weight-bold mb-2">Mandatory Skills</div>
-          <Skills skills={mandatorySkills} />
+          {/*<Skills skills={mandatorySkills} />*/}
         </Col>
         <Col xs="12" sm="6">
           <div className="font-weight-bold mb-2">Optional Skills</div>
-          <Skills skills={optionalSkills} />
+          {/*<Skills skills={optionalSkills} />*/}
         </Col>
       </Row>
     </div>

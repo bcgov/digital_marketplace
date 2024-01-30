@@ -22,7 +22,7 @@ import Link, {
 import Markdown from "front-end/lib/views/markdown";
 import OpportunityInfo from "front-end/lib/views/opportunity-info";
 import ProgramType from "front-end/lib/views/program-type";
-import Skills from "front-end/lib/views/skills";
+// import Skills from "front-end/lib/views/skills";
 import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
 import React, { Fragment } from "react";
 import { Col, Container, Row } from "reactstrap";
@@ -452,14 +452,14 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
           To submit a proposal for this opportunity, you must possess the
           following skills:
         </p>
-        <Skills skills={opp.mandatorySkills} />
-        {opp.optionalSkills.length ? (
+        {/*<Skills skills={opp.mandatorySkills} />*/}
+        {opp ? (
           <Fragment>
             <p className="mt-3 mb-2">
               Additionally, possessing the following skills would be considered
               a bonus:
             </p>
-            <Skills skills={opp.optionalSkills} />
+            {/*<Skills skills={opp.optionalSkills} />*/}
           </Fragment>
         ) : null}
       </Col>
