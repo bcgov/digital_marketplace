@@ -9,7 +9,7 @@ import { CONTACT_EMAIL } from "shared/config";
 import React from "react";
 import { Emails } from "back-end/lib/mailer";
 import { MAILER_BATCH_SIZE, MAILER_REPLY } from "back-end/config";
-import { unionBy } from "lodash";
+import { lowerCase, startCase, unionBy } from "lodash";
 
 /**
  * Handles the logic for sending two different emails
@@ -190,13 +190,14 @@ export function makeTWUOpportunityInformation(
   opportunity: TWUOpportunity,
   showDueDate = true
 ): templates.DescriptionListProps {
+  const serviceAreas = opportunity.resources.map((resource, index) => ({
+    name: "Service Area ".concat(`${index + 1}`),
+    value: `${startCase(lowerCase(resource.serviceArea))}`
+  }));
   const items = [
     { name: "Type", value: "Team With Us" },
     { name: "Value", value: `$${formatAmount(opportunity.maxBudget)}` },
-    // {
-    //   name: "Service Area",
-    //   value: `${startCase(lowerCase(opportunity.serviceArea))}`
-    // },
+    ...serviceAreas,
     {
       name: "Contract Start Date",
       value: formatDate(opportunity.startDate, false)

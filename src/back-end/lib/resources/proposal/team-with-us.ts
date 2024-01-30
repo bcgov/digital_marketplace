@@ -86,9 +86,9 @@ interface ValidatedDeleteRequestBody {
 }
 /**
  * @typeParam CreateRequestBody - All the information that comes in the request
- * body when a vendor is creating a Team with Us Proposal. SharedCreateRequestBody
- * is an alias defined in this file for CreateRequestBody defined in the 'shared'
- * folder. It is renamed 'CreateRequestBody' here, though redefines 'status' as a
+ * body when a vendor is creating a Team with Us Proposal.
+ * @typeParam SharedCreateRequestBody - is an alias defined in this file for CreateRequestBody
+ * defined in the 'shared' folder. It is renamed 'CreateRequestBody' here, though redefines 'status' as a
  * string instead of an enum of statuses.
  */
 type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
@@ -105,13 +105,16 @@ const routeNamespace = "proposals/team-with-us";
  * @remarks
  *
  * validates that the TWU opp id exists in the database, checks permissions of
- * the user, if the request comes with the following parameters set:
- *   - request.query.opportunity=<string> = (an opportunity number) it will
+ * the user, if the request comes with the following parameters set.
+ *
+ * @example
+ *
+ * - request.query.opportunity=<string> = (an opportunity number) it will
  *   return all proposals associated with that opportunity
- *   - request.query.organizationProposals=<string> = it will return a response
+ * - request.query.organizationProposals=<string> = it will return a response
  *   for all proposals associated with the organizations the requester has
  *   access to.
- *   - default behavior is to return the requester\'s own proposals
+ * - default behavior is to return the requester\'s own proposals
  *
  * @param connection
  */

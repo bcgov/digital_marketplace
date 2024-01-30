@@ -188,9 +188,9 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
 const create: crud.Create<
   Session,
   db.Connection,
-  CreateRequestBody, // enum
-  ValidatedCreateRequestBody, // number
-  CreateValidationErrors // enum
+  CreateRequestBody, // serviceArea = enum
+  ValidatedCreateRequestBody, // serviceArea = number
+  CreateValidationErrors // serviceArea = enum
 > = (connection: db.Connection) => {
   return {
     // obtain values from each part of the incoming request body
@@ -490,9 +490,9 @@ const create: crud.Create<
 const update: crud.Update<
   Session,
   db.Connection,
-  UpdateRequestBody, // enum
-  ValidatedUpdateRequestBody, // number
-  UpdateValidationErrors // enum
+  UpdateRequestBody, // serviceArea = enum
+  ValidatedUpdateRequestBody, // serviceArea = number
+  UpdateValidationErrors // serviceArea = enum
 > = (connection: db.Connection) => {
   return {
     async parseRequestBody(request) {
@@ -550,8 +550,7 @@ const update: crud.Update<
           notFound: ["The specified opportunity does not exist."]
         });
       }
-      // maybe here be dragons
-      // resources back as an enum
+
       const twuOpportunity = validatedTWUOpportunity.value;
 
       if (
@@ -803,7 +802,6 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
-          // convert enum values to numeric
 
           // Perform validation to ensure it's ready for publishing
           if (
