@@ -552,7 +552,6 @@ const update: crud.Update<
             connection,
             request.body.value
           );
-          console.log(validatedServiceAreas);
           if (isInvalid<string[][]>(validatedServiceAreas)) {
             return invalid({
               organization: adt(

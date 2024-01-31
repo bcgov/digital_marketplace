@@ -6,7 +6,6 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
-import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -18,11 +17,9 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
 import * as Resources from "front-end/lib/pages/opportunity/team-with-us/lib/components/resources";
-import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { getNumber } from "shared/lib";
-import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
 import {
   canTWUOpportunityDetailsBeEdited,
@@ -42,7 +39,6 @@ import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import {
   invalid,
-  mapInvalid,
   mapValid,
   valid,
   isValid as isValid_,
@@ -84,8 +80,6 @@ export interface State {
   maxBudget: Immutable<NumberField.State>;
   // Resource Details Tab
   resources: Immutable<Resources.State>;
-  mandatorySkills: Immutable<SelectMulti.State>;
-  optionalSkills: Immutable<SelectMulti.State>;
   // Description Tab
   description: Immutable<RichMarkdownEditor.State>;
   // Team Questions Tab
@@ -114,8 +108,6 @@ export type Msg =
   | ADT<"maxBudget", NumberField.Msg>
   // Resource Details Tab
   | ADT<"resources", Resources.Msg>
-  | ADT<"mandatorySkills", SelectMulti.Msg>
-  | ADT<"optionalSkills", SelectMulti.Msg>
   // Description Tab
   | ADT<"description", RichMarkdownEditor.Msg>
   // Team Questions Tab
@@ -323,44 +315,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [resourcesState, resourcesCmds] = Resources.init({
     resources: opportunity?.resources || []
   });
-  const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
-    errors: [],
-    validate: (v) => {
-      const strings = v.map(({ value }) => value);
-      const validated0 = genericValidation.validateMandatorySkills(strings);
-      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
-      return mapInvalid(validated1, (es) => flatten(es));
-    },
-    child: {
-      value: [],
-      // opportunity?.mandatorySkills.map((value) => ({
-      //   value,
-      //   label: value
-      // })) || [],
-      id: "twu-opportunity-mandatory-skills",
-      creatable: true,
-      options: SelectMulti.stringsToOptions(SKILLS)
-    }
-  });
-  const [optionalSkillsState, optionalSkillsCmds] = SelectMulti.init({
-    errors: [],
-    validate: (v) => {
-      const strings = v.map(({ value }) => value);
-      const validated0 = genericValidation.validateOptionalSkills(strings);
-      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
-      return mapInvalid(validated1, (es) => flatten(es));
-    },
-    child: {
-      value: [],
-      // opportunity?.optionalSkills.map((value) => ({
-      //   value,
-      //   label: value
-      // })) || [],
-      id: "twu-opportunity-optional-skills",
-      creatable: true,
-      options: SelectMulti.stringsToOptions(SKILLS)
-    }
-  });
   const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
     errors: [],
     validate: genericValidation.validateDescription,
@@ -448,8 +402,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       completionDate: immutable(completionDateState),
       maxBudget: immutable(maxBudgetState),
       resources: immutable(resourcesState),
-      mandatorySkills: immutable(mandatorySkillsState),
-      optionalSkills: immutable(optionalSkillsState),
       description: immutable(descriptionState),
       resourceQuestions: immutable(resourceQuestionsState),
       questionsWeight: immutable(questionsWeightState),
@@ -481,12 +433,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
       ...component_.cmd.mapMany(resourcesCmds, (msg) => adt("resources", msg)),
-      ...component_.cmd.mapMany(mandatorySkillsCmds, (msg) =>
-        adt("mandatorySkills", msg)
-      ),
-      ...component_.cmd.mapMany(optionalSkillsCmds, (msg) =>
-        adt("optionalSkills", msg)
-      ),
       ...component_.cmd.mapMany(descriptionCmds, (msg) =>
         adt("description", msg)
       ),
@@ -545,12 +491,6 @@ export function setErrors(
       .update("resources", (s) =>
         Resources.setErrors(s, errors.resources || [])
       )
-      .update("mandatorySkills", (s) =>
-        FormField.setErrors(s, flatten(errors.mandatorySkills || []))
-      )
-      .update("optionalSkills", (s) =>
-        FormField.setErrors(s, flatten(errors.optionalSkills || []))
-      )
       .update("description", (s) =>
         FormField.setErrors(s, errors.description || [])
       )
@@ -582,8 +522,6 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("completionDate", (s) => FormField.validate(s))
     .update("maxBudget", (s) => FormField.validate(s))
     .update("resources", (s) => Resources.validate(s))
-    .update("mandatorySkills", (s) => FormField.validate(s))
-    .update("optionalSkills", (s) => FormField.validate(s))
     .update("description", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s))
     .update("questionsWeight", (s) => FormField.validate(s))
@@ -622,11 +560,7 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
  * @param state
  */
 export function isResourceDetailsTabValid(state: Immutable<State>): boolean {
-  return (
-    Resources.isValid(state.resources) &&
-    FormField.isValid(state.mandatorySkills) &&
-    FormField.isValid(state.optionalSkills)
-  );
+  return Resources.isValid(state.resources);
 }
 
 /**
@@ -735,8 +669,6 @@ export function getValues(state: Immutable<State>): Values {
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
     resources,
-    // mandatorySkills: SelectMulti.getValueAsStrings(state.mandatorySkills),
-    // optionalSkills: SelectMulti.getValueAsStrings(state.optionalSkills),
     description: FormField.getValue(state.description),
     questionsWeight,
     challengeWeight,
@@ -1067,24 +999,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("resources", value)
       });
 
-    case "mandatorySkills":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["mandatorySkills"],
-        childUpdate: SelectMulti.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("mandatorySkills", value)
-      });
-
-    case "optionalSkills":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["optionalSkills"],
-        childUpdate: SelectMulti.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("optionalSkills", value)
-      });
-
     case "description":
       return component_.base.updateChild({
         state,
@@ -1337,34 +1251,6 @@ const ResourceDetailsView: component_.base.View<Props> = ({
             adt("resources" as const, value)
           )}
           disabled={disabled}
-        />
-      </Col>
-      <Col xs="12">
-        <SelectMulti.view
-          extraChildProps={{}}
-          label="Mandatory Skills"
-          placeholder="Mandatory Skills"
-          help="Start typing to search for a skill from our list or to create your own skill"
-          required
-          disabled={disabled}
-          state={state.mandatorySkills}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("mandatorySkills" as const, value)
-          )}
-        />
-      </Col>
-
-      <Col xs="12">
-        <SelectMulti.view
-          extraChildProps={{}}
-          label="Optional Skills"
-          placeholder="Optional Skills"
-          help="Select the skill(s) from the list provided that the successful proponent may possess that would be considered a bonus, or nice-to-have, but is/are not required in order to be awarded the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below."
-          disabled={disabled}
-          state={state.optionalSkills}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("optionalSkills" as const, value)
-          )}
         />
       </Col>
     </Row>

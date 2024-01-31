@@ -8,25 +8,36 @@ import {
   Immutable
 } from "front-end/lib/framework";
 import * as Select from "front-end/lib/components/form-field/select";
+import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import {
   CreateTWUResourceValidationErrors,
   TWUServiceArea,
   TWUResource,
   parseTWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
-import { invalid, valid } from "shared/lib/validation";
+import {
+  Validation,
+  invalid,
+  mapInvalid,
+  mapValid,
+  valid
+} from "shared/lib/validation";
+import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import {
   arrayFromRange,
-  arrayContainsGreaterThan1Check as isRemovalPermitted,
-  getStringArray
+  arrayContainsGreaterThan1Check as isRemovalPermitted
 } from "shared/lib";
 import * as FormField from "front-end/lib/components/form-field";
 import { getNumberSelectValue } from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
+import { flatten } from "lodash";
+import SKILLS from "shared/lib/data/skills";
 
 interface Resource {
   serviceArea: Immutable<Select.State>;
   targetAllocation: Immutable<Select.State>;
+  mandatorySkills: Immutable<SelectMulti.State>;
+  optionalSkills: Immutable<SelectMulti.State>;
   removeable: boolean;
 }
 
@@ -38,7 +49,9 @@ export type Msg =
   | ADT<"addResource">
   | ADT<"deleteResource", number>
   | ADT<"serviceArea", { childMsg: Select.Msg; rIndex: number }>
-  | ADT<"targetAllocation", { childMsg: Select.Msg; rIndex: number }>;
+  | ADT<"targetAllocation", { childMsg: Select.Msg; rIndex: number }>
+  | ADT<"mandatorySkills", { childMsg: SelectMulti.Msg; rIndex: number }>
+  | ADT<"optionalSkills", { childMsg: SelectMulti.Msg; rIndex: number }>;
 
 export interface Params {
   resources: TWUResource[];
@@ -68,6 +81,7 @@ function createResource(
   rIndex: number,
   resource?: TWUResource
 ): component_.base.InitReturnValue<Resource, Msg> {
+  const idNamespace = String(Math.random());
   /**
    * Sets a single key/value pair for service area, or null
    *
@@ -97,7 +111,7 @@ function createResource(
     },
     child: {
       value: serviceArea,
-      id: "twu-service-area",
+      id: `${idNamespace}-twu-resource-service-area`,
       options: Select.objectToOptions(TWUServiceArea)
     }
   });
@@ -111,7 +125,7 @@ function createResource(
     },
     child: {
       value: selectedTargetAllocationOption ?? null,
-      id: "twu-opportunity-target-allocation",
+      id: `${idNamespace}-twu-resource-target-allocation`,
       options: adt(
         "options",
         [
@@ -127,11 +141,50 @@ function createResource(
       )
     }
   });
-
+  const [mandatorySkillsState, mandatorySkillsCmds] = SelectMulti.init({
+    errors: [],
+    validate: (v) => {
+      const strings = v.map(({ value }) => value);
+      const validated0 = genericValidation.validateMandatorySkills(strings);
+      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
+      return mapInvalid(validated1, (es) => flatten(es));
+    },
+    child: {
+      value:
+        resource?.mandatorySkills.map((value) => ({
+          value,
+          label: value
+        })) ?? [],
+      id: `${idNamespace}-twu-resource-twu-mandatory-skills`,
+      creatable: true,
+      options: SelectMulti.stringsToOptions(SKILLS)
+    }
+  });
+  const [optionalSkillsState, optionalSkillsCmds] = SelectMulti.init({
+    errors: [],
+    validate: (v) => {
+      const strings = v.map(({ value }) => value);
+      const validated0 = genericValidation.validateOptionalSkills(strings);
+      const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
+      return mapInvalid(validated1, (es) => flatten(es));
+    },
+    child: {
+      value:
+        resource?.optionalSkills.map((value) => ({
+          value,
+          label: value
+        })) ?? [],
+      id: `${idNamespace}-twu-resource-optional-skills`,
+      creatable: true,
+      options: SelectMulti.stringsToOptions(SKILLS)
+    }
+  });
   return [
     {
       serviceArea: immutable(serviceAreaState),
       targetAllocation: immutable(targetAllocationState),
+      mandatorySkills: immutable(mandatorySkillsState),
+      optionalSkills: immutable(optionalSkillsState),
       removeable: true
     },
     [
@@ -146,6 +199,14 @@ function createResource(
             childMsg,
             rIndex
           }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        mandatorySkillsCmds,
+        (childMsg) => adt("mandatorySkills", { childMsg, rIndex }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        optionalSkillsCmds,
+        (childMsg) => adt("optionalSkills", { childMsg, rIndex }) as Msg
       )
     ]
   ];
@@ -166,11 +227,22 @@ export function setErrors(
           s as Immutable<Select.State>,
           e.targetAllocation || []
         )
+      )
+      .updateIn(["resources", i, "mandatorySkills"], (s) =>
+        FormField.setErrors(
+          s as Immutable<SelectMulti.State>,
+          flatten(e.mandatorySkills ?? [])
+        )
+      )
+      .updateIn(["resources", i, "optionalSkills"], (s) =>
+        FormField.setErrors(
+          s as Immutable<SelectMulti.State>,
+          flatten(e.optionalSkills ?? [])
+        )
       );
   }, state);
 }
 
-// TODO: confirm this is working as expected
 export function validate(state: Immutable<State>): Immutable<State> {
   return state.resources.reduce((acc, r, i) => {
     return acc
@@ -179,6 +251,12 @@ export function validate(state: Immutable<State>): Immutable<State> {
       )
       .updateIn(["resources", i, "targetAllocation"], (s) =>
         FormField.validate(s as Immutable<Select.State>)
+      )
+      .updateIn(["resources", i, "mandatorySkills"], (s) =>
+        FormField.validate(s as Immutable<SelectMulti.State>)
+      )
+      .updateIn(["resources", i, "optionalSkills"], (s) =>
+        FormField.validate(s as Immutable<SelectMulti.State>)
       );
   }, state);
 }
@@ -191,7 +269,9 @@ export function isValid(state: Immutable<State>): boolean {
     return (
       acc &&
       FormField.isValid(r.serviceArea) &&
-      FormField.isValid(r.targetAllocation)
+      FormField.isValid(r.targetAllocation) &&
+      FormField.isValid(r.mandatorySkills) &&
+      FormField.isValid(r.optionalSkills)
     );
   }, true as boolean);
 }
@@ -208,8 +288,8 @@ export function getValues(state: Immutable<State>): Values {
         parseTWUServiceArea(Select.getValue(r.serviceArea)) ??
         TWUServiceArea.FullStackDeveloper,
       targetAllocation: getNumberSelectValue(r.targetAllocation) || 0,
-      mandatorySkills: getStringArray(r, "mandatorySkills"),
-      optionalSkills: getStringArray(r, "optionalSkills"),
+      mandatorySkills: SelectMulti.getValueAsStrings(r.mandatorySkills),
+      optionalSkills: SelectMulti.getValueAsStrings(r.optionalSkills),
       order: order
     });
     return acc;
@@ -289,15 +369,38 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
 
     case "targetAllocation": {
-      const componentMessage = msg.value.childMsg;
-      const rIndex = msg.value.rIndex;
+      const { childMsg, rIndex } = msg.value;
       return component_.base.updateChild({
         state,
         childStatePath: ["resources", `${rIndex}`, "targetAllocation"],
         childUpdate: Select.update,
-        childMsg: componentMessage,
+        childMsg,
         mapChildMsg: (value) =>
           adt("targetAllocation", { rIndex, childMsg: value })
+      });
+    }
+
+    case "mandatorySkills": {
+      const { childMsg, rIndex } = msg.value;
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["resources", `${rIndex}`, "mandatorySkills"],
+        childUpdate: SelectMulti.update,
+        childMsg,
+        mapChildMsg: (value) =>
+          adt("mandatorySkills", { rIndex, childMsg: value })
+      });
+    }
+
+    case "optionalSkills": {
+      const { childMsg, rIndex } = msg.value;
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["resources", `${rIndex}`, "optionalSkills"],
+        childUpdate: SelectMulti.update,
+        childMsg,
+        mapChildMsg: (value) =>
+          adt("optionalSkills", { rIndex, childMsg: value })
       });
     }
   }
@@ -365,6 +468,38 @@ const ResourceView: component_.base.View<ResourceViewProps> = (props) => {
                 childMsg: value,
                 rIndex: index
               })
+            )}
+          />
+        </Col>
+
+        <Col xs="12">
+          <SelectMulti.view
+            extraChildProps={{}}
+            label="Mandatory Skills"
+            placeholder="Mandatory Skills"
+            help="Start typing to search for a skill from our list or to create your own skill"
+            required
+            disabled={disabled}
+            state={state.mandatorySkills}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("mandatorySkills" as const, {
+                childMsg: value,
+                rIndex: index
+              })
+            )}
+          />
+        </Col>
+
+        <Col xs="12">
+          <SelectMulti.view
+            extraChildProps={{}}
+            label="Optional Skills"
+            placeholder="Optional Skills"
+            help="Select the skill(s) from the list provided that the successful proponent may possess that would be considered a bonus, or nice-to-have, but is/are not required in order to be awarded the opportunity. If you do not see the skill(s) that you are looking for, you may create a new skill by entering it into the field below."
+            disabled={disabled}
+            state={state.optionalSkills}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("optionalSkills" as const, { childMsg: value, rIndex: index })
             )}
           />
         </Col>
