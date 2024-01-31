@@ -130,12 +130,18 @@ function buildCreateTWUOpportunityParams(
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
-    resources: opportunity.resources.map((resource) => ({
-      serviceArea: resource.serviceArea as string,
-      targetAllocation: resource.targetAllocation,
-      mandatorySkills: resource.mandatorySkills,
-      optionalSkills: resource.optionalSkills,
-      order: resource.order
+    resources: [...Array(faker.number.int({ min: 0, max: 3 }))].map((_, i) => ({
+      serviceArea: 1,
+      targetAllocation: faker.number.int({ min: 1, max: 100 }),
+      mandatorySkills: faker.helpers.arrayElements(SKILLS, {
+        min: 1,
+        max: 6
+      }),
+      optionalSkills: faker.helpers.arrayElements(SKILLS, {
+        min: 0,
+        max: 6
+      }),
+      order: i
     })),
     ...overrides
   };

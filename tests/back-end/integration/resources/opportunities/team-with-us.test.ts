@@ -76,8 +76,7 @@ test("team-with-us opportunity crud", async () => {
       "description",
       "questionsWeight",
       "challengeWeight",
-      "priceWeight",
-      "resources"
+      "priceWeight"
     ]),
     proposalDeadline: getISODateString(opportunity, "proposalDeadline"),
     assignmentDate: getISODateString(opportunity, "assignmentDate"),
