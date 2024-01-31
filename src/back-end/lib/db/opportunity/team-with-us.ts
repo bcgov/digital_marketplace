@@ -226,7 +226,7 @@ async function rawTWUOpportunityToTWUOpportunity(
     await readManyResources(connection, raw.versionId ?? ""),
     undefined
   );
-  // console.log("LINE 219 rawTWUOpportunityToTWUOpportunity: ", resources);
+
   if (!addenda || !resourceQuestions || !resources) {
     throw new Error("unable to process opportunity");
   }
@@ -474,9 +474,6 @@ export function generateTWUOpportunityQuery(
         )
       );
     })
-    .join("twuResources as tr", function () {
-      this.on("tr.opportunityVersion", "=", "versions.id");
-    })
     .select<RawTWUOpportunitySlim[]>(
       "opportunities.id",
       "opportunities.createdAt",
@@ -495,7 +492,6 @@ export function generateTWUOpportunityQuery(
       "versions.maxBudget",
       "versions.proposalDeadline",
       "statuses.status"
-      // "sa.serviceArea"
     );
 
   if (full) {
@@ -1026,22 +1022,17 @@ export const createTWUOpportunity = tryDb<
       throw new Error("unable to create opportunity version");
     }
 
+    // Create resources
     for (const twuResource of opportunity.resources) {
       await connection<TWUResourceRecord & { opportunityVersion: Id }>(
         "twuResources"
       )
         .transacting(trx)
-        .insert(
-          {
-            ...twuResource,
-            id: generateUuid(),
-            opportunityVersion: opportunityVersionRecord.id
-          },
-          "*"
-        );
-      if (!twuResource) {
-        throw new Error("unable to create resource");
-      }
+        .insert({
+          ...twuResource,
+          id: generateUuid(),
+          opportunityVersion: opportunityVersionRecord.id
+        });
     }
 
     // Create initial opportunity status

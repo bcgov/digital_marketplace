@@ -278,8 +278,14 @@ async function validateTWUResource(
     return invalid({
       serviceArea: getInvalidValue(validatedServiceArea, undefined),
       targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
-      mandatorySkills: getInvalidValue(validatedMandatorySkills, undefined),
-      optionalSkills: getInvalidValue(validatedOptionalSkills, undefined),
+      mandatorySkills: getInvalidValue<string[][], undefined>(
+        validatedMandatorySkills,
+        undefined
+      ),
+      optionalSkills: getInvalidValue<string[][], undefined>(
+        validatedOptionalSkills,
+        undefined
+      ),
       order: getInvalidValue(validatedOrder, undefined)
     } as CreateTWUResourceValidationErrors);
   }
