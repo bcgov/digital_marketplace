@@ -461,13 +461,13 @@ const InfoDetailsHeading: component_.base.View<{
 function resourceTableHeadCells(): Table.HeadCells {
   return [
     {
-      children: "Resource Type",
+      children: "Resource",
       className: "text-nowrap",
       style: { width: "100%" }
     },
     {
       children: "Allocation %",
-      className: "text-center",
+      className: "text-nowrap text-center",
       style: { width: "0px" }
     }
   ];
@@ -511,7 +511,10 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({
         <h3 className="mb-0">Details</h3>
       </Col>
       <Col xs="12" className="mt-5">
-        <InfoDetailsHeading icon="laptop-code-outline" text="Service Area(s)" />
+        <InfoDetailsHeading
+          icon="laptop-code-outline"
+          text={`Service Area${opp.resources.length ? "s" : ""}`}
+        />
         <ResourcesTable state={state} dispatch={dispatch} />
       </Col>
       <Col xs="12" className="mt-5">
