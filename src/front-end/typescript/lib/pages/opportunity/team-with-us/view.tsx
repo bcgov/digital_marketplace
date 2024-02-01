@@ -5,9 +5,14 @@ import {
   makeStopLoading
 } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
+import * as Table from "front-end/lib/components/table";
 import { AddendaList } from "front-end/lib/components/addenda";
 import { AttachmentList } from "front-end/lib/components/attachments";
-import { component as component_ } from "front-end/lib/framework";
+import {
+  Immutable,
+  immutable,
+  component as component_
+} from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { OpportunityBadge } from "front-end/lib/views/badge";
 import DateMetadata from "front-end/lib/views/date-metadata";
@@ -62,6 +67,7 @@ export interface State {
   routePath: string;
   competitionRulesContent: string;
   qualification: Qualification;
+  table: Immutable<Table.State>;
 }
 
 export type InnerMsg =
@@ -78,7 +84,8 @@ export type InnerMsg =
     >
   | ADT<"toggleWatch">
   | ADT<"onToggleWatchResponse", boolean>
-  | ADT<"setActiveInfoTab", InfoTab>;
+  | ADT<"setActiveInfoTab", InfoTab>
+  | ADT<"table", Table.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -95,6 +102,9 @@ const init: component_.page.Init<
 > = ({ routeParams, shared, routePath }) => {
   const { opportunityId } = routeParams;
   const viewerUser = shared.session?.user || null;
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "resources-table"
+  });
   return [
     {
       toggleWatchLoading: 0,
@@ -104,7 +114,8 @@ const init: component_.page.Init<
       activeInfoTab: "details",
       routePath,
       competitionRulesContent: "",
-      qualification: "notQualified"
+      qualification: "notQualified",
+      table: immutable(tableState)
     },
     [
       api.counters.update<Msg>()(
@@ -138,7 +149,8 @@ const init: component_.page.Init<
             competitionRulesContentResponse,
             organizationsResponse
           ]) as Msg
-      )
+      ),
+      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
     ]
   ];
 };
@@ -245,6 +257,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       }
       return [stopToggleWatchLoading(state), []];
     }
+    case "table":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["table", "state"],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => ({ tag: "table", value })
+      });
     default:
       return [state, []];
   }
@@ -438,13 +458,61 @@ const InfoDetailsHeading: component_.base.View<{
   );
 };
 
-const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
+function resourceTableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: "Resource Type",
+      className: "text-nowrap",
+      style: { width: "100%" }
+    },
+    {
+      children: "Allocation %",
+      className: "text-center",
+      style: { width: "0px" }
+    }
+  ];
+}
+
+function resourceTableBodyRows(state: Immutable<State>): Table.BodyRows {
+  return (
+    state.opportunity?.resources.map(({ serviceArea, targetAllocation }) => [
+      { children: startCase(lowerCase(serviceArea)) },
+      { children: targetAllocation.toString(), className: "text-center" }
+    ]) ?? []
+  );
+}
+
+const ResourcesTable: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
+  return (
+    <Table.view
+      headCells={resourceTableHeadCells()}
+      bodyRows={resourceTableBodyRows(state)}
+      state={state.table}
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+        adt("table" as const, msg)
+      )}
+      hover={false}
+    />
+  );
+};
+
+const InfoDetails: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const opp = state.opportunity;
   if (!opp) return null;
   return (
     <Row>
       <Col xs="12">
         <h3 className="mb-0">Details</h3>
+      </Col>
+      <Col xs="12" className="mt-5">
+        <InfoDetailsHeading icon="laptop-code-outline" text="Service Area(s)" />
+        <ResourcesTable state={state} dispatch={dispatch} />
       </Col>
       <Col xs="12" className="mt-5">
         <InfoDetailsHeading icon="toolbox-outline" text="Required Skills" />
