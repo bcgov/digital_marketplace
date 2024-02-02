@@ -28,11 +28,14 @@ import {
   CreateTWUProposalTeamMemberValidationErrors,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
+import { TWUResource } from "shared/lib/resources/opportunity/team-with-us";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 export interface Params {
   orgId?: Id;
   affiliations: AffiliationMember[];
   proposalTeam: TWUProposalTeamMember[];
+  resources: TWUResource[];
 }
 
 type ModalId = ADT<"addTeamMembers"> | ADT<"viewTeamMember", Member>;
@@ -247,8 +250,24 @@ function membersTableHeadCells(): Table.HeadCells {
       children: "Team Member",
       className: "text-nowrap",
       style: {
-        width: "100%",
+        width: "50%",
         minWidth: "240px"
+      }
+    },
+    {
+      children: "Service Area",
+      className: "text-nowrap",
+      style: {
+        width: "25%",
+        minWidth: "120px"
+      }
+    },
+    {
+      children: "Target Allocation",
+      className: "text-nowrap",
+      style: {
+        width: "25%",
+        minWidth: "120px"
       }
     },
     {
@@ -264,38 +283,76 @@ interface MemberTableBodyRowsParams
   extends Pick<Props, "dispatch" | "disabled"> {
   idNamespace: string;
   addedMembers: Member[];
+  resources: TWUResource[];
 }
 
+/**
+ * Create a table where the number of rows is dynamically set based on the number of service areas available
+ * in the opportunity.
+ *
+ * @param params
+ */
 function membersTableBodyRows(
   params: MemberTableBodyRowsParams
 ): Table.BodyRows {
-  const { addedMembers, dispatch, disabled } = params;
-  return addedMembers.map((m) => [
+  const { addedMembers, resources, dispatch, disabled } = params;
+  return resources.map((resource, index) => [
     {
-      children: (
+      // TODO: change numerical value of index which is dynamically set to something more stable, such as
+      //  resource.order or addedMembers.index - Desired end state is to have a member associated with a specific
+      //  resource
+      children: addedMembers[index] ? (
         <div className="d-flex align-items-center flex-nowrap">
           <Link
             onClick={() =>
-              dispatch(adt("showModal", adt("viewTeamMember" as const, m)))
+              dispatch(
+                adt(
+                  "showModal",
+                  adt("viewTeamMember" as const, addedMembers[index])
+                )
+              )
             }
-            symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
-            {m.user.name}
+            symbol_={leftPlacement(
+              imageLinkSymbol(userAvatarPath(addedMembers[index].user))
+            )}>
+            {addedMembers[index].user.name}
           </Link>
-          {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
+          {memberIsPending(addedMembers[index]) ? (
+            <PendingBadge className="ml-3" />
+          ) : null}
+        </div>
+      ) : (
+        <p>Please select a Team Member</p>
+      )
+    },
+    {
+      children: (
+        <div className="d-flex align-items-center flex-nowrap">
+          {twuServiceAreaToTitleCase(resources[resource.order].serviceArea)}
         </div>
       )
     },
     {
-      children: disabled ? null : (
-        <Link
-          button
-          size="sm"
-          symbol_={leftPlacement(iconLinkSymbol("user-times"))}
-          onClick={() => dispatch(adt("removeTeamMember", m.user.id))}
-          color="danger">
-          Remove
-        </Link>
+      children: (
+        <div className="d-flex align-items-center flex-nowrap">
+          {resources[resource.order].targetAllocation}
+        </div>
       )
+    },
+    {
+      children:
+        disabled || !addedMembers[index] ? null : (
+          <Link
+            button
+            size="sm"
+            symbol_={leftPlacement(iconLinkSymbol("user-times"))}
+            onClick={() =>
+              dispatch(adt("removeTeamMember", addedMembers[index].user.id))
+            }
+            color="danger">
+            Remove
+          </Link>
+        )
     }
   ]);
 }
@@ -315,7 +372,7 @@ export const view: component_.base.View<Props> = ({
           only consist of confirmed (non-pending) members of the selected
           organization.
         </p>
-        {disabled ? null : (
+        {disabled || addedMembers.length === state.resources.length ? null : (
           <Link
             button
             outline
@@ -331,7 +388,7 @@ export const view: component_.base.View<Props> = ({
           </Link>
         )}
       </Col>
-      {addedMembers.length ? (
+      {state.resources.length ? (
         <Col xs="12" className="mt-4">
           <Table.view
             headCells={membersTableHeadCells()}
@@ -339,7 +396,8 @@ export const view: component_.base.View<Props> = ({
               addedMembers,
               dispatch,
               disabled,
-              idNamespace: state.idNamespace
+              idNamespace: state.idNamespace,
+              resources: state.resources
             })}
             state={state.membersTable}
             dispatch={component_.base.mapDispatch(dispatch, (v) =>

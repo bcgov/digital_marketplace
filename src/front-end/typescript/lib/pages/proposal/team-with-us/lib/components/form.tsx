@@ -50,6 +50,7 @@ import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
+// import * as Table from "front-end/lib/components/table";
 
 export type TabId =
   | "Evaluation"
@@ -191,7 +192,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [teamState, teamCmds] = Team.init({
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposalTeam: proposal?.team || []
+    proposalTeam: proposal?.team || [],
+    resources: opportunity.resources
   });
 
   const [hourlyRateState, hourlyRateCmds] = NumberField.init({
@@ -435,7 +437,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const [teamState, teamCmds] = Team.init({
         orgId: state.proposal?.organization?.id,
         affiliations,
-        proposalTeam: state.proposal?.team || []
+        proposalTeam: state.proposal?.team || [],
+        resources: state.opportunity.resources
       });
       return [
         state.set("team", immutable(teamState)),
@@ -746,6 +749,20 @@ const PricingView: component_.base.View<Props> = ({
       </Row>
       <Row>
         <Col xs="12" md="6">
+          {/*<Table.view*/}
+          {/*  headCells={pricingTableHeadCells()}*/}
+          {/*  bodyRows={pricingTableBodyRows({*/}
+          {/*    addedMembers,*/}
+          {/*    dispatch,*/}
+          {/*    disabled,*/}
+          {/*    idNamespace: state.idNamespace,*/}
+          {/*    resources: state.resources,*/}
+          {/*  })}*/}
+          {/*  state={state.pricingTable}*/}
+          {/*  dispatch={component_.base.mapDispatch(dispatch, (v) =>*/}
+          {/*    adt("pricingTable" as const, v)*/}
+          {/*  )}*/}
+          {/*/>*/}
           <NumberField.view
             disabled={disabled}
             extraChildProps={{ prefix: "$" }}

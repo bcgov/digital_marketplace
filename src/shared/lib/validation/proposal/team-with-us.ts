@@ -8,7 +8,6 @@ import {
 import {
   doesOrganizationProvideServiceAreas,
   Organization
-  // doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
   CreateTWUProposalStatus,

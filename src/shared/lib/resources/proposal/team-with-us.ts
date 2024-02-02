@@ -202,6 +202,7 @@ export interface TWUProposalTeamMember {
   member: UserSlim;
   idpUsername: string;
   hourlyRate: number;
+  // order?: number;
 }
 
 export interface CreateValidationErrors extends BodyWithErrors {
