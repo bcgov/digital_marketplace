@@ -8,7 +8,7 @@ import Link, { emailDest, routeDest } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
-// import Skills from "front-end/lib/views/skills";
+import Skills from "front-end/lib/views/skills";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
@@ -18,6 +18,7 @@ import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 // import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import { map } from "lodash";
+import { aggregateResourceSkills } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -157,14 +158,10 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
   const {
-    // mandatorySkills,
-    // optionalSkills,
     assignmentDate,
     proposalDeadline,
     startDate,
     completionDate,
-    // serviceArea,
-    // targetAllocation,
     maxBudget,
     location
   } = opportunity;
@@ -218,6 +215,8 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
     })
   );
 
+  const skills = aggregateResourceSkills(opportunity);
+
   return (
     <div className="mt-5 pt-5 border-top">
       <Row>
@@ -238,11 +237,11 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       <Row className="mt-3">
         <Col xs="12" sm="6">
           <div className="font-weight-bold mb-2">Mandatory Skills</div>
-          {/*<Skills skills={mandatorySkills} />*/}
+          <Skills skills={skills.mandatory} />
         </Col>
         <Col xs="12" sm="6">
           <div className="font-weight-bold mb-2">Optional Skills</div>
-          {/*<Skills skills={optionalSkills} />*/}
+          <Skills skills={skills.optional} />
         </Col>
       </Row>
     </div>
