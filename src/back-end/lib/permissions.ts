@@ -20,6 +20,7 @@ import {
 import { Affiliation } from "shared/lib/resources/affiliation";
 import {
   CWUOpportunity,
+  CWUOpportunityStatus,
   doesCWUOpportunityStatusAllowGovToViewProposals
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
@@ -351,12 +352,17 @@ export async function editCWUOpportunity(
 export async function deleteCWUOpportunity(
   connection: Connection,
   session: Session,
-  opportunityId: string
+  opportunityId: string,
+  status: CWUOpportunityStatus
 ): Promise<boolean> {
   return (
-    isAdmin(session) ||
+    (isAdmin(session) &&
+      [CWUOpportunityStatus.Draft, CWUOpportunityStatus.UnderReview].includes(
+        status
+      )) ||
     (session &&
       isGovernment(session) &&
+      status === CWUOpportunityStatus.Draft &&
       (await isCWUOpportunityAuthor(
         connection,
         session.user,
