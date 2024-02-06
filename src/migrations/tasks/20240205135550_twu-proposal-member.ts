@@ -6,18 +6,17 @@ const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export async function up(connection: Knex): Promise<void> {
   /**
-   * Adds a new column to the twuProposalMember table to store the TWUResource
-   * ids
+   * Adds a new column to the twuProposalMember table to store the resource ids
    */
   await connection.schema.alterTable("twuProposalMember", function (table) {
     table
-      .uuid("twuResource")
+      .uuid("resource")
       .references("id")
       .inTable("twuResources")
       .onDelete("CASCADE");
   });
 
-  logger.info("Added twuResource column to twuProposalMember table");
+  logger.info("Added resource column to twuProposalMember table");
 
   /**
    * Obtains records of previously created opportunities and relevant proposals
@@ -44,7 +43,7 @@ export async function up(connection: Knex): Promise<void> {
     );
 
   /**
-   * iterates through the records and updates the new twuResource column in the
+   * iterates through the records and updates the new resource column in the
    * twuProposalMember table with the relevant resourceId. Prior to this point
    * in time, there was one and only one ServiceArea/resourceId per TWU
    * opportunity, so we are guaranteed the resourceId to be correct. This
@@ -58,19 +57,19 @@ export async function up(connection: Knex): Promise<void> {
    */
   for (const record of records) {
     await connection("twuProposalMember")
-      .update({ twuResource: record.id })
+      .update({ resource: record.id })
       .where({ proposal: record.proposal });
   }
 
   logger.info(
-    "Added default data (resource ids) to twuResource column in the twuProposalMember table"
+    "Added default data (resource ids) to resource column in the twuProposalMember table"
   );
 
   /**
    * after data has been added, we can declare that it be NOT NULL
    */
   await connection.schema.alterTable("twuProposalMember", function (table) {
-    table.uuid("twuResource").notNullable().alter();
+    table.uuid("resource").notNullable().alter();
   });
 
   logger.info("Added NOT NULL property to the column");
@@ -78,7 +77,7 @@ export async function up(connection: Knex): Promise<void> {
 
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.alterTable("twuProposalMember", function (table) {
-    table.dropColumn("twuResource");
+    table.dropColumn("resource");
   });
-  logger.info("Dropped twuResource column in the twuProposalMember table");
+  logger.info("Dropped resource column in the twuProposalMember table");
 }
