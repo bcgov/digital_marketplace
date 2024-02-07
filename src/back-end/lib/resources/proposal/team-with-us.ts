@@ -267,7 +267,8 @@ const create: crud.Create<
         resourceQuestionResponses: get(body, "resourceQuestionResponses"),
         team: (Array.isArray(team) ? team : []).map((member) => ({
           member: getString(member, "member"),
-          hourlyRate: getNumber(member, "hourlyRate")
+          hourlyRate: getNumber(member, "hourlyRate"),
+          resource: getString(member, "resource")
         }))
       };
     },
@@ -405,7 +406,8 @@ const create: crud.Create<
           attachments: validatedAttachments.value,
           team: team.map((t) => ({
             member: getString(t, "member"),
-            hourlyRate: getNumber(t, "hourlyRate")
+            hourlyRate: getNumber(t, "hourlyRate"),
+            resource: getString(t, "resource")
           }))
         });
       }
@@ -717,7 +719,8 @@ const update: crud.Update<
                 team: team
                   ? team.map((t) => ({
                       member: getString(t, "member"),
-                      hourlyRate: getNumber<number>(t, "hourlyRate")
+                      hourlyRate: getNumber<number>(t, "hourlyRate"),
+                      resource: getString(t, "resource")
                     }))
                   : []
               })
@@ -830,9 +833,10 @@ const update: crud.Update<
               await validateTWUProposalTeamMembers(
                 connection,
                 validatedTWUProposal.value.team?.map(
-                  ({ member, hourlyRate }) => ({
+                  ({ member, hourlyRate, resource }) => ({
                     member: member.id,
-                    hourlyRate
+                    hourlyRate,
+                    resource
                   })
                 ) ?? [],
                 validatedOrganization.value.id

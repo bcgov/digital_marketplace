@@ -326,7 +326,7 @@ export async function validateTWUResources(
  * organization in the proposal
  *
  * @param connection - database connection
- * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
+ * @param raw - a 'team' object, with 'member', 'hourlyRate' and 'resource' elements
  * @param organization - organization id
  */
 export async function validateTWUProposalTeamMembers(
@@ -354,10 +354,18 @@ export async function validateTWUProposalTeamMembers(
       const validatedHourlyRate = validateTWUHourlyRate(
         getNumber<number>(rawMember, "hourlyRate")
       );
-      if (isValid(validatedMember) && isValid(validatedHourlyRate)) {
+      const validatedResourceId = validateUUID(
+        getString(rawMember, "resource")
+      );
+      if (
+        isValid(validatedMember) &&
+        isValid(validatedHourlyRate) &&
+        isValid(validatedResourceId)
+      ) {
         return valid({
           member: validatedMember.value.id,
-          hourlyRate: validatedHourlyRate.value
+          hourlyRate: validatedHourlyRate.value,
+          resource: validatedResourceId.value
         });
       } else {
         return invalid({
@@ -365,7 +373,8 @@ export async function validateTWUProposalTeamMembers(
             validatedMember,
             undefined
           ),
-          hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+          hourlyRate: getInvalidValue(validatedHourlyRate, undefined),
+          resource: getInvalidValue(validatedResourceId, undefined)
         }) as Validation<
           CreateTWUProposalTeamMemberBody,
           CreateTWUProposalTeamMemberValidationErrors
