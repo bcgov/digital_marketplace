@@ -37,8 +37,7 @@ import { getTWUOpportunityViewsCounterName } from "shared/lib/resources/counter"
 import {
   TWUOpportunity,
   DEFAULT_OPPORTUNITY_TITLE,
-  isTWUOpportunityAcceptingProposals,
-  TWUServiceArea
+  isTWUOpportunityAcceptingProposals
 } from "shared/lib/resources/opportunity/team-with-us";
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 import { isVendor, User, UserType } from "shared/lib/resources/user";
@@ -48,7 +47,7 @@ import { Content } from "shared/lib/resources/content";
 import {
   OrganizationSlim,
   doesOrganizationMeetTWUQualification,
-  doesOrganizationProvideServiceArea
+  doesOrganizationProvideServiceAreas
 } from "shared/lib/resources/organization";
 import { aggregateResourceSkills } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
@@ -206,10 +205,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         (qualification: Qualification, organization) => {
           if (doesOrganizationMeetTWUQualification(organization)) {
             if (
-              doesOrganizationProvideServiceArea(
+              doesOrganizationProvideServiceAreas(
                 organization,
-                // opportunity.serviceArea
-                "FULL_STACK_DEVELOPER" as TWUServiceArea
+                opportunity.resources
               )
             ) {
               return "qualifiedCorrectServiceArea";
@@ -929,8 +927,8 @@ export const component: component_.page.Component<
                     <Link dest={routeDest(adt("learnMoreTWU", null))}>
                       Qualified Supplier
                     </Link>{" "}
-                    for this Service Area in order to submit a proposal to this
-                    opportunity.
+                    for these Service Areas in order to submit a proposal to
+                    this opportunity.
                   </span>
                 )
               });

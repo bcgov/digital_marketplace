@@ -8,7 +8,10 @@ import {
   ReadManyResponseBodyBase
 } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation/index";
-import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  TWUResource,
+  TWUServiceArea
+} from "shared/lib/resources/opportunity/team-with-us";
 import { AffiliationEvent } from "shared/lib/resources/affiliation";
 
 export { ReadManyResponseValidationErrors } from "shared/lib/types";
@@ -149,5 +152,20 @@ export function doesOrganizationProvideServiceArea(
 ): boolean {
   return organization.serviceAreas.some(
     (orgServiceArea) => orgServiceArea.serviceArea === serviceArea
+  );
+}
+
+/**
+ * Returns true if the organization provides all the service areas.
+ *
+ * @param organization
+ * @param resources - array of TWUResources[]
+ */
+export function doesOrganizationProvideServiceAreas(
+  organization: Organization | OrganizationSlim,
+  resources: TWUResource[]
+): boolean {
+  return resources.every((serviceArea) =>
+    doesOrganizationProvideServiceArea(organization, serviceArea.serviceArea)
   );
 }
