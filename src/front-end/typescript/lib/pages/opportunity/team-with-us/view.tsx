@@ -416,8 +416,8 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="calendar"
-                  name="Contract Start Date"
+                  icon="award"
+                  name="Contract Award Date"
                   value={formatDate(opp.assignmentDate)}
                 />
               </Col>
@@ -425,9 +425,9 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="award"
-                  name="Contract Award Date"
-                  value={formatDate(opp.completionDate)}
+                  icon="calendar"
+                  name="Contract Start Date"
+                  value={formatDate(opp.startDate)}
                 />
               </Col>
             </Row>
