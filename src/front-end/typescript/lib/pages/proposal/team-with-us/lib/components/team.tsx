@@ -1,459 +1,424 @@
-import { Route } from "front-end/lib/app/types";
-import * as Table from "front-end/lib/components/table";
+import * as FormField from "front-end/lib/components/form-field";
+import * as Select from "front-end/lib/components/form-field/select";
+import * as NumberField from "front-end/lib/components/form-field/number";
 import {
   immutable,
   Immutable,
   component as component_
 } from "front-end/lib/framework";
-import {
-  makeViewTeamMemberModal,
-  PendingBadge
-} from "front-end/lib/pages/organization/lib/views/team-member";
-import { userAvatarPath } from "front-end/lib/pages/user/lib";
-import Link, {
-  iconLinkSymbol,
-  imageLinkSymbol,
-  leftPlacement,
-  routeDest
-} from "front-end/lib/views/link";
+import { find } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { compareStrings, find } from "shared/lib";
+import { AffiliationMember } from "shared/lib/resources/affiliation";
 import {
-  AffiliationMember,
-  memberIsPending
-} from "shared/lib/resources/affiliation";
-import { adt, ADT, Id } from "shared/lib/types";
-import {
+  CreateTWUProposalTeamMemberBody,
   CreateTWUProposalTeamMemberValidationErrors,
   TWUProposalTeamMember
 } from "shared/lib/resources/proposal/team-with-us";
+import { adt, ADT, Id } from "shared/lib/types";
+import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
+import { compareNumbers } from "shared/lib";
+import { invalid, valid } from "shared/lib/validation";
+import { TWUResource } from "shared/lib/resources/opportunity/team-with-us";
+import { UpdateReturnValue } from "front-end/lib/framework/component/base";
 
 export interface Params {
   orgId?: Id;
   affiliations: AffiliationMember[];
   proposalTeam: TWUProposalTeamMember[];
+  resources: TWUResource[];
 }
 
-type ModalId = ADT<"addTeamMembers"> | ADT<"viewTeamMember", Member>;
+export interface Staff extends AffiliationMember {
+  resource?: Id;
+}
 
-export interface Member extends AffiliationMember {
-  index: number;
-  added: boolean;
-  toBeAdded: boolean;
+export interface TeamMember {
+  resource: TWUResource;
+  member: Immutable<Select.State>;
+  hourlyRate: Immutable<NumberField.State>;
 }
 
 export interface State extends Omit<Params, "affiliations" | "orgId"> {
-  idNamespace: string;
   orgId: Id | null;
-  showModal: ModalId | null;
-  members: Member[];
-  membersTable: Immutable<Table.State>;
+  members: TeamMember[];
+  staff: Staff[];
 }
 
 export type Msg =
-  | ADT<"showModal", ModalId>
-  | ADT<"hideModal">
-  | ADT<"toggleAffiliationToBeAdded", number>
-  | ADT<"addTeamMembers">
-  | ADT<"removeTeamMember", Id>
-  | ADT<"membersTable", Table.Msg>;
+  | ADT<"member", [number, Select.Msg]>
+  | ADT<"hourlyRate", [number, NumberField.Msg]>;
+
+function affiliationsToStaff(
+  affiliations: AffiliationMember[],
+  proposalTeam: TWUProposalTeamMember[]
+): Staff[] {
+  return affiliations.map((a) => {
+    const existingTeamMember = find(
+      proposalTeam,
+      ({ member }) => member.id === a.user.id
+    );
+    return {
+      ...a,
+      resource: existingTeamMember?.resource
+    };
+  });
+}
+
+function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
+  return adt(
+    "options",
+    staff
+      .filter((s) => {
+        return !s.resource;
+      })
+      .map(({ user: { name, id } }) => ({
+        label: name,
+        value: id
+      }))
+  );
+}
 
 /**
  * Compares two tuples of users, existing users and users affiliated with an
  * organization.
  *
- * @param affiliations
+ * @param staff
  * @param existingMembers
  * @returns - one tuple of members
  */
-function affiliationsToMembers(
-  affiliations: AffiliationMember[],
+function initTeam(
+  resources: TWUResource[],
+  staff: Staff[],
   existingMembers: TWUProposalTeamMember[]
-): Member[] {
-  return affiliations
-    .map((a, index) => {
+): [TeamMember, component_.Cmd<Msg>[]][] {
+  return resources
+    .map((r, index) => {
       const existingTeamMember = find(
         existingMembers,
-        ({ member }) => member.id === a.user.id
+        ({ resource }) => resource === r.id
       );
-      return {
-        ...a,
-        index,
-        added: !!existingTeamMember,
-        toBeAdded: false
-      };
+      const selectedMemberOption = existingTeamMember
+        ? {
+            label: existingTeamMember.member.name,
+            value: existingTeamMember.member.id
+          }
+        : null;
+      const [memberState, memberCmds] = Select.init({
+        errors: [],
+        validate: (option) => {
+          if (!option) {
+            return invalid(["Please select a team member."]);
+          }
+          return valid(option);
+        },
+        child: {
+          value: selectedMemberOption,
+          id: "twu-proposal-member", // TODO: Better ID
+          options: getNonAddedStaffOptions(staff)
+        }
+      });
+      const [hourlyRateState, hourlyRateCmds] = NumberField.init({
+        errors: [],
+        validate: (v) => {
+          if (v === null) {
+            return invalid([`Please enter a valid hourly rate.`]);
+          }
+          return proposalValidation.validateTWUHourlyRate(v);
+        },
+        child: {
+          value: existingTeamMember?.hourlyRate || null,
+          id: "twu-proposal-hourly-rate", // TODO: Better ID
+          min: 1
+        }
+      });
+      return [
+        {
+          member: immutable(memberState),
+          hourlyRate: immutable(hourlyRateState),
+          resource: r
+        },
+        [
+          ...component_.cmd.mapMany(
+            memberCmds,
+            (msg) => adt("member", [index, msg]) as Msg
+          ),
+          ...component_.cmd.mapMany(
+            hourlyRateCmds,
+            (msg) => adt("hourlyRate", [index, msg]) as Msg
+          )
+        ]
+      ] as [TeamMember, component_.Cmd<Msg>[]];
     })
-    .sort((a, b) => compareStrings(a.user.name, b.user.name));
+    .sort((a, b) => compareNumbers(a[0].resource.order, b[0].resource.order));
 }
 
 /**
- * Sets the state for 'members' and 'orgId'
+ * Sets the state for 'members', 'staff', and 'orgId'
  *
  * @param state
  * @param affiliations
  * @param orgId
  */
-export function setAffiliations(
+export function setMembers(
   state: Immutable<State>,
   affiliations: AffiliationMember[],
   orgId: Id
-): Immutable<State> {
+): UpdateReturnValue<State, Msg> {
+  const staff = affiliationsToStaff(affiliations, state.proposalTeam);
+  const members = initTeam(state.resources, staff, state.proposalTeam);
   state = state
-    .set("members", affiliationsToMembers(affiliations, state.proposalTeam))
-    .set("orgId", orgId);
-  return state;
+    .set(
+      "members",
+      members.map((m) => m[0])
+    )
+    .set("orgId", orgId)
+    .set("staff", staff);
+  return [
+    state,
+    members.reduce((acc, m) => [...acc, ...m[1]], [] as component_.Cmd<Msg>[])
+  ];
 }
 
+/**
+ * Initializes team before setMembers is called
+ *
+ * @param params
+ * @returns
+ */
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { proposalTeam } = params;
-  const { affiliations, orgId, ...paramsForState } = params;
-  const members = affiliationsToMembers(affiliations, proposalTeam);
-  const [membersTableState, membersTableCmds] = Table.init({
-    idNamespace: `twu-proposal-implementation-members-${Math.random()}`
-  });
+  const { orgId, affiliations, proposalTeam, resources, ...paramsForState } =
+    params;
+  const staff = affiliationsToStaff(affiliations, proposalTeam);
+  const members = initTeam(resources, staff, proposalTeam);
   return [
     {
       ...paramsForState,
-      idNamespace: String(Math.random()),
+      proposalTeam,
+      resources,
       orgId: orgId || null,
-      showModal: null,
-      members,
-      membersTable: immutable(membersTableState)
+      members: members.map((m) => m[0]),
+      staff
     },
-    component_.cmd.mapMany(
-      membersTableCmds,
-      (msg) => adt("membersTable", msg) as Msg
-    )
+    members.reduce((acc, m) => [...acc, ...m[1]], [] as component_.Cmd<Msg>[])
   ];
 };
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "showModal":
-      return [state.set("showModal", msg.value), []];
-
-    case "hideModal":
-      return [state.set("showModal", null), []];
-
-    case "toggleAffiliationToBeAdded":
-      return [
-        state.update("members", (ms) =>
-          ms.map((a) => {
-            return a.index === msg.value
-              ? { ...a, toBeAdded: !a.toBeAdded }
-              : a;
-          })
-        ),
-        []
-      ];
-
-    case "addTeamMembers": {
-      state = state.set("showModal", null).update("members", (ms) =>
-        ms.map((a) => ({
-          ...a,
-          added: a.added || a.toBeAdded,
-          toBeAdded: false
-        }))
-      );
-      return [state, []];
-    }
-
-    case "removeTeamMember":
-      state = state.update("members", (ms) =>
-        ms.map((m) => {
-          const shouldRemove = m.user.id === msg.value;
-          return {
-            ...m,
-            added: shouldRemove ? false : m.added
-          };
-        })
-      );
-      return [state, []];
-
-    case "membersTable":
+    case "member": {
+      const [index] = msg.value;
+      const prevMember = Select.getValue(state.members[index].member);
       return component_.base.updateChild({
         state,
-        childStatePath: ["membersTable"],
-        childUpdate: Table.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => ({ tag: "membersTable", value })
+        childStatePath: ["members", String(msg.value[0]), "member"],
+        childUpdate: Select.update,
+        childMsg: msg.value[1],
+        mapChildMsg: (value) => adt("member", [msg.value[0], value]) as Msg,
+        updateAfter: (state) => {
+          const currMember = Select.getValue(state.members[index].member);
+          // Adds resource ID to current member and removes it from the previous member
+          const staffState = state.update("staff", (ms) =>
+            ms.map((staff) => {
+              return staff.user.id === currMember
+                ? { ...staff, resource: state.resources[index].id }
+                : staff.user.id === prevMember &&
+                  staff.resource === state.resources[index].id
+                ? { ...staff, resource: undefined }
+                : staff;
+            })
+          );
+
+          const members = staffState.members.reduce((acc, _, i) => {
+            return acc.updateIn(["members", i, "member"], (s) =>
+              Select.setOptions(
+                s as Immutable<Select.State>,
+                getNonAddedStaffOptions(staffState.staff)
+              )
+            );
+          }, staffState);
+          return [members, []];
+        }
+      });
+    }
+
+    case "hourlyRate":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["members", String(msg.value[0]), "hourlyRate"],
+        childUpdate: NumberField.update,
+        childMsg: msg.value[1],
+        mapChildMsg: (value) => adt("hourlyRate", [msg.value[0], value]) as Msg
       });
   }
 };
 
-export type Values = AffiliationMember["user"][];
+export type Values = CreateTWUProposalTeamMemberBody[];
 
-/**
- * Gets the user id of each member that's added to a proposal
- *
- * @param state
- */
 export function getValues(state: Immutable<State>): Values {
-  return getAddedMembers(state).map(({ user }) => user);
-}
-
-function filterAddedMembers(members: Member[], isAdded: boolean): Member[] {
-  return members.filter(({ added }) => isAdded === added);
-}
-
-export function getAddedMembers(state: Immutable<State>): Member[] {
-  return filterAddedMembers(state.members, true);
-}
-
-export function getNonAddedMembers(state: Immutable<State>): Member[] {
-  return filterAddedMembers(state.members, false);
+  return state.members.map((m) => ({
+    member: Select.getValue(m.member),
+    hourlyRate: FormField.getValue(m.hourlyRate) ?? 0,
+    resource: m.resource.id
+  }));
 }
 
 export type Errors = CreateTWUProposalTeamMemberValidationErrors[];
 
-/**
- * No need to set errors as the fields themselves can't result in errors.
- * TODO - find a better solution than disabling eslint
- */
 export function setErrors(
   state: Immutable<State>,
-  errors?: Errors // eslint-disable-line @typescript-eslint/no-unused-vars
+  errors: Errors = []
 ): Immutable<State> {
-  return state;
+  return errors.reduce((acc, e, i) => {
+    return acc
+      .updateIn(["members", i, "member"], (s) =>
+        FormField.setErrors(s as Immutable<Select.State>, e.member || [])
+      )
+      .updateIn(["members", i, "hourlyRate"], (s) =>
+        FormField.setErrors(s as Immutable<Select.State>, e.hourlyRate || [])
+      );
+  }, state);
 }
 
-// Nothing to visibly validate for this component.
 export function validate(state: Immutable<State>): Immutable<State> {
-  return state;
+  return state.members.reduce((acc, _, i) => {
+    return acc
+      .updateIn(["members", i, "member"], (s) =>
+        FormField.validate(s as Immutable<Select.State>)
+      )
+      .updateIn(["members", i, "hourlyRate"], (s) =>
+        FormField.validate(s as Immutable<NumberField.State>)
+      );
+  }, state);
 }
 
-function areAllMembersConfirmed(members: Member[]): boolean {
-  for (const m of members) {
-    if (memberIsPending(m)) {
-      return false;
-    }
-  }
-  return true;
+function isMemberValid(member: TeamMember): boolean {
+  return (
+    FormField.isValid(member.member) && FormField.isValid(member.hourlyRate)
+  );
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  const addedMembers = getAddedMembers(state);
-  return !!addedMembers.length && areAllMembersConfirmed(addedMembers);
+  return state.members.reduce((acc, m) => {
+    return acc && isMemberValid(m);
+  }, true as boolean);
 }
 
-export interface Props extends component_.base.ComponentViewProps<State, Msg> {
+interface MemberViewProps {
+  index: number;
+  member: TeamMember;
   disabled?: boolean;
+  dispatch: component_.base.Dispatch<Msg>;
 }
 
-function membersTableHeadCells(): Table.HeadCells {
-  return [
-    {
-      children: "Team Member",
-      className: "text-nowrap",
-      style: {
-        width: "100%",
-        minWidth: "240px"
-      }
-    },
-    {
-      children: null,
-      style: {
-        width: "0px"
-      }
-    }
-  ];
-}
-
-interface MemberTableBodyRowsParams
-  extends Pick<Props, "dispatch" | "disabled"> {
-  idNamespace: string;
-  addedMembers: Member[];
-}
-
-function membersTableBodyRows(
-  params: MemberTableBodyRowsParams
-): Table.BodyRows {
-  const { addedMembers, dispatch, disabled } = params;
-  return addedMembers.map((m) => [
-    {
-      children: (
-        <div className="d-flex align-items-center flex-nowrap">
-          <Link
-            onClick={() =>
-              dispatch(adt("showModal", adt("viewTeamMember" as const, m)))
-            }
-            symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
-            {m.user.name}
-          </Link>
-          {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
-        </div>
-      )
-    },
-    {
-      children: disabled ? null : (
-        <Link
-          button
-          size="sm"
-          symbol_={leftPlacement(iconLinkSymbol("user-times"))}
-          onClick={() => dispatch(adt("removeTeamMember", m.user.id))}
-          color="danger">
-          Remove
-        </Link>
-      )
-    }
-  ]);
-}
-
-export const view: component_.base.View<Props> = ({
-  state,
-  dispatch,
-  disabled
-}) => {
-  const addedMembers = getAddedMembers(state);
+const MemberView: component_.base.View<MemberViewProps> = (props) => {
+  const { member, dispatch, index, disabled } = props;
+  // const isValid = isMemberValid(member);
+  // const title = `Question ${index + 1}`;
   return (
-    <Row className="mb-5">
-      <Col xs="12">
-        <h4>Team Member</h4>
-        <p className="mb-0">
-          To satisfy this opportunity{"'"}s requirements, your team member must
-          only consist of confirmed (non-pending) members of the selected
-          organization.
-        </p>
-        {disabled ? null : (
-          <Link
-            button
-            outline
-            color="primary"
-            size="sm"
-            disabled={disabled}
-            className="mt-3"
-            onClick={() =>
-              dispatch(adt("showModal", adt("addTeamMembers")) as Msg)
-            }
-            symbol_={leftPlacement(iconLinkSymbol("user-plus"))}>
-            Add Team Member
-          </Link>
-        )}
+    <Row>
+      <p>{member.resource.serviceArea}</p>
+      <p>{member.resource.targetAllocation}</p>
+      <Col md="6" xs="12">
+        <Select.view
+          extraChildProps={{}}
+          label="Resource Name"
+          placeholder="Please select a resource name"
+          help="Dunno"
+          required
+          disabled={disabled}
+          state={member.member}
+          dispatch={component_.base.mapDispatch(
+            dispatch,
+            (value) => adt("member" as const, [index, value]) as Msg
+          )}
+        />
       </Col>
-      {addedMembers.length ? (
-        <Col xs="12" className="mt-4">
-          <Table.view
-            headCells={membersTableHeadCells()}
-            bodyRows={membersTableBodyRows({
-              addedMembers,
-              dispatch,
-              disabled,
-              idNamespace: state.idNamespace
-            })}
-            state={state.membersTable}
-            dispatch={component_.base.mapDispatch(dispatch, (v) =>
-              adt("membersTable" as const, v)
-            )}
-          />
-        </Col>
-      ) : null}
+
+      <Col md="6" xs="12">
+        <NumberField.view
+          extraChildProps={{ prefix: "$" }}
+          label="Hourly Rate"
+          placeholder="Hourly Rate"
+          help="Dunno"
+          required
+          disabled={disabled}
+          state={member.hourlyRate}
+          dispatch={component_.base.mapDispatch(
+            dispatch,
+            (value) => adt("hourlyRate" as const, [index, value]) as Msg
+          )}
+        />
+      </Col>
     </Row>
+    // <Accordion
+    //   className={""}
+    //   toggle={() => dispatch(adt("toggleAccordion", index))}
+    //   color="info"
+    //   title={title}
+    //   titleClassName="h3 mb-0"
+    //   icon={isValid ? undefined : "exclamation-circle"}
+    //   iconColor={isValid ? undefined : "warning"}
+    //   iconWidth={2}
+    //   iconHeight={2}
+    //   chevronWidth={1.5}
+    //   chevronHeight={1.5}
+    //   open={member.isAccordianOpen}>
+    //   <p style={{ whiteSpace: "pre-line" }}>{member.question.question}</p>
+    //   <div className="mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap">
+    //     <div className="mb-2 mb-md-0">
+    //       {member.question.wordLimit} word limit
+    //     </div>
+    //     <Separator spacing="2" color="secondary" className="d-none d-md-block">
+    //       |
+    //     </Separator>
+    //     <div>Scored out of {member.question.score}</div>
+    //   </div>
+    //   <Alert color="primary" fade={false} className="mb-4">
+    //     <div style={{ whiteSpace: "pre-line" }}>
+    //       {member.question.guideline}
+    //     </div>
+    //   </Alert>
+    //   <RichMarkdownEditor.view
+    //     required
+    //     label={`${title} Response`}
+    //     placeholder={`${title} Response`}
+    //     help={`Provide your response to this question. You may use Markdown to write your response, however please do not include any images or links, as they will be redacted. Please ensure to stay within the question's response word limit.`}
+    //     extraChildProps={{
+    //       style: { height: "50vh", minHeight: "400px" }
+    //     }}
+    //     className="mb-0"
+    //     disabled={disabled}
+    //     state={member.response}
+    //     dispatch={component_.base.mapDispatch(
+    //       dispatch,
+    //       (value) => adt("response", [index, value]) as Msg
+    //     )}
+    //   />
+    // </Accordion>
   );
 };
 
-export const getModal: component_.page.GetModal<State, Msg> = (state) => {
-  if (!state.showModal) {
-    return component_.page.modal.hide();
-  }
-  switch (state.showModal.tag) {
-    case "viewTeamMember":
-      return makeViewTeamMemberModal({
-        member: state.showModal.value,
-        onCloseMsg: adt("hideModal") as Msg
-      });
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
+  disabled?: boolean;
+}
 
-    case "addTeamMembers": {
-      const nonAddedMembers = getNonAddedMembers(state);
-      return component_.page.modal.show({
-        title: "Add Team Member",
-        onCloseMsg: adt("hideModal") as Msg,
-        body: (dispatch) => {
-          if (!state.orgId) {
-            return null;
-          }
-          return (
-            <div>
-              <p>
-                Select the team member that you want to propose to be part of
-                your team for this opportunity. If you do not see the team
-                member that you want to add, you must send them a{" "}
-                <Link
-                  newTab
-                  dest={routeDest(
-                    adt("orgEdit", { orgId: state.orgId, tab: "team" }) as Route
-                  )}>
-                  request to join your organization
-                </Link>
-                .
-              </p>
-              {nonAddedMembers.length ? (
-                <div className="border-top border-left">
-                  {nonAddedMembers.map((m, i) => {
-                    return (
-                      <div
-                        key={`twu-proposal-phase-affiliation-${i}`}
-                        className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
-                        <Link
-                          onClick={() =>
-                            dispatch(adt("toggleAffiliationToBeAdded", m.index))
-                          }
-                          symbol_={leftPlacement(
-                            iconLinkSymbol(
-                              m.toBeAdded ? "check-circle" : "circle"
-                            )
-                          )}
-                          symbolClassName={
-                            m.toBeAdded ? "text-success" : "text-body"
-                          }
-                          className="text-nowrap flex-nowrap"
-                          color="body">
-                          <img
-                            className="rounded-circle border mr-2"
-                            style={{
-                              width: "1.75rem",
-                              height: "1.75rem",
-                              objectFit: "cover"
-                            }}
-                            src={userAvatarPath(m.user)}
-                          />
-                          {m.user.name}
-                        </Link>
-                        {memberIsPending(m) ? (
-                          <PendingBadge className="ml-3" />
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <strong>
-                  This organization does not have any additional team members
-                  that can be added to this opportunity.
-                </strong>
-              )}
-            </div>
-          );
-        },
-        actions: [
-          {
-            text: "Add Team Member",
-            disabled: !nonAddedMembers.reduce(
-              (acc, { toBeAdded }) => acc || toBeAdded,
-              false as boolean
-            ),
-            button: true,
-            color: "primary",
-            icon: "user-plus",
-            msg: adt("addTeamMembers")
-          },
-          {
-            text: "Cancel",
-            color: "secondary",
-            msg: adt("hideModal")
-          }
-        ]
-      });
-    }
-  }
+export const view: component_.base.View<Props> = (props) => {
+  const { state, disabled } = props;
+  return (
+    <div>
+      {state.members.map((member, i) => (
+        <Row key={`twu-proposal-team-question-response-${i}`}>
+          <Col xs="12" className={i < state.resources.length - 1 ? "mb-4" : ""}>
+            <MemberView
+              index={i}
+              disabled={disabled}
+              member={member}
+              dispatch={props.dispatch}
+            />
+          </Col>
+        </Row>
+      ))}
+    </div>
+  );
 };

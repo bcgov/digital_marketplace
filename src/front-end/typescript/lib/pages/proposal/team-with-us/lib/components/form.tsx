@@ -24,7 +24,7 @@ import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
 import { find } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { formatAmount, formatDate } from "shared/lib";
+import { formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity
@@ -48,15 +48,9 @@ import { invalid, valid, Validation } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
-import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
-import { userAvatarPath } from "front-end/lib/pages/user/lib";
+// import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
-export type TabId =
-  | "Evaluation"
-  | "Resource"
-  | "Pricing"
-  | "Questions"
-  | "Review Proposal";
+export type TabId = "Evaluation" | "Resource" | "Questions" | "Review Proposal";
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
@@ -73,15 +67,12 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-type ModalId = ADT<"viewTeamMember", Team.Member>;
-
 export interface State
   extends Pick<
     Params,
     "viewerUser" | "opportunity" | "evaluationContent" | "organizations"
   > {
   proposal: TWUProposal | null;
-  showModal: ModalId | null;
   getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
@@ -100,8 +91,6 @@ export interface State
 export type Msg =
   | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
-  | ADT<"showModal", ModalId>
-  | ADT<"hideModal">
   // Team Tab
   | ADT<"organization", Select.Msg>
   | ADT<"onGetAffiliationsResponse", [Id, AffiliationMember[]]>
@@ -163,7 +152,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       }
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
-    tabs: ["Evaluation", "Resource", "Pricing", "Questions", "Review Proposal"],
+    tabs: ["Evaluation", "Resource", "Questions", "Review Proposal"],
     activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
@@ -191,7 +180,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [teamState, teamCmds] = Team.init({
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposalTeam: proposal?.team || []
+    proposalTeam: proposal?.team || [],
+    resources: opportunity.resources
   });
 
   const [hourlyRateState, hourlyRateCmds] = NumberField.init({
@@ -318,9 +308,8 @@ export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
 
 export function isValid(state: Immutable<State>): boolean {
   return (
-    isPricingTabValid(state) &&
-    isResourceQuestionsTabValid(state) &&
-    isOrganizationsTabValid(state)
+    // isPricingTabValid(state) &&
+    isResourceQuestionsTabValid(state) && isOrganizationsTabValid(state)
   );
 }
 
@@ -332,10 +321,10 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
-  const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
+  // const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
   const team = Team.getValues(state.team);
   return {
-    team: team.map((member) => ({ member: member.id, hourlyRate })),
+    team,
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
@@ -435,7 +424,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const [teamState, teamCmds] = Team.init({
         orgId: state.proposal?.organization?.id,
         affiliations,
-        proposalTeam: state.proposal?.team || []
+        proposalTeam: state.proposal?.team || [],
+        resources: state.opportunity.resources
       });
       return [
         state.set("team", immutable(teamState)),
@@ -451,12 +441,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt("tabbedForm", value)
       });
-
-    case "showModal":
-      return [state.set("showModal", msg.value), []];
-
-    case "hideModal":
-      return [state.set("showModal", null), []];
 
     case "organization":
       return component_.base.updateChild({
@@ -492,11 +476,30 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 
     case "onGetAffiliationsResponse": {
       const [orgId, affiliations] = msg.value;
-      state = state.update("team", (t) =>
-        Team.setAffiliations(t, affiliations, orgId)
+      const [membersState, membersCmds] = Team.setMembers(
+        state.team,
+        affiliations,
+        orgId
       );
-      return [stopGetAffiliationsLoading(state), []];
+      state = state.set("team", membersState);
+      return [
+        stopGetAffiliationsLoading(state),
+        component_.cmd.mapMany(membersCmds, (msg) => adt("team", msg) as Msg)
+      ];
     }
+
+    // case "onGetAffiliationsResponse": {
+    //   const [orgId, affiliations] = msg.value;
+    //   const [membersState, membersCmds] = Team.setMembers(
+    //     state.team,
+    //     affiliations,
+    //     orgId
+    //   );
+    //   return [
+    //     stopGetAffiliationsLoading(state),
+    //     component_.cmd.mapMany(membersCmds, (msg) => adt("team", msg) as Msg)
+    //   ];
+    // }
 
     case "team":
       return component_.base.updateChild({
@@ -678,94 +681,6 @@ const OrganizationView: component_.base.View<Props> = ({
   );
 };
 
-const PricingView: component_.base.View<Props> = ({
-  state,
-  dispatch,
-  disabled
-}) => {
-  const { maxBudget } = state.opportunity;
-  return (
-    <div>
-      <Row>
-        <Col xs="12" className="mb-4">
-          <p className="font-weight-bold">
-            Proponents take note of the following pricing rules and
-            requirements:
-          </p>
-          <ol className="li-paren-lower-alpha">
-            <li>
-              Proponent pricing quoted will be taken to mean and deemed to be:
-              <ol className="li-paren-lower-roman">
-                <li>in Canadian dollars;</li>
-                <li>
-                  inclusive of all costs or expenses that may be incurred with
-                  respect to the services specified by the Competition Notice;
-                </li>
-                <li>exclusive of any applicable taxes.</li>
-              </ol>
-            </li>
-            <li>
-              In addition, the following rules apply to pricing bid by
-              Proponents:
-              <ol className="li-paren-lower-roman">
-                <li>
-                  Team With Us Terms & Conditions section 1.8 regarding pricing
-                  and its provisions are incorporated herein by this reference.
-                </li>
-                <li>
-                  All pricing bid is required to be unconditional and
-                  unqualified. If any pricing bid does not meet this
-                  requirement, the Proponent’s Proposal may be rejected
-                  resulting in the Proponent being eliminated from the
-                  Competition Notice competition.
-                </li>
-                <li>
-                  Failure to provide pricing where required by the Competition
-                  Notice will result in the Proponent being unable to submit a
-                  Proposal.
-                </li>
-                <li>
-                  Entering the numerical figure of “$0”, “$zero”, or the like in
-                  response to a call for a specific dollar amount will result in
-                  the Proponent being unable to submit a Proposal.
-                </li>
-                <li>
-                  The Contract will provide that the Contractor may request an
-                  increase in the bid pricing for any extension term of the
-                  Contract, limited to any increases, if any, as supported by
-                  the Canadian Consumer Price Index or 3% whichever is lower.
-                </li>
-              </ol>
-            </li>
-          </ol>
-          <p>
-            Please provide the hourly rate you are proposing for this
-            opportunity.
-          </p>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs="12" md="6">
-          <NumberField.view
-            disabled={disabled}
-            extraChildProps={{ prefix: "$" }}
-            label="Hourly Rate"
-            placeholder="Hourly Rate"
-            hint={`Maximum opportunity budget is ${formatAmount(
-              maxBudget,
-              "$"
-            )}`}
-            state={state.hourlyRate}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("hourlyRate" as const, value)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
-  );
-};
-
 const ResourceQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
@@ -902,7 +817,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
   dispatch
 }) => {
   const organization = getSelectedOrganization(state);
-  const team = Team.getValues(state.team);
+  // const team = Team.getValues(state.team);
   return (
     <Row>
       <Col xs="12">
@@ -964,7 +879,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
           <h2 className="mb-4">Resource and Pricing</h2>
         </div>
       </Col>
-      {team.length > 0 ? (
+      {/* {team.length > 0 ? (
         team.map((member) => (
           <Col key={member.id}>
             <Row style={{ rowGap: "0.5rem" }}>
@@ -1003,7 +918,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
         <Col xs="12">
           You have not yet selected a resource for this proposal.
         </Col>
-      )}
+      )} */}
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>
@@ -1050,8 +965,6 @@ export const view: component_.base.View<Props> = ({
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
         return <EvaluationView {...props} />;
-      case "Pricing":
-        return <PricingView {...props} />;
       case "Resource":
         return <OrganizationView {...props} />;
       case "Questions":
@@ -1069,8 +982,6 @@ export const view: component_.base.View<Props> = ({
         switch (tab) {
           case "Evaluation":
             return true;
-          case "Pricing":
-            return isPricingTabValid(state);
           case "Resource":
             return isOrganizationsTabValid(state);
           case "Questions":
@@ -1094,25 +1005,6 @@ export const component: component_.base.Component<Params, State, Msg> = {
   view
 };
 
-export const getModal: component_.page.GetModal<State, Msg> = (state) => {
-  const teamModal = component_.page.modal.map(
-    Team.getModal(state.team),
-    (msg) => adt("team", msg) as Msg
-  );
-  if (teamModal && teamModal.tag === "show") {
-    return teamModal;
-  }
-  if (!state.showModal) {
-    return component_.page.modal.hide();
-  }
-  switch (state.showModal.tag) {
-    case "viewTeamMember":
-      return makeViewTeamMemberModal({
-        member: state.showModal.value,
-        onCloseMsg: adt("hideModal")
-      });
-  }
-};
 export function getAlerts<Msg>(
   state: Immutable<State>
 ): component_.page.Alerts<Msg> {

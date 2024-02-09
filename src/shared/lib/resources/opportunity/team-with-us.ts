@@ -228,6 +228,7 @@ export interface TWUResourceQuestion {
 }
 
 export interface TWUResource {
+  id: Id;
   serviceArea: TWUServiceArea;
   targetAllocation: number;
   mandatorySkills: string[];
@@ -280,7 +281,7 @@ export type CreateTWUResourceQuestionBody = Omit<
  * Resource's TWUServiceArea enum cannot be guaranteed until parsing is
  * complete.
  */
-export type CreateTWUResourceBody = Omit<TWUResource, "serviceArea"> & {
+export type CreateTWUResourceBody = Omit<TWUResource, "serviceArea" | "id"> & {
   serviceArea: string;
 };
 
