@@ -8,16 +8,13 @@ import * as templates from "back-end/lib/mailer/templates";
 import { makeSend } from "back-end/lib/mailer/transport";
 import React from "react";
 import { CONTACT_EMAIL, EMPTY_STRING } from "shared/config";
-import {
-  isTWUOpportunityClosed,
-  TWUOpportunity
-} from "shared/lib/resources/opportunity/team-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import {
   TWUProposal,
   TWUProposalSlim
 } from "shared/lib/resources/proposal/team-with-us";
 import { AuthenticatedSession } from "shared/lib/resources/session";
-import { User } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 
@@ -161,13 +158,6 @@ export async function handleTWUProposalWithdrawn(
       ),
       null
     );
-  // Need to read opportunityAuthor separate here, as this session will not be allowed to read from opportunity itself
-  const opportunityAuthor =
-    proposal &&
-    getValidValue(
-      await db.readOneTWUOpportunityAuthor(connection, proposal.opportunity.id),
-      null
-    );
 
   if (proposal && opportunity) {
     const withdrawnProponent =
@@ -176,23 +166,28 @@ export async function handleTWUProposalWithdrawn(
         await db.readOneUser(connection, proposal.createdBy.id),
         null
       );
-    // Notify opportunity author if opportunity is closed
-    if (
-      opportunityAuthor &&
-      withdrawnProponent &&
-      isTWUOpportunityClosed(opportunity)
-    ) {
-      await withdrawnTWUProposalSubmission(
-        opportunityAuthor,
-        withdrawnProponent,
-        opportunity
-      );
-    }
     // Notify proposal author
     if (withdrawnProponent) {
       await withdrawnTWUProposalSubmissionProposalAuthor(
         withdrawnProponent,
         opportunity
+      );
+
+      // Notify admins that the proposal has been withdrawn
+      const adminUsers =
+        getValidValue(
+          await db.readManyUsersByRole(connection, UserType.Admin),
+          null
+        ) || [];
+      await Promise.all(
+        adminUsers.map(
+          async (admin) =>
+            await withdrawnTWUProposalSubmission(
+              admin,
+              withdrawnProponent,
+              opportunity
+            )
+        )
       );
     }
   }
