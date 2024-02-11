@@ -143,7 +143,6 @@ export async function handleSWUProposalWithdrawn(
   proposalId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  //Notify the opportunity author that the proposal has been withdrawn
   const proposal = getValidValue(
     await db.readOneSWUProposal(connection, proposalId, session),
     null
