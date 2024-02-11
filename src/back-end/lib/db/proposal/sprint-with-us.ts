@@ -1892,12 +1892,6 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
 
   const proposalScorings = await generateSWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
-    .join(
-      "swuTeamQuestionResponses as responses",
-      "responses.proposal",
-      "=",
-      "proposals.id"
-    )
     .select<ProposalScoring[]>(
       "proposals.id",
       "statuses.status",
