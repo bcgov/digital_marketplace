@@ -24,7 +24,7 @@ import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
 import { find } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { formatAmount, formatDate } from "shared/lib";
+import { formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity
@@ -683,7 +683,6 @@ const PricingView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
-  const { maxBudget } = state.opportunity;
   return (
     <div>
       <Row>
@@ -751,10 +750,6 @@ const PricingView: component_.base.View<Props> = ({
             extraChildProps={{ prefix: "$" }}
             label="Hourly Rate"
             placeholder="Hourly Rate"
-            hint={`Maximum opportunity budget is ${formatAmount(
-              maxBudget,
-              "$"
-            )}`}
             state={state.hourlyRate}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("hourlyRate" as const, value)
