@@ -1,6 +1,6 @@
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
-import Knex from "knex";
+import { Knex } from "knex";
 
 enum CWUOpportunityEvent {
   Edited = "EDITED",
