@@ -21,6 +21,7 @@ import { compareNumbers } from "shared/lib";
 import { invalid, valid } from "shared/lib/validation";
 import { TWUResource } from "shared/lib/resources/opportunity/team-with-us";
 import { UpdateReturnValue } from "front-end/lib/framework/component/base";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 export interface Params {
   orgId?: Id;
@@ -316,41 +317,54 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
   // const isValid = isMemberValid(member);
   // const title = `Question ${index + 1}`;
   return (
-    <Row>
-      <p>{member.resource.serviceArea}</p>
-      <p>{member.resource.targetAllocation}</p>
-      <Col md="6" xs="12">
-        <Select.view
-          extraChildProps={{}}
-          label="Resource Name"
-          placeholder="Please select a resource name"
-          help="Dunno"
-          required
-          disabled={disabled}
-          state={member.member}
-          dispatch={component_.base.mapDispatch(
-            dispatch,
-            (value) => adt("member" as const, [index, value]) as Msg
-          )}
-        />
-      </Col>
-
-      <Col md="6" xs="12">
-        <NumberField.view
-          extraChildProps={{ prefix: "$" }}
-          label="Hourly Rate"
-          placeholder="Hourly Rate"
-          help="Dunno"
-          required
-          disabled={disabled}
-          state={member.hourlyRate}
-          dispatch={component_.base.mapDispatch(
-            dispatch,
-            (value) => adt("hourlyRate" as const, [index, value]) as Msg
-          )}
-        />
-      </Col>
-    </Row>
+    <div>
+      <h4 className="bg-c-report-card-bg p-2">Resource {index + 1}</h4>
+      <Row>
+        <Col md="9" xs="7">
+          <Select.view
+            extraChildProps={{}}
+            label="Resource Name"
+            placeholder="Please select a resource name"
+            help="Dunno"
+            required
+            disabled={disabled}
+            state={member.member}
+            dispatch={component_.base.mapDispatch(
+              dispatch,
+              (value) => adt("member" as const, [index, value]) as Msg
+            )}
+          />
+        </Col>
+        <Col md="3" xs="5" className="text-center">
+          <NumberField.view
+            extraChildProps={{ prefix: "$" }}
+            label="Hourly Rate"
+            placeholder="Hourly Rate"
+            help="Dunno"
+            required
+            disabled={disabled}
+            state={member.hourlyRate}
+            dispatch={component_.base.mapDispatch(
+              dispatch,
+              (value) => adt("hourlyRate" as const, [index, value]) as Msg
+            )}
+          />
+        </Col>
+        <div className="w-100"></div>
+        <Col md="9" xs="7">
+          <div className="font-weight-bold d-flex flex-nowrap">
+            Service Area
+          </div>
+          <p>{twuServiceAreaToTitleCase(member.resource.serviceArea)}</p>
+        </Col>
+        <Col md="3" xs="5">
+          <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+            Allocation
+          </div>
+          <p className="text-center">{member.resource.targetAllocation}%</p>
+        </Col>
+      </Row>
+    </div>
     // <Accordion
     //   className={""}
     //   toggle={() => dispatch(adt("toggleAccordion", index))}
