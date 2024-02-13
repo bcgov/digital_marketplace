@@ -430,7 +430,7 @@ export const readOneOrganization = tryDb<
 export const readOneOrganizationContactEmail = tryDb<[Id], string | null>(
   async (connection, id) => {
     const [result] = await connection<{ contactEmail: string }>("organizations")
-      .where({ id })
+      .where("id", id)
       .select("contactEmail");
     return valid(result?.contactEmail || null);
   }
@@ -698,7 +698,7 @@ export const qualifyOrganizationServiceAreas = tryDb<
       serviceArea: ServiceAreaId;
     }>("twuOrganizationServiceAreas")
       .transacting(trx)
-      .where({ "twuOrganizationServiceAreas.organization": organization })
+      .where("twuOrganizationServiceAreas.organization", organization)
       .delete("*");
 
     for (const serviceArea of serviceAreas) {

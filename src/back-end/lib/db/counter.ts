@@ -5,7 +5,7 @@ import { Counter } from "shared/lib/resources/counter";
 export const incrementCounters = tryDb<[string[]], Record<string, number>>(
   async (connection, names) => {
     // Update existing counters
-    const existingCounters = await connection<Counter>("viewCounters")
+    const existingCounters: string[] = await connection<Counter>("viewCounters")
       .whereIn("name", names)
       .increment("count")
       .update({}, "name");

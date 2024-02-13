@@ -8,7 +8,7 @@ import {
 import { RawCWUOpportunitySubscriber } from "back-end/lib/db/subscribers/code-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
 import * as cwuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/code-with-us";
-import { QueryBuilder } from "knex";
+import { Knex } from "knex";
 import { valid } from "shared/lib/http";
 import { getCWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
@@ -243,7 +243,7 @@ async function rawCWUOpportunityHistoryRecordToCWUOpportunityHistoryRecord(
 function processForRole<T extends RawCWUOpportunity | RawCWUOpportunitySlim>(
   result: T,
   session: Session
-) {
+): T {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (
     !session ||
@@ -305,7 +305,7 @@ export function generateCWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query: QueryBuilder = connection<RawCWUOpportunity>(
+  const query: Knex.QueryBuilder = connection<RawCWUOpportunity>(
     "cwuOpportunities as opp"
   )
     // Join on latest CWU status
@@ -421,20 +421,24 @@ export const readOneCWUOpportunity = tryDb<
     result = processForRole(result, session);
     result.attachments = (
       await connection<{ file: Id }>("cwuOpportunityAttachments")
-        .where({ opportunityVersion: result.versionId })
+        .where("opportunityVersion", result.versionId)
         .select("file")
     ).map((row) => row.file);
     result.addenda = (
       await connection<{ id: Id }>("cwuOpportunityAddenda")
-        .where({ opportunity: id })
+        .where("opportunity", id)
         .select("id")
     ).map((row) => row.id);
 
     // Get published date if applicable
+    const conditions = {
+      opportunity: result.id,
+      status: CWUOpportunityStatus.Published
+    };
     const publishedDate = await connection<{ createdAt: Date }>(
       "cwuOpportunityStatuses"
     )
-      .where({ opportunity: result.id, status: CWUOpportunityStatus.Published })
+      .where(conditions)
       .select("createdAt")
       .orderBy("createdAt", "asc")
       .first();
@@ -481,7 +485,7 @@ export const readOneCWUOpportunity = tryDb<
       const rawStatusArray = await connection<RawCWUOpportunityHistoryRecord>(
         "cwuOpportunityStatuses"
       )
-        .where({ opportunity: result.id })
+        .where("opportunity", result.id)
         .orderBy("createdAt", "desc");
 
       if (!rawStatusArray) {
@@ -494,7 +498,7 @@ export const readOneCWUOpportunity = tryDb<
           async (raw) =>
             (raw.attachments = (
               await connection<{ file: Id }>("cwuOpportunityNoteAttachments")
-                .where({ event: raw.id })
+                .where("event", raw.id)
                 .select("file")
             ).map((row) => row.file))
         )
@@ -513,10 +517,13 @@ export const readOneCWUOpportunity = tryDb<
 
       if (publicOpportunityStatuses.includes(result.status)) {
         // Retrieve opportunity views
+        const conditions = {
+          name: getCWUOpportunityViewsCounterName(result.id)
+        };
         const numViews =
           (
             await connection<{ count: number }>("viewCounters")
-              .where({ name: getCWUOpportunityViewsCounterName(result.id) })
+              .where(conditions)
               .first()
           )?.count || 0;
 
@@ -624,7 +631,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(
     const results = await Promise.all(
       (
         await query
-      ).map(async (result) => {
+      ).map(async (result: RawCWUOpportunity | RawCWUOpportunitySlim) => {
         if (session) {
           result.subscribed = await isSubscribed(
             connection,
@@ -964,7 +971,7 @@ export const readOneCWUOpportunityAuthor = tryDb<[Id], User | null>(
     const authorId =
       (
         await connection<{ createdBy: Id }>("cwuOpportunities as opportunities")
-          .where({ id })
+          .where("id", id)
           .select<{ createdBy: Id }>("createdBy")
           .first()
       )?.createdBy || null;
