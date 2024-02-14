@@ -258,7 +258,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({
           <ReportCardList reportCards={reportCards} />
         </Col>
       </Row>
-      <Row>
+      <Row className="mb-5">
         <Col>
           <ServiceAreasHeading
             icon="laptop-code-outline"
@@ -267,7 +267,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({
           <ResourcesTable state={state} dispatch={dispatch} />
         </Col>
       </Row>
-      <Row className="mt-3">
+      <Row className="mb-5">
         <Col xs="12" sm="6">
           <div className="font-weight-bold mb-2">Mandatory Skills</div>
           <Skills skills={skills.mandatory} />
@@ -291,7 +291,7 @@ const ServiceAreasHeading: component_.base.View<{
   text: string;
 }> = ({ icon, text }) => {
   return (
-    <div className="d-flex align-items-start flex-nowrap mb-3">
+    <div className="d-flex align-items-start flex-nowrap mb-4">
       <Icon
         name={icon}
         width={1.5}
@@ -356,7 +356,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
       />
       <SuccessfulProponent {...props} />
       <Details {...props} />
-      {/*<ResourcesTable {...props} />*/}
     </div>
   );
 };
