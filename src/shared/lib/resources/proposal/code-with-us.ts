@@ -319,36 +319,29 @@ export function isValidStatusChange(
 
     case CWUProposalStatus.UnderReview:
       return (
-        (([
-          CWUProposalStatus.Evaluated,
-          CWUProposalStatus.Disqualified
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === CWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        [CWUProposalStatus.Evaluated, CWUProposalStatus.Disqualified].includes(
+          to
+        ) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case CWUProposalStatus.Evaluated:
       return (
-        (([
+        [
           CWUProposalStatus.Evaluated,
           CWUProposalStatus.Awarded,
           CWUProposalStatus.NotAwarded,
           CWUProposalStatus.Disqualified
         ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === CWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case CWUProposalStatus.Awarded:
       return (
-        ((to === CWUProposalStatus.Disqualified &&
-          userType !== UserType.Vendor) ||
-          (to === CWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        to === CWUProposalStatus.Disqualified &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 

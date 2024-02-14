@@ -425,77 +425,63 @@ export function isValidStatusChange(
 
     case SWUProposalStatus.UnderReviewTeamQuestions:
       return (
-        (([
+        [
           SWUProposalStatus.EvaluatedTeamQuestions,
           SWUProposalStatus.Disqualified
         ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === SWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case SWUProposalStatus.EvaluatedTeamQuestions:
       return (
-        ([
+        [
           SWUProposalStatus.UnderReviewCodeChallenge,
           SWUProposalStatus.Disqualified
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case SWUProposalStatus.UnderReviewCodeChallenge:
       return (
-        ([
+        [
           SWUProposalStatus.EvaluatedCodeChallenge,
           SWUProposalStatus.Disqualified,
           SWUProposalStatus.EvaluatedTeamQuestions
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case SWUProposalStatus.EvaluatedCodeChallenge:
       return (
-        ([
+        [
           SWUProposalStatus.UnderReviewTeamScenario,
           SWUProposalStatus.Disqualified
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case SWUProposalStatus.UnderReviewTeamScenario:
       return (
-        ([
+        [
           SWUProposalStatus.EvaluatedTeamScenario,
           SWUProposalStatus.Disqualified,
           SWUProposalStatus.EvaluatedCodeChallenge
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === SWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case SWUProposalStatus.EvaluatedTeamScenario:
       return (
-        (([
+        [
           SWUProposalStatus.Awarded,
           SWUProposalStatus.NotAwarded,
           SWUProposalStatus.Disqualified
         ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === SWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case SWUProposalStatus.Awarded:
       return (
-        ((to === SWUProposalStatus.Disqualified &&
-          userType !== UserType.Vendor) ||
-          (to === SWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        to === SWUProposalStatus.Disqualified &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
