@@ -322,6 +322,16 @@ export async function validateTWUResources(
 }
 
 /**
+ * Helper function to determine if an array has duplicate values
+ *
+ * @param arr
+ * @returns boolean - true if there are duplicate values, false otherwise.
+ */
+function hasDuplicates(arr: string[]): boolean {
+  return new Set(arr).size < arr.length;
+}
+
+/**
  * Checks to see if a TWU proposal's members are affiliated with the
  * organization in the proposal
  *
@@ -342,7 +352,10 @@ export async function validateTWUProposalTeamMembers(
   if (!raw.length) {
     return invalid([{ members: ["Please select at least one team member."] }]);
   }
-
+  // ensure that all member values are unique
+  if (hasDuplicates(raw.map((v) => getString(v, "member")))) {
+    return invalid([{ members: ["Please select unique team members."] }]);
+  }
   return await validateArrayCustomAsync(
     raw,
     async (rawMember) => {
