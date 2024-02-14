@@ -110,7 +110,7 @@ export const readManyContent = tryDb<[], ContentSlim[]>(async (connection) => {
 export const readOneContentById = tryDb<[Id, Session], Content | null>(
   async (connection, id, session) => {
     const result = await generateContentQuery(connection, session)
-      .where({ "content.id": id })
+      .where("content.id", id)
       .first();
     return valid(result ? await rawContentToContent(connection, result) : null);
   }
@@ -119,7 +119,7 @@ export const readOneContentById = tryDb<[Id, Session], Content | null>(
 export const readOneContentBySlug = tryDb<[string, Session], Content | null>(
   async (connection, slug, session) => {
     const result = await generateContentQuery(connection, session)
-      .where({ "content.slug": slug })
+      .where("content.slug", slug)
       .first();
     return valid(result ? await rawContentToContent(connection, result) : null);
   }
@@ -188,7 +188,7 @@ export const updateContent = tryDb<
     // Update slug on root record
     const [rootContentRecord] = await connection<RootContentRecord>("content")
       .transacting(trx)
-      .where({ id })
+      .where("id", id)
       .update(
         {
           slug
@@ -232,9 +232,10 @@ export const updateContent = tryDb<
 
 export const deleteContent = tryDb<[Id, Session], Content>(
   async (connection, id, session) => {
-    const [result] = await generateContentQuery(connection, session).where({
-      "content.id": id
-    });
+    const [result] = await generateContentQuery(connection, session).where(
+      "content.id",
+      id
+    );
 
     if (!result) {
       throw new Error("unable to retrieve content for deletion");

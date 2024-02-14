@@ -63,7 +63,7 @@ import {
 } from "back-end/lib/types";
 import { Application } from "express";
 import { Server } from "http";
-import Knex from "knex";
+import { Knex, knex } from "knex";
 import { concat, flatten, flow, map } from "lodash/fp";
 import { flipCurried } from "shared/lib";
 import {
@@ -105,19 +105,19 @@ if (configErrors.length || !PG_CONFIG) {
 
 const logger = makeDomainLogger(consoleAdapter, "back-end");
 
+const config: Knex.Config = {
+  client: "pg",
+  connection: PG_CONFIG,
+  migrations: {
+    tableName: DB_MIGRATIONS_TABLE_NAME
+  },
+  debug: KNEX_DEBUG
+};
+
 export const connectToDatabase: () => Connection = (() => {
   let _connection: Connection | null = null;
   return function (): Connection {
-    _connection =
-      _connection ||
-      Knex({
-        client: "pg",
-        connection: PG_CONFIG,
-        migrations: {
-          tableName: DB_MIGRATIONS_TABLE_NAME
-        },
-        debug: KNEX_DEBUG
-      });
+    _connection = _connection || knex(config);
     return _connection;
   };
 })();

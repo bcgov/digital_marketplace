@@ -10,7 +10,7 @@ import {
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
-import { QueryBuilder } from "knex";
+import { Knex } from "knex";
 import { valid } from "shared/lib/http";
 import { Addendum } from "shared/lib/resources/addendum";
 import { getTWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
@@ -340,7 +340,7 @@ export function generateTWUOpportunityQuery(
   connection: Connection,
   full = false
 ) {
-  const query: QueryBuilder = connection<RawTWUOpportunity>(
+  const query: Knex.QueryBuilder = connection<RawTWUOpportunity>(
     "twuOpportunities as opportunities"
   )
     // Join on latest TWU status
@@ -464,7 +464,7 @@ export const readManyTWUAddendum = tryDb<[Id], Addendum[]>(
   async (connection, opportunityId) => {
     const results = await connection<RawTWUOpportunityAddendum>(
       "twuOpportunityAddenda"
-    ).where({ opportunity: opportunityId });
+    ).where("opportunity", opportunityId);
 
     if (!results) {
       throw new Error("unable to read addenda");
@@ -536,7 +536,7 @@ export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
     const results = await Promise.all(
       (
         await query
-      ).map(async (result) => {
+      ).map(async (result: RawTWUOpportunity | RawTWUOpportunitySlim) => {
         if (session) {
           result.subscribed = await isSubscribed(
             connection,
@@ -670,17 +670,18 @@ export const readOneTWUOpportunity = tryDb<
     // Query for attachment file ids
     result.attachments = (
       await connection<{ file: Id }>("twuOpportunityAttachments")
-        .where({ opportunityVersion: result.versionId })
+        .where("opportunityVersion", result.versionId)
         .select("file")
     ).map((row) => row.file);
 
     // Get published date if applicable
+    const conditions = {
+      opportunity: result.id,
+      status: TWUOpportunityStatus.Published
+    };
     result.publishedAt = (
       await connection<{ createdAt: Date }>("twuOpportunityStatuses")
-        .where({
-          opportunity: result.id,
-          status: TWUOpportunityStatus.Published
-        })
+        .where(conditions)
         .select("createdAt")
         .orderBy("createdAt", "desc")
         .first()
@@ -738,7 +739,7 @@ export const readOneTWUOpportunity = tryDb<
       const rawHistory = await connection<RawTWUOpportunityHistoryRecord>(
         "twuOpportunityStatuses"
       )
-        .where({ opportunity: result.id })
+        .where("opportunity", result.id)
         .orderBy("createdAt", "desc");
 
       if (!rawHistory) {
@@ -752,7 +753,7 @@ export const readOneTWUOpportunity = tryDb<
       //     async (raw) =>
       //       (raw.attachments = (
       //         await connection<{ file: Id }>("twuOpportunityNoteAttachments")
-      //           .where({ event: raw.id })
+      //           .where("event", raw.id)
       //           .select("file")
       //       ).map((row) => row.file))
       //   )
@@ -766,11 +767,14 @@ export const readOneTWUOpportunity = tryDb<
       );
 
       if (publicOpportunityStatuses.includes(result.status)) {
+        const conditions = {
+          name: getTWUOpportunityViewsCounterName(result.id)
+        };
         // Retrieve opportunity views
         const numViews =
           (
             await connection<{ count: number }>("viewCounters")
-              .where({ name: getTWUOpportunityViewsCounterName(result.id) })
+              .where(conditions)
               .first()
           )?.count || 0;
 
@@ -1245,7 +1249,7 @@ export const readOneTWUOpportunityAuthor = tryDb<[Id], User | null>(
     const authorId =
       (
         await connection<{ createdBy: Id }>("twuOpportunities as opportunities")
-          .where({ id })
+          .where("id", id)
           .select<{ createdBy: Id }>("createdBy")
           .first()
       )?.createdBy || null;
