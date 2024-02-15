@@ -10,7 +10,10 @@ import {
 import { find } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
-import { AffiliationMember } from "shared/lib/resources/affiliation";
+import {
+  AffiliationMember,
+  MembershipStatus
+} from "shared/lib/resources/affiliation";
 import {
   CreateTWUProposalTeamMemberBody,
   CreateTWUProposalTeamMemberValidationErrors,
@@ -57,16 +60,22 @@ function affiliationsToStaff(
   affiliations: AffiliationMember[],
   proposalTeam: TWUProposalTeamMember[]
 ): Staff[] {
-  return affiliations.map((a) => {
+  return affiliations.reduce<Staff[]>((acc, a) => {
+    if (a.membershipStatus !== MembershipStatus.Active) {
+      return acc;
+    }
     const existingTeamMember = find(
       proposalTeam,
       ({ member }) => member.id === a.user.id
     );
-    return {
-      ...a,
-      resource: existingTeamMember?.resource
-    };
-  });
+    return [
+      ...acc,
+      {
+        ...a,
+        resource: existingTeamMember?.resource
+      }
+    ];
+  }, []);
 }
 
 function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
