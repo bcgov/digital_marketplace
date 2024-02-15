@@ -149,6 +149,14 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
+/**
+ * "raw" indicates reading data from the db and modifying the data to conform
+ * to type declarations in the application. In this case, the db holds a memberID
+ * which is then used to get a username 'idpUsername'.
+ *
+ * @param connection
+ * @param raw
+ */
 async function rawProposalTeamMemberToProposalTeamMember(
   connection: Connection,
   raw: RawProposalTeamMember
@@ -638,7 +646,7 @@ const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
       proposal: proposalId
     });
 
-    query.select<RawProposalTeamMember[]>("member", "hourlyRate");
+    query.select<RawProposalTeamMember[]>("member", "hourlyRate", "resource");
 
     const results = await query;
 
@@ -851,7 +859,8 @@ async function createTWUProposalTeamMembers(
       {
         proposal: proposalId,
         member: teamMember.member,
-        hourlyRate: teamMember.hourlyRate
+        hourlyRate: teamMember.hourlyRate,
+        resource: teamMember.resource
       },
       "*"
     );

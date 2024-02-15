@@ -322,11 +322,21 @@ export async function validateTWUResources(
 }
 
 /**
+ * Helper function to determine if an array has duplicate values
+ *
+ * @param arr
+ * @returns boolean - true if there are duplicate values, false otherwise.
+ */
+function hasDuplicates(arr: string[]): boolean {
+  return new Set(arr).size < arr.length;
+}
+
+/**
  * Checks to see if a TWU proposal's members are affiliated with the
  * organization in the proposal
  *
  * @param connection - database connection
- * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
+ * @param raw - a 'team' object, with 'member', 'hourlyRate' and 'resource' elements
  * @param organization - organization id
  */
 export async function validateTWUProposalTeamMembers(
@@ -342,7 +352,10 @@ export async function validateTWUProposalTeamMembers(
   if (!raw.length) {
     return invalid([{ members: ["Please select at least one team member."] }]);
   }
-
+  // ensure that all member values are unique
+  if (hasDuplicates(raw.map((v) => getString(v, "member")))) {
+    return invalid([{ members: ["Please select unique team members."] }]);
+  }
   return await validateArrayCustomAsync(
     raw,
     async (rawMember) => {
@@ -354,10 +367,19 @@ export async function validateTWUProposalTeamMembers(
       const validatedHourlyRate = validateTWUHourlyRate(
         getNumber<number>(rawMember, "hourlyRate")
       );
-      if (isValid(validatedMember) && isValid(validatedHourlyRate)) {
+      const validatedResource = getValidValue(
+        await db.readOneResource(connection, getString(rawMember, "resource")),
+        null
+      );
+      if (
+        isValid(validatedMember) &&
+        isValid(validatedHourlyRate) &&
+        validatedResource
+      ) {
         return valid({
           member: validatedMember.value.id,
-          hourlyRate: validatedHourlyRate.value
+          hourlyRate: validatedHourlyRate.value,
+          resource: validatedResource.id
         });
       } else {
         return invalid({
@@ -365,7 +387,8 @@ export async function validateTWUProposalTeamMembers(
             validatedMember,
             undefined
           ),
-          hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+          hourlyRate: getInvalidValue(validatedHourlyRate, undefined),
+          resource: ["This resource cannot be found."]
         }) as Validation<
           CreateTWUProposalTeamMemberBody,
           CreateTWUProposalTeamMemberValidationErrors

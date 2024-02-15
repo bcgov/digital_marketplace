@@ -33,7 +33,7 @@ import {
   TWUOpportunity,
   TWUOpportunityStatus,
   UpdateEditValidationErrors,
-  TWUResource
+  CreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -637,7 +637,7 @@ export function getNumberSelectValue(state: Immutable<Select.State>) {
 }
 
 export type Values = Omit<CreateRequestBody, "attachments" | "status"> & {
-  resources: TWUResource[];
+  resources: CreateTWUResourceBody[];
 };
 
 /**

@@ -13,7 +13,8 @@ import {
   CreateTWUResourceValidationErrors,
   TWUServiceArea,
   TWUResource,
-  parseTWUServiceArea
+  parseTWUServiceArea,
+  CreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   Validation,
@@ -276,7 +277,7 @@ export function isValid(state: Immutable<State>): boolean {
   }, true as boolean);
 }
 
-export type Values = TWUResource[];
+export type Values = CreateTWUResourceBody[];
 
 export function getValues(state: Immutable<State>): Values {
   return state.resources.reduce<Values>((acc, r, order) => {

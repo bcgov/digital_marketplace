@@ -370,7 +370,7 @@ async function rawResourceToResource(
   connection: Connection,
   raw: RawResource
 ): Promise<TWUResource> {
-  const { id: id } = raw;
+  const { id } = raw;
   const resource = id
     ? getValidValue(await readOneResource(connection, id), undefined)
     : undefined;
@@ -395,6 +395,7 @@ async function rawResourceToResource(
   }
 
   return {
+    id,
     serviceArea,
     targetAllocation: resource.targetAllocation,
     mandatorySkills: resource.mandatorySkills,

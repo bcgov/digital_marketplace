@@ -806,13 +806,6 @@ export const component: Tab.Component<State, Msg> = {
   },
 
   getModal: (state) => {
-    const formModal = component_.page.modal.map(
-      Form.getModal(state.form),
-      (msg) => adt("form", msg) as Msg
-    );
-    if (formModal.tag !== "hide") {
-      return formModal;
-    }
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
       SubmitProposalTerms.getAppCheckbox(state.submitTerms);
