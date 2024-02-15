@@ -1146,19 +1146,7 @@ export const component: Tab.Component<State, Msg> = {
       case TWUProposalStatus.EvaluatedResourceQuestions:
       case TWUProposalStatus.EvaluatedChallenge:
       case TWUProposalStatus.Awarded:
-        return component_.page.actions.links([
-          {
-            children: "Withdraw",
-            symbol_: leftPlacement(iconLinkSymbol("ban")),
-            button: true,
-            outline: true,
-            color: "c-nav-fg-alt",
-            disabled,
-            loading: isWithdrawLoading,
-            onClick: () =>
-              dispatch(adt("showModal", "withdrawAfterDeadline" as const))
-          }
-        ]);
+        return component_.page.actions.none();
       case TWUProposalStatus.Withdrawn:
         if (isAcceptingProposals) {
           return component_.page.actions.links([
