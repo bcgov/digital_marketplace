@@ -81,14 +81,12 @@ function affiliationsToStaff(
 function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
   return adt(
     "options",
-    staff
-      .filter((s) => {
-        return !s.resource;
-      })
-      .map(({ user: { name, id } }) => ({
-        label: name,
-        value: id
-      }))
+    staff.reduce<Select.Option[]>((acc, { resource, user: { name, id } }) => {
+      if (resource) {
+        return acc;
+      }
+      return [...acc, { label: name, value: id }];
+    }, [])
   );
 }
 
