@@ -1,6 +1,7 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as NumberField from "front-end/lib/components/form-field/number";
+import Accordion from "front-end/lib/views/accordion";
 import {
   immutable,
   Immutable,
@@ -44,11 +45,13 @@ export interface State extends Omit<Params, "affiliations" | "orgId"> {
   orgId: Id | null;
   members: TeamMember[];
   staff: Staff[];
+  isImportantInformationAccordionOpen: boolean;
 }
 
 export type Msg =
   | ADT<"member", [number, Select.Msg]>
-  | ADT<"hourlyRate", [number, NumberField.Msg]>;
+  | ADT<"hourlyRate", [number, NumberField.Msg]>
+  | ADT<"toggleImportantInformationAccordion">;
 
 function affiliationsToStaff(
   affiliations: AffiliationMember[],
@@ -201,7 +204,8 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
       resources,
       orgId: orgId || null,
       members: members.map((m) => m[0]),
-      staff
+      staff,
+      isImportantInformationAccordionOpen: true
     },
     members.reduce((acc, m) => [...acc, ...m[1]], [] as component_.Cmd<Msg>[])
   ];
@@ -253,6 +257,12 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value[1],
         mapChildMsg: (value) => adt("hourlyRate", [msg.value[0], value]) as Msg
       });
+
+    case "toggleImportantInformationAccordion":
+      return [
+        state.update("isImportantInformationAccordionOpen", (v) => !v),
+        []
+      ];
   }
 };
 
@@ -316,18 +326,17 @@ interface MemberViewProps {
 
 const MemberView: component_.base.View<MemberViewProps> = (props) => {
   const { member, dispatch, index, disabled } = props;
-  // const isValid = isMemberValid(member);
-  // const title = `Question ${index + 1}`;
   return (
-    <div>
-      <h4 className="bg-c-report-card-bg p-2">Resource {index + 1}</h4>
-      <Row>
+    <div className={index > 0 ? "pt-4 mt-2 border-top" : ""}>
+      <h5 className="bg-c-proposal-twu-form-team-member-heading p-2 pt-3 pb-3">
+        Resource {index + 1}
+      </h5>
+      <Row className="mb-2">
         <Col md="9" xs="7">
           <Select.view
             extraChildProps={{}}
             label="Resource Name"
             placeholder="Please select a resource name"
-            help="Dunno"
             required
             disabled={disabled}
             state={member.member}
@@ -342,7 +351,6 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
             extraChildProps={{ prefix: "$" }}
             label="Hourly Rate"
             placeholder="Hourly Rate"
-            help="Dunno"
             required
             disabled={disabled}
             state={member.hourlyRate}
@@ -367,51 +375,6 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
         </Col>
       </Row>
     </div>
-    // <Accordion
-    //   className={""}
-    //   toggle={() => dispatch(adt("toggleAccordion", index))}
-    //   color="info"
-    //   title={title}
-    //   titleClassName="h3 mb-0"
-    //   icon={isValid ? undefined : "exclamation-circle"}
-    //   iconColor={isValid ? undefined : "warning"}
-    //   iconWidth={2}
-    //   iconHeight={2}
-    //   chevronWidth={1.5}
-    //   chevronHeight={1.5}
-    //   open={member.isAccordianOpen}>
-    //   <p style={{ whiteSpace: "pre-line" }}>{member.question.question}</p>
-    //   <div className="mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap">
-    //     <div className="mb-2 mb-md-0">
-    //       {member.question.wordLimit} word limit
-    //     </div>
-    //     <Separator spacing="2" color="secondary" className="d-none d-md-block">
-    //       |
-    //     </Separator>
-    //     <div>Scored out of {member.question.score}</div>
-    //   </div>
-    //   <Alert color="primary" fade={false} className="mb-4">
-    //     <div style={{ whiteSpace: "pre-line" }}>
-    //       {member.question.guideline}
-    //     </div>
-    //   </Alert>
-    //   <RichMarkdownEditor.view
-    //     required
-    //     label={`${title} Response`}
-    //     placeholder={`${title} Response`}
-    //     help={`Provide your response to this question. You may use Markdown to write your response, however please do not include any images or links, as they will be redacted. Please ensure to stay within the question's response word limit.`}
-    //     extraChildProps={{
-    //       style: { height: "50vh", minHeight: "400px" }
-    //     }}
-    //     className="mb-0"
-    //     disabled={disabled}
-    //     state={member.response}
-    //     dispatch={component_.base.mapDispatch(
-    //       dispatch,
-    //       (value) => adt("response", [index, value]) as Msg
-    //     )}
-    //   />
-    // </Accordion>
   );
 };
 
@@ -420,12 +383,91 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 }
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, disabled } = props;
+  const { state, disabled, dispatch } = props;
+  const memberText = `member${state.members.length ? "s" : ""}`;
   return (
     <div>
+      <h4 className="text-capitalize">Team {memberText}</h4>
+      <Accordion
+        toggle={() => dispatch(adt("toggleImportantInformationAccordion"))}
+        color="black"
+        icon="exclamation-circle"
+        iconWidth={2}
+        iconHeight={2}
+        title="Important Information"
+        titleClassName="h4 mb-0"
+        chevronWidth={1.5}
+        chevronHeight={1.5}
+        open={state.isImportantInformationAccordionOpen}
+        className="mb-1">
+        <Row>
+          <Col xs="12">
+            <p>
+              To satisfy this opportunity&apos;s requirements, your team member
+              must only consist of confirmed (non-pending) {memberText} of the
+              selected organization.
+            </p>
+            <p className="font-weight-bold">
+              Proponents take note of the following pricing rules and
+              requirements:
+            </p>
+            <ol className="li-paren-lower-alpha">
+              <li>
+                Proponent pricing quoted will be taken to mean and deemed to be:
+                <ol className="li-paren-lower-roman">
+                  <li>in Canadian dollars;</li>
+                  <li>
+                    inclusive of all costs or expenses that may be incurred with
+                    respect to the services specified by the Competition Notice;
+                  </li>
+                  <li>exclusive of any applicable taxes.</li>
+                </ol>
+              </li>
+              <li>
+                In addition, the following rules apply to pricing bid by
+                Proponents:
+                <ol className="li-paren-lower-roman">
+                  <li>
+                    Team With Us Terms & Conditions section 1.8 regarding
+                    pricing and its provisions are incorporated herein by this
+                    reference.
+                  </li>
+                  <li>
+                    All pricing bid is required to be unconditional and
+                    unqualified. If any pricing bid does not meet this
+                    requirement, the Proponent&apos;s Proposal may be rejected
+                    resulting in the Proponent being eliminated from the
+                    Competition Notice competition.
+                  </li>
+                  <li>
+                    Failure to provide pricing where required by the Competition
+                    Notice will result in the Proponent being unable to submit a
+                    Proposal.
+                  </li>
+                  <li>
+                    Entering the numerical figure of “$0”, “$zero”, or the like
+                    in response to a call for a specific dollar amount will
+                    result in the Proponent being unable to submit a Proposal.
+                  </li>
+                  <li>
+                    The Contract will provide that the Contractor may request an
+                    increase in the bid pricing for any extension term of the
+                    Contract, limited to any increases, if any, as supported by
+                    the Canadian Consumer Price Index or 3% whichever is lower.
+                  </li>
+                </ol>
+              </li>
+            </ol>
+            <p>
+              Please provide the hourly rate you are proposing for this
+              opportunity.
+            </p>
+          </Col>
+        </Row>
+      </Accordion>
       {state.members.map((member, i) => (
         <Row key={`twu-proposal-team-question-response-${i}`}>
-          <Col xs="12" className={i < state.resources.length - 1 ? "mb-4" : ""}>
+          <Col xs="12">
             <MemberView
               index={i}
               disabled={disabled}
