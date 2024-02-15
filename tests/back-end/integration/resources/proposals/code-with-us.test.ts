@@ -143,11 +143,20 @@ test("code-with-us proposal crud", async () => {
     attachments: [],
     status: CWUProposalStatus.Draft
   };
+
+  /**
+   * Create a draft (request) CWU Proposal by an organization
+   */
   const createRequest = userAppAgent
     .post("/api/proposals/code-with-us")
     .send(body);
 
+  /**
+   * Make sure response from the above request is good
+   * by looking at status and object matching (requires permission)
+   */
   const createResult = await requestWithCookie(createRequest, testUserSession);
+
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
@@ -203,6 +212,9 @@ test("code-with-us proposal crud", async () => {
 
   expect(readManyAfterDeleteResult.body).toHaveLength(0);
 
+  /**
+   * Create an Individual proponent body
+   */
   const createIndividualProponentBody: CreateRequestBody = {
     ...body,
     proponent: adt("individual", {

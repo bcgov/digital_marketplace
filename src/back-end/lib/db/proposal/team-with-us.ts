@@ -357,9 +357,13 @@ async function getTWUProposalSubmittedAt(
   connection: Connection,
   proposal: RawTWUProposal | RawTWUProposalSlim
 ): Promise<Date | undefined> {
+  const conditions = {
+    proposal: proposal.id,
+    status: TWUProposalStatus.Submitted
+  };
   return (
     await connection<{ submittedAt: Date }>("twuProposalStatuses")
-      .where({ proposal: proposal.id, status: TWUProposalStatus.Submitted })
+      .where(conditions)
       .orderBy("createdAt", "desc")
       .select("createdAt as submittedAt")
       .first()
@@ -642,9 +646,10 @@ export const readManyProposalResourceQuestionResponses = tryDb<
  */
 const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
   async (connection, proposalId) => {
-    const query = connection<RawProposalTeamMember>("twuProposalMember").where({
-      proposal: proposalId
-    });
+    const query = connection<RawProposalTeamMember>("twuProposalMember").where(
+      "proposal",
+      proposalId
+    );
 
     query.select<RawProposalTeamMember[]>("member", "hourlyRate", "resource");
 
@@ -679,7 +684,7 @@ export const readOneTWUProposal = tryDb<
     // Fetch attachments
     result.attachments = (
       await connection<{ file: Id }>("twuProposalAttachments")
-        .where({ proposal: result.id })
+        .where("proposal", result.id)
         .select("file")
     ).map((row) => row.file);
 
@@ -696,7 +701,7 @@ export const readOneTWUProposal = tryDb<
       const rawProposalStatuses = await connection<RawHistoryRecord>(
         "twuProposalStatuses"
       )
-        .where({ proposal: result.id })
+        .where("proposal", result.id)
         .orderBy("createdAt", "desc")
         .select("createdAt", "note", "createdBy", "status", "event");
       result.history = await Promise.all(
@@ -1006,7 +1011,7 @@ export const updateTWUProposalResourceQuestionScores = tryDb<
         updatedBy: Id;
       }>("twuProposals")
         .transacting(trx)
-        .where({ id: proposalId })
+        .where("id", proposalId)
         .update({
           updatedAt: now,
           updatedBy: session.user.id
@@ -1116,7 +1121,7 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
         updatedBy: Id;
       }>("twuProposals")
         .transacting(trx)
-        .where({ id: proposalId })
+        .where("id", proposalId)
         .update({
           challengeScore,
           priceScore,
@@ -1212,7 +1217,7 @@ async function calculatePriceScore(
   // Get the price score weight from the opportunity corresponding to this proposal
   const priceScoreWeight = (
     await connection<{ priceWeight: number }>("twuProposals as proposals")
-      .where({ "proposals.id": proposalId })
+      .where("proposals.id", proposalId)
       .join(
         "twuOpportunities as opportunities",
         "proposals.opportunity",
@@ -1323,7 +1328,7 @@ export const awardTWUProposal = tryDb<
         (
           await connection<{ id: Id }>("twuProposals")
             .transacting(trx)
-            .andWhere({ opportunity: proposalRecord.opportunity })
+            .andWhere("opportunity", proposalRecord.opportunity)
             .andWhereNot({ id: proposalId })
             .select("id")
         )?.map((result) => result.id) || [];
@@ -1556,12 +1561,6 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
 
   const proposalScorings = await generateTWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
-    .join(
-      "twuResourceQuestionResponses as responses",
-      "responses.proposal",
-      "=",
-      "proposals.id"
-    )
     .select<ProposalScoring[]>(
       "proposals.id",
       "statuses.status",
@@ -1635,7 +1634,7 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
     const authorId =
       (
         await connection<{ createdBy: Id }>("twuProposals as proposals")
-          .where({ id })
+          .where("id", id)
           .select<{ createdBy: Id }>("createdBy")
           .first()
       )?.createdBy || null;

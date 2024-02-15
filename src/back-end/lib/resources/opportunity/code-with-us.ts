@@ -1089,17 +1089,6 @@ const delete_: crud.Delete<
 > = (connection: db.Connection) => {
   return {
     async validateRequestBody(request) {
-      if (
-        !(await permissions.deleteCWUOpportunity(
-          connection,
-          request.session,
-          request.params.id
-        ))
-      ) {
-        return invalid({
-          permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
       const validatedCWUOpportunity = await validateCWUOpportunityId(
         connection,
         request.params.id,
@@ -1108,8 +1097,17 @@ const delete_: crud.Delete<
       if (isInvalid(validatedCWUOpportunity)) {
         return invalid({ notFound: ["Opportunity not found."] });
       }
-      if (validatedCWUOpportunity.value.status !== CWUOpportunityStatus.Draft) {
-        return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+      if (
+        !(await permissions.deleteCWUOpportunity(
+          connection,
+          request.session,
+          request.params.id,
+          validatedCWUOpportunity.value.status
+        ))
+      ) {
+        return invalid({
+          permissions: [permissions.ERROR_MESSAGE]
+        });
       }
       return valid(validatedCWUOpportunity.value.id);
     },

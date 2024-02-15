@@ -19,7 +19,7 @@ export const readOneServiceAreaByServiceArea = tryDb<
   ServiceAreaId | null
 >(async (connection, serviceArea) => {
   const result = await connection<TWUServiceAreaRecord>("serviceAreas")
-    .where({ serviceArea })
+    .where("serviceArea", serviceArea)
     .first();
   return valid(result ? result.id : null);
 });

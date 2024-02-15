@@ -5,7 +5,6 @@ import findUp from "find-up";
 import { existsSync, mkdirSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { parseBooleanEnvironmentVariable } from "shared/config";
-import { ConnectionConfig } from "knex";
 
 // HARDCODED CONFIG
 // Offset for total opportunity metrics displayed on landing page
@@ -85,6 +84,17 @@ export const SERVICE_TOKEN_HASH = get("SERVICE_TOKEN_HASH", "");
 export const SWAGGER_ENABLE = get("SWAGGER_ENABLE", "") === "true";
 
 export const SWAGGER_UI_PATH = get("SWAGGER_UI_PATH", "/docs/api");
+
+interface ConnectionConfig {
+  host: string;
+  user: string;
+  password: string;
+  database: string;
+  domain?: string;
+  instanceName?: string;
+  debug?: boolean;
+  requestTimeout?: number;
+}
 
 export function getPGConfig(): string | ConnectionConfig {
   let connectionConfig: string | ConnectionConfig = "";

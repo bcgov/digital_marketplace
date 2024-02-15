@@ -92,6 +92,8 @@ export function flipCurried<A, B, C>(
 }
 
 export function getOrdinalSuffix(position: number): string {
+  if (position > 10 && position < 20) return "th"; // teens are all "th"
+
   switch (position % 10) {
     case 1:
       return "st";

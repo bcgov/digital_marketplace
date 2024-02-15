@@ -274,7 +274,7 @@ export async function userHasAcceptedCurrentTerms(
   id: Id
 ): Promise<boolean> {
   const [result] = await connection<{ acceptedTermsAt: Date }>("users")
-    .where({ id })
+    .where("id", id)
     .select("acceptedTermsAt");
 
   if (!result) {
@@ -291,7 +291,7 @@ export async function userHasAcceptedPreviousTerms(
   id: Id
 ): Promise<boolean> {
   const [result] = await connection<{ lastAcceptedTermsAt: Date }>("users")
-    .where({ id })
+    .where("id", id)
     .select("lastAcceptedTermsAt");
 
   if (!result) {

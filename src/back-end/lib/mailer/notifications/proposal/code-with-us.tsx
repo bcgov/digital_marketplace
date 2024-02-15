@@ -8,16 +8,13 @@ import * as templates from "back-end/lib/mailer/templates";
 import { makeSend } from "back-end/lib/mailer/transport";
 import React from "react";
 import { CONTACT_EMAIL, EMPTY_STRING } from "shared/config";
-import {
-  CWUOpportunity,
-  isCWUOpportunityClosed
-} from "shared/lib/resources/opportunity/code-with-us";
+import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CWUProposal,
   CWUProposalSlim
 } from "shared/lib/resources/proposal/code-with-us";
 import { AuthenticatedSession } from "shared/lib/resources/session";
-import { User } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { Id } from "shared/lib/types";
 import { getValidValue } from "shared/lib/validation";
 
@@ -140,7 +137,6 @@ export async function handleCWUProposalWithdrawn(
   proposalId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  //Notify the opportunity author if the opportunity is in an awardable state
   const proposal = getValidValue(
     await db.readOneCWUProposal(connection, proposalId, session),
     null
@@ -155,13 +151,6 @@ export async function handleCWUProposalWithdrawn(
       ),
       null
     );
-  // Need to read opportunityAuthor separate here, as this session will not be allowed to read from opportunity itself
-  const opportunityAuthor =
-    proposal &&
-    getValidValue(
-      await db.readOneCWUOpportunityAuthor(connection, proposal.opportunity.id),
-      null
-    );
 
   if (proposal && opportunity) {
     const withdrawnProponent =
@@ -170,23 +159,28 @@ export async function handleCWUProposalWithdrawn(
         await db.readOneUser(connection, proposal.createdBy.id),
         null
       );
-    // Notify opportunity author if opportunity is closed
-    if (
-      opportunityAuthor &&
-      withdrawnProponent &&
-      isCWUOpportunityClosed(opportunity)
-    ) {
-      await withdrawnCWUProposalSubmission(
-        opportunityAuthor,
-        withdrawnProponent,
-        opportunity
-      );
-    }
     // Notify proposal author
     if (withdrawnProponent) {
       await withdrawnCWUProposalSubmissionProposalAuthor(
         withdrawnProponent,
         opportunity
+      );
+
+      // Notify admins that the proposal has been withdrawn
+      const adminUsers =
+        getValidValue(
+          await db.readManyUsersByRole(connection, UserType.Admin),
+          null
+        ) || [];
+      await Promise.all(
+        adminUsers.map(
+          async (admin) =>
+            await withdrawnCWUProposalSubmission(
+              admin,
+              withdrawnProponent,
+              opportunity
+            )
+        )
       );
     }
   }

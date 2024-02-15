@@ -319,56 +319,46 @@ export function isValidStatusChange(
 
     case TWUProposalStatus.UnderReviewResourceQuestions:
       return (
-        (([
+        [
           TWUProposalStatus.EvaluatedResourceQuestions,
           TWUProposalStatus.Disqualified
         ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === TWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case TWUProposalStatus.EvaluatedResourceQuestions:
       return (
-        ([
+        [
           TWUProposalStatus.UnderReviewChallenge,
           TWUProposalStatus.Disqualified
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === TWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case TWUProposalStatus.UnderReviewChallenge:
       return (
-        ([
+        [
           TWUProposalStatus.EvaluatedChallenge,
           TWUProposalStatus.Disqualified,
           TWUProposalStatus.EvaluatedResourceQuestions
-        ].includes(to) &&
-          userType !== UserType.Vendor) ||
-        (to === TWUProposalStatus.Withdrawn && userType === UserType.Vendor)
+        ].includes(to) && userType !== UserType.Vendor
       );
 
     case TWUProposalStatus.EvaluatedChallenge:
       return (
-        (([
+        [
           TWUProposalStatus.Awarded,
           TWUProposalStatus.NotAwarded,
           TWUProposalStatus.Disqualified
         ].includes(to) &&
-          userType !== UserType.Vendor) ||
-          (to === TWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
     case TWUProposalStatus.Awarded:
       return (
-        ((to === TWUProposalStatus.Disqualified &&
-          userType !== UserType.Vendor) ||
-          (to === TWUProposalStatus.Withdrawn &&
-            userType === UserType.Vendor)) &&
+        to === TWUProposalStatus.Disqualified &&
+        userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
