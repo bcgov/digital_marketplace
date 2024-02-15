@@ -612,7 +612,7 @@ export const readManyResourceQuestions = tryDb<[Id], TWUResourceQuestion[]>(
 export const readManyResources = tryDb<[Id], TWUResource[]>(
   async (connection, opportunityVersionId) => {
     const results = await connection<RawResource>("twuResources")
-      .where({ opportunityVersion: opportunityVersionId })
+      .where("opportunityVersion", opportunityVersionId)
       .orderBy("order", "asc");
     if (!results) {
       throw new Error("unable to read resources");
