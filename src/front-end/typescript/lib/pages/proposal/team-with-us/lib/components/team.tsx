@@ -95,6 +95,8 @@ function initTeam(
 ): [TeamMember, component_.Cmd<Msg>[]][] {
   return resources
     .map((r, index) => {
+      const idNamespace = String(Math.random());
+
       const existingTeamMember = find(
         existingMembers,
         ({ resource }) => resource === r.id
@@ -115,7 +117,7 @@ function initTeam(
         },
         child: {
           value: selectedMemberOption,
-          id: "twu-proposal-member", // TODO: Better ID
+          id: `${idNamespace}-team-member`,
           options: getNonAddedStaffOptions(staff)
         }
       });
@@ -129,7 +131,7 @@ function initTeam(
         },
         child: {
           value: existingTeamMember?.hourlyRate || null,
-          id: "twu-proposal-hourly-rate", // TODO: Better ID
+          id: `${idNamespace}-team-hourly-rate`,
           min: 1
         }
       });
