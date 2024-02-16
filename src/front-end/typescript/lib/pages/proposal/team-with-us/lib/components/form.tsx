@@ -48,6 +48,7 @@ import { invalid, valid, Validation } from "shared/lib/validation";
 import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
+import { userAvatarPath } from "front-end/lib/pages/user/lib";
 // import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
 export type TabId = "Evaluation" | "Resource" | "Questions" | "Review Proposal";
@@ -817,7 +818,21 @@ const ReviewProposalView: component_.base.View<Props> = ({
   dispatch
 }) => {
   const organization = getSelectedOrganization(state);
-  // const team = Team.getValues(state.team);
+  const team = Team.getValues(state.team);
+  const teamWithUser = team.map((member) => {
+    const user = state.team.staff.find((u) => u.user.id === member.member)!;
+    const resources = state.team.resources.find(
+      (r) => r.id === member.resource
+    )!;
+
+    return {
+      hourlyRate: member.hourlyRate,
+      serviceArea: resources.serviceArea,
+      targetAllocation: resources.targetAllocation,
+      user: user.user
+    };
+  });
+
   return (
     <Row>
       <Col xs="12">
@@ -879,14 +894,16 @@ const ReviewProposalView: component_.base.View<Props> = ({
           <h2 className="mb-4">Resource and Pricing</h2>
         </div>
       </Col>
-      {/* {team.length > 0 ? (
-        team.map((member) => (
-          <Col key={member.id}>
+      {teamWithUser ? (
+        teamWithUser.map((m, i) => (
+          <Col key={m.user.id}>
+            <h4 className="">Resource {i + 1}</h4>
             <Row style={{ rowGap: "0.5rem" }}>
               <Col xs="12" sm="6">
                 <div
                   className="d-flex text-nowrap flex-nowrap align-items-center"
                   color="body">
+                  {m.user.name}
                   <img
                     className="rounded-circle border mr-2"
                     style={{
@@ -894,22 +911,21 @@ const ReviewProposalView: component_.base.View<Props> = ({
                       height: "1.75rem",
                       objectFit: "cover"
                     }}
-                    src={userAvatarPath(member)}
+                    src={userAvatarPath(m.user)}
                   />
-                  {member.name}
                 </div>
               </Col>
               <Col xs="12" sm="6">
-                <NumberField.view
-                  disabled
-                  extraChildProps={{ prefix: "$" }}
-                  label="Hourly Rate"
-                  placeholder="Hourly Rate"
-                  state={state.hourlyRate}
-                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
-                    adt("hourlyRate" as const, value)
-                  )}
-                />
+                <br />
+                <p>{m.hourlyRate}</p>
+              </Col>
+              <Col xs="12" sm="6">
+                <br />
+                <p>{m.serviceArea}</p>
+              </Col>
+              <Col xs="12" sm="6">
+                <br />
+                <p>{m.targetAllocation}</p>
               </Col>
             </Row>
           </Col>
@@ -918,7 +934,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
         <Col xs="12">
           You have not yet selected a resource for this proposal.
         </Col>
-      )} */}
+      )}
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>
