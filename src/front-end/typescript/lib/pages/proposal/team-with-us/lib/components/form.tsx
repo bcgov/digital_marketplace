@@ -50,7 +50,6 @@ import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
-// import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
 export type TabId = "Evaluation" | "Resource" | "Questions" | "Review Proposal";
 
@@ -145,7 +144,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         doesOrganizationProvideServiceAreas(o, opportunity.resources)
     )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
   const hourlyRate = proposal?.team?.length ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
@@ -309,10 +307,7 @@ export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return (
-    // isPricingTabValid(state) &&
-    isResourceQuestionsTabValid(state) && isOrganizationsTabValid(state)
-  );
+  return isResourceQuestionsTabValid(state) && isOrganizationsTabValid(state);
 }
 
 export function isLoading(state: Immutable<State>): boolean {
@@ -323,7 +318,6 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
-  // const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
   const team = Team.getValues(state.team);
   return {
     team,
@@ -489,19 +483,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         component_.cmd.mapMany(membersCmds, (msg) => adt("team", msg) as Msg)
       ];
     }
-
-    // case "onGetAffiliationsResponse": {
-    //   const [orgId, affiliations] = msg.value;
-    //   const [membersState, membersCmds] = Team.setMembers(
-    //     state.team,
-    //     affiliations,
-    //     orgId
-    //   );
-    //   return [
-    //     stopGetAffiliationsLoading(state),
-    //     component_.cmd.mapMany(membersCmds, (msg) => adt("team", msg) as Msg)
-    //   ];
-    // }
 
     case "team":
       return component_.base.updateChild({
