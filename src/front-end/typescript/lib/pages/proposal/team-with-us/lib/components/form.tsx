@@ -24,7 +24,7 @@ import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
 import { find } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { formatDate } from "shared/lib";
+import { formatAmount, formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity
@@ -49,6 +49,7 @@ import * as proposalValidation from "shared/lib/validation/proposal/team-with-us
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 // import { userAvatarPath } from "front-end/lib/pages/user/lib";
 
 export type TabId = "Evaluation" | "Resource" | "Questions" | "Review Proposal";
@@ -819,19 +820,19 @@ const ReviewProposalView: component_.base.View<Props> = ({
 }) => {
   const organization = getSelectedOrganization(state);
   const team = Team.getValues(state.team);
-  const teamWithUser = team.map((member) => {
-    const user = state.team.staff.find((u) => u.user.id === member.member)!;
-    const resources = state.team.resources.find(
-      (r) => r.id === member.resource
-    )!;
+  const resourcesWithMemberSelections = state.opportunity.resources.map(
+    (resource) => {
+      const { hourlyRate, member } =
+        team.find(({ resource: r }) => r === resource.id) ?? {};
 
-    return {
-      hourlyRate: member.hourlyRate,
-      serviceArea: resources.serviceArea,
-      targetAllocation: resources.targetAllocation,
-      user: user.user
-    };
-  });
+      return {
+        hourlyRate,
+        user: state.team.staff.find((u) => u.user.id === member),
+        serviceArea: resource.serviceArea,
+        targetAllocation: resource.targetAllocation
+      };
+    }
+  );
 
   return (
     <Row>
@@ -891,50 +892,74 @@ const ReviewProposalView: component_.base.View<Props> = ({
       </Col>
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
-          <h2 className="mb-4">Resource and Pricing</h2>
+          <h2 className="mb-4">Resources and Pricing</h2>
         </div>
       </Col>
-      {teamWithUser ? (
-        teamWithUser.map((m, i) => (
-          <Col key={m.user.id}>
-            <h4 className="">Resource {i + 1}</h4>
-            <Row style={{ rowGap: "0.5rem" }}>
-              <Col xs="12" sm="6">
-                <div
-                  className="d-flex text-nowrap flex-nowrap align-items-center"
-                  color="body">
-                  {m.user.name}
-                  <img
-                    className="rounded-circle border mr-2"
-                    style={{
-                      width: "1.75rem",
-                      height: "1.75rem",
-                      objectFit: "cover"
-                    }}
-                    src={userAvatarPath(m.user)}
-                  />
+      <Col>
+        {resourcesWithMemberSelections.map((resource, index) => {
+          return (
+            <Row key={`twu-proposal-team-question-response-${index}`}>
+              <Col xs="12">
+                <div className={index > 0 ? "pt-4 mt-2 border-top" : ""}>
+                  <h5 className="bg-c-proposal-twu-form-team-member-heading p-2 pt-3 pb-3">
+                    Resource {index + 1}
+                  </h5>
+                  <Row className="mb-2">
+                    <Col md="9" xs="7">
+                      <div className="font-weight-bold d-flex flex-nowrap">
+                        Resource Name
+                      </div>
+                      {resource.user ? (
+                        <p
+                          className="d-flex text-nowrap flex-nowrap align-items-center"
+                          color="body">
+                          <img
+                            className="rounded-circle border mr-2"
+                            style={{
+                              width: "1.75rem",
+                              height: "1.75rem",
+                              objectFit: "cover"
+                            }}
+                            src={userAvatarPath(resource.user.user)}
+                          />
+                          {resource.user.user.name}
+                        </p>
+                      ) : (
+                        EMPTY_STRING
+                      )}
+                    </Col>
+                    <Col md="3" xs="5" className="text-center">
+                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                        Hourly Rate
+                      </div>
+                      <p>
+                        {resource.hourlyRate
+                          ? formatAmount(resource.hourlyRate, "$")
+                          : EMPTY_STRING}
+                      </p>
+                    </Col>
+                    <div className="w-100"></div>
+                    <Col md="9" xs="7">
+                      <div className="font-weight-bold d-flex flex-nowrap">
+                        Service Area
+                      </div>
+                      <p>{twuServiceAreaToTitleCase(resource.serviceArea)}</p>
+                    </Col>
+                    <Col md="3" xs="5">
+                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                        Allocation
+                      </div>
+                      <p className="text-center">
+                        {resource.targetAllocation}%
+                      </p>
+                    </Col>
+                  </Row>
                 </div>
               </Col>
-              <Col xs="12" sm="6">
-                <br />
-                <p>{m.hourlyRate}</p>
-              </Col>
-              <Col xs="12" sm="6">
-                <br />
-                <p>{m.serviceArea}</p>
-              </Col>
-              <Col xs="12" sm="6">
-                <br />
-                <p>{m.targetAllocation}</p>
-              </Col>
             </Row>
-          </Col>
-        ))
-      ) : (
-        <Col xs="12">
-          You have not yet selected a resource for this proposal.
-        </Col>
-      )}
+          );
+        })}
+      </Col>
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>
