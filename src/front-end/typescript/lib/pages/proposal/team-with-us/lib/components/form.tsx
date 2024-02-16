@@ -51,7 +51,11 @@ import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
-export type TabId = "Evaluation" | "Resource" | "Questions" | "Review Proposal";
+export type TabId =
+  | "Evaluation"
+  | "Team Members"
+  | "Questions"
+  | "Review Proposal";
 
 const TabbedFormComponent = TabbedForm.makeComponent<TabId>();
 
@@ -152,7 +156,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       }
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
-    tabs: ["Evaluation", "Resource", "Questions", "Review Proposal"],
+    tabs: ["Evaluation", "Team Members", "Questions", "Review Proposal"],
     activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
@@ -987,7 +991,7 @@ export const view: component_.base.View<Props> = ({
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
         return <EvaluationView {...props} />;
-      case "Resource":
+      case "Team Members":
         return <OrganizationView {...props} />;
       case "Questions":
         return <ResourceQuestionsView {...props} />;
@@ -1004,7 +1008,7 @@ export const view: component_.base.View<Props> = ({
         switch (tab) {
           case "Evaluation":
             return true;
-          case "Resource":
+          case "Team Members":
             return isOrganizationsTabValid(state);
           case "Questions":
             return isResourceQuestionsTabValid(state);
