@@ -94,6 +94,7 @@ function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
  * Compares two tuples of users, existing users and users affiliated with an
  * organization.
  *
+ * @param resources
  * @param staff
  * @param existingMembers
  * @returns - one tuple of members

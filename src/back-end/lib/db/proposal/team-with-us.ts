@@ -1264,6 +1264,7 @@ async function calculatePriceScore(
       "=",
       "members.proposal"
     )
+    .join("twuResources as resources", "members.resource", "=", "resources.id")
     .whereIn("proposals.opportunity", function () {
       this.where({ id: proposalId }).select("opportunity").from("twuProposals");
     })
@@ -1271,7 +1272,13 @@ async function calculatePriceScore(
       TWUProposalStatus.UnderReviewChallenge,
       TWUProposalStatus.EvaluatedChallenge
     ])
-    .sum("members.hourlyRate as bid")
+    // multiple resources requires matching the hourly rate of the team member
+    // with the targetAllocation for the opportunity
+    .select(
+      connection.raw(
+        'SUM(members."hourlyRate" * resources."targetAllocation" / 100) AS bid'
+      )
+    )
     .groupBy("proposals.id")
     .select<ProposalBidRecord[]>("proposals.id")
     .orderBy("bid", "asc");
