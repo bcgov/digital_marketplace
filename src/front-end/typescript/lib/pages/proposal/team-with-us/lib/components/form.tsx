@@ -885,7 +885,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
           return (
             <Row key={`twu-proposal-team-question-response-${index}`}>
               <Col xs="12">
-                <div className={index > 0 ? "pt-4 mt-2 border-top" : ""}>
+                <div className={index > 0 ? "mt-3" : ""}>
                   <h5 className="bg-c-proposal-twu-form-team-member-heading p-2 pt-3 pb-3">
                     Resource {index + 1}
                   </h5>
