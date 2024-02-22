@@ -445,7 +445,7 @@ const ResourceView: component_.base.View<ResourceViewProps> = (props) => {
             extraChildProps={{}}
             label="Service Area"
             placeholder="Service Area"
-            help="Each TWU Opportunity must be matched to one and only one Service Area."
+            help="Select the Service Area, Target Allocation, Mandatory and Optional skills for each resource. To add additional resources to your opportunity, use the 'Add a Resource' button below."
             required
             disabled={disabled}
             state={state.serviceArea}

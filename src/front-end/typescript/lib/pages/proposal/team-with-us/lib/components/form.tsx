@@ -603,7 +603,9 @@ const OrganizationView: component_.base.View<Props> = ({
             consideration, you must:
           </p>
           <ul className="mb-5">
-            <li>Select at most, one member for this opportunity; and</li>
+            <li>
+              Assign a team member for each requested Service Area/Resource
+            </li>
             <li>
               Ensure the member{"'"}s capabilities satisfy the required service
               area for the implementation.
