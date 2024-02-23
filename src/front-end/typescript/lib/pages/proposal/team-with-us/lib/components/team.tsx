@@ -169,7 +169,7 @@ function initTeam(
 }
 
 /**
- * Sets the state for 'staff' and 'member' options
+ * Sets the state for 'staff', 'member' options, and 'orgId'
  *
  * @param state
  * @param affiliations
