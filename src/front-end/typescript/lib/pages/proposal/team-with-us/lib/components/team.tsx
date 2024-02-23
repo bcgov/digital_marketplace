@@ -169,30 +169,28 @@ function initTeam(
 }
 
 /**
- * Sets the state for 'members', 'staff', and 'orgId'
+ * Sets the state for 'staff' and 'member' options
  *
  * @param state
  * @param affiliations
  * @param orgId
  */
-export function setMembers(
+export function setStaff(
   state: Immutable<State>,
   affiliations: AffiliationMember[],
-  orgId: Id
+  orgId: Id | null
 ): UpdateReturnValue<State, Msg> {
   const staff = affiliationsToStaff(affiliations, state.proposalTeam);
-  const members = initTeam(state.resources, staff, state.proposalTeam);
-  state = state
-    .set(
-      "members",
-      members.map((m) => m[0])
-    )
-    .set("orgId", orgId)
-    .set("staff", staff);
-  return [
-    state,
-    members.reduce((acc, m) => [...acc, ...m[1]], [] as component_.Cmd<Msg>[])
-  ];
+  const membersState = state.members.reduce((acc, _, i) => {
+    return acc.updateIn(["members", i, "member"], (s) =>
+      Select.setOptions(
+        s as Immutable<Select.State>,
+        getNonAddedStaffOptions(staff)
+      )
+    );
+  }, state);
+  state = membersState.set("orgId", orgId).set("staff", staff);
+  return [state, []];
 }
 
 /**

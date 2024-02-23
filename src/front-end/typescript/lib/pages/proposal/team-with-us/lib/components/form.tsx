@@ -90,6 +90,7 @@ export interface State
 }
 
 export type Msg =
+  | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
   // Team Tab
   | ADT<"organization", Select.Msg>
@@ -175,7 +176,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
 
   const [teamState, teamCmds] = Team.init({
     orgId: proposal?.organization?.id,
-    affiliations: [], // Re-initialize with affiliations once loaded.
+    affiliations: [], // Set members with affiliations once loaded.
     proposalTeam: proposal?.team || [],
     resources: opportunity.resources
   });
@@ -213,6 +214,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
+      ),
+      component_.cmd.map(
+        getAffiliations(proposal?.organization?.id),
+        (as) => adt("onInitResponse", as) as Msg
       )
     ] as component_.Cmd<Msg>[]
   ];
@@ -376,6 +381,19 @@ const stopGetAffiliationsLoading = makeStopLoading<State>(
  */
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
+    case "onInitResponse": {
+      const affiliations = msg.value;
+      const [teamState, teamCmds] = Team.setStaff(
+        state.team,
+        affiliations,
+        state.proposal?.organization?.id ?? null
+      );
+      return [
+        state.set("team", teamState),
+        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
+      ];
+    }
+
     case "tabbedForm":
       return component_.base.updateChild({
         state,
@@ -419,15 +437,16 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 
     case "onGetAffiliationsResponse": {
       const [orgId, affiliations] = msg.value;
-      const [membersState, membersCmds] = Team.setMembers(
-        state.team,
+      const [teamState, teamCmds] = Team.init({
+        orgId,
         affiliations,
-        orgId
-      );
-      state = state.set("team", membersState);
+        proposalTeam: [], // Re-initialize Team component when switching orgs.
+        resources: state.opportunity.resources
+      });
+      state = state.set("team", immutable(teamState));
       return [
         stopGetAffiliationsLoading(state),
-        component_.cmd.mapMany(membersCmds, (msg) => adt("team", msg) as Msg)
+        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
       ];
     }
 
