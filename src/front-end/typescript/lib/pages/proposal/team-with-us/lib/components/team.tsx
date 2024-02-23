@@ -386,7 +386,7 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
           <NumberField.view
             extraChildProps={{ prefix: "$" }}
             label="Hourly Rate"
-            placeholder="Hourly Rate"
+            placeholder="Rate"
             required
             disabled={disabled}
             state={member.hourlyRate}
