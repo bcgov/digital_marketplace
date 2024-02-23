@@ -90,7 +90,6 @@ export interface State
 }
 
 export type Msg =
-  | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
   // Team Tab
   | ADT<"organization", Select.Msg>
@@ -214,10 +213,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
-      ),
-      component_.cmd.map(
-        getAffiliations(proposal?.organization?.id),
-        (as) => adt("onInitResponse", as) as Msg
       )
     ] as component_.Cmd<Msg>[]
   ];
@@ -381,20 +376,6 @@ const stopGetAffiliationsLoading = makeStopLoading<State>(
  */
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
-    case "onInitResponse": {
-      const affiliations = msg.value;
-      const [teamState, teamCmds] = Team.init({
-        orgId: state.proposal?.organization?.id,
-        affiliations,
-        proposalTeam: state.proposal?.team || [],
-        resources: state.opportunity.resources
-      });
-      return [
-        state.set("team", immutable(teamState)),
-        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
-      ];
-    }
-
     case "tabbedForm":
       return component_.base.updateChild({
         state,
