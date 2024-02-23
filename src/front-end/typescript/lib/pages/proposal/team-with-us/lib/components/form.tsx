@@ -4,7 +4,6 @@ import {
 } from "front-end/config";
 import { fileBlobPath, makeStartLoading, makeStopLoading } from "front-end/lib";
 import * as FormField from "front-end/lib/components/form-field";
-import * as NumberField from "front-end/lib/components/form-field/number";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
@@ -45,7 +44,6 @@ import {
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
@@ -84,8 +82,6 @@ export interface State
   // Team Tab
   organization: Immutable<Select.State>;
   team: Immutable<Team.State>;
-  // Pricing Tab
-  hourlyRate: Immutable<NumberField.State>;
   // Questions Tab
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Review Proposal Tab
@@ -100,8 +96,6 @@ export type Msg =
   | ADT<"organization", Select.Msg>
   | ADT<"onGetAffiliationsResponse", [Id, AffiliationMember[]]>
   | ADT<"team", Team.Msg>
-  // Pricing Tab
-  | ADT<"hourlyRate", NumberField.Msg>
   // Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Review Proposal Tab
@@ -148,7 +142,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         doesOrganizationProvideServiceAreas(o, opportunity.resources)
     )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  const hourlyRate = proposal?.team?.length ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -188,20 +181,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     resources: opportunity.resources
   });
 
-  const [hourlyRateState, hourlyRateCmds] = NumberField.init({
-    errors: [],
-    validate: (v) => {
-      if (v === null) {
-        return invalid([`Please enter a valid hourly rate.`]);
-      }
-      return proposalValidation.validateTWUHourlyRate(v);
-    },
-    child: {
-      value: hourlyRate || null,
-      id: "twu-proposal-cost",
-      min: 1
-    }
-  });
   const [resourceQuestionsState, resourceQuestionsCmds] =
     ResourceQuestions.init({
       questions: opportunity.resourceQuestions,
@@ -222,7 +201,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       tabbedForm: immutable(tabbedFormState),
       organization: immutable(organizationState),
       team: immutable(teamState),
-      hourlyRate: immutable(hourlyRateState),
       resourceQuestions: immutable(resourceQuestionsState),
       existingProposalForOrganizationError: null
     },
@@ -234,9 +212,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         adt("organization", msg)
       ),
       ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
-      ...component_.cmd.mapMany(hourlyRateCmds, (msg) =>
-        adt("hourlyRate", msg)
-      ),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
       ),
@@ -259,48 +234,35 @@ export function setErrors(
     : errors?.existingOrganizationProposal
     ? errors.existingOrganizationProposal.errors
     : [];
-  return (
-    state
-      .update("organization", (s) => FormField.setErrors(s, organizationErrors))
-      // TODO: Populate the rest of the form errors correctly.
-      // .update( "team", (s) =>
-      //   Team.setErrors(s, {
-      //     team.errors?team
-      //   })
-      // )
-      // .update("hourlyRate", (s) =>
-      //   FormField.setErrors(
-      //     s,
-      //     (errors && (errors as CreateValidationErrors).hourlyRate) || []
-      //   )
-      // )
-      .update("resourceQuestions", (s) =>
-        ResourceQuestions.setErrors(
-          s,
-          (errors &&
-            (errors as CreateValidationErrors).resourceQuestionResponses) ||
-            []
-        )
+  return state
+    .update("organization", (s) => FormField.setErrors(s, organizationErrors))
+    .update("team", (s) =>
+      Team.setErrors(
+        s,
+        (errors && (errors as CreateValidationErrors).team) || []
       )
-      .set(
-        "existingProposalForOrganizationError",
-        errors?.existingOrganizationProposal
-          ? errors.existingOrganizationProposal.proposalId
-          : null
+    )
+    .update("resourceQuestions", (s) =>
+      ResourceQuestions.setErrors(
+        s,
+        (errors &&
+          (errors as CreateValidationErrors).resourceQuestionResponses) ||
+          []
       )
-  );
+    )
+    .set(
+      "existingProposalForOrganizationError",
+      errors?.existingOrganizationProposal
+        ? errors.existingOrganizationProposal.proposalId
+        : null
+    );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("organization", (s) => FormField.validate(s))
     .update("team", (s) => Team.validate(s))
-    .update("hourlyRate", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
-}
-
-export function isPricingTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.hourlyRate);
 }
 
 export function isOrganizationsTabValid(state: Immutable<State>): boolean {
@@ -497,15 +459,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("team", value)
       });
 
-    case "hourlyRate":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["hourlyRate"],
-        childUpdate: NumberField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("hourlyRate", value)
-      });
-
     case "resourceQuestions":
       return component_.base.updateChild({
         state,
@@ -603,9 +556,7 @@ const OrganizationView: component_.base.View<Props> = ({
             consideration, you must:
           </p>
           <ul className="mb-5">
-            <li>
-              Assign a team member for each requested Service Area/Resource
-            </li>
+            <li>Select at most, one member for this opportunity; and</li>
             <li>
               Ensure the member{"'"}s capabilities satisfy the required service
               area for the implementation.
