@@ -176,8 +176,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     DEFAULT_PRICE_WEIGHT
   );
 
-  const isStatusPublished =
-    opportunity?.status === TWUOpportunityStatus.Published;
+  const isStatusNotDraft = opportunity?.status !== TWUOpportunityStatus.Draft;
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
@@ -413,7 +412,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       priceWeight: immutable(priceWeightState),
       weightsTotal: immutable(weightsTotalState),
       attachments: immutable(attachmentsState),
-      preserveData: isStatusPublished
+      preserveData: isStatusNotDraft
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
