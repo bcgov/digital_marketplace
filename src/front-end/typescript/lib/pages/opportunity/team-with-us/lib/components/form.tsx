@@ -91,6 +91,7 @@ export interface State {
   weightsTotal: Immutable<NumberField.State>;
   // Attachments tab
   attachments: Immutable<Attachments.State>;
+  preserveData: boolean;
 }
 
 export type Msg =
@@ -174,6 +175,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     "priceWeight",
     DEFAULT_PRICE_WEIGHT
   );
+
+  const isStatusPublished =
+    opportunity?.status === TWUOpportunityStatus.Published;
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
@@ -408,7 +412,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       challengeWeight: immutable(challengeWeightState),
       priceWeight: immutable(priceWeightState),
       weightsTotal: immutable(weightsTotalState),
-      attachments: immutable(attachmentsState)
+      attachments: immutable(attachmentsState),
+      preserveData: isStatusPublished
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
@@ -1250,7 +1255,7 @@ const ResourceDetailsView: component_.base.View<Props> = ({
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("resources" as const, value)
           )}
-          disabled={disabled}
+          disabled={state.preserveData ? true : disabled}
         />
       </Col>
     </Row>
