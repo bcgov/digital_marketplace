@@ -26,6 +26,7 @@ import { invalid, valid } from "shared/lib/validation";
 import { TWUResource } from "shared/lib/resources/opportunity/team-with-us";
 import { UpdateReturnValue } from "front-end/lib/framework/component/base";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
+import Skills from "front-end/lib/views/skills";
 
 export interface Params {
   orgId?: Id;
@@ -380,6 +381,12 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
             Allocation
           </div>
           <p className="text-center">{member.resource.targetAllocation}%</p>
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <div className="font-weight-bold mb-2">Mandatory Skills</div>
+          <Skills skills={member.resource.mandatorySkills} />
         </Col>
       </Row>
     </div>
