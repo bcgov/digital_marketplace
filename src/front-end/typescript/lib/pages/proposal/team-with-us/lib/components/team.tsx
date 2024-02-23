@@ -278,11 +278,21 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 export type Values = CreateTWUProposalTeamMemberBody[];
 
 export function getValues(state: Immutable<State>): Values {
-  return state.members.map((m) => ({
-    member: Select.getValue(m.member),
-    hourlyRate: FormField.getValue(m.hourlyRate) ?? 0,
-    resource: m.resource.id
-  }));
+  return state.members.reduce<Values>((acc, m) => {
+    const member = Select.getValue(m.member);
+    if (!member) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        member,
+        hourlyRate: FormField.getValue(m.hourlyRate) ?? 0,
+        resource: m.resource.id
+      }
+    ];
+  }, []);
 }
 
 export type Errors = CreateTWUProposalTeamMemberValidationErrors[];
