@@ -176,7 +176,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     DEFAULT_PRICE_WEIGHT
   );
 
-  const isStatusNotDraft = opportunity?.status !== TWUOpportunityStatus.Draft;
+  // Used to flag when an opportunity is being created (undefined) or edited (draft)
+  const isStatusNotDraft =
+    opportunity?.status !== TWUOpportunityStatus.Draft &&
+    opportunity?.status !== undefined;
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
