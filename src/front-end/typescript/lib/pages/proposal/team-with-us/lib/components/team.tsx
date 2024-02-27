@@ -57,14 +57,27 @@ export type Msg =
   | ADT<"hourlyRate", [number, NumberField.Msg]>
   | ADT<"toggleImportantInformationAccordion">;
 
+/**
+ * Ensures that members attached to a proposal are in fact affiliated with
+ * the organization list passed to the function
+ *
+ * @param affiliations - members that are affiliated with an org
+ * @param proposalTeam - members that are attached to a proposal
+ */
 function affiliationsToStaff(
   affiliations: AffiliationMember[],
   proposalTeam: TWUProposalTeamMember[]
 ): Staff[] {
+  // reduce the array of affiliated members in an organization to a single value
   return affiliations.reduce<Staff[]>((acc, a) => {
+    // skip over any member that is NOT active
     if (a.membershipStatus !== MembershipStatus.Active) {
       return acc;
     }
+    /**
+     * search through proposalTeam and return that member if they are affiliated
+     * with the organization
+     */
     const existingTeamMember = find(
       proposalTeam,
       ({ member }) => member.id === a.user.id
@@ -95,9 +108,9 @@ function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
  * Compares two tuples of users, existing users and users affiliated with an
  * organization.
  *
- * @param resources
- * @param staff
- * @param existingMembers
+ * @param resources - Reflects the opportunity and what resources it requires
+ * @param staff - All people who are affiliated with an organization.
+ * @param existingMembers - All people who have been selected from 'Staff' and attached to the proposal.
  * @returns - one tuple of members
  */
 function initTeam(
@@ -109,6 +122,11 @@ function initTeam(
     .map((r, index) => {
       const idNamespace = String(Math.random());
 
+      /**
+       * match a team memberID from TWUProposalMember table with a resourceID
+       * from the TWUOpportunityVersion table. NOTE: Will break when a new
+       * version of the opportunity is Published.
+       */
       const existingTeamMember = find(
         existingMembers,
         ({ resource }) => resource === r.id
@@ -202,6 +220,7 @@ export function setStaff(
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
   const { orgId, affiliations, proposalTeam, resources, ...paramsForState } =
     params;
+  // ensures that proposal members in fact are affiliated with an org
   const staff = affiliationsToStaff(affiliations, proposalTeam);
   const members = initTeam(resources, staff, proposalTeam);
   return [
