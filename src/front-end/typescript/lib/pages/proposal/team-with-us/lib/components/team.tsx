@@ -36,7 +36,7 @@ export interface Params {
 }
 
 export interface Staff extends AffiliationMember {
-  resource?: Id;
+  added: boolean;
 }
 
 export interface TeamMember {
@@ -86,7 +86,7 @@ function affiliationsToStaff(
       ...acc,
       {
         ...a,
-        resource: existingTeamMember?.resource
+        added: Boolean(existingTeamMember)
       }
     ];
   }, []);
@@ -95,8 +95,8 @@ function affiliationsToStaff(
 function getNonAddedStaffOptions(staff: Staff[]): Select.Options {
   return adt(
     "options",
-    staff.reduce<Select.Option[]>((acc, { resource, user: { name, id } }) => {
-      if (resource) {
+    staff.reduce<Select.Option[]>((acc, { added, user: { name, id } }) => {
+      if (added) {
         return acc;
       }
       return [...acc, { label: name, value: id }];
@@ -250,14 +250,12 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("member", [msg.value[0], value]) as Msg,
         updateAfter: (state) => {
           const currMember = Select.getValue(state.members[index].member);
-          // Adds resource ID to current member and removes it from the previous member
           const staffState = state.update("staff", (ms) =>
             ms.map((staff) => {
               return staff.user.id === currMember
-                ? { ...staff, resource: state.resources[index].id }
-                : staff.user.id === prevMember &&
-                  staff.resource === state.resources[index].id
-                ? { ...staff, resource: undefined }
+                ? { ...staff, added: true }
+                : staff.user.id === prevMember && staff.added
+                ? { ...staff, added: false }
                 : staff;
             })
           );
