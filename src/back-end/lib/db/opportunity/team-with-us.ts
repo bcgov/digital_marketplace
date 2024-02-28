@@ -1103,6 +1103,28 @@ export const updateTWUOpportunityVersion = tryDb<
   const { attachments, resourceQuestions, resources, ...restOfOpportunity } =
     opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
+    const prevResources: TWUResourceRecord[] = await connection<
+      TWUResourceRecord & { opportunityVersion: Id }
+    >("twuResources as tr")
+      .select("tr.*")
+      .join(
+        "twuOpportunityVersions as tov",
+        "tr.opportunityVersion",
+        "=",
+        "tov.id"
+      )
+      .where(
+        "tov.createdAt",
+        "=",
+        connection<Date>("twuOpportunityVersions as tov2")
+          .max("createdAt")
+          .where("tov2.opportunity", "=", restOfOpportunity.id)
+      );
+
+    if (prevResources.length === 0) {
+      throw new Error("could not fetch previous resources");
+    }
+
     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
       "twuOpportunityVersions"
     )
@@ -1123,6 +1145,7 @@ export const updateTWUOpportunityVersion = tryDb<
     }
 
     for (const twuResourceRecord of resources) {
+      const id = generateUuid();
       await connection<TWUResourceRecord & { opportunityVersion: Id }>(
         "twuResources"
       )
@@ -1130,13 +1153,43 @@ export const updateTWUOpportunityVersion = tryDb<
         .insert(
           {
             ...twuResourceRecord,
-            id: generateUuid(),
+            id,
             opportunityVersion: versionRecord.id
           },
           "*"
         );
       if (!twuResourceRecord) {
         throw new Error("unable to update resource");
+      }
+
+      /**
+       * If any of the previous resources have the same properties
+       * update team members that referred to that resource so that
+       * they point to the new resource.
+       */
+      for (const pr of prevResources) {
+        if (
+          pr.serviceArea === twuResourceRecord.serviceArea &&
+          pr.targetAllocation === twuResourceRecord.targetAllocation &&
+          pr.mandatorySkills.every(
+            (skill, index) => skill === twuResourceRecord.mandatorySkills[index]
+          ) &&
+          pr.optionalSkills.every(
+            (skill, index) => skill === twuResourceRecord.optionalSkills[index]
+          ) &&
+          pr.order === twuResourceRecord.order
+        ) {
+          const result = await connection("twuProposalMember")
+            .transacting(trx)
+            .where("resource", "=", pr.id)
+            .update({ resource: id });
+
+          if (!result) {
+            throw new Error(
+              "unable to port new resource to proposal team member"
+            );
+          }
+        }
       }
     }
 
