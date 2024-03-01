@@ -651,7 +651,7 @@ const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
       proposalId
     );
 
-    query.select<RawProposalTeamMember[]>("member", "hourlyRate", "resource");
+    query.select<RawProposalTeamMember[]>("member", "hourlyRate", "order");
 
     const results = await query;
 
@@ -865,7 +865,7 @@ async function createTWUProposalTeamMembers(
         proposal: proposalId,
         member: teamMember.member,
         hourlyRate: teamMember.hourlyRate,
-        resource: teamMember.resource
+        order: teamMember.order
       },
       "*"
     );

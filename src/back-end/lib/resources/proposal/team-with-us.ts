@@ -268,7 +268,7 @@ const create: crud.Create<
         team: (Array.isArray(team) ? team : []).map((member) => ({
           member: getString(member, "member"),
           hourlyRate: getNumber(member, "hourlyRate"),
-          resource: getString(member, "resource")
+          order: getNumber(member, "order")
         }))
       };
     },
@@ -407,7 +407,7 @@ const create: crud.Create<
           team: team.map((t) => ({
             member: getString(t, "member"),
             hourlyRate: getNumber(t, "hourlyRate"),
-            resource: getString(t, "resource")
+            order: getNumber(t, "order")
           }))
         });
       }
@@ -720,7 +720,7 @@ const update: crud.Update<
                   ? team.map((t) => ({
                       member: getString(t, "member"),
                       hourlyRate: getNumber<number>(t, "hourlyRate"),
-                      resource: getString(t, "resource")
+                      order: getNumber<number>(t, "order")
                     }))
                   : []
               })
@@ -833,10 +833,10 @@ const update: crud.Update<
               await validateTWUProposalTeamMembers(
                 connection,
                 validatedTWUProposal.value.team?.map(
-                  ({ member, hourlyRate, resource }) => ({
+                  ({ member, hourlyRate, order }) => ({
                     member: member.id,
                     hourlyRate,
-                    resource
+                    order
                   })
                 ) ?? [],
                 validatedOrganization.value.id

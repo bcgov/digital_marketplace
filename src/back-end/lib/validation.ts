@@ -367,20 +367,13 @@ export async function validateTWUProposalTeamMembers(
       const validatedHourlyRate = validateTWUHourlyRate(
         getNumber<number>(rawMember, "hourlyRate")
       );
-      const validatedResource = getValidValue(
-        await db.readOneResource(connection, getString(rawMember, "resource")),
-        null
-      );
-      if (
-        isValid(validatedMember) &&
-        isValid(validatedHourlyRate) &&
-        validatedResource
-      ) {
+      const validatedOrder = validateOrder(getNumber<number>(raw, "order"));
+      if (allValid([validatedMember, validatedHourlyRate, validatedOrder])) {
         return valid({
-          member: validatedMember.value.id,
+          member: (validatedMember.value as User).id,
           hourlyRate: validatedHourlyRate.value,
-          resource: validatedResource.id
-        });
+          order: validatedOrder.value
+        } as CreateTWUProposalTeamMemberBody);
       } else {
         return invalid({
           member: getInvalidValue<string[], undefined>(
@@ -388,7 +381,7 @@ export async function validateTWUProposalTeamMembers(
             undefined
           ),
           hourlyRate: getInvalidValue(validatedHourlyRate, undefined),
-          resource: ["This resource cannot be found."]
+          order: getInvalidValue(validatedOrder, undefined)
         }) as Validation<
           CreateTWUProposalTeamMemberBody,
           CreateTWUProposalTeamMemberValidationErrors

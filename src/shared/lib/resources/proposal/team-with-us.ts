@@ -191,7 +191,7 @@ export interface CreateTWUProposalResourceQuestionResponseValidationErrors
 export interface CreateTWUProposalTeamMemberBody {
   member: Id;
   hourlyRate: number;
-  resource: Id;
+  order: number;
 }
 
 export interface CreateTWUProposalTeamMemberValidationErrors
@@ -203,7 +203,7 @@ export interface TWUProposalTeamMember {
   member: UserSlim;
   idpUsername: string;
   hourlyRate: number;
-  resource: Id;
+  order: number;
 }
 
 export interface CreateValidationErrors extends BodyWithErrors {

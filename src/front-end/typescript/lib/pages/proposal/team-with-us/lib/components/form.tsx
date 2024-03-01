@@ -763,7 +763,7 @@ const ReviewProposalView: component_.base.View<Props> = ({
   const resourcesWithMemberSelections = state.opportunity.resources.map(
     (resource) => {
       const { hourlyRate, member } =
-        team.find(({ resource: r }) => r === resource.id) ?? {};
+        team.find(({ order }) => order === resource.order) ?? {};
 
       return {
         hourlyRate,

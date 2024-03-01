@@ -40,9 +40,9 @@ export interface Staff extends AffiliationMember {
 }
 
 export interface TeamMember {
-  resource: TWUResource;
   member: Immutable<Select.State>;
   hourlyRate: Immutable<NumberField.State>;
+  order: number;
 }
 
 export interface State extends Omit<Params, "affiliations" | "orgId"> {
@@ -129,7 +129,7 @@ function initTeam(
        */
       const existingTeamMember = find(
         existingMembers,
-        ({ resource }) => resource === r.id
+        ({ order }) => order === r.order
       );
       const selectedMemberOption = existingTeamMember
         ? {
@@ -169,7 +169,7 @@ function initTeam(
         {
           member: immutable(memberState),
           hourlyRate: immutable(hourlyRateState),
-          resource: r
+          order: r.order
         },
         [
           ...component_.cmd.mapMany(
@@ -183,7 +183,7 @@ function initTeam(
         ]
       ] as [TeamMember, component_.Cmd<Msg>[]];
     })
-    .sort((a, b) => compareNumbers(a[0].resource.order, b[0].resource.order));
+    .sort((a, b) => compareNumbers(a[0].order, b[0].order));
 }
 
 /**
@@ -304,7 +304,7 @@ export function getValues(state: Immutable<State>): Values {
       {
         member,
         hourlyRate: FormField.getValue(m.hourlyRate) ?? 0,
-        resource: m.resource.id
+        order: m.order
       }
     ];
   }, []);
@@ -354,12 +354,13 @@ export function isValid(state: Immutable<State>): boolean {
 interface MemberViewProps {
   index: number;
   member: TeamMember;
+  resources: TWUResource[];
   disabled?: boolean;
   dispatch: component_.base.Dispatch<Msg>;
 }
 
 const MemberView: component_.base.View<MemberViewProps> = (props) => {
-  const { member, dispatch, index, disabled } = props;
+  const { member, resources, dispatch, index, disabled } = props;
   return (
     <div className={index > 0 ? "pt-4 mt-2 border-top" : ""}>
       <h5 className="bg-c-proposal-twu-form-team-member-heading p-2 pt-3 pb-3">
@@ -399,19 +400,23 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
           <div className="font-weight-bold d-flex flex-nowrap">
             Service Area
           </div>
-          <p>{twuServiceAreaToTitleCase(member.resource.serviceArea)}</p>
+          <p>
+            {twuServiceAreaToTitleCase(resources[member.order].serviceArea)}
+          </p>
         </Col>
         <Col md="3" xs="5">
           <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
             Allocation
           </div>
-          <p className="text-center">{member.resource.targetAllocation}%</p>
+          <p className="text-center">
+            {resources[member.order].targetAllocation}%
+          </p>
         </Col>
       </Row>
       <Row>
         <Col>
           <div className="font-weight-bold mb-2">Mandatory Skills</div>
-          <Skills skills={member.resource.mandatorySkills} />
+          <Skills skills={resources[member.order].mandatorySkills} />
         </Col>
       </Row>
     </div>
@@ -506,12 +511,13 @@ export const view: component_.base.View<Props> = (props) => {
         </Row>
       </Accordion>
       {state.members.map((member, i) => (
-        <Row key={`twu-proposal-team-question-response-${i}`}>
+        <Row key={`twu-proposal-resource-team-member-${i}`}>
           <Col xs="12">
             <MemberView
               index={i}
               disabled={disabled}
               member={member}
+              resources={state.resources}
               dispatch={props.dispatch}
             />
           </Col>
