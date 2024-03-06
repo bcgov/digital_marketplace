@@ -33,6 +33,7 @@ import * as FormField from "front-end/lib/components/form-field";
 import { getNumberSelectValue } from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import { flatten } from "lodash";
 import SKILLS from "shared/lib/data/skills";
+import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 
 interface Resource {
   serviceArea: Immutable<Select.State>;
@@ -89,11 +90,11 @@ function createResource(
    * @see {@link getSingleKeyValueOption}
    */
   const serviceArea: Select.Option | null = (() => {
-    const v = resource?.serviceArea ? resource.serviceArea : null;
+    const v = resource?.serviceArea;
     if (!v) {
       return null;
     }
-    return getSingleKeyValueOption(v as unknown as TWUServiceArea);
+    return getSingleKeyValueOption(v);
   })();
   const selectedTargetAllocationOption = resource?.targetAllocation
     ? {
@@ -113,7 +114,13 @@ function createResource(
     child: {
       value: serviceArea,
       id: `${idNamespace}-twu-resource-service-area`,
-      options: Select.objectToOptions(TWUServiceArea)
+      options: Select.objectToOptions(
+        ALL_SERVICE_AREAS.reduce<Record<string, string>>(
+          (acc, serviceArea) => ({ ...acc, [serviceArea]: serviceArea }),
+          {}
+        ),
+        twuServiceAreaToTitleCase
+      )
     }
   });
   const [targetAllocationState, targetAllocationCmds] = Select.init({
