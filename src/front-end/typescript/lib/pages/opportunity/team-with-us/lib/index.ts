@@ -175,6 +175,9 @@ export function opportunityToHistoryItems({
  * @returns
  */
 export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
+  if (s === TWUServiceArea.DevopsSpecialist) {
+    return "DevOps Specialist";
+  }
   return startCase(
     Object.keys(TWUServiceArea)[Object.values(TWUServiceArea).indexOf(s)]
   );
