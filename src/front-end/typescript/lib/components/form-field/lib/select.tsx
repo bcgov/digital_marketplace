@@ -45,13 +45,14 @@ export function stringsToOptions(values: string[]): ADT<"options", Option[]> {
  * @returns adt - options for a select list
  */
 export function objectToOptions(
-  values: Record<string, string>
+  values: Record<string, string>,
+  formatter = startCase
 ): ADT<"options", Option[]> {
   return adt(
     "options",
     Object.entries(values).map(([key, value]) => ({
       value,
-      label: startCase(key)
+      label: formatter(key)
     }))
   );
 }
