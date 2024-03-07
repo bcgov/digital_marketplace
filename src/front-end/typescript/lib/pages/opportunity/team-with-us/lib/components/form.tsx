@@ -176,9 +176,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     DEFAULT_PRICE_WEIGHT
   );
 
-  // Used to flag when an opportunity is being created (undefined) or edited (draft)
-  const isStatusNotDraft =
+  // Used to flag when an opportunity is being created (undefined) or edited (draft/under review)
+  const isStatusNotDraftOrUnderReview =
     opportunity?.status !== TWUOpportunityStatus.Draft &&
+    opportunity?.status !== TWUOpportunityStatus.UnderReview &&
     opportunity?.status !== undefined;
 
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
@@ -415,7 +416,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       priceWeight: immutable(priceWeightState),
       weightsTotal: immutable(weightsTotalState),
       attachments: immutable(attachmentsState),
-      preserveData: isStatusNotDraft
+      preserveData: isStatusNotDraftOrUnderReview
     },
     [
       ...component_.cmd.mapMany(tabbedFormCmds, (msg) =>
