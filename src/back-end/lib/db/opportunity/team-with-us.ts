@@ -1179,14 +1179,17 @@ export const updateTWUOpportunityVersion = tryDb<
           ) &&
           pr.order === twuResourceRecord.order
         ) {
+          const [{ memberCount }] = await connection("twuProposalMember")
+            .count("member", { as: "memberCount" })
+            .where("resource", "=", pr.id);
           const result = await connection("twuProposalMember")
             .transacting(trx)
             .where("resource", "=", pr.id)
             .update({ resource: id });
 
-          if (!result) {
+          if (result !== Number(memberCount)) {
             throw new Error(
-              "unable to port new resource to proposal team member"
+              "unable to port new resource to proposal team members"
             );
           }
         }
