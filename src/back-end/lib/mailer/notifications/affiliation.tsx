@@ -87,8 +87,8 @@ export async function addedToTeamT(affiliation: Affiliation): Promise<Emails> {
             </p>
             <p>
               If you approve the membership, you can be included as a team
-              member on future Sprint With Us proposals submitted by{" "}
-              {organization.legalName}.
+              member on future Sprint With Us or Team With Us proposals
+              submitted by {organization.legalName}.
             </p>
           </div>
         ),
@@ -124,7 +124,8 @@ export async function approvedRequestToJoinT(
             </p>
             <p>
               {memberName} can now be included in proposals submitted by{" "}
-              {organizationName} to Sprint With Us opportunities.
+              {organizationName} to Sprint With Us or Team With Us
+              opportunities.
             </p>
           </div>
         ),
@@ -184,7 +185,7 @@ export async function membershipCompleteT(
             </p>
             <p>
               {organizationName} can now include you on proposals to Sprint With
-              Us opportunities.
+              Us or Team With Us opportunities.
             </p>
           </div>
         ),
@@ -214,7 +215,8 @@ export async function memberLeavesT(
             <p>
               {memberName} has left {organizationName}
               {"'"}s team on the Digital Marketplace. They will no longer be
-              able to be included on proposals for Sprint With Us opportunities.
+              able to be included on proposals for Sprint With Us or Team With
+              Us opportunities.
             </p>
           </div>
         ),
