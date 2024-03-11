@@ -49,6 +49,7 @@ export function validateDateFormatMinMaxOrUndefined(
 }
 
 /**
+ * Checks for a string value with a minimum and maximum length
  *
  * @param raw - string[] an array of strings
  */
@@ -60,6 +61,20 @@ export function validateMandatorySkills(
   }
   const validatedArray = validateArray(raw, (v) =>
     validateGenericString(v, "Mandatory Skill", 1, 100)
+  );
+  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
+    uniq(skills)
+  );
+}
+
+/**
+ * Checks for a string value with a minimum and maximum length
+ *
+ * @param raw - string[] an array of strings
+ */
+export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
+  const validatedArray = validateArray(raw, (v) =>
+    validateGenericString(v, "Optional Skill", 1, 100)
   );
   return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
     uniq(skills)

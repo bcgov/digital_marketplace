@@ -31,8 +31,10 @@ import { kebabCase } from "lodash";
 import { TWUServiceAreaRecord } from "shared/lib/resources/service-area";
 import { TWU_BC_BID_URL } from "front-end/config";
 import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
+import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
-type AvailableServiceArea = typeof ALL_SERVICE_AREAS[number];
+type AvailableServiceArea = { serviceArea: TWUServiceArea; name: string };
 
 interface ServiceArea extends AvailableServiceArea {
   checkbox: Immutable<Checkbox.State>;
@@ -66,7 +68,10 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 function resetQualifiedServiceAreas(
   organizationServiceAreas: TWUServiceAreaRecord[]
 ) {
-  return ALL_SERVICE_AREAS.reduce<[ServiceArea[], component_.Cmd<Msg>[]]>(
+  return ALL_SERVICE_AREAS.map((serviceArea) => ({
+    serviceArea,
+    name: twuServiceAreaToTitleCase(serviceArea)
+  })).reduce<[ServiceArea[], component_.Cmd<Msg>[]]>(
     ([serviceAreas, serviceAreasCmds], serviceArea, index) => {
       const [checkboxState, checkboxCmds] = Checkbox.init({
         errors: [],

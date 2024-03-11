@@ -1,7 +1,7 @@
-import { Content } from "back-end/../shared/lib/resources/content";
+import { Content } from "shared/lib/resources/content";
 import * as db from "back-end/lib/db";
 import { get, union } from "lodash";
-import { getNumber, getString } from "shared/lib";
+import { getNumber, getString, getStringArray } from "shared/lib";
 import {
   Affiliation,
   MembershipStatus
@@ -51,8 +51,11 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import {
+  CreateTWUResourceBody,
+  CreateTWUResourceValidationErrors,
   parseTWUServiceArea,
-  TWUOpportunity
+  TWUOpportunity,
+  ValidatedCreateTWUResourceBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
   CreateTWUProposalTeamMemberBody,
@@ -61,6 +64,14 @@ import {
 } from "shared/lib/resources/proposal/team-with-us";
 import { validateTWUHourlyRate } from "shared/lib/validation/proposal/team-with-us";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
+import {
+  validateTargetAllocation,
+  validateOrder
+} from "shared/lib/validation/opportunity/team-with-us";
+import {
+  validateMandatorySkills,
+  validateOptionalSkills
+} from "shared/lib/validation/opportunity/utility";
 
 /**
  * TWU - Team With Us Validation
@@ -139,11 +150,24 @@ export async function validateTWUOpportunityId(
 }
 
 /**
- * Takes a string from a validates it is a valid Team With Us service area in the database.
+ * Takes one string and proves that it as a valid TWU service area in the db.
  *
  * @param raw - string argument
  * @param connection - Knex connection wrapper
- * @returns
+ * @returns Validation - valid serviceAreaId (key value) | invalid string (error messages)
+ *
+ * @example
+ * raw = "FULL_STACK_DEVELOPER"
+ * returns
+ * {
+ *   tag: "valid",
+ *   value: 1
+ * }
+ * or
+ * {
+ *   tag: "invalid",
+ *   value: ["The specified service area was not found"]
+ * }
  */
 export async function validateServiceArea(
   connection: db.Connection,
@@ -173,11 +197,31 @@ export async function validateServiceArea(
 }
 
 /**
- * Validates a list of service areas in the db.
+ * Takes a list of service areas and proves that each of them exists in the db.
  *
  * @param raw - string array argument
  * @param connection - Knex connection wrapper
- * @returns
+ * @returns ArrayValidation - valid [array of integers] reflecting key values of serviceArea | invalid [array of
+ * strings] reflecting error messages
+ *
+ * @example
+ * raw = ["FULL_STACK_DEVELOPER", "DATA_PROFESSIONAL"]
+ * returns
+ * {
+ *   tag: "valid",
+ *   value: [1,2]
+ * }
+ * or
+ * raw = ["FULL_STACK_DEVELOPER", "DATA_PROFESSIONAL, "NOT_A_SERVICE_AREA"]
+ *{
+ *   tag: "invalid",
+ *   value:
+ *   [
+ *    [],
+ *    [],
+ *    ['"NOT_A_SERVICE_AREA" is not a valid service area.' ]
+ *   ]
+ * }
  */
 export function validateServiceAreas(
   connection: db.Connection,
@@ -187,11 +231,112 @@ export function validateServiceAreas(
 }
 
 /**
+ * Takes a resource and validates it.
+ *
+ * @param connection
+ * @param raw
+ * @returns Validation - valid ValidatedCreateTWUResourceBody | invalid CreateTWUResourceValidationErrors
+ */
+async function validateTWUResource(
+  connection: db.Connection,
+  raw: CreateTWUResourceBody
+): Promise<
+  Validation<ValidatedCreateTWUResourceBody, CreateTWUResourceValidationErrors>
+> {
+  const validatedServiceArea = await validateServiceArea(
+    connection,
+    getString(raw, "serviceArea")
+  );
+  const validatedTargetAllocation = validateTargetAllocation(
+    getNumber(raw, "targetAllocation")
+  );
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  const validatedMandatorySkills = validateMandatorySkills(
+    getStringArray(raw, "mandatorySkills")
+  );
+  const validatedOptionalSkills = validateOptionalSkills(
+    getStringArray(raw, "optionalSkills")
+  );
+  if (
+    allValid([
+      validatedServiceArea,
+      validatedTargetAllocation,
+      validatedMandatorySkills,
+      validatedOptionalSkills,
+      validatedOrder
+    ])
+  ) {
+    return valid({
+      serviceArea: validatedServiceArea.value,
+      targetAllocation: validatedTargetAllocation.value,
+      mandatorySkills: validatedMandatorySkills.value,
+      optionalSkills: validatedOptionalSkills.value,
+      order: validatedOrder.value
+    } as ValidatedCreateTWUResourceBody);
+  } else {
+    return invalid({
+      serviceArea: getInvalidValue(validatedServiceArea, undefined),
+      targetAllocation: getInvalidValue(validatedTargetAllocation, undefined),
+      mandatorySkills: getInvalidValue<string[][], undefined>(
+        validatedMandatorySkills,
+        undefined
+      ),
+      optionalSkills: getInvalidValue<string[][], undefined>(
+        validatedOptionalSkills,
+        undefined
+      ),
+      order: getInvalidValue(validatedOrder, undefined)
+    } as CreateTWUResourceValidationErrors);
+  }
+}
+
+/**
+ * Takes a list of resources and validates each one.
+ *
+ * @param connection
+ * @param raw
+ * @returns ArrayValidation - valid [array of ValidatedCreateTWUResourceBody] | invalid [array of
+ * CreateTWUResourceValidationErrors]
+ */
+export async function validateTWUResources(
+  connection: db.Connection,
+  raw: CreateTWUResourceBody[]
+): Promise<
+  ArrayValidation<
+    ValidatedCreateTWUResourceBody,
+    CreateTWUResourceValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of resources"] }
+    ]);
+  }
+
+  return await validateArrayCustomAsync(
+    raw,
+    (v) => validateTWUResource(connection, v),
+    {}
+  );
+}
+
+/**
+ * Helper function to determine if an array has duplicate values
+ *
+ * @param arr
+ * @returns boolean - true if there are duplicate values, false otherwise.
+ */
+function hasDuplicates(arr: string[]): boolean {
+  return new Set(arr).size < arr.length;
+}
+
+/**
  * Checks to see if a TWU proposal's members are affiliated with the
  * organization in the proposal
  *
  * @param connection - database connection
- * @param raw - a 'team' object, with 'member' and 'hourlyRate' elements
+ * @param raw - a 'team' object, with 'member', 'hourlyRate' and 'resource' elements
  * @param organization - organization id
  */
 export async function validateTWUProposalTeamMembers(
@@ -207,7 +352,10 @@ export async function validateTWUProposalTeamMembers(
   if (!raw.length) {
     return invalid([{ members: ["Please select at least one team member."] }]);
   }
-
+  // ensure that all member values are unique
+  if (hasDuplicates(raw.map((v) => getString(v, "member")))) {
+    return invalid([{ members: ["Please select unique team members."] }]);
+  }
   return await validateArrayCustomAsync(
     raw,
     async (rawMember) => {
@@ -219,10 +367,19 @@ export async function validateTWUProposalTeamMembers(
       const validatedHourlyRate = validateTWUHourlyRate(
         getNumber<number>(rawMember, "hourlyRate")
       );
-      if (isValid(validatedMember) && isValid(validatedHourlyRate)) {
+      const validatedResource = getValidValue(
+        await db.readOneResource(connection, getString(rawMember, "resource")),
+        null
+      );
+      if (
+        isValid(validatedMember) &&
+        isValid(validatedHourlyRate) &&
+        validatedResource
+      ) {
         return valid({
           member: validatedMember.value.id,
-          hourlyRate: validatedHourlyRate.value
+          hourlyRate: validatedHourlyRate.value,
+          resource: validatedResource.id
         });
       } else {
         return invalid({
@@ -230,7 +387,8 @@ export async function validateTWUProposalTeamMembers(
             validatedMember,
             undefined
           ),
-          hourlyRate: getInvalidValue(validatedHourlyRate, undefined)
+          hourlyRate: getInvalidValue(validatedHourlyRate, undefined),
+          resource: ["This resource cannot be found."]
         }) as Validation<
           CreateTWUProposalTeamMemberBody,
           CreateTWUProposalTeamMemberValidationErrors

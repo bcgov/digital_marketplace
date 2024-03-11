@@ -4,7 +4,6 @@ import {
 } from "front-end/config";
 import { fileBlobPath, makeStartLoading, makeStopLoading } from "front-end/lib";
 import * as FormField from "front-end/lib/components/form-field";
-import * as NumberField from "front-end/lib/components/form-field/number";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
 import {
@@ -24,7 +23,7 @@ import Markdown, { ProposalMarkdown } from "front-end/lib/views/markdown";
 import { find } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { formatDate } from "shared/lib";
+import { formatAmount, formatDate } from "shared/lib";
 import {
   isTWUOpportunityAcceptingProposals,
   TWUOpportunity
@@ -32,7 +31,7 @@ import {
 import {
   OrganizationSlim,
   doesOrganizationMeetTWUQualification,
-  doesOrganizationProvideServiceArea
+  doesOrganizationProvideServiceAreas
 } from "shared/lib/resources/organization";
 import {
   CreateRequestBody,
@@ -45,16 +44,14 @@ import {
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
-import * as proposalValidation from "shared/lib/validation/proposal/team-with-us";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Team from "front-end/lib/pages/proposal/team-with-us/lib/components/team";
-import { makeViewTeamMemberModal } from "front-end/lib/pages/organization/lib/views/team-member";
 import { userAvatarPath } from "front-end/lib/pages/user/lib";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 export type TabId =
   | "Evaluation"
-  | "Resource"
-  | "Pricing"
+  | "Team Members"
   | "Questions"
   | "Review Proposal";
 
@@ -73,23 +70,18 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-type ModalId = ADT<"viewTeamMember", Team.Member>;
-
 export interface State
   extends Pick<
     Params,
     "viewerUser" | "opportunity" | "evaluationContent" | "organizations"
   > {
   proposal: TWUProposal | null;
-  showModal: ModalId | null;
   getAffiliationsLoading: number;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   viewerUser: User;
   // Team Tab
   organization: Immutable<Select.State>;
   team: Immutable<Team.State>;
-  // Pricing Tab
-  hourlyRate: Immutable<NumberField.State>;
   // Questions Tab
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Review Proposal Tab
@@ -100,14 +92,10 @@ export interface State
 export type Msg =
   | ADT<"onInitResponse", AffiliationMember[]>
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
-  | ADT<"showModal", ModalId>
-  | ADT<"hideModal">
   // Team Tab
   | ADT<"organization", Select.Msg>
   | ADT<"onGetAffiliationsResponse", [Id, AffiliationMember[]]>
   | ADT<"team", Team.Msg>
-  // Pricing Tab
-  | ADT<"hourlyRate", NumberField.Msg>
   // Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Review Proposal Tab
@@ -151,11 +139,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     .filter(
       (o) =>
         doesOrganizationMeetTWUQualification(o) &&
-        doesOrganizationProvideServiceArea(o, opportunity.serviceArea)
+        doesOrganizationProvideServiceAreas(o, opportunity.resources)
     )
     .map(({ id, legalName }) => ({ label: legalName, value: id }));
-  // TODO: hourlyRate will need to be set differently after TWU moves away from a one-and-only-one-resource world
-  const hourlyRate = proposal?.team?.length ? proposal.team[0].hourlyRate : 0;
   const selectedOrganizationOption = proposal?.organization
     ? {
         label: proposal.organization.legalName,
@@ -163,7 +149,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       }
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
-    tabs: ["Evaluation", "Resource", "Pricing", "Questions", "Review Proposal"],
+    tabs: ["Evaluation", "Team Members", "Questions", "Review Proposal"],
     activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
@@ -190,24 +176,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
 
   const [teamState, teamCmds] = Team.init({
     orgId: proposal?.organization?.id,
-    affiliations: [], // Re-initialize with affiliations once loaded.
-    proposalTeam: proposal?.team || []
+    affiliations: [], // Set members with affiliations once loaded.
+    proposalTeam: proposal?.team || [],
+    resources: opportunity.resources
   });
 
-  const [hourlyRateState, hourlyRateCmds] = NumberField.init({
-    errors: [],
-    validate: (v) => {
-      if (v === null) {
-        return invalid([`Please enter a valid hourly rate.`]);
-      }
-      return proposalValidation.validateTWUHourlyRate(v);
-    },
-    child: {
-      value: hourlyRate || null,
-      id: "twu-proposal-cost",
-      min: 1
-    }
-  });
   const [resourceQuestionsState, resourceQuestionsCmds] =
     ResourceQuestions.init({
       questions: opportunity.resourceQuestions,
@@ -228,7 +201,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       tabbedForm: immutable(tabbedFormState),
       organization: immutable(organizationState),
       team: immutable(teamState),
-      hourlyRate: immutable(hourlyRateState),
       resourceQuestions: immutable(resourceQuestionsState),
       existingProposalForOrganizationError: null
     },
@@ -240,9 +212,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         adt("organization", msg)
       ),
       ...component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg)),
-      ...component_.cmd.mapMany(hourlyRateCmds, (msg) =>
-        adt("hourlyRate", msg)
-      ),
       ...component_.cmd.mapMany(resourceQuestionsCmds, (msg) =>
         adt("resourceQuestions", msg)
       ),
@@ -265,48 +234,35 @@ export function setErrors(
     : errors?.existingOrganizationProposal
     ? errors.existingOrganizationProposal.errors
     : [];
-  return (
-    state
-      .update("organization", (s) => FormField.setErrors(s, organizationErrors))
-      // TODO: Populate the rest of the form errors correctly.
-      // .update( "team", (s) =>
-      //   Team.setErrors(s, {
-      //     team.errors?team
-      //   })
-      // )
-      // .update("hourlyRate", (s) =>
-      //   FormField.setErrors(
-      //     s,
-      //     (errors && (errors as CreateValidationErrors).hourlyRate) || []
-      //   )
-      // )
-      .update("resourceQuestions", (s) =>
-        ResourceQuestions.setErrors(
-          s,
-          (errors &&
-            (errors as CreateValidationErrors).resourceQuestionResponses) ||
-            []
-        )
+  return state
+    .update("organization", (s) => FormField.setErrors(s, organizationErrors))
+    .update("team", (s) =>
+      Team.setErrors(
+        s,
+        (errors && (errors as CreateValidationErrors).team) || []
       )
-      .set(
-        "existingProposalForOrganizationError",
-        errors?.existingOrganizationProposal
-          ? errors.existingOrganizationProposal.proposalId
-          : null
+    )
+    .update("resourceQuestions", (s) =>
+      ResourceQuestions.setErrors(
+        s,
+        (errors &&
+          (errors as CreateValidationErrors).resourceQuestionResponses) ||
+          []
       )
-  );
+    )
+    .set(
+      "existingProposalForOrganizationError",
+      errors?.existingOrganizationProposal
+        ? errors.existingOrganizationProposal.proposalId
+        : null
+    );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
   return state
     .update("organization", (s) => FormField.validate(s))
     .update("team", (s) => Team.validate(s))
-    .update("hourlyRate", (s) => FormField.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s));
-}
-
-export function isPricingTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.hourlyRate);
 }
 
 export function isOrganizationsTabValid(state: Immutable<State>): boolean {
@@ -317,11 +273,7 @@ export function isResourceQuestionsTabValid(state: Immutable<State>): boolean {
 }
 
 export function isValid(state: Immutable<State>): boolean {
-  return (
-    isPricingTabValid(state) &&
-    isResourceQuestionsTabValid(state) &&
-    isOrganizationsTabValid(state)
-  );
+  return isResourceQuestionsTabValid(state) && isOrganizationsTabValid(state);
 }
 
 export function isLoading(state: Immutable<State>): boolean {
@@ -332,10 +284,9 @@ export type Values = Omit<CreateRequestBody, "status">;
 
 export function getValues(state: Immutable<State>): Values {
   const organization = FormField.getValue(state.organization);
-  const hourlyRate = FormField.getValue(state.hourlyRate) || 0;
   const team = Team.getValues(state.team);
   return {
-    team: team.map((member) => ({ member: member.id, hourlyRate })),
+    team,
     attachments: [],
     opportunity: state.opportunity.id,
     organization: organization?.value,
@@ -432,13 +383,13 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "onInitResponse": {
       const affiliations = msg.value;
-      const [teamState, teamCmds] = Team.init({
-        orgId: state.proposal?.organization?.id,
+      const [teamState, teamCmds] = Team.setStaff(
+        state.team,
         affiliations,
-        proposalTeam: state.proposal?.team || []
-      });
+        state.proposal?.organization?.id ?? null
+      );
       return [
-        state.set("team", immutable(teamState)),
+        state.set("team", teamState),
         component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
       ];
     }
@@ -451,12 +402,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt("tabbedForm", value)
       });
-
-    case "showModal":
-      return [state.set("showModal", msg.value), []];
-
-    case "hideModal":
-      return [state.set("showModal", null), []];
 
     case "organization":
       return component_.base.updateChild({
@@ -492,10 +437,17 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 
     case "onGetAffiliationsResponse": {
       const [orgId, affiliations] = msg.value;
-      state = state.update("team", (t) =>
-        Team.setAffiliations(t, affiliations, orgId)
-      );
-      return [stopGetAffiliationsLoading(state), []];
+      const [teamState, teamCmds] = Team.init({
+        orgId,
+        affiliations,
+        proposalTeam: [], // Re-initialize Team component when switching orgs.
+        resources: state.opportunity.resources
+      });
+      state = state.set("team", immutable(teamState));
+      return [
+        stopGetAffiliationsLoading(state),
+        component_.cmd.mapMany(teamCmds, (msg) => adt("team", msg) as Msg)
+      ];
     }
 
     case "team":
@@ -505,15 +457,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childUpdate: Team.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("team", value)
-      });
-
-    case "hourlyRate":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["hourlyRate"],
-        childUpdate: NumberField.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("hourlyRate", value)
       });
 
     case "resourceQuestions":
@@ -613,7 +556,9 @@ const OrganizationView: component_.base.View<Props> = ({
             consideration, you must:
           </p>
           <ul className="mb-5">
-            <li>Select at most, one member for this opportunity; and</li>
+            <li>
+              Assign a team member for each requested Service Area/Resource
+            </li>
             <li>
               Ensure the member{"'"}s capabilities satisfy the required service
               area for the implementation.
@@ -673,89 +618,6 @@ const OrganizationView: component_.base.View<Props> = ({
             </div>
           </Col>
         ) : null}
-      </Row>
-    </div>
-  );
-};
-
-const PricingView: component_.base.View<Props> = ({
-  state,
-  dispatch,
-  disabled
-}) => {
-  return (
-    <div>
-      <Row>
-        <Col xs="12" className="mb-4">
-          <p className="font-weight-bold">
-            Proponents take note of the following pricing rules and
-            requirements:
-          </p>
-          <ol className="li-paren-lower-alpha">
-            <li>
-              Proponent pricing quoted will be taken to mean and deemed to be:
-              <ol className="li-paren-lower-roman">
-                <li>in Canadian dollars;</li>
-                <li>
-                  inclusive of all costs or expenses that may be incurred with
-                  respect to the services specified by the Competition Notice;
-                </li>
-                <li>exclusive of any applicable taxes.</li>
-              </ol>
-            </li>
-            <li>
-              In addition, the following rules apply to pricing bid by
-              Proponents:
-              <ol className="li-paren-lower-roman">
-                <li>
-                  Team With Us Terms & Conditions section 1.8 regarding pricing
-                  and its provisions are incorporated herein by this reference.
-                </li>
-                <li>
-                  All pricing bid is required to be unconditional and
-                  unqualified. If any pricing bid does not meet this
-                  requirement, the Proponent’s Proposal may be rejected
-                  resulting in the Proponent being eliminated from the
-                  Competition Notice competition.
-                </li>
-                <li>
-                  Failure to provide pricing where required by the Competition
-                  Notice will result in the Proponent being unable to submit a
-                  Proposal.
-                </li>
-                <li>
-                  Entering the numerical figure of “$0”, “$zero”, or the like in
-                  response to a call for a specific dollar amount will result in
-                  the Proponent being unable to submit a Proposal.
-                </li>
-                <li>
-                  The Contract will provide that the Contractor may request an
-                  increase in the bid pricing for any extension term of the
-                  Contract, limited to any increases, if any, as supported by
-                  the Canadian Consumer Price Index or 3% whichever is lower.
-                </li>
-              </ol>
-            </li>
-          </ol>
-          <p>
-            Please provide the hourly rate you are proposing for this
-            opportunity.
-          </p>
-        </Col>
-      </Row>
-      <Row>
-        <Col xs="12" md="6">
-          <NumberField.view
-            disabled={disabled}
-            extraChildProps={{ prefix: "$" }}
-            label="Hourly Rate"
-            placeholder="Hourly Rate"
-            state={state.hourlyRate}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("hourlyRate" as const, value)
-            )}
-          />
-        </Col>
       </Row>
     </div>
   );
@@ -898,6 +760,20 @@ const ReviewProposalView: component_.base.View<Props> = ({
 }) => {
   const organization = getSelectedOrganization(state);
   const team = Team.getValues(state.team);
+  const resourcesWithMemberSelections = state.opportunity.resources.map(
+    (resource) => {
+      const { hourlyRate, member } =
+        team.find(({ resource: r }) => r === resource.id) ?? {};
+
+      return {
+        hourlyRate,
+        user: state.team.staff.find((u) => u.user.id === member),
+        serviceArea: resource.serviceArea,
+        targetAllocation: resource.targetAllocation
+      };
+    }
+  );
+
   return (
     <Row>
       <Col xs="12">
@@ -956,49 +832,74 @@ const ReviewProposalView: component_.base.View<Props> = ({
       </Col>
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
-          <h2 className="mb-4">Resource and Pricing</h2>
+          <h2 className="mb-4">Resources and Pricing</h2>
         </div>
       </Col>
-      {team.length > 0 ? (
-        team.map((member) => (
-          <Col key={member.id}>
-            <Row style={{ rowGap: "0.5rem" }}>
-              <Col xs="12" sm="6">
-                <div
-                  className="d-flex text-nowrap flex-nowrap align-items-center"
-                  color="body">
-                  <img
-                    className="rounded-circle border mr-2"
-                    style={{
-                      width: "1.75rem",
-                      height: "1.75rem",
-                      objectFit: "cover"
-                    }}
-                    src={userAvatarPath(member)}
-                  />
-                  {member.name}
+      <Col>
+        {resourcesWithMemberSelections.map((resource, index) => {
+          return (
+            <Row key={`twu-proposal-team-question-response-${index}`}>
+              <Col xs="12">
+                <div className={index > 0 ? "mt-3" : ""}>
+                  <h5 className="bg-c-proposal-twu-form-team-member-heading p-2 pt-3 pb-3">
+                    Resource {index + 1}
+                  </h5>
+                  <Row className="mb-2">
+                    <Col md="9" xs="7">
+                      <div className="font-weight-bold d-flex flex-nowrap">
+                        Resource Name
+                      </div>
+                      {resource.user ? (
+                        <p
+                          className="d-flex text-nowrap flex-nowrap align-items-center"
+                          color="body">
+                          <img
+                            className="rounded-circle border mr-2"
+                            style={{
+                              width: "1.75rem",
+                              height: "1.75rem",
+                              objectFit: "cover"
+                            }}
+                            src={userAvatarPath(resource.user.user)}
+                          />
+                          {resource.user.user.name}
+                        </p>
+                      ) : (
+                        EMPTY_STRING
+                      )}
+                    </Col>
+                    <Col md="3" xs="5" className="text-center">
+                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                        Hourly Rate
+                      </div>
+                      <p>
+                        {resource.hourlyRate
+                          ? formatAmount(resource.hourlyRate, "$")
+                          : EMPTY_STRING}
+                      </p>
+                    </Col>
+                    <div className="w-100"></div>
+                    <Col md="9" xs="7">
+                      <div className="font-weight-bold d-flex flex-nowrap">
+                        Service Area
+                      </div>
+                      <p>{twuServiceAreaToTitleCase(resource.serviceArea)}</p>
+                    </Col>
+                    <Col md="3" xs="5">
+                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                        Allocation
+                      </div>
+                      <p className="text-center">
+                        {resource.targetAllocation}%
+                      </p>
+                    </Col>
+                  </Row>
                 </div>
               </Col>
-              <Col xs="12" sm="6">
-                <NumberField.view
-                  disabled
-                  extraChildProps={{ prefix: "$" }}
-                  label="Hourly Rate"
-                  placeholder="Hourly Rate"
-                  state={state.hourlyRate}
-                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
-                    adt("hourlyRate" as const, value)
-                  )}
-                />
-              </Col>
             </Row>
-          </Col>
-        ))
-      ) : (
-        <Col xs="12">
-          You have not yet selected a resource for this proposal.
-        </Col>
-      )}
+          );
+        })}
+      </Col>
       <Col xs="12">
         <div className="mt-5 pt-5 border-top">
           <h2 className="mb-4">Questions{"'"} Responses</h2>
@@ -1045,9 +946,7 @@ export const view: component_.base.View<Props> = ({
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
         return <EvaluationView {...props} />;
-      case "Pricing":
-        return <PricingView {...props} />;
-      case "Resource":
+      case "Team Members":
         return <OrganizationView {...props} />;
       case "Questions":
         return <ResourceQuestionsView {...props} />;
@@ -1064,9 +963,7 @@ export const view: component_.base.View<Props> = ({
         switch (tab) {
           case "Evaluation":
             return true;
-          case "Pricing":
-            return isPricingTabValid(state);
-          case "Resource":
+          case "Team Members":
             return isOrganizationsTabValid(state);
           case "Questions":
             return isResourceQuestionsTabValid(state);
@@ -1089,25 +986,6 @@ export const component: component_.base.Component<Params, State, Msg> = {
   view
 };
 
-export const getModal: component_.page.GetModal<State, Msg> = (state) => {
-  const teamModal = component_.page.modal.map(
-    Team.getModal(state.team),
-    (msg) => adt("team", msg) as Msg
-  );
-  if (teamModal && teamModal.tag === "show") {
-    return teamModal;
-  }
-  if (!state.showModal) {
-    return component_.page.modal.hide();
-  }
-  switch (state.showModal.tag) {
-    case "viewTeamMember":
-      return makeViewTeamMemberModal({
-        member: state.showModal.value,
-        onCloseMsg: adt("hideModal")
-      });
-  }
-};
 export function getAlerts<Msg>(
   state: Immutable<State>
 ): component_.page.Alerts<Msg> {

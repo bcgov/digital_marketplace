@@ -149,6 +149,7 @@ $c-opportunity-view-got-questions-bg: $blue-light-alt;
 $c-opportunity-view-apply-bg: $blue-light-alt;
 $c-proposal-swu-form-team-question-response-heading: $blue-dark;
 $c-proposal-swu-form-scrum-master: $purple;
+$c-proposal-twu-form-team-member-heading: $blue-light-alt-2;
 $c-user-profile-permission: $purple;
 // Misc. Views
 $c-report-card-bg: $blue-light-alt;
@@ -211,6 +212,8 @@ $app-utility-colors: (
   "c-proposal-swu-form-team-question-response-heading":
     $c-proposal-swu-form-team-question-response-heading,
   "c-proposal-swu-form-scrum-master": $c-proposal-swu-form-scrum-master,
+  "c-proposal-twu-form-team-member-heading":
+    $c-proposal-twu-form-team-member-heading,
   "c-user-profile-permission": $c-user-profile-permission,
   // Misc. Views
   "c-report-card-bg": $c-report-card-bg,

@@ -389,15 +389,6 @@ export const component: Tab.Component<State, Msg> = {
   },
 
   getModal: (state) => {
-    const form = state.form;
-    if (!form) return component_.page.modal.hide();
-    const formModal = component_.page.modal.map(
-      Form.getModal(form),
-      (msg) => adt("form", msg) as Msg
-    );
-    if (formModal.tag !== "hide") {
-      return formModal;
-    }
     const isDisqualifyLoading = state.disqualifyLoading > 0;
     switch (state.showModal) {
       case "award":

@@ -90,7 +90,7 @@ test("team-with-us proposal crud", async () => {
   } = await setup();
 
   const serviceAreaId = getValidValue(
-    await validateServiceArea(connection, TWUServiceArea.FullStackDeveloper),
+    await validateServiceArea(connection, TWUServiceArea.DataProfessional),
     null
   );
   if (!serviceAreaId) {
@@ -149,8 +149,7 @@ test("team-with-us proposal crud", async () => {
 
   const opportunityParams = buildCreateTWUOpportunityParams({
     status: TWUOpportunityStatus.Published,
-    proposalDeadline: faker.date.soon(),
-    serviceArea: serviceAreaId
+    proposalDeadline: faker.date.soon()
   });
   const opportunity = await insertTWUOpportunity(
     connection,
@@ -177,6 +176,13 @@ test("team-with-us proposal crud", async () => {
     slimOpportunityProps
   );
 
+  /**
+   * TODO - create as many users as there are resources attached to the opportunity.
+   * For now a value of 1 has been hard-coded into this integration test
+   * @see `buildTWUOpportunity` in tests/utils/generate/opportunities/team-with-us.ts
+   */
+
+  // create a proposal
   const proposal = buildTWUProposal({
     createdBy: testUserSlim,
     organization: qualifiedOrganizationSlim,
@@ -188,12 +194,13 @@ test("team-with-us proposal crud", async () => {
           response: faker.lorem.words({ min: 1, max: wordLimit })
         })
     ),
-    team: [
+    team: opportunity.resources.map((resource) =>
       buildTWUProposalTeamMember({
         member: testUserSlim,
-        idpUsername: testUser.idpUsername
+        idpUsername: testUser.idpUsername,
+        resource: resource.id
       })
-    ]
+    )
   });
 
   const body: CreateRequestBody = {
@@ -202,21 +209,33 @@ test("team-with-us proposal crud", async () => {
     attachments: [],
     resourceQuestionResponses: proposal.resourceQuestionResponses,
     team:
-      proposal.team?.map(({ member, hourlyRate }) => ({
+      proposal.team?.map(({ member, hourlyRate, resource }) => ({
         member: member.id,
-        hourlyRate
+        hourlyRate,
+        resource
       })) ?? [],
     status: TWUProposalStatus.Draft
   };
   const createRequest = userAppAgent
     .post("/api/proposals/team-with-us")
     .send(body);
-
   const createResult = await requestWithCookie(createRequest, testUserSession);
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
-    team: proposal.team,
+    /**
+     * since the requestBody (body) is different from the response body
+     * (createResult) for the team element, only some elements are expected to be
+     * the same (hourlyRate, resource)
+     */
+    team: [
+      {
+        hourlyRate: body.team[0].hourlyRate,
+        resource: body.team[0].resource,
+        member: testUserSlim,
+        idpUsername: testUser.idpUsername
+      }
+    ],
     opportunity: {
       ...omit(opportunitySlim, ["createdBy", "updatedBy", "subscribed"]),
       createdAt: getISODateString(opportunity, "createdAt"),
@@ -346,6 +365,19 @@ test("team-with-us proposal crud", async () => {
 
   // Close the opportunity
   const newDeadline = faker.date.recent();
+  /**
+   * updating/forcing the closing of an opportunity this way by calling this
+   * function, creates another version of the opportunity which updates the
+   * resources ids in TWUProposalMember. Typically, outside of integration tests
+   * the hook calls `closeTWUOpportunities` which does NOT create a new version.
+   * The call to `updateTWUOpportunityVersion` is called here only for the purposes
+   * of the integration tests, which creates a different value for resource when
+   * comparing resubmitResult.body (updated value) to scoreChallengeResult.body
+   * (previous value)
+   *
+   * @see line 503, `expect(scoreChallengeResult.body).toEqual({
+   *     ...resubmitResult.body,`
+   */
   await updateTWUOpportunityVersion(
     connection,
     {
@@ -439,6 +471,21 @@ test("team-with-us proposal crud", async () => {
   expect(scoreChallengeResult.body).toEqual({
     ...resubmitResult.body,
     ...rescreenInToChallengeResult.body,
+    team: [
+      {
+        hourlyRate: resubmitResult.body.team[0].hourlyRate,
+        /**
+         * we don't expect the resource value to be the same because the opportunityVersion
+         * has been updated in a unique way for the purposes of integration tests.
+         * @see line 413 `updateTWUOpportunityVersion`
+         * That call affects the resourceID, however the scoreChallenge.body has
+         * been updated, nor is it expected to be.
+         */
+        resource: scoreChallengeResult.body.team[0].resource,
+        idpUsername: resubmitResult.body.team[0].idpUsername,
+        member: resubmitResult.body.team[0].member
+      }
+    ],
     opportunity: {
       ...rescreenInToChallengeResult.body.opportunity,
       status: TWUOpportunityStatus.EvaluationChallenge,

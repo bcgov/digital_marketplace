@@ -53,6 +53,7 @@ function buildTWUProposalTeamMember(
     member: buildUserSlim(),
     idpUsername: faker.internet.userName(),
     hourlyRate: faker.number.int({ max: 200 }),
+    resource: getId(),
     ...overrides
   };
 }
