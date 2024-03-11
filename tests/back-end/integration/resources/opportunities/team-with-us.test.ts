@@ -13,8 +13,8 @@ import {
   CreateRequestBody,
   TWUOpportunityEvent,
   TWUOpportunityStatus,
-  TWUResourceQuestion,
-  ValidatedCreateTWUResourceBody
+  TWUResource,
+  TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
 import { omit, pick } from "lodash";
 import { getISODateString } from "shared/lib";
@@ -44,15 +44,6 @@ afterEach(async () => {
   await clearTestDatabase(connection);
 });
 
-/**
- * A convenience type for this test to reconcile the difference between the data type of 'serviceArea' (enum) in the
- * request body and the required data type of `serviceArea` (number) in the database. Outside of these tests, this
- * conversion is taken care of during the validation phase.
- */
-type TWUCreateRequestBody = Omit<CreateRequestBody, "resources"> & {
-  resources: ValidatedCreateTWUResourceBody[];
-};
-
 test("team-with-us opportunity crud", async () => {
   const {
     testUser,
@@ -65,7 +56,7 @@ test("team-with-us opportunity crud", async () => {
 
   // returns enum
   const opportunity = buildTWUOpportunity();
-  const body: TWUCreateRequestBody = {
+  const body: CreateRequestBody = {
     ...pick(opportunity, [
       "title",
       "teaser",
@@ -88,13 +79,8 @@ test("team-with-us opportunity crud", async () => {
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...restOfQuestion }) => restOfQuestion
     ),
-    // needs to be converted to number type before going to the db
     resources: opportunity.resources.map((resource) => ({
-      serviceArea: 2,
-      targetAllocation: resource.targetAllocation,
-      mandatorySkills: resource.mandatorySkills,
-      optionalSkills: resource.optionalSkills,
-      order: resource.order
+      ...resource
     }))
   };
 
@@ -107,6 +93,18 @@ test("team-with-us opportunity crud", async () => {
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
+    resources: [
+      ...body.resources.map((resource) => ({
+        ...resource,
+        /**
+         * We expect the value for resource.id to be different in the response
+         * body (createResult.body) compared to the request (body) since
+         * the function `createRequest` generates a new opportunityVersion which
+         * updates the value of resource.id
+         */
+        id: createResult.body.resources[0].id
+      }))
+    ],
     createdBy: { id: testUser.id }
   });
 
@@ -139,6 +137,18 @@ test("team-with-us opportunity crud", async () => {
           createdAt: expect.any(String)
         })
       )
+    ],
+    resources: [
+      ...readResult.body.resources.map((resource: TWUResource) => ({
+        ...resource,
+        /**
+         * We expect the value for resource.id to be different in the response
+         * body (editResult.body) compared to the previous response body
+         * (readResult.body) since the function `editResult` generates a new
+         * opportunityVersion which updates the value of resource.id
+         */
+        id: editResult.body.resources[0].id
+      }))
     ]
   });
 

@@ -70,7 +70,13 @@ function buildTWUOpportunity(
         createdBy
       })
     ),
-    resources: [...Array(faker.number.int({ min: 0, max: 3 }))].map((_, i) => ({
+    /**
+     * For now a value of 1 has been hard-coded into this integration test
+     * though future iterations could look at more than one
+     * @see `buildProposal` in tests/back-end/integration/resources/proposals/team-with-us.test.ts
+     */
+    resources: [...Array(faker.number.int({ min: 1, max: 1 }))].map((_, i) => ({
+      id: getId(),
       serviceArea: TWUServiceArea.DataProfessional,
       targetAllocation: faker.number.int({ min: 1, max: 100 }),
       mandatorySkills: faker.helpers.arrayElements(SKILLS, {
@@ -130,18 +136,13 @@ function buildCreateTWUOpportunityParams(
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
-    resources: [...Array(faker.number.int({ min: 0, max: 3 }))].map((_, i) => ({
-      serviceArea: 1,
-      targetAllocation: faker.number.int({ min: 1, max: 100 }),
-      mandatorySkills: faker.helpers.arrayElements(SKILLS, {
-        min: 1,
-        max: 6
-      }),
-      optionalSkills: faker.helpers.arrayElements(SKILLS, {
-        min: 0,
-        max: 6
-      }),
-      order: i
+    /**
+     * hard-code the serviceArea to '2', or DataProfessional to
+     * ensure that the created organization qualifies
+     */
+    resources: opportunity.resources.map((resource) => ({
+      ...resource,
+      serviceArea: 2
     })),
     ...overrides
   };
