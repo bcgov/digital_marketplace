@@ -45,13 +45,14 @@ export function stringsToOptions(values: string[]): ADT<"options", Option[]> {
  * @returns adt - options for a select list
  */
 export function objectToOptions(
-  values: Record<string, string>
+  values: Record<string, string>,
+  formatter = startCase
 ): ADT<"options", Option[]> {
   return adt(
     "options",
     Object.entries(values).map(([key, value]) => ({
       value,
-      label: startCase(key)
+      label: formatter(key)
     }))
   );
 }
@@ -246,7 +247,7 @@ export const view: component.base.View<Props> = (props) => {
       }
     }
   } as SelectProps;
-  const selectProps = (() => {
+  const { id, ...selectProps } = (() => {
     if (props.multi) {
       return {
         ...baseProps,
@@ -280,9 +281,9 @@ export const view: component.base.View<Props> = (props) => {
     }
   })();
   if (props.creatable) {
-    return <SelectCreatable {...selectProps} />;
+    return <SelectCreatable inputId={id} {...selectProps} />;
   } else {
-    return <Select {...selectProps} />;
+    return <Select inputId={id} {...selectProps} />;
   }
 };
 

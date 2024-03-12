@@ -156,3 +156,10 @@ export function setValueFromString(
 export function getValue(state: Immutable<State>): string {
   return state.child.value ? state.child.value.value : "";
 }
+
+export function setOptions(
+  state: Immutable<State>,
+  value: Options
+): Immutable<State> {
+  return state.update("child", (child) => child.set("options", value));
+}

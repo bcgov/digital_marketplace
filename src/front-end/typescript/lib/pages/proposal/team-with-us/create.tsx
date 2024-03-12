@@ -509,16 +509,8 @@ export const component: component_.page.Component<
   }),
 
   getModal: getModalValid((state) => {
-    const form = state.form;
     const opportunity = state.opportunity;
-    if (!form || !opportunity) return component_.page.modal.hide();
-    const formModal = component_.page.modal.map(
-      Form.getModal(form),
-      (msg) => adt("form", msg) as Msg
-    );
-    if (formModal.tag !== "hide") {
-      return formModal;
-    }
+    if (!opportunity) return component_.page.modal.hide();
     const hasAcceptedTerms =
       SubmitProposalTerms.getProposalCheckbox(state.submitTerms) &&
       SubmitProposalTerms.getAppCheckbox(state.submitTerms);

@@ -52,7 +52,7 @@ export async function inviteToRegisterT(
               />{" "}
               for a Digital Marketplace account. Once you have signed up, you
               can join their team and be included in proposals to Sprint With Us
-              opportunities.
+              or Team With Us opportunities.
             </p>
           </div>
         ),

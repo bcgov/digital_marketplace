@@ -17,6 +17,7 @@ import { CONTACT_EMAIL, COPY, VENDOR_IDP_NAME } from "shared/config";
 import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 import { ADT, adt } from "shared/lib/types";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { twuServiceAreaToTitleCase } from "../opportunity/team-with-us/lib";
 
 export interface State {
   isVendorAccordionOpen: boolean;
@@ -185,8 +186,10 @@ const VendorHIW: component_.base.View = () => {
               following service areas:
             </p>
             <ul>
-              {ALL_SERVICE_AREAS.map(({ name }) => (
-                <li key={name}>{name}</li>
+              {ALL_SERVICE_AREAS.map((serviceArea) => (
+                <li key={serviceArea}>
+                  {twuServiceAreaToTitleCase(serviceArea)}
+                </li>
               ))}
             </ul>
             <p className="mb-0">

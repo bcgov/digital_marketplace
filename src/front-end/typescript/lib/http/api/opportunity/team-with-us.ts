@@ -149,6 +149,7 @@ function rawTWUOpportunityToTWUOpportunity(
         .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1),
     resourceQuestions: raw.resourceQuestions
       .map((tq) => rawTWUResourceQuestionToTWUResourceQuestion(tq))
-      .sort((a, b) => compareNumbers(a.order, b.order))
+      .sort((a, b) => compareNumbers(a.order, b.order)),
+    resources: raw.resources.sort((a, b) => compareNumbers(a.order, b.order))
   };
 }

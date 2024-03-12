@@ -1,6 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
-import { startCase } from "lodash";
+import { flatten, startCase, uniq } from "lodash";
 import {
   isOpen,
   TWUOpportunity,
@@ -175,7 +175,28 @@ export function opportunityToHistoryItems({
  * @returns
  */
 export function twuServiceAreaToTitleCase(s: TWUServiceArea) {
+  if (s === TWUServiceArea.DevopsSpecialist) {
+    return "DevOps Specialist";
+  }
   return startCase(
     Object.keys(TWUServiceArea)[Object.values(TWUServiceArea).indexOf(s)]
   );
+}
+
+/**
+ * Flattens and removes duplicates from a TWU opportunity's mandatory and
+ * optional skills.
+ *
+ * @param opp TWU opportunity with resources
+ * @returns object containing aggregated mandatory and optional skills
+ */
+export function aggregateResourceSkills(opp: TWUOpportunity): {
+  mandatory: string[];
+  optional: string[];
+} {
+  const [mandatory, optional] = (["mandatorySkills", "optionalSkills"] as const)
+    .map((skill) => opp.resources.map((resource) => resource[skill]))
+    .map((skills) => uniq(flatten(skills)));
+
+  return { mandatory, optional };
 }

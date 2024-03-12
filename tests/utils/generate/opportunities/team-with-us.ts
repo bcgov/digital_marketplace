@@ -28,11 +28,7 @@ function buildTWUOpportunity(
     assignmentDate = faker.date.soon({ refDate: proposalDeadline }),
     completionDate = overrides.completionDate
       ? overrides.completionDate
-      : faker.date.future({ refDate: assignmentDate }),
-    mandatorySkills = faker.helpers.arrayElements(SKILLS, {
-      min: 1,
-      max: 6
-    })
+      : faker.date.future({ refDate: assignmentDate })
   } = overrides;
 
   return {
@@ -46,12 +42,6 @@ function buildTWUOpportunity(
     remoteOk,
     remoteDesc: remoteOk ? faker.lorem.paragraph() : "",
     location: faker.location.city(),
-    mandatorySkills,
-    optionalSkills: faker.helpers.arrayElements(
-      SKILLS.filter((skill) => !mandatorySkills.includes(skill)),
-      { min: 1, max: 6 }
-    ),
-    serviceArea: TWUServiceArea.FullStackDeveloper,
     description: faker.lorem.paragraphs(),
     proposalDeadline: setDateTo4PM(proposalDeadline),
     assignmentDate: setDateTo4PM(assignmentDate),
@@ -63,7 +53,6 @@ function buildTWUOpportunity(
     ),
     completionDate: setDateTo4PM(completionDate),
     maxBudget: faker.number.float({ min: 1, precision: 2 }),
-    targetAllocation: faker.number.int({ min: 1, max: 100 }),
     questionsWeight: DEFAULT_QUESTIONS_WEIGHT,
     challengeWeight: DEFAULT_CODE_CHALLENGE_WEIGHT,
     priceWeight: DEFAULT_PRICE_WEIGHT,
@@ -81,6 +70,25 @@ function buildTWUOpportunity(
         createdBy
       })
     ),
+    /**
+     * For now a value of 1 has been hard-coded into this integration test
+     * though future iterations could look at more than one
+     * @see `buildProposal` in tests/back-end/integration/resources/proposals/team-with-us.test.ts
+     */
+    resources: [...Array(faker.number.int({ min: 1, max: 1 }))].map((_, i) => ({
+      id: getId(),
+      serviceArea: TWUServiceArea.DataProfessional,
+      targetAllocation: faker.number.int({ min: 1, max: 100 }),
+      mandatorySkills: faker.helpers.arrayElements(SKILLS, {
+        min: 1,
+        max: 6
+      }),
+      optionalSkills: faker.helpers.arrayElements(SKILLS, {
+        min: 0,
+        max: 6
+      }),
+      order: i
+    })),
     ...overrides
   };
 }
@@ -112,7 +120,7 @@ function buildCreateTWUOpportunityParams(
 ): CreateTWUOpportunityParams {
   const opportunity = buildTWUOpportunity();
 
-  return {
+  return <CreateTWUOpportunityParams>{
     ...omit(opportunity, [
       "createdBy",
       "createdAt",
@@ -122,13 +130,20 @@ function buildCreateTWUOpportunityParams(
       "id",
       "addenda",
       "resourceQuestions",
-      "serviceArea"
+      "resources"
     ]),
     status: TWUOpportunityStatus.Draft,
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
-    serviceArea: 1,
+    /**
+     * hard-code the serviceArea to '2', or DataProfessional to
+     * ensure that the created organization qualifies
+     */
+    resources: opportunity.resources.map((resource) => ({
+      ...resource,
+      serviceArea: 2
+    })),
     ...overrides
   };
 }

@@ -82,7 +82,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
         valid(
           immutable({
             opportunity: null,
-            tab: [tabId, immutable(tabState)],
+            tab: [tabId, immutable(tabState as Tab.Tabs[K]["state"])],
             sidebar: sidebarState
           })
         ) as State_<K>,

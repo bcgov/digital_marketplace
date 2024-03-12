@@ -149,6 +149,14 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
+/**
+ * "raw" indicates reading data from the db and modifying the data to conform
+ * to type declarations in the application. In this case, the db holds a memberID
+ * which is then used to get a username 'idpUsername'.
+ *
+ * @param connection
+ * @param raw
+ */
 async function rawProposalTeamMemberToProposalTeamMember(
   connection: Connection,
   raw: RawProposalTeamMember
@@ -643,7 +651,7 @@ const readTWUProposalMembers = tryDb<[Id], RawProposalTeamMember[]>(
       proposalId
     );
 
-    query.select<RawProposalTeamMember[]>("member", "hourlyRate");
+    query.select<RawProposalTeamMember[]>("member", "hourlyRate", "resource");
 
     const results = await query;
 
@@ -856,7 +864,8 @@ async function createTWUProposalTeamMembers(
       {
         proposal: proposalId,
         member: teamMember.member,
-        hourlyRate: teamMember.hourlyRate
+        hourlyRate: teamMember.hourlyRate,
+        resource: teamMember.resource
       },
       "*"
     );
@@ -1255,6 +1264,7 @@ async function calculatePriceScore(
       "=",
       "members.proposal"
     )
+    .join("twuResources as resources", "members.resource", "=", "resources.id")
     .whereIn("proposals.opportunity", function () {
       this.where({ id: proposalId }).select("opportunity").from("twuProposals");
     })
@@ -1262,7 +1272,13 @@ async function calculatePriceScore(
       TWUProposalStatus.UnderReviewChallenge,
       TWUProposalStatus.EvaluatedChallenge
     ])
-    .sum("members.hourlyRate as bid")
+    // multiple resources requires matching the hourly rate of the team member
+    // with the targetAllocation for the opportunity
+    .select(
+      connection.raw(
+        'SUM(members."hourlyRate" * resources."targetAllocation" / 100) AS bid'
+      )
+    )
     .groupBy("proposals.id")
     .select<ProposalBidRecord[]>("proposals.id")
     .orderBy("bid", "asc");

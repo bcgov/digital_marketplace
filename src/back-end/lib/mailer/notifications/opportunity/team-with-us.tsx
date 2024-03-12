@@ -190,13 +190,14 @@ export function makeTWUOpportunityInformation(
   opportunity: TWUOpportunity,
   showDueDate = true
 ): templates.DescriptionListProps {
+  const serviceAreas = opportunity.resources.map((resource, index) => ({
+    name: "Service Area ".concat(`${index + 1}`),
+    value: `${startCase(lowerCase(resource.serviceArea))}`
+  }));
   const items = [
     { name: "Type", value: "Team With Us" },
     { name: "Value", value: `$${formatAmount(opportunity.maxBudget)}` },
-    {
-      name: "Service Area",
-      value: `${startCase(lowerCase(opportunity.serviceArea))}`
-    },
+    ...serviceAreas,
     {
       name: "Contract Start Date",
       value: formatDate(opportunity.startDate, false)
