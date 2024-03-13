@@ -1,17 +1,18 @@
 name: Sonar
 on:
-  # Trigger analysis when a pull request is merged.
-  pull_request:
+  push:
     branches:
       - development
-      - master
-
+  # Trigger analysis when a pull request is merged.
+  pull_request:
+    types: [opened, synchronize, reopened]
 jobs:
   sonarcloud:
+    name: SonarCloud
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         # Disabling shallow clone is recommended for improving relevancy of reporting
         fetch-depth: 0
