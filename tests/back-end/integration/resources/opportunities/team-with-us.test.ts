@@ -13,12 +13,12 @@ import {
   CreateRequestBody,
   TWUOpportunityEvent,
   TWUOpportunityStatus,
+  TWUResource,
   TWUResourceQuestion
 } from "shared/lib/resources/opportunity/team-with-us";
 import { omit, pick } from "lodash";
 import { getISODateString } from "shared/lib";
 import { adt } from "shared/lib/types";
-
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
     buildCreateUserParams({ type: UserType.Government }),
@@ -54,6 +54,7 @@ test("team-with-us opportunity crud", async () => {
     adminAppAgent
   } = await setup();
 
+  // returns enum
   const opportunity = buildTWUOpportunity();
   const body: CreateRequestBody = {
     ...pick(opportunity, [
@@ -63,10 +64,6 @@ test("team-with-us opportunity crud", async () => {
       "remoteDesc",
       "location",
       "maxBudget",
-      "targetAllocation",
-      "mandatorySkills",
-      "optionalSkills",
-      "serviceArea",
       "description",
       "questionsWeight",
       "challengeWeight",
@@ -81,7 +78,10 @@ test("team-with-us opportunity crud", async () => {
     status: TWUOpportunityStatus.Draft,
     resourceQuestions: opportunity.resourceQuestions.map(
       ({ createdAt, createdBy, ...restOfQuestion }) => restOfQuestion
-    )
+    ),
+    resources: opportunity.resources.map((resource) => ({
+      ...resource
+    }))
   };
 
   const createRequest = userAppAgent
@@ -93,6 +93,18 @@ test("team-with-us opportunity crud", async () => {
   expect(createResult.status).toEqual(201);
   expect(createResult.body).toMatchObject({
     ...body,
+    resources: [
+      ...body.resources.map((resource) => ({
+        ...resource,
+        /**
+         * We expect the value for resource.id to be different in the response
+         * body (createResult.body) compared to the request (body) since
+         * the function `createRequest` generates a new opportunityVersion which
+         * updates the value of resource.id
+         */
+        id: createResult.body.resources[0].id
+      }))
+    ],
     createdBy: { id: testUser.id }
   });
 
@@ -125,6 +137,18 @@ test("team-with-us opportunity crud", async () => {
           createdAt: expect.any(String)
         })
       )
+    ],
+    resources: [
+      ...readResult.body.resources.map((resource: TWUResource) => ({
+        ...resource,
+        /**
+         * We expect the value for resource.id to be different in the response
+         * body (editResult.body) compared to the previous response body
+         * (readResult.body) since the function `editResult` generates a new
+         * opportunityVersion which updates the value of resource.id
+         */
+        id: editResult.body.resources[0].id
+      }))
     ]
   });
 

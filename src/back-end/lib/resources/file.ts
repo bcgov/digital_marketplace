@@ -1,3 +1,4 @@
+import contentDisposition from "content-disposition";
 import * as crud from "back-end/lib/crud";
 import * as db from "back-end/lib/db";
 import * as permissions from "back-end/lib/permissions";
@@ -89,7 +90,7 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
         adt("file", {
           buffer: dbResultBlob.value.blob,
           contentType: lookup(file.name) || "application/octet-stream",
-          contentDisposition: `attachment; filename="${file.name}"`
+          contentDisposition: contentDisposition(file.name)
         })
       );
     }

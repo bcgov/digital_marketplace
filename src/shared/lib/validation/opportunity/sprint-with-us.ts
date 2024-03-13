@@ -1,4 +1,4 @@
-import { get, uniq } from "lodash";
+import { get } from "lodash";
 import { SWU_MAX_BUDGET } from "shared/config";
 import {
   getISODateString,
@@ -30,7 +30,6 @@ import {
   mapValid,
   optional,
   valid,
-  validateArray,
   validateArrayCustom,
   validateCapability,
   validateDate,
@@ -423,15 +422,6 @@ export function validateMinimumTeamMembers(
       validateNumber(v, 1, undefined, "minimum team size", "a")
     ),
     (v) => v || null
-  );
-}
-
-export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Optional Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
   );
 }
 

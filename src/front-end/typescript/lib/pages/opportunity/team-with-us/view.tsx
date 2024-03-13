@@ -5,9 +5,14 @@ import {
   makeStopLoading
 } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
+import * as Table from "front-end/lib/components/table";
 import { AddendaList } from "front-end/lib/components/addenda";
 import { AttachmentList } from "front-end/lib/components/attachments";
-import { component as component_ } from "front-end/lib/framework";
+import {
+  Immutable,
+  immutable,
+  component as component_
+} from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { OpportunityBadge } from "front-end/lib/views/badge";
 import DateMetadata from "front-end/lib/views/date-metadata";
@@ -42,8 +47,9 @@ import { Content } from "shared/lib/resources/content";
 import {
   OrganizationSlim,
   doesOrganizationMeetTWUQualification,
-  doesOrganizationProvideServiceArea
+  doesOrganizationProvideServiceAreas
 } from "shared/lib/resources/organization";
+import { aggregateResourceSkills } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 type InfoTab = "details" | "competitionRules" | "attachments" | "addenda";
 
@@ -61,6 +67,7 @@ export interface State {
   routePath: string;
   competitionRulesContent: string;
   qualification: Qualification;
+  table: Immutable<Table.State>;
 }
 
 export type InnerMsg =
@@ -77,7 +84,8 @@ export type InnerMsg =
     >
   | ADT<"toggleWatch">
   | ADT<"onToggleWatchResponse", boolean>
-  | ADT<"setActiveInfoTab", InfoTab>;
+  | ADT<"setActiveInfoTab", InfoTab>
+  | ADT<"table", Table.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -94,6 +102,9 @@ const init: component_.page.Init<
 > = ({ routeParams, shared, routePath }) => {
   const { opportunityId } = routeParams;
   const viewerUser = shared.session?.user || null;
+  const [tableState, tableCmds] = Table.init({
+    idNamespace: "resources-table"
+  });
   return [
     {
       toggleWatchLoading: 0,
@@ -103,7 +114,8 @@ const init: component_.page.Init<
       activeInfoTab: "details",
       routePath,
       competitionRulesContent: "",
-      qualification: "notQualified"
+      qualification: "notQualified",
+      table: immutable(tableState)
     },
     [
       api.counters.update<Msg>()(
@@ -137,7 +149,8 @@ const init: component_.page.Init<
             competitionRulesContentResponse,
             organizationsResponse
           ]) as Msg
-      )
+      ),
+      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
     ]
   ];
 };
@@ -192,9 +205,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         (qualification: Qualification, organization) => {
           if (doesOrganizationMeetTWUQualification(organization)) {
             if (
-              doesOrganizationProvideServiceArea(
+              doesOrganizationProvideServiceAreas(
                 organization,
-                opportunity.serviceArea
+                opportunity.resources
               )
             ) {
               return "qualifiedCorrectServiceArea";
@@ -243,6 +256,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       }
       return [stopToggleWatchLoading(state), []];
     }
+    case "table":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["table", "state"],
+        childUpdate: Table.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => ({ tag: "table", value })
+      });
     default:
       return [state, []];
   }
@@ -373,26 +394,6 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 xs="6"
                 className="d-flex justify-content-start align-items-start flex-nowrap">
                 <OpportunityInfo
-                  icon="laptop-code-outline"
-                  name="Service Area"
-                  value={startCase(lowerCase(opp.serviceArea)) || EMPTY_STRING}
-                />
-              </Col>
-              <Col
-                xs="6"
-                className="d-flex justify-content-start align-items-start flex-nowrap">
-                <OpportunityInfo
-                  icon="balance-scale"
-                  name="Resource Target Allocation"
-                  value={opp.targetAllocation.toString().concat("%")}
-                />
-              </Col>
-            </Row>
-            <Row>
-              <Col
-                xs="6"
-                className="d-flex justify-content-start align-items-start flex-nowrap">
-                <OpportunityInfo
                   icon="map-marker"
                   name="Location"
                   value={opp.location}
@@ -405,6 +406,26 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                   icon="map"
                   name="Remote OK?"
                   value={opp.remoteOk ? "Yes" : "No"}
+                />
+              </Col>
+            </Row>
+            <Row>
+              <Col
+                xs="6"
+                className="d-flex justify-content-start align-items-start flex-nowrap">
+                <OpportunityInfo
+                  icon="award"
+                  name="Contract Award Date"
+                  value={formatDate(opp.assignmentDate)}
+                />
+              </Col>
+              <Col
+                xs="6"
+                className="d-flex justify-content-start align-items-start flex-nowrap">
+                <OpportunityInfo
+                  icon="calendar"
+                  name="Contract Start Date"
+                  value={formatDate(opp.startDate)}
                 />
               </Col>
             </Row>
@@ -433,13 +454,67 @@ const InfoDetailsHeading: component_.base.View<{
   );
 };
 
-const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
+function resourceTableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: "Resource",
+      className: "text-nowrap",
+      style: { width: "100%" }
+    },
+    {
+      children: "Allocation %",
+      className: "text-nowrap text-center",
+      style: { width: "0px" }
+    }
+  ];
+}
+
+function resourceTableBodyRows(state: Immutable<State>): Table.BodyRows {
+  return (
+    state.opportunity?.resources.map(({ serviceArea, targetAllocation }) => [
+      { children: startCase(lowerCase(serviceArea)) },
+      { children: targetAllocation.toString(), className: "text-center" }
+    ]) ?? []
+  );
+}
+
+const ResourcesTable: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
+  return (
+    <Table.view
+      headCells={resourceTableHeadCells()}
+      bodyRows={resourceTableBodyRows(state)}
+      state={state.table}
+      dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+        adt("table" as const, msg)
+      )}
+      hover={false}
+    />
+  );
+};
+
+const InfoDetails: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const opp = state.opportunity;
   if (!opp) return null;
+
+  const skills = aggregateResourceSkills(opp);
+
   return (
     <Row>
       <Col xs="12">
         <h3 className="mb-0">Details</h3>
+      </Col>
+      <Col xs="12" className="mt-5">
+        <InfoDetailsHeading
+          icon="laptop-code-outline"
+          text={`Service Area${opp.resources.length ? "s" : ""}`}
+        />
+        <ResourcesTable state={state} dispatch={dispatch} />
       </Col>
       <Col xs="12" className="mt-5">
         <InfoDetailsHeading icon="toolbox-outline" text="Required Skills" />
@@ -447,14 +522,14 @@ const InfoDetails: component_.base.ComponentView<State, Msg> = ({ state }) => {
           To submit a proposal for this opportunity, you must possess the
           following skills:
         </p>
-        <Skills skills={opp.mandatorySkills} />
-        {opp.optionalSkills.length ? (
+        <Skills skills={skills.mandatory} />
+        {skills.optional.length ? (
           <Fragment>
             <p className="mt-3 mb-2">
               Additionally, possessing the following skills would be considered
               a bonus:
             </p>
-            <Skills skills={opp.optionalSkills} />
+            <Skills skills={skills.optional} />
           </Fragment>
         ) : null}
       </Col>
@@ -852,8 +927,8 @@ export const component: component_.page.Component<
                     <Link dest={routeDest(adt("learnMoreTWU", null))}>
                       Qualified Supplier
                     </Link>{" "}
-                    for this Service Area in order to submit a proposal to this
-                    opportunity.
+                    for these Service Areas in order to submit a proposal to
+                    this opportunity.
                   </span>
                 )
               });

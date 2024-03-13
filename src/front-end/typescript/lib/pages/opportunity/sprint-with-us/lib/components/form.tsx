@@ -359,7 +359,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     errors: [],
     validate: (v) => {
       const strings = v.map(({ value }) => value);
-      const validated0 = opportunityValidation.validateOptionalSkills(strings);
+      const validated0 = genericValidation.validateOptionalSkills(strings);
       const validated1 = mapValid(validated0 as Validation<string[]>, () => v);
       return mapInvalid(validated1, (es) => flatten(es));
     },

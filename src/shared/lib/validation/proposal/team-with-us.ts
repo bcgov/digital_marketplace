@@ -6,8 +6,9 @@ import {
   TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
-  Organization,
-  doesOrganizationProvideServiceArea
+  doesOrganizationProvideServiceAreas,
+  Organization
+  // doesOrganizationProvideServiceArea
 } from "shared/lib/resources/organization";
 import {
   CreateTWUProposalStatus,
@@ -167,10 +168,10 @@ export function validateTWUProposalProposedCost(
 }
 
 /**
- * Validates that an organization provides an opportunity's service area.
+ * Validates that an organization provides an opportunity's service areas.
  *
  * @param opportunity
- * @param organizationServiceAreas
+ * @param organization
  * @returns
  */
 export function validateTWUProposalOrganizationServiceAreas(
@@ -179,14 +180,14 @@ export function validateTWUProposalOrganizationServiceAreas(
 ): ArrayValidation<TWUServiceArea, string> {
   if (
     organization &&
-    doesOrganizationProvideServiceArea(organization, opportunity.serviceArea)
+    doesOrganizationProvideServiceAreas(organization, opportunity.resources)
   ) {
     return valid(
       organization.serviceAreas.map(({ serviceArea }) => serviceArea)
     );
   } else {
     return invalid([
-      "The selected organization does not satisfy this opportunity's service area."
+      "The selected organization does not satisfy this opportunity's service areas."
     ]);
   }
 }

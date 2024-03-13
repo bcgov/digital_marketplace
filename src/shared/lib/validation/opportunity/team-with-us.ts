@@ -1,4 +1,3 @@
-import { uniq } from "lodash";
 import { getNumber, getString, setDateTo4PM } from "shared/lib";
 import {
   CreateTWUOpportunityStatus,
@@ -16,9 +15,7 @@ import {
   ArrayValidation,
   getInvalidValue,
   invalid,
-  mapValid,
   valid,
-  validateArray,
   validateArrayCustom,
   validateDate,
   validateGenericString,
@@ -28,6 +25,16 @@ import {
 
 export { validateCapabilities } from "shared/lib/validation";
 export { validateAddendumText } from "shared/lib/validation/addendum";
+
+/**
+ * @remarks
+ *
+ * Summary: This file holds validation functions that can be shared between the front and back-end for
+ * Team With Us Opportunities. As a rule of thumb, and a point of distinction between other validation files
+ * there are no database calls in this file.
+ *
+ * @see {@link src/back-end/lib/validation.ts}
+ */
 
 export function validateTWUOpportunityStatus(
   raw: string,
@@ -76,7 +83,7 @@ export function validateResourceQuestionWordLimit(
 }
 
 // Allow up to 100 resource questions per opportunity.
-export function validateResourceQuestionOrder(raw: number): Validation<number> {
+export function validateOrder(raw: number): Validation<number> {
   return validateNumber(raw, 0, MAX_RESOURCE_QUESTIONS, "Order", "an");
 }
 
@@ -96,7 +103,7 @@ export function validateResourceQuestion(
   const validatedWordLimit = validateResourceQuestionWordLimit(
     getNumber(raw, "wordLimit")
   );
-  const validatedOrder = validateResourceQuestionOrder(getNumber(raw, "order"));
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
   if (
     allValid([
       validatedQuestion,
@@ -140,15 +147,6 @@ export function validateResourceQuestions(
 
 export function validateMaxBudget(raw: string | number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Maximum Budget");
-}
-
-export function validateOptionalSkills(raw: string[]): ArrayValidation<string> {
-  const validatedArray = validateArray(raw, (v) =>
-    validateGenericString(v, "Optional Skill", 1, 100)
-  );
-  return mapValid<string[], string[][], string[]>(validatedArray, (skills) =>
-    uniq(skills)
-  );
 }
 
 export function validateProposalDeadline(
