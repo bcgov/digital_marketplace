@@ -31,7 +31,6 @@ import {
 import { organizationArchivedT } from "back-end/lib/mailer/notifications/organization";
 import {
   awardedCWUProposalSubmissionT,
-  disqualifiedCWUProposalSubmissionT,
   successfulCWUProposalSubmissionT,
   unsuccessfulCWUProposalSubmissionT,
   withdrawnCWUProposalSubmissionProposalAuthorT,
@@ -260,14 +259,6 @@ async function makeEmailNotificationReference(): Promise<
           mocks.cwuProposal
         ))
       ]
-    },
-    {
-      title: "CWU Proposal Disqualified",
-      emails: await disqualifiedCWUProposalSubmissionT(
-        mocks.vendorUser,
-        mocks.cwuOpportunity,
-        mocks.cwuProposal
-      )
     },
     {
       title: "CWU Proposal Withdrawn",

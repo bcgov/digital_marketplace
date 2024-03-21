@@ -857,12 +857,6 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify of disqualification
-            cwuProposalNotifications.handleCWUProposalDisqualified(
-              connection,
-              request.params.id,
-              session
-            );
             break;
           case "withdraw":
             dbResult = await db.updateCWUProposalStatus(
