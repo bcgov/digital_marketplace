@@ -38,7 +38,6 @@ import {
 } from "back-end/lib/mailer/notifications/proposal/code-with-us";
 import {
   awardedSWUProposalSubmissionT,
-  disqualifiedSWUProposalSubmissionT,
   successfulSWUProposalSubmissionT,
   unsuccessfulSWUProposalSubmissionT,
   withdrawnSWUProposalSubmissionProposalAuthorT,
@@ -379,14 +378,6 @@ async function makeEmailNotificationReference(): Promise<
           mocks.swuProposal
         ))
       ]
-    },
-    {
-      title: "SWU Proposal Disqualified",
-      emails: await disqualifiedSWUProposalSubmissionT(
-        mocks.vendorUser,
-        mocks.swuOpportunity,
-        mocks.swuProposal
-      )
     },
     {
       title: "SWU Proposal Withdrawn",
