@@ -7,7 +7,7 @@ import {
 import * as templates from "back-end/lib/mailer/templates";
 import { makeSend } from "back-end/lib/mailer/transport";
 import React from "react";
-import { CONTACT_EMAIL, EMPTY_STRING } from "shared/config";
+import { EMPTY_STRING } from "shared/config";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CWUProposal,
@@ -94,41 +94,6 @@ export async function handleCWUProposalAwarded(
         }
       }
     }
-  }
-}
-
-export async function handleCWUProposalDisqualified(
-  connection: db.Connection,
-  proposalId: Id,
-  session: AuthenticatedSession
-): Promise<void> {
-  //Notify the disqualified proponent
-  const proposal = getValidValue(
-    await db.readOneCWUProposal(connection, proposalId, session),
-    null
-  );
-  const opportunity =
-    proposal &&
-    getValidValue(
-      await db.readOneCWUOpportunity(
-        connection,
-        proposal.opportunity.id,
-        session
-      ),
-      null
-    );
-  const disqualifiedProponent =
-    proposal &&
-    getValidValue(
-      await db.readOneUser(connection, proposal.createdBy.id),
-      null
-    );
-  if (proposal && opportunity && disqualifiedProponent) {
-    await disqualifiedCWUProposalSubmission(
-      disqualifiedProponent,
-      opportunity,
-      proposal
-    );
   }
 }
 
@@ -326,47 +291,6 @@ export async function unsuccessfulCWUProposalSubmissionT(
             <p>
               Thank you for your submission and we wish you luck on the next
               opportunity.
-            </p>
-          </div>
-        ),
-        callsToAction: [
-          viewCWUOpportunityCallToAction(opportunity),
-          viewCWUProposalCallToAction(proposal)
-        ]
-      })
-    }
-  ];
-}
-
-export const disqualifiedCWUProposalSubmission = makeSend(
-  disqualifiedCWUProposalSubmissionT
-);
-
-export async function disqualifiedCWUProposalSubmissionT(
-  recipient: User,
-  opportunity: CWUOpportunity,
-  proposal: CWUProposal | CWUProposalSlim
-): Promise<Emails> {
-  const title = "Your Code With Us Proposal Has Been Deemed Non-Compliant";
-  const description =
-    "The proposal that you submitted for the following Digital Marketplace opportunity was deemed non-compliant and will not be considered any further:";
-  return [
-    {
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              We appreciate the time and effort you put into creating your
-              proposal. Thank you for your interest in this opportunity.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
             </p>
           </div>
         ),
