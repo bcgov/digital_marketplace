@@ -7,7 +7,7 @@ import {
 import * as templates from "back-end/lib/mailer/templates";
 import { makeSend } from "back-end/lib/mailer/transport";
 import React from "react";
-import { CONTACT_EMAIL, EMPTY_STRING } from "shared/config";
+import { EMPTY_STRING } from "shared/config";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   SWUProposal,
@@ -102,39 +102,6 @@ export async function handleSWUProposalAwarded(
         }
       }
     }
-  }
-}
-
-export async function handleSWUProposalDisqualified(
-  connection: db.Connection,
-  proposalId: Id,
-  session: AuthenticatedSession
-): Promise<void> {
-  //Notify the disqualified proponent
-  const proposal = getValidValue(
-    await db.readOneSWUProposal(connection, proposalId, session),
-    null
-  );
-  const opportunity =
-    proposal &&
-    getValidValue(
-      await db.readOneSWUOpportunity(
-        connection,
-        proposal.opportunity.id,
-        session
-      ),
-      null
-    );
-  const disqualifiedProponent = getValidValue(
-    await db.readOneSWUProposalAuthor(connection, proposalId),
-    null
-  );
-  if (proposal && opportunity && disqualifiedProponent) {
-    await disqualifiedSWUProposalSubmission(
-      disqualifiedProponent,
-      opportunity,
-      proposal
-    );
   }
 }
 
@@ -335,47 +302,6 @@ export async function unsuccessfulSWUProposalSubmissionT(
             <p>
               Thank you for your submission and we wish you luck on the next
               opportunity.
-            </p>
-          </div>
-        ),
-        callsToAction: [
-          viewSWUOpportunityCallToAction(opportunity),
-          viewSWUProposalCallToAction(proposal)
-        ]
-      })
-    }
-  ];
-}
-
-export const disqualifiedSWUProposalSubmission = makeSend(
-  disqualifiedSWUProposalSubmissionT
-);
-
-export async function disqualifiedSWUProposalSubmissionT(
-  recipient: User,
-  opportunity: SWUOpportunity,
-  proposal: SWUProposal | SWUProposalSlim
-): Promise<Emails> {
-  const title = "Your Sprint With Us Proposal Has Been Deemed Non-Compliant";
-  const description =
-    "The proposal that you submitted for the following Digital Marketplace opportunity was deemed non-compliant and will not be considered any further:";
-  return [
-    {
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              We appreciate the time and effort you put into creating your
-              proposal. Thank you for your interest in this opportunity.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
             </p>
           </div>
         ),

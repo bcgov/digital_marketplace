@@ -31,7 +31,6 @@ import {
 import { organizationArchivedT } from "back-end/lib/mailer/notifications/organization";
 import {
   awardedCWUProposalSubmissionT,
-  disqualifiedCWUProposalSubmissionT,
   successfulCWUProposalSubmissionT,
   unsuccessfulCWUProposalSubmissionT,
   withdrawnCWUProposalSubmissionProposalAuthorT,
@@ -39,7 +38,6 @@ import {
 } from "back-end/lib/mailer/notifications/proposal/code-with-us";
 import {
   awardedSWUProposalSubmissionT,
-  disqualifiedSWUProposalSubmissionT,
   successfulSWUProposalSubmissionT,
   unsuccessfulSWUProposalSubmissionT,
   withdrawnSWUProposalSubmissionProposalAuthorT,
@@ -262,14 +260,6 @@ async function makeEmailNotificationReference(): Promise<
       ]
     },
     {
-      title: "CWU Proposal Disqualified",
-      emails: await disqualifiedCWUProposalSubmissionT(
-        mocks.vendorUser,
-        mocks.cwuOpportunity,
-        mocks.cwuProposal
-      )
-    },
-    {
       title: "CWU Proposal Withdrawn",
       emails: [
         ...(await withdrawnCWUProposalSubmissionProposalAuthorT(
@@ -388,14 +378,6 @@ async function makeEmailNotificationReference(): Promise<
           mocks.swuProposal
         ))
       ]
-    },
-    {
-      title: "SWU Proposal Disqualified",
-      emails: await disqualifiedSWUProposalSubmissionT(
-        mocks.vendorUser,
-        mocks.swuOpportunity,
-        mocks.swuProposal
-      )
     },
     {
       title: "SWU Proposal Withdrawn",

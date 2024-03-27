@@ -7,7 +7,7 @@ import {
 import * as templates from "back-end/lib/mailer/templates";
 import { makeSend } from "back-end/lib/mailer/transport";
 import React from "react";
-import { CONTACT_EMAIL, EMPTY_STRING } from "shared/config";
+import { EMPTY_STRING } from "shared/config";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import {
   TWUProposal,
@@ -102,39 +102,6 @@ export async function handleTWUProposalAwarded(
         }
       }
     }
-  }
-}
-
-export async function handleTWUProposalDisqualified(
-  connection: db.Connection,
-  proposalId: Id,
-  session: AuthenticatedSession
-): Promise<void> {
-  //Notify the disqualified proponent
-  const proposal = getValidValue(
-    await db.readOneTWUProposal(connection, proposalId, session),
-    null
-  );
-  const opportunity =
-    proposal &&
-    getValidValue(
-      await db.readOneTWUOpportunity(
-        connection,
-        proposal.opportunity.id,
-        session
-      ),
-      null
-    );
-  const disqualifiedProponent = getValidValue(
-    await db.readOneTWUProposalAuthor(connection, proposalId),
-    null
-  );
-  if (proposal && opportunity && disqualifiedProponent) {
-    await disqualifiedTWUProposalSubmission(
-      disqualifiedProponent,
-      opportunity,
-      proposal
-    );
   }
 }
 
@@ -335,47 +302,6 @@ export async function unsuccessfulTWUProposalSubmissionT(
             <p>
               Thank you for your submission and we wish you luck on the next
               opportunity.
-            </p>
-          </div>
-        ),
-        callsToAction: [
-          viewTWUOpportunityCallToAction(opportunity),
-          viewTWUProposalCallToAction(proposal)
-        ]
-      })
-    }
-  ];
-}
-
-export const disqualifiedTWUProposalSubmission = makeSend(
-  disqualifiedTWUProposalSubmissionT
-);
-
-export async function disqualifiedTWUProposalSubmissionT(
-  recipient: User,
-  opportunity: TWUOpportunity,
-  proposal: TWUProposal | TWUProposalSlim
-): Promise<Emails> {
-  const title = "Your Team With Us Proposal Has Been Deemed Non-Compliant";
-  const description =
-    "The proposal that you submitted for the following Digital Marketplace opportunity was deemed non-compliant and will not be considered any further:";
-  return [
-    {
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              We appreciate the time and effort you put into creating your
-              proposal. Thank you for your interest in this opportunity.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
             </p>
           </div>
         ),

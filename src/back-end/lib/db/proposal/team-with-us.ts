@@ -1342,19 +1342,38 @@ export const awardTWUProposal = tryDb<
 
       for (const id of otherProposalIds) {
         // Get latest status for proposal and check equal to Evaluated/Awarded
+        const currentStatus = (
+          await connection<{ status: TWUProposalStatus }>("twuProposalStatuses")
+            .whereNotNull("status")
+            .andWhere("proposal", id)
+            .select("status")
+            .orderBy("createdAt", "desc")
+            .first()
+        )?.status;
 
-        await connection<RawHistoryRecord & { id: Id; proposal: Id }>(
-          "twuProposalStatuses"
-        )
-          .transacting(trx)
-          .insert({
-            id: generateUuid(),
-            proposal: id,
-            createdAt: now,
-            createdBy: session.user.id,
-            status: TWUProposalStatus.NotAwarded,
-            note: ""
-          });
+        if (
+          currentStatus &&
+          ![
+            TWUProposalStatus.Disqualified,
+            TWUProposalStatus.Draft,
+            TWUProposalStatus.NotAwarded,
+            TWUProposalStatus.Submitted,
+            TWUProposalStatus.Withdrawn
+          ].includes(currentStatus)
+        ) {
+          await connection<RawHistoryRecord & { id: Id; proposal: Id }>(
+            "twuProposalStatuses"
+          )
+            .transacting(trx)
+            .insert({
+              id: generateUuid(),
+              proposal: id,
+              createdAt: now,
+              createdBy: session.user.id,
+              status: TWUProposalStatus.NotAwarded,
+              note: ""
+            });
+        }
 
         await connection<RawTWUProposal>("twuProposals")
           .where({ id: id })

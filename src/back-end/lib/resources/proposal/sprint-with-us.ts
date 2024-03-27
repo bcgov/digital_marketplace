@@ -1616,14 +1616,6 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify of disqualification
-            if (isValid(dbResult)) {
-              swuProposalNotifications.handleSWUProposalDisqualified(
-                connection,
-                request.params.id,
-                request.body.session
-              );
-            }
             break;
           case "withdraw":
             dbResult = await db.updateSWUProposalStatus(
