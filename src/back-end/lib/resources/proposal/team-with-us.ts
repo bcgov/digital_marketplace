@@ -1256,14 +1256,6 @@ const update: crud.Update<
               body.value,
               session
             );
-            // Notify of disqualification
-            if (isValid(dbResult)) {
-              twuProposalNotifications.handleTWUProposalDisqualified(
-                connection,
-                request.params.id,
-                request.body.session
-              );
-            }
             break;
           case "withdraw":
             dbResult = await db.updateTWUProposalStatus(
