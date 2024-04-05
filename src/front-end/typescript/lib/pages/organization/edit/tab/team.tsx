@@ -49,12 +49,18 @@ import {
 import { adt, ADT, Id } from "shared/lib/types";
 import { validateUserEmail } from "shared/lib/validation/affiliation";
 
+interface NonOwnerMember extends AffiliationMember {
+  newOwner: boolean;
+  index: number;
+}
+
 type ModalId =
   | ADT<"addTeamMembers">
   | ADT<"viewTeamMember", AffiliationMember>
   | ADT<"removeTeamMember", AffiliationMember>
   | ADT<"approveAffiliation", AffiliationMember>
-  | ADT<"acceptOrgAdminStatusTerms", AffiliationMember>;
+  | ADT<"acceptOrgAdminStatusTerms", AffiliationMember>
+  | ADT<"changeOwner">;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -66,6 +72,7 @@ export interface State extends Tab.Params {
   capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
   acceptOrgAdminTerms: Immutable<AcceptOrgAdminTerms.State>;
+  nonOwnerMembers: NonOwnerMember[];
 }
 
 export type InnerMsg =
@@ -86,7 +93,8 @@ export type InnerMsg =
       "onUpdateAdminStatusResponse",
       api.ResponseValidation<Affiliation, UpdateValidationErrors>
     >
-  | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>;
+  | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>
+  | ADT<"toggleNewOwner", number>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -162,7 +170,10 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       capabilities: determineCapabilities(params.affiliations),
       membersTable: immutable(tableState),
       addTeamMembersEmails: [immutable(addTeamMemberEmailState)],
-      acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState)
+      acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState),
+      nonOwnerMembers: params.affiliations
+        .filter((m) => !memberIsOwner(m))
+        .map((m, i) => ({ ...m, index: i, newOwner: false }))
     },
     [
       ...component_.cmd.mapMany(
@@ -477,6 +488,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt("acceptOrgAdminTerms", value)
       });
+
+    case "toggleNewOwner":
+      return [
+        state.update("nonOwnerMembers", (ms) =>
+          ms.map((a) => {
+            return a.index === msg.value
+              ? { ...a, newOwner: true }
+              : { ...a, newOwner: false };
+          })
+        ),
+        []
+      ];
 
     default:
       return [state, []];
@@ -866,6 +889,56 @@ export const component: Tab.Component<State, Msg> = {
                 state.acceptOrgAdminTerms
               )
             },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case "changeOwner":
+        return component_.page.modal.show({
+          title: "Change Owner",
+          onCloseMsg: adt("hideModal") as Msg,
+          body: (dispatch) => {
+            return (
+              <div className="border-top border-left">
+                {state.nonOwnerMembers.map((m, i) => {
+                  return (
+                    <div
+                      key={`non-owner-members-${i}`}
+                      className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
+                      <Link
+                        onClick={() => dispatch(adt("toggleNewOwner", m.index))}
+                        symbol_={leftPlacement(
+                          iconLinkSymbol(m.newOwner ? "check-circle" : "circle")
+                        )}
+                        symbolClassName={
+                          m.newOwner ? "text-success" : "text-body"
+                        }
+                        className="text-nowrap flex-nowrap"
+                        color="body">
+                        <img
+                          className="rounded-circle border mr-2"
+                          style={{
+                            width: "1.75rem",
+                            height: "1.75rem",
+                            objectFit: "cover"
+                          }}
+                          src={userAvatarPath(m.user)}
+                        />
+                        {m.user.name}
+                      </Link>
+                      {memberIsPending(m) ? (
+                        <PendingBadge className="ml-3" />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          },
+          actions: [
             {
               text: "Cancel",
               color: "secondary",
