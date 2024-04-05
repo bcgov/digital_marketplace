@@ -966,7 +966,7 @@ export const component: Tab.Component<State, Msg> = {
         symbol_: leftPlacement(iconLinkSymbol("user-plus")),
         color: "primary"
       },
-      ...(viewerIsAdmin
+      ...(viewerIsAdmin && state.nonOwnerMembers.length
         ? [
             {
               children: "Change Owner",
