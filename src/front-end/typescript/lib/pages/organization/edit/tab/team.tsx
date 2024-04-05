@@ -22,6 +22,7 @@ import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import Capabilities, { Capability } from "front-end/lib/views/capabilities";
 import Icon from "front-end/lib/views/icon";
 import Link, {
+  Props as LinkProps,
   iconLinkSymbol,
   imageLinkSymbol,
   leftPlacement
@@ -875,7 +876,8 @@ export const component: Tab.Component<State, Msg> = {
     }
   },
   getActions: ({ state, dispatch }) => {
-    if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) {
+    const viewerIsAdmin = isAdmin(state.viewerUser);
+    if (!isVendor(state.viewerUser) && !viewerIsAdmin) {
       return component_.page.actions.none();
     }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
@@ -890,7 +892,22 @@ export const component: Tab.Component<State, Msg> = {
         disabled: isLoading,
         symbol_: leftPlacement(iconLinkSymbol("user-plus")),
         color: "primary"
-      }
+      },
+      ...(viewerIsAdmin
+        ? [
+            {
+              children: "Change Owner",
+              onClick: () =>
+                dispatch(adt("showModal", adt("changeOwner")) as Msg),
+              button: true,
+              outline: true,
+              loading: isAddTeamMembersLoading,
+              disabled: isLoading,
+              symbol_: leftPlacement(iconLinkSymbol("user-edit")),
+              color: "c-nav-fg-alt"
+            } as LinkProps
+          ]
+        : [])
     ]);
   }
 };
