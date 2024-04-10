@@ -5,6 +5,7 @@ import {
   readOneOrganizationSlim
 } from "back-end/lib/db/organization";
 import { readOneUser } from "back-end/lib/db/user";
+import { Knex } from "knex";
 import { valid } from "shared/lib/http";
 import {
   Affiliation,
@@ -319,6 +320,90 @@ export const updateAdminStatus = tryDb<
       }
 
       return valid(await rawAffiliationToAffiliation(connection, affiliation));
+    });
+  }
+);
+
+// @eslint-ignore
+function affiliationUpdateQuery(
+  connection: Connection,
+  rawAffiliation: Partial<RawAffiliation>,
+  queryObject: Record<string, Knex.MaybeRawColumn<string>>
+) {
+  return connection<RawAffiliation>("affiliations")
+    .update(rawAffiliation, "*")
+    .where(queryObject)
+    .whereIn("organization", function () {
+      this.select("id").from("organizations").where({
+        active: true
+      });
+    });
+}
+
+export const changeOwner = tryDb<[Id, Id, AuthenticatedSession], Affiliation>(
+  async (connection, id, orgId, session: AuthenticatedSession) => {
+    const now = new Date();
+    return await connection.transaction(async (trx) => {
+      const [previousOwnerAffiliation] = await affiliationUpdateQuery(
+        connection,
+        { membershipType: MembershipType.Member, updatedAt: now },
+        { organization: orgId, membershipType: MembershipType.Owner }
+      ).transacting(trx);
+
+      if (!previousOwnerAffiliation) {
+        throw new Error("unable to set affiliation type to member");
+      }
+
+      const [previousOwnerAffiliationEvent] =
+        await connection<RawHistoryRecord>("affiliationEvents")
+          .transacting(trx)
+          .insert(
+            {
+              id: generateUuid(),
+              affiliation: previousOwnerAffiliation.id,
+              event: AffiliationEvent.OwnerStatusRevoked,
+              createdAt: now,
+              createdBy: session.user.id
+            },
+            "*"
+          );
+
+      if (!previousOwnerAffiliationEvent) {
+        throw new Error("unable to create affiliation event");
+      }
+
+      const [newOwnerAffiliation] = await affiliationUpdateQuery(
+        connection,
+        { membershipType: MembershipType.Owner, updatedAt: now },
+        { id }
+      ).transacting(trx);
+
+      if (!newOwnerAffiliation) {
+        throw new Error("unable to set affiliation type owner");
+      }
+
+      const [newOwnerAffiliationEvent] = await connection<RawHistoryRecord>(
+        "affiliationEvents"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            affiliation: id,
+            event: AffiliationEvent.OwnerStatusGranted,
+            createdAt: now,
+            createdBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!newOwnerAffiliationEvent) {
+        throw new Error("unable to create affiliation event");
+      }
+
+      return valid(
+        await rawAffiliationToAffiliation(connection, newOwnerAffiliation)
+      );
     });
   }
 );
