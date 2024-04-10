@@ -20,7 +20,9 @@ export enum MembershipStatus {
 
 export enum AffiliationEvent {
   AdminStatusGranted = "ADMIN_STATUS_GRANTED",
-  AdminStatusRevoked = "ADMIN_STATUS_REVOKED"
+  AdminStatusRevoked = "ADMIN_STATUS_REVOKED",
+  OwnerStatusGranted = "OWNER_STATUS_GRANTED",
+  OwnerStatusRevoked = "OWNER_STATUS_REVOKED"
 }
 
 export interface AffiliationHistoryRecord {
