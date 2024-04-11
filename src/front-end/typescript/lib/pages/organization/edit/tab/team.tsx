@@ -65,6 +65,7 @@ type ModalId =
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   addTeamMembersLoading: number;
+  changeOwnerLoading: number;
   removeTeamMemberLoading: Id | null; //Id of affiliation, not user
   approveAffiliationLoading: Id | null; //Id of affiliation, not user
   updateAdminStatusLoading: Id | null;
@@ -94,7 +95,9 @@ export type InnerMsg =
       api.ResponseValidation<Affiliation, UpdateValidationErrors>
     >
   | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>
-  | ADT<"toggleNewOwner", number>;
+  | ADT<"toggleNewOwner", number>
+  | ADT<"changeOwner", NonOwnerMember>
+  | ADT<"onChangeOwnerResponse", boolean>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -137,6 +140,12 @@ function resetAddTeamMemberEmails(
   ];
 }
 
+function resetNonOwnerMembers(members: AffiliationMember[]): NonOwnerMember[] {
+  return members
+    .filter((m) => !memberIsOwner(m))
+    .map((m, i) => ({ ...m, index: i, newOwner: false }));
+}
+
 function isAffiliationAdminStatusChecked(
   affiliationMember: AffiliationMember
 ): boolean {
@@ -164,6 +173,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...params,
       showModal: null,
       addTeamMembersLoading: 0,
+      changeOwnerLoading: 0,
       removeTeamMemberLoading: null,
       approveAffiliationLoading: null,
       updateAdminStatusLoading: null,
@@ -196,6 +206,8 @@ const startAddTeamMembersLoading = makeStartLoading<State>(
   "addTeamMembersLoading"
 );
 
+const startChangeOwnerLoading = makeStartLoading<State>("changeOwnerLoading");
+
 interface AddTeamMemberState {
   successToasts: string[];
   warningToasts: string[];
@@ -220,6 +232,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           }
           case "addTeamMembers":
             return resetAddTeamMemberEmails(state);
+          case "changeOwner":
+            state = state.set(
+              "nonOwnerMembers",
+              resetNonOwnerMembers(state.affiliations)
+            );
+            break;
         }
       return [state, []];
     }
@@ -500,6 +518,48 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         ),
         []
       ];
+
+    case "changeOwner": {
+      const { id: memberId } = msg.value;
+      return [
+        startChangeOwnerLoading(state).set("showModal", null),
+        [
+          api.affiliations.update<Msg>()(
+            memberId,
+            adt("changeOwner"),
+            (response) =>
+              adt("onChangeOwnerResponse", api.isValid(response)) as Msg
+          )
+        ]
+      ];
+    }
+
+    case "onChangeOwnerResponse": {
+      const succeeded = msg.value;
+      if (!succeeded) {
+        return [
+          state.set("changeOwnerLoading", 0),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.changedOwner.error(state.organization))
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.changedOwner.success(state.organization))
+            )
+          ),
+          component_.cmd.dispatch(component_.global.reloadMsg())
+        ]
+      ];
+    }
 
     default:
       return [state, []];
@@ -896,7 +956,9 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
-      case "changeOwner":
+
+      case "changeOwner": {
+        const newOwner = state.nonOwnerMembers.find((m) => m.newOwner);
         return component_.page.modal.show({
           title: "Change Owner",
           onCloseMsg: adt("hideModal") as Msg,
@@ -940,12 +1002,21 @@ export const component: Tab.Component<State, Msg> = {
           },
           actions: [
             {
+              text: "Change Owner",
+              disabled: !newOwner,
+              button: true,
+              color: "primary",
+              icon: "user-edit",
+              msg: newOwner ? adt("changeOwner", newOwner) : adt("hideModal")
+            },
+            {
               text: "Cancel",
               color: "secondary",
               msg: adt("hideModal")
             }
           ]
         });
+      }
     }
   },
   getActions: ({ state, dispatch }) => {
@@ -954,8 +1025,12 @@ export const component: Tab.Component<State, Msg> = {
       return component_.page.actions.none();
     }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
+    const isChangeOwnerLoading = state.changeOwnerLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
-    const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+    const isLoading =
+      isAddTeamMembersLoading ||
+      isRemoveTeamMemberLoading ||
+      isChangeOwnerLoading;
     return component_.page.actions.links([
       {
         children: "Add Team Member(s)",
@@ -974,7 +1049,7 @@ export const component: Tab.Component<State, Msg> = {
                 dispatch(adt("showModal", adt("changeOwner")) as Msg),
               button: true,
               outline: true,
-              loading: isAddTeamMembersLoading,
+              loading: isChangeOwnerLoading,
               disabled: isLoading,
               symbol_: leftPlacement(iconLinkSymbol("user-edit")),
               color: "c-nav-fg-alt"
