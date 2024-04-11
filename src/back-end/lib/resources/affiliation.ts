@@ -57,7 +57,10 @@ export type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 type ValidatedUpdateRequestBody = {
   session: AuthenticatedSession;
-  body: ADT<"approve"> | ADT<"updateAdminStatus", MembershipType>;
+  body:
+    | ADT<"approve">
+    | ADT<"updateAdminStatus", MembershipType>
+    | ADT<"changeOwner", Organization["id"]>;
 };
 
 type ValidatedDeleteRequestBody = Id;
@@ -312,6 +315,8 @@ const update: crud.Update<
             return null;
           }
         }
+        case "changeOwner":
+          return adt("changeOwner");
         default:
           return null;
       }
@@ -399,6 +404,27 @@ const update: crud.Update<
             body: adt("updateAdminStatus" as const, membershipType)
           });
         }
+        case "changeOwner": {
+          if (memberIsOwner(existingAffiliation)) {
+            return invalid({
+              affiliation: ["Membership type is already owner."]
+            });
+          }
+
+          if (!permissions.isAdmin(request.session)) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
+          return valid({
+            session: request.session,
+            body: adt(
+              "changeOwner" as const,
+              existingAffiliation.organization.id
+            )
+          });
+        }
         default:
           return invalid({ affiliation: adt("parseFailure" as const) });
       }
@@ -420,6 +446,14 @@ const update: crud.Update<
             break;
           case "updateAdminStatus":
             dbResult = await db.updateAdminStatus(
+              connection,
+              id,
+              body.value,
+              session
+            );
+            break;
+          case "changeOwner":
+            dbResult = await db.changeOwner(
               connection,
               id,
               body.value,

@@ -64,7 +64,8 @@ export interface CreateRequestBody {
 
 export type UpdateRequestBody =
   | ADT<"approve">
-  | ADT<"updateAdminStatus", boolean>;
+  | ADT<"updateAdminStatus", boolean>
+  | ADT<"changeOwner">;
 
 export interface CreateValidationErrors
   extends ErrorTypeFrom<CreateRequestBody>,
