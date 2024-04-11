@@ -324,7 +324,6 @@ export const updateAdminStatus = tryDb<
   }
 );
 
-// @eslint-ignore
 function affiliationUpdateQuery(
   connection: Connection,
   rawAffiliation: Partial<RawAffiliation>,
