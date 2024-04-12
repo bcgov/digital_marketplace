@@ -390,7 +390,7 @@ export const changeOwner = tryDb<[Id, Id, AuthenticatedSession], Affiliation>(
       ).transacting(trx);
 
       if (!newOwnerAffiliation) {
-        throw new Error("unable to set affiliation type owner");
+        throw new Error("unable to set affiliation type to owner");
       }
 
       const [newOwnerAffiliationEvent] = await connection<RawHistoryRecord>(
