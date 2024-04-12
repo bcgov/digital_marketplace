@@ -266,63 +266,56 @@ export const approveAffiliation = tryDb<[Id], Affiliation>(
 export const updateAdminStatus = tryDb<
   [Id, MembershipType, AuthenticatedSession],
   Affiliation
->(
-  async (
-    connection,
-    id,
-    membershipType: MembershipType,
-    session: AuthenticatedSession
-  ) => {
-    const now = new Date();
-    return await connection.transaction(async (trx) => {
-      const [affiliation] = await connection<RawAffiliation>("affiliations")
-        .transacting(trx)
-        .update(
-          {
-            membershipType,
-            updatedAt: now
-          } as RawAffiliation,
-          "*"
-        )
-        .where({
-          id
-        })
-        .whereIn("organization", function () {
-          this.select("id").from("organizations").where({
-            active: true
-          });
-        });
-
-      if (!affiliation) {
-        throw new Error("unable to update admin status");
-      }
-
-      const [affiliationEvent] = await connection<RawHistoryRecord>(
-        "affiliationEvents"
+>(async (connection, id, membershipType, session) => {
+  const now = new Date();
+  return await connection.transaction(async (trx) => {
+    const [affiliation] = await connection<RawAffiliation>("affiliations")
+      .transacting(trx)
+      .update(
+        {
+          membershipType,
+          updatedAt: now
+        } as RawAffiliation,
+        "*"
       )
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            affiliation: affiliation.id,
-            event:
-              membershipType === MembershipType.Admin
-                ? AffiliationEvent.AdminStatusGranted
-                : AffiliationEvent.AdminStatusRevoked,
-            createdAt: now,
-            createdBy: session.user.id
-          },
-          "*"
-        );
+      .where({
+        id
+      })
+      .whereIn("organization", function () {
+        this.select("id").from("organizations").where({
+          active: true
+        });
+      });
 
-      if (!affiliationEvent) {
-        throw new Error("unable to create affiliation event");
-      }
+    if (!affiliation) {
+      throw new Error("unable to update admin status");
+    }
 
-      return valid(await rawAffiliationToAffiliation(connection, affiliation));
-    });
-  }
-);
+    const [affiliationEvent] = await connection<RawHistoryRecord>(
+      "affiliationEvents"
+    )
+      .transacting(trx)
+      .insert(
+        {
+          id: generateUuid(),
+          affiliation: affiliation.id,
+          event:
+            membershipType === MembershipType.Admin
+              ? AffiliationEvent.AdminStatusGranted
+              : AffiliationEvent.AdminStatusRevoked,
+          createdAt: now,
+          createdBy: session.user.id
+        },
+        "*"
+      );
+
+    if (!affiliationEvent) {
+      throw new Error("unable to create affiliation event");
+    }
+
+    return valid(await rawAffiliationToAffiliation(connection, affiliation));
+  });
+});
 
 /**
  * Utility for affiliation updates.
@@ -352,7 +345,7 @@ function affiliationUpdateQuery(
  * the new owner. Records the events in the affiliation events table.
  */
 export const changeOwner = tryDb<[Id, Id, AuthenticatedSession], Affiliation>(
-  async (connection, id, orgId, session: AuthenticatedSession) => {
+  async (connection, id, orgId, session) => {
     const now = new Date();
     return await connection.transaction(async (trx) => {
       const [previousOwnerAffiliation] = await affiliationUpdateQuery(
