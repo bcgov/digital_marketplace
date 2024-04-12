@@ -40,6 +40,7 @@ export async function down(connection: Knex): Promise<void> {
   '
   );
 
+  // Can't really change these events to anything else, so remove them.
   await connection("affiliations")
     .where({ event: AffiliationEvent.OwnerStatusGranted })
     .orWhere({ event: AffiliationEvent.OwnerStatusRevoked })

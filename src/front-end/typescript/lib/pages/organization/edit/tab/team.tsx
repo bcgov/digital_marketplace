@@ -528,6 +528,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             memberId,
             adt("changeOwner"),
             (response) =>
+              // api.isValid is true if the updated affiliation was returned
               adt("onChangeOwnerResponse", api.isValid(response)) as Msg
           )
         ]

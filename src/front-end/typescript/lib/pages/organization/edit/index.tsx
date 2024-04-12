@@ -154,6 +154,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 organization,
                 swuQualified,
                 twuQualified,
+                // Sort affiliations for a consistent team UI
                 affiliations: affiliations.sort((a, b) =>
                   compareStrings(a.user.name, b.user.name)
                 ),

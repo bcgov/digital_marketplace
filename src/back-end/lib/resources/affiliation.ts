@@ -411,6 +411,7 @@ const update: crud.Update<
             });
           }
 
+          // Only admins are able to perform ownership changes.
           if (!permissions.isAdmin(request.session)) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]

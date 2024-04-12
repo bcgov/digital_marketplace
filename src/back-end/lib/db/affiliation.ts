@@ -324,6 +324,14 @@ export const updateAdminStatus = tryDb<
   }
 );
 
+/**
+ * Utility for affiliation updates.
+ *
+ * @param connection Knex connection
+ * @param rawAffiliation partial affiliation
+ * @param queryObject object containing queryable columns
+ * @returns Knex Affiliation Query
+ */
 function affiliationUpdateQuery(
   connection: Connection,
   rawAffiliation: Partial<RawAffiliation>,
@@ -339,6 +347,10 @@ function affiliationUpdateQuery(
     });
 }
 
+/**
+ * Sets original owner to a member and the passed the passed in id's member to
+ * the new owner. Records the events in the affiliation events table.
+ */
 export const changeOwner = tryDb<[Id, Id, AuthenticatedSession], Affiliation>(
   async (connection, id, orgId, session: AuthenticatedSession) => {
     const now = new Date();
