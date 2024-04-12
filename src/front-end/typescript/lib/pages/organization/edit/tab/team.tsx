@@ -181,9 +181,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       membersTable: immutable(tableState),
       addTeamMembersEmails: [immutable(addTeamMemberEmailState)],
       acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState),
-      nonOwnerMembers: params.affiliations
-        .filter((m) => !memberIsOwner(m))
-        .map((m, i) => ({ ...m, index: i, newOwner: false }))
+      nonOwnerMembers: resetNonOwnerMembers(params.affiliations)
     },
     [
       ...component_.cmd.mapMany(
