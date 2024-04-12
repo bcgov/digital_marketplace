@@ -27,6 +27,7 @@ import {
   doesOrganizationMeetSWUQualification,
   doesOrganizationMeetTWUQualification
 } from "shared/lib/resources/organization";
+import { compareStrings } from "shared/lib";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   viewerUser: User;
@@ -153,7 +154,9 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 organization,
                 swuQualified,
                 twuQualified,
-                affiliations,
+                affiliations: affiliations.sort((a, b) =>
+                  compareStrings(a.user.name, b.user.name)
+                ),
                 viewerUser: state.viewerUser
               });
               // Everything checks out, return valid state.
