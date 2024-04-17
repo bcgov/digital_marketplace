@@ -20,7 +20,9 @@ export enum MembershipStatus {
 
 export enum AffiliationEvent {
   AdminStatusGranted = "ADMIN_STATUS_GRANTED",
-  AdminStatusRevoked = "ADMIN_STATUS_REVOKED"
+  AdminStatusRevoked = "ADMIN_STATUS_REVOKED",
+  OwnerStatusGranted = "OWNER_STATUS_GRANTED",
+  OwnerStatusRevoked = "OWNER_STATUS_REVOKED"
 }
 
 export interface AffiliationHistoryRecord {
@@ -62,7 +64,8 @@ export interface CreateRequestBody {
 
 export type UpdateRequestBody =
   | ADT<"approve">
-  | ADT<"updateAdminStatus", boolean>;
+  | ADT<"updateAdminStatus", boolean>
+  | ADT<"changeOwner">;
 
 export interface CreateValidationErrors
   extends ErrorTypeFrom<CreateRequestBody>,

@@ -22,6 +22,7 @@ import { userAvatarPath } from "front-end/lib/pages/user/lib";
 import Capabilities, { Capability } from "front-end/lib/views/capabilities";
 import Icon from "front-end/lib/views/icon";
 import Link, {
+  Props as LinkProps,
   iconLinkSymbol,
   imageLinkSymbol,
   leftPlacement
@@ -48,16 +49,23 @@ import {
 import { adt, ADT, Id } from "shared/lib/types";
 import { validateUserEmail } from "shared/lib/validation/affiliation";
 
+interface NonOwnerMember extends AffiliationMember {
+  newOwner: boolean;
+  index: number;
+}
+
 type ModalId =
   | ADT<"addTeamMembers">
   | ADT<"viewTeamMember", AffiliationMember>
   | ADT<"removeTeamMember", AffiliationMember>
   | ADT<"approveAffiliation", AffiliationMember>
-  | ADT<"acceptOrgAdminStatusTerms", AffiliationMember>;
+  | ADT<"acceptOrgAdminStatusTerms", AffiliationMember>
+  | ADT<"changeOwner">;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
   addTeamMembersLoading: number;
+  changeOwnerLoading: number;
   removeTeamMemberLoading: Id | null; //Id of affiliation, not user
   approveAffiliationLoading: Id | null; //Id of affiliation, not user
   updateAdminStatusLoading: Id | null;
@@ -65,6 +73,7 @@ export interface State extends Tab.Params {
   capabilities: Capability[];
   addTeamMembersEmails: Array<Immutable<ShortText.State>>;
   acceptOrgAdminTerms: Immutable<AcceptOrgAdminTerms.State>;
+  nonOwnerMembers: NonOwnerMember[];
 }
 
 export type InnerMsg =
@@ -85,7 +94,10 @@ export type InnerMsg =
       "onUpdateAdminStatusResponse",
       api.ResponseValidation<Affiliation, UpdateValidationErrors>
     >
-  | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>;
+  | ADT<"acceptOrgAdminTerms", AcceptOrgAdminTerms.Msg>
+  | ADT<"toggleNewOwner", number>
+  | ADT<"changeOwner", NonOwnerMember>
+  | ADT<"onChangeOwnerResponse", boolean>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -128,6 +140,12 @@ function resetAddTeamMemberEmails(
   ];
 }
 
+function resetNonOwnerMembers(members: AffiliationMember[]): NonOwnerMember[] {
+  return members
+    .filter((m) => !memberIsOwner(m))
+    .map((m, i) => ({ ...m, index: i, newOwner: false }));
+}
+
 function isAffiliationAdminStatusChecked(
   affiliationMember: AffiliationMember
 ): boolean {
@@ -155,13 +173,15 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...params,
       showModal: null,
       addTeamMembersLoading: 0,
+      changeOwnerLoading: 0,
       removeTeamMemberLoading: null,
       approveAffiliationLoading: null,
       updateAdminStatusLoading: null,
       capabilities: determineCapabilities(params.affiliations),
       membersTable: immutable(tableState),
       addTeamMembersEmails: [immutable(addTeamMemberEmailState)],
-      acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState)
+      acceptOrgAdminTerms: immutable(acceptOrgAdminTermsState),
+      nonOwnerMembers: resetNonOwnerMembers(params.affiliations)
     },
     [
       ...component_.cmd.mapMany(
@@ -183,6 +203,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
 const startAddTeamMembersLoading = makeStartLoading<State>(
   "addTeamMembersLoading"
 );
+
+const startChangeOwnerLoading = makeStartLoading<State>("changeOwnerLoading");
 
 interface AddTeamMemberState {
   successToasts: string[];
@@ -208,6 +230,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           }
           case "addTeamMembers":
             return resetAddTeamMemberEmails(state);
+          case "changeOwner":
+            state = state.set(
+              "nonOwnerMembers",
+              resetNonOwnerMembers(state.affiliations)
+            );
+            break;
         }
       return [state, []];
     }
@@ -476,6 +504,61 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt("acceptOrgAdminTerms", value)
       });
+
+    case "toggleNewOwner":
+      return [
+        state.update("nonOwnerMembers", (ms) =>
+          ms.map((a) => {
+            return a.index === msg.value
+              ? { ...a, newOwner: true }
+              : { ...a, newOwner: false };
+          })
+        ),
+        []
+      ];
+
+    case "changeOwner": {
+      const { id: memberId } = msg.value;
+      return [
+        startChangeOwnerLoading(state).set("showModal", null),
+        [
+          api.affiliations.update<Msg>()(
+            memberId,
+            adt("changeOwner"),
+            (response) =>
+              // api.isValid is true if the updated affiliation was returned
+              adt("onChangeOwnerResponse", api.isValid(response)) as Msg
+          )
+        ]
+      ];
+    }
+
+    case "onChangeOwnerResponse": {
+      const succeeded = msg.value;
+      if (!succeeded) {
+        return [
+          state.set("changeOwnerLoading", 0),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", toasts.changedOwner.error(state.organization))
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("success", toasts.changedOwner.success(state.organization))
+            )
+          ),
+          component_.cmd.dispatch(component_.global.reloadMsg())
+        ]
+      ];
+    }
 
     default:
       return [state, []];
@@ -872,15 +955,82 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
+
+      case "changeOwner": {
+        const newOwner = state.nonOwnerMembers.find((m) => m.newOwner);
+        return component_.page.modal.show({
+          title: "Change Owner",
+          onCloseMsg: adt("hideModal") as Msg,
+          body: (dispatch) => {
+            return (
+              <div className="border-top border-left">
+                {state.nonOwnerMembers.map((m, i) => {
+                  return (
+                    <div
+                      key={`non-owner-members-${i}`}
+                      className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
+                      <Link
+                        onClick={() => dispatch(adt("toggleNewOwner", m.index))}
+                        symbol_={leftPlacement(
+                          iconLinkSymbol(m.newOwner ? "check-circle" : "circle")
+                        )}
+                        symbolClassName={
+                          m.newOwner ? "text-success" : "text-body"
+                        }
+                        className="text-nowrap flex-nowrap"
+                        color="body"
+                        disabled={memberIsPending(m)}>
+                        <img
+                          className="rounded-circle border mr-2"
+                          style={{
+                            width: "1.75rem",
+                            height: "1.75rem",
+                            objectFit: "cover"
+                          }}
+                          src={userAvatarPath(m.user)}
+                        />
+                        {m.user.name}
+                      </Link>
+                      {memberIsPending(m) ? (
+                        <PendingBadge className="ml-3" />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          },
+          actions: [
+            {
+              text: "Change Owner",
+              disabled: !newOwner,
+              button: true,
+              color: "primary",
+              icon: "user-edit",
+              msg: newOwner ? adt("changeOwner", newOwner) : adt("hideModal")
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      }
     }
   },
   getActions: ({ state, dispatch }) => {
-    if (!isVendor(state.viewerUser) && !isAdmin(state.viewerUser)) {
+    const viewerIsAdmin = isAdmin(state.viewerUser);
+    if (!isVendor(state.viewerUser) && !viewerIsAdmin) {
       return component_.page.actions.none();
     }
     const isAddTeamMembersLoading = state.addTeamMembersLoading > 0;
+    const isChangeOwnerLoading = state.changeOwnerLoading > 0;
     const isRemoveTeamMemberLoading = !!state.removeTeamMemberLoading;
-    const isLoading = isAddTeamMembersLoading || isRemoveTeamMemberLoading;
+    const isLoading =
+      isAddTeamMembersLoading ||
+      isRemoveTeamMemberLoading ||
+      isChangeOwnerLoading;
     return component_.page.actions.links([
       {
         children: "Add Team Member(s)",
@@ -890,7 +1040,22 @@ export const component: Tab.Component<State, Msg> = {
         disabled: isLoading,
         symbol_: leftPlacement(iconLinkSymbol("user-plus")),
         color: "primary"
-      }
+      },
+      ...(viewerIsAdmin && state.nonOwnerMembers.length
+        ? [
+            {
+              children: "Change Owner",
+              onClick: () =>
+                dispatch(adt("showModal", adt("changeOwner")) as Msg),
+              button: true,
+              outline: true,
+              loading: isChangeOwnerLoading,
+              disabled: isLoading,
+              symbol_: leftPlacement(iconLinkSymbol("user-edit")),
+              color: "c-nav-fg-alt"
+            } as LinkProps
+          ]
+        : [])
     ]);
   }
 };
