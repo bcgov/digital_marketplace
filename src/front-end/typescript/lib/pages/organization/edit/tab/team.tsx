@@ -978,7 +978,8 @@ export const component: Tab.Component<State, Msg> = {
                           m.newOwner ? "text-success" : "text-body"
                         }
                         className="text-nowrap flex-nowrap"
-                        color="body">
+                        color="body"
+                        disabled={memberIsPending(m)}>
                         <img
                           className="rounded-circle border mr-2"
                           style={{

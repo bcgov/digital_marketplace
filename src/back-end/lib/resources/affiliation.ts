@@ -28,7 +28,8 @@ import {
   UpdateValidationErrors,
   UpdateRequestBody as SharedUpdateRequestBody,
   adminStatusToAffiliationMembershipType,
-  memberIsOwner
+  memberIsOwner,
+  memberIsPending
 } from "shared/lib/resources/affiliation";
 import { Organization } from "shared/lib/resources/organization";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
@@ -408,6 +409,13 @@ const update: crud.Update<
           if (memberIsOwner(existingAffiliation)) {
             return invalid({
               affiliation: ["Membership type is already owner."]
+            });
+          }
+
+          // Do not allow Pending Members
+          if (memberIsPending(existingAffiliation)) {
+            return invalid({
+              affiliation: ["Membership type is pending."]
             });
           }
 
