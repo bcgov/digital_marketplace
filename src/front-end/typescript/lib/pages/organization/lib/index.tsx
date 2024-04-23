@@ -9,6 +9,10 @@ export function OrganizationHistoryTypeToTitleCase(
       return "Admin Rights Given";
     case AffiliationEvent.AdminStatusRevoked:
       return "Admin Rights Removed";
+    case AffiliationEvent.OwnerStatusGranted:
+      return "Owner Rights Given";
+    case AffiliationEvent.OwnerStatusRevoked:
+      return "Owner Rights Removed";
     default:
       // Remove default case after fully enumerating organization events
       return "";

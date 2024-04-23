@@ -180,3 +180,14 @@ export const serviceAreasUpdated = {
     body: "Your service areas could not be updated. Please try again later."
   }
 };
+
+export const changedOwner = {
+  success: (org: Organization) => ({
+    title: "Owner Changed",
+    body: `Successfully changed the owner of ${org.legalName}.`
+  }),
+  error: (org: Organization) => ({
+    title: "Unable to Change Owner",
+    body: `An error occurred while attempting to change the owner of ${org.legalName}. Please try again later.`
+  })
+};
