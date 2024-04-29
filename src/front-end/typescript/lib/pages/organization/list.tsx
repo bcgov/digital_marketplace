@@ -23,6 +23,7 @@ import React from "react";
 import { Col, Row } from "reactstrap";
 import { DEFAULT_PAGE_SIZE } from "shared/config";
 import {
+  doesOrganizationMeetSWUQualification,
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
@@ -34,6 +35,7 @@ import {
   UserType
 } from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
+import Icon from "front-end/lib/views/icon";
 
 type TableOrganization = OrganizationSlim;
 
@@ -157,7 +159,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function showOwnerColumn(state: Immutable<State>): boolean {
+function showOwnerOrAdminColumn(state: Immutable<State>): boolean {
   return !!state.sessionUser && state.sessionUser.type !== UserType.Government;
 }
 
@@ -169,6 +171,13 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
       minWidth: "200px"
     }
   };
+  const swuQualified = {
+    children: "SWU Qualified?",
+    className: "text-center text-nowrap",
+    style: {
+      width: "0px"
+    }
+  };
   return [
     {
       children: "Organization Name",
@@ -178,12 +187,14 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
         minWidth: "240px"
       }
     },
-    ...(showOwnerColumn(state) ? [owner] : [])
+    ...(showOwnerOrAdminColumn(state) ? [swuQualified] : []),
+    ...(showOwnerOrAdminColumn(state) ? [owner] : [])
   ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map((org) => {
+    const isSwuQualified = doesOrganizationMeetSWUQualification(org);
     const owner = {
       className: "text-nowrap",
       children: org.owner ? (
@@ -200,6 +211,24 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         EMPTY_STRING
       )
     };
+    const swuQualified = {
+      className: "text-nowrap",
+      children: org.owner ? (
+        state.sessionUser &&
+        (usersAreEquivalent(org.owner, state.sessionUser) ||
+          isAdmin(state.sessionUser)) ? (
+          <Icon
+            name={isSwuQualified ? "check" : "times"}
+            color={isSwuQualified ? "success" : "body"}
+          />
+        ) : (
+          // only admins or owners can see SWU qualified status
+          EMPTY_STRING
+        )
+      ) : (
+        EMPTY_STRING
+      )
+    };
     return [
       {
         children: org.owner ? (
@@ -210,7 +239,8 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
           org.legalName
         )
       },
-      ...(showOwnerColumn(state) ? [owner] : [])
+      ...(showOwnerOrAdminColumn(state) ? [swuQualified] : []),
+      ...(showOwnerOrAdminColumn(state) ? [owner] : [])
     ];
   });
 }
