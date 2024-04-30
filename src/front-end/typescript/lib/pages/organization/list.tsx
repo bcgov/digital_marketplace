@@ -24,6 +24,7 @@ import { Col, Row } from "reactstrap";
 import { DEFAULT_PAGE_SIZE } from "shared/config";
 import {
   doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
@@ -68,7 +69,7 @@ function updateUrl(page: number): component_.Cmd<Msg> {
 }
 
 const DEFAULT_PAGE = 1;
-const DEFAULT_NUM_PAGES = 5;
+const DEFAULT_NUM_PAGES = 6;
 
 function loadPage(page: number): component_.Cmd<ReadManyResponseBody> {
   return api.organizations.readMany(page, DEFAULT_PAGE_SIZE, (response) => {
@@ -159,7 +160,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function showOwnerOrAdminColumn(state: Immutable<State>): boolean {
+function showVendorOrAdminColumn(state: Immutable<State>): boolean {
   return !!state.sessionUser && state.sessionUser.type !== UserType.Government;
 }
 
@@ -178,6 +179,13 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
       width: "0px"
     }
   };
+  const twuQualified = {
+    children: "TWU Qualified?",
+    className: "text-center text-nowrap",
+    style: {
+      width: "0px"
+    }
+  };
   return [
     {
       children: "Organization Name",
@@ -187,14 +195,16 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
         minWidth: "240px"
       }
     },
-    ...(showOwnerOrAdminColumn(state) ? [swuQualified] : []),
-    ...(showOwnerOrAdminColumn(state) ? [owner] : [])
+    ...(showVendorOrAdminColumn(state) ? [twuQualified] : []),
+    ...(showVendorOrAdminColumn(state) ? [swuQualified] : []),
+    ...(showVendorOrAdminColumn(state) ? [owner] : [])
   ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map((org) => {
     const isSwuQualified = doesOrganizationMeetSWUQualification(org);
+    const isTwuQualified = doesOrganizationMeetTWUQualification(org);
     const owner = {
       className: "text-nowrap",
       children: org.owner ? (
@@ -229,6 +239,24 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         EMPTY_STRING
       )
     };
+    const twuQualified = {
+      className: "text-nowrap",
+      children: org.owner ? (
+        state.sessionUser &&
+        (usersAreEquivalent(org.owner, state.sessionUser) ||
+          isAdmin(state.sessionUser)) ? (
+          <Icon
+            name={isTwuQualified ? "check" : "times"}
+            color={isTwuQualified ? "success" : "body"}
+          />
+        ) : (
+          // only admins or owners can see SWU qualified status
+          EMPTY_STRING
+        )
+      ) : (
+        EMPTY_STRING
+      )
+    };
     return [
       {
         children: org.owner ? (
@@ -239,8 +267,9 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
           org.legalName
         )
       },
-      ...(showOwnerOrAdminColumn(state) ? [swuQualified] : []),
-      ...(showOwnerOrAdminColumn(state) ? [owner] : [])
+      ...(showVendorOrAdminColumn(state) ? [twuQualified] : []),
+      ...(showVendorOrAdminColumn(state) ? [swuQualified] : []),
+      ...(showVendorOrAdminColumn(state) ? [owner] : [])
     ];
   });
 }

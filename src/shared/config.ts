@@ -46,4 +46,4 @@ export const COPY = {
 
 export const EMPTY_STRING = "—"; // emdash
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 50;
