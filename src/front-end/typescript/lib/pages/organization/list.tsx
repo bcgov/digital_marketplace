@@ -224,17 +224,10 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
     const swuQualified = {
       className: "text-nowrap",
       children: org.owner ? (
-        state.sessionUser &&
-        (usersAreEquivalent(org.owner, state.sessionUser) ||
-          isAdmin(state.sessionUser)) ? (
-          <Icon
-            name={isSwuQualified ? "check" : "times"}
-            color={isSwuQualified ? "success" : "body"}
-          />
-        ) : (
-          // only admins or owners can see SWU qualified status
-          EMPTY_STRING
-        )
+        <Icon
+          name={isSwuQualified ? "check" : "times"}
+          color={isSwuQualified ? "success" : "body"}
+        />
       ) : (
         EMPTY_STRING
       )
@@ -242,17 +235,10 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
     const twuQualified = {
       className: "text-nowrap",
       children: org.owner ? (
-        state.sessionUser &&
-        (usersAreEquivalent(org.owner, state.sessionUser) ||
-          isAdmin(state.sessionUser)) ? (
-          <Icon
-            name={isTwuQualified ? "check" : "times"}
-            color={isTwuQualified ? "success" : "body"}
-          />
-        ) : (
-          // only admins or owners can see SWU qualified status
-          EMPTY_STRING
-        )
+        <Icon
+          name={isTwuQualified ? "check" : "times"}
+          color={isTwuQualified ? "success" : "body"}
+        />
       ) : (
         EMPTY_STRING
       )
