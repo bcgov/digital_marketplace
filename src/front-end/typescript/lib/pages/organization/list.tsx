@@ -69,7 +69,7 @@ function updateUrl(page: number): component_.Cmd<Msg> {
 }
 
 const DEFAULT_PAGE = 1;
-const DEFAULT_NUM_PAGES = 6;
+const DEFAULT_NUM_PAGES = 7;
 
 function loadPage(page: number): component_.Cmd<ReadManyResponseBody> {
   return api.organizations.readMany(page, DEFAULT_PAGE_SIZE, (response) => {
