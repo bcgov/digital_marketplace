@@ -23,6 +23,8 @@ import React from "react";
 import { Col, Row } from "reactstrap";
 import { DEFAULT_PAGE_SIZE } from "shared/config";
 import {
+  doesOrganizationMeetSWUQualification,
+  doesOrganizationMeetTWUQualification,
   OrganizationSlim,
   ReadManyResponseBody
 } from "shared/lib/resources/organization";
@@ -34,6 +36,7 @@ import {
   UserType
 } from "shared/lib/resources/user";
 import { ADT, adt } from "shared/lib/types";
+import Icon from "front-end/lib/views/icon";
 
 type TableOrganization = OrganizationSlim;
 
@@ -66,7 +69,7 @@ function updateUrl(page: number): component_.Cmd<Msg> {
 }
 
 const DEFAULT_PAGE = 1;
-const DEFAULT_NUM_PAGES = 5;
+const DEFAULT_NUM_PAGES = 7;
 
 function loadPage(page: number): component_.Cmd<ReadManyResponseBody> {
   return api.organizations.readMany(page, DEFAULT_PAGE_SIZE, (response) => {
@@ -157,7 +160,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-function showOwnerColumn(state: Immutable<State>): boolean {
+function showVendorOrAdminColumn(state: Immutable<State>): boolean {
   return !!state.sessionUser && state.sessionUser.type !== UserType.Government;
 }
 
@@ -169,6 +172,20 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
       minWidth: "200px"
     }
   };
+  const swuQualified = {
+    children: "SWU Qualified?",
+    className: "text-center text-nowrap",
+    style: {
+      width: "0px"
+    }
+  };
+  const twuQualified = {
+    children: "TWU Qualified?",
+    className: "text-center text-nowrap",
+    style: {
+      width: "0px"
+    }
+  };
   return [
     {
       children: "Organization Name",
@@ -178,12 +195,16 @@ function tableHeadCells(state: Immutable<State>): Table.HeadCells {
         minWidth: "240px"
       }
     },
-    ...(showOwnerColumn(state) ? [owner] : [])
+    ...(showVendorOrAdminColumn(state) ? [twuQualified] : []),
+    ...(showVendorOrAdminColumn(state) ? [swuQualified] : []),
+    ...(showVendorOrAdminColumn(state) ? [owner] : [])
   ];
 }
 
 function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.organizations.map((org) => {
+    const isSwuQualified = doesOrganizationMeetSWUQualification(org);
+    const isTwuQualified = doesOrganizationMeetTWUQualification(org);
     const owner = {
       className: "text-nowrap",
       children: org.owner ? (
@@ -200,6 +221,28 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
         EMPTY_STRING
       )
     };
+    const swuQualified = {
+      className: "text-nowrap",
+      children: org.owner ? (
+        <Icon
+          name={isSwuQualified ? "check" : "times"}
+          color={isSwuQualified ? "success" : "body"}
+        />
+      ) : (
+        EMPTY_STRING
+      )
+    };
+    const twuQualified = {
+      className: "text-nowrap",
+      children: org.owner ? (
+        <Icon
+          name={isTwuQualified ? "check" : "times"}
+          color={isTwuQualified ? "success" : "body"}
+        />
+      ) : (
+        EMPTY_STRING
+      )
+    };
     return [
       {
         children: org.owner ? (
@@ -210,7 +253,9 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
           org.legalName
         )
       },
-      ...(showOwnerColumn(state) ? [owner] : [])
+      ...(showVendorOrAdminColumn(state) ? [twuQualified] : []),
+      ...(showVendorOrAdminColumn(state) ? [swuQualified] : []),
+      ...(showVendorOrAdminColumn(state) ? [owner] : [])
     ];
   });
 }
