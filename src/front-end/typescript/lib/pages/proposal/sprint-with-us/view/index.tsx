@@ -199,7 +199,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                     immutable<Tab.Tabs[K]["state"]>(tabState)
                   ])
                   .set("sidebar", immutable(sidebarState))
-                  .set("proposal", proposal),
+                  .set("proposal", proposal)
+                  .set("proposals", proposals),
                 [
                   ...component_.cmd.mapMany(
                     sidebarCmds,
