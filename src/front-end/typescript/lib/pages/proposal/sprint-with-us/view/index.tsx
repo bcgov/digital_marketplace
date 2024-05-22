@@ -20,7 +20,8 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import {
   DEFAULT_SWU_PROPOSAL_TITLE,
-  SWUProposal
+  SWUProposal,
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
@@ -90,14 +91,17 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join(
+          component_.cmd.join3(
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
             api.opportunities.swu.readOne()(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            (proposal, opportunity) => {
+            api.proposals.swu.readMany(opportunityId)((response) =>
+              api.getValidValue(response, [])
+            ),
+            (proposal, opportunity, proposals) => {
               if (!proposal || !opportunity)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
