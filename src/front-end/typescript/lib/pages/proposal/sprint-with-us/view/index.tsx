@@ -30,6 +30,7 @@ import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us"
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: SWUProposal | null;
+  proposals: SWUProposalSlim[];
 }
 
 export type State_<K extends Tab.TabId> = Validation<
@@ -147,8 +148,13 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [viewerUser, routeParams, proposal, opportunity] =
-                msg.value;
+              const [
+                viewerUser,
+                routeParams,
+                proposal,
+                opportunity,
+                proposals
+              ] = msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";
               // Initialize the sidebar.
@@ -161,7 +167,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabState, tabCmds] = tabComponent.init({
                 viewerUser,
                 proposal,
-                opportunity
+                opportunity,
+                proposals
               });
               // Everything checks out, return valid state.
               return [
@@ -171,7 +178,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                     immutable<Tab.Tabs[K]["state"]>(tabState)
                   ])
                   .set("sidebar", immutable(sidebarState))
-                  .set("proposal", proposal),
+                  .set("proposal", proposal)
+                  .set("proposals", proposals),
                 [
                   ...component_.cmd.mapMany(
                     sidebarCmds,
