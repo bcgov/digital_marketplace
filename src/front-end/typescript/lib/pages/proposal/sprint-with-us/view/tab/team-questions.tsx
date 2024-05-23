@@ -11,6 +11,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
+import ProposalTabCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/views/proposal-tab-carousel";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
@@ -33,7 +34,8 @@ import {
   SWUProposalStatus,
   SWUProposalTeamQuestionResponse,
   UpdateTeamQuestionScoreBody,
-  UpdateValidationErrors
+  UpdateValidationErrors,
+  compareSWUProposalsForPublicSector
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
@@ -436,6 +438,13 @@ const view: component_.base.ComponentView<State, Msg> = ({
           </Col>
         </Row>
       </div>
+      <ProposalTabCarousel
+        proposals={state.proposals.sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "questionsScore")
+        )}
+        proposal={state.proposal}
+        tab="teamQuestions"
+      />
     </div>
   );
 };
