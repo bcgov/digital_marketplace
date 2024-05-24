@@ -34,8 +34,7 @@ import {
   SWUProposalStatus,
   SWUProposalTeamQuestionResponse,
   UpdateTeamQuestionScoreBody,
-  UpdateValidationErrors,
-  compareSWUProposalsForPublicSector
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
@@ -439,9 +438,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
         </Row>
       </div>
       <ProposalTabCarousel
-        proposals={state.proposals.sort((a, b) =>
-          compareSWUProposalsForPublicSector(a, b, "questionsScore")
-        )}
+        proposals={state.proposals}
         proposal={state.proposal}
         tab="teamQuestions"
       />
