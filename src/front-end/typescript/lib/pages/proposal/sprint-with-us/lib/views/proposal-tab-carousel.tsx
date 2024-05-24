@@ -12,6 +12,7 @@ import {
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { adt } from "shared/lib/types";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import { compareNumbers } from "shared/lib";
 
 export interface Props {
   proposal: SWUProposal;
@@ -19,11 +20,30 @@ export interface Props {
   tab: Tab.TabId;
 }
 
+/**
+ * Sorts proponents by anonymous proponent name in ascending order.
+ *
+ * @param proposals - unsorted proponents
+ * @returns - sorted proponents with order property
+ */
+export function sortProponentsByAnonymousProponentName(
+  proposals: SWUProposalSlim[]
+) {
+  return proposals
+    .reduce<(SWUProposalSlim & { order: number })[]>((acc, p) => {
+      const order = Number(p.anonymousProponentName.match(/\d+/)?.at(0));
+      return isNaN(order) ? acc : [...acc, { ...p, order }];
+    }, [])
+    .sort((a, b) => {
+      return compareNumbers(a.order, b.order) * -1;
+    });
+}
 const ProposalTabCarousel: component.base.View<Props> = ({
   proposals,
   proposal,
   tab
 }) => {
+  proposals = sortProponentsByAnonymousProponentName(proposals);
   const index = proposals.findIndex(
     (otherProposal) => otherProposal.id === proposal.id
   );
