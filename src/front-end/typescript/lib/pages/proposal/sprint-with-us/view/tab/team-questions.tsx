@@ -961,9 +961,7 @@ const TeamQuestionResponsesView: component_.base.View<{
         </Row>
       </div>
       <ProposalTabCarousel
-        proposals={state.proposals.sort((a, b) =>
-          compareSWUProposalsForPublicSector(a, b, "questionsScore")
-        )}
+        proposals={state.proposals}
         proposal={state.proposal}
         tab="teamQuestions"
       />
