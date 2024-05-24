@@ -38,6 +38,16 @@ export function sortProponentsByAnonymousProponentName(
       return compareNumbers(a.order, b.order) * -1;
     });
 }
+
+/**
+ * Browse opportunity's proposals from a tab details view.
+ * `proposals` should be filtered appropriately for the tab.
+ *
+ * @see {@link Props}
+ *
+ * @param props - proposals, proposal, tab
+ * @returns - base view component
+ */
 const ProposalTabCarousel: component.base.View<Props> = ({
   proposals,
   proposal,
