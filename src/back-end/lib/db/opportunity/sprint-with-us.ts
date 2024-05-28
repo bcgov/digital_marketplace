@@ -20,6 +20,7 @@ import {
   CreateSWUTeamQuestionBody,
   privateOpportunityStatuses,
   publicOpportunityStatuses,
+  SWUEvaluator,
   SWUOpportunity,
   SWUOpportunityEvent,
   SWUOpportunityHistoryRecord,
@@ -161,6 +162,11 @@ interface RawSWUOpportunityHistoryRecord
   status?: SWUOpportunityStatus;
   event?: SWUOpportunityEvent;
   attachments: Id[];
+}
+
+interface RawSWUEvaluator extends Omit<SWUEvaluator, "user"> {
+  opportunityVersion: Id;
+  user: Id;
 }
 
 async function rawSWUOpportunityToSWUOpportunity(
@@ -387,6 +393,23 @@ async function rawHistoryRecordToHistoryRecord(
       ? adt("status", status as SWUOpportunityStatus)
       : adt("event", event as SWUOpportunityEvent),
     attachments
+  };
+}
+
+async function rawEvaluatorToEvaluator(
+  connection: Connection,
+  raw: RawSWUEvaluator
+): Promise<SWUEvaluator> {
+  const { user: userId, ...restOfRaw } = raw;
+  const user = getValidValue(await readOneUserSlim(connection, userId), null);
+
+  if (!user) {
+    throw new Error("unable to process evaluator");
+  }
+
+  return {
+    ...restOfRaw,
+    user
   };
 }
 
@@ -801,7 +824,8 @@ export const readOneSWUOpportunity = tryDb<
       );
     }
 
-    // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
+    // If admin/owner, add on history, evaluators, reporting metrics, and
+    // successful proponent if applicable
     if (
       session?.user.type === UserType.Admin ||
       result.createdBy === session?.user.id
@@ -832,6 +856,16 @@ export const readOneSWUOpportunity = tryDb<
         rawHistory.map(
           async (raw) =>
             await rawHistoryRecordToHistoryRecord(connection, session, raw)
+        )
+      );
+
+      const rawEvaluators = await connection<RawSWUEvaluator>("swuEvaluators")
+        .where("opportunityVersion", result.versionId)
+        .orderBy("order");
+
+      result.evaluators = await Promise.all(
+        rawEvaluators.map(
+          async (raw) => await rawEvaluatorToEvaluator(connection, raw)
         )
       );
 
