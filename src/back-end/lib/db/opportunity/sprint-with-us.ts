@@ -736,7 +736,8 @@ export const readOneSWUOpportunity = tryDb<
       publicOpportunityStatuses as SWUOpportunityStatus[]
     );
   } else if (session.user.type === UserType.Government) {
-    // Gov users should only see private opportunities they own, and public opportunities
+    // Gov users should only see private opportunities they own or are evaluators for,
+    // and public opportunities
     query = query.andWhere(function () {
       this.whereIn(
         "statuses.status",
@@ -745,7 +746,16 @@ export const readOneSWUOpportunity = tryDb<
         this.whereIn(
           "statuses.status",
           privateOpportunityStatuses as SWUOpportunityStatus[]
-        ).andWhere({ "opportunities.createdBy": session.user?.id });
+        ).andWhere(function () {
+          this.where({ "opportunities.createdBy": session.user.id }).orWhereIn(
+            "versions.id",
+            function () {
+              this.select("opportunityVersion")
+                .from("swuEvaluators")
+                .where("user", "=", session.user.id);
+            }
+          );
+        });
       });
     });
   } else {
