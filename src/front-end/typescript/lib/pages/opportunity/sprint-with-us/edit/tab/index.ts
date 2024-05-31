@@ -98,6 +98,18 @@ export interface Tabs {
     ProposalsTab.InnerMsg,
     InitResponse
   >;
+  instructions: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
+  overview: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -167,6 +179,20 @@ export function idToDefinition<K extends TabId>(
         component: HistoryTab.component,
         icon: "history",
         title: "History"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "instructions":
+      return {
+        // TODO: Create tab
+        component: SummaryTab.component,
+        icon: "hand-point-up",
+        title: "Instructions"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "overview":
+      return {
+        // TODO: Create tab
+        component: SummaryTab.component,
+        icon: "list-check",
+        title: "Overview"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "summary":
     default:
