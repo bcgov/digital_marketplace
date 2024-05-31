@@ -12,6 +12,7 @@ import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
+  SWUEvaluator,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
@@ -220,7 +221,8 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  opportunity?: SWUOpportunity
+  opportunity?: SWUOpportunity,
+  evaluator?: SWUEvaluator
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     items: opportunity
@@ -235,10 +237,19 @@ export function makeSidebarState(
             : []),
           makeSidebarLink("history", opportunity.id, activeTab),
           adt("heading", "Opportunity Evaluation"),
-          makeSidebarLink("proposals", opportunity.id, activeTab),
+          ...(evaluator
+            ? [
+                makeSidebarLink("instructions", opportunity.id, activeTab),
+                makeSidebarLink("overview", opportunity.id, activeTab)
+              ]
+            : [makeSidebarLink("proposals", opportunity.id, activeTab)]),
           makeSidebarLink("teamQuestions", opportunity.id, activeTab),
-          makeSidebarLink("codeChallenge", opportunity.id, activeTab),
-          makeSidebarLink("teamScenario", opportunity.id, activeTab),
+          ...(evaluator
+            ? []
+            : [
+                makeSidebarLink("codeChallenge", opportunity.id, activeTab),
+                makeSidebarLink("teamScenario", opportunity.id, activeTab)
+              ]),
           adt("heading", "Need Help?"),
           adt("link", {
             icon: "external-link-alt",

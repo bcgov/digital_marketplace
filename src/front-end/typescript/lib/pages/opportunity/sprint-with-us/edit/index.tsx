@@ -150,8 +150,13 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [routePath, tabId, opportunityResponse, proposalsResponse] =
-                msg.value;
+              const [
+                routePath,
+                tabId,
+                opportunityResponse,
+                proposalsResponse,
+                viewerUser
+              ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -173,7 +178,10 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
-                opportunity
+                opportunity,
+                opportunity.evaluators?.find(
+                  ({ user: eu }) => eu.id === viewerUser.id
+                )
               );
               const tabComponent = Tab.idToDefinition(tabId).component;
               return [
