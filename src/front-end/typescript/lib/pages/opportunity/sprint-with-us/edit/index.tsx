@@ -22,7 +22,7 @@ import {
   DEFAULT_OPPORTUNITY_TITLE,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { UserType } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
@@ -46,7 +46,8 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       string,
       Tab.TabId,
       api.ResponseValidation<SWUOpportunity, string[]>,
-      api.ResponseValidation<SWUProposalSlim[], string[]>
+      api.ResponseValidation<SWUProposalSlim[], string[]>,
+      User
     ]
   >
 >;
@@ -107,7 +108,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routePath,
                 tabId,
                 opportunity,
-                proposals
+                proposals,
+                shared.sessionUser
               ]) as Msg
           )
         ]
