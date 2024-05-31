@@ -834,11 +834,16 @@ export const readOneSWUOpportunity = tryDb<
       );
     }
 
-    // If admin/owner, add on history, evaluators, reporting metrics, and
+    const rawEvaluators = await connection<RawSWUEvaluator>("swuEvaluators")
+      .where("opportunityVersion", result.versionId)
+      .orderBy("order");
+
+    // If admin/owner/evaluator, add on history, evaluators, reporting metrics, and
     // successful proponent if applicable
     if (
       session?.user.type === UserType.Admin ||
-      result.createdBy === session?.user.id
+      result.createdBy === session?.user.id ||
+      rawEvaluators.find(({ user }) => user === session?.user.id)
     ) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>(
         "swuOpportunityStatuses"
@@ -868,10 +873,6 @@ export const readOneSWUOpportunity = tryDb<
             await rawHistoryRecordToHistoryRecord(connection, session, raw)
         )
       );
-
-      const rawEvaluators = await connection<RawSWUEvaluator>("swuEvaluators")
-        .where("opportunityVersion", result.versionId)
-        .orderBy("order");
 
       result.evaluators = await Promise.all(
         rawEvaluators.map(
