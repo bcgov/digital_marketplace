@@ -179,7 +179,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
                 opportunity,
-                opportunity.evaluators?.find(
+                opportunity.evaluationCommittee?.find(
                   ({ user: eu }) => eu.id === viewerUser.id
                 )
               );

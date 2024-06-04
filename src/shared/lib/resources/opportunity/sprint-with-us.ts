@@ -209,7 +209,7 @@ export interface SWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
-  evaluators?: SWUEvaluator[];
+  evaluationCommittee?: SWUEvaluationCommitteeMember[];
 }
 
 export interface SWUSuccessfulProponent {
@@ -247,9 +247,10 @@ export interface SWUTeamQuestion {
   createdBy?: UserSlim;
 }
 
-export interface SWUEvaluator {
+export interface SWUEvaluationCommitteeMember {
   user: UserSlim;
   chair: boolean;
+  evaluator: boolean;
 }
 
 export function getQuestionByOrder(

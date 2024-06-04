@@ -20,7 +20,7 @@ import {
   CreateSWUTeamQuestionBody,
   privateOpportunityStatuses,
   publicOpportunityStatuses,
-  SWUEvaluator,
+  SWUEvaluationCommitteeMember,
   SWUOpportunity,
   SWUOpportunityEvent,
   SWUOpportunityHistoryRecord,
@@ -164,7 +164,8 @@ interface RawSWUOpportunityHistoryRecord
   attachments: Id[];
 }
 
-interface RawSWUEvaluator extends Omit<SWUEvaluator, "user"> {
+interface RawSWUEvaluationCommitteeMember
+  extends Omit<SWUEvaluationCommitteeMember, "user"> {
   opportunityVersion: Id;
   user: Id;
 }
@@ -396,15 +397,15 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
-async function rawEvaluatorToEvaluator(
+async function rawEvaluationCommitteeMemberToEvaluationCommitteeMember(
   connection: Connection,
-  raw: RawSWUEvaluator
-): Promise<SWUEvaluator> {
+  raw: RawSWUEvaluationCommitteeMember
+): Promise<SWUEvaluationCommitteeMember> {
   const { user: userId, ...restOfRaw } = raw;
   const user = getValidValue(await readOneUserSlim(connection, userId), null);
 
   if (!user) {
-    throw new Error("unable to process evaluator");
+    throw new Error("unable to process evaluation committee member");
   }
 
   return {
@@ -736,8 +737,8 @@ export const readOneSWUOpportunity = tryDb<
       publicOpportunityStatuses as SWUOpportunityStatus[]
     );
   } else if (session.user.type === UserType.Government) {
-    // Gov users should only see private opportunities they own or are evaluators for,
-    // and public opportunities
+    // Gov users should only see private opportunities they own or are on the
+    // evaluation committee for, and public opportunities
     query = query.andWhere(function () {
       this.whereIn(
         "statuses.status",
@@ -751,7 +752,7 @@ export const readOneSWUOpportunity = tryDb<
             "versions.id",
             function () {
               this.select("opportunityVersion")
-                .from("swuEvaluators")
+                .from("swuEvaluationCommitteeMembers")
                 .where("user", "=", session.user.id);
             }
           );
@@ -834,16 +835,22 @@ export const readOneSWUOpportunity = tryDb<
       );
     }
 
-    const rawEvaluators = await connection<RawSWUEvaluator>("swuEvaluators")
-      .where("opportunityVersion", result.versionId)
-      .orderBy("order");
+    const rawEvaluationCommitteeMembers =
+      await connection<RawSWUEvaluationCommitteeMember>(
+        "swuEvaluationCommitteeMembers"
+      )
+        .where("opportunityVersion", result.versionId)
+        .orderBy("order");
 
-    // If admin/owner/evaluator, add on history, evaluators, reporting metrics, and
-    // successful proponent if applicable
+    // If admin/owner/evaluation committee member, add on history,
+    // evaluation committee, reporting metrics, and successful proponent if
+    // applicable
     if (
       session?.user.type === UserType.Admin ||
       result.createdBy === session?.user.id ||
-      rawEvaluators.find(({ user }) => user === session?.user.id)
+      rawEvaluationCommitteeMembers.find(
+        ({ user }) => user === session?.user.id
+      )
     ) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>(
         "swuOpportunityStatuses"
@@ -874,9 +881,13 @@ export const readOneSWUOpportunity = tryDb<
         )
       );
 
-      result.evaluators = await Promise.all(
-        rawEvaluators.map(
-          async (raw) => await rawEvaluatorToEvaluator(connection, raw)
+      result.evaluationCommittee = await Promise.all(
+        rawEvaluationCommitteeMembers.map(
+          async (raw) =>
+            await rawEvaluationCommitteeMemberToEvaluationCommitteeMember(
+              connection,
+              raw
+            )
         )
       );
 
