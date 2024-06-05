@@ -12,10 +12,11 @@ import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
+  canViewSWUEvaluationConsensus,
   SWUEvaluationCommitteeMember,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { User } from "shared/lib/resources/user";
+import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
@@ -221,10 +222,15 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
+  viewerUser: User,
   opportunity?: SWUOpportunity,
   evaluationCommitteeMember?: SWUEvaluationCommitteeMember
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  const isOpportunityOwnerOrAdmin =
+    viewerUser.id === opportunity?.createdBy?.id || isAdmin(viewerUser);
   const isEvaluator = Boolean(evaluationCommitteeMember?.evaluator);
+  const isChair = Boolean(evaluationCommitteeMember?.chair);
+
   return MenuSidebar.init({
     items: opportunity
       ? [
@@ -238,19 +244,25 @@ export function makeSidebarState(
             : []),
           makeSidebarLink("history", opportunity.id, activeTab),
           adt("heading", "Opportunity Evaluation"),
+          ...(isOpportunityOwnerOrAdmin
+            ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
+            : []),
           ...(isEvaluator
             ? [
                 makeSidebarLink("instructions", opportunity.id, activeTab),
                 makeSidebarLink("overview", opportunity.id, activeTab)
               ]
-            : [makeSidebarLink("proposals", opportunity.id, activeTab)]),
+            : []),
           makeSidebarLink("teamQuestions", opportunity.id, activeTab),
-          ...(isEvaluator
+          ...(isChair || canViewSWUEvaluationConsensus(opportunity.status)
             ? []
-            : [
+            : []),
+          ...(isOpportunityOwnerOrAdmin
+            ? [
                 makeSidebarLink("codeChallenge", opportunity.id, activeTab),
                 makeSidebarLink("teamScenario", opportunity.id, activeTab)
-              ]),
+              ]
+            : []),
           adt("heading", "Need Help?"),
           adt("link", {
             icon: "external-link-alt",

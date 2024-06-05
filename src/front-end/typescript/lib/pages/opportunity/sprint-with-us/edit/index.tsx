@@ -74,7 +74,10 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
+        tabId,
+        shared.sessionUser
+      );
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
         viewerUser: shared.sessionUser
@@ -178,6 +181,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
+                viewerUser,
                 opportunity,
                 opportunity.evaluationCommittee?.find(
                   ({ user: eu }) => eu.id === viewerUser.id
