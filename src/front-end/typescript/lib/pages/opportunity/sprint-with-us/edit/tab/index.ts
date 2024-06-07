@@ -112,6 +112,12 @@ export interface Tabs {
     SummaryTab.InnerMsg,
     InitResponse
   >;
+  consensus: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -130,6 +136,9 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "teamScenario":
     case "proposals":
     case "history":
+    case "instructions":
+    case "overview":
+    case "consensus":
       return raw;
     default:
       return null;
@@ -184,8 +193,7 @@ export function idToDefinition<K extends TabId>(
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "instructions":
       return {
-        // TODO: Create tab
-        component: SummaryTab.component,
+        component: InstructionsTab.component,
         icon: "hand-point-up",
         title: "Instructions"
       } as TabbedPage.TabDefinition<Tabs, K>;
@@ -195,6 +203,13 @@ export function idToDefinition<K extends TabId>(
         component: SummaryTab.component,
         icon: "list-check",
         title: "Overview"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "consensus":
+      return {
+        // TODO: Create tab
+        component: SummaryTab.component,
+        icon: "check-double",
+        title: "Consensus"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "summary":
     default:
@@ -253,9 +268,11 @@ export function makeSidebarState(
                 makeSidebarLink("overview", opportunity.id, activeTab)
               ]
             : []),
-          makeSidebarLink("teamQuestions", opportunity.id, activeTab),
+          ...(isEvaluator || isOpportunityOwnerOrAdmin
+            ? [makeSidebarLink("teamQuestions", opportunity.id, activeTab)]
+            : []),
           ...(isChair || canViewSWUEvaluationConsensus(opportunity.status)
-            ? []
+            ? [makeSidebarLink("consensus", opportunity.id, activeTab)]
             : []),
           ...(isOpportunityOwnerOrAdmin
             ? [
