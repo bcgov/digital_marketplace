@@ -9,6 +9,7 @@ import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/ed
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
 import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
+import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
@@ -102,8 +103,8 @@ export interface Tabs {
   >;
   instructions: TabbedPage.Tab<
     Params,
-    SummaryTab.State,
-    SummaryTab.InnerMsg,
+    InstructionsTab.State,
+    InstructionsTab.InnerMsg,
     InitResponse
   >;
   overview: TabbedPage.Tab<
