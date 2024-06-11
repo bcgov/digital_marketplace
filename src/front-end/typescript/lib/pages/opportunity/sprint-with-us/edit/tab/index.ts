@@ -14,10 +14,9 @@ import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
   canViewSWUEvaluationConsensus,
-  SWUEvaluationCommitteeMember,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { isAdmin, User } from "shared/lib/resources/user";
+import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
@@ -42,6 +41,12 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 export interface Params {
   viewerUser: User;
 }
+
+export type TabPermissions = {
+  isOpportunityOwnerOrAdmin: boolean;
+  isEvaluator: boolean;
+  isChair: boolean;
+};
 
 export type InitResponse = [SWUOpportunity, SWUProposalSlim[]];
 
@@ -146,6 +151,32 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   }
 };
 
+export function canGovUserViewTab(
+  tab: TabId,
+  tabPermissions: TabPermissions,
+  opportunity: SWUOpportunity
+) {
+  const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
+  switch (tab) {
+    case "summary":
+    case "opportunity":
+    case "addenda":
+    case "history":
+      return true;
+    case "teamQuestions":
+      return isEvaluator || isOpportunityOwnerOrAdmin;
+    case "codeChallenge":
+    case "teamScenario":
+    case "proposals":
+      return isOpportunityOwnerOrAdmin;
+    case "instructions":
+    case "overview":
+      return isEvaluator;
+    case "consensus":
+      return isChair || canViewSWUEvaluationConsensus(opportunity.status);
+  }
+}
+
 export function idToDefinition<K extends TabId>(
   id: K
 ): TabbedPage.TabDefinition<Tabs, K> {
@@ -238,63 +269,62 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  viewerUser: User,
-  opportunity?: SWUOpportunity,
-  evaluationCommitteeMember?: SWUEvaluationCommitteeMember
+  tabPermissions: TabPermissions,
+  opportunity?: SWUOpportunity
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
-  const isOpportunityOwnerOrAdmin =
-    viewerUser.id === opportunity?.createdBy?.id || isAdmin(viewerUser);
-  const isEvaluator = Boolean(evaluationCommitteeMember?.evaluator);
-  const isChair = Boolean(evaluationCommitteeMember?.chair);
-
+  if (!opportunity) {
+    return MenuSidebar.init({ items: [] });
+  }
+  const canGovUserViewTabs = (...tabIds: TabId[]) =>
+    tabIds.some((tabId) =>
+      canGovUserViewTab(tabId, tabPermissions, opportunity)
+    );
   return MenuSidebar.init({
-    items: opportunity
-      ? [
-          adt("heading", "Summary"),
-          makeSidebarLink("summary", opportunity.id, activeTab),
-          adt("heading", "Opportunity Management"),
-          makeSidebarLink("opportunity", opportunity.id, activeTab),
-          //Only show Addenda sidebar link if opportunity can have addenda.
-          ...(canAddAddendumToSWUOpportunity(opportunity)
-            ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
-            : []),
-          makeSidebarLink("history", opportunity.id, activeTab),
-          adt("heading", "Opportunity Evaluation"),
-          ...(isOpportunityOwnerOrAdmin
-            ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
-            : []),
-          ...(isEvaluator
-            ? [
-                makeSidebarLink("instructions", opportunity.id, activeTab),
-                makeSidebarLink("overview", opportunity.id, activeTab)
-              ]
-            : []),
-          ...(isEvaluator || isOpportunityOwnerOrAdmin
-            ? [makeSidebarLink("teamQuestions", opportunity.id, activeTab)]
-            : []),
-          ...(isChair || canViewSWUEvaluationConsensus(opportunity.status)
-            ? [makeSidebarLink("consensus", opportunity.id, activeTab)]
-            : []),
-          ...(isOpportunityOwnerOrAdmin
-            ? [
-                makeSidebarLink("codeChallenge", opportunity.id, activeTab),
-                makeSidebarLink("teamScenario", opportunity.id, activeTab)
-              ]
-            : []),
-          adt("heading", "Need Help?"),
-          adt("link", {
-            icon: "external-link-alt",
-            text: "Read Guide",
-            active: false,
-            newTab: true,
-            dest: routeDest(
-              adt("swuGuide", {
-                guideAudience: GUIDE_AUDIENCE.Ministry
-              })
-            )
+    items: [
+      adt("heading", "Summary"),
+      makeSidebarLink("summary", opportunity.id, activeTab),
+      adt("heading", "Opportunity Management"),
+      makeSidebarLink("opportunity", opportunity.id, activeTab),
+      //Only show Addenda sidebar link if opportunity can have addenda.
+      ...(canAddAddendumToSWUOpportunity(opportunity)
+        ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
+        : []),
+      makeSidebarLink("history", opportunity.id, activeTab),
+      adt("heading", "Opportunity Evaluation"),
+      ...(canGovUserViewTabs("proposals")
+        ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("instructions", "overview")
+        ? [
+            makeSidebarLink("instructions", opportunity.id, activeTab),
+            makeSidebarLink("overview", opportunity.id, activeTab)
+          ]
+        : []),
+      ...(canGovUserViewTabs("teamQuestions")
+        ? [makeSidebarLink("teamQuestions", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("consensus")
+        ? [makeSidebarLink("consensus", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("codeChallenge", "teamScenario")
+        ? [
+            makeSidebarLink("codeChallenge", opportunity.id, activeTab),
+            makeSidebarLink("teamScenario", opportunity.id, activeTab)
+          ]
+        : []),
+      adt("heading", "Need Help?"),
+      adt("link", {
+        icon: "external-link-alt",
+        text: "Read Guide",
+        active: false,
+        newTab: true,
+        dest: routeDest(
+          adt("swuGuide", {
+            guideAudience: GUIDE_AUDIENCE.Ministry
           })
-        ]
-      : []
+        )
+      })
+    ]
   });
 }
 

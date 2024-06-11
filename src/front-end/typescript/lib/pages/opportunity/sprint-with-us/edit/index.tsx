@@ -22,7 +22,7 @@ import {
   DEFAULT_OPPORTUNITY_TITLE,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { User, UserType } from "shared/lib/resources/user";
+import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
@@ -74,10 +74,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
-        tabId,
-        shared.sessionUser
-      );
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId, {
+        isOpportunityOwnerOrAdmin: false,
+        isEvaluator: false,
+        isChair: false
+      });
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
         viewerUser: shared.sessionUser
@@ -178,14 +179,38 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               }
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
+
+              // Tab Permissions
+              const evaluationCommitteeMember =
+                opportunity.evaluationCommittee?.find(
+                  ({ user: eu }) => eu.id === viewerUser.id
+                );
+              const tabPermissions = {
+                isOpportunityOwnerOrAdmin:
+                  viewerUser.id === opportunity?.createdBy?.id ||
+                  isAdmin(viewerUser),
+                isEvaluator: Boolean(evaluationCommitteeMember?.evaluator),
+                isChair: Boolean(evaluationCommitteeMember?.chair)
+              };
+
+              if (!Tab.canGovUserViewTab(tabId, tabPermissions, opportunity)) {
+                return [
+                  state,
+                  [
+                    component_.cmd.dispatch(
+                      component_.global.replaceRouteMsg(
+                        adt("notFound" as const, { path: routePath })
+                      )
+                    )
+                  ]
+                ];
+              }
+
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
-                viewerUser,
-                opportunity,
-                opportunity.evaluationCommittee?.find(
-                  ({ user: eu }) => eu.id === viewerUser.id
-                )
+                tabPermissions,
+                opportunity
               );
               const tabComponent = Tab.idToDefinition(tabId).component;
               return [
