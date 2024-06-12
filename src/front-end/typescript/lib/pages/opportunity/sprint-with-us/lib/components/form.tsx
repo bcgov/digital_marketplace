@@ -60,6 +60,7 @@ type RemoteOk = "yes" | "no";
 const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
 export type TabId =
+  | "Agreement"
   | "Overview"
   | "Description"
   | "Phases"
@@ -147,7 +148,7 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-const DEFAULT_ACTIVE_TAB: TabId = "Overview";
+const DEFAULT_ACTIVE_TAB: TabId = "Agreement";
 
 function makePhaseTypeOption(value: SWUOpportunityPhaseType): Select.Option {
   return (
@@ -216,6 +217,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   );
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
+      "Agreement",
       "Overview",
       "Description",
       "Phases",
@@ -1162,6 +1164,105 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
+const AgreementView: component_.base.View = () => (
+  <div className="table-responsive">
+    <table className="table-hover" style={{ textAlign: "center" }}>
+      <thead>
+        <tr>
+          <th className="text-left" style={{ width: "50%" }}>
+            Responsibility
+          </th>
+          <th className="text-nowrap" style={{ width: "50%" }}>
+            Gov. Business Area
+          </th>
+          <th className="text-nowrap" style={{ width: 0 }}>
+            Digital Marketplace
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="text-left">Project Funding</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Problem Statement</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Business Area Expertise</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Technical SME</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Product Owner/Roadmap</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Creating Opportunity</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Evaluating Proposals</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Consultancy</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left">Tech Advice (Code Challenge)</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left">Procurement Advice</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left">Support</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+);
+
 const OverviewView: component_.base.View<Props> = ({
   state,
   dispatch,
@@ -1597,6 +1698,8 @@ export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+      case "Agreement":
+        return <AgreementView />;
       case "Overview":
         return <OverviewView {...props} />;
       case "Description":
@@ -1618,6 +1721,8 @@ export const view: component_.base.View<Props> = (props) => {
       getTabLabel={(a) => a}
       isTabValid={(tab) => {
         switch (tab) {
+          case "Agreement":
+            return true;
           case "Overview":
             return isOverviewTabValid(state);
           case "Description":
