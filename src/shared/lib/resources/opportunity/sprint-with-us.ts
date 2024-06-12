@@ -209,7 +209,7 @@ export interface SWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
-  evaluationCommittee?: SWUEvaluationCommitteeMember[];
+  evaluationPanel?: SWUEvaluationPanelMember[];
 }
 
 export interface SWUSuccessfulProponent {
@@ -247,7 +247,7 @@ export interface SWUTeamQuestion {
   createdBy?: UserSlim;
 }
 
-export interface SWUEvaluationCommitteeMember {
+export interface SWUEvaluationPanelMember {
   user: UserSlim;
   chair: boolean;
   evaluator: boolean;

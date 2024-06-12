@@ -181,16 +181,15 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const proposals = api.getValidValue(proposalsResponse, []);
 
               // Tab Permissions
-              const evaluationCommitteeMember =
-                opportunity.evaluationCommittee?.find(
-                  ({ user: eu }) => eu.id === viewerUser.id
-                );
+              const evaluationPanelMember = opportunity.evaluationPanel?.find(
+                ({ user: eu }) => eu.id === viewerUser.id
+              );
               const tabPermissions = {
                 isOpportunityOwnerOrAdmin:
                   viewerUser.id === opportunity?.createdBy?.id ||
                   isAdmin(viewerUser),
-                isEvaluator: Boolean(evaluationCommitteeMember?.evaluator),
-                isChair: Boolean(evaluationCommitteeMember?.chair)
+                isEvaluator: Boolean(evaluationPanelMember?.evaluator),
+                isChair: Boolean(evaluationPanelMember?.chair)
               };
 
               if (!Tab.canGovUserViewTab(tabId, tabPermissions, opportunity)) {
