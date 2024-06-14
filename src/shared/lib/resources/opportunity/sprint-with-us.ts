@@ -355,6 +355,9 @@ export interface CreateSWUTeamQuestionValidationErrors
   parseFailure?: string[];
 }
 
+export type CreateSWUEvaluationPanelMemberValidationErrors =
+  ErrorTypeFrom<CreateSWUEvaluationPanelMemberBody>;
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
