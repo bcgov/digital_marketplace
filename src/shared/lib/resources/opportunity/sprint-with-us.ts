@@ -306,6 +306,11 @@ export type CreateSWUTeamQuestionBody = Omit<
   "createdAt" | "createdBy"
 >;
 
+export type CreateSWUEvaluationPanelMemberBody = {
+  email: string;
+  chair: boolean;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
