@@ -462,3 +462,19 @@ export function validatePriceWeight(raw: string | number): Validation<number> {
 export function validateNote(raw: string): Validation<string> {
   return validateGenericString(raw, "Status Note", 0, 1000);
 }
+
+export function validateSWUEvaluationPanelMemberEvaluator(
+  raw: any
+): Validation<boolean> {
+  return typeof raw === "boolean"
+    ? valid(raw)
+    : invalid(["Invalid value provided for evaluator."]);
+}
+
+export function validateSWUEvaluationPanelMemberChair(
+  raw: any
+): Validation<boolean> {
+  return typeof raw === "boolean"
+    ? valid(raw)
+    : invalid(["Invalid value provided for chair."]);
+}
