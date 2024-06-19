@@ -26,7 +26,7 @@ import {
   SWUProposal
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-import { User } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import {
   allValid,
@@ -40,6 +40,7 @@ import {
   valid,
   validateArrayAsync,
   validateArrayCustomAsync,
+  validateEmail,
   validateGenericString,
   validateUUID,
   Validation
@@ -409,6 +410,29 @@ export async function validateUserId(
     return validatedId;
   }
   const dbResult = await db.readOneUser(connection, userId);
+  switch (dbResult.tag) {
+    case "valid":
+      return dbResult.value
+        ? valid(dbResult.value)
+        : invalid(["This user cannot be found."]);
+    case "invalid":
+      return invalid(["Please select a valid user"]);
+  }
+}
+
+export async function validateUserEmail(
+  connection: db.Connection,
+  userEmail: string
+): Promise<Validation<User>> {
+  // Validate the provided email
+  const validatedEmail = validateEmail(userEmail);
+  if (isInvalid(validatedEmail)) {
+    return validatedEmail;
+  }
+  const dbResult = await db.readOneUserByEmail(connection, userEmail, false, [
+    UserType.Government,
+    UserType.Admin
+  ]);
   switch (dbResult.tag) {
     case "valid":
       return dbResult.value
