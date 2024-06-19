@@ -1,6 +1,6 @@
 import { Content } from "shared/lib/resources/content";
 import * as db from "back-end/lib/db";
-import { get, union } from "lodash";
+import { get, union, uniqBy } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
 import {
   Affiliation,
@@ -9,6 +9,8 @@ import {
 import { FileRecord } from "shared/lib/resources/file";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
+  CreateSWUEvaluationPanelMemberBody,
+  CreateSWUEvaluationPanelMemberValidationErrors,
   SWUOpportunity,
   SWUOpportunityPhase
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -73,6 +75,11 @@ import {
   validateMandatorySkills,
   validateOptionalSkills
 } from "shared/lib/validation/opportunity/utility";
+import { MIN_SWU_EVALUATION_PANEL_MEMBERS } from "shared/config";
+import {
+  validateSWUEvaluationPanelMemberChair,
+  validateSWUEvaluationPanelMemberEvaluator
+} from "shared/lib/validation/opportunity/sprint-with-us";
 
 /**
  * TWU - Team With Us Validation
@@ -699,6 +706,122 @@ export async function validateSWUOpportunityId(
   } catch (exception) {
     return invalid(["Please select a valid Sprint With Us opportunity."]);
   }
+}
+
+export async function validateEvaluationPanelMember(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  Validation<
+    Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id },
+    CreateSWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  const validatedUser = await validateUserEmail(
+    connection,
+    getString(raw, "email")
+  );
+  const validatedEvaluator = validateSWUEvaluationPanelMemberEvaluator(
+    get(raw, "evaluator")
+  );
+  const validatedChair = validateSWUEvaluationPanelMemberChair(
+    get(raw, "chair")
+  );
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([
+      validatedUser,
+      validatedEvaluator,
+      validatedChair,
+      validatedOrder
+    ])
+  ) {
+    return valid({
+      evaluator: validatedEvaluator.value,
+      chair: validatedChair.value,
+      user: (validatedUser.value as User).id,
+      order: validatedOrder.value
+    } as Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id });
+  } else {
+    return invalid({
+      email: getInvalidValue(validatedUser, undefined),
+      evaluator: getInvalidValue(validatedEvaluator, undefined),
+      chair: getInvalidValue(validatedChair, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+}
+
+/**
+ * Checks to see if there is at least one member in an array of evaluation
+ * panel members, that there are no duplicate evaluation panel members, and
+ * that there is one and only one chair.
+ *
+ * @param connection
+ * @param raw - Array of evaluation panel member bodies
+ * @param organization
+ */
+export async function validateSWUEvaluationPanelMembers(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  ArrayValidation<
+    Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id },
+    CreateSWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of evaluation panel members."] }
+    ]);
+  }
+  if (raw.length < MIN_SWU_EVALUATION_PANEL_MEMBERS) {
+    return invalid([
+      {
+        members: [
+          `Please select at least ${MIN_SWU_EVALUATION_PANEL_MEMBERS} evaluation panel member(s).`
+        ]
+      }
+    ]);
+  }
+  const validatedMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateEvaluationPanelMember(connection, v),
+    {}
+  );
+  if (
+    getValidValue<
+      (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
+    >(validatedMembers, []).filter((member) => member.chair).length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single chair."]
+      }
+    ]);
+  }
+
+  if (
+    uniqBy(
+      getValidValue<
+        (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
+      >(validatedMembers, []),
+      ({ user }) => {
+        return user;
+      }
+    ).length !== raw.length
+  ) {
+    return invalid([
+      {
+        members: [
+          "You may not specify the same evaluation panel member more than once."
+        ]
+      }
+    ]);
+  }
+
+  return validatedMembers;
 }
 
 export async function validateMember(
