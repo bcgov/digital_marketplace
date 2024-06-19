@@ -785,15 +785,19 @@ export async function validateSWUEvaluationPanelMembers(
       }
     ]);
   }
-  const validatedMembers = await validateArrayCustomAsync(
+  const validatedEvaluationPanelMembers = await validateArrayCustomAsync(
     raw,
     async (v) => await validateEvaluationPanelMember(connection, v),
     {}
   );
+
+  const validValidatedEvaluationPanelMembers = getValidValue<
+    (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
+  >(validatedEvaluationPanelMembers, []);
+
   if (
-    getValidValue<
-      (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
-    >(validatedMembers, []).filter((member) => member.chair).length > 1
+    validValidatedEvaluationPanelMembers.filter((member) => member.chair)
+      .length > 1
   ) {
     return invalid([
       {
@@ -803,14 +807,7 @@ export async function validateSWUEvaluationPanelMembers(
   }
 
   if (
-    uniqBy(
-      getValidValue<
-        (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
-      >(validatedMembers, []),
-      ({ user }) => {
-        return user;
-      }
-    ).length !== raw.length
+    uniqBy(validValidatedEvaluationPanelMembers, "user").length !== raw.length
   ) {
     return invalid([
       {
@@ -821,7 +818,7 @@ export async function validateSWUEvaluationPanelMembers(
     ]);
   }
 
-  return validatedMembers;
+  return validatedEvaluationPanelMembers;
 }
 
 export async function validateMember(
