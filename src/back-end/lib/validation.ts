@@ -792,8 +792,13 @@ export async function validateSWUEvaluationPanelMembers(
   );
 
   const validValidatedEvaluationPanelMembers = getValidValue<
-    (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[]
-  >(validatedEvaluationPanelMembers, []);
+    (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[],
+    undefined
+  >(validatedEvaluationPanelMembers, undefined);
+
+  if (!validValidatedEvaluationPanelMembers) {
+    return validatedEvaluationPanelMembers;
+  }
 
   if (
     validValidatedEvaluationPanelMembers.filter((member) => member.chair)
