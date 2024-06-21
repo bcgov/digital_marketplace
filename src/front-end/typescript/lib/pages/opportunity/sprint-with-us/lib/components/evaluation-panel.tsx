@@ -150,7 +150,21 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ["evaluationPanelMembers", `${epmIndex}`, "chair"],
         childUpdate: Checkbox.update,
         childMsg: componentMessage,
-        mapChildMsg: (value) => adt("chair", { epmIndex, childMsg: value })
+        mapChildMsg: (value) => adt("chair", { epmIndex, childMsg: value }),
+        updateAfter: (state) => {
+          return [
+            state.update("evaluationPanelMembers", (s) =>
+              s.map((epm, i) => ({
+                ...epm,
+                chair: FormField.setValue(
+                  state.evaluationPanelMembers[i].chair,
+                  i === epmIndex
+                )
+              }))
+            ),
+            []
+          ];
+        }
       });
     }
   }
