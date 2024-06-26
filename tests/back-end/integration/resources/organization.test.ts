@@ -84,4 +84,12 @@ test("organization crud", async () => {
     ...body,
     contactEmail: body.contactEmail.toLowerCase()
   });
+
+  const organizationId = createResult.body.id;
+  const organizationIdUrl = `/api/organizations/${organizationId}`;
+
+  const readResult = await user1AppAgent.get(organizationIdUrl);
+
+  expect(readResult.status).toEqual(200);
+  expect(readResult.body).toEqual(createResult.body);
 });
