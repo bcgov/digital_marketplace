@@ -12,6 +12,7 @@ import { UserType } from "shared/lib/resources/user";
 import { agent } from "supertest";
 import { buildOrganization } from "tests/utils/generate/organization";
 import { buildCreateUserParams } from "tests/utils/generate/user";
+import { adt } from "shared/lib/types";
 
 async function setup() {
   const [testUser1, testUser1Session] = await insertUserWithActiveSession(
@@ -92,4 +93,16 @@ test("organization crud", async () => {
 
   expect(readResult.status).toEqual(200);
   expect(readResult.body).toEqual(createResult.body);
+
+  const editedBody = { ...body, legalName: "Updated Name" };
+  const editResult = await user1AppAgent
+    .put(organizationIdUrl)
+    .send(adt("updateProfile", editedBody));
+
+  expect(editResult.status).toEqual(200);
+  expect(editResult.body).toMatchObject({
+    ...readResult.body,
+    legalName: editedBody.legalName,
+    updatedAt: expect.any(String)
+  });
 });
