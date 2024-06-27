@@ -116,4 +116,15 @@ test("organization crud", async () => {
     acceptedSWUTerms: expect.any(String),
     updatedAt: expect.any(String)
   });
+
+  const acceptTWUTermsResult = await user1AppAgent
+    .put(organizationIdUrl)
+    .send(adt("acceptTWUTerms"));
+
+  expect(acceptTWUTermsResult.status).toEqual(200);
+  expect(acceptTWUTermsResult.body).toMatchObject({
+    ...acceptSWUTermsResult.body,
+    acceptedTWUTerms: expect.any(String),
+    updatedAt: expect.any(String)
+  });
 });
