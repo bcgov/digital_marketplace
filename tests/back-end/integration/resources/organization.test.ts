@@ -105,4 +105,15 @@ test("organization crud", async () => {
     legalName: editedBody.legalName,
     updatedAt: expect.any(String)
   });
+
+  const acceptSWUTermsResult = await user1AppAgent
+    .put(organizationIdUrl)
+    .send(adt("acceptSWUTerms"));
+
+  expect(acceptSWUTermsResult.status).toEqual(200);
+  expect(acceptSWUTermsResult.body).toMatchObject({
+    ...editResult.body,
+    acceptedSWUTerms: expect.any(String),
+    updatedAt: expect.any(String)
+  });
 });
