@@ -7,6 +7,7 @@ import {
 import { omit } from "lodash";
 import { connection } from "tests/back-end/setup-server.jest";
 import CAPABILITY_NAMES_ONLY from "shared/lib/data/capabilities";
+import ALL_SERVICE_AREAS from "shared/lib/data/service-areas";
 import { CreateRequestBody } from "shared/lib/resources/organization";
 import { UserType } from "shared/lib/resources/user";
 import { agent } from "supertest";
@@ -59,7 +60,8 @@ afterEach(async () => {
 });
 
 test("organization crud", async () => {
-  const { testUser1Session, user1AppAgent } = await setup();
+  const { testUser1Session, testAdminSession, user1AppAgent, adminAppAgent } =
+    await setup();
 
   const body: CreateRequestBody = omit(buildOrganization(), [
     "id",
@@ -125,6 +127,31 @@ test("organization crud", async () => {
   expect(acceptTWUTermsResult.body).toMatchObject({
     ...acceptSWUTermsResult.body,
     acceptedTWUTerms: expect.any(String),
+    updatedAt: expect.any(String)
+  });
+
+  const qualifyServiceAreasRequest = adminAppAgent
+    .put(organizationIdUrl)
+    .send(adt("qualifyServiceAreas", ALL_SERVICE_AREAS));
+
+  const qualifyServiceAreasResult = await requestWithCookie(
+    qualifyServiceAreasRequest,
+    testAdminSession
+  );
+
+  expect(qualifyServiceAreasResult.status).toEqual(200);
+  expect(qualifyServiceAreasResult.body).toMatchObject({
+    ...acceptTWUTermsResult.body,
+    possessOneServiceArea: true,
+    serviceAreas: expect.arrayContaining(
+      ALL_SERVICE_AREAS.map((serviceArea) =>
+        expect.objectContaining({
+          id: expect.any(Number),
+          serviceArea,
+          name: expect.any(String)
+        })
+      )
+    ),
     updatedAt: expect.any(String)
   });
 });
