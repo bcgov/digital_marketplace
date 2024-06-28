@@ -365,15 +365,14 @@ export const readOneOrganization = tryDb<
     query = query.andWhere({ "organizations.active": true });
   }
 
-  const resultWithViewerIsOrgAdmin = await query.first<
-    RawOrganization & { viewerIsOrgAdmin: boolean }
+  const result = await query.first<
+    RawOrganization & { viewerIsOrgAdmin?: boolean }
   >();
-  const { viewerIsOrgAdmin, ...result } = resultWithViewerIsOrgAdmin;
   if (result) {
     if (
       !session ||
       (isVendor(session) &&
-        !(result.owner === session.user?.id || viewerIsOrgAdmin))
+        !(result.owner === session.user?.id || result.viewerIsOrgAdmin))
     ) {
       delete result.owner;
       delete result.numTeamMembers;
@@ -412,6 +411,7 @@ export const readOneOrganization = tryDb<
             )
         )
       );
+      delete result.viewerIsOrgAdmin;
     }
   }
   return valid(
