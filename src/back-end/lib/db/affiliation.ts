@@ -47,11 +47,12 @@ export interface RawHistoryRecord
 
 async function rawAffiliationToAffiliation(
   connection: Connection,
-  params: RawAffiliation
+  params: RawAffiliation,
+  allowInactive = false
 ): Promise<Affiliation> {
   const { user: userId, organization: orgId } = params;
   const organization = getValidValue(
-    await readOneOrganization(connection, orgId, false),
+    await readOneOrganization(connection, orgId, allowInactive),
     null
   );
   const user = getValidValue(await readOneUser(connection, userId), null);
