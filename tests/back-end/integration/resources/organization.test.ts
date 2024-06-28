@@ -14,6 +14,7 @@ import { agent } from "supertest";
 import { buildOrganization } from "tests/utils/generate/organization";
 import { buildCreateUserParams } from "tests/utils/generate/user";
 import { adt } from "shared/lib/types";
+import { MembershipType } from "shared/lib/resources/affiliation";
 
 async function setup() {
   const [testUser1, testUser1Session] = await insertUserWithActiveSession(
@@ -63,6 +64,8 @@ const endpoint = "/api/organizations";
 
 test("organization crud", async () => {
   const {
+    testUser1,
+    testUser2,
     testUser1Session,
     testUser2Session,
     testAdminSession,
@@ -187,6 +190,29 @@ test("organization crud", async () => {
   const readManyBeforeDeleteResult = await adminAppAgent.get(
     `${endpoint}?page=1&pageSize=50`
   );
+
   expect(readManyBeforeDeleteResult.status).toEqual(200);
   expect(readManyBeforeDeleteResult.body.items).toHaveLength(2);
+
+  // Add affiliation to test deletion with events
+  await user1AppAgent.post("/api/affiliations").send({
+    userEmail: testUser2.email,
+    organization: organizationId,
+    membershipType: MembershipType.Member
+  });
+
+  const deleteResult = await user1AppAgent.delete(organizationIdUrl);
+
+  expect(deleteResult.status).toEqual(200);
+  expect(deleteResult.body).toMatchObject({
+    ...qualifyServiceAreasResult.body,
+    possessAllCapabilities: false, // Don't think this is specified anywhere
+    active: false,
+    deactivatedOn: expect.any(String),
+    deactivatedBy: testUser1.id,
+    updatedAt: expect.any(String)
+  });
+
+  const readDeletedResult = await user1AppAgent.get(organizationIdUrl);
+  expect(readDeletedResult.status).toEqual(404);
 });
