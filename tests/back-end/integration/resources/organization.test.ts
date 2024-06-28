@@ -59,9 +59,17 @@ afterEach(async () => {
   await clearTestDatabase(connection);
 });
 
+const endpoint = "/api/organizations";
+
 test("organization crud", async () => {
-  const { testUser1Session, testAdminSession, user1AppAgent, adminAppAgent } =
-    await setup();
+  const {
+    testUser1Session,
+    testUser2Session,
+    testAdminSession,
+    user1AppAgent,
+    user2AppAgent,
+    adminAppAgent
+  } = await setup();
 
   const body: CreateRequestBody = omit(buildOrganization(), [
     "id",
@@ -78,7 +86,7 @@ test("organization crud", async () => {
     "serviceAreas"
   ]);
 
-  const createRequest = user1AppAgent.post("/api/organizations").send(body);
+  const createRequest = user1AppAgent.post(endpoint).send(body);
 
   const createResult = await requestWithCookie(createRequest, testUser1Session);
 
@@ -89,7 +97,7 @@ test("organization crud", async () => {
   });
 
   const organizationId = createResult.body.id;
-  const organizationIdUrl = `/api/organizations/${organizationId}`;
+  const organizationIdUrl = `${endpoint}/${organizationId}`;
 
   const readResult = await user1AppAgent.get(organizationIdUrl);
 
@@ -154,4 +162,31 @@ test("organization crud", async () => {
     ),
     updatedAt: expect.any(String)
   });
+
+  const createForDeleteBody: CreateRequestBody = omit(buildOrganization(), [
+    "id",
+    "createdAt",
+    "updatedAt",
+    "logoImageFile",
+    "active",
+    "owner",
+    "acceptedSWUTerms",
+    "acceptedTWUTerms",
+    "possessAllCapabilities",
+    "possessOneServiceArea",
+    "numTeamMembers",
+    "serviceAreas"
+  ]);
+
+  const createForDeleteRequest = user2AppAgent
+    .post(endpoint)
+    .send(createForDeleteBody);
+
+  await requestWithCookie(createForDeleteRequest, testUser2Session);
+
+  const readManyBeforeDeleteResult = await adminAppAgent.get(
+    `${endpoint}?page=1&pageSize=50`
+  );
+  expect(readManyBeforeDeleteResult.status).toEqual(200);
+  expect(readManyBeforeDeleteResult.body.items).toHaveLength(2);
 });
