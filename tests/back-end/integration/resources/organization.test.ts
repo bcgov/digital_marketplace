@@ -215,4 +215,10 @@ test("organization crud", async () => {
 
   const readDeletedResult = await user1AppAgent.get(organizationIdUrl);
   expect(readDeletedResult.status).toEqual(404);
+
+  const readManyAfterDeleteResult = await adminAppAgent.get(
+    `${endpoint}?page=1&pageSize=50`
+  );
+  expect(readManyAfterDeleteResult.status).toEqual(200);
+  expect(readManyAfterDeleteResult.body.items).toHaveLength(1);
 });
