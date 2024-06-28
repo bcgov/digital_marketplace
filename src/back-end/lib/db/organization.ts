@@ -171,7 +171,7 @@ async function rawHistoryRecordToHistoryRecord(
     const { affiliation: affilationId, event: type, ...restOfRaw } = value;
 
     const affiliation = getValidValue(
-      await readOneAffiliationById(connection, affilationId, false),
+      await readOneAffiliationById(connection, affilationId, true),
       null
     );
 
