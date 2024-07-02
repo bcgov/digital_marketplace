@@ -166,7 +166,6 @@ export type ModalId = "acceptNewTerms";
 export interface State {
   //App Internal State
   ready: boolean;
-  showTWUBanner: boolean;
   incomingRoute: router.IncomingRoute<Route> | null;
   activeRoute: Route;
   //Toasts
@@ -249,7 +248,6 @@ export type InnerMsg =
   | ADT<"submitAcceptNewTerms">
   | ADT<"onAcceptNewTermsResponse", AcceptNewTerms.AcceptNewTermsResponse>
   | ADT<"nav", Nav.Msg>
-  | ADT<"setShowTWUBanner", boolean>
   | ADT<"pageLanding", PageLanding.Msg>
   | ADT<"pageDashboard", PageDashboard.Msg>
   | ADT<"pageOpportunities", PageOpportunities.Msg>
