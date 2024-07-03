@@ -15,6 +15,7 @@ import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
 import {
+  CreateSWUEvaluationPanelMemberBody,
   CreateSWUOpportunityPhaseBody,
   CreateSWUOpportunityStatus,
   CreateSWUTeamQuestionBody,
@@ -54,12 +55,14 @@ export interface CreateSWUOpportunityParams
     | "prototypePhase"
     | "implementationPhase"
     | "teamQuestions"
+    | "evaluationPanel"
   > {
   status: CreateSWUOpportunityStatus;
   inceptionPhase?: CreateSWUOpportunityPhaseParams;
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberParams[];
 }
 
 interface UpdateSWUOpportunityParams
@@ -76,6 +79,11 @@ export interface CreateSWUOpportunityPhaseParams
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
   startDate: Date;
   completionDate: Date;
+}
+
+interface CreateSWUEvaluationPanelMemberParams
+  extends Omit<CreateSWUEvaluationPanelMemberBody, "email"> {
+  user: Id;
 }
 
 interface SWUOpportunityRootRecord {
@@ -402,7 +410,7 @@ async function rawEvaluationPanelMemberToEvaluationPanelMember(
   raw: RawSWUEvaluationPanelMember
 ): Promise<SWUEvaluationPanelMember> {
   const { user: userId, ...restOfRaw } = raw;
-  const user = getValidValue(await readOneUserSlim(connection, userId), null);
+  const user = getValidValue(await readOneUser(connection, userId), null);
 
   if (!user) {
     throw new Error("unable to process evaluation panel member");
@@ -410,7 +418,12 @@ async function rawEvaluationPanelMemberToEvaluationPanelMember(
 
   return {
     ...restOfRaw,
-    user
+    user: {
+      id: user.id,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      email: user.email
+    }
   };
 }
 
@@ -998,6 +1011,7 @@ export const createSWUOpportunity = tryDb<
       prototypePhase,
       implementationPhase,
       teamQuestions,
+      evaluationPanel,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -1087,6 +1101,16 @@ export const createSWUOpportunity = tryDb<
         });
     }
 
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: opportunityVersionRecord.id
+        });
+    }
+
     return opportunityRootRecord.id;
   });
 
@@ -1165,6 +1189,7 @@ export const updateSWUOpportunityVersion = tryDb<
     prototypePhase,
     implementationPhase,
     teamQuestions,
+    evaluationPanel,
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
@@ -1232,6 +1257,16 @@ export const updateSWUOpportunityVersion = tryDb<
           ...teamQuestion,
           createdAt: now,
           createdBy: session.user.id,
+          opportunityVersion: versionRecord.id
+        });
+    }
+
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
           opportunityVersion: versionRecord.id
         });
     }
