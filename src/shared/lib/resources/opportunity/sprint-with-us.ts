@@ -2,7 +2,7 @@ import { SWU_MAX_BUDGET } from "shared/config";
 import { formatAmount, isDateInTheFuture, isDateInThePast } from "shared/lib";
 import { Addendum } from "shared/lib/resources/addendum";
 import { FileRecord } from "shared/lib/resources/file";
-import { UserSlim } from "shared/lib/resources/user";
+import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -248,9 +248,10 @@ export interface SWUTeamQuestion {
 }
 
 export interface SWUEvaluationPanelMember {
-  user: UserSlim;
+  user: UserSlim & { email: User["email"] };
   chair: boolean;
   evaluator: boolean;
+  order: number;
 }
 
 export function getQuestionByOrder(
@@ -309,6 +310,8 @@ export type CreateSWUTeamQuestionBody = Omit<
 export type CreateSWUEvaluationPanelMemberBody = {
   email: string;
   chair: boolean;
+  evaluator: boolean;
+  order: number;
 };
 
 export interface CreateRequestBody {
@@ -334,6 +337,7 @@ export interface CreateRequestBody {
   prototypePhase?: CreateSWUOpportunityPhaseBody;
   implementationPhase: CreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
 }
 
 export interface CreateSWUOpportunityPhaseValidationErrors
@@ -355,8 +359,11 @@ export interface CreateSWUTeamQuestionValidationErrors
   parseFailure?: string[];
 }
 
-export type CreateSWUEvaluationPanelMemberValidationErrors =
-  ErrorTypeFrom<CreateSWUEvaluationPanelMemberBody>;
+export interface CreateSWUEvaluationPanelMemberValidationErrors
+  extends ErrorTypeFrom<CreateSWUEvaluationPanelMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
 
 export interface CreateValidationErrors
   extends Omit<
@@ -368,6 +375,7 @@ export interface CreateValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -378,6 +386,7 @@ export interface CreateValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Update.
@@ -431,6 +440,7 @@ export interface UpdateEditValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -441,6 +451,7 @@ export interface UpdateEditValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Delete.
