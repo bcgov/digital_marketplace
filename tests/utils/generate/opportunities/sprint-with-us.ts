@@ -12,7 +12,7 @@ import {
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { getEmail, getId } from "tests/utils/generate";
 import { fakerEN_CA as faker } from "@faker-js/faker";
-import { buildUserSlim } from "../user";
+import { buildUserSlim } from "tests/utils/generate/user";
 import { SWU_MAX_BUDGET } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import {
@@ -60,7 +60,17 @@ function buildSWUOpportunity(
       startDate: setDateTo4PM(implementationPhaseStartDate),
       completionDate: setDateTo4PM(implementationPhaseCompletionDate),
       maxBudget: totalMaxBudget
-    })
+    }),
+    evaluationPanel = [
+      buildSWUEvaluationPanelMember({
+        user: { ...createdBy, email: getEmail() },
+        chair: true,
+        order: 0
+      }),
+      buildSWUEvaluationPanelMember({
+        order: 1
+      })
+    ]
   } = overrides;
 
   // Inherit phase createdAt and createdBy for consistency and a simpler API
@@ -126,6 +136,7 @@ function buildSWUOpportunity(
         createdBy
       })
     ),
+    evaluationPanel,
     ...overrides
   };
 }
