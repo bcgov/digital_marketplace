@@ -409,7 +409,7 @@ async function rawEvaluationPanelMemberToEvaluationPanelMember(
   connection: Connection,
   raw: RawSWUEvaluationPanelMember
 ): Promise<SWUEvaluationPanelMember> {
-  const { user: userId, ...restOfRaw } = raw;
+  const { opportunityVersion, user: userId, ...restOfRaw } = raw;
   const user = getValidValue(await readOneUser(connection, userId), null);
 
   if (!user) {
