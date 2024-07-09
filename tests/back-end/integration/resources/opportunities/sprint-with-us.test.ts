@@ -8,7 +8,10 @@ import { connection } from "tests/back-end/setup-server.jest";
 import { UserType } from "shared/lib/resources/user";
 import { agent } from "supertest";
 import { buildCreateUserParams } from "tests/utils/generate/user";
-import { buildSWUOpportunity } from "tests/utils/generate/opportunities/sprint-with-us";
+import {
+  buildSWUEvaluationPanelMember,
+  buildSWUOpportunity
+} from "tests/utils/generate/opportunities/sprint-with-us";
 import {
   CreateRequestBody,
   SWUOpportunityEvent,
@@ -19,6 +22,7 @@ import {
 import { omit, pick } from "lodash";
 import { getISODateString } from "shared/lib";
 import { adt } from "shared/lib/types";
+import { getEmail } from "tests/utils/generate";
 
 async function setup() {
   const [testUser, testUserSession] = await insertUserWithActiveSession(
@@ -91,7 +95,30 @@ test("sprint-with-us opportunity crud", async () => {
     status: SWUOpportunityStatus.Draft,
     teamQuestions: opportunity.teamQuestions.map(
       ({ createdAt, createdBy, ...restOfQuestion }) => restOfQuestion
-    )
+    ),
+    evaluationPanel: [
+      {
+        ...pick(
+          buildSWUEvaluationPanelMember({
+            user: testUser,
+            chair: true,
+            order: 0
+          }),
+          ["chair", "evaluator", "order"]
+        ),
+        email: testUser.email ?? getEmail()
+      },
+      {
+        ...pick(
+          buildSWUEvaluationPanelMember({
+            user: testAdmin,
+            order: 1
+          }),
+          ["chair", "evaluator", "order"]
+        ),
+        email: testAdmin.email ?? getEmail()
+      }
+    ]
   };
 
   const createRequest = userAppAgent
@@ -114,6 +141,16 @@ test("sprint-with-us opportunity crud", async () => {
         )
       )
     },
+    evaluationPanel: [
+      {
+        ...omit(body.evaluationPanel[0], ["email"]),
+        user: pick(testUser, ["id", "name", "avatarImageFile", "email"])
+      },
+      {
+        ...omit(body.evaluationPanel[1], ["email"]),
+        user: pick(testAdmin, ["id", "name", "avatarImageFile", "email"])
+      }
+    ],
     createdBy: { id: testUser.id }
   });
 
