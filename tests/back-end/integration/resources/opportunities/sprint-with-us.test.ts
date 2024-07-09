@@ -98,23 +98,23 @@ test("sprint-with-us opportunity crud", async () => {
     ),
     evaluationPanel: [
       {
-        ...pick(
+        ...omit(
           buildSWUEvaluationPanelMember({
             user: testUser,
             chair: true,
             order: 0
           }),
-          ["chair", "evaluator", "order"]
+          ["user"]
         ),
         email: testUser.email ?? getEmail()
       },
       {
-        ...pick(
+        ...omit(
           buildSWUEvaluationPanelMember({
             user: testAdmin,
             order: 1
           }),
-          ["chair", "evaluator", "order"]
+          ["user"]
         ),
         email: testAdmin.email ?? getEmail()
       }
