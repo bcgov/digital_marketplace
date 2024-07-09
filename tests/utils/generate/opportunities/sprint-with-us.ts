@@ -3,13 +3,14 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   DEFAULT_SCENARIO_WEIGHT,
   DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT,
+  SWUEvaluationPanelMember,
   SWUOpportunity,
   SWUOpportunityPhase,
   SWUOpportunityPhaseType,
   SWUOpportunitySlim,
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { getId } from "..";
+import { getEmail, getId } from "tests/utils/generate";
 import { fakerEN_CA as faker } from "@faker-js/faker";
 import { buildUserSlim } from "../user";
 import { SWU_MAX_BUDGET } from "shared/config";
@@ -176,6 +177,19 @@ function buildSWUOpportunitySlim(
       "remoteOk",
       "subscribed"
     ])
+  };
+}
+
+export function buildSWUEvaluationPanelMember(
+  overrides: Partial<SWUEvaluationPanelMember>
+): SWUEvaluationPanelMember {
+  const user = buildUserSlim();
+  return {
+    user: { ...user, email: getEmail() },
+    chair: false,
+    evaluator: true,
+    order: 0,
+    ...overrides
   };
 }
 
