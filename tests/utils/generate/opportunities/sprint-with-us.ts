@@ -221,7 +221,8 @@ function buildCreateSWUOpportunityParams(
       "inceptionPhase",
       "prototypePhase",
       "implementationPhase",
-      "teamQuestions"
+      "teamQuestions",
+      "evaluationPanel"
     ]),
     status: SWUOpportunityStatus.Draft,
     implementationPhase: buildCreateSWUOpportunityPhaseParams(
@@ -230,6 +231,13 @@ function buildCreateSWUOpportunityParams(
     teamQuestions: opportunity.teamQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
+    evaluationPanel:
+      opportunity.evaluationPanel?.map(
+        ({ user: { email }, ...evaluationPanelMember }) => ({
+          ...evaluationPanelMember,
+          user: email ?? getEmail()
+        })
+      ) ?? [],
     ...overrides
   };
 }
