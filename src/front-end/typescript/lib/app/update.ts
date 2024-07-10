@@ -1,7 +1,4 @@
-import {
-  TOAST_AUTO_DISMISS_DURATION,
-  TWU_BANNER_ACKNOWLEDGED
-} from "front-end/config";
+import { TOAST_AUTO_DISMISS_DURATION } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import router from "front-end/lib/app/router";
 import {
@@ -914,20 +911,6 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: adtCurried<ADT<"nav", Nav.Msg>>("nav")
       });
-
-    case "setShowTWUBanner":
-      return [
-        state.set("showTWUBanner", msg.value),
-        !msg.value
-          ? [
-              component.cmd.localStorage.setItem(
-                TWU_BANNER_ACKNOWLEDGED,
-                TWU_BANNER_ACKNOWLEDGED,
-                adt("noop") as Msg
-              )
-            ]
-          : []
-      ];
 
     case "pageOrgEdit":
       return component.app.updatePage({
