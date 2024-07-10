@@ -5,14 +5,16 @@ import { Counter } from "shared/lib/resources/counter";
 export const incrementCounters = tryDb<[string[]], Record<string, number>>(
   async (connection, names) => {
     // Update existing counters
-    const existingCounters: string[] = await connection<Counter>("viewCounters")
+    const existingCounters: { name: string }[] = await connection<Counter>(
+      "viewCounters"
+    )
       .whereIn("name", names)
       .increment("count")
       .update({}, "name");
 
     // Create new counters where applicable
     for (const name of names) {
-      if (!existingCounters.includes(name)) {
+      if (!existingCounters.some(({ name: eName }) => eName === name)) {
         await connection<Counter>("viewCounters").insert({
           name,
           count: 1

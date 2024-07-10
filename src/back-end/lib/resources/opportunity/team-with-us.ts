@@ -1185,7 +1185,12 @@ const delete_: crud.Delete<
       if (isInvalid(validatedTWUOpportunity)) {
         return invalid({ notFound: ["Opportunity not found."] });
       }
-      if (validatedTWUOpportunity.value.status !== TWUOpportunityStatus.Draft) {
+      if (
+        ![
+          TWUOpportunityStatus.Draft,
+          TWUOpportunityStatus.UnderReview
+        ].includes(validatedTWUOpportunity.value.status)
+      ) {
         return invalid({ permissions: [permissions.ERROR_MESSAGE] });
       }
       return valid(validatedTWUOpportunity.value.id);

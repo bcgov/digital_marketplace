@@ -47,11 +47,12 @@ export interface RawHistoryRecord
 
 async function rawAffiliationToAffiliation(
   connection: Connection,
-  params: RawAffiliation
+  params: RawAffiliation,
+  allowInactive = false
 ): Promise<Affiliation> {
   const { user: userId, organization: orgId } = params;
   const organization = getValidValue(
-    await readOneOrganization(connection, orgId, false),
+    await readOneOrganization(connection, orgId, allowInactive),
     null
   );
   const user = getValidValue(await readOneUser(connection, userId), null);
@@ -136,8 +137,8 @@ export const readOneAffiliation = tryDb<[Id, Id], Affiliation | null>(
 );
 
 export const readOneAffiliationById = tryDb<[Id, boolean?], Affiliation | null>(
-  async (connection, id, activeOnly = true) => {
-    const result = await connection<RawAffiliation>("affiliations")
+  async (connection, id, allowInactive = false) => {
+    let query = connection<RawAffiliation>("affiliations")
       .join(
         "organizations",
         "affiliations.organization",
@@ -146,16 +147,21 @@ export const readOneAffiliationById = tryDb<[Id, boolean?], Affiliation | null>(
       )
       .select<RawAffiliation>("affiliations.*")
       .where({ "affiliations.id": id })
-      .andWhereNot({
-        ...(activeOnly
-          ? { "affiliations.membershipStatus": MembershipStatus.Inactive }
-          : {}),
-        "organizations.active": false
-      })
       .first();
 
+    if (!allowInactive) {
+      query = query.andWhereNot({
+        "affiliations.membershipStatus": MembershipStatus.Inactive,
+        "organizations.active": false
+      });
+    }
+
+    const result = await query;
+
     return valid(
-      result ? await rawAffiliationToAffiliation(connection, result) : null
+      result
+        ? await rawAffiliationToAffiliation(connection, result, allowInactive)
+        : null
     );
   }
 );
