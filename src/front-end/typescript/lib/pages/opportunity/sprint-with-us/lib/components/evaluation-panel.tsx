@@ -25,13 +25,15 @@ interface EvaluationPanelMember {
 
 export interface State {
   evaluationPanelMembers: EvaluationPanelMember[];
+  evaluationPanelChair: Immutable<ShortText.State>;
 }
 
 export type Msg =
   | ADT<"addMember">
   | ADT<"deleteMember", number>
   | ADT<"email", { childMsg: ShortText.Msg; epmIndex: number }>
-  | ADT<"chair", { childMsg: Checkbox.Msg; epmIndex: number }>;
+  | ADT<"chair", { childMsg: Checkbox.Msg; epmIndex: number }>
+  | ADT<"evaluationPanelChair", ShortText.Msg>;
 
 export interface Params {
   evaluationPanel: SWUEvaluationPanelMember[];
@@ -39,6 +41,7 @@ export interface Params {
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
   const [evaluationPanelMembers, cmds] = params.evaluationPanel
+    .filter(({ evaluator }) => evaluator)
     .map((epm, index) => createEvaluationPanelMember(index, epm))
     .reduce(
       ([accEvaluationPanelMembers, accCmds], [q, cs]) => [
@@ -56,11 +59,28 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
     cmds.push(...emptyPanelMember[1]);
   }
 
+  const [evaluationPanelChairState, evaluationPanelChairCmds] = ShortText.init({
+    errors: [],
+    validate: validateEmail,
+    child: {
+      id: "swu-opportunity-evaluation-panel-chair",
+      type: "email",
+      value: params.evaluationPanel.find(({ chair }) => chair)?.user.email ?? ""
+    }
+  });
+
   return [
     {
-      evaluationPanelMembers
+      evaluationPanelMembers,
+      evaluationPanelChair: immutable(evaluationPanelChairState)
     },
-    cmds
+    [
+      ...cmds,
+      ...component_.cmd.mapMany(
+        evaluationPanelChairCmds,
+        (msg) => adt("evaluationPanelChair", msg) as Msg
+      )
+    ]
   ];
 };
 
@@ -138,7 +158,26 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ["evaluationPanelMembers", `${epmIndex}`, "email"],
         childUpdate: ShortText.update,
         childMsg: componentMessage,
-        mapChildMsg: (value) => adt("email", { epmIndex, childMsg: value })
+        mapChildMsg: (value) => adt("email", { epmIndex, childMsg: value }),
+        updateAfter: (state) => {
+          return [
+            // Keep chair in sync with evaluator chair
+            state.update("evaluationPanelChair", (s) => {
+              if (
+                FormField.getValue(state.evaluationPanelMembers[epmIndex].chair)
+              ) {
+                return FormField.setValue(
+                  s,
+                  FormField.getValue(
+                    state.evaluationPanelMembers[epmIndex].email
+                  )
+                );
+              }
+              return s;
+            }),
+            []
+          ];
+        }
       });
     }
 
@@ -153,12 +192,48 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("chair", { epmIndex, childMsg: value }),
         updateAfter: (state) => {
           return [
+            // Remove chair from other panel members
+            state
+              .update("evaluationPanelMembers", (s) =>
+                s.map((epm, i) => ({
+                  ...epm,
+                  chair: FormField.setValue(
+                    state.evaluationPanelMembers[i].chair,
+                    i === epmIndex
+                  )
+                }))
+              )
+              // Keep chair in sync with evaluator chair
+              .update("evaluationPanelChair", (s) =>
+                FormField.setValue(
+                  s,
+                  FormField.getValue(
+                    state.evaluationPanelMembers[epmIndex].email
+                  )
+                )
+              ),
+            []
+          ];
+        }
+      });
+    }
+
+    case "evaluationPanelChair":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["evaluationPanelChair"],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("evaluationPanelChair", value),
+        updateAfter: (state) => {
+          return [
+            // Remove chair from other panel members
             state.update("evaluationPanelMembers", (s) =>
               s.map((epm, i) => ({
                 ...epm,
                 chair: FormField.setValue(
                   state.evaluationPanelMembers[i].chair,
-                  i === epmIndex
+                  false
                 )
               }))
             ),
@@ -166,25 +241,39 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
         }
       });
-    }
   }
 };
 
 export type Values = CreateSWUEvaluationPanelMemberBody[];
 
 export function getValues(state: Immutable<State>): Values {
-  return state.evaluationPanelMembers.reduce<Values>((acc, epm, order) => {
-    if (!acc) {
+  const values = state.evaluationPanelMembers.reduce<Values>(
+    (acc, epm, order) => {
+      if (!acc) {
+        return acc;
+      }
+      acc.push({
+        email: FormField.getValue(epm.email),
+        chair: FormField.getValue(epm.chair),
+        evaluator: true,
+        order
+      });
       return acc;
-    }
-    acc.push({
-      email: FormField.getValue(epm.email),
-      chair: FormField.getValue(epm.chair),
-      evaluator: true,
-      order
-    });
-    return acc;
-  }, []);
+    },
+    []
+  );
+
+  return !values.some((evaluationPanelMember) => evaluationPanelMember.chair)
+    ? [
+        ...values,
+        {
+          email: FormField.getValue(state.evaluationPanelChair),
+          chair: true,
+          evaluator: false,
+          order: state.evaluationPanelMembers.length
+        }
+      ]
+    : values;
 }
 
 export type Errors = CreateSWUEvaluationPanelMemberValidationErrors[];
@@ -193,27 +282,42 @@ export function setErrors(
   state: Immutable<State>,
   errors: Errors = []
 ): Immutable<State> {
-  return errors.reduce((acc, e, i) => {
-    return acc
-      .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
-        FormField.setErrors(s as Immutable<ShortText.State>, e.email || [])
+  let chairErrors: CreateSWUEvaluationPanelMemberValidationErrors | undefined;
+  if (errors.length !== state.evaluationPanelMembers.length) {
+    chairErrors = errors.pop();
+  }
+  return errors
+    .reduce((acc, e, i) => {
+      return acc
+        .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
+          FormField.setErrors(s as Immutable<ShortText.State>, e.email || [])
+        )
+        .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
+          FormField.setErrors(s as Immutable<Checkbox.State>, e.chair || [])
+        );
+    }, state)
+    .update("evaluationPanelChair", (s) =>
+      FormField.setErrors(
+        s as Immutable<ShortText.State>,
+        chairErrors?.email || []
       )
-      .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
-        FormField.setErrors(s as Immutable<Checkbox.State>, e.chair || [])
-      );
-  }, state);
+    );
 }
 
 export function validate(state: Immutable<State>): Immutable<State> {
-  return state.evaluationPanelMembers.reduce((acc, _, i) => {
-    return acc
-      .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
-        FormField.validate(s as Immutable<ShortText.State>)
-      )
-      .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
-        FormField.validate(s as Immutable<Checkbox.State>)
-      );
-  }, state);
+  return state.evaluationPanelMembers
+    .reduce((acc, _, i) => {
+      return acc
+        .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
+          FormField.validate(s as Immutable<ShortText.State>)
+        )
+        .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
+          FormField.validate(s as Immutable<Checkbox.State>)
+        );
+    }, state)
+    .update("evaluationPanelChair", (s) =>
+      FormField.validate(s as Immutable<ShortText.State>)
+    );
 }
 
 export function isValid(state: Immutable<State>): boolean {
@@ -252,7 +356,6 @@ const EvalationPanelMemberView: component_.base.View<
             extraChildProps={{}}
             label="Email"
             placeholder="Email"
-            help="Enter your question in the field provided below."
             required
             disabled={disabled}
             state={evaluationPanelMember.email}
@@ -266,7 +369,6 @@ const EvalationPanelMemberView: component_.base.View<
         <Col xs="12">
           <div className="d-flex align-items-center justify-content-between">
             <Checkbox.view
-              placeholder="Provide some guidance on how proponents can effectively respond to your question."
               required
               extraChildProps={{
                 inlineLabel: "Panel Chair"
@@ -298,7 +400,7 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 }
 
 const AddButton: component_.base.View<Props> = ({
-  state,
+  // state,
   disabled,
   dispatch
 }) => {
@@ -308,7 +410,7 @@ const AddButton: component_.base.View<Props> = ({
   return (
     <Row>
       <Col xs="12">
-        <div className={state.evaluationPanelMembers.length ? "mt-3" : ""}>
+        <div className="mt-3 mb-5">
           <Link
             disabled={disabled}
             color="primary"
@@ -325,7 +427,7 @@ const AddButton: component_.base.View<Props> = ({
 };
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, disabled } = props;
+  const { state, disabled, dispatch } = props;
   const removable =
     state.evaluationPanelMembers.length > MIN_SWU_EVALUATION_PANEL_MEMBERS;
 
@@ -337,11 +439,33 @@ export const view: component_.base.View<Props> = (props) => {
           index={i}
           disabled={disabled}
           evaluationPanelMember={evaluationPanelMember}
-          dispatch={props.dispatch}
+          dispatch={dispatch}
           removable={removable}
         />
       ))}
       <AddButton {...props} />
+      <Row>
+        <Col xs="12">
+          <div className="mb-4">
+            <h3 className="mb-0">Panel Chair</h3>
+          </div>
+        </Col>
+      </Row>
+      <Row>
+        <Col xs="12">
+          <ShortText.view
+            extraChildProps={{}}
+            label="Email"
+            placeholder="Email"
+            required
+            disabled={disabled}
+            state={state.evaluationPanelChair}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("evaluationPanelChair" as const, value)
+            )}
+          />
+        </Col>
+      </Row>
     </div>
   );
 };
