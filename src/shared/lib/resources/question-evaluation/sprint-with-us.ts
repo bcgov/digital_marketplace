@@ -1,6 +1,19 @@
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
+export function parseSWUTeamQuestionResponseEvaluationType(
+  raw: string
+): SWUTeamQuestionResponseEvaluationType | null {
+  switch (raw) {
+    case SWUTeamQuestionResponseEvaluationType.Conensus:
+      return SWUTeamQuestionResponseEvaluationType.Conensus;
+    case SWUTeamQuestionResponseEvaluationType.Individual:
+      return SWUTeamQuestionResponseEvaluationType.Individual;
+    default:
+      return null;
+  }
+}
+
 export enum SWUTeamQuestionResponseEvaluationType {
   Conensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
