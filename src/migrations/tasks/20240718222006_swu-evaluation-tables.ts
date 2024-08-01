@@ -9,6 +9,11 @@ enum SWUTeamQuestionResponseEvaluationType {
   Individual = "INDIVIDUAL"
 }
 
+export enum SWUTeamQuestionResponseEvaluationStatuses {
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED"
+}
+
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable(
     "swuTeamQuestionResponseEvaluations",
@@ -52,10 +57,35 @@ export async function up(connection: Knex): Promise<void> {
       table.text("notes").notNullable();
     }
   );
-  logger.info("Created swuTeamQuestionResponseEvaluations table.");
+  logger.info("Created swuTeamQuestionResponseEvaluationScores table.");
+
+  await connection.schema.createTable(
+    "swuTeamQuestionResponseEvaluationStatuses",
+    (table) => {
+      table.uuid("id").primary().unique().notNullable();
+      table.timestamp("createdAt").notNullable();
+      table.uuid("createdBy").references("id").inTable("users");
+      table
+        .uuid("teamQuestionResponseEvaluation")
+        .references("id")
+        .inTable("swuTeamQuestionResponseEvaluations")
+        .notNullable()
+        .onDelete("CASCADE");
+      table
+        .enu("status", Object.values(SWUTeamQuestionResponseEvaluationStatuses))
+        .notNullable();
+      table.string("note");
+    }
+  );
+  logger.info("Created swuTeamQuestionResponseEvaluationStatuses table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
+  await connection.schema.dropTable(
+    "swuTeamQuestionResponseEvaluationStatuses"
+  );
+  logger.info("Dropped table swuTeamQuestionResponseEvaluationStatuses");
+
   await connection.schema.dropTable("swuTeamQuestionResponseEvaluationScores");
   logger.info("Dropped table swuTeamQuestionResponseEvaluationScores");
 
