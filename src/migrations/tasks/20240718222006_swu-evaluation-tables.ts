@@ -9,7 +9,7 @@ enum SWUTeamQuestionResponseEvaluationType {
   Individual = "INDIVIDUAL"
 }
 
-export enum SWUTeamQuestionResponseEvaluationStatuses {
+export enum SWUTeamQuestionResponseEvaluationStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED"
 }
@@ -72,7 +72,7 @@ export async function up(connection: Knex): Promise<void> {
         .notNullable()
         .onDelete("CASCADE");
       table
-        .enu("status", Object.values(SWUTeamQuestionResponseEvaluationStatuses))
+        .enu("status", Object.values(SWUTeamQuestionResponseEvaluationStatus))
         .notNullable();
       table.string("note");
     }
