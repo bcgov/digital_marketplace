@@ -1,5 +1,7 @@
 import {
+  parseSWUTeamQuestionResponseEvaluationStatus,
   parseSWUTeamQuestionResponseEvaluationType,
+  SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { invalid, valid, Validation } from "shared/lib/validation";
@@ -28,5 +30,13 @@ export const validateSWUTeamQuestionResponseEvaluationType =
     parseSWUTeamQuestionResponseEvaluationType,
     (raw) =>
       `"${raw}" is not a valid SprintWithUs team question response evaluation type.`,
+    (raw, isOneOf) => `"${raw}" is not one of: ${isOneOf.join(", ")}`
+  );
+
+export const validateSWUTeamQuestionResponseEvaluationStatus =
+  makeValidateSWUTeamQuestionResponseEvaluationEnum<SWUTeamQuestionResponseEvaluationStatus>(
+    parseSWUTeamQuestionResponseEvaluationStatus,
+    (raw) =>
+      `"${raw}" is not a valid SprintWithUs team question response evaluation status.`,
     (raw, isOneOf) => `"${raw}" is not one of: ${isOneOf.join(", ")}`
   );
