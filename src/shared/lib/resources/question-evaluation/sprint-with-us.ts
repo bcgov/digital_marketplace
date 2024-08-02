@@ -32,6 +32,7 @@ interface SWUTeamQuestionResponseEvaluationScores {
 
 export interface SWUTeamQuestionResponseEvaluation {
   proposal: Id;
+  status: SWUTeamQuestionResponseEvaluationStatus;
   type: SWUTeamQuestionResponseEvaluationType;
   scores: SWUTeamQuestionResponseEvaluationScores[];
 }
