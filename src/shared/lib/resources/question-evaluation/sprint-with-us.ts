@@ -14,6 +14,19 @@ export function parseSWUTeamQuestionResponseEvaluationType(
   }
 }
 
+export function parseSWUTeamQuestionResponseEvaluationStatus(
+  raw: string
+): SWUTeamQuestionResponseEvaluationStatus | null {
+  switch (raw) {
+    case SWUTeamQuestionResponseEvaluationStatus.Draft:
+      return SWUTeamQuestionResponseEvaluationStatus.Draft;
+    case SWUTeamQuestionResponseEvaluationStatus.Submitted:
+      return SWUTeamQuestionResponseEvaluationStatus.Submitted;
+    default:
+      return null;
+  }
+}
+
 export enum SWUTeamQuestionResponseEvaluationType {
   Conensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
