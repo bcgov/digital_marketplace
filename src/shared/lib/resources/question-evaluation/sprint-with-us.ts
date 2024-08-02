@@ -19,6 +19,11 @@ export enum SWUTeamQuestionResponseEvaluationType {
   Individual = "INDIVIDUAL"
 }
 
+export enum SWUTeamQuestionResponseEvaluationStatus {
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED"
+}
+
 interface SWUTeamQuestionResponseEvaluationScores {
   notes: string;
   score: number;
