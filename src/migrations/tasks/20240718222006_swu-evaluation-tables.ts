@@ -19,12 +19,6 @@ export async function up(connection: Knex): Promise<void> {
     "swuTeamQuestionResponseEvaluations",
     (table) => {
       table
-        .uuid("opportunity")
-        .references("id")
-        .inTable("swuOpportunities")
-        .notNullable()
-        .onDelete("CASCADE");
-      table
         .uuid("proposal")
         .references("id")
         .inTable("swuProposals")
