@@ -57,6 +57,8 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
+  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
+  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
   EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
