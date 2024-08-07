@@ -4,6 +4,32 @@ import { Knex } from "knex";
 
 const logger = makeDomainLogger(consoleAdapter, "migrations");
 
+enum SWUOpportunityStatus {
+  Draft = "DRAFT",
+  UnderReview = "UNDER_REVIEW",
+  Published = "PUBLISHED",
+  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
+  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
+  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationCodeChallenge = "EVAL_CC",
+  EvaluationTeamScenario = "EVAL_SCENARIO",
+  Awarded = "AWARDED",
+  Suspended = "SUSPENDED",
+  Canceled = "CANCELED"
+}
+
+enum PreviousSWUOpportunityStatus {
+  Draft = "DRAFT",
+  UnderReview = "UNDER_REVIEW",
+  Published = "PUBLISHED",
+  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationCodeChallenge = "EVAL_CC",
+  EvaluationTeamScenario = "EVAL_SCENARIO",
+  Awarded = "AWARDED",
+  Suspended = "SUSPENDED",
+  Canceled = "CANCELED"
+}
+
 enum SWUTeamQuestionResponseEvaluationType {
   Conensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
@@ -15,6 +41,20 @@ export enum SWUTeamQuestionResponseEvaluationStatus {
 }
 
 export async function up(connection: Knex): Promise<void> {
+  await connection.schema.raw(
+    ' \
+      ALTER TABLE "swuOpportunityStatuses" \
+      DROP CONSTRAINT "swuOpportunityStatuses_status_check" \
+    '
+  );
+
+  await connection.schema.raw(` \
+    ALTER TABLE "swuOpportunityStatuses" \
+    ADD CONSTRAINT "swuOpportunityStatuses_status_check" \
+    CHECK (status IN ('${Object.values(SWUOpportunityStatus).join("','")}')) \
+  `);
+  logger.info("Modified constraint on swuOpportunityStatuses");
+
   await connection.schema.createTable(
     "swuTeamQuestionResponseEvaluations",
     (table) => {
@@ -75,6 +115,27 @@ export async function up(connection: Knex): Promise<void> {
 }
 
 export async function down(connection: Knex): Promise<void> {
+  await connection.schema.raw(
+    ' \
+      ALTER TABLE "swuOpportunityStatuses" \
+      DROP CONSTRAINT "swuOpportunityStatuses_status_check" \
+    '
+  );
+
+  await connection("swuOpportunityStatuses")
+    .where({ status: "QUESTIONS_PANEL_EVAL" })
+    .orWhere({ status: "QUESTIONS_PANEL_CONSENSUS" })
+    .del();
+
+  await connection.schema.raw(` \
+    ALTER TABLE "swuOpportunityStatuses" \
+    ADD CONSTRAINT "swuOpportunityStatuses_status_check" \
+    CHECK (status IN ('${Object.values(PreviousSWUOpportunityStatus).join(
+      "','"
+    )}')) \
+  `);
+  logger.info("Reverted constraint on swuOpportunityStatuses");
+
   await connection.schema.dropTable(
     "swuTeamQuestionResponseEvaluationStatuses"
   );
