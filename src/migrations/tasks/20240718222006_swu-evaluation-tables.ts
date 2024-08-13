@@ -74,6 +74,8 @@ export async function up(connection: Knex): Promise<void> {
       table
         .enu("type", Object.values(SWUTeamQuestionResponseEvaluationType))
         .notNullable();
+      table.timestamp("createdAt").notNullable();
+      table.timestamp("updatedAt").notNullable();
     }
   );
   logger.info("Created swuTeamQuestionResponseEvaluations table.");
