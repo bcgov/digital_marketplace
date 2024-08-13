@@ -6,7 +6,6 @@ import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface RawSWUTeamQuestionResponseEvaluation
   extends Omit<
     SWUTeamQuestionResponseEvaluation,
@@ -44,3 +43,34 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function generateSWUTeamQuestionResponseEvaluationQuery(
+  connection: Connection
+) {
+  const query = connection("swuTeamQuestionResponseEvaluations as evaluations")
+    .join("swuTeamQuestionResponseEvaluationStatuses as statuses", function () {
+      this.on("evaluations.id", "=", "statuses.teamQuestionResponseEvaluation")
+        .andOnNotNull("statuses.status")
+        .andOn(
+          "statuses.createdAt",
+          "=",
+          connection.raw(
+            '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
+            statuses2.teamQuestionResponseEvaluation = evaluations.id and statuses2.status is not null)'
+          )
+        );
+    })
+    .select<RawSWUTeamQuestionResponseEvaluation[]>(
+      "evaluations.id",
+      "evaluations.proposal",
+      "evaluations.evaluationPanelMember",
+      "evaluations.type",
+      connection.raw(
+        '(CASE WHEN evaluations."updatedAt" > statuses."createdAt" THEN evaluations."updatedAt" ELSE statuses."createdAt" END) AS "updatedAt" '
+      ),
+      "statuses.status",
+      "statuses.createdAt"
+    );
+
+  return query;
+}
