@@ -4,6 +4,18 @@ import { Connection } from "back-end/lib/db";
 import { SessionRecord } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface RawSWUTeamQuestionResponseEvaluation
+  extends Omit<
+    SWUTeamQuestionResponseEvaluation,
+    "proposal" | "evaluationPanelMember"
+  > {
+  id: Id;
+  proposal: Id;
+  evaluationPanelMember: Id;
+}
 
 function makeIsSWUOpportunityEvaluationPanelMember(
   typeFn: (epm: SWUEvaluationPanelMember) => boolean
