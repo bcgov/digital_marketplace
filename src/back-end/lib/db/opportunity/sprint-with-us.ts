@@ -1557,6 +1557,23 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
+export const readOneSWUEvaluationPanelMember = tryDb<
+  [Id],
+  SWUEvaluationPanelMember | null
+>(async (connection, id) => {
+  const raw = await connection<{ id: Id }, RawSWUEvaluationPanelMember>(
+    "evaluationPanelMember"
+  )
+    .where("id", id)
+    .first();
+
+  return valid(
+    raw
+      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      : null
+  );
+});
+
 export const addSWUOpportunityNote = tryDb<
   [Id, UpdateSWUOpportunityWithNoteParams, AuthenticatedSession],
   SWUOpportunity
