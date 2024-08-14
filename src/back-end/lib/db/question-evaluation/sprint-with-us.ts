@@ -4,7 +4,11 @@ import {
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, valid } from "shared/lib/validation";
 import { Connection, readOneSWUProposal, tryDb } from "back-end/lib/db";
-import { Session, SessionRecord } from "shared/lib/resources/session";
+import {
+  AuthenticatedSession,
+  Session,
+  SessionRecord
+} from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -25,7 +29,6 @@ export type RawSWUTeamQuestionResponseEvaluationScores =
     teamQuestionResponseEvaluation: Id;
   };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
@@ -100,9 +103,7 @@ export const readManyTeamQuestionResponseEvaluationScores = tryDb<
 >(async (connection, teamQuestionResponseEvaluationId) => {
   const results = await connection<RawSWUTeamQuestionResponseEvaluationScores>(
     "swuTeamQuestionResponseEvaluationScores"
-  )
-    .where({ teamQuestionResponseEvaluation: teamQuestionResponseEvaluationId })
-    .select("*");
+  ).where({ teamQuestionResponseEvaluation: teamQuestionResponseEvaluationId });
 
   if (!results) {
     throw new Error(
@@ -113,7 +114,38 @@ export const readManyTeamQuestionResponseEvaluationScores = tryDb<
   return valid(results);
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
+  [Id, AuthenticatedSession],
+  SWUTeamQuestionResponseEvaluation | null
+>(async (connection, id, session) => {
+  const result = await generateSWUTeamQuestionResponseEvaluationQuery(
+    connection
+  )
+    .where({ "evaluations.id": id })
+    .first<RawSWUTeamQuestionResponseEvaluation>();
+
+  if (result) {
+    result.scores =
+      getValidValue(
+        await readManyTeamQuestionResponseEvaluationScores(
+          connection,
+          result.id
+        ),
+        []
+      ) ?? [];
+  }
+
+  return valid(
+    result
+      ? await RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+          connection,
+          session,
+          result
+        )
+      : null
+  );
+});
+
 function generateSWUTeamQuestionResponseEvaluationQuery(
   connection: Connection
 ) {
