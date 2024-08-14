@@ -1,7 +1,10 @@
-import { readOneSWUOpportunity } from "back-end/lib/db/opportunity/sprint-with-us";
+import {
+  readOneSWUEvaluationPanelMember,
+  readOneSWUOpportunity
+} from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, valid } from "shared/lib/validation";
-import { Connection, tryDb } from "back-end/lib/db";
-import { SessionRecord } from "shared/lib/resources/session";
+import { Connection, readOneSWUProposal, tryDb } from "back-end/lib/db";
+import { Session, SessionRecord } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -21,6 +24,47 @@ export type RawSWUTeamQuestionResponseEvaluationScores =
   SWUTeamQuestionResponseEvaluation["scores"][number] & {
     teamQuestionResponseEvaluation: Id;
   };
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+  connection: Connection,
+  session: Session,
+  raw: RawSWUTeamQuestionResponseEvaluation
+): Promise<SWUTeamQuestionResponseEvaluation> {
+  const {
+    id,
+    proposal: proposalId,
+    evaluationPanelMember: evaluationPanelMemberId,
+    ...restOfRaw
+  } = raw;
+
+  const proposal =
+    session &&
+    getValidValue(
+      await readOneSWUProposal(connection, proposalId, session),
+      null
+    );
+  if (!proposal) {
+    throw new Error("unable to process team question response evaluation");
+  }
+
+  const evaluationPanelMember = getValidValue(
+    await readOneSWUEvaluationPanelMember(connection, evaluationPanelMemberId),
+    undefined
+  );
+  if (!evaluationPanelMember) {
+    throw new Error("unable to process team question response evaluation");
+  }
+
+  return {
+    ...restOfRaw,
+    scores: raw.scores.map(
+      ({ teamQuestionResponseEvaluation, ...scores }) => scores
+    ),
+    proposal,
+    evaluationPanelMember
+  };
+}
 
 function makeIsSWUOpportunityEvaluationPanelMember(
   typeFn: (epm: SWUEvaluationPanelMember) => boolean
