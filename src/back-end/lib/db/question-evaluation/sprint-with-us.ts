@@ -1,6 +1,6 @@
 import { readOneSWUOpportunity } from "back-end/lib/db/opportunity/sprint-with-us";
-import { getValidValue } from "shared/lib/validation";
-import { Connection } from "back-end/lib/db";
+import { getValidValue, valid } from "shared/lib/validation";
+import { Connection, tryDb } from "back-end/lib/db";
 import { SessionRecord } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -9,12 +9,18 @@ import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question
 interface RawSWUTeamQuestionResponseEvaluation
   extends Omit<
     SWUTeamQuestionResponseEvaluation,
-    "proposal" | "evaluationPanelMember"
+    "proposal" | "evaluationPanelMember" | "scores"
   > {
   id: Id;
   proposal: Id;
   evaluationPanelMember: Id;
+  scores: RawSWUTeamQuestionResponseEvaluationScores[];
 }
+
+export type RawSWUTeamQuestionResponseEvaluationScores =
+  SWUTeamQuestionResponseEvaluation["scores"][number] & {
+    teamQuestionResponseEvaluation: Id;
+  };
 
 function makeIsSWUOpportunityEvaluationPanelMember(
   typeFn: (epm: SWUEvaluationPanelMember) => boolean
@@ -43,6 +49,26 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
+
+export const readManyTeamQuestionResponseEvaluationScores = tryDb<
+  [Id],
+  RawSWUTeamQuestionResponseEvaluationScores[]
+>(async (connection, teamQuestionResponseEvaluationId) => {
+  const results = await connection<RawSWUTeamQuestionResponseEvaluationScores>(
+    "swuTeamQuestionResponseEvaluationScores"
+  )
+    .where({ teamQuestionResponseEvaluation: teamQuestionResponseEvaluationId })
+    .select("*");
+
+  if (!results) {
+    throw new Error(
+      "unable to read proposal team question response evaluations"
+    );
+  }
+
+  return valid(results);
+});
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function generateSWUTeamQuestionResponseEvaluationQuery(
   connection: Connection
