@@ -89,6 +89,7 @@ export async function up(connection: Knex): Promise<void> {
         .inTable("swuTeamQuestionResponseEvaluations")
         .notNullable()
         .onDelete("CASCADE");
+      table.integer("order").notNullable();
       table.float("score").notNullable();
       table.text("notes").notNullable();
     }
