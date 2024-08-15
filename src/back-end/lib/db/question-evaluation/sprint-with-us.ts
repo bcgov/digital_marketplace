@@ -11,7 +11,20 @@ import {
 } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+export interface CreateSWUTeamQuestionResponseEvaluationParams
+  extends CreateRequestBody {
+  evaluationPanelMember: Id;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface SWUTeamQuestionResponseEvaluationStatusRecord {
+  id: Id;
+  opportunity: Id;
+  createdAt: Date;
+  createdBy: Id;
+  status: SWUTeamQuestionResponseEvaluationStatus;
+  note: string;
+}
 
 interface RawSWUTeamQuestionResponseEvaluation
   extends Omit<
