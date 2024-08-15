@@ -1557,12 +1557,12 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
-export const readOneSWUEvaluationPanelMember = tryDb<
+export const readOneSWUEvaluationPanelMemberById = tryDb<
   [Id],
   SWUEvaluationPanelMember | null
 >(async (connection, id) => {
-  const raw = await connection<{ id: Id }, RawSWUEvaluationPanelMember>(
-    "evaluationPanelMember"
+  const raw = await connection<RawSWUEvaluationPanelMember>(
+    "swuEvaluationPanelMembers"
   )
     .where("id", id)
     .first();

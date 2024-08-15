@@ -1,5 +1,5 @@
 import {
-  readOneSWUEvaluationPanelMember,
+  readOneSWUEvaluationPanelMemberById,
   readOneSWUOpportunity
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, valid } from "shared/lib/validation";
@@ -52,7 +52,10 @@ async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
   }
 
   const evaluationPanelMember = getValidValue(
-    await readOneSWUEvaluationPanelMember(connection, evaluationPanelMemberId),
+    await readOneSWUEvaluationPanelMemberById(
+      connection,
+      evaluationPanelMemberId
+    ),
     undefined
   );
   if (!evaluationPanelMember) {
