@@ -1557,6 +1557,33 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
+// TODO: add indexes
+export const readOneSWUEvaluationPanelMember = tryDb<
+  [Id, Id],
+  SWUEvaluationPanelMember | null
+>(async (connection, user, opportunity) => {
+  const raw = await connection<RawSWUEvaluationPanelMember>(
+    "swuEvaluationPanelMembers"
+  )
+    .join(
+      "swuOpportunityVersions",
+      "swuEvaluationPanelMembers.opportunityVersion",
+      "=",
+      "swuOpportunityVersions.id"
+    )
+    .where({
+      "swuOpportunityVersions.opportunity": opportunity,
+      "swuEvaluationPanelMembers.user": user
+    })
+    .first();
+
+  return valid(
+    raw
+      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      : null
+  );
+});
+
 export const readOneSWUEvaluationPanelMemberById = tryDb<
   [Id],
   SWUEvaluationPanelMember | null
