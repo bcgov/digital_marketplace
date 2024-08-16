@@ -1578,6 +1578,7 @@ export const readOneSWUEvaluationPanelMemberWithId = tryDb<
       "swuOpportunityVersions.opportunity": opportunity,
       "swuEvaluationPanelMembers.user": user
     })
+    .select("swuEvaluationPanelMembers.*")
     .first();
 
   return valid(
