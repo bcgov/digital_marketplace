@@ -41,6 +41,7 @@ import sessionResource from "back-end/lib/resources/session";
 import codeWithUsSubscriberResource from "back-end/lib/resources/subscribers/code-with-us";
 import sprintWithUsSubscriberResource from "back-end/lib/resources/subscribers/sprint-with-us";
 import teamWithUsSubscriberResource from "back-end/lib/resources/subscribers/team-with-us";
+import sprintWithUsQuestionEvaluationResource from "back-end/lib/resources/question-evaluation/sprint-with-us";
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
@@ -160,7 +161,8 @@ export function createRouter(connection: Connection): AppRouter {
     sessionResource,
     userResource,
     metricsResource,
-    emailNotificationsResource
+    emailNotificationsResource,
+    sprintWithUsQuestionEvaluationResource
   ];
 
   // Define CRUD routes.
