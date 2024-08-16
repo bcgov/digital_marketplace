@@ -52,13 +52,31 @@ export interface SWUTeamQuestionResponseEvaluation {
 
 // Create.
 
-export interface CreateRequestBody extends SWUTeamQuestionResponseEvaluation {
-  opportunity: Id;
+export type CreateSWUTeamQuestionResponseEvaluationStatus =
+  SWUTeamQuestionResponseEvaluationStatus.Draft;
+
+export type CreateSWUTeamQuestionResponseEvaluationScoreBody =
+  SWUTeamQuestionResponseEvaluationScores;
+
+export interface CreateRequestBody {
+  proposal: Id;
+  type: SWUTeamQuestionResponseEvaluationType;
+  status: CreateSWUTeamQuestionResponseEvaluationStatus;
+  scores: CreateSWUTeamQuestionResponseEvaluationScoreBody[];
 }
 
-export interface CreateValidationErrors
-  extends ErrorTypeFrom<CreateRequestBody>,
-    BodyWithErrors {}
+export interface CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors
+  extends ErrorTypeFrom<CreateSWUTeamQuestionResponseEvaluationScoreBody> {
+  parseFailure?: string[];
+}
+
+export interface CreateValidationErrors extends BodyWithErrors {
+  evaluationPanelMember?: string[];
+  proposal?: string[];
+  type?: string[];
+  status?: string[];
+  scores?: CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[];
+}
 
 // Update.
 
