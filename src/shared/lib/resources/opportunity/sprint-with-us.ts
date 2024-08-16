@@ -124,6 +124,8 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
+  SWUOpportunityStatus.TeamQuestionsPanelEvaluation,
+  SWUOpportunityStatus.TeamQuestionsPanelConsensus,
   SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
@@ -250,7 +252,6 @@ export interface SWUTeamQuestion {
 }
 
 export interface SWUEvaluationPanelMember {
-  id: Id;
   user: UserSlim & { email: User["email"] };
   chair: boolean;
   evaluator: boolean;
