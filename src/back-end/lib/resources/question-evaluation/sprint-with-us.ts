@@ -116,7 +116,7 @@ const create: crud.Create<
       }
 
       const validatedSWUPanelEvaluationPanelMember =
-        await db.readOneSWUEvaluationPanelMember(
+        await db.readOneSWUEvaluationPanelMemberWithId(
           connection,
           request.session.user.id,
           validatedSWUProposal.value.opportunity.id
