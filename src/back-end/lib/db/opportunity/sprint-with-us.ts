@@ -174,6 +174,7 @@ interface RawSWUOpportunityHistoryRecord
 
 interface RawSWUEvaluationPanelMember
   extends Omit<SWUEvaluationPanelMember, "user"> {
+  id: Id;
   opportunityVersion: Id;
   user: Id;
 }
@@ -1107,6 +1108,7 @@ export const createSWUOpportunity = tryDb<
         .transacting(trx)
         .insert({
           ...member,
+          id: generateUuid(),
           opportunityVersion: opportunityVersionRecord.id
         });
     }
@@ -1267,6 +1269,7 @@ export const updateSWUOpportunityVersion = tryDb<
         .transacting(trx)
         .insert({
           ...member,
+          id: generateUuid(),
           opportunityVersion: versionRecord.id
         });
     }
@@ -1558,9 +1561,9 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
 );
 
 // TODO: add indexes
-export const readOneSWUEvaluationPanelMember = tryDb<
+export const readOneSWUEvaluationPanelMemberWithId = tryDb<
   [Id, Id],
-  SWUEvaluationPanelMember | null
+  (SWUEvaluationPanelMember & { id: Id }) | null
 >(async (connection, user, opportunity) => {
   const raw = await connection<RawSWUEvaluationPanelMember>(
     "swuEvaluationPanelMembers"
@@ -1579,7 +1582,13 @@ export const readOneSWUEvaluationPanelMember = tryDb<
 
   return valid(
     raw
-      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      ? {
+          ...(await rawEvaluationPanelMemberToEvaluationPanelMember(
+            connection,
+            raw
+          )),
+          id: raw.id
+        }
       : null
   );
 });
