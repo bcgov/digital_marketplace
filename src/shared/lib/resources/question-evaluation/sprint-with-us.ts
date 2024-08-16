@@ -39,7 +39,7 @@ export enum SWUTeamQuestionResponseEvaluationStatus {
   Submitted = "SUBMITTED"
 }
 
-interface SWUTeamQuestionResponseEvaluationScores {
+export interface SWUTeamQuestionResponseEvaluationScores {
   notes: string;
   score: number;
   order: number;
