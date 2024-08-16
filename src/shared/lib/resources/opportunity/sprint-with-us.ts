@@ -250,6 +250,7 @@ export interface SWUTeamQuestion {
 }
 
 export interface SWUEvaluationPanelMember {
+  id: Id;
   user: UserSlim & { email: User["email"] };
   chair: boolean;
   evaluator: boolean;
