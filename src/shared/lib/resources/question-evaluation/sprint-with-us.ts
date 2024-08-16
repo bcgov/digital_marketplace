@@ -1,5 +1,7 @@
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
+import { SWUEvaluationPanelMember } from "src/shared/lib/resources/opportunity/sprint-with-us";
+import { SWUProposalSlim } from "src/shared/lib/resources/proposal/sprint-with-us";
 
 export function parseSWUTeamQuestionResponseEvaluationType(
   raw: string
@@ -44,10 +46,14 @@ interface SWUTeamQuestionResponseEvaluationScores {
 }
 
 export interface SWUTeamQuestionResponseEvaluation {
-  proposal: Id;
+  id: Id;
+  proposal: SWUProposalSlim;
+  evaluationPanelMember: SWUEvaluationPanelMember;
   status: SWUTeamQuestionResponseEvaluationStatus;
   type: SWUTeamQuestionResponseEvaluationType;
   scores: SWUTeamQuestionResponseEvaluationScores[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Create.
