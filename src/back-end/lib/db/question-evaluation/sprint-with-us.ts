@@ -259,7 +259,7 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
           "=",
           connection.raw(
             '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
-            statuses2.teamQuestionResponseEvaluation = evaluations.id and statuses2.status is not null)'
+            statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)'
           )
         );
     })
