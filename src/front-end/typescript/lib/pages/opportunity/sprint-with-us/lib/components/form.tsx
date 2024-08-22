@@ -18,6 +18,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases";
 import * as TeamQuestions from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions";
+import * as EvaluationPanel from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/evaluation-panel";
 import Icon from "front-end/lib/views/icon";
 import { flatten } from "lodash";
 import React from "react";
@@ -60,6 +61,8 @@ type RemoteOk = "yes" | "no";
 const RemoteOkRadioGroup = RadioGroup.makeComponent<RemoteOk>();
 
 export type TabId =
+  | "Agreement"
+  | "Evaluation Panel"
   | "Overview"
   | "Description"
   | "Phases"
@@ -76,6 +79,8 @@ export interface State {
   viewerUser: User;
   tabbedForm: Immutable<TabbedForm.State<TabId>>;
   showPhaseInfo: boolean;
+  // Evaluation Tab
+  evaluationPanel: Immutable<EvaluationPanel.State>;
   // Overview Tab
   title: Immutable<ShortText.State>;
   teaser: Immutable<LongText.State>;
@@ -108,6 +113,8 @@ export interface State {
 export type Msg =
   | ADT<"tabbedForm", TabbedForm.Msg<TabId>>
   | ADT<"hidePhaseInfo">
+  // Team Questions Tab
+  | ADT<"evaluationPanel", EvaluationPanel.Msg>
   // Overview Tab
   | ADT<"title", ShortText.Msg>
   | ADT<"teaser", LongText.Msg>
@@ -147,7 +154,7 @@ export function getActiveTab(state: Immutable<State>): TabId {
   return TabbedForm.getActiveTab(state.tabbedForm);
 }
 
-const DEFAULT_ACTIVE_TAB: TabId = "Overview";
+const DEFAULT_ACTIVE_TAB: TabId = "Agreement";
 
 function makePhaseTypeOption(value: SWUOpportunityPhaseType): Select.Option {
   return (
@@ -216,6 +223,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   );
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
+      "Agreement",
+      "Evaluation Panel",
       "Overview",
       "Description",
       "Phases",
@@ -411,6 +420,11 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity?.teamQuestions || []
   });
+  const [evaluationPanelState, evaluationPanelCmds] = EvaluationPanel.init({
+    evaluationPanel: opportunity?.evaluationPanel || [
+      { user: viewerUser, chair: true, evaluator: true, order: 0 }
+    ]
+  });
   const [questionsWeightState, questionsWeightCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
@@ -503,6 +517,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       startingPhase: immutable(startingPhaseState),
       phases: immutable(phasesState),
       teamQuestions: immutable(teamQuestionsState),
+      evaluationPanel: immutable(evaluationPanelState),
       questionsWeight: immutable(questionsWeightState),
       codeChallengeWeight: immutable(codeChallengeWeightState),
       scenarioWeight: immutable(scenarioWeightState),
@@ -548,6 +563,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ...component_.cmd.mapMany(phasesCmds, (msg) => adt("phases", msg)),
       ...component_.cmd.mapMany(teamQuestionsCmds, (msg) =>
         adt("teamQuestions", msg)
+      ),
+      ...component_.cmd.mapMany(evaluationPanelCmds, (msg) =>
+        adt("evaluationPanel", msg)
       ),
       ...component_.cmd.mapMany(questionsWeightCmds, (msg) =>
         adt("questionsWeight", msg)
@@ -610,6 +628,9 @@ export function setErrors(
       .update("phases", (s) => Phases.setErrors(s, errors))
       .update("teamQuestions", (s) =>
         TeamQuestions.setErrors(s, errors.teamQuestions)
+      )
+      .update("evaluationPanel", (s) =>
+        EvaluationPanel.setErrors(s, errors.evaluationPanel)
       );
   } else {
     return state;
@@ -638,6 +659,10 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("priceWeight", (s) => FormField.validate(s))
     .update("weightsTotal", (s) => FormField.validate(s))
     .update("attachments", (s) => Attachments.validate(s));
+}
+
+export function isEvaluationPanelTabValid(state: Immutable<State>): boolean {
+  return EvaluationPanel.isValid(state.evaluationPanel);
 }
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {
@@ -706,6 +731,7 @@ export function getValues(state: Immutable<State>): Values {
   const priceWeight = FormField.getValue(state.priceWeight) || 0;
   const teamQuestions = TeamQuestions.getValues(state.teamQuestions);
   const phases = Phases.getValues(state.phases);
+  const evaluationPanel = EvaluationPanel.getValues(state.evaluationPanel);
   return {
     ...phases,
     title: FormField.getValue(state.title),
@@ -724,7 +750,8 @@ export function getValues(state: Immutable<State>): Values {
     codeChallengeWeight,
     scenarioWeight,
     priceWeight,
-    teamQuestions
+    teamQuestions,
+    evaluationPanel
   };
 }
 
@@ -1159,8 +1186,136 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: (value) => adt("attachments", value)
       });
+
+    case "evaluationPanel":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["evaluationPanel"],
+        childUpdate: EvaluationPanel.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("evaluationPanel", value)
+      });
   }
 };
+
+const AgreementView: component_.base.View = () => (
+  <div className="table-responsive">
+    <table className="table-hover" style={{ textAlign: "center" }}>
+      <thead>
+        <tr>
+          <th className="text-left" style={{ width: "50%" }}>
+            Responsibility
+          </th>
+          <th className="text-nowrap" style={{ width: "50%" }}>
+            Gov. Business Area
+          </th>
+          <th className="text-nowrap" style={{ width: 0 }}>
+            Digital Marketplace
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td className="text-left">Project Funding</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Problem Statement</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Business Area Expertise</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Technical SME</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Product Owner/Roadmap</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Creating Opportunity</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Evaluating Proposals</td>
+          <td>
+            <Icon name="check" />
+          </td>
+          <td />
+        </tr>
+        <tr>
+          <td className="text-left">Consultancy</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left text-nowrap">
+            Tech Advice (Code Challenge)
+          </td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left">Procurement Advice</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+        <tr>
+          <td className="text-left">Support</td>
+          <td />
+          <td>
+            <Icon name="check" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+);
+
+const EvaluationPanelView: component_.base.View<Props> = ({
+  disabled,
+  state,
+  dispatch
+}) => (
+  <Row>
+    <Col xs="12">
+      <EvaluationPanel.view
+        disabled={disabled}
+        state={state.evaluationPanel}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("evaluationPanel" as const, value)
+        )}
+      />
+    </Col>
+  </Row>
+);
 
 const OverviewView: component_.base.View<Props> = ({
   state,
@@ -1597,6 +1752,10 @@ export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+      case "Agreement":
+        return <AgreementView />;
+      case "Evaluation Panel":
+        return <EvaluationPanelView {...props} />;
       case "Overview":
         return <OverviewView {...props} />;
       case "Description":
@@ -1618,6 +1777,10 @@ export const view: component_.base.View<Props> = (props) => {
       getTabLabel={(a) => a}
       isTabValid={(tab) => {
         switch (tab) {
+          case "Agreement":
+            return true;
+          case "Evaluation Panel":
+            return isEvaluationPanelTabValid(state);
           case "Overview":
             return isOverviewTabValid(state);
           case "Description":

@@ -15,11 +15,13 @@ import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
 import {
+  CreateSWUEvaluationPanelMemberBody,
   CreateSWUOpportunityPhaseBody,
   CreateSWUOpportunityStatus,
   CreateSWUTeamQuestionBody,
   privateOpportunityStatuses,
   publicOpportunityStatuses,
+  SWUEvaluationPanelMember,
   SWUOpportunity,
   SWUOpportunityEvent,
   SWUOpportunityHistoryRecord,
@@ -53,12 +55,14 @@ export interface CreateSWUOpportunityParams
     | "prototypePhase"
     | "implementationPhase"
     | "teamQuestions"
+    | "evaluationPanel"
   > {
   status: CreateSWUOpportunityStatus;
   inceptionPhase?: CreateSWUOpportunityPhaseParams;
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberParams[];
 }
 
 interface UpdateSWUOpportunityParams
@@ -75,6 +79,11 @@ export interface CreateSWUOpportunityPhaseParams
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
   startDate: Date;
   completionDate: Date;
+}
+
+interface CreateSWUEvaluationPanelMemberParams
+  extends Omit<CreateSWUEvaluationPanelMemberBody, "email"> {
+  user: Id;
 }
 
 interface SWUOpportunityRootRecord {
@@ -161,6 +170,13 @@ interface RawSWUOpportunityHistoryRecord
   status?: SWUOpportunityStatus;
   event?: SWUOpportunityEvent;
   attachments: Id[];
+}
+
+interface RawSWUEvaluationPanelMember
+  extends Omit<SWUEvaluationPanelMember, "user"> {
+  id: Id;
+  opportunityVersion: Id;
+  user: Id;
 }
 
 async function rawSWUOpportunityToSWUOpportunity(
@@ -387,6 +403,28 @@ async function rawHistoryRecordToHistoryRecord(
       ? adt("status", status as SWUOpportunityStatus)
       : adt("event", event as SWUOpportunityEvent),
     attachments
+  };
+}
+
+async function rawEvaluationPanelMemberToEvaluationPanelMember(
+  connection: Connection,
+  raw: RawSWUEvaluationPanelMember
+): Promise<SWUEvaluationPanelMember> {
+  const { opportunityVersion, user: userId, ...restOfRaw } = raw;
+  const user = getValidValue(await readOneUser(connection, userId), null);
+
+  if (!user) {
+    throw new Error("unable to process evaluation panel member");
+  }
+
+  return {
+    ...restOfRaw,
+    user: {
+      id: user.id,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      email: user.email
+    }
   };
 }
 
@@ -713,7 +751,8 @@ export const readOneSWUOpportunity = tryDb<
       publicOpportunityStatuses as SWUOpportunityStatus[]
     );
   } else if (session.user.type === UserType.Government) {
-    // Gov users should only see private opportunities they own, and public opportunities
+    // Gov users should only see private opportunities they own or are on the
+    // evaluation panel for, and public opportunities
     query = query.andWhere(function () {
       this.whereIn(
         "statuses.status",
@@ -722,7 +761,16 @@ export const readOneSWUOpportunity = tryDb<
         this.whereIn(
           "statuses.status",
           privateOpportunityStatuses as SWUOpportunityStatus[]
-        ).andWhere({ "opportunities.createdBy": session.user?.id });
+        ).andWhere(function () {
+          this.where({ "opportunities.createdBy": session.user.id }).orWhereIn(
+            "versions.id",
+            function () {
+              this.select("opportunityVersion")
+                .from("swuEvaluationPanelMembers")
+                .where("user", "=", session.user.id);
+            }
+          );
+        });
       });
     });
   } else {
@@ -801,10 +849,18 @@ export const readOneSWUOpportunity = tryDb<
       );
     }
 
-    // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
+    const rawEvaluationPanelMembers =
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .where("opportunityVersion", result.versionId)
+        .orderBy("order");
+
+    // If admin/owner/evaluation panel member, add on history,
+    // evaluation panel, reporting metrics, and successful proponent if
+    // applicable
     if (
       session?.user.type === UserType.Admin ||
-      result.createdBy === session?.user.id
+      result.createdBy === session?.user.id ||
+      rawEvaluationPanelMembers.find(({ user }) => user === session?.user.id)
     ) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>(
         "swuOpportunityStatuses"
@@ -832,6 +888,16 @@ export const readOneSWUOpportunity = tryDb<
         rawHistory.map(
           async (raw) =>
             await rawHistoryRecordToHistoryRecord(connection, session, raw)
+        )
+      );
+
+      result.evaluationPanel = await Promise.all(
+        rawEvaluationPanelMembers.map(
+          async (raw) =>
+            await rawEvaluationPanelMemberToEvaluationPanelMember(
+              connection,
+              raw
+            )
         )
       );
 
@@ -946,6 +1012,7 @@ export const createSWUOpportunity = tryDb<
       prototypePhase,
       implementationPhase,
       teamQuestions,
+      evaluationPanel,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -1035,6 +1102,17 @@ export const createSWUOpportunity = tryDb<
         });
     }
 
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          id: generateUuid(),
+          opportunityVersion: opportunityVersionRecord.id
+        });
+    }
+
     return opportunityRootRecord.id;
   });
 
@@ -1113,6 +1191,7 @@ export const updateSWUOpportunityVersion = tryDb<
     prototypePhase,
     implementationPhase,
     teamQuestions,
+    evaluationPanel,
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
@@ -1180,6 +1259,17 @@ export const updateSWUOpportunityVersion = tryDb<
           ...teamQuestion,
           createdAt: now,
           createdBy: session.user.id,
+          opportunityVersion: versionRecord.id
+        });
+    }
+
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          id: generateUuid(),
           opportunityVersion: versionRecord.id
         });
     }
@@ -1469,6 +1559,57 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+// TODO: add indexes
+export const readOneSWUEvaluationPanelMemberWithId = tryDb<
+  [Id, Id],
+  (SWUEvaluationPanelMember & { id: Id }) | null
+>(async (connection, user, opportunity) => {
+  const raw = await connection<RawSWUEvaluationPanelMember>(
+    "swuEvaluationPanelMembers"
+  )
+    .join(
+      "swuOpportunityVersions",
+      "swuEvaluationPanelMembers.opportunityVersion",
+      "=",
+      "swuOpportunityVersions.id"
+    )
+    .where({
+      "swuOpportunityVersions.opportunity": opportunity,
+      "swuEvaluationPanelMembers.user": user
+    })
+    .select("swuEvaluationPanelMembers.*")
+    .first();
+
+  return valid(
+    raw
+      ? {
+          ...(await rawEvaluationPanelMemberToEvaluationPanelMember(
+            connection,
+            raw
+          )),
+          id: raw.id
+        }
+      : null
+  );
+});
+
+export const readOneSWUEvaluationPanelMemberById = tryDb<
+  [Id],
+  SWUEvaluationPanelMember | null
+>(async (connection, id) => {
+  const raw = await connection<RawSWUEvaluationPanelMember>(
+    "swuEvaluationPanelMembers"
+  )
+    .where("id", id)
+    .first();
+
+  return valid(
+    raw
+      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      : null
+  );
+});
 
 export const addSWUOpportunityNote = tryDb<
   [Id, UpdateSWUOpportunityWithNoteParams, AuthenticatedSession],

@@ -76,7 +76,8 @@ export const testCreateSWUOpportunityParams: CreateSWUOpportunityParams = {
       order: 1
     }
   ],
-  attachments: []
+  attachments: [],
+  evaluationPanel: []
 };
 
 interface SWUScenario1 {

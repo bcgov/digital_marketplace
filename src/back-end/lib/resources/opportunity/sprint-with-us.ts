@@ -12,7 +12,8 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
-  validateSWUOpportunityId
+  validateSWUOpportunityId,
+  validateSWUEvaluationPanelMembers
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import {
@@ -38,7 +39,9 @@ import {
   SWUOpportunityStatus,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors,
-  UpdateWithNoteRequestBody
+  UpdateWithNoteRequestBody,
+  CreateSWUEvaluationPanelMemberBody,
+  CreateSWUEvaluationPanelMemberValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
@@ -81,6 +84,7 @@ interface ValidatedCreateRequestBody
     | "teamQuestions"
     | "codeChallengeEndDate"
     | "teamScenarioEndDate"
+    | "evaluationPanel"
   > {
   status: CreateSWUOpportunityStatus;
   session: AuthenticatedSession;
@@ -88,6 +92,9 @@ interface ValidatedCreateRequestBody
   prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
   implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & {
+    user: Id;
+  })[];
 }
 
 interface ValidatedUpdateRequestBody {
@@ -208,7 +215,8 @@ const create: crud.Create<
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
         implementationPhase: get(body, "implementationPhase"),
-        teamQuestions: get(body, "teamQuestions")
+        teamQuestions: get(body, "teamQuestions"),
+        evaluationPanel: get(body, "evaluationPanel")
       };
     },
     async validateRequestBody(request) {
@@ -234,7 +242,8 @@ const create: crud.Create<
         inceptionPhase,
         prototypePhase,
         implementationPhase,
-        teamQuestions
+        teamQuestions,
+        evaluationPanel
       } = request.body;
 
       const validatedStatus =
@@ -349,6 +358,20 @@ const create: crud.Create<
             getValidValue(validatedAssignmentDate, now)
           )
         );
+
+      const validatedEvaluationPanel = await validateSWUEvaluationPanelMembers(
+        connection,
+        evaluationPanel
+      );
+      if (
+        isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+          validatedEvaluationPanel
+        )
+      ) {
+        return invalid({
+          evaluationPanel: validatedEvaluationPanel.value
+        });
+      }
 
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === SWUOpportunityStatus.Draft) {
@@ -469,7 +492,8 @@ const create: crud.Create<
                 defaultPhaseLength
               )
             )
-          }
+          },
+          evaluationPanel: validatedEvaluationPanel.value
         });
       }
 
@@ -547,7 +571,8 @@ const create: crud.Create<
           validatedProposalDeadline,
           validatedAssignmentDate,
           validatedAttachments,
-          validatedStatus
+          validatedStatus,
+          validatedEvaluationPanel
         ])
       ) {
         // Ensure that score weights total 100%
@@ -596,7 +621,8 @@ const create: crud.Create<
           proposalDeadline: validatedProposalDeadline.value,
           assignmentDate: validatedAssignmentDate.value,
           attachments: validatedAttachments.value,
-          status: validatedStatus.value
+          status: validatedStatus.value,
+          evaluationPanel: validatedEvaluationPanel.value
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
@@ -640,7 +666,11 @@ const create: crud.Create<
             validatedProposalDeadline,
             undefined
           ),
-          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined)
+          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
+          evaluationPanel: getInvalidValue<
+            CreateSWUEvaluationPanelMemberValidationErrors[],
+            undefined
+          >(validatedEvaluationPanel, undefined)
         });
       }
     },
@@ -736,7 +766,8 @@ const update: crud.Update<
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
             implementationPhase: get(value, "implementationPhase"),
-            teamQuestions: get(value, "teamQuestions")
+            teamQuestions: get(value, "teamQuestions"),
+            evaluationPanel: get(value, "evaluationPanel")
           });
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));
@@ -814,7 +845,8 @@ const update: crud.Update<
             inceptionPhase,
             prototypePhase,
             implementationPhase,
-            teamQuestions
+            teamQuestions,
+            evaluationPanel
           } = request.body.value;
 
           if (!editableOpportunityStatuses.includes(swuOpportunity.status)) {
@@ -926,6 +958,23 @@ const update: crud.Update<
                 getValidValue(validatedAssignmentDate, now)
               )
             );
+
+          const validatedEvaluationPanel =
+            await validateSWUEvaluationPanelMembers(
+              connection,
+              evaluationPanel
+            );
+          if (
+            isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
 
           // Do not validate other fields if the opportunity a draft
           if (swuOpportunity.status === SWUOpportunityStatus.Draft) {
@@ -1055,7 +1104,8 @@ const update: crud.Update<
                       defaultPhaseLength
                     )
                   )
-                }
+                },
+                evaluationPanel: validatedEvaluationPanel.value
               })
             } as ValidatedUpdateRequestBody);
           }
@@ -1136,7 +1186,8 @@ const update: crud.Update<
               validatedTeamQuestions,
               validatedProposalDeadline,
               validatedAssignmentDate,
-              validatedAttachments
+              validatedAttachments,
+              validatedEvaluationPanel
             ])
           ) {
             // Ensure that score weights total 100%
@@ -1189,7 +1240,8 @@ const update: crud.Update<
                 teamQuestions: validatedTeamQuestions.value,
                 proposalDeadline: validatedProposalDeadline.value,
                 assignmentDate: validatedAssignmentDate.value,
-                attachments: validatedAttachments.value
+                attachments: validatedAttachments.value,
+                evaluationPanel: validatedEvaluationPanel.value
               })
             } as ValidatedUpdateRequestBody);
           } else {
@@ -1253,7 +1305,11 @@ const update: crud.Update<
                 assignmentDate: getInvalidValue(
                   validatedAssignmentDate,
                   undefined
-                )
+                ),
+                evaluationPanel: getInvalidValue<
+                  CreateSWUEvaluationPanelMemberValidationErrors[],
+                  undefined
+                >(validatedEvaluationPanel, undefined)
               })
             });
           }

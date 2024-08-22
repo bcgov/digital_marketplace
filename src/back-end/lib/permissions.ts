@@ -63,6 +63,10 @@ import {
   TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
 import { Id } from "shared/lib/types";
+import {
+  isSWUOpportunityEvaluationPanelChair,
+  isSWUOpportunityEvaluationPanelEvaluator
+} from "./db/question-evaluation/sprint-with-us";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
@@ -860,6 +864,33 @@ export async function deleteSWUProposal(
         proposal.organization?.id ?? null
       ))) ||
     false
+  );
+}
+
+// SWU Team Question Response Evaluations
+
+export async function createSWUTeamQuestionResponseEvaluation(
+  connection: Connection,
+  session: Session,
+  proposal: SWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    ((proposal.opportunity.status ===
+      SWUOpportunityStatus.TeamQuestionsPanelEvaluation &&
+      (await isSWUOpportunityEvaluationPanelEvaluator(
+        connection,
+        session,
+        proposal.opportunity.id
+      ))) ||
+      (proposal.opportunity.status ===
+        SWUOpportunityStatus.TeamQuestionsPanelConsensus &&
+        (await isSWUOpportunityEvaluationPanelChair(
+          connection,
+          session,
+          proposal.opportunity.id
+        ))))
   );
 }
 

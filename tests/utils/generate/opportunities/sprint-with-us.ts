@@ -3,15 +3,16 @@ import {
   DEFAULT_QUESTIONS_WEIGHT,
   DEFAULT_SCENARIO_WEIGHT,
   DEFAULT_TEAM_QUESTION_RESPONSE_WORD_LIMIT,
+  SWUEvaluationPanelMember,
   SWUOpportunity,
   SWUOpportunityPhase,
   SWUOpportunityPhaseType,
   SWUOpportunitySlim,
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { getId } from "..";
+import { getEmail, getId } from "tests/utils/generate";
 import { fakerEN_CA as faker } from "@faker-js/faker";
-import { buildUserSlim } from "../user";
+import { buildUserSlim } from "tests/utils/generate/user";
 import { SWU_MAX_BUDGET } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import {
@@ -59,7 +60,17 @@ function buildSWUOpportunity(
       startDate: setDateTo4PM(implementationPhaseStartDate),
       completionDate: setDateTo4PM(implementationPhaseCompletionDate),
       maxBudget: totalMaxBudget
-    })
+    }),
+    evaluationPanel = [
+      buildSWUEvaluationPanelMember({
+        user: { ...createdBy, email: getEmail() },
+        chair: true,
+        order: 0
+      }),
+      buildSWUEvaluationPanelMember({
+        order: 1
+      })
+    ]
   } = overrides;
 
   // Inherit phase createdAt and createdBy for consistency and a simpler API
@@ -125,6 +136,7 @@ function buildSWUOpportunity(
         createdBy
       })
     ),
+    evaluationPanel,
     ...overrides
   };
 }
@@ -179,6 +191,19 @@ function buildSWUOpportunitySlim(
   };
 }
 
+export function buildSWUEvaluationPanelMember(
+  overrides: Partial<SWUEvaluationPanelMember>
+): SWUEvaluationPanelMember {
+  const user = buildUserSlim();
+  return {
+    user: { ...user, email: getEmail() },
+    chair: false,
+    evaluator: true,
+    order: 0,
+    ...overrides
+  };
+}
+
 function buildCreateSWUOpportunityParams(
   overrides: Partial<CreateSWUOpportunityParams> = {}
 ): CreateSWUOpportunityParams {
@@ -196,7 +221,8 @@ function buildCreateSWUOpportunityParams(
       "inceptionPhase",
       "prototypePhase",
       "implementationPhase",
-      "teamQuestions"
+      "teamQuestions",
+      "evaluationPanel"
     ]),
     status: SWUOpportunityStatus.Draft,
     implementationPhase: buildCreateSWUOpportunityPhaseParams(
@@ -205,6 +231,13 @@ function buildCreateSWUOpportunityParams(
     teamQuestions: opportunity.teamQuestions.map(
       ({ createdAt, createdBy, ...teamQuestions }) => teamQuestions
     ),
+    evaluationPanel:
+      opportunity.evaluationPanel?.map(
+        ({ user: { email }, ...evaluationPanelMember }) => ({
+          ...evaluationPanelMember,
+          user: email ?? getEmail()
+        })
+      ) ?? [],
     ...overrides
   };
 }

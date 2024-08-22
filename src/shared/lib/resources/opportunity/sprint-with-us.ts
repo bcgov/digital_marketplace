@@ -2,7 +2,7 @@ import { SWU_MAX_BUDGET } from "shared/config";
 import { formatAmount, isDateInTheFuture, isDateInThePast } from "shared/lib";
 import { Addendum } from "shared/lib/resources/addendum";
 import { FileRecord } from "shared/lib/resources/file";
-import { UserSlim } from "shared/lib/resources/user";
+import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -57,6 +57,8 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
+  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
+  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
   EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
@@ -122,6 +124,8 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
+  SWUOpportunityStatus.TeamQuestionsPanelEvaluation,
+  SWUOpportunityStatus.TeamQuestionsPanelConsensus,
   SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
@@ -209,6 +213,7 @@ export interface SWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+  evaluationPanel?: SWUEvaluationPanelMember[];
 }
 
 export interface SWUSuccessfulProponent {
@@ -244,6 +249,13 @@ export interface SWUTeamQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+}
+
+export interface SWUEvaluationPanelMember {
+  user: UserSlim & { email: User["email"] };
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
 }
 
 export function getQuestionByOrder(
@@ -299,6 +311,13 @@ export type CreateSWUTeamQuestionBody = Omit<
   "createdAt" | "createdBy"
 >;
 
+export type CreateSWUEvaluationPanelMemberBody = {
+  email: string;
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -322,6 +341,7 @@ export interface CreateRequestBody {
   prototypePhase?: CreateSWUOpportunityPhaseBody;
   implementationPhase: CreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
 }
 
 export interface CreateSWUOpportunityPhaseValidationErrors
@@ -343,6 +363,12 @@ export interface CreateSWUTeamQuestionValidationErrors
   parseFailure?: string[];
 }
 
+export interface CreateSWUEvaluationPanelMemberValidationErrors
+  extends ErrorTypeFrom<CreateSWUEvaluationPanelMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
@@ -353,6 +379,7 @@ export interface CreateValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -363,6 +390,7 @@ export interface CreateValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Update.
@@ -416,6 +444,7 @@ export interface UpdateEditValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -426,6 +455,7 @@ export interface UpdateEditValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Delete.
@@ -668,6 +698,16 @@ export function doesSWUOpportunityStatusAllowGovToViewFullProposal(
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
       return true;
+    default:
+      return false;
+  }
+}
+
+export function canViewSWUEvaluationConsensus(
+  s: SWUOpportunityStatus
+): boolean {
+  switch (s) {
+    // TODO: Add statuses
     default:
       return false;
   }

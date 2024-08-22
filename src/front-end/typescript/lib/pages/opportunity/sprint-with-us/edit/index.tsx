@@ -22,7 +22,7 @@ import {
   DEFAULT_OPPORTUNITY_TITLE,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { UserType } from "shared/lib/resources/user";
+import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
@@ -46,7 +46,8 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       string,
       Tab.TabId,
       api.ResponseValidation<SWUOpportunity, string[]>,
-      api.ResponseValidation<SWUProposalSlim[], string[]>
+      api.ResponseValidation<SWUProposalSlim[], string[]>,
+      User
     ]
   >
 >;
@@ -73,7 +74,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId, {
+        isOpportunityOwnerOrAdmin: false,
+        isEvaluator: false,
+        isChair: false
+      });
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
         viewerUser: shared.sessionUser
@@ -107,7 +112,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routePath,
                 tabId,
                 opportunity,
-                proposals
+                proposals,
+                shared.sessionUser
               ]) as Msg
           )
         ]
@@ -148,8 +154,13 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [routePath, tabId, opportunityResponse, proposalsResponse] =
-                msg.value;
+              const [
+                routePath,
+                tabId,
+                opportunityResponse,
+                proposalsResponse,
+                viewerUser
+              ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -168,9 +179,36 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               }
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
+
+              // Tab Permissions
+              const evaluationPanelMember = opportunity.evaluationPanel?.find(
+                ({ user: eu }) => eu.id === viewerUser.id
+              );
+              const tabPermissions = {
+                isOpportunityOwnerOrAdmin:
+                  viewerUser.id === opportunity?.createdBy?.id ||
+                  isAdmin(viewerUser),
+                isEvaluator: Boolean(evaluationPanelMember?.evaluator),
+                isChair: Boolean(evaluationPanelMember?.chair)
+              };
+
+              if (!Tab.canGovUserViewTab(tabId, tabPermissions, opportunity)) {
+                return [
+                  state,
+                  [
+                    component_.cmd.dispatch(
+                      component_.global.replaceRouteMsg(
+                        adt("notFound" as const, { path: routePath })
+                      )
+                    )
+                  ]
+                ];
+              }
+
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
+                tabPermissions,
                 opportunity
               );
               const tabComponent = Tab.idToDefinition(tabId).component;

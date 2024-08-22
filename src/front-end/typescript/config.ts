@@ -55,6 +55,12 @@ export const SWU_QUALIFICATION_TERMS_ID = "sprint-with-us-terms-and-conditions";
 
 export const TWU_QUALIFICATION_TERMS_ID = "team-with-us-terms-and-conditions";
 
+export const SWU_PROPOSAL_EVALUATION_INSTRUCTIONS_ID =
+  "sprint-with-us-evaluation-instructions";
+
+export const TWU_PROPOSAL_EVALUATION_INSTRUCTIONS_ID =
+  "team-with-us-evaluation-instructions";
+
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 
 export const MANDATORY_WEIGHTED_CRITERIA_URL =

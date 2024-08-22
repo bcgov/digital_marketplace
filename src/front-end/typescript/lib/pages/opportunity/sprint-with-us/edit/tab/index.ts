@@ -9,9 +9,11 @@ import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/ed
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
 import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
+import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
+  canViewSWUEvaluationConsensus,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
@@ -39,6 +41,12 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 export interface Params {
   viewerUser: User;
 }
+
+export type TabPermissions = {
+  isOpportunityOwnerOrAdmin: boolean;
+  isEvaluator: boolean;
+  isChair: boolean;
+};
 
 export type InitResponse = [SWUOpportunity, SWUProposalSlim[]];
 
@@ -98,6 +106,24 @@ export interface Tabs {
     ProposalsTab.InnerMsg,
     InitResponse
   >;
+  instructions: TabbedPage.Tab<
+    Params,
+    InstructionsTab.State,
+    InstructionsTab.InnerMsg,
+    InitResponse
+  >;
+  overview: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
+  consensus: TabbedPage.Tab<
+    Params,
+    SummaryTab.State,
+    SummaryTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -116,11 +142,40 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "teamScenario":
     case "proposals":
     case "history":
+    case "instructions":
+    case "overview":
+    case "consensus":
       return raw;
     default:
       return null;
   }
 };
+
+export function canGovUserViewTab(
+  tab: TabId,
+  tabPermissions: TabPermissions,
+  opportunity: SWUOpportunity
+) {
+  const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
+  switch (tab) {
+    case "summary":
+    case "opportunity":
+    case "addenda":
+    case "history":
+      return true;
+    case "teamQuestions":
+      return isEvaluator || isOpportunityOwnerOrAdmin;
+    case "codeChallenge":
+    case "teamScenario":
+    case "proposals":
+      return isOpportunityOwnerOrAdmin;
+    case "instructions":
+    case "overview":
+      return isEvaluator;
+    case "consensus":
+      return isChair || canViewSWUEvaluationConsensus(opportunity.status);
+  }
+}
 
 export function idToDefinition<K extends TabId>(
   id: K
@@ -168,6 +223,26 @@ export function idToDefinition<K extends TabId>(
         icon: "history",
         title: "History"
       } as TabbedPage.TabDefinition<Tabs, K>;
+    case "instructions":
+      return {
+        component: InstructionsTab.component,
+        icon: "hand-point-up",
+        title: "Instructions"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "overview":
+      return {
+        // TODO: Create tab
+        component: SummaryTab.component,
+        icon: "list-check",
+        title: "Overview"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "consensus":
+      return {
+        // TODO: Create tab
+        component: SummaryTab.component,
+        icon: "check-double",
+        title: "Consensus"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "summary":
     default:
       return {
@@ -194,39 +269,62 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
+  tabPermissions: TabPermissions,
   opportunity?: SWUOpportunity
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  if (!opportunity) {
+    return MenuSidebar.init({ items: [] });
+  }
+  const canGovUserViewTabs = (...tabIds: TabId[]) =>
+    tabIds.some((tabId) =>
+      canGovUserViewTab(tabId, tabPermissions, opportunity)
+    );
   return MenuSidebar.init({
-    items: opportunity
-      ? [
-          adt("heading", "Summary"),
-          makeSidebarLink("summary", opportunity.id, activeTab),
-          adt("heading", "Opportunity Management"),
-          makeSidebarLink("opportunity", opportunity.id, activeTab),
-          //Only show Addenda sidebar link if opportunity can have addenda.
-          ...(canAddAddendumToSWUOpportunity(opportunity)
-            ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
-            : []),
-          makeSidebarLink("history", opportunity.id, activeTab),
-          adt("heading", "Opportunity Evaluation"),
-          makeSidebarLink("proposals", opportunity.id, activeTab),
-          makeSidebarLink("teamQuestions", opportunity.id, activeTab),
-          makeSidebarLink("codeChallenge", opportunity.id, activeTab),
-          makeSidebarLink("teamScenario", opportunity.id, activeTab),
-          adt("heading", "Need Help?"),
-          adt("link", {
-            icon: "external-link-alt",
-            text: "Read Guide",
-            active: false,
-            newTab: true,
-            dest: routeDest(
-              adt("swuGuide", {
-                guideAudience: GUIDE_AUDIENCE.Ministry
-              })
-            )
+    items: [
+      adt("heading", "Summary"),
+      makeSidebarLink("summary", opportunity.id, activeTab),
+      adt("heading", "Opportunity Management"),
+      makeSidebarLink("opportunity", opportunity.id, activeTab),
+      //Only show Addenda sidebar link if opportunity can have addenda.
+      ...(canAddAddendumToSWUOpportunity(opportunity)
+        ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
+        : []),
+      makeSidebarLink("history", opportunity.id, activeTab),
+      adt("heading", "Opportunity Evaluation"),
+      ...(canGovUserViewTabs("proposals")
+        ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("instructions", "overview")
+        ? [
+            makeSidebarLink("instructions", opportunity.id, activeTab),
+            makeSidebarLink("overview", opportunity.id, activeTab)
+          ]
+        : []),
+      ...(canGovUserViewTabs("teamQuestions")
+        ? [makeSidebarLink("teamQuestions", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("consensus")
+        ? [makeSidebarLink("consensus", opportunity.id, activeTab)]
+        : []),
+      ...(canGovUserViewTabs("codeChallenge", "teamScenario")
+        ? [
+            makeSidebarLink("codeChallenge", opportunity.id, activeTab),
+            makeSidebarLink("teamScenario", opportunity.id, activeTab)
+          ]
+        : []),
+      adt("heading", "Need Help?"),
+      adt("link", {
+        icon: "external-link-alt",
+        text: "Read Guide",
+        active: false,
+        newTab: true,
+        dest: routeDest(
+          adt("swuGuide", {
+            guideAudience: GUIDE_AUDIENCE.Ministry
           })
-        ]
-      : []
+        )
+      })
+    ]
   });
 }
 
