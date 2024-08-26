@@ -67,6 +67,10 @@ import {
   isSWUOpportunityEvaluationPanelChair,
   isSWUOpportunityEvaluationPanelEvaluator
 } from "./db/question-evaluation/sprint-with-us";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationType
+} from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
@@ -891,6 +895,23 @@ export async function createSWUTeamQuestionResponseEvaluation(
           session,
           proposal.opportunity.id
         ))))
+  );
+}
+
+export function editSWUTeamQuestionResponseEvaluation(
+  session: Session,
+  evaluation: SWUTeamQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember.user.id === session.user.id &&
+    ((evaluation.proposal.opportunity.status ===
+      SWUOpportunityStatus.TeamQuestionsPanelEvaluation &&
+      evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
+      (evaluation.proposal.opportunity.status ===
+        SWUOpportunityStatus.TeamQuestionsPanelConsensus &&
+        evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
   );
 }
 
