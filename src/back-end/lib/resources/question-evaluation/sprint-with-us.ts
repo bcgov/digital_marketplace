@@ -20,7 +20,7 @@ import {
   SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType,
   CreateRequestBody as SharedCreateRequestBody,
-  UpdateRequestBody,
+  UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors,
   isValidStatusChange
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -55,6 +55,8 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "type" | "status"> & {
   status: string;
   type: string;
 };
+
+type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "question-evaluations/sprint-with-us";
 
@@ -229,7 +231,7 @@ const update: crud.Update<
     },
     async validateRequestBody(request) {
       if (!request.body) {
-        return invalid({ proposal: adt("parseFailure" as const) });
+        return invalid({ evaluation: adt("parseFailure" as const) });
       }
       if (!permissions.isSignedIn(request.session)) {
         return invalid({
@@ -266,6 +268,18 @@ const update: crud.Update<
         case "edit": {
           const scores = request.body.value.scores;
 
+          // Only drafts and submitted consensuses can be edited
+          if (
+            validatedSWUTeamQuestionResponseEvaluation.value.status !==
+              SWUTeamQuestionResponseEvaluationStatus.Draft &&
+            validatedSWUTeamQuestionResponseEvaluation.value.type !==
+              SWUTeamQuestionResponseEvaluationType.Conensus
+          ) {
+            return invalid({
+              permissions: [permissions.ERROR_MESSAGE]
+            });
+          }
+
           const fullProposal = await db.readOneSWUProposal(
             connection,
             validatedSWUTeamQuestionResponseEvaluation.value.proposal.id,
@@ -279,14 +293,15 @@ const update: crud.Update<
             );
 
           if (isValid(validatedScores)) {
-            return valid(
-              adt(
+            return valid({
+              session: request.session,
+              body: adt(
                 "edit" as const,
                 {
                   scores: validatedScores.value
                 } as ValidatedUpdateEditRequestBody
               )
-            );
+            });
           } else {
             return invalid({
               evaluation: adt("edit" as const, {
@@ -348,7 +363,7 @@ const update: crud.Update<
             questionEvaluationValidation.validateNote(request.body.value);
           if (isInvalid(validatedSubmissionNote)) {
             return invalid({
-              proposal: adt("submit" as const, validatedSubmissionNote.value)
+              evaluation: adt("submit" as const, validatedSubmissionNote.value)
             });
           }
           return valid({
@@ -357,7 +372,7 @@ const update: crud.Update<
           } as ValidatedUpdateRequestBody);
         }
         default:
-          return invalid({ proposal: adt("parseFailure" as const) });
+          return invalid({ evaluation: adt("parseFailure" as const) });
       }
     },
     respond: wrapRespond<
@@ -379,21 +394,13 @@ const update: crud.Update<
             );
             break;
           case "submit":
-            dbResult = await db.updateSWUProposalStatus(
+            dbResult = await db.updateSWUTeamQuestionResponseEvaluationStatus(
               connection,
               request.params.id,
-              SWUProposalStatus.Submitted,
+              SWUTeamQuestionResponseEvaluationStatus.Submitted,
               body.value,
               session
             );
-            // Notify of submission
-            if (isValid(dbResult)) {
-              swuProposalNotifications.handleSWUProposalSubmitted(
-                connection,
-                request.params.id,
-                request.body.session
-              );
-            }
             break;
         }
         if (isInvalid(dbResult)) {
