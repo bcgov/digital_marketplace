@@ -90,4 +90,32 @@ export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submit", string>;
 
-export type UpdateEditRequestBody = CreateRequestBody;
+export type UpdateEditRequestBody = Omit<
+  CreateRequestBody,
+  "proposal" | "type" | "status"
+>;
+
+type UpdateADTErrors =
+  | ADT<"edit", UpdateEditValidationErrors>
+  | ADT<"submit", string[]>
+  | ADT<"parseFailure">;
+
+export interface UpdateEditValidationErrors {
+  scores?: CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[];
+}
+
+export interface UpdateValidationErrors extends BodyWithErrors {
+  evaluation?: UpdateADTErrors;
+}
+
+export function isValidStatusChange(
+  from: SWUTeamQuestionResponseEvaluationStatus,
+  to: SWUTeamQuestionResponseEvaluationStatus
+): boolean {
+  switch (from) {
+    case SWUTeamQuestionResponseEvaluationStatus.Draft:
+      return SWUTeamQuestionResponseEvaluationStatus.Submitted === to;
+    default:
+      return false;
+  }
+}
