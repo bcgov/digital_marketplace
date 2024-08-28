@@ -3,7 +3,12 @@ import {
   readOneSWUOpportunity
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
-import { Connection, readOneSWUProposal, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  Transaction,
+  readOneSWUProposal,
+  tryDb
+} from "back-end/lib/db";
 import {
   AuthenticatedSession,
   Session,
@@ -13,6 +18,7 @@ import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateRequestBody,
+  CreateSWUTeamQuestionResponseEvaluationScoreBody,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus
@@ -246,6 +252,29 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
   }
   return valid(dbResult.value);
 });
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function updateSWUTeamQuestionResponseEvaluationScores(
+  connection: Transaction,
+  evaluationId: Id,
+  scores: CreateSWUTeamQuestionResponseEvaluationScoreBody[]
+): Promise<void> {
+  // Remove existing and recreate
+  await connection("swuTeamQuestionResponseEvaluationScores")
+    .where({ teamQuestionResponseEvaluation: evaluationId })
+    .delete();
+
+  for (const score of scores) {
+    await connection<
+      SWUTeamQuestionResponseEvaluationScores & {
+        teamQuestionResponseEvaluation: Id;
+      }
+    >("swuTeamQuestionResponseEvaluationScores").insert({
+      ...score,
+      teamQuestionResponseEvaluation: evaluationId
+    });
+  }
+}
 
 function generateSWUTeamQuestionResponseEvaluationQuery(
   connection: Connection
