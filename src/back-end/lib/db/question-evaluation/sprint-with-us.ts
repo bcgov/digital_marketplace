@@ -38,7 +38,7 @@ interface UpdateSWUTeamQuestionResponseEvaluationParams
 
 interface SWUTeamQuestionResponseEvaluationStatusRecord {
   id: Id;
-  opportunity: Id;
+  teamQuestionResponseEvaluation: Id;
   createdAt: Date;
   createdBy: Id;
   status: SWUTeamQuestionResponseEvaluationStatus;
@@ -209,23 +209,22 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
     }
 
     // Create a evaluation status record
-    const [evaluationStatusRecord] = await connection<
-      SWUTeamQuestionResponseEvaluationStatusRecord & {
-        teamQuestionResponseEvaluation: Id;
-      }
-    >("swuTeamQuestionResponseEvaluationStatuses")
-      .transacting(trx)
-      .insert(
-        {
-          id: generateUuid(),
-          teamQuestionResponseEvaluation: evaluationRootRecord.id,
-          status,
-          createdAt: now,
-          createdBy: session.user.id,
-          note: ""
-        },
-        "*"
-      );
+    const [evaluationStatusRecord] =
+      await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+        "swuTeamQuestionResponseEvaluationStatuses"
+      )
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            teamQuestionResponseEvaluation: evaluationRootRecord.id,
+            status,
+            createdAt: now,
+            createdBy: session.user.id,
+            note: ""
+          },
+          "*"
+        );
 
     if (!evaluationStatusRecord) {
       throw new Error("unable to create team question evaluation status");
@@ -267,7 +266,7 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
   const { id, scores } = proposal;
   return valid(
     await connection.transaction(async (trx) => {
-      // Update organization/timestamps
+      // Update timestamp
       const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
         "swuTeamQuestionResponseEvaluations"
       )
@@ -324,6 +323,61 @@ async function updateSWUTeamQuestionResponseEvaluationScores(
     });
   }
 }
+
+export const updateSWUTeamQuestionResponseEvaluationStatus = tryDb<
+  [Id, SWUTeamQuestionResponseEvaluationStatus, string, AuthenticatedSession],
+  SWUTeamQuestionResponseEvaluation
+>(async (connection, evaluationId, status, note, session) => {
+  const now = new Date();
+  return valid(
+    await connection.transaction(async (trx) => {
+      const [statusRecord] =
+        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+          "swuTeamQuestionResponseEvaluationStatuses"
+        )
+          .transacting(trx)
+          .insert(
+            {
+              id: generateUuid(),
+              teamQuestionResponseEvaluation: evaluationId,
+              createdAt: now,
+              createdBy: session.user.id,
+              status,
+              note
+            },
+            "*"
+          );
+
+      // Update proposal root record
+      await connection<RawSWUTeamQuestionResponseEvaluation>(
+        "swuTeamQuestionResponseEvaluations"
+      )
+        .transacting(trx)
+        .where({ id: evaluationId })
+        .update(
+          {
+            updatedAt: now
+          },
+          "*"
+        );
+
+      if (!statusRecord) {
+        throw new Error("unable to update team question evaluation");
+      }
+
+      const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
+        trx,
+        statusRecord.teamQuestionResponseEvaluation,
+        session
+      );
+      if (isInvalid(dbResult) || !dbResult.value) {
+        throw new Error("unable to update team question evaluation");
+      }
+
+      return dbResult.value;
+    })
+  );
+});
 
 function generateSWUTeamQuestionResponseEvaluationQuery(
   connection: Connection
