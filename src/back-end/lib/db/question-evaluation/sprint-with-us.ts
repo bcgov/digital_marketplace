@@ -248,7 +248,7 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
     session
   );
   if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error("unable to create proposal");
+    throw new Error("unable to create team question evaluation");
   }
   return valid(dbResult.value);
 });
