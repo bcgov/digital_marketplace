@@ -21,13 +21,19 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
-  SWUTeamQuestionResponseEvaluationStatus
+  SWUTeamQuestionResponseEvaluationStatus,
+  UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { generateUuid } from "back-end/lib";
 
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {
   evaluationPanelMember: Id;
+}
+
+interface UpdateSWUTeamQuestionResponseEvaluationParams
+  extends UpdateEditRequestBody {
+  id: Id;
 }
 
 interface SWUTeamQuestionResponseEvaluationStatusRecord {
@@ -253,7 +259,50 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
   return valid(dbResult.value);
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const updateSWUTeamQuestionResponseEvaluation = tryDb<
+  [UpdateSWUTeamQuestionResponseEvaluationParams, AuthenticatedSession],
+  SWUTeamQuestionResponseEvaluation
+>(async (connection, proposal, session) => {
+  const now = new Date();
+  const { id, scores } = proposal;
+  return valid(
+    await connection.transaction(async (trx) => {
+      // Update organization/timestamps
+      const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
+        "swuTeamQuestionResponseEvaluations"
+      )
+        .transacting(trx)
+        .where({ id })
+        .update(
+          {
+            updatedAt: now
+          },
+          "*"
+        );
+
+      if (!result) {
+        throw new Error("unable to update team question evaluation");
+      }
+      // Update scores
+      await updateSWUTeamQuestionResponseEvaluationScores(
+        trx,
+        result.id,
+        scores
+      );
+
+      const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
+        trx,
+        result.id,
+        session
+      );
+      if (isInvalid(dbResult) || !dbResult.value) {
+        throw new Error("unable to update team question evaluation");
+      }
+      return dbResult.value;
+    })
+  );
+});
+
 async function updateSWUTeamQuestionResponseEvaluationScores(
   connection: Transaction,
   evaluationId: Id,
