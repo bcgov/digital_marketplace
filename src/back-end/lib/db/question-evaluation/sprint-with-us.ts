@@ -22,6 +22,7 @@ import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
+  SWUTeamQuestionResponseEvaluationType,
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { generateUuid } from "back-end/lib";
@@ -130,6 +131,29 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
+
+export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember =
+  tryDb<[Id, Id, SWUTeamQuestionResponseEvaluationType, Session], Id | null>(
+    async (connection, proposalId, evaluationPanelMemberId, type, session) => {
+      if (!session) {
+        return valid(null);
+      }
+      const result = (
+        await connection<RawSWUTeamQuestionResponseEvaluation>(
+          "swuTeamQuestionResponseEvaluations"
+        )
+          .where({
+            proposal: proposalId,
+            evaluationPanelMember: evaluationPanelMemberId,
+            type
+          })
+          .select("id")
+          .first()
+      )?.id;
+
+      return valid(result ? result : null);
+    }
+  );
 
 export const readManyTeamQuestionResponseEvaluationScores = tryDb<
   [Id],
