@@ -16,6 +16,7 @@ import {
   isInvalid,
   valid,
   validateArrayCustom,
+  validateGenericString,
   validateGenericStringWords,
   validateNumber,
   Validation
@@ -148,4 +149,8 @@ export function validateSWUTeamQuestionResponseEvaluationScores(
       ),
     {}
   );
+}
+
+export function validateNote(raw: string): Validation<string> {
+  return validateGenericString(raw, "Note", 0, 5000);
 }
