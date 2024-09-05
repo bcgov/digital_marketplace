@@ -147,6 +147,28 @@ const create: crud.Create<
         });
       }
 
+      // Check for existing evaluation on this proposal, authored by this user
+      const dbResultEvaluation =
+        await db.readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember(
+          connection,
+          validatedSWUProposal.value.id,
+          validatedSWUPanelEvaluationPanelMember.value.id,
+          validatedType.value,
+          request.session
+        );
+      if (isInvalid(dbResultEvaluation)) {
+        return invalid({
+          database: [db.ERROR_MESSAGE]
+        });
+      }
+      if (dbResultEvaluation.value) {
+        return invalid({
+          conflict: [
+            "You already have an team question evaluation for this proposal."
+          ]
+        });
+      }
+
       const validatedScores =
         questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
           scores,
