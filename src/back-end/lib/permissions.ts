@@ -907,15 +907,13 @@ export async function createSWUTeamQuestionResponseEvaluation(
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    ((proposal.opportunity.status ===
-      SWUOpportunityStatus.TeamQuestionsPanelEvaluation &&
+    ((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual &&
       (await isSWUOpportunityEvaluationPanelEvaluator(
         connection,
         session,
         proposal.opportunity.id
       ))) ||
-      (proposal.opportunity.status ===
-        SWUOpportunityStatus.TeamQuestionsPanelConsensus &&
+      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
         (await isSWUOpportunityEvaluationPanelChair(
           connection,
           session,
@@ -932,11 +930,28 @@ export function editSWUTeamQuestionResponseEvaluation(
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
     evaluation.evaluationPanelMember.user.id === session.user.id &&
-    ((evaluation.proposal.opportunity.status ===
-      SWUOpportunityStatus.TeamQuestionsPanelEvaluation &&
+    ((evaluation.proposal.status ===
+      SWUProposalStatus.TeamQuestionsPanelIndividual &&
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
-      (evaluation.proposal.opportunity.status ===
-        SWUOpportunityStatus.TeamQuestionsPanelConsensus &&
+      (evaluation.proposal.status ===
+        SWUProposalStatus.TeamQuestionsPanelIndividual &&
+        evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
+  );
+}
+
+export function submitSWUTeamQuestionResponseEvaluation(
+  session: Session,
+  evaluation: SWUTeamQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember.user.id === session.user.id &&
+    ((evaluation.proposal.status ===
+      SWUProposalStatus.TeamQuestionsPanelIndividual &&
+      evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
+      (evaluation.proposal.status ===
+        SWUProposalStatus.TeamQuestionsPanelConsensus &&
         evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
   );
 }
