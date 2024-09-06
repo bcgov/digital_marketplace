@@ -873,6 +873,32 @@ export async function deleteSWUProposal(
 
 // SWU Team Question Response Evaluations
 
+export async function readManySWUTeamQuestionResponseEvaluations(
+  connection: Connection,
+  session: Session,
+  proposal: SWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    // Filtered to authored evaluations elsewhere when proposal status is
+    // in individual evaluation
+    (((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ||
+      proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus) &&
+      (await isSWUOpportunityEvaluationPanelEvaluator(
+        connection,
+        session,
+        proposal.opportunity.id
+      ))) ||
+      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
+        (await isSWUOpportunityEvaluationPanelChair(
+          connection,
+          session,
+          proposal.opportunity.id
+        ))))
+  );
+}
+
 export async function createSWUTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
