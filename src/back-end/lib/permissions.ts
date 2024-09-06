@@ -899,6 +899,12 @@ export async function readManySWUTeamQuestionResponseEvaluations(
   );
 }
 
+export function readOwnSWUTeamQuestionResponseEvaluations(
+  session: Session
+): boolean {
+  return isGovernment(session) || isAdmin(session);
+}
+
 export async function createSWUTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
