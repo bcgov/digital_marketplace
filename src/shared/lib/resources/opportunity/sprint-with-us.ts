@@ -57,8 +57,7 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
-  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
+  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
   EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
@@ -124,8 +123,7 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
-  SWUOpportunityStatus.TeamQuestionsPanelEvaluation,
-  SWUOpportunityStatus.TeamQuestionsPanelConsensus,
+  SWUOpportunityStatus.EvaluationTeamQuestionsPanel,
   SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
