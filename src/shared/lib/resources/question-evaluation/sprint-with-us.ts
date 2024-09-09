@@ -56,6 +56,14 @@ export interface SWUTeamQuestionResponseEvaluation {
   updatedAt: Date;
 }
 
+export interface SWUTeamQuestionResponseEvaluationSlim
+  extends Omit<
+    SWUTeamQuestionResponseEvaluation,
+    "proposal" | "evaluationPanelMember" | "scores"
+  > {
+  scores: Omit<SWUTeamQuestionResponseEvaluationScores, "notes">[];
+}
+
 // Create.
 
 export type CreateSWUTeamQuestionResponseEvaluationStatus =
