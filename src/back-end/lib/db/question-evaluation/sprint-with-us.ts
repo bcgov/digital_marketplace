@@ -21,6 +21,7 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
+  SWUTeamQuestionResponseEvaluationSlim,
   SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType,
   UpdateEditRequestBody
@@ -101,6 +102,20 @@ async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
     ),
     proposal,
     evaluationPanelMember
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+  raw: RawSWUTeamQuestionResponseEvaluation
+): SWUTeamQuestionResponseEvaluationSlim {
+  const { proposal, evaluationPanelMember, scores, ...restOfRaw } = raw;
+
+  return {
+    ...restOfRaw,
+    scores: scores.map(
+      ({ notes, teamQuestionResponseEvaluation, ...score }) => score
+    )
   };
 }
 
