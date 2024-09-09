@@ -27,6 +27,7 @@ import {
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { generateUuid } from "back-end/lib";
+import { SWUProposalStatus } from "shared/lib/resources/proposal/sprint-with-us";
 
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {
@@ -63,7 +64,7 @@ export type RawSWUTeamQuestionResponseEvaluationScores =
     teamQuestionResponseEvaluation: Id;
   };
 
-async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
   raw: RawSWUTeamQuestionResponseEvaluation
@@ -105,7 +106,6 @@ async function RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
   raw: RawSWUTeamQuestionResponseEvaluation
 ): SWUTeamQuestionResponseEvaluationSlim {
@@ -146,6 +146,56 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
+
+export const readManySWUTeamQuestionResponseEvaluations = tryDb<
+  [AuthenticatedSession, Id, SWUProposalStatus],
+  SWUTeamQuestionResponseEvaluationSlim[]
+>(async (connection, session, id, proposalStatus) => {
+  const query = generateSWUTeamQuestionResponseEvaluationQuery(
+    connection
+  ).where({ proposal: id });
+
+  // If proposal is still in individual evaluation, scope results to
+  // the evaluations they have authored
+  if (proposalStatus === SWUProposalStatus.TeamQuestionsPanelIndividual) {
+    query
+      .join(
+        "evaluationPanelMembers epm",
+        "epm.id",
+        "=",
+        "evaluations.evaluationPanelMember"
+      )
+      .andWhere({ "epm.user": session.user.id });
+  }
+
+  const results = await Promise.all(
+    (
+      await query
+    ).map(async (result: RawSWUTeamQuestionResponseEvaluation) => {
+      result.scores =
+        getValidValue(
+          await readManyTeamQuestionResponseEvaluationScores(
+            connection,
+            result.id
+          ),
+          []
+        ) ?? [];
+      return result;
+    })
+  );
+
+  if (!results) {
+    throw new Error("unable to read evaluations");
+  }
+
+  return valid(
+    results.map((result) =>
+      rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+        result
+      )
+    )
+  );
+});
 
 export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember =
   tryDb<[Id, Id, SWUTeamQuestionResponseEvaluationType, Session], Id | null>(
@@ -210,7 +260,7 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
 
   return valid(
     result
-      ? await RawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+      ? await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
           connection,
           session,
           result
