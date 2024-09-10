@@ -6,7 +6,7 @@ import { getValidValue, isInvalid, valid } from "shared/lib/validation";
 import {
   Connection,
   Transaction,
-  readOneSWUProposal,
+  readOneSWUProposalSlim,
   tryDb
 } from "back-end/lib/db";
 import {
@@ -78,7 +78,7 @@ async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
   const proposal =
     session &&
     getValidValue(
-      await readOneSWUProposal(connection, proposalId, session),
+      await readOneSWUProposalSlim(connection, proposalId, session),
       null
     );
   if (!proposal) {
