@@ -25,6 +25,7 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CreateSWUOpportunityStatus,
+  doesSWUOpportunityStatusAllowGovToViewEvaluations,
   doesSWUOpportunityStatusAllowGovToViewProposals,
   SWUOpportunity,
   SWUOpportunityStatus
@@ -881,15 +882,18 @@ export async function readManySWUTeamQuestionResponseEvaluations(
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    // Filtered to authored evaluations elsewhere when proposal status is
-    // in individual evaluation
-    (((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ||
-      proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus) &&
-      (await isSWUOpportunityEvaluationPanelEvaluator(
-        connection,
-        session,
-        proposal.opportunity.id
-      ))) ||
+    (doesSWUOpportunityStatusAllowGovToViewEvaluations(
+      proposal.opportunity.status
+    ) ||
+      // Filtered to authored evaluations elsewhere when proposal status is
+      // in individual evaluation
+      ((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ||
+        proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus) &&
+        (await isSWUOpportunityEvaluationPanelEvaluator(
+          connection,
+          session,
+          proposal.opportunity.id
+        ))) ||
       (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
         (await isSWUOpportunityEvaluationPanelChair(
           connection,
