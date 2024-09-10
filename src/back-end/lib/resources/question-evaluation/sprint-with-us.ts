@@ -5,6 +5,7 @@ import {
   JsonResponseBody,
   basicResponse,
   makeJsonResponseBody,
+  nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
 import {
@@ -17,6 +18,7 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   CreateValidationErrors,
   SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationSlim,
   SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType,
   CreateRequestBody as SharedCreateRequestBody,
@@ -59,6 +61,69 @@ type CreateRequestBody = Omit<SharedCreateRequestBody, "type" | "status"> & {
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
 const routeNamespace = "question-evaluations/sprint-with-us";
+
+const readMany: crud.ReadMany<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<SWUTeamQuestionResponseEvaluationSlim[] | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (
+      code: number,
+      body: SWUTeamQuestionResponseEvaluationSlim[] | string[]
+    ) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (request.query.proposal) {
+      if (!permissions.isSignedIn(request.session)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const validatedSWUProposal = await validateSWUProposalId(
+        connection,
+        request.query.proposal,
+        request.session
+      );
+      if (isInvalid(validatedSWUProposal)) {
+        return respond(404, ["Sprint With Us proposal not found."]);
+      }
+
+      if (
+        !(await permissions.readManySWUTeamQuestionResponseEvaluations(
+          connection,
+          request.session,
+          validatedSWUProposal.value
+        ))
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult = await db.readManySWUTeamQuestionResponseEvaluations(
+        connection,
+        request.session,
+        request.query.proposal,
+        validatedSWUProposal.value.status
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else {
+      if (
+        !permissions.isSignedIn(request.session) ||
+        !permissions.readOwnSWUTeamQuestionResponseEvaluations(request.session)
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult = await db.readOwnSWUTeamQuestionResponseEvaluations(
+        connection,
+        request.session
+      );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    }
+  });
+};
 
 const create: crud.Create<
   Session,
@@ -451,6 +516,7 @@ const update: crud.Update<
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
+  readMany,
   create,
   update
 };
