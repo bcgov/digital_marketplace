@@ -220,6 +220,35 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   );
 });
 
+export const readOwnSWUTeamQuestionResponseEvaluations = tryDb<
+  [AuthenticatedSession],
+  SWUTeamQuestionResponseEvaluationSlim[]
+>(async (connection, session) => {
+  const evaluations = await generateSWUTeamQuestionResponseEvaluationQuery(
+    connection
+  )
+    .join(
+      "evaluationPanelMembers epm",
+      "epm.id",
+      "=",
+      "evaluations.evaluationPanelMember"
+    )
+    .andWhere({ "epm.user": session.user.id });
+
+  return valid(
+    await Promise.all(
+      evaluations.map(
+        async (result) =>
+          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+            connection,
+            session,
+            result
+          )
+      )
+    )
+  );
+});
+
 export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember =
   tryDb<[Id, Id, SWUTeamQuestionResponseEvaluationType, Session], Id | null>(
     async (connection, proposalId, evaluationPanelMemberId, type, session) => {
