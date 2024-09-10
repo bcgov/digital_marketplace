@@ -106,13 +106,31 @@ async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
   };
 }
 
-function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+  connection: Connection,
+  session: Session,
   raw: RawSWUTeamQuestionResponseEvaluation
-): SWUTeamQuestionResponseEvaluationSlim {
-  const { proposal, evaluationPanelMember, scores, ...restOfRaw } = raw;
+): Promise<SWUTeamQuestionResponseEvaluationSlim> {
+  const {
+    proposal: proposalId,
+    evaluationPanelMember,
+    scores,
+    ...restOfRaw
+  } = raw;
+
+  const proposal =
+    session &&
+    getValidValue(
+      await readOneSWUProposalSlim(connection, proposalId, session),
+      null
+    );
+  if (!proposal) {
+    throw new Error("unable to process team question response evaluation");
+  }
 
   return {
     ...restOfRaw,
+    proposal,
     scores: scores.map(
       ({ notes, teamQuestionResponseEvaluation, ...score }) => score
     )
@@ -189,9 +207,14 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   }
 
   return valid(
-    results.map((result) =>
-      rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
-        result
+    await Promise.all(
+      results.map(
+        async (result) =>
+          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+            connection,
+            session,
+            result
+          )
       )
     )
   );
