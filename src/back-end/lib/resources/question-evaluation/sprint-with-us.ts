@@ -125,6 +125,42 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
   });
 };
 
+const readOne: crud.ReadOne<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<SWUTeamQuestionResponseEvaluation | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (
+      code: number,
+      body: SWUTeamQuestionResponseEvaluation | string[]
+    ) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.isSignedIn(request.session)) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    const validatedSWUTeamQuestionResponseEvaluation =
+      await validateSWUTeamQuestionResponseEvaluationId(
+        connection,
+        request.params.id,
+        request.session
+      );
+    if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+      return respond(404, ["Evaluation not found."]);
+    }
+    if (
+      !(await permissions.readOneSWUTeamQuestionResponseEvaluation(
+        connection,
+        request.session,
+        validatedSWUTeamQuestionResponseEvaluation.value
+      ))
+    ) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    return respond(200, validatedSWUTeamQuestionResponseEvaluation.value);
+  });
+};
+
 const create: crud.Create<
   Session,
   db.Connection,
@@ -516,6 +552,7 @@ const update: crud.Update<
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
+  readOne,
   readMany,
   create,
   update
