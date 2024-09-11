@@ -974,7 +974,7 @@ export function editSWUTeamQuestionResponseEvaluation(
       SWUProposalStatus.TeamQuestionsPanelIndividual &&
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
       (evaluation.proposal.status ===
-        SWUProposalStatus.TeamQuestionsPanelIndividual &&
+        SWUProposalStatus.TeamQuestionsPanelConsensus &&
         evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
   );
 }
