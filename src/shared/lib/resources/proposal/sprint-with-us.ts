@@ -128,6 +128,20 @@ function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
   }
 }
 
+function getSWUProposalAnonymousProponentNumber(proposal: SWUProposalSlim) {
+  return Number(proposal.anonymousProponentName.match(/\d+/)?.at(0));
+}
+
+export function compareSWUProposalAnonymousProponentNumber(
+  a: SWUProposalSlim,
+  b: SWUProposalSlim
+) {
+  return compareNumbers(
+    getSWUProposalAnonymousProponentNumber(a),
+    getSWUProposalAnonymousProponentNumber(b)
+  );
+}
+
 export function compareSWUProposalStatuses(
   a: SWUProposalStatus,
   b: SWUProposalStatus
