@@ -25,7 +25,7 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CreateSWUOpportunityStatus,
-  doesSWUOpportunityStatusAllowGovToViewEvaluations,
+  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
   doesSWUOpportunityStatusAllowGovToViewProposals,
   SWUOpportunity,
   SWUOpportunityStatus
@@ -882,7 +882,7 @@ export async function readOneSWUTeamQuestionResponseEvaluation(
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    (doesSWUOpportunityStatusAllowGovToViewEvaluations(
+    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       evaluation.proposal.opportunity.status
     ) ||
       (evaluation.proposal.status ===
@@ -907,29 +907,33 @@ export async function readOneSWUTeamQuestionResponseEvaluation(
 export async function readManySWUTeamQuestionResponseEvaluations(
   connection: Connection,
   session: Session,
-  proposal: SWUProposal
+  opportunity: SWUOpportunity,
+  isConsensus: boolean
 ): Promise<boolean> {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    (doesSWUOpportunityStatusAllowGovToViewEvaluations(
-      proposal.opportunity.status
+    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+      opportunity.status
     ) ||
-      // Filtered to authored evaluations elsewhere when proposal status is
-      // in individual evaluation
-      ((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ||
-        proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus) &&
-        (await isSWUOpportunityEvaluationPanelEvaluator(
-          connection,
-          session,
-          proposal.opportunity.id
-        ))) ||
-      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
-        (await isSWUOpportunityEvaluationPanelChair(
-          connection,
-          session,
-          proposal.opportunity.id
-        ))))
+      (isConsensus
+        ? (await isSWUOpportunityEvaluationPanelEvaluator(
+            connection,
+            session,
+            opportunity.id
+          )) ||
+          (await isSWUOpportunityEvaluationPanelChair(
+            connection,
+            session,
+            opportunity.id
+          ))
+        : // Filtered to authored evaluations elsewhere when evaluation is
+          // individual
+          await isSWUOpportunityEvaluationPanelEvaluator(
+            connection,
+            session,
+            opportunity.id
+          )))
   );
 }
 
