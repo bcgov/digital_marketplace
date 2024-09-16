@@ -27,7 +27,6 @@ import {
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { generateUuid } from "back-end/lib";
-import { SWUProposalStatus } from "shared/lib/resources/proposal/sprint-with-us";
 
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {
@@ -166,24 +165,24 @@ export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
-  [AuthenticatedSession, Id, SWUProposalStatus],
+  [AuthenticatedSession, Id, boolean],
   SWUTeamQuestionResponseEvaluationSlim[]
->(async (connection, session, id, proposalStatus) => {
-  const query = generateSWUTeamQuestionResponseEvaluationQuery(
-    connection
-  ).where({ proposal: id });
+>(async (connection, session, id, isConsensus) => {
+  const query = generateSWUTeamQuestionResponseEvaluationQuery(connection)
+    .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
+    .where({ "swuProposals.opportunity": id });
 
-  // If proposal is still in individual evaluation, scope results to
-  // the evaluations they have authored
-  if (proposalStatus === SWUProposalStatus.TeamQuestionsPanelIndividual) {
+  // If not reading consensus evaluations, scope results to those they have
+  // authored
+  if (!isConsensus) {
     query
       .join(
-        "evaluationPanelMembers epm",
-        "epm.id",
+        "swuEvaluationPanelMembers",
+        "swuEvaluationPanelMembers.id",
         "=",
         "evaluations.evaluationPanelMember"
       )
-      .andWhere({ "epm.user": session.user.id });
+      .andWhere({ "swuEvaluationPanelMembers.user": session.user.id });
   }
 
   const results = await Promise.all(
