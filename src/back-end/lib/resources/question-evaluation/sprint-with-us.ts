@@ -9,6 +9,7 @@ import {
   wrapRespond
 } from "back-end/lib/server";
 import {
+  validateSWUOpportunityId,
   validateSWUProposalId,
   validateSWUTeamQuestionResponseEvaluationId
 } from "back-end/lib/validation";
@@ -73,25 +74,27 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       code: number,
       body: SWUTeamQuestionResponseEvaluationSlim[] | string[]
     ) => basicResponse(code, request.session, makeJsonResponseBody(body));
-    if (request.query.proposal) {
+    if (request.query.opportunity) {
       if (!permissions.isSignedIn(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
 
-      const validatedSWUProposal = await validateSWUProposalId(
+      const validatedSWUOpportunity = await validateSWUOpportunityId(
         connection,
-        request.query.proposal,
+        request.query.opportunity,
         request.session
       );
-      if (isInvalid(validatedSWUProposal)) {
-        return respond(404, ["Sprint With Us proposal not found."]);
+      if (isInvalid(validatedSWUOpportunity)) {
+        return respond(404, ["Sprint With Us opportunity not found."]);
       }
 
+      const isConsensus = Boolean(request.query.consensus);
       if (
         !(await permissions.readManySWUTeamQuestionResponseEvaluations(
           connection,
           request.session,
-          validatedSWUProposal.value
+          validatedSWUOpportunity.value,
+          isConsensus
         ))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
@@ -99,8 +102,8 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       const dbResult = await db.readManySWUTeamQuestionResponseEvaluations(
         connection,
         request.session,
-        request.query.proposal,
-        validatedSWUProposal.value.status
+        request.query.opportunity,
+        isConsensus
       );
       if (isInvalid(dbResult)) {
         return respond(503, [db.ERROR_MESSAGE]);
