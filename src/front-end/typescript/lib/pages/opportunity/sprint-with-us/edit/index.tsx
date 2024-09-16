@@ -26,6 +26,7 @@ import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluationSlim } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: SWUOpportunity | null;
@@ -47,6 +48,7 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       Tab.TabId,
       api.ResponseValidation<SWUOpportunity, string[]>,
       api.ResponseValidation<SWUProposalSlim[], string[]>,
+      api.ResponseValidation<SWUTeamQuestionResponseEvaluationSlim[], string[]>,
       User
     ]
   >
@@ -97,7 +99,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             (msg) => adt("sidebar", msg) as Msg
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
-          component_.cmd.join(
+          component_.cmd.join3(
             api.opportunities.swu.readOne()(
               routeParams.opportunityId,
               (response) => response
@@ -107,12 +109,19 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                   (response) => response
                 )
               : component_.cmd.dispatch(valid([])),
-            (opportunity, proposals) =>
+            Tab.shouldLoadEvaluationsForTab(tabId)
+              ? api.evaluations.swu.readMany(
+                  routeParams.opportunityId,
+                  tabId === "consensus"
+                )((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals, evaluations) =>
               adt("onInitResponse", [
                 routePath,
                 tabId,
                 opportunity,
                 proposals,
+                evaluations,
                 shared.sessionUser
               ]) as Msg
           )
@@ -159,6 +168,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 tabId,
                 opportunityResponse,
                 proposalsResponse,
+                evaluationsResponse,
                 viewerUser
               ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
@@ -179,6 +189,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               }
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
+              const evaluations = api.getValidValue(evaluationsResponse, []);
 
               // Tab Permissions
               const evaluationPanelMember = opportunity.evaluationPanel?.find(
@@ -223,7 +234,11 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                   ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
-                      tabComponent.onInitResponse([opportunity, proposals]),
+                      tabComponent.onInitResponse([
+                        opportunity,
+                        proposals,
+                        evaluations
+                      ]),
                       (msg) => adt("tab", msg)
                     ) as Msg
                   )
