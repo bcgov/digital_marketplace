@@ -14,7 +14,7 @@ import * as SWUProposalEditTab from "front-end/lib/pages/proposal/sprint-with-us
 import * as SWUProposalViewTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import * as TWUProposalEditTab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import * as UserProfileTab from "front-end/lib/pages/user/profile/tab";
-import { getString } from "shared/lib";
+import { getString, getStringArray } from "shared/lib";
 import { adt } from "shared/lib/types";
 
 export function pushState<Msg>(route: Route, msg: Msg): component.Cmd<Msg> {
@@ -123,12 +123,26 @@ const router: router_.Router<Route> = {
         "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId"
       ),
       makeRoute({ params, query }) {
+        const qEvalIndividual = Array.isArray(query.qEvalIndividual)
+          ? getStringArray(query, "qEvalIndividual")
+          : [getString(query, "qEvalIndividual")].filter(Boolean);
+        const qEvalConsensus = getString(query, "qEvalConsensus");
+        const qEvalMode =
+          query.qEvalMode === "create"
+            ? "create"
+            : query.qEvalMode === "edit"
+            ? "edit"
+            : undefined;
+
         return {
           tag: "proposalSWUView",
           value: {
             proposalId: params.proposalId || "",
             opportunityId: params.opportunityId || "",
-            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined,
+            qEvalIndividual,
+            qEvalConsensus,
+            qEvalMode
           }
         };
       }
@@ -716,14 +730,35 @@ const router: router_.Router<Route> = {
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
-      case "proposalSWUView":
+      case "proposalSWUView": {
+        const params = new URLSearchParams({
+          ...(route.value.tab ? { tab: route.value.tab } : {})
+        });
+        switch (route.value.qEvalMode) {
+          case "create":
+            params.append("qEvalMode", "create");
+            break;
+          case "edit": {
+            params.append("qEvalMode", "edit");
+            route.value.qEvalIndividual?.forEach((q) => {
+              params.append("qEvalIndividual", q);
+            });
+            if (route.value.qEvalConsensus) {
+              params.append("qEvalConsensus", route.value.qEvalConsensus);
+            }
+            break;
+          }
+        }
+
         return prefixPath(
-          `/opportunities/sprint-with-us/${
-            route.value.opportunityId
-          }/proposals/${route.value.proposalId}${
-            route.value.tab ? `?tab=${route.value.tab}` : ""
-          }`
+          [
+            `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}`,
+            params.toString()
+          ]
+            .filter(Boolean)
+            .join("?")
         );
+      }
       case "proposalSWUExportOne":
         return prefixPath(
           `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`

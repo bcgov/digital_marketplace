@@ -26,6 +26,7 @@ import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: SWUProposal | null;
@@ -40,7 +41,16 @@ export type State = State_<Tab.TabId>;
 
 export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
   K,
-  ADT<"onInitResponse", [User, RouteParams, SWUProposal, SWUOpportunity]>
+  ADT<
+    "onInitResponse",
+    [
+      User,
+      RouteParams,
+      SWUProposal,
+      SWUOpportunity,
+      SWUTeamQuestionResponseEvaluation[]
+    ]
+  >
 >;
 
 export type InnerMsg = InnerMsg_<Tab.TabId>;
@@ -49,11 +59,33 @@ export type Msg_<K extends Tab.TabId> = Tab.ParentMsg<K, InnerMsg>;
 
 export type Msg = Msg_<Tab.TabId>;
 
-export interface RouteParams {
+interface CreateEvaluationRouteParams {
   opportunityId: Id;
   proposalId: Id;
   tab?: Tab.TabId;
+  qEvalMode: "create";
 }
+
+interface EditEvaluationRouteParams {
+  opportunityId: Id;
+  proposalId: Id;
+  tab?: Tab.TabId;
+  qEvalIndividual?: Id[];
+  qEvalConsensus?: Id;
+  qEvalMode: "edit";
+}
+
+interface DefaultRouteParams {
+  opportunityId: Id;
+  proposalId: Id;
+  tab?: Tab.TabId;
+  qEvalMode?: undefined;
+}
+
+export type RouteParams =
+  | DefaultRouteParams
+  | CreateEvaluationRouteParams
+  | EditEvaluationRouteParams;
 
 function makeInit<K extends Tab.TabId>(): component_.page.Init<
   RouteParams,
@@ -75,14 +107,45 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join(
+          component_.cmd.join3(
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
             api.opportunities.swu.readOne()(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            (proposal, opportunity) => {
+            routeParams.qEvalMode === "edit"
+              ? component_.cmd.map(
+                  component_.cmd.sequence(
+                    [
+                      ...(routeParams.qEvalIndividual ?? []),
+                      ...(routeParams.qEvalConsensus
+                        ? [routeParams.qEvalConsensus]
+                        : [])
+                    ].map((id) =>
+                      api.evaluations.swu.readOne<
+                        api.ResponseValidation<
+                          SWUTeamQuestionResponseEvaluation,
+                          string[]
+                        >
+                      >()(id, (a) => a)
+                    )
+                  ),
+                  (questionEvaluationResponses) => {
+                    return questionEvaluationResponses.reduce<
+                      SWUTeamQuestionResponseEvaluation[]
+                    >((questionEvaluations, questionEvaluationResponse) => {
+                      return api.isValid(questionEvaluationResponse)
+                        ? [
+                            ...questionEvaluations,
+                            questionEvaluationResponse.value
+                          ]
+                        : questionEvaluations;
+                    }, []);
+                  }
+                )
+              : component_.cmd.dispatch([]),
+            (proposal, opportunity, questionEvaluations) => {
               if (!proposal || !opportunity)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
@@ -91,7 +154,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 shared.sessionUser,
                 routeParams,
                 proposal,
-                opportunity
+                opportunity,
+                questionEvaluations
               ]) as Msg;
             }
           )
@@ -139,8 +203,13 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [viewerUser, routeParams, proposal, opportunity] =
-                msg.value;
+              const [
+                viewerUser,
+                routeParams,
+                proposal,
+                opportunity,
+                questionEvaluations
+              ] = msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";
               // Initialize the sidebar.
@@ -153,7 +222,9 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabState, tabCmds] = tabComponent.init({
                 viewerUser,
                 proposal,
-                opportunity
+                opportunity,
+                questionEvaluations,
+                questionEvaluationMode: routeParams.qEvalMode
               });
               // Everything checks out, return valid state.
               return [
