@@ -1,6 +1,6 @@
 import { isArray } from "lodash";
 import { getNumber, getString } from "shared/lib";
-import { SWUProposalTeamQuestionResponse } from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestion } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
@@ -19,6 +19,7 @@ import {
   validateGenericString,
   validateGenericStringWords,
   validateNumber,
+  validateNumberWithPrecision,
   Validation
 } from "shared/lib/validation";
 
@@ -59,15 +60,16 @@ export const validateSWUTeamQuestionResponseEvaluationStatus =
 
 export function validateSWUTeamQuestionResponseEvaluationScoreOrder(
   raw: number,
-  proposalTeamQuestionResponses: SWUProposalTeamQuestionResponse[]
+  opportunityTeamQuestions: SWUTeamQuestion[]
 ): Validation<number> {
-  return validateNumber(raw, 0, proposalTeamQuestionResponses.length, "Order");
+  return validateNumber(raw, 0, opportunityTeamQuestions.length, "Order");
 }
 
 export function validateSWUTeamQuestionResponseEvaluationScoreScore(
-  raw: number
+  raw: number,
+  maxScore: number
 ): Validation<number> {
-  return validateNumber(raw, 1, undefined, "Score");
+  return validateNumberWithPrecision(raw, 0, maxScore, 2, "Score");
 }
 
 export function validateSWUTeamQuestionResponseEvaluationScoreNotes(
@@ -78,30 +80,31 @@ export function validateSWUTeamQuestionResponseEvaluationScoreNotes(
 
 export function validateSWUTeamQuestionResponseEvaluationScore(
   raw: any,
-  proposalTeamQuestionResponses: SWUProposalTeamQuestionResponse[]
+  opportunityTeamQuestions: SWUTeamQuestion[]
 ): Validation<
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors
 > {
   const validatedOrder = validateSWUTeamQuestionResponseEvaluationScoreOrder(
     getNumber(raw, "order"),
-    proposalTeamQuestionResponses
+    opportunityTeamQuestions
   );
   if (isInvalid(validatedOrder)) {
     return invalid({
       order: getInvalidValue(validatedOrder, undefined)
     });
   }
-  const proposalTeamQuestionResponse = proposalTeamQuestionResponses.find(
-    (q) => q.order === validatedOrder.value
-  );
-  if (!proposalTeamQuestionResponse) {
+  const maxScore =
+    opportunityTeamQuestions.find((q) => q.order === validatedOrder.value)
+      ?.score || null;
+  if (!maxScore) {
     return invalid({
       order: ["No matching proposal team question response."]
     });
   }
   const validatedScore = validateSWUTeamQuestionResponseEvaluationScoreScore(
-    getNumber(raw, "score")
+    getNumber(raw, "score"),
+    maxScore
   );
   if (isInvalid(validatedScore)) {
     return invalid({
@@ -126,7 +129,7 @@ export function validateSWUTeamQuestionResponseEvaluationScore(
 
 export function validateSWUTeamQuestionResponseEvaluationScores(
   raw: any,
-  proposalTeamQuestionResponses: SWUProposalTeamQuestionResponse[]
+  opportunityTeamQuestions: SWUTeamQuestion[]
 ): ArrayValidation<
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors
@@ -145,7 +148,7 @@ export function validateSWUTeamQuestionResponseEvaluationScores(
     (v) =>
       validateSWUTeamQuestionResponseEvaluationScore(
         v,
-        proposalTeamQuestionResponses
+        opportunityTeamQuestions
       ),
     {}
   );

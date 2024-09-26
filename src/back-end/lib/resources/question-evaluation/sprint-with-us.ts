@@ -273,10 +273,16 @@ const create: crud.Create<
         });
       }
 
+      const fullOpportunity = await db.readOneSWUOpportunity(
+        connection,
+        validatedSWUProposal.value.opportunity.id,
+        request.session
+      );
+
       const validatedScores =
         questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
           scores,
-          validatedSWUProposal.value.teamQuestionResponses
+          fullOpportunity.value?.teamQuestions ?? []
         );
 
       if (isValid(validatedScores)) {
@@ -406,16 +412,17 @@ const update: crud.Update<
             });
           }
 
-          const fullProposal = await db.readOneSWUProposal(
+          const fullOpportunity = await db.readOneSWUOpportunity(
             connection,
-            validatedSWUTeamQuestionResponseEvaluation.value.proposal.id,
+            validatedSWUTeamQuestionResponseEvaluation.value.proposal
+              .opportunity.id,
             request.session
           );
 
           const validatedScores =
             questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
               scores,
-              fullProposal.value?.teamQuestionResponses ?? []
+              fullOpportunity.value?.teamQuestions ?? []
             );
 
           if (isValid(validatedScores)) {
@@ -448,16 +455,17 @@ const update: crud.Update<
             });
           }
 
-          const fullProposal = await db.readOneSWUProposal(
+          const fullOpportunity = await db.readOneSWUOpportunity(
             connection,
-            validatedSWUTeamQuestionResponseEvaluation.value.proposal.id,
+            validatedSWUTeamQuestionResponseEvaluation.value.proposal
+              .opportunity.id,
             request.session
           );
 
           const validatedScores =
             questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
               validatedSWUTeamQuestionResponseEvaluation.value.scores,
-              fullProposal.value?.teamQuestionResponses ?? []
+              fullOpportunity.value?.teamQuestions ?? []
             );
 
           if (
@@ -465,7 +473,7 @@ const update: crud.Update<
               CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
             >(validatedScores) ||
             validatedScores.value.length !==
-              fullProposal.value?.teamQuestionResponses.length
+              fullOpportunity.value?.teamQuestions.length
           ) {
             return invalid({
               evaluation: adt("submit" as const, [
