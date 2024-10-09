@@ -164,6 +164,51 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
 
+export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
+  tryDb<[AuthenticatedSession, Id], SWUTeamQuestionResponseEvaluation[]>(
+    async (connection, session, id) => {
+      const query = generateSWUTeamQuestionResponseEvaluationQuery(
+        connection
+      ).where({
+        "evaluations.proposal": id,
+        "evaluations.type": SWUTeamQuestionResponseEvaluationType.Individual
+      });
+
+      const results = await Promise.all(
+        (
+          await query
+        ).map(async (result: RawSWUTeamQuestionResponseEvaluation) => {
+          result.scores =
+            getValidValue(
+              await readManyTeamQuestionResponseEvaluationScores(
+                connection,
+                result.id
+              ),
+              []
+            ) ?? [];
+          return result;
+        })
+      );
+
+      if (!results) {
+        throw new Error("unable to read evaluations");
+      }
+
+      return valid(
+        await Promise.all(
+          results.map(
+            async (result) =>
+              await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+                connection,
+                session,
+                result
+              )
+          )
+        )
+      );
+    }
+  );
+
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id, boolean],
   SWUTeamQuestionResponseEvaluationSlim[]
