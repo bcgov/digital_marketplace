@@ -1,6 +1,9 @@
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
-import { SWUEvaluationPanelMember } from "src/shared/lib/resources/opportunity/sprint-with-us";
+import {
+  SWUEvaluationPanelMember,
+  SWUOpportunity
+} from "src/shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposalSlim } from "src/shared/lib/resources/proposal/sprint-with-us";
 
 export function parseSWUTeamQuestionResponseEvaluationType(
@@ -56,12 +59,20 @@ export interface SWUTeamQuestionResponseEvaluation {
   updatedAt: Date;
 }
 
-export interface SWUTeamQuestionResponseEvaluationSlim
-  extends Omit<
-    SWUTeamQuestionResponseEvaluation,
-    "proposal" | "evaluationPanelMember" | "scores"
-  > {
-  scores: Omit<SWUTeamQuestionResponseEvaluationScores, "notes">[];
+export function getEvaluationById(
+  evaluations: SWUTeamQuestionResponseEvaluation[],
+  id: Id
+): SWUTeamQuestionResponseEvaluation | null {
+  return (
+    evaluations.find((e) => e.evaluationPanelMember.user.id === id) ?? null
+  );
+}
+
+export function getEvaluationScoreByOrder(
+  evaluation: SWUTeamQuestionResponseEvaluation,
+  order: number
+): SWUTeamQuestionResponseEvaluationScores | null {
+  return evaluation.scores.find((s) => s.order === order) ?? null;
 }
 
 // Create.
@@ -126,4 +137,14 @@ export function isValidStatusChange(
     default:
       return false;
   }
+}
+
+export function canSWUTeamQuestionResponseEvaluationBeSubmitted(
+  e: Pick<SWUTeamQuestionResponseEvaluation, "status" | "scores">,
+  o: Pick<SWUOpportunity, "teamQuestions">
+): boolean {
+  return (
+    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft &&
+    o.teamQuestions.length === e.scores.length
+  );
 }

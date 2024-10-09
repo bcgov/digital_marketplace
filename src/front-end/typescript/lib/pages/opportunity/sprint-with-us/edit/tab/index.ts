@@ -21,7 +21,7 @@ import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
-import { SWUTeamQuestionResponseEvaluationSlim } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 // Parent page types & functions.
 
@@ -53,7 +53,7 @@ export type TabPermissions = {
 export type InitResponse = [
   SWUOpportunity,
   SWUProposalSlim[],
-  SWUTeamQuestionResponseEvaluationSlim[]
+  SWUTeamQuestionResponseEvaluation[]
 ];
 
 export type Component<State, Msg> = TabbedPage.TabComponent<

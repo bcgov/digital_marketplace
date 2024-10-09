@@ -31,7 +31,6 @@ import {
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationSlim,
   canSWUTeamQuestionResponseEvaluationBeSubmitted
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
@@ -41,7 +40,7 @@ export interface State extends Tab.Params {
   submitLoading: boolean;
   canEvaluationsBeSubmitted: boolean;
   canViewEvaluations: boolean;
-  evaluations: SWUTeamQuestionResponseEvaluationSlim[];
+  evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
 }
@@ -53,7 +52,7 @@ export type InnerMsg =
   | ADT<
       "onSubmitResponse",
       api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluationSlim,
+        SWUTeamQuestionResponseEvaluation,
         UpdateValidationErrors
       >[]
     >;
@@ -182,8 +181,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             api.proposals.swu.readMany(opportunity.id)((response) =>
               api.getValidValue(response, state.proposals)
             ),
-            api.evaluations.swu.readMany(opportunity.id)((response) =>
-              api.getValidValue(response, state.evaluations)
+            api.evaluations.swu.readMany({ opportunityId: opportunity.id })(
+              (response) => api.getValidValue(response, state.evaluations)
             ),
             (newOpp, newProposals, newEvaluations) =>
               adt("onInitResponse", [
@@ -222,6 +221,38 @@ const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   } else {
     return <div>No proposals were submitted to this opportunity.</div>;
   }
+};
+
+const ContextMenuCell: component_.base.View<{
+  disabled: boolean;
+  proposal: SWUProposalSlim;
+  evaluation?: SWUTeamQuestionResponseEvaluation;
+}> = ({ disabled, proposal, evaluation }) => {
+  const proposalRouteParams = {
+    proposalId: proposal.id,
+    opportunityId: proposal.opportunity.id,
+    tab: "teamQuestions" as const
+  };
+  return evaluation ? (
+    <Link
+      disabled={disabled}
+      dest={routeDest(
+        adt("questionEvaluationIndividualSWUEdit", {
+          ...proposalRouteParams,
+          evaluationId: evaluation.id
+        })
+      )}>
+      {evaluation ? "Edit" : "Start Evaluation"}
+    </Link>
+  ) : (
+    <Link
+      disabled={disabled}
+      dest={routeDest(
+        adt("questionEvaluationIndividualSWUCreate", proposalRouteParams)
+      )}>
+      {evaluation ? "Edit" : "Start Evaluation"}
+    </Link>
+  );
 };
 
 interface ProponentCellProps {
@@ -267,6 +298,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const issubmitLoading = !!state.submitLoading;
   const isLoading = issubmitLoading;
   return state.proposals.map((p) => {
+    const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
     return [
       {
         className: "text-wrap",
@@ -279,12 +311,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
         )
       },
       ...opportunity.teamQuestions.map((tq) => {
-        const evaluation = state.evaluations.find(
-          (e) => e.proposal.id === p.id
-        );
-        const score = evaluation?.scores.find(
-          (s) => tq.order === s.order
-        )?.score;
+        const score = evaluation?.scores[tq.order].score;
         return {
           className: "text-center",
           children: (
@@ -296,7 +323,13 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
       }),
       {
         className: "text-center",
-        children: "PLACEHOLDER"
+        children: (
+          <ContextMenuCell
+            disabled={isLoading}
+            proposal={p}
+            evaluation={evaluation}
+          />
+        )
       }
     ];
   });

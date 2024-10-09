@@ -19,7 +19,6 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   CreateValidationErrors,
   SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationSlim,
   SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType,
   CreateRequestBody as SharedCreateRequestBody,
@@ -67,14 +66,47 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
   connection: db.Connection
 ) => {
   return nullRequestBodyHandler<
-    JsonResponseBody<SWUTeamQuestionResponseEvaluationSlim[] | string[]>,
+    JsonResponseBody<SWUTeamQuestionResponseEvaluation[] | string[]>,
     Session
   >(async (request) => {
     const respond = (
       code: number,
-      body: SWUTeamQuestionResponseEvaluationSlim[] | string[]
+      body: SWUTeamQuestionResponseEvaluation[] | string[]
     ) => basicResponse(code, request.session, makeJsonResponseBody(body));
     if (request.query.opportunity) {
+      if (!permissions.isSignedIn(request.session)) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+
+      const validatedSWUProposal = await validateSWUProposalId(
+        connection,
+        request.query.proposal,
+        request.session
+      );
+      if (isInvalid(validatedSWUProposal)) {
+        return respond(404, ["Sprint With Us proposal not found."]);
+      }
+
+      if (
+        !(await permissions.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+          connection,
+          request.session,
+          validatedSWUProposal.value
+        ))
+      ) {
+        return respond(401, [permissions.ERROR_MESSAGE]);
+      }
+      const dbResult =
+        await db.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+          connection,
+          request.session,
+          request.query.proposal
+        );
+      if (isInvalid(dbResult)) {
+        return respond(503, [db.ERROR_MESSAGE]);
+      }
+      return respond(200, dbResult.value);
+    } else if (request.query.proposal) {
       if (!permissions.isSignedIn(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }

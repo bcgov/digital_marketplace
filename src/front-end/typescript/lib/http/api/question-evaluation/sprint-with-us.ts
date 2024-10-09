@@ -23,11 +23,16 @@ export function create<Msg>(): crud.CreateAction<
  * @param opportunityId
  * @param consensus
  */
-export function readMany<Msg>(
-  opportunityId?: Id,
-  consensus?: boolean
-): crud.ReadManyAction<
-  Resource.SWUTeamQuestionResponseEvaluationSlim,
+export function readMany<Msg>({
+  opportunityId,
+  proposalId,
+  consensus
+}: {
+  opportunityId?: Id;
+  proposalId?: Id;
+  consensus?: boolean;
+} = {}): crud.ReadManyAction<
+  Resource.SWUTeamQuestionResponseEvaluation,
   string[],
   Msg
 > {
@@ -35,29 +40,28 @@ export function readMany<Msg>(
     opportunity:
       opportunityId !== undefined
         ? window.encodeURIComponent(opportunityId)
-        : ""
+        : "",
+    proposal:
+      proposalId !== undefined ? window.encodeURIComponent(proposalId) : ""
   });
   if (consensus) {
     params.append("consensus", "true");
   }
   return crud.makeReadManyAction(
     NAMESPACE,
-    rawSWUTeamQuestionResponseEvaluationSlimToSWUTeamQuestionResponseEvaluationSlim,
+    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation,
     params.toString()
   );
 }
 
-export function readOne<Msg>(
-  opportunityId: Id
-): crud.ReadOneAction<
+export function readOne<Msg>(): crud.ReadOneAction<
   Resource.SWUTeamQuestionResponseEvaluation,
   string[],
   Msg
 > {
   return crud.makeReadOneAction(
     NAMESPACE,
-    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation,
-    `opportunity=${window.encodeURIComponent(opportunityId)}`
+    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation
   );
 }
 
@@ -87,26 +91,6 @@ interface RawSWUTeamQuestionResponseEvaluation
 function rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation(
   raw: RawSWUTeamQuestionResponseEvaluation
 ): Resource.SWUTeamQuestionResponseEvaluation {
-  return {
-    ...raw,
-    createdAt: new Date(raw.createdAt),
-    updatedAt: new Date(raw.updatedAt),
-    scores: raw.scores.sort((a, b) => compareNumbers(a.order, b.order))
-  };
-}
-
-interface RawSWUTeamQuestionResponseEvaluationSlim
-  extends Omit<
-    Resource.SWUTeamQuestionResponseEvaluationSlim,
-    "createdAt" | "updatedAt"
-  > {
-  createdAt: string;
-  updatedAt: string;
-}
-
-function rawSWUTeamQuestionResponseEvaluationSlimToSWUTeamQuestionResponseEvaluationSlim(
-  raw: RawSWUTeamQuestionResponseEvaluationSlim
-): Resource.SWUTeamQuestionResponseEvaluationSlim {
   return {
     ...raw,
     createdAt: new Date(raw.createdAt),

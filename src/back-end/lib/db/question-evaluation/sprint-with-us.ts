@@ -21,7 +21,6 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
-  SWUTeamQuestionResponseEvaluationSlim,
   SWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationType,
   UpdateEditRequestBody
@@ -105,37 +104,6 @@ async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
   };
 }
 
-async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
-  connection: Connection,
-  session: Session,
-  raw: RawSWUTeamQuestionResponseEvaluation
-): Promise<SWUTeamQuestionResponseEvaluationSlim> {
-  const {
-    proposal: proposalId,
-    evaluationPanelMember,
-    scores,
-    ...restOfRaw
-  } = raw;
-
-  const proposal =
-    session &&
-    getValidValue(
-      await readOneSWUProposalSlim(connection, proposalId, session),
-      null
-    );
-  if (!proposal) {
-    throw new Error("unable to process team question response evaluation");
-  }
-
-  return {
-    ...restOfRaw,
-    proposal,
-    scores: scores.map(
-      ({ notes, teamQuestionResponseEvaluation, ...score }) => score
-    )
-  };
-}
-
 function makeIsSWUOpportunityEvaluationPanelMember(
   typeFn: (epm: SWUEvaluationPanelMember) => boolean
 ) {
@@ -211,7 +179,7 @@ export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id, boolean],
-  SWUTeamQuestionResponseEvaluationSlim[]
+  SWUTeamQuestionResponseEvaluation[]
 >(async (connection, session, id, isConsensus) => {
   const query = generateSWUTeamQuestionResponseEvaluationQuery(connection)
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
@@ -254,7 +222,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
     await Promise.all(
       results.map(
         async (result) =>
-          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
             connection,
             session,
             result
@@ -266,7 +234,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
 
 export const readOwnSWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession],
-  SWUTeamQuestionResponseEvaluationSlim[]
+  SWUTeamQuestionResponseEvaluation[]
 >(async (connection, session) => {
   const evaluations = await generateSWUTeamQuestionResponseEvaluationQuery(
     connection
@@ -283,7 +251,7 @@ export const readOwnSWUTeamQuestionResponseEvaluations = tryDb<
     await Promise.all(
       evaluations.map(
         async (result) =>
-          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluationSlim(
+          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
             connection,
             session,
             result

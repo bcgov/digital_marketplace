@@ -26,7 +26,7 @@ import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluationSlim } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: SWUOpportunity | null;
@@ -48,7 +48,7 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       Tab.TabId,
       api.ResponseValidation<SWUOpportunity, string[]>,
       api.ResponseValidation<SWUProposalSlim[], string[]>,
-      api.ResponseValidation<SWUTeamQuestionResponseEvaluationSlim[], string[]>,
+      api.ResponseValidation<SWUTeamQuestionResponseEvaluation[], string[]>,
       User
     ]
   >
@@ -110,10 +110,10 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 )
               : component_.cmd.dispatch(valid([])),
             Tab.shouldLoadEvaluationsForTab(tabId)
-              ? api.evaluations.swu.readMany(
-                  routeParams.opportunityId,
-                  tabId === "consensus"
-                )((response) => response)
+              ? api.evaluations.swu.readMany({
+                  opportunityId: routeParams.opportunityId,
+                  consensus: tabId === "consensus"
+                })((response) => response)
               : component_.cmd.dispatch(valid([])),
             (opportunity, proposals, evaluations) =>
               adt("onInitResponse", [
