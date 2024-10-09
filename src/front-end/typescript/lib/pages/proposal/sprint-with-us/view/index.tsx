@@ -26,9 +26,11 @@ import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: SWUProposal | null;
+  questionEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 export type State_<K extends Tab.TabId> = Validation<
@@ -40,7 +42,16 @@ export type State = State_<Tab.TabId>;
 
 export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
   K,
-  ADT<"onInitResponse", [User, RouteParams, SWUProposal, SWUOpportunity]>
+  ADT<
+    "onInitResponse",
+    [
+      User,
+      RouteParams,
+      SWUProposal,
+      SWUOpportunity,
+      SWUTeamQuestionResponseEvaluation[]
+    ]
+  >
 >;
 
 export type InnerMsg = InnerMsg_<Tab.TabId>;
@@ -71,7 +82,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           immutable({
             proposal: null,
             tab: null,
-            sidebar: null
+            sidebar: null,
+            questionEvaluations: []
           })
         ) as State_<K>,
         [
@@ -91,7 +103,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 shared.sessionUser,
                 routeParams,
                 proposal,
-                opportunity
+                opportunity,
+                []
               ]) as Msg;
             }
           )
@@ -139,8 +152,13 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [viewerUser, routeParams, proposal, opportunity] =
-                msg.value;
+              const [
+                viewerUser,
+                routeParams,
+                proposal,
+                opportunity,
+                questionEvaluations
+              ] = msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";
               // Initialize the sidebar.
@@ -153,7 +171,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const [tabState, tabCmds] = tabComponent.init({
                 viewerUser,
                 proposal,
-                opportunity
+                opportunity,
+                questionEvaluations
               });
               // Everything checks out, return valid state.
               return [
