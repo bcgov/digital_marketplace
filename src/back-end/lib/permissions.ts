@@ -1004,7 +1004,7 @@ export function editSWUTeamQuestionResponseEvaluation(
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
       (evaluation.proposal.status ===
         SWUProposalStatus.TeamQuestionsPanelConsensus &&
-        evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
+        evaluation.type === SWUTeamQuestionResponseEvaluationType.Consensus))
   );
 }
 
@@ -1021,7 +1021,7 @@ export function submitSWUTeamQuestionResponseEvaluation(
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
       (evaluation.proposal.status ===
         SWUProposalStatus.TeamQuestionsPanelConsensus &&
-        evaluation.type === SWUTeamQuestionResponseEvaluationType.Conensus))
+        evaluation.type === SWUTeamQuestionResponseEvaluationType.Consensus))
   );
 }
 

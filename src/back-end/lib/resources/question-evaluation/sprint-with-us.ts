@@ -227,7 +227,7 @@ const create: crud.Create<
         questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationType(
           type,
           [
-            SWUTeamQuestionResponseEvaluationType.Conensus,
+            SWUTeamQuestionResponseEvaluationType.Consensus,
             SWUTeamQuestionResponseEvaluationType.Individual
           ]
         );
@@ -437,7 +437,7 @@ const update: crud.Update<
             validatedSWUTeamQuestionResponseEvaluation.value.status !==
               SWUTeamQuestionResponseEvaluationStatus.Draft &&
             validatedSWUTeamQuestionResponseEvaluation.value.type !==
-              SWUTeamQuestionResponseEvaluationType.Conensus
+              SWUTeamQuestionResponseEvaluationType.Consensus
           ) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]

@@ -10,8 +10,8 @@ export function parseSWUTeamQuestionResponseEvaluationType(
   raw: string
 ): SWUTeamQuestionResponseEvaluationType | null {
   switch (raw) {
-    case SWUTeamQuestionResponseEvaluationType.Conensus:
-      return SWUTeamQuestionResponseEvaluationType.Conensus;
+    case SWUTeamQuestionResponseEvaluationType.Consensus:
+      return SWUTeamQuestionResponseEvaluationType.Consensus;
     case SWUTeamQuestionResponseEvaluationType.Individual:
       return SWUTeamQuestionResponseEvaluationType.Individual;
     default:
@@ -33,7 +33,7 @@ export function parseSWUTeamQuestionResponseEvaluationStatus(
 }
 
 export enum SWUTeamQuestionResponseEvaluationType {
-  Conensus = "CONSENSUS",
+  Consensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
 }
 
