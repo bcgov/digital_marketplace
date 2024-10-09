@@ -937,6 +937,31 @@ export async function readManySWUTeamQuestionResponseEvaluations(
   );
 }
 
+export async function readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+  connection: Connection,
+  session: Session,
+  proposal: SWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+      proposal.opportunity.status
+    ) ||
+      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
+        ((await isSWUOpportunityEvaluationPanelEvaluator(
+          connection,
+          session,
+          proposal.opportunity.id
+        )) ||
+          (await isSWUOpportunityEvaluationPanelChair(
+            connection,
+            session,
+            proposal.opportunity.id
+          )))))
+  );
+}
+
 export function readOwnSWUTeamQuestionResponseEvaluations(
   session: Session
 ): boolean {
