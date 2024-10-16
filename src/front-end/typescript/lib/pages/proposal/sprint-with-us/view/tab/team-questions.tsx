@@ -1,7 +1,7 @@
 import { EMPTY_STRING } from "front-end/config";
 // import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
-// import * as FormField from "front-end/lib/components/form-field";
+import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as LongText from "front-end/lib/components/form-field/long-text";
 import {
@@ -10,6 +10,7 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
+import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
@@ -19,30 +20,31 @@ import ReportCardList from "front-end/lib/views/report-card-list";
 import Separator from "front-end/lib/views/separator";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
-import { compareNumbers, countWords } from "shared/lib";
+import { countWords } from "shared/lib";
 import {
   // canSWUOpportunityBeScreenedInToCodeChallenge,
   getQuestionByOrder,
   // hasSWUOpportunityPassedCodeChallenge,
   hasSWUOpportunityPassedTeamQuestions,
   hasSWUOpportunityPassedTeamQuestionsEvaluation,
-  SWUEvaluationPanelMember,
   SWUOpportunity,
-  SWUOpportunityStatus,
-  SWUTeamQuestion
+  SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   NUM_SCORE_DECIMALS,
   SWUProposal,
+  SWUProposalStatus,
   // SWUProposalStatus,
-  SWUProposalTeamQuestionResponse,
-  UpdateValidationErrors
+  SWUProposalTeamQuestionResponse
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
-  getEvaluationById,
+  CreateValidationErrors,
   getEvaluationScoreByOrder,
   SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationScores
+  SWUTeamQuestionResponseEvaluationScores,
+  SWUTeamQuestionResponseEvaluationStatus,
+  SWUTeamQuestionResponseEvaluationType,
+  UpdateValidationErrors
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
@@ -50,203 +52,113 @@ import {
   validateSWUTeamQuestionResponseEvaluationScoreNotes,
   validateSWUTeamQuestionResponseEvaluationScoreScore
 } from "shared/lib/validation/question-evaluation/sprint-with-us";
+import { makeStartLoading, makeStopLoading } from "front-end/lib";
+import { leftPlacement, iconLinkSymbol } from "front-end/lib/views/link";
 
 interface EvaluationScore {
   score: Immutable<NumberField.State>;
   notes: Immutable<LongText.State>;
 }
 
+type ModalId = ADT<"cancel">;
+
 export interface State extends Tab.Params {
-  enterScoreLoading: number;
+  showModal: ModalId | null;
+  startEditingLoading: number;
+  saveLoading: number;
   screenToFromLoading: number;
   openAccordions: Set<number>;
-  individualEvaluationScores: EvaluationScore[][];
-  consensusEvaluationScores: EvaluationScore[];
+  evaluationScores: EvaluationScore[];
+  isEditing: boolean;
 }
 
 export type InnerMsg =
   | ADT<"toggleAccordion", number>
-  | ADT<"submitScore">
+  | ADT<"showModal", ModalId>
+  | ADT<"saveDraft">
   | ADT<
-      "onSubmitScoreResponse",
-      api.ResponseValidation<SWUProposal, UpdateValidationErrors>
+      "onSaveDraftResponse",
+      api.ResponseValidation<
+        SWUTeamQuestionResponseEvaluation,
+        CreateValidationErrors
+      >
+    >
+  | ADT<"saveChanges">
+  | ADT<
+      "onSaveChangesResponse",
+      api.ResponseValidation<
+        SWUTeamQuestionResponseEvaluation,
+        UpdateValidationErrors
+      >
     >
   | ADT<"screenIn">
   | ADT<"onScreenInResponse", SWUProposal | null>
   | ADT<"screenOut">
   | ADT<"onScreenOutResponse", SWUProposal | null>
-  | ADT<
-      "scoreMsgIndividual",
-      { childMsg: NumberField.Msg; rIndex: number; eIndex: number }
-    >
-  | ADT<
-      "notesMsgIndividual",
-      { childMsg: LongText.Msg; rIndex: number; eIndex: number }
-    >
-  | ADT<"scoreMsgConsensus", { childMsg: NumberField.Msg; rIndex: number }>
-  | ADT<"notesMsgConsensus", { childMsg: LongText.Msg; rIndex: number }>;
+  | ADT<"scoreMsg", { childMsg: NumberField.Msg; rIndex: number }>
+  | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const initScore = (
-  score: SWUTeamQuestionResponseEvaluationScores,
-  question: SWUTeamQuestion | null,
-  order: number,
-  rIndex: number
-): [
-  EvaluationScore,
-  [ReturnType<typeof NumberField.init>[1], ReturnType<typeof LongText.init>[1]]
-] => {
-  const [scoreState, scoreCmds] = NumberField.init({
-    errors: [],
-    validate: (v) => {
-      if (v === null) {
-        return invalid(["Please enter a valid score."]);
-      }
-      return validateSWUTeamQuestionResponseEvaluationScoreScore(
-        v,
-        question?.score || 0
-      );
-    },
-    child: {
-      step: 0.01,
-      value:
-        score.score === null || score.score === undefined ? null : score.score,
-      id: `swu-proposal-question-score-${order}-${rIndex}`
-    }
-  });
-  const [notesState, notesCmds] = LongText.init({
-    errors: [],
-    validate: validateSWUTeamQuestionResponseEvaluationScoreNotes,
-    child: {
-      value: score?.notes ?? "",
-      id: `swu-proposal-question-notes-${order}-${rIndex}`
-    }
-  });
-
-  return [
-    {
-      score: immutable(scoreState),
-      notes: immutable(notesState)
-    },
-    [scoreCmds, notesCmds]
-  ];
-};
-
-function initIndividualScores(
+function initEvaluationScores(
   opp: SWUOpportunity,
   prop: SWUProposal,
-  evaluators: SWUEvaluationPanelMember[],
-  evaluations: SWUTeamQuestionResponseEvaluation[]
-): [EvaluationScore[][], component_.Cmd<Msg>[]] {
-  return (prop.teamQuestionResponses || []).reduce(
-    ([states, cmds], r, rIndex) => {
-      // Gets the opp by response order
-      const question = getQuestionByOrder(opp, r.order);
-
-      const [questionScoreStates, questionScoreCmds] = evaluators.reduce<
-        component_.base.InitReturnValue<EvaluationScore[], Msg>
-      >(
-        ([scoreStates, scoreCmds], epm, eIndex) => {
-          const evaluation = getEvaluationById(evaluations, epm.user.id);
-          if (!evaluation) {
-            return [scoreStates, scoreCmds];
-          }
-          const score = getEvaluationScoreByOrder(evaluation, r.order);
-          if (!score) {
-            return [scoreStates, scoreCmds];
-          }
-
-          const [scoreState, [scoreScoreCmds, scoreNotesCmds]] = initScore(
-            score,
-            question,
-            epm.order,
-            rIndex
-          );
-
-          return [
-            [...scoreStates, scoreState],
-            [
-              ...scoreCmds,
-              ...[
-                ...component_.cmd.mapMany(
-                  scoreScoreCmds,
-                  (childMsg) =>
-                    adt("scoreMsgIndividual", {
-                      rIndex,
-                      eIndex,
-                      childMsg
-                    }) as Msg
-                ),
-                ...component_.cmd.mapMany(
-                  scoreNotesCmds,
-                  (childMsg) =>
-                    adt("notesMsgIndividual", {
-                      rIndex,
-                      eIndex,
-                      childMsg
-                    }) as Msg
-                )
-              ]
-            ]
-          ];
-        },
-        [[], []]
-      );
-
-      return [
-        [...states, questionScoreStates],
-        [...cmds, ...questionScoreCmds]
-      ];
-    },
-    [[], []] as [EvaluationScore[][], component_.Cmd<Msg>[]]
-  );
-}
-
-function initConsensusScores(
-  opp: SWUOpportunity,
-  prop: SWUProposal,
-  chair: SWUEvaluationPanelMember,
-  evaluations: SWUTeamQuestionResponseEvaluation[]
+  evaluation?: SWUTeamQuestionResponseEvaluation
 ): [EvaluationScore[], component_.Cmd<Msg>[]] {
-  return (prop.teamQuestionResponses || []).reduce<
+  return prop.teamQuestionResponses.reduce<
     [EvaluationScore[], component_.Cmd<Msg>[]]
   >(
     ([states, cmds], r, rIndex) => {
       const question = getQuestionByOrder(opp, r.order);
+      const score = evaluation
+        ? getEvaluationScoreByOrder(evaluation, r.order)
+        : null;
 
-      const evaluation = getEvaluationById(evaluations, chair.user.id);
-      if (!evaluation) {
-        return [states, cmds];
-      }
-      const score = getEvaluationScoreByOrder(evaluation, r.order);
-      if (!score) {
-        return [states, cmds];
-      }
-
-      const [scoreState, [scoreScoreCmds, scoreNotesCmds]] = initScore(
-        score,
-        question,
-        chair.order,
-        rIndex
-      );
+      const [scoreState, scoreCmds] = NumberField.init({
+        errors: [],
+        validate: (v) => {
+          if (v === null) {
+            return invalid(["Please enter a valid score."]);
+          }
+          return validateSWUTeamQuestionResponseEvaluationScoreScore(
+            v,
+            question?.score || 0
+          );
+        },
+        child: {
+          step: 0.01,
+          value: score?.score ?? null,
+          id: `swu-proposal-question-evaluation-score-${rIndex}`
+        }
+      });
+      const [notesState, notesCmds] = LongText.init({
+        errors: [],
+        validate: validateSWUTeamQuestionResponseEvaluationScoreNotes,
+        child: {
+          value: score?.notes ?? "",
+          id: `swu-proposal-question-evaluation-notes-${rIndex}`
+        }
+      });
 
       return [
-        [...states, scoreState],
+        [
+          ...states,
+          { score: immutable(scoreState), notes: immutable(notesState) }
+        ],
         [
           ...cmds,
           ...component_.cmd.mapMany(
-            scoreScoreCmds,
+            scoreCmds,
             (childMsg) =>
-              adt("scoreMsgConsensus", {
+              adt("scoreMsg", {
                 rIndex,
                 childMsg
               }) as Msg
           ),
           ...component_.cmd.mapMany(
-            scoreNotesCmds,
+            notesCmds,
             (childMsg) =>
-              adt("notesMsgConsensus", {
+              adt("notesMsg", {
                 rIndex,
                 childMsg
               }) as Msg
@@ -259,43 +171,32 @@ function initConsensusScores(
 }
 
 export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
-  const sortedEvaluators =
-    params.opportunity.evaluationPanel?.sort((a, b) =>
-      compareNumbers(a.order, b.order)
-    ) ?? [];
-  const chair = sortedEvaluators.filter((epm) => epm.chair)[0];
-  const [individualScoreStates, individualScoreCmds] = initIndividualScores(
+  const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
     params.opportunity,
     params.proposal,
-    sortedEvaluators.filter((epm) => epm.evaluator),
-    params.questionEvaluations
-  );
-  const [consensusScoreStates, consensusScoreCmds] = initConsensusScores(
-    params.opportunity,
-    params.proposal,
-    chair,
-    params.questionEvaluations
+    params.questionEvaluation
   );
   return [
     {
       ...params,
       showModal: null,
       screenToFromLoading: 0,
-      enterScoreLoading: 0,
+      saveLoading: 0,
+      startEditingLoading: 0,
       openAccordions: new Set(
         params.proposal.teamQuestionResponses.map((p, i) => i)
       ),
-      individualEvaluationScores: individualScoreStates,
-      consensusEvaluationScores: consensusScoreStates
+      evaluationScores: evaluationScoreStates,
+      isEditing: !params.questionEvaluation
     },
-    [...individualScoreCmds, ...consensusScoreCmds]
+    evaluationScoreCmds
   ];
 };
 
-// const startScreenToFromLoading = makeStartLoading<State>("screenToFromLoading");
-// const stopScreenToFromLoading = makeStopLoading<State>("screenToFromLoading");
-// const startEnterScoreLoading = makeStartLoading<State>("enterScoreLoading");
-// const stopEnterScoreLoading = makeStopLoading<State>("enterScoreLoading");
+const startSaveLoading = makeStartLoading<State>("saveLoading");
+const stopSaveLoading = makeStopLoading<State>("saveLoading");
+// const startEditingLoading = makeStartLoading<State>("startEditingLoading");
+// const stopEditingLoading = makeStopLoading<State>("startEditingLoading");
 
 const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -311,101 +212,192 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         }),
         []
       ];
-    // case "submitScore": {
-    //   const scores = state.proposal.teamQuestionResponses.reduce(
-    //     (acc, r, i) => {
-    //       if (!acc) {
-    //         return null;
-    //       }
-    //       const field = state.scores[i];
-    //       if (!field) {
-    //         return null;
-    //       }
-    //       const score = FormField.getValue(field);
-    //       if (score === null) {
-    //         return null;
-    //       }
-    //       acc.push({
-    //         order: r.order,
-    //         score
-    //       });
-    //       return acc;
-    //     },
-    //     [] as UpdateTeamQuestionScoreBody[] | null
-    //   );
-    //   if (scores === null) {
-    //     return [state, []];
-    //   }
-    //   return [
-    //     startEnterScoreLoading(state),
-    //     [
-    //       api.proposals.swu.update<Msg>()(
-    //         state.proposal.id,
-    //         adt("scoreQuestions", scores),
-    //         (response) => adt("onSubmitScoreResponse", response)
-    //       )
-    //     ]
-    //   ];
-    // }
-    // case "onSubmitScoreResponse": {
-    //   state = stopEnterScoreLoading(state);
-    //   const result = msg.value;
-    //   switch (result.tag) {
-    //     case "valid": {
-    //       const [scoreStates, scoreCmds] = initScores(
-    //         state.opportunity,
-    //         result.value
-    //       );
-    //       return [
-    //         state
-    //           .set("scores", scoreStates)
-    //           .set("showModal", null)
-    //           .set("proposal", result.value),
-    //         [
-    //           ...scoreCmds,
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("success", toasts.scored.success("Team Questions"))
-    //             )
-    //           )
-    //         ]
-    //       ];
-    //     }
-    //     case "invalid": {
-    //       let scores = state.scores;
-    //       if (
-    //         result.value.proposal &&
-    //         result.value.proposal.tag === "scoreQuestions"
-    //       ) {
-    //         scores = result.value.proposal.value.map((e, i) =>
-    //           FormField.setErrors(scores[i], e.score || [])
-    //         );
-    //       }
-    //       return [
-    //         state.set("scores", scores),
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("error", toasts.scored.error("Team Questions"))
-    //             )
-    //           )
-    //         ]
-    //       ];
-    //     }
-    //     case "unhandled":
-    //     default:
-    //       return [
-    //         state,
-    //         [
-    //           component_.cmd.dispatch(
-    //             component_.global.showToastMsg(
-    //               adt("error", toasts.scored.error("Team Questions"))
-    //             )
-    //           )
-    //         ]
-    //       ];
-    //   }
-    // }
+    case "saveDraft": {
+      const scores = getValues(state);
+      if (scores === null) {
+        return [state, []];
+      }
+
+      return [
+        startSaveLoading(state),
+        [
+          api.evaluations.swu.create<Msg>()(
+            {
+              proposal: state.proposal.id,
+              type:
+                state.proposal.status ===
+                SWUProposalStatus.TeamQuestionsPanelIndividual
+                  ? SWUTeamQuestionResponseEvaluationType.Individual
+                  : SWUTeamQuestionResponseEvaluationType.Consensus,
+              status: SWUTeamQuestionResponseEvaluationStatus.Draft,
+              scores
+            },
+            (response) => adt("onSaveDraftResponse", response)
+          )
+        ]
+      ];
+    }
+    case "onSaveDraftResponse": {
+      state = stopSaveLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [evaluationScoreStates, evaluationScoreCmds] =
+            initEvaluationScores(
+              state.opportunity,
+              state.proposal,
+              result.value
+            );
+          return [
+            state.set("evaluationScores", evaluationScoreStates),
+            [
+              ...evaluationScoreCmds,
+              component_.cmd.dispatch(
+                component_.global.newRouteMsg(
+                  adt(
+                    result.value.type ===
+                      SWUTeamQuestionResponseEvaluationType.Individual
+                      ? "questionEvaluationIndividualSWUEdit"
+                      : "questionEvaluationConsensusSWUEdit",
+                    {
+                      proposalId: state.proposal.id,
+                      opportunityId: state.proposal.opportunity.id,
+                      evaluationId: result.value.id,
+                      tab: "teamQuestions" as const
+                    }
+                  ) as Route
+                )
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.questionEvaluationDraftCreated.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let evaluationScores = state.evaluationScores;
+          if (result.value) {
+            evaluationScores = (result.value.scores ?? []).map((e, i) => ({
+              notes: FormField.setErrors(
+                evaluationScores[i].notes,
+                e.notes || []
+              ),
+              score: FormField.setErrors(
+                evaluationScores[i].score,
+                e.score || []
+              )
+            }));
+          }
+          return [
+            state.set("evaluationScores", evaluationScores),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationDraftCreated.error)
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationDraftCreated.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "saveChanges": {
+      const scores = getValues(state);
+      if (scores === null) {
+        return [state, []];
+      }
+
+      return [
+        startSaveLoading(state),
+        state.questionEvaluation
+          ? [
+              api.evaluations.swu.update<Msg>()(
+                state.questionEvaluation.id,
+                adt("edit", { scores }),
+                (response) => adt("onSaveDraftResponse", response)
+              )
+            ]
+          : []
+      ];
+    }
+    case "onSaveChangesResponse": {
+      state = stopSaveLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [evaluationScoreStates, evaluationScoreCmds] =
+            initEvaluationScores(
+              state.opportunity,
+              state.proposal,
+              result.value
+            );
+          return [
+            state.set("evaluationScores", evaluationScoreStates),
+            [
+              ...evaluationScoreCmds,
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.questionEvaluationChangesSaved.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let evaluationScores = state.evaluationScores;
+          if (result.value.evaluation?.tag === "edit") {
+            evaluationScores = (result.value.evaluation.value.scores ?? []).map(
+              (e, i) => ({
+                notes: FormField.setErrors(
+                  evaluationScores[i].notes,
+                  e.notes || []
+                ),
+                score: FormField.setErrors(
+                  evaluationScores[i].score,
+                  e.score || []
+                )
+              })
+            );
+          }
+          return [
+            state.set("evaluationScores", evaluationScores),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationChangesSaved.error)
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationChangesSaved.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
     // case "screenIn":
     //   return [
     //     startScreenToFromLoading(state).set("showModal", null),
@@ -482,70 +474,26 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     //     return [state, []];
     //   }
     // }
-    case "scoreMsgIndividual":
+    case "scoreMsg":
       return component_.base.updateChild({
         state,
-        childStatePath: [
-          "individualEvaluationScores",
-          String(msg.value.rIndex),
-          String(msg.value.eIndex),
-          "score"
-        ],
+        childStatePath: ["evaluationScores", String(msg.value.rIndex), "score"],
         childUpdate: NumberField.update,
         childMsg: msg.value.childMsg,
         mapChildMsg: (value) =>
-          adt("scoreMsgIndividual", {
+          adt("scoreMsg", {
             rIndex: msg.value.rIndex,
-            eIndex: msg.value.eIndex,
             childMsg: value
           }) as Msg
       });
-    case "notesMsgIndividual":
+    case "notesMsg":
       return component_.base.updateChild({
         state,
-        childStatePath: [
-          "individualEvaluationScores",
-          String(msg.value.rIndex),
-          String(msg.value.eIndex),
-          "notes"
-        ],
+        childStatePath: ["evaluationScores", String(msg.value.rIndex), "notes"],
         childUpdate: LongText.update,
         childMsg: msg.value.childMsg,
         mapChildMsg: (value) =>
-          adt("notesMsgIndividual", {
-            rIndex: msg.value.rIndex,
-            eIndex: msg.value.eIndex,
-            childMsg: value
-          }) as Msg
-      });
-    case "scoreMsgConsensus":
-      return component_.base.updateChild({
-        state,
-        childStatePath: [
-          "consensusEvaluationScores",
-          String(msg.value.rIndex),
-          "score"
-        ],
-        childUpdate: NumberField.update,
-        childMsg: msg.value.childMsg,
-        mapChildMsg: (value) =>
-          adt("scoreMsgConsensus", {
-            rIndex: msg.value.rIndex,
-            childMsg: value
-          }) as Msg
-      });
-    case "notesMsgConsensus":
-      return component_.base.updateChild({
-        state,
-        childStatePath: [
-          "consensusEvaluationScores",
-          String(msg.value.rIndex),
-          "notes"
-        ],
-        childUpdate: LongText.update,
-        childMsg: msg.value.childMsg,
-        mapChildMsg: (value) =>
-          adt("notesMsgConsensus", {
+          adt("notesMsg", {
             rIndex: msg.value.rIndex,
             childMsg: value
           }) as Msg
@@ -554,6 +502,34 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [state, []];
   }
 };
+
+export function getValues(
+  state: Immutable<State>
+): SWUTeamQuestionResponseEvaluationScores[] | null {
+  return state.proposal.teamQuestionResponses.reduce((acc, r, i) => {
+    if (!acc) {
+      return null;
+    }
+    const field = state.evaluationScores[i];
+    if (!field) {
+      return null;
+    }
+    const score = FormField.getValue(field.score);
+    if (score === null) {
+      return null;
+    }
+    const notes = FormField.getValue(field.notes);
+    if (notes === null) {
+      return null;
+    }
+    acc.push({
+      order: r.order,
+      score,
+      notes
+    });
+    return acc;
+  }, [] as SWUTeamQuestionResponseEvaluationScores[] | null);
+}
 
 interface TeamQuestionResponseViewProps {
   opportunity: SWUOpportunity;
@@ -663,9 +639,36 @@ const TeamQuestionResponsesView: component_.base.View<{
   );
 };
 
+// interface TeamQuestionResponseEvalViewProps
+//   extends TeamQuestionResponseViewProps {
+//   individualScores: EvaluationScore[];
+//   consensusScore: EvaluationScore;
+// }
+
+// const TeamQuestionsResponseEvalIndividualView: component_.base.View<
+// TeamQuestionResponseEvalViewProps
+// > = ()
+
+interface TeamQuestionResponseEvalViewProps
+  extends Omit<TeamQuestionResponseViewProps, "toggleAccordion"> {
+  score: EvaluationScore;
+  proposal: SWUProposal;
+  dispatch: component_.base.Dispatch<Msg>;
+  // panelEvaluationScores: SWUTeamQuestionResponseEvaluation[]
+}
+
 const TeamQuestionResponseEvalView: component_.base.View<
-  TeamQuestionResponseViewProps
-> = ({ opportunity, response, index, isOpen, className, toggleAccordion }) => {
+  TeamQuestionResponseEvalViewProps
+> = ({
+  opportunity,
+  response,
+  index,
+  isOpen,
+  className,
+  dispatch,
+  proposal,
+  score
+}) => {
   const question = getQuestionByOrder(opportunity, response.order);
   if (!question) {
     return null;
@@ -673,7 +676,7 @@ const TeamQuestionResponseEvalView: component_.base.View<
   return (
     <Accordion
       className={className}
-      toggle={() => toggleAccordion()}
+      toggle={() => dispatch(adt("toggleAccordion", index))}
       color="info"
       title={`Question ${index + 1}`}
       titleClassName="h3 mb-0"
@@ -702,7 +705,46 @@ const TeamQuestionResponseEvalView: component_.base.View<
       <Alert color="primary" fade={false} className="mb-4">
         <div style={{ whiteSpace: "pre-line" }}>{question.guideline}</div>
       </Alert>
-      <ProposalMarkdown box source={response.response || EMPTY_STRING} />
+      <div className="mb-3">
+        <ProposalMarkdown box source={response.response || EMPTY_STRING} />
+      </div>
+      {proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ? (
+        <Row>
+          <Col xs="12">
+            <LongText.view
+              label="Evaluator Notes"
+              extraChildProps={{
+                style: { height: "200px" }
+              }}
+              // disabled={disabled}
+              state={score.notes}
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                adt("notesMsg" as const, {
+                  childMsg: value,
+                  rIndex: index
+                })
+              )}
+            />
+          </Col>
+          <Col xs="12">
+            <NumberField.view
+              extraChildProps={{ suffix: "Points" }}
+              label="Score"
+              hint="hint"
+              // disabled={disabled}
+              state={score.score}
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                adt("scoreMsg" as const, {
+                  childMsg: value,
+                  rIndex: index
+                })
+              )}
+            />
+          </Col>
+        </Row>
+      ) : (
+        <div />
+      )}
     </Accordion>
   );
 };
@@ -744,13 +786,16 @@ const TeamQuestionResponsesEvalView: component_.base.View<{
                 <h3 className="mb-4">Team Questions{"'"} Responses</h3>
                 {state.proposal.teamQuestionResponses.map((r, i, rs) => (
                   <TeamQuestionResponseEvalView
-                    key={`swu-proposal-team-question-response-${i}`}
+                    key={`swu-proposal-team-question-response-evaluation-${i}`}
                     className={i < rs.length - 1 ? "mb-4" : ""}
                     opportunity={state.opportunity}
                     isOpen={state.openAccordions.has(i)}
-                    toggleAccordion={() => dispatch(adt("toggleAccordion", i))}
                     index={i}
                     response={r}
+                    score={state.evaluationScores[i]}
+                    // panelEvaluations={state.panelEvaluations}
+                    proposal={state.proposal}
+                    dispatch={dispatch}
                   />
                 ))}
               </div>
@@ -776,12 +821,12 @@ const view: component_.base.ComponentView<State, Msg> = ({
   );
 };
 
-// function isValid(state: Immutable<State>): boolean {
-//   return state.scores.reduce(
-//     (acc, s) => acc && FormField.isValid(s),
-//     true as boolean
-//   );
-// }
+function isValid(state: Immutable<State>): boolean {
+  return state.evaluationScores.reduce(
+    (acc, s) => acc && FormField.isValid(s.notes) && FormField.isValid(s.score),
+    true as boolean
+  );
+}
 
 export const component: Tab.Component<State, Msg> = {
   init,
@@ -848,21 +893,57 @@ export const component: Tab.Component<State, Msg> = {
   //   }
   // },
 
-  getActions: ({ state }) => {
+  getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
-    // const isScreenToFromLoading = state.screenToFromLoading > 0;
+    const isSaveLoading = state.saveLoading > 0;
+    const valid = isValid(state);
+    // if (state.evaluation && state.isEditing) {
+    // }
     switch (propStatus) {
-      // case SWUProposalStatus.UnderReviewTeamQuestions:
-      //   return component_.page.actions.links([
-      //     {
-      //       children: "Enter Score",
-      //       symbol_: leftPlacement(iconLinkSymbol("star-full")),
-      //       button: true,
-      //       color: "primary",
-      //       onClick: () => dispatch(adt("showModal", "enterScore" as const))
-      //     }
-      //   ]);
+      case SWUProposalStatus.TeamQuestionsPanelIndividual:
+        return component_.page.actions.links(
+          state.questionEvaluation
+            ? state.questionEvaluation.status ===
+              SWUTeamQuestionResponseEvaluationStatus.Draft
+              ? [
+                  {
+                    children: "Save Changes",
+                    symbol_: leftPlacement(iconLinkSymbol("save")),
+                    loading: isSaveLoading,
+                    disabled: isSaveLoading || !valid,
+                    button: true,
+                    color: "success",
+                    onClick: () => dispatch(adt("saveChanges"))
+                  },
+                  {
+                    children: "Cancel",
+                    color: "c-nav-fg-alt",
+                    disabled: isSaveLoading,
+                    onClick: () =>
+                      dispatch(adt("showModal", adt("cancel")) as Msg)
+                  }
+                ]
+              : []
+            : [
+                {
+                  children: "Save Draft",
+                  symbol_: leftPlacement(iconLinkSymbol("save")),
+                  loading: isSaveLoading,
+                  disabled: isSaveLoading || !valid,
+                  button: true,
+                  color: "success",
+                  onClick: () => dispatch(adt("saveDraft"))
+                },
+                {
+                  children: "Cancel",
+                  color: "c-nav-fg-alt",
+                  disabled: isSaveLoading,
+                  onClick: () =>
+                    dispatch(adt("showModal", adt("cancel")) as Msg)
+                }
+              ]
+        );
       // case SWUProposalStatus.EvaluatedTeamQuestions:
       //   return component_.page.actions.links([
       //     ...(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
