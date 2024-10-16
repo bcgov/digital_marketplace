@@ -59,20 +59,11 @@ export interface SWUTeamQuestionResponseEvaluation {
   updatedAt: Date;
 }
 
-export function getEvaluationById(
-  evaluations: SWUTeamQuestionResponseEvaluation[],
-  id: Id
-): SWUTeamQuestionResponseEvaluation | null {
-  return (
-    evaluations.find((e) => e.evaluationPanelMember.user.id === id) ?? null
-  );
-}
-
 export function getEvaluationScoreByOrder(
-  evaluation: SWUTeamQuestionResponseEvaluation,
+  evaluation: SWUTeamQuestionResponseEvaluation | null,
   order: number
 ): SWUTeamQuestionResponseEvaluationScores | null {
-  return evaluation.scores.find((s) => s.order === order) ?? null;
+  return evaluation?.scores.find((s) => s.order === order) ?? null;
 }
 
 // Create.
