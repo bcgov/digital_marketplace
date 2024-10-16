@@ -34,7 +34,8 @@ export interface Params {
   proposal: SWUProposal;
   opportunity: SWUOpportunity;
   viewerUser: User;
-  questionEvaluations: SWUTeamQuestionResponseEvaluation[];
+  questionEvaluation?: SWUTeamQuestionResponseEvaluation;
+  panelQuestionEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 export type InitResponse = null;

@@ -49,6 +49,7 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       RouteParams,
       SWUProposal,
       SWUOpportunity,
+      SWUTeamQuestionResponseEvaluation | undefined,
       SWUTeamQuestionResponseEvaluation[]
     ]
   >
@@ -104,6 +105,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routeParams,
                 proposal,
                 opportunity,
+                undefined,
                 []
               ]) as Msg;
             }
@@ -157,7 +159,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 routeParams,
                 proposal,
                 opportunity,
-                questionEvaluations
+                questionEvaluation,
+                panelQuestionEvaluations
               ] = msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";
@@ -172,7 +175,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 viewerUser,
                 proposal,
                 opportunity,
-                questionEvaluations
+                questionEvaluation,
+                panelQuestionEvaluations
               });
               // Everything checks out, return valid state.
               return [
