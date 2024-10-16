@@ -53,13 +53,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.evaluations.swu.readMany({ proposalId })((response) =>
               api.isValid(response) ? response.value : null
             ),
-            (proposal, opportunity, consensus, individualEvaluations) => {
-              if (
-                !proposal ||
-                !opportunity ||
-                !consensus ||
-                !individualEvaluations
-              )
+            (proposal, opportunity, evaluation, panelEvaluations) => {
+              if (!proposal || !opportunity || !evaluation || !panelEvaluations)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
                 );
@@ -68,12 +63,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routeParams,
                 proposal,
                 opportunity,
-                [
-                  consensus,
-                  ...(Array.isArray(individualEvaluations)
-                    ? individualEvaluations
-                    : [])
-                ]
+                evaluation,
+                panelEvaluations
               ]) as Msg;
             }
           )
