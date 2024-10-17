@@ -242,7 +242,7 @@ const ContextMenuCell: component_.base.View<{
           evaluationId: evaluation.id
         })
       )}>
-      {evaluation ? "Edit" : "Start Evaluation"}
+      Edit
     </Link>
   ) : (
     <Link
@@ -250,7 +250,7 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationIndividualSWUCreate", proposalRouteParams)
       )}>
-      {evaluation ? "Edit" : "Start Evaluation"}
+      Start Evaluation
     </Link>
   );
 };
@@ -311,12 +311,12 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
         )
       },
       ...opportunity.teamQuestions.map((tq) => {
-        const score = evaluation?.scores[tq.order].score;
+        const score = evaluation?.scores[tq.order]?.score;
         return {
           className: "text-center",
           children: (
             <div>
-              {score ? `${score.toFixed(NUM_SCORE_DECIMALS)}%` : EMPTY_STRING}
+              {score ? `${score.toFixed(NUM_SCORE_DECIMALS)}` : EMPTY_STRING}
             </div>
           )
         };
