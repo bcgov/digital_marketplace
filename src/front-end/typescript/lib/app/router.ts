@@ -135,6 +135,68 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/individual/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualSWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/individual/:evaluationId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualSWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            evaluationId: params.evaluationId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/consensus/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusSWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/consensus/:evaluationId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusSWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            evaluationId: params.evaluationId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export"
       ),
       makeRoute({ params }) {
@@ -721,6 +783,46 @@ const router: router_.Router<Route> = {
           `/opportunities/sprint-with-us/${
             route.value.opportunityId
           }/proposals/${route.value.proposalId}${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationIndividualSWUCreate":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/question-evaluations/individual/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationIndividualSWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/question-evaluations/individual/${route.value.evaluationId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusSWUCreate":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/question-evaluations/consensus/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusSWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/question-evaluations/consensus/${route.value.evaluationId}/edit${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );

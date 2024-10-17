@@ -57,8 +57,7 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
-  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
+  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
   EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
@@ -113,6 +112,7 @@ export function isSWUOpportunityStatusInEvaluation(
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
+    case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
     case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
@@ -124,8 +124,7 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
-  SWUOpportunityStatus.TeamQuestionsPanelEvaluation,
-  SWUOpportunityStatus.TeamQuestionsPanelConsensus,
+  SWUOpportunityStatus.EvaluationTeamQuestionsPanel,
   SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
@@ -559,6 +558,23 @@ export function canViewSWUOpportunityProposals(o: SWUOpportunity): boolean {
   );
 }
 
+export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
+  o: SWUOpportunity
+): boolean {
+  // Return true if the opportunity has ever had the `Panel` status.
+  return (
+    !!o.history &&
+    o.history.reduce((acc, record) => {
+      return (
+        acc ||
+        (record.type.tag === "status" &&
+          record.type.value ===
+            SWUOpportunityStatus.EvaluationTeamQuestionsPanel)
+      );
+    }, false as boolean)
+  );
+}
+
 export function canSWUOpportunityDetailsBeEdited(
   o: SWUOpportunity,
   adminsOnly: boolean
@@ -612,6 +628,29 @@ export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
     o.status !== SWUOpportunityStatus.UnderReview &&
     o.status !== SWUOpportunityStatus.Suspended
   );
+}
+
+export function hasSWUOpportunityPassedTeamQuestionsEvaluation(
+  o: Pick<SWUOpportunity, "history">
+): boolean {
+  if (!o.history) {
+    return false;
+  }
+  return o.history.reduce((acc, h) => {
+    if (acc || h.type.tag !== "status") {
+      return acc;
+    }
+    switch (h.type.value) {
+      case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
+      case SWUOpportunityStatus.EvaluationTeamQuestions:
+      case SWUOpportunityStatus.EvaluationCodeChallenge:
+      case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Awarded:
+        return true;
+      default:
+        return false;
+    }
+  }, false as boolean);
 }
 
 export function hasSWUOpportunityPassedTeamQuestions(
@@ -694,6 +733,20 @@ export function doesSWUOpportunityStatusAllowGovToViewFullProposal(
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+  s: SWUOpportunityStatus
+): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:

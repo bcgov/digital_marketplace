@@ -1,14 +1,17 @@
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
-import { SWUEvaluationPanelMember } from "src/shared/lib/resources/opportunity/sprint-with-us";
+import {
+  SWUEvaluationPanelMember,
+  SWUOpportunity
+} from "src/shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposalSlim } from "src/shared/lib/resources/proposal/sprint-with-us";
 
 export function parseSWUTeamQuestionResponseEvaluationType(
   raw: string
 ): SWUTeamQuestionResponseEvaluationType | null {
   switch (raw) {
-    case SWUTeamQuestionResponseEvaluationType.Conensus:
-      return SWUTeamQuestionResponseEvaluationType.Conensus;
+    case SWUTeamQuestionResponseEvaluationType.Consensus:
+      return SWUTeamQuestionResponseEvaluationType.Consensus;
     case SWUTeamQuestionResponseEvaluationType.Individual:
       return SWUTeamQuestionResponseEvaluationType.Individual;
     default:
@@ -30,7 +33,7 @@ export function parseSWUTeamQuestionResponseEvaluationStatus(
 }
 
 export enum SWUTeamQuestionResponseEvaluationType {
-  Conensus = "CONSENSUS",
+  Consensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
 }
 
@@ -54,6 +57,13 @@ export interface SWUTeamQuestionResponseEvaluation {
   scores: SWUTeamQuestionResponseEvaluationScores[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export function getEvaluationScoreByOrder(
+  evaluation: SWUTeamQuestionResponseEvaluation | null,
+  order: number
+): SWUTeamQuestionResponseEvaluationScores | null {
+  return evaluation?.scores.find((s) => s.order === order) ?? null;
 }
 
 // Create.
@@ -90,4 +100,42 @@ export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submit", string>;
 
-export type UpdateEditRequestBody = CreateRequestBody;
+export type UpdateEditRequestBody = Omit<
+  CreateRequestBody,
+  "proposal" | "type" | "status"
+>;
+
+type UpdateADTErrors =
+  | ADT<"edit", UpdateEditValidationErrors>
+  | ADT<"submit", string[]>
+  | ADT<"parseFailure">;
+
+export interface UpdateEditValidationErrors {
+  scores?: CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[];
+}
+
+export interface UpdateValidationErrors extends BodyWithErrors {
+  evaluation?: UpdateADTErrors;
+}
+
+export function isValidStatusChange(
+  from: SWUTeamQuestionResponseEvaluationStatus,
+  to: SWUTeamQuestionResponseEvaluationStatus
+): boolean {
+  switch (from) {
+    case SWUTeamQuestionResponseEvaluationStatus.Draft:
+      return SWUTeamQuestionResponseEvaluationStatus.Submitted === to;
+    default:
+      return false;
+  }
+}
+
+export function canSWUTeamQuestionResponseEvaluationBeSubmitted(
+  e: Pick<SWUTeamQuestionResponseEvaluation, "status" | "scores">,
+  o: Pick<SWUOpportunity, "teamQuestions">
+): boolean {
+  return (
+    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft &&
+    o.teamQuestions.length === e.scores.length
+  );
+}

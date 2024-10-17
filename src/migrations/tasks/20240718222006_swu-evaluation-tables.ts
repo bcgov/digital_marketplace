@@ -8,8 +8,7 @@ enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  TeamQuestionsPanelEvaluation = "QUESTIONS_PANEL_EVAL",
-  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONSENSUS",
+  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
   EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
@@ -30,8 +29,40 @@ enum PreviousSWUOpportunityStatus {
   Canceled = "CANCELED"
 }
 
+enum SWUProposalStatus {
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED",
+  TeamQuestionsPanelIndividual = "QUESTIONS_PANEL_INDIVIDUAL",
+  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONESENSUS",
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
+  EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
+  UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
+  EvaluatedTeamScenario = "EVALUATED_TEAM_SCENARIO",
+  Awarded = "AWARDED",
+  NotAwarded = "NOT_AWARDED",
+  Disqualified = "DISQUALIFIED",
+  Withdrawn = "WITHDRAWN"
+}
+
+enum PreviousSWUProposalStatus {
+  Draft = "DRAFT",
+  Submitted = "SUBMITTED",
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
+  EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
+  UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
+  EvaluatedTeamScenario = "EVALUATED_TEAM_SCENARIO",
+  Awarded = "AWARDED",
+  NotAwarded = "NOT_AWARDED",
+  Disqualified = "DISQUALIFIED",
+  Withdrawn = "WITHDRAWN"
+}
+
 enum SWUTeamQuestionResponseEvaluationType {
-  Conensus = "CONSENSUS",
+  Consensus = "CONSENSUS",
   Individual = "INDIVIDUAL"
 }
 
@@ -41,6 +72,20 @@ export enum SWUTeamQuestionResponseEvaluationStatus {
 }
 
 export async function up(connection: Knex): Promise<void> {
+  await connection.schema.raw(
+    ' \
+      ALTER TABLE "swuProposalStatuses" \
+      DROP CONSTRAINT "swuProposalStatuses_status_check" \
+    '
+  );
+
+  await connection.schema.raw(` \
+    ALTER TABLE "swuProposalStatuses" \
+    ADD CONSTRAINT "swuProposalStatuses_status_check" \
+    CHECK (status IN ('${Object.values(SWUProposalStatus).join("','")}')) \
+  `);
+  logger.info("Modified constraint on swuProposalStatuses");
+
   await connection.schema.raw(
     ' \
       ALTER TABLE "swuOpportunityStatuses" \
@@ -120,14 +165,34 @@ export async function up(connection: Knex): Promise<void> {
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.raw(
     ' \
+      ALTER TABLE "swuProposalStatuses" \
+      DROP CONSTRAINT "swuProposalStatuses_status_check" \
+    '
+  );
+
+  await connection("swuProposalStatuses")
+    .where({ status: "QUESTIONS_PANEL_INDIVIDUAL" })
+    .where({ status: "QUESTIONS_PANEL_CONSENSUS" })
+    .del();
+
+  await connection.schema.raw(` \
+    ALTER TABLE "swuProposalStatuses" \
+    ADD CONSTRAINT "swuProposalStatuses_status_check" \
+    CHECK (status IN ('${Object.values(PreviousSWUProposalStatus).join(
+      "','"
+    )}')) \
+  `);
+  logger.info("Reverted constraint on swuProposalStatuses");
+
+  await connection.schema.raw(
+    ' \
       ALTER TABLE "swuOpportunityStatuses" \
       DROP CONSTRAINT "swuOpportunityStatuses_status_check" \
     '
   );
 
   await connection("swuOpportunityStatuses")
-    .where({ status: "QUESTIONS_PANEL_EVAL" })
-    .orWhere({ status: "QUESTIONS_PANEL_CONSENSUS" })
+    .where({ status: "EVAL_QUESTIONS_PANEL" })
     .del();
 
   await connection.schema.raw(` \

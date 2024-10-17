@@ -60,3 +60,4 @@ export * as proposals from "front-end/lib/http/api/proposal";
 export * as sessions from "front-end/lib/http/api/session";
 export * as subscribers from "front-end/lib/http/api/subscribers";
 export * as users from "front-end/lib/http/api/user";
+export * as evaluations from "front-end/lib/http/api/question-evaluation";

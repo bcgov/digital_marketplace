@@ -80,6 +80,7 @@ import {
   validateSWUEvaluationPanelMemberChair,
   validateSWUEvaluationPanelMemberEvaluator
 } from "shared/lib/validation/opportunity/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 /**
  * TWU - Team With Us Validation
@@ -1012,6 +1013,38 @@ export async function validateDraftProposalOrganization(
   return await optionalAsync(organization, (v) =>
     validateOrganizationId(connection, v, session, false)
   );
+}
+
+export async function validateSWUTeamQuestionResponseEvaluationId(
+  connection: db.Connection,
+  evaluationId: Id,
+  session: AuthenticatedSession
+): Promise<Validation<SWUTeamQuestionResponseEvaluation>> {
+  try {
+    const validatedId = validateUUID(evaluationId);
+    if (isInvalid(validatedId)) {
+      return validatedId;
+    }
+    const dbResult = await db.readOneSWUTeamQuestionResponseEvaluation(
+      connection,
+      evaluationId,
+      session
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const evaluation = dbResult.value;
+    if (!evaluation) {
+      return invalid([
+        "The specified team question response evaluation was not found."
+      ]);
+    }
+    return valid(evaluation);
+  } catch (exception) {
+    return invalid([
+      "Please select a valid team question response evaluation."
+    ]);
+  }
 }
 
 export async function validateContentId(
