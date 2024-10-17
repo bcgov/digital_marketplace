@@ -73,7 +73,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       code: number,
       body: SWUTeamQuestionResponseEvaluation[] | string[]
     ) => basicResponse(code, request.session, makeJsonResponseBody(body));
-    if (request.query.opportunity) {
+    if (request.query.proposal) {
       if (!permissions.isSignedIn(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -106,7 +106,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         return respond(503, [db.ERROR_MESSAGE]);
       }
       return respond(200, dbResult.value);
-    } else if (request.query.proposal) {
+    } else if (request.query.opportunity) {
       if (!permissions.isSignedIn(request.session)) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
