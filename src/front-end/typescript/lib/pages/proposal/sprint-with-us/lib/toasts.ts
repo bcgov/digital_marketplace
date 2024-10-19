@@ -60,7 +60,7 @@ export const scored = {
 export const questionEvaluationDraftCreated = {
   success: {
     title: "Draft Evaluation Saved",
-    body: "Your draft Sprint With Us evaluation has been saved. You can return to this page to modify your proposal prior to submission."
+    body: "Your draft Sprint With Us evaluation has been saved. You can return to this page to modify your evaluation prior to submission."
   },
   error: {
     title: "Unable to Save Draft Evaluation",
