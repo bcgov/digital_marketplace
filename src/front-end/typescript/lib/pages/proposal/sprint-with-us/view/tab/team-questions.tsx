@@ -60,7 +60,7 @@ interface EvaluationScore {
   notes: Immutable<LongText.State>;
 }
 
-type ModalId = ADT<"cancel">;
+type ModalId = ADT<"cancelDraft">;
 
 export interface State extends Tab.Params {
   showModal: ModalId | null;
@@ -75,6 +75,8 @@ export interface State extends Tab.Params {
 export type InnerMsg =
   | ADT<"toggleAccordion", number>
   | ADT<"showModal", ModalId>
+  | ADT<"hideModal">
+  | ADT<"cancel">
   | ADT<"saveDraft">
   | ADT<
       "onSaveDraftResponse",
@@ -211,6 +213,36 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           return s;
         }),
         []
+      ];
+    case "showModal":
+      return [state.set("showModal", msg.value), []];
+    case "hideModal":
+      if (state.saveLoading > 0) {
+        return [state, []];
+      }
+      return [state.set("showModal", null), []];
+    case "cancel":
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.newRouteMsg(
+              adt("opportunitySWUEdit" as const, {
+                opportunityId: state.opportunity.id,
+                tab: (() => {
+                  switch (state.proposal.status) {
+                    case SWUProposalStatus.TeamQuestionsPanelIndividual:
+                      return "overview" as const;
+                    case SWUProposalStatus.TeamQuestionsPanelConsensus:
+                      return "consensus" as const;
+                    default:
+                      return "teamQuestions" as const;
+                  }
+                })()
+              })
+            )
+          )
+        ]
       ];
     case "saveDraft": {
       const scores = getValues(state);
@@ -828,6 +860,14 @@ function isValid(state: Immutable<State>): boolean {
   );
 }
 
+// component_.page.Component<
+//   RouteParams,
+//   SharedState,
+//   State,
+//   InnerMsg,
+//   Route
+// >
+
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
@@ -837,61 +877,35 @@ export const component: Tab.Component<State, Msg> = {
     return component_.page.readyMsg();
   },
 
-  // getModal: (state) => {
-  //   const isEnterScoreLoading = state.enterScoreLoading > 0;
-  //   const valid = isValid(state);
-  //   switch (state.showModal) {
-  //     case "enterScore":
-  //       return component_.page.modal.show({
-  //         title: "Enter Score",
-  //         onCloseMsg: adt("hideModal") as Msg,
-  //         actions: [
-  //           {
-  //             text: "Submit Score",
-  //             icon: "star-full",
-  //             color: "primary",
-  //             button: true,
-  //             loading: isEnterScoreLoading,
-  //             disabled: isEnterScoreLoading || !valid,
-  //             msg: adt("submitScore")
-  //           },
-  //           {
-  //             text: "Cancel",
-  //             color: "secondary",
-  //             disabled: isEnterScoreLoading,
-  //             msg: adt("hideModal")
-  //           }
-  //         ],
-  //         body: (dispatch) => (
-  //           <div>
-  //             <p>
-  //               Provide a score for each team question response submitted by the
-  //               proponent.
-  //             </p>
-  //             {state.scores.map((s, i) => {
-  //               return (
-  //                 <NumberField.view
-  //                   key={`swu-proposal-question-score-field-${i}`}
-  //                   extraChildProps={{ suffix: "point(s)" }}
-  //                   required
-  //                   disabled={isEnterScoreLoading}
-  //                   label={`Question ${i + 1} Score`}
-  //                   placeholder="Score"
-  //                   dispatch={component_.base.mapDispatch(
-  //                     dispatch,
-  //                     (v) => adt("scoreMsg" as const, [i, v]) as Msg
-  //                   )}
-  //                   state={s}
-  //                 />
-  //               );
-  //             })}
-  //           </div>
-  //         )
-  //       });
-  //     case null:
-  //       return component_.page.modal.hide();
-  //   }
-  // },
+  getModal: (state) => {
+    if (!state.showModal) {
+      return component_.page.modal.hide();
+    }
+    switch (state.showModal.tag) {
+      case "cancelDraft":
+        return component_.page.modal.show<Msg>({
+          title: "Cancel New Sprint With Us Evaluation?",
+          body: () =>
+            "Are you sure you want to cancel? Any information you may have entered will be lost if you do so.",
+          onCloseMsg: adt("hideModal"),
+          actions: [
+            {
+              text: "Yes, I want to cancel",
+              color: "danger",
+              msg: adt("cancel"),
+              button: true
+            },
+            {
+              text: "Go Back",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ]
+        });
+      case null:
+        return component_.page.modal.hide();
+    }
+  },
 
   getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
@@ -940,7 +954,7 @@ export const component: Tab.Component<State, Msg> = {
                   color: "c-nav-fg-alt",
                   disabled: isSaveLoading,
                   onClick: () =>
-                    dispatch(adt("showModal", adt("cancel")) as Msg)
+                    dispatch(adt("showModal", adt("cancelDraft")) as Msg)
                 }
               ]
         );
