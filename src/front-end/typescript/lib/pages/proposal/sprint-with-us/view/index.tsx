@@ -27,6 +27,7 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { getTeamQuestionsOpportunityTab } from "./tab/team-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: SWUProposal | null;
@@ -49,6 +50,7 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       RouteParams,
       SWUProposal,
       SWUOpportunity,
+      boolean,
       SWUTeamQuestionResponseEvaluation | undefined,
       SWUTeamQuestionResponseEvaluation[]
     ]
@@ -105,6 +107,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routeParams,
                 proposal,
                 opportunity,
+                false,
                 undefined,
                 []
               ]) as Msg;
@@ -159,6 +162,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 routeParams,
                 proposal,
                 opportunity,
+                evaluating,
                 questionEvaluation,
                 panelQuestionEvaluations
               ] = msg.value;
@@ -167,7 +171,11 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Initialize the sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
-                proposal
+                proposal,
+                getTeamQuestionsOpportunityTab(
+                  evaluating,
+                  panelQuestionEvaluations
+                )
               );
               // Initialize the tab.
               const tabComponent = Tab.idToDefinition(tabId).component;
@@ -175,6 +183,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 viewerUser,
                 proposal,
                 opportunity,
+                evaluating,
                 questionEvaluation,
                 panelQuestionEvaluations
               });

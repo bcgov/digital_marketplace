@@ -34,6 +34,7 @@ export interface Params {
   proposal: SWUProposal;
   opportunity: SWUOpportunity;
   viewerUser: User;
+  evaluating: boolean;
   questionEvaluation?: SWUTeamQuestionResponseEvaluation;
   panelQuestionEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
@@ -159,7 +160,8 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  proposal: SWUProposal
+  proposal: SWUProposal,
+  teamQuestionsTab: "consensus" | "overview" | "teamQuestions"
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     backLink: {
@@ -173,7 +175,7 @@ export function makeSidebarState(
             case "teamScenario":
               return "teamScenario" as const;
             case "teamQuestions":
-              return "teamQuestions" as const;
+              return teamQuestionsTab;
             case "proposal":
             case "history":
             default:

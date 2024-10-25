@@ -27,8 +27,7 @@ import {
   // hasSWUOpportunityPassedCodeChallenge,
   hasSWUOpportunityPassedTeamQuestions,
   hasSWUOpportunityPassedTeamQuestionsEvaluation,
-  SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   NUM_SCORE_DECIMALS,
@@ -76,6 +75,12 @@ export type InnerMsg =
   | ADT<"toggleAccordion", number>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
+  | ADT<"startEditing">
+  | ADT<
+      "onStartEditingResponse",
+      api.ResponseValidation<SWUTeamQuestionResponseEvaluation, string[]>
+    >
+  | ADT<"cancelEditing">
   | ADT<"cancel">
   | ADT<"saveDraft">
   | ADT<
@@ -101,6 +106,17 @@ export type InnerMsg =
   | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
+
+export function getTeamQuestionsOpportunityTab(
+  evaluating: boolean,
+  panelEvaluations: SWUTeamQuestionResponseEvaluation[]
+) {
+  return evaluating
+    ? panelEvaluations.length
+      ? ("consensus" as const)
+      : ("overview" as const)
+    : ("teamQuestions" as const);
+}
 
 function initEvaluationScores(
   opp: SWUOpportunity,
@@ -197,8 +213,8 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
 
 const startSaveLoading = makeStartLoading<State>("saveLoading");
 const stopSaveLoading = makeStopLoading<State>("saveLoading");
-// const startEditingLoading = makeStartLoading<State>("startEditingLoading");
-// const stopEditingLoading = makeStopLoading<State>("startEditingLoading");
+const startStartEditingLoading = makeStartLoading<State>("startEditingLoading");
+const stopStartEditingLoading = makeStopLoading<State>("startEditingLoading");
 
 const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
@@ -221,6 +237,53 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         return [state, []];
       }
       return [state.set("showModal", null), []];
+    case "startEditing": {
+      const evaluation = state.questionEvaluation;
+      if (!evaluation) return [state, []];
+      return [
+        startStartEditingLoading(state),
+        [
+          api.evaluations.swu.readOne<Msg>()(evaluation.id, (result) =>
+            adt("onStartEditingResponse", result)
+          )
+        ]
+      ];
+    }
+    case "onStartEditingResponse": {
+      const evaluation = state.questionEvaluation;
+      if (!evaluation) return [state, []];
+      const evaluationResult = msg.value;
+      state = stopStartEditingLoading(state);
+      if (!api.isValid(evaluationResult)) {
+        return [state, []];
+      }
+      const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
+        state.opportunity,
+        state.proposal,
+        evaluationResult.value
+      );
+      return [
+        state
+          .set("isEditing", true)
+          .set("evaluationScores", evaluationScoreStates),
+        evaluationScoreCmds
+      ];
+    }
+    case "cancelEditing": {
+      const evaluation = state.evaluationScores;
+      if (!evaluation) return [state, []];
+      const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
+        state.opportunity,
+        state.proposal,
+        state.questionEvaluation
+      );
+      return [
+        state
+          .set("isEditing", false)
+          .set("evaluationScores", evaluationScoreStates),
+        evaluationScoreCmds
+      ];
+    }
     case "cancel":
       return [
         state,
@@ -229,16 +292,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             component_.global.newRouteMsg(
               adt("opportunitySWUEdit" as const, {
                 opportunityId: state.opportunity.id,
-                tab: (() => {
-                  switch (state.proposal.status) {
-                    case SWUProposalStatus.TeamQuestionsPanelIndividual:
-                      return "overview" as const;
-                    case SWUProposalStatus.TeamQuestionsPanelConsensus:
-                      return "consensus" as const;
-                    default:
-                      return "teamQuestions" as const;
-                  }
-                })()
+                tab: (() =>
+                  getTeamQuestionsOpportunityTab(
+                    state.evaluating,
+                    state.panelQuestionEvaluations
+                  ))()
               })
             )
           )
@@ -686,6 +744,7 @@ interface TeamQuestionResponseEvalViewProps
   score: EvaluationScore;
   proposal: SWUProposal;
   dispatch: component_.base.Dispatch<Msg>;
+  disabled: boolean;
   // panelEvaluationScores: SWUTeamQuestionResponseEvaluation[]
 }
 
@@ -699,7 +758,8 @@ const TeamQuestionResponseEvalView: component_.base.View<
   className,
   dispatch,
   proposal,
-  score
+  score,
+  disabled
 }) => {
   const question = getQuestionByOrder(opportunity, response.order);
   if (!question) {
@@ -748,7 +808,7 @@ const TeamQuestionResponseEvalView: component_.base.View<
               extraChildProps={{
                 style: { height: "200px" }
               }}
-              // disabled={disabled}
+              disabled={disabled}
               state={score.notes}
               dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("notesMsg" as const, {
@@ -763,7 +823,7 @@ const TeamQuestionResponseEvalView: component_.base.View<
               extraChildProps={{ suffix: "Points" }}
               label="Score"
               hint="hint"
-              // disabled={disabled}
+              disabled={disabled}
               state={score.score}
               dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("scoreMsg" as const, {
@@ -788,6 +848,9 @@ const TeamQuestionResponsesEvalView: component_.base.View<{
   const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
     state.opportunity
   );
+  const isStartEditingLoading = state.startEditingLoading > 0;
+  const isSaveLoading = state.saveLoading > 0;
+  const isLoading = isStartEditingLoading || isSaveLoading;
   return (
     <div>
       <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
@@ -825,9 +888,9 @@ const TeamQuestionResponsesEvalView: component_.base.View<{
                     index={i}
                     response={r}
                     score={state.evaluationScores[i]}
-                    // panelEvaluations={state.panelEvaluations}
                     proposal={state.proposal}
                     dispatch={dispatch}
+                    disabled={!state.isEditing || isLoading}
                   />
                 ))}
               </div>
@@ -845,8 +908,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
-  return state.opportunity.status ===
-    SWUOpportunityStatus.EvaluationTeamQuestionsPanel ? (
+  return state.evaluating ? (
     <TeamQuestionResponsesEvalView state={state} dispatch={dispatch} />
   ) : (
     <TeamQuestionResponsesView state={state} dispatch={dispatch} />
@@ -859,14 +921,6 @@ function isValid(state: Immutable<State>): boolean {
     true as boolean
   );
 }
-
-// component_.page.Component<
-//   RouteParams,
-//   SharedState,
-//   State,
-//   InnerMsg,
-//   Route
-// >
 
 export const component: Tab.Component<State, Msg> = {
   init,
@@ -911,52 +965,68 @@ export const component: Tab.Component<State, Msg> = {
     const proposal = state.proposal;
     const propStatus = proposal.status;
     const isSaveLoading = state.saveLoading > 0;
+    const isStartEditingLoading = state.startEditingLoading > 0;
+    const isLoading = isSaveLoading || isStartEditingLoading;
     const valid = isValid(state);
-    // if (state.evaluation && state.isEditing) {
-    // }
+    if (state.isEditing && state.questionEvaluation) {
+      return component_.page.actions.links([
+        {
+          children: "Save Changes",
+          symbol_: leftPlacement(iconLinkSymbol("save")),
+          loading: isSaveLoading,
+          disabled: isLoading || !valid,
+          button: true,
+          color: "success",
+          onClick: () => dispatch(adt("saveChanges"))
+        },
+        {
+          children: "Cancel",
+          color: "c-nav-fg-alt",
+          disabled: isLoading,
+          onClick: () => dispatch(adt("cancelEditing") as Msg)
+        }
+      ]);
+    }
     switch (propStatus) {
       case SWUProposalStatus.TeamQuestionsPanelIndividual:
         return component_.page.actions.links(
-          state.questionEvaluation
-            ? state.questionEvaluation.status ===
-              SWUTeamQuestionResponseEvaluationStatus.Draft
-              ? [
+          state.evaluating
+            ? state.questionEvaluation
+              ? state.questionEvaluation.status ===
+                  SWUTeamQuestionResponseEvaluationStatus.Draft &&
+                state.questionEvaluation.type ===
+                  SWUTeamQuestionResponseEvaluationType.Individual
+                ? [
+                    {
+                      children: "Edit",
+                      onClick: () => dispatch(adt("startEditing")),
+                      button: true,
+                      loading: isStartEditingLoading,
+                      disabled: isLoading,
+                      symbol_: leftPlacement(iconLinkSymbol("edit")),
+                      color: "primary"
+                    }
+                  ]
+                : []
+              : [
                   {
-                    children: "Save Changes",
+                    children: "Save Draft",
                     symbol_: leftPlacement(iconLinkSymbol("save")),
                     loading: isSaveLoading,
-                    disabled: isSaveLoading || !valid,
+                    disabled: isLoading || !valid,
                     button: true,
                     color: "success",
-                    onClick: () => dispatch(adt("saveChanges"))
+                    onClick: () => dispatch(adt("saveDraft"))
                   },
                   {
                     children: "Cancel",
                     color: "c-nav-fg-alt",
-                    disabled: isSaveLoading,
+                    disabled: isLoading,
                     onClick: () =>
-                      dispatch(adt("showModal", adt("cancel")) as Msg)
+                      dispatch(adt("showModal", adt("cancelDraft")) as Msg)
                   }
                 ]
-              : []
-            : [
-                {
-                  children: "Save Draft",
-                  symbol_: leftPlacement(iconLinkSymbol("save")),
-                  loading: isSaveLoading,
-                  disabled: isSaveLoading || !valid,
-                  button: true,
-                  color: "success",
-                  onClick: () => dispatch(adt("saveDraft"))
-                },
-                {
-                  children: "Cancel",
-                  color: "c-nav-fg-alt",
-                  disabled: isSaveLoading,
-                  onClick: () =>
-                    dispatch(adt("showModal", adt("cancelDraft")) as Msg)
-                }
-              ]
+            : []
         );
       // case SWUProposalStatus.EvaluatedTeamQuestions:
       //   return component_.page.actions.links([

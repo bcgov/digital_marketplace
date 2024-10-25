@@ -60,6 +60,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 routeParams,
                 proposal,
                 opportunity,
+                true,
                 evaluation,
                 []
               ]) as Msg;
