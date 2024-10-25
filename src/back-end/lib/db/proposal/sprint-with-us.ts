@@ -762,6 +762,42 @@ export const readManyProposalTeamQuestionResponses = tryDb<
   return valid(results);
 });
 
+export const readOneSWUProposalSlim = tryDb<
+  [Id, AuthenticatedSession],
+  SWUProposalSlim | null
+>(async (connection, id, session) => {
+  const result = await generateSWUProposalQuery(connection)
+    .where({ "proposals.id": id })
+    .first();
+
+  if (result) {
+    // Fetch submittedAt date if applicable
+    result.submittedAt = await getSWUProposalSubmittedAt(connection, result);
+
+    // Fetch team questions (scores only included if admin/owner)
+    const canReadScores = await readSWUProposalScore(
+      connection,
+      session,
+      result.opportunity,
+      result.id,
+      result.status,
+      result.organization
+    );
+
+    // Check for permissions on viewing scores and rank
+    if (canReadScores) {
+      // Set scores and rankings
+      await calculateScores(connection, session, result.opportunity, [result]);
+    }
+  }
+
+  return valid(
+    result
+      ? await rawSWUProposalSlimToSWUProposalSlim(connection, result, session)
+      : null
+  );
+});
+
 export const readOneSWUProposal = tryDb<
   [Id, AuthenticatedSession],
   SWUProposal | null

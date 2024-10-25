@@ -9,6 +9,7 @@ import * as TeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/vi
 import { routeDest } from "front-end/lib/views/link";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 
@@ -33,6 +34,9 @@ export interface Params {
   proposal: SWUProposal;
   opportunity: SWUOpportunity;
   viewerUser: User;
+  evaluating: boolean;
+  questionEvaluation?: SWUTeamQuestionResponseEvaluation;
+  panelQuestionEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 export type InitResponse = null;
@@ -156,7 +160,8 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  proposal: SWUProposal
+  proposal: SWUProposal,
+  teamQuestionsTab: "consensus" | "overview" | "teamQuestions"
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     backLink: {
@@ -170,7 +175,7 @@ export function makeSidebarState(
             case "teamScenario":
               return "teamScenario" as const;
             case "teamQuestions":
-              return "teamQuestions" as const;
+              return teamQuestionsTab;
             case "proposal":
             case "history":
             default:
@@ -190,4 +195,9 @@ export function makeSidebarState(
       makeSidebarLink("history", proposal, activeTab)
     ]
   });
+}
+
+export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
+  const evaluationTabs: TabId[] = ["teamQuestions"];
+  return evaluationTabs.includes(tabId);
 }

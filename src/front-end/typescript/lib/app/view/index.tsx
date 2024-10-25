@@ -261,6 +261,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalSWUEdit", value })
       );
 
+    case "questionEvaluationIndividualSWUCreate":
+    case "questionEvaluationIndividualSWUEdit":
+    case "questionEvaluationConsensusSWUCreate":
+    case "questionEvaluationConsensusSWUEdit":
     case "proposalSWUView":
       return makeViewPageProps(
         props,
