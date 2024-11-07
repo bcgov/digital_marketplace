@@ -13,7 +13,8 @@ import {
 import {
   validateAttachments,
   validateSWUOpportunityId,
-  validateSWUEvaluationPanelMembers
+  validateSWUEvaluationPanelMembers,
+  validateSWUTeamQuestionResponseEvaluationId
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import {
@@ -41,8 +42,14 @@ import {
   UpdateValidationErrors,
   UpdateWithNoteRequestBody,
   CreateSWUEvaluationPanelMemberBody,
-  CreateSWUEvaluationPanelMemberValidationErrors
+  CreateSWUEvaluationPanelMemberValidationErrors,
+  SubmitQuestionEvaluationsWithNoteRequestBody
 } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
+  isValidStatusChange as IsValidQuestionEvaluationStatusChange,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
 import {
@@ -58,6 +65,7 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
+import * as questionEvaluationValidation from "shared/lib/validation/question-evaluation/sprint-with-us";
 
 interface ValidatedCreateSWUOpportunityPhaseBody
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
@@ -108,7 +116,11 @@ interface ValidatedUpdateRequestBody {
     | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
-    | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>;
+    | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>
+    | ADT<
+        "submitIndividualQuestionEvaluations",
+        SubmitQuestionEvaluationsWithNoteRequestBody
+      >;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
@@ -788,6 +800,11 @@ const update: crud.Update<
             note: getString(value, "note"),
             attachments: getStringArray(value, "attachments")
           });
+        case "submitIndividualQuestionEvaluations":
+          return adt(
+            "submitIndividualQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
         default:
           return null;
       }
@@ -1625,6 +1642,101 @@ const update: crud.Update<
             });
           }
         }
+        case "submitIndividualQuestionEvaluations": {
+          for (const id of request.body.value.evaluations) {
+            const validatedSWUTeamQuestionResponseEvaluation =
+              await validateSWUTeamQuestionResponseEvaluationId(
+                connection,
+                id,
+                request.session
+              );
+
+            if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+              return invalid({
+                opportunity: adt(
+                  "submitIndividualQuestionEvaluations" as const,
+                  getInvalidValue(
+                    validatedSWUTeamQuestionResponseEvaluation,
+                    []
+                  )
+                )
+              });
+            }
+
+            if (
+              !permissions.editSWUTeamQuestionResponseEvaluation(
+                request.session,
+                validatedSWUTeamQuestionResponseEvaluation.value
+              )
+            ) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+
+            if (
+              !IsValidQuestionEvaluationStatusChange(
+                validatedSWUTeamQuestionResponseEvaluation.value.status,
+                SWUTeamQuestionResponseEvaluationStatus.Submitted
+              )
+            ) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+
+            const validatedScores =
+              questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                validatedSWUOpportunity.value.teamQuestions
+              );
+
+            if (
+              isInvalid<
+                CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+              >(validatedScores) ||
+              validatedScores.value.length !==
+                validatedSWUOpportunity.value.teamQuestions.length
+            ) {
+              return invalid({
+                opportunity: adt(
+                  "submitIndividualQuestionEvaluations" as const,
+                  [
+                    "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                  ]
+                )
+              });
+            }
+
+            if (
+              !permissions.submitSWUTeamQuestionResponseEvaluation(
+                request.session,
+                validatedSWUTeamQuestionResponseEvaluation.value
+              )
+            ) {
+              return invalid({
+                permissions: [permissions.ERROR_MESSAGE]
+              });
+            }
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitIndividualQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitIndividualQuestionEvaluations" as const, {
+              note: validatedSubmissionNote.value,
+              evaluations: request.body.value.evaluations
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         default:
           return invalid({ opportunity: adt("parseFailure" as const) });
       }
@@ -1774,6 +1886,14 @@ const update: crud.Update<
             break;
           case "addNote":
             dbResult = await db.addSWUOpportunityNote(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "submitIndividualQuestionEvaluations":
+            dbResult = await db.submitIndividualQuestionEvaluations(
               connection,
               request.params.id,
               body.value,

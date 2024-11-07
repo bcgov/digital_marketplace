@@ -37,7 +37,7 @@ interface UpdateSWUTeamQuestionResponseEvaluationParams
   id: Id;
 }
 
-interface SWUTeamQuestionResponseEvaluationStatusRecord {
+export interface SWUTeamQuestionResponseEvaluationStatusRecord {
   id: Id;
   teamQuestionResponseEvaluation: Id;
   createdAt: Date;
@@ -46,7 +46,7 @@ interface SWUTeamQuestionResponseEvaluationStatusRecord {
   note: string;
 }
 
-interface RawSWUTeamQuestionResponseEvaluation
+export interface RawSWUTeamQuestionResponseEvaluation
   extends Omit<
     SWUTeamQuestionResponseEvaluation,
     "proposal" | "evaluationPanelMember" | "scores"

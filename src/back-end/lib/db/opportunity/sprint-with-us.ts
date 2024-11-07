@@ -1,5 +1,11 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  RawSWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatusRecord,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
@@ -36,6 +42,7 @@ import {
   SWUProposalSlim,
   SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluationStatus } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -73,6 +80,11 @@ interface UpdateSWUOpportunityParams
 interface UpdateSWUOpportunityWithNoteParams {
   note: string;
   attachments: FileRecord[];
+}
+
+interface SubmitQuestionEvaluationsWithNoteParams {
+  note: string;
+  evaluations: Id[];
 }
 
 export interface CreateSWUOpportunityPhaseParams
@@ -1645,6 +1657,59 @@ export const addSWUOpportunityNote = tryDb<
       noteParams.attachments
     );
   });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add note");
+  }
+  return valid(dbResult.value);
+});
+
+export const submitIndividualQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    for (const evaluationId of evaluationParams.evaluations) {
+      const [statusRecord] =
+        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+          "swuTeamQuestionResponseEvaluationStatuses"
+        )
+          .transacting(trx)
+          .insert(
+            {
+              id: generateUuid(),
+              teamQuestionResponseEvaluation: evaluationId,
+              createdAt: now,
+              createdBy: session.user.id,
+              status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+              note: evaluationParams.note
+            },
+            "*"
+          );
+
+      // Update evaluation root record
+      await connection<RawSWUTeamQuestionResponseEvaluation>(
+        "swuTeamQuestionResponseEvaluations"
+      )
+        .transacting(trx)
+        .where({ id: evaluationId })
+        .update(
+          {
+            updatedAt: now
+          },
+          "*"
+        );
+
+      if (!statusRecord) {
+        throw new Error("unable to update team question evaluation");
+      }
+    }
+  });
+
+  // TODO: Check if all individual proposals for a proposal have been submitted;
+  // If so, move the proposal into consensus
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
