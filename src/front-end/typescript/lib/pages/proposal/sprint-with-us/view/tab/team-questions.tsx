@@ -121,7 +121,8 @@ export function getTeamQuestionsOpportunityTab(
 function initEvaluationScores(
   opp: SWUOpportunity,
   prop: SWUProposal,
-  evaluation?: SWUTeamQuestionResponseEvaluation
+  evaluation?: SWUTeamQuestionResponseEvaluation,
+  validate = false
 ): [EvaluationScore[], component_.Cmd<Msg>[]] {
   return prop.teamQuestionResponses.reduce<
     [EvaluationScore[], component_.Cmd<Msg>[]]
@@ -161,7 +162,12 @@ function initEvaluationScores(
       return [
         [
           ...states,
-          { score: immutable(scoreState), notes: immutable(notesState) }
+          validate
+            ? {
+                score: FormField.validate(immutable(scoreState)),
+                notes: FormField.validate(immutable(notesState))
+              }
+            : { score: immutable(scoreState), notes: immutable(notesState) }
         ],
         [
           ...cmds,
@@ -192,7 +198,8 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
     params.opportunity,
     params.proposal,
-    params.questionEvaluation
+    params.questionEvaluation,
+    false
   );
   return [
     {
@@ -260,7 +267,8 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
         state.opportunity,
         state.proposal,
-        evaluationResult.value
+        evaluationResult.value,
+        true
       );
       return [
         state
@@ -418,7 +426,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.evaluations.swu.update<Msg>()(
                 state.questionEvaluation.id,
                 adt("edit", { scores }),
-                (response) => adt("onSaveDraftResponse", response)
+                (response) => adt("onSaveChangesResponse", response)
               )
             ]
           : []
@@ -436,7 +444,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               result.value
             );
           return [
-            state.set("evaluationScores", evaluationScoreStates),
+            state
+              .set("evaluationScores", evaluationScoreStates)
+              .set("isEditing", false),
             [
               ...evaluationScoreCmds,
               component_.cmd.dispatch(
@@ -595,30 +605,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 
 export function getValues(
   state: Immutable<State>
-): SWUTeamQuestionResponseEvaluationScores[] | null {
+): SWUTeamQuestionResponseEvaluationScores[] {
   return state.proposal.teamQuestionResponses.reduce((acc, r, i) => {
-    if (!acc) {
-      return null;
-    }
     const field = state.evaluationScores[i];
-    if (!field) {
-      return null;
-    }
-    const score = FormField.getValue(field.score);
-    if (score === null) {
-      return null;
-    }
     const notes = FormField.getValue(field.notes);
-    if (notes === null) {
-      return null;
-    }
+    const score = FormField.getValue(field.score);
     acc.push({
       order: r.order,
-      score,
+      score: score ?? 0,
       notes
     });
     return acc;
-  }, [] as SWUTeamQuestionResponseEvaluationScores[] | null);
+  }, [] as SWUTeamQuestionResponseEvaluationScores[]);
 }
 
 interface TeamQuestionResponseViewProps {
@@ -915,13 +913,6 @@ const view: component_.base.ComponentView<State, Msg> = ({
   );
 };
 
-function isValid(state: Immutable<State>): boolean {
-  return state.evaluationScores.reduce(
-    (acc, s) => acc && FormField.isValid(s.notes) && FormField.isValid(s.score),
-    true as boolean
-  );
-}
-
 export const component: Tab.Component<State, Msg> = {
   init,
   update,
@@ -967,14 +958,13 @@ export const component: Tab.Component<State, Msg> = {
     const isSaveLoading = state.saveLoading > 0;
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isLoading = isSaveLoading || isStartEditingLoading;
-    const valid = isValid(state);
     if (state.isEditing && state.questionEvaluation) {
       return component_.page.actions.links([
         {
           children: "Save Changes",
           symbol_: leftPlacement(iconLinkSymbol("save")),
           loading: isSaveLoading,
-          disabled: isLoading || !valid,
+          disabled: isLoading,
           button: true,
           color: "success",
           onClick: () => dispatch(adt("saveChanges"))
@@ -1013,7 +1003,7 @@ export const component: Tab.Component<State, Msg> = {
                     children: "Save Draft",
                     symbol_: leftPlacement(iconLinkSymbol("save")),
                     loading: isSaveLoading,
-                    disabled: isLoading || !valid,
+                    disabled: isLoading,
                     button: true,
                     color: "success",
                     onClick: () => dispatch(adt("saveDraft"))
