@@ -56,6 +56,7 @@ import {
   allValid,
   getInvalidValue,
   getValidValue,
+  Invalid,
   isInvalid,
   isValid,
   optional,
@@ -1643,81 +1644,99 @@ const update: crud.Update<
           }
         }
         case "submitIndividualQuestionEvaluations": {
-          for (const id of request.body.value.evaluations) {
-            const validatedSWUTeamQuestionResponseEvaluation =
-              await validateSWUTeamQuestionResponseEvaluationId(
-                connection,
-                id,
-                request.session
-              );
+          const validations = await Promise.all(
+            request.body.value.evaluations.map<
+              Promise<Validation<string, UpdateValidationErrors>>
+            >(async (id) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
 
-            if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
-              return invalid({
-                opportunity: adt(
-                  "submitIndividualQuestionEvaluations" as const,
-                  getInvalidValue(
-                    validatedSWUTeamQuestionResponseEvaluation,
-                    []
+              const validatedSWUTeamQuestionResponseEvaluation =
+                await validateSWUTeamQuestionResponseEvaluationId(
+                  connection,
+                  id,
+                  request.session
+                );
+
+              if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedSWUTeamQuestionResponseEvaluation,
+                      []
+                    )
                   )
+                });
+              }
+
+              if (
+                !permissions.editSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
                 )
-              });
-            }
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
 
-            if (
-              !permissions.editSWUTeamQuestionResponseEvaluation(
-                request.session,
-                validatedSWUTeamQuestionResponseEvaluation.value
-              )
-            ) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-
-            if (
-              !IsValidQuestionEvaluationStatusChange(
-                validatedSWUTeamQuestionResponseEvaluation.value.status,
-                SWUTeamQuestionResponseEvaluationStatus.Submitted
-              )
-            ) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
-
-            const validatedScores =
-              questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
-                validatedSWUTeamQuestionResponseEvaluation.value.scores,
-                validatedSWUOpportunity.value.teamQuestions
-              );
-
-            if (
-              isInvalid<
-                CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
-              >(validatedScores) ||
-              validatedScores.value.length !==
-                validatedSWUOpportunity.value.teamQuestions.length
-            ) {
-              return invalid({
-                opportunity: adt(
-                  "submitIndividualQuestionEvaluations" as const,
-                  [
-                    "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
-                  ]
+              if (
+                !IsValidQuestionEvaluationStatusChange(
+                  validatedSWUTeamQuestionResponseEvaluation.value.status,
+                  SWUTeamQuestionResponseEvaluationStatus.Submitted
                 )
-              });
-            }
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
 
-            if (
-              !permissions.submitSWUTeamQuestionResponseEvaluation(
-                request.session,
-                validatedSWUTeamQuestionResponseEvaluation.value
-              )
-            ) {
-              return invalid({
-                permissions: [permissions.ERROR_MESSAGE]
-              });
-            }
+              const validatedScores =
+                questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                  validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                  validatedSWUOpportunity.value.teamQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedSWUOpportunity.value.teamQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(id);
+            })
+          );
+
+          const invalidEvaluation = validations.find(isInvalid);
+          if (invalidEvaluation) {
+            return invalidEvaluation as Invalid<UpdateValidationErrors>;
           }
           const validatedSubmissionNote =
             questionEvaluationValidation.validateNote(request.body.value.note);

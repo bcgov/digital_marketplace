@@ -992,7 +992,7 @@ export async function createSWUTeamQuestionResponseEvaluation(
 }
 
 export function editSWUTeamQuestionResponseEvaluation(
-  session: Session,
+  session: AuthenticatedSession,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): boolean {
   return (
