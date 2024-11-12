@@ -1671,41 +1671,43 @@ export const submitIndividualQuestionEvaluations = tryDb<
 >(async (connection, id, evaluationParams, session) => {
   const now = new Date();
   await connection.transaction(async (trx) => {
-    for (const evaluationId of evaluationParams.evaluations) {
-      const [statusRecord] =
-        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-          "swuTeamQuestionResponseEvaluationStatuses"
+    await Promise.all(
+      evaluationParams.evaluations.map(async (evaluationId) => {
+        const [statusRecord] =
+          await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+            "swuTeamQuestionResponseEvaluationStatuses"
+          )
+            .transacting(trx)
+            .insert(
+              {
+                id: generateUuid(),
+                teamQuestionResponseEvaluation: evaluationId,
+                createdAt: now,
+                createdBy: session.user.id,
+                status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                note: evaluationParams.note
+              },
+              "*"
+            );
+
+        // Update evaluation root record
+        await connection<RawSWUTeamQuestionResponseEvaluation>(
+          "swuTeamQuestionResponseEvaluations"
         )
           .transacting(trx)
-          .insert(
+          .where({ id: evaluationId })
+          .update(
             {
-              id: generateUuid(),
-              teamQuestionResponseEvaluation: evaluationId,
-              createdAt: now,
-              createdBy: session.user.id,
-              status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
-              note: evaluationParams.note
+              updatedAt: now
             },
             "*"
           );
 
-      // Update evaluation root record
-      await connection<RawSWUTeamQuestionResponseEvaluation>(
-        "swuTeamQuestionResponseEvaluations"
-      )
-        .transacting(trx)
-        .where({ id: evaluationId })
-        .update(
-          {
-            updatedAt: now
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update team question evaluation");
-      }
-    }
+        if (!statusRecord) {
+          throw new Error("unable to update team question evaluation");
+        }
+      })
+    );
   });
 
   // TODO: Check if all individual proposals for a proposal have been submitted;
