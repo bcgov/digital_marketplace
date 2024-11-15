@@ -10,7 +10,11 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import * as toasts from "front-end/lib/pages/opportunity/sprint-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
-import Link, { routeDest } from "front-end/lib/views/link";
+import Link, {
+  iconLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
@@ -20,26 +24,29 @@ import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
   isSWUOpportunityAcceptingProposals,
   SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunityStatus,
+  UpdateValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   compareSWUProposalAnonymousProponentNumber,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
   SWUProposalSlim,
-  UpdateValidationErrors
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
-  canSWUTeamQuestionResponseEvaluationBeSubmitted
+  SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
+import { isValid } from "shared/lib/validation";
+import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/question-evaluation/sprint-with-us";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
   submitLoading: boolean;
-  canEvaluationsBeSubmitted: boolean;
   canViewEvaluations: boolean;
+  canEvaluationsBeSubmitted: boolean;
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
@@ -51,10 +58,7 @@ export type InnerMsg =
   | ADT<"submit">
   | ADT<
       "onSubmitResponse",
-      api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluation,
-        UpdateValidationErrors
-      >[]
+      api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
     >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
@@ -70,6 +74,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       submitLoading: false,
       canViewEvaluations: false,
       canEvaluationsBeSubmitted: false,
+      areEvaluationsValid: false,
       evaluations: [],
       proposals: [],
       table: immutable(tableState)
@@ -85,6 +90,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
+      if (!opportunity) {
+        return [state, []];
+      }
       const proposals = msg.value[1].sort((a, b) =>
         compareSWUProposalAnonymousProponentNumber(a, b)
       );
@@ -99,7 +107,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set("canViewEvaluations", canViewEvaluations)
           // Determine whether the "Submit" button should be shown at all.
           // Can be submitted if...
-          // - Opportunity has the appropriate status; and
+          // - Opportunity has the appropriate status
+          // - All proposals have the appropriate status
           // - All questions have been evaluated.
           .set(
             "canEvaluationsBeSubmitted",
@@ -108,10 +117,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               evaluations.reduce(
                 (acc, e) =>
                   acc ||
-                  canSWUTeamQuestionResponseEvaluationBeSubmitted(
-                    e,
-                    opportunity
-                  ),
+                  (e.proposal.status ===
+                    SWUProposalStatus.TeamQuestionsPanelIndividual &&
+                    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
                 false as boolean
               )
           ),
@@ -125,19 +133,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("submitLoading", true),
         [
-          component_.cmd.map(
-            component_.cmd.sequence(
-              state.evaluations.map(({ id }) =>
-                api.evaluations.swu.update<
-                  api.ResponseValidation<
-                    SWUTeamQuestionResponseEvaluation,
-                    UpdateValidationErrors
-                  >
-                >()(id, adt("submit", ""), (response) => response)
-              )
-            ),
-            (evaluationResponses) =>
-              adt("onSubmitResponse", evaluationResponses)
+          api.opportunities.swu.update<Msg>()(
+            opportunity.id,
+            adt("submitIndividualQuestionEvaluations", {
+              note: "",
+              evaluations: state.evaluations.map(({ id }) => id)
+            }),
+            (response) => adt("onSubmitResponse", response)
           )
         ]
       ];
@@ -148,7 +150,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       if (!opportunity) return [state, []];
       state = state.set("submitLoading", false);
       const result = msg.value;
-      if (result.some((e) => e.tag === "valid" || e.tag === "unhandled")) {
+      if (!api.isValid(result)) {
         return [
           state,
           [
@@ -156,7 +158,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.statusChanged.error(SWUOpportunityStatus.Awarded)
+                  toasts.submittedQuestionEvaluationScoresForConsensus.error
                 )
               )
             )
@@ -170,7 +172,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.statusChanged.success(SWUOpportunityStatus.Awarded)
+                toasts.submittedQuestionEvaluationScoresForConsensus.success
               )
             )
           ),
@@ -295,8 +297,8 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
 function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
-  const issubmitLoading = !!state.submitLoading;
-  const isLoading = issubmitLoading;
+  const isSubmitLoading = !!state.submitLoading;
+  const isLoading = isSubmitLoading;
   return state.proposals.map((p) => {
     const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
     return [
@@ -456,5 +458,39 @@ export const component: Tab.Component<State, Msg> = {
 
   onInitResponse(response) {
     return adt("onInitResponse", response);
+  },
+
+  getActions: ({ state, dispatch }) => {
+    const opportunity = state.opportunity;
+    if (!opportunity || !state.canEvaluationsBeSubmitted) {
+      return component_.page.actions.none();
+    }
+    const isLoading = state.submitLoading;
+    const areEvaluationsValid =
+      state.evaluations.length === state.proposals.length &&
+      state.evaluations.reduce(
+        (acc, e) =>
+          acc &&
+          isValid(
+            validateSWUTeamQuestionResponseEvaluationScores(
+              e.scores,
+              opportunity.teamQuestions
+            )
+          ),
+        true as boolean
+      );
+    return component_.page.actions.links([
+      {
+        children: "Submit Scores for Consensus",
+        symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+        color: "primary",
+        button: true,
+        loading: isLoading,
+        disabled: (() => {
+          return isLoading || !areEvaluationsValid;
+        })(),
+        onClick: () => dispatch(adt("submit") as Msg)
+      }
+    ]);
   }
 };
