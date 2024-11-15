@@ -445,6 +445,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             );
           return [
             state
+              .set("questionEvaluation", result.value)
               .set("evaluationScores", evaluationScoreStates)
               .set("isEditing", false),
             [
