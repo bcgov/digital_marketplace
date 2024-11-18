@@ -48,6 +48,7 @@ import {
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   isValidStatusChange as IsValidQuestionEvaluationStatusChange,
+  SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
@@ -120,7 +121,7 @@ interface ValidatedUpdateRequestBody {
     | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>
     | ADT<
         "submitIndividualQuestionEvaluations",
-        SubmitQuestionEvaluationsWithNoteRequestBody
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
       >;
 }
 
@@ -132,6 +133,11 @@ type ValidatedUpdateEditRequestBody = Omit<
 interface ValidatedUpdateWithNoteRequestBody
   extends Omit<UpdateWithNoteRequestBody, "attachments"> {
   attachments: FileRecord[];
+}
+
+interface ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "evaluations"> {
+  evaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -1646,7 +1652,12 @@ const update: crud.Update<
         case "submitIndividualQuestionEvaluations": {
           const validations = await Promise.all(
             request.body.value.evaluations.map<
-              Promise<Validation<string, UpdateValidationErrors>>
+              Promise<
+                Validation<
+                  SWUTeamQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
             >(async (id) => {
               // Satisfy the compiler.
               if (!permissions.isSignedIn(request.session)) {
@@ -1730,13 +1741,14 @@ const update: crud.Update<
                 });
               }
 
-              return valid(id);
+              return valid(validatedSWUTeamQuestionResponseEvaluation.value);
             })
           );
 
-          const invalidEvaluation = validations.find(isInvalid);
-          if (invalidEvaluation) {
-            return invalidEvaluation as Invalid<UpdateValidationErrors>;
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
           }
           const validatedSubmissionNote =
             questionEvaluationValidation.validateNote(request.body.value.note);
@@ -1752,7 +1764,9 @@ const update: crud.Update<
             session: request.session,
             body: adt("submitIndividualQuestionEvaluations" as const, {
               note: validatedSubmissionNote.value,
-              evaluations: request.body.value.evaluations
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as SWUTeamQuestionResponseEvaluation[]
             })
           } as ValidatedUpdateRequestBody);
         }
