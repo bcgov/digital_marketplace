@@ -1749,17 +1749,23 @@ export const submitIndividualQuestionEvaluations = tryDb<
                 "evaluations.proposal": proposalId
               })
               .count("*"),
-            connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+            connection<RawSWUEvaluationPanelMember>(
+              "swuEvaluationPanelMembers as members"
+            )
               .transacting(trx)
-              .join(
-                "swuOpportunityVersions",
-                "swuOpportunityVersions.id",
-                "=",
-                "swuEvaluationPanelMembers.opportunityVersion"
-              )
+              .join("swuOpportunityVersions as versions", function () {
+                this.on("members.opportunityVersion", "=", "versions.id").andOn(
+                  "versions.createdAt",
+                  "=",
+                  connection.raw(
+                    '(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
+            versions2.opportunity = ?)',
+                    id
+                  )
+                );
+              })
               .where({
-                evaluator: true,
-                opportunity: id
+                evaluator: true
               })
               .count("*")
           ]);
