@@ -618,6 +618,7 @@ export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
 export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
   switch (o.status) {
     case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
     case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
