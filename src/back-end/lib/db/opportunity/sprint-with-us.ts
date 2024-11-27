@@ -9,6 +9,7 @@ import {
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
+  allIndividualSWUTeamQuestionResponseEvaluationsComplete,
   readOneSWUAwardedProposal,
   readSubmittedSWUProposalCount,
   updateSWUProposalStatus
@@ -45,8 +46,7 @@ import {
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType
+  SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
@@ -189,7 +189,7 @@ interface RawSWUOpportunityHistoryRecord
   attachments: Id[];
 }
 
-interface RawSWUEvaluationPanelMember
+export interface RawSWUEvaluationPanelMember
   extends Omit<SWUEvaluationPanelMember, "user"> {
   id: Id;
   opportunityVersion: Id;
@@ -1713,63 +1713,14 @@ export const submitIndividualQuestionEvaluations = tryDb<
             throw new Error("unable to update team question evaluation");
           }
 
-          // Check if proposal can be moved into question consensus
-          const [
-            [{ count: submittedIndividualEvaluationsCount }],
-            [{ count: evaluatorsCount }]
-          ] = await Promise.all([
-            connection<RawSWUTeamQuestionResponseEvaluation>(
-              "swuTeamQuestionResponseEvaluations as evaluations"
+          if (
+            await allIndividualSWUTeamQuestionResponseEvaluationsComplete(
+              connection,
+              trx,
+              proposalId,
+              id
             )
-              .transacting(trx)
-              .join(
-                "swuTeamQuestionResponseEvaluationStatuses as statuses",
-                function () {
-                  this.on(
-                    "evaluations.id",
-                    "=",
-                    "statuses.teamQuestionResponseEvaluation"
-                  )
-                    .andOnNotNull("statuses.status")
-                    .andOn(
-                      "statuses.createdAt",
-                      "=",
-                      connection.raw(
-                        '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
-                  statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)'
-                      )
-                    );
-                }
-              )
-              .where({
-                "statuses.status":
-                  SWUTeamQuestionResponseEvaluationStatus.Submitted,
-                "evaluations.type":
-                  SWUTeamQuestionResponseEvaluationType.Individual,
-                "evaluations.proposal": proposalId
-              })
-              .count("*"),
-            connection<RawSWUEvaluationPanelMember>(
-              "swuEvaluationPanelMembers as members"
-            )
-              .transacting(trx)
-              .join("swuOpportunityVersions as versions", function () {
-                this.on("members.opportunityVersion", "=", "versions.id").andOn(
-                  "versions.createdAt",
-                  "=",
-                  connection.raw(
-                    '(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
-            versions2.opportunity = ?)',
-                    id
-                  )
-                );
-              })
-              .where({
-                evaluator: true
-              })
-              .count("*")
-          ]);
-          if (submittedIndividualEvaluationsCount === evaluatorsCount) {
+          ) {
             const result = await updateSWUProposalStatus(
               connection,
               proposalId,
