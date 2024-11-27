@@ -403,7 +403,11 @@ export type UpdateRequestBody =
   | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
-  | ADT<"addNote", UpdateWithNoteRequestBody>;
+  | ADT<"addNote", UpdateWithNoteRequestBody>
+  | ADT<
+      "submitIndividualQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -417,6 +421,11 @@ export interface UpdateWithNoteValidationErrors
   attachments?: string[][];
 }
 
+export interface SubmitQuestionEvaluationsWithNoteRequestBody {
+  note: string;
+  evaluations: Id[];
+}
+
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
@@ -427,6 +436,7 @@ type UpdateADTErrors =
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
   | ADT<"addNote", UpdateWithNoteValidationErrors>
+  | ADT<"submitIndividualQuestionEvaluations", string[]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {

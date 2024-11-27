@@ -1,10 +1,18 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  RawSWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatusRecord,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
+  allIndividualSWUTeamQuestionResponseEvaluationsComplete,
   readOneSWUAwardedProposal,
-  readSubmittedSWUProposalCount
+  readSubmittedSWUProposalCount,
+  updateSWUProposalStatus
 } from "back-end/lib/db/proposal/sprint-with-us";
 import { RawSWUOpportunitySubscriber } from "back-end/lib/db/subscribers/sprint-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
@@ -36,6 +44,10 @@ import {
   SWUProposalSlim,
   SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -73,6 +85,11 @@ interface UpdateSWUOpportunityParams
 interface UpdateSWUOpportunityWithNoteParams {
   note: string;
   attachments: FileRecord[];
+}
+
+interface SubmitQuestionEvaluationsWithNoteParams {
+  note: string;
+  evaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 export interface CreateSWUOpportunityPhaseParams
@@ -172,7 +189,7 @@ interface RawSWUOpportunityHistoryRecord
   attachments: Id[];
 }
 
-interface RawSWUEvaluationPanelMember
+export interface RawSWUEvaluationPanelMember
   extends Omit<SWUEvaluationPanelMember, "user"> {
   id: Id;
   opportunityVersion: Id;
@@ -1643,6 +1660,80 @@ export const addSWUOpportunityNote = tryDb<
       trx,
       event.id,
       noteParams.attachments
+    );
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add note");
+  }
+  return valid(dbResult.value);
+});
+
+export const submitIndividualQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({ id: evaluationId, proposal: { id: proposalId } }) => {
+          const [statusRecord] =
+            await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+              "swuTeamQuestionResponseEvaluationStatuses"
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  id: generateUuid(),
+                  teamQuestionResponseEvaluation: evaluationId,
+                  createdAt: now,
+                  createdBy: session.user.id,
+                  status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            "swuTeamQuestionResponseEvaluations"
+          )
+            .transacting(trx)
+            .where({ id })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update team question evaluation");
+          }
+
+          if (
+            await allIndividualSWUTeamQuestionResponseEvaluationsComplete(
+              connection,
+              trx,
+              proposalId,
+              id
+            )
+          ) {
+            const result = await updateSWUProposalStatus(
+              connection,
+              proposalId,
+              SWUProposalStatus.TeamQuestionsPanelConsensus,
+              "",
+              session
+            );
+            if (isInvalid(result)) {
+              throw new Error("unable to update proposal");
+            }
+          }
+        }
+      )
     );
   });
 

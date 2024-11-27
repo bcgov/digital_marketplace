@@ -106,3 +106,14 @@ export const startedEditing = {
     body: "This opportunity cannot be edited at this time. Please try again later."
   }
 };
+
+export const submittedQuestionEvaluationScoresForConsensus = {
+  success: {
+    title: "Evaluations Submitted for Consensus",
+    body: "Your evaluations for this Sprint With Us opportunity have been submitted for consensus."
+  },
+  error: {
+    title: "Unable to Submit Evaluations for Consensus",
+    body: "Your evaluations for this Sprint With Us opportunity could not be submitted for consensus. Please try again later."
+  }
+};

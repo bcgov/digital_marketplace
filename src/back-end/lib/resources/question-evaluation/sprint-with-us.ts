@@ -14,7 +14,7 @@ import {
   validateSWUTeamQuestionResponseEvaluationId
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
-import { getString } from "shared/lib";
+import { getNumber, getString } from "shared/lib";
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   CreateValidationErrors,
@@ -33,7 +33,6 @@ import {
   getInvalidValue,
   invalid,
   isInvalid,
-  isValid,
   valid
 } from "shared/lib/validation";
 import * as questionEvaluationValidation from "shared/lib/validation/question-evaluation/sprint-with-us";
@@ -305,33 +304,18 @@ const create: crud.Create<
         });
       }
 
-      const fullOpportunity = await db.readOneSWUOpportunity(
-        connection,
-        validatedSWUProposal.value.opportunity.id,
-        request.session
-      );
-
-      const validatedScores =
-        questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
-          scores,
-          fullOpportunity.value?.teamQuestions ?? []
-        );
-
-      if (isValid(validatedScores)) {
-        return valid({
-          session: request.session,
-          proposal: validatedSWUProposal.value.id,
-          evaluationPanelMember:
-            validatedSWUPanelEvaluationPanelMember.value.id,
-          status: validatedStatus.value,
-          type: validatedType.value,
-          scores: validatedScores.value
-        } as ValidatedCreateRequestBody);
-      } else {
-        return invalid({
-          scores: getInvalidValue(validatedScores, undefined)
-        });
-      }
+      return valid({
+        session: request.session,
+        proposal: validatedSWUProposal.value.id,
+        evaluationPanelMember: validatedSWUPanelEvaluationPanelMember.value.id,
+        status: validatedStatus.value,
+        type: validatedType.value,
+        scores: scores.map((score) => ({
+          score: getNumber<number>(score, "score"),
+          notes: getString(score, "notes"),
+          order: getNumber<number>(score, "order")
+        }))
+      } as ValidatedCreateRequestBody);
     },
     respond: wrapRespond<
       ValidatedCreateRequestBody,
@@ -443,37 +427,19 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-
-          const fullOpportunity = await db.readOneSWUOpportunity(
-            connection,
-            validatedSWUTeamQuestionResponseEvaluation.value.proposal
-              .opportunity.id,
-            request.session
-          );
-
-          const validatedScores =
-            questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
-              scores,
-              fullOpportunity.value?.teamQuestions ?? []
-            );
-
-          if (isValid(validatedScores)) {
-            return valid({
-              session: request.session,
-              body: adt(
-                "edit" as const,
-                {
-                  scores: validatedScores.value
-                } as ValidatedUpdateEditRequestBody
-              )
-            });
-          } else {
-            return invalid({
-              evaluation: adt("edit" as const, {
-                scores: getInvalidValue(validatedScores, undefined)
-              })
-            });
-          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "edit" as const,
+              {
+                scores: scores.map((score) => ({
+                  score: getNumber<number>(score, "score"),
+                  notes: getString(score, "notes"),
+                  order: getNumber<number>(score, "order")
+                }))
+              } as ValidatedUpdateEditRequestBody
+            )
+          });
         }
         case "submit": {
           if (

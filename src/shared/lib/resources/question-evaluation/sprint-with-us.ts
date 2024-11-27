@@ -1,9 +1,6 @@
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
-import {
-  SWUEvaluationPanelMember,
-  SWUOpportunity
-} from "src/shared/lib/resources/opportunity/sprint-with-us";
+import { SWUEvaluationPanelMember } from "src/shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposalSlim } from "src/shared/lib/resources/proposal/sprint-with-us";
 
 export function parseSWUTeamQuestionResponseEvaluationType(
@@ -128,14 +125,4 @@ export function isValidStatusChange(
     default:
       return false;
   }
-}
-
-export function canSWUTeamQuestionResponseEvaluationBeSubmitted(
-  e: Pick<SWUTeamQuestionResponseEvaluation, "status" | "scores">,
-  o: Pick<SWUOpportunity, "teamQuestions">
-): boolean {
-  return (
-    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft &&
-    o.teamQuestions.length === e.scores.length
-  );
 }

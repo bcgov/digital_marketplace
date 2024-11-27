@@ -138,7 +138,16 @@ export function validateSWUTeamQuestionResponseEvaluationScores(
     return invalid([
       {
         parseFailure: [
-          "Please provide an array of team question response evaluations."
+          "Please provide an array of team question response evaluation scores."
+        ]
+      }
+    ]);
+  }
+  if (raw.length !== opportunityTeamQuestions.length) {
+    return invalid([
+      {
+        parseFailure: [
+          "Please provide a number of team question response evaluation scores that matches the number of team questions"
         ]
       }
     ]);
