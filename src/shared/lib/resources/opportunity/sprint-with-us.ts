@@ -248,6 +248,7 @@ export interface SWUTeamQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+  minimumScore?: number;
 }
 
 export interface SWUEvaluationPanelMember {
