@@ -341,6 +341,24 @@ export function validateTeamQuestionScore(raw: number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Score");
 }
 
+export function validateTeamQuestionMinimumScore(
+  raw?: number | null,
+  questionScore?: number | null
+): Validation<number | null> {
+  return mapValid(
+    optional(raw, (v) =>
+      validateNumber(
+        v,
+        0,
+        questionScore ? questionScore - 1 : undefined,
+        "minimum score",
+        "a"
+      )
+    ),
+    (v) => v || null
+  );
+}
+
 export function validateTeamQuestionWordLimit(raw: number): Validation<number> {
   return validateNumber(raw, 1, MAX_TEAM_QUESTION_WORD_LIMIT, "Word Limit");
 }
