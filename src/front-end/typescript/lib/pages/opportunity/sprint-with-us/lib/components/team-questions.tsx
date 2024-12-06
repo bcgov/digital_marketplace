@@ -17,7 +17,7 @@ import {
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
-import { invalid } from "shared/lib/validation";
+import { invalid, valid } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
 
 interface Question {
@@ -25,6 +25,7 @@ interface Question {
   guideline: Immutable<LongText.State>;
   wordLimit: Immutable<NumberField.State>;
   score: Immutable<NumberField.State>;
+  minimumScore: Immutable<NumberField.State>;
 }
 
 export interface State {
@@ -37,10 +38,32 @@ export type Msg =
   | ADT<"questionText", { childMsg: LongText.Msg; qIndex: number }>
   | ADT<"guidelineText", { childMsg: LongText.Msg; qIndex: number }>
   | ADT<"wordLimit", { childMsg: NumberField.Msg; qIndex: number }>
-  | ADT<"score", { childMsg: NumberField.Msg; qIndex: number }>;
+  | ADT<"score", { childMsg: NumberField.Msg; qIndex: number }>
+  | ADT<"minimumScore", { childMsg: NumberField.Msg; qIndex: number }>;
 
 export interface Params {
   questions: SWUTeamQuestion[];
+}
+
+function resetMinimumScore(
+  state: Immutable<State>,
+  i: number
+): Immutable<State> {
+  return state.updateIn(["questions", i, "minimumScore"], (s) => {
+    return FormField.setValidate(
+      s as Immutable<NumberField.State>,
+      (v) => {
+        if (v === null) {
+          return valid(null);
+        }
+        return opportunityValidation.validateTeamQuestionMinimumScore(
+          v,
+          FormField.getValue(state.questions[i].score)
+        );
+      },
+      FormField.getValue(s as Immutable<NumberField.State>) !== null
+    );
+  });
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
@@ -112,12 +135,30 @@ function createQuestion(
       min: 1
     }
   });
+  const [minimumScoreState, minimumScoreCmds] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return valid(null);
+      }
+      return opportunityValidation.validateTeamQuestionMinimumScore(
+        v,
+        question?.score
+      );
+    },
+    child: {
+      value: question?.minimumScore || null,
+      id: `${idNamespace}-minimum-team-questions-score`,
+      min: 0
+    }
+  });
   return [
     {
       question: immutable(questionState),
       guideline: immutable(guidelineState),
       wordLimit: immutable(wordLimitState),
-      score: immutable(scoreState)
+      score: immutable(scoreState),
+      minimumScore: immutable(minimumScoreState)
     },
     [
       ...component_.cmd.mapMany(
@@ -135,6 +176,10 @@ function createQuestion(
       ...component_.cmd.mapMany(
         scoreCmds,
         (childMsg) => adt("score", { childMsg, qIndex }) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        minimumScoreCmds,
+        (childMsg) => adt("minimumScore", { childMsg, qIndex }) as Msg
       )
     ]
   ];
@@ -204,7 +249,22 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ["questions", `${qIndex}`, "score"],
         childUpdate: NumberField.update,
         childMsg: componentMessage,
-        mapChildMsg: (value) => adt("score", { qIndex, childMsg: value })
+        mapChildMsg: (value) => adt("score", { qIndex, childMsg: value }),
+        updateAfter: (state) => [resetMinimumScore(state, qIndex), []]
+      });
+    }
+
+    case "minimumScore": {
+      const componentMessage = msg.value.childMsg;
+      const qIndex = msg.value.qIndex;
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["questions", `${qIndex}`, "minimumScore"],
+        childUpdate: NumberField.update,
+        childMsg: componentMessage,
+        mapChildMsg: (value) =>
+          adt("minimumScore", { qIndex, childMsg: value }),
+        updateAfter: (state) => [resetMinimumScore(state, qIndex), []]
       });
     }
   }
@@ -252,6 +312,12 @@ export function setErrors(
       )
       .updateIn(["questions", i, "score"], (s) =>
         FormField.setErrors(s as Immutable<NumberField.State>, e.score || [])
+      )
+      .updateIn(["questions", i, "minimumScore"], (s) =>
+        FormField.setErrors(
+          s as Immutable<NumberField.State>,
+          e.minimumScore || []
+        )
       );
   }, state);
 }
@@ -270,6 +336,9 @@ export function validate(state: Immutable<State>): Immutable<State> {
       )
       .updateIn(["questions", i, "score"], (s) =>
         FormField.validate(s as Immutable<NumberField.State>)
+      )
+      .updateIn(["questions", i, "minimumScore"], (s) =>
+        FormField.validate(s as Immutable<NumberField.State>)
       );
   }, state);
 }
@@ -284,7 +353,8 @@ export function isValid(state: Immutable<State>): boolean {
       FormField.isValid(q.question) &&
       FormField.isValid(q.guideline) &&
       FormField.isValid(q.wordLimit) &&
-      FormField.isValid(q.score)
+      FormField.isValid(q.score) &&
+      FormField.isValid(q.minimumScore)
     );
   }, true as boolean);
 }
@@ -380,12 +450,29 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
             }}
             label="Score"
             placeholder="Score"
-            className="mb-0"
             required
             disabled={disabled}
             state={question.score}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("score" as const, { childMsg: value, qIndex: index })
+            )}
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col xs="12" md="6" lg="5">
+          <NumberField.view
+            extraChildProps={{
+              suffix: "points"
+            }}
+            label="Minimum Score"
+            placeholder="Minimum Score"
+            help="Please enter a number between zero and score entered above. Proponents scoring below this value will be disqualified."
+            className="mb-0"
+            disabled={disabled}
+            state={question.minimumScore}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("minimumScore" as const, { childMsg: value, qIndex: index })
             )}
           />
         </Col>
