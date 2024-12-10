@@ -284,7 +284,8 @@ export function getValues(state: Immutable<State>): Values {
       guideline: FormField.getValue(q.guideline),
       wordLimit,
       score,
-      order
+      order,
+      minimumScore: FormField.getValue(q.minimumScore)
     });
     return acc;
   }, []);
