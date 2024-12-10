@@ -419,6 +419,7 @@ const create: crud.Create<
                 question: getString(v, "question"),
                 guideline: getString(v, "guideline"),
                 score: getNumber(v, "score"),
+                minimumScore: getNumber<null>(v, "minimumScore", null),
                 wordLimit: getNumber(v, "wordLimit"),
                 order: getNumber(v, "order")
               }))
@@ -1027,7 +1028,8 @@ const update: crud.Update<
                       guideline: getString(v, "guideline"),
                       score: getNumber(v, "score"),
                       wordLimit: getNumber(v, "wordLimit"),
-                      order: getNumber(v, "order")
+                      order: getNumber(v, "order"),
+                      minimumScore: getNumber<null>(v, "minimumScore", null)
                     }))
                   : [],
                 attachments: validatedAttachments.value,
