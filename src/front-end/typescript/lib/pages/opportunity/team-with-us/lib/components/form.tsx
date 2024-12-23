@@ -1,4 +1,4 @@
-import { DEFAULT_LOCATION } from "front-end/config";
+import { DEFAULT_LOCATION, TWU_COST_RECOVERY_FIGURE } from "front-end/config";
 import * as Attachments from "front-end/lib/components/attachments";
 import * as FormField from "front-end/lib/components/form-field";
 import * as DateField from "front-end/lib/components/form-field/date";
@@ -17,6 +17,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as ResourceQuestions from "front-end/lib/pages/opportunity/team-with-us/lib/components/resource-questions";
 import * as Resources from "front-end/lib/pages/opportunity/team-with-us/lib/components/resources";
+import Link from "front-end/lib/views/link";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { getNumber } from "shared/lib";
@@ -78,6 +79,7 @@ export interface State {
   startDate: Immutable<DateField.State>;
   completionDate: Immutable<DateField.State>;
   maxBudget: Immutable<NumberField.State>;
+  costRecovery: Immutable<NumberField.State>;
   // Resource Details Tab
   resources: Immutable<Resources.State>;
   // Description Tab
@@ -107,6 +109,7 @@ export type Msg =
   | ADT<"startDate", DateField.Msg>
   | ADT<"completionDate", DateField.Msg>
   | ADT<"maxBudget", NumberField.Msg>
+  | ADT<"costRecovery", NumberField.Msg>
   // Resource Details Tab
   | ADT<"resources", Resources.Msg>
   // Description Tab
@@ -319,6 +322,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       min: 1
     }
   });
+  const [costRecoveryState, costRecoveryCmds] = NumberField.init({
+    errors: [],
+    child: {
+      value: TWU_COST_RECOVERY_FIGURE,
+      id: "twu-opportunity-cost-recovery"
+    }
+  });
   const [resourcesState, resourcesCmds] = Resources.init({
     resources: opportunity?.resources || []
   });
@@ -408,6 +418,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       startDate: immutable(startDateState),
       completionDate: immutable(completionDateState),
       maxBudget: immutable(maxBudgetState),
+      costRecovery: immutable(costRecoveryState),
       resources: immutable(resourcesState),
       description: immutable(descriptionState),
       resourceQuestions: immutable(resourceQuestionsState),
@@ -440,6 +451,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         adt("completionDate", msg)
       ),
       ...component_.cmd.mapMany(maxBudgetCmds, (msg) => adt("maxBudget", msg)),
+      ...component_.cmd.mapMany(costRecoveryCmds, (msg) =>
+        adt("costRecovery", msg)
+      ),
       ...component_.cmd.mapMany(resourcesCmds, (msg) => adt("resources", msg)),
       ...component_.cmd.mapMany(descriptionCmds, (msg) =>
         adt("description", msg)
@@ -998,6 +1012,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("maxBudget", value)
       });
 
+    case "costRecovery":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["costRecovery"],
+        childUpdate: NumberField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("costRecovery", value)
+      });
+
     case "resources":
       return component_.base.updateChild({
         state,
@@ -1238,6 +1261,28 @@ const OverviewView: component_.base.View<Props> = ({
           state={state.maxBudget}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("maxBudget" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col xs="12">
+        <NumberField.view
+          extraChildProps={{ prefix: "$" }}
+          label="Cost Recovery"
+          placeholder="Cost Recovery"
+          help={
+            <div>
+              <p className="mb-0">
+                See <Link>Service Level Agreement</Link> for more details on
+                Cost Recovery and Services provided
+              </p>
+            </div>
+          }
+          required
+          disabled={true}
+          state={state.costRecovery}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("costRecovery" as const, value)
           )}
         />
       </Col>
