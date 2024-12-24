@@ -1,6 +1,6 @@
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
-import { immutable, component as component_ } from "front-end/lib/framework";
+import { component as component_ } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { BulletPoint } from "front-end/lib/views/bullet-point";
 import Icon from "front-end/lib/views/icon";
@@ -19,10 +19,21 @@ import * as cwu from "shared/lib/resources/opportunity/code-with-us";
 import * as swu from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { OpportunityMetrics } from "shared/lib/resources/metrics";
+import {
+  isPublicSectorEmployee,
+  User,
+  UserType
+} from "shared/lib/resources/user";
+import {
+  CWU_COST_RECOVERY_FIGURE,
+  SWU_COST_RECOVERY_FIGURE,
+  TWU_COST_RECOVERY_FIGURE
+} from "front-end/config";
 
 const IMG_MAX_WIDTH = "550px";
 
 export interface State {
+  viewerUser?: User;
   totalCount: number;
   totalAwarded: number;
 }
@@ -42,9 +53,10 @@ const init: component_.page.Init<
   State,
   InnerMsg,
   Route
-> = () => {
+> = ({ shared }) => {
   return [
     {
+      viewerUser: shared.session?.user,
       totalCount: 0,
       totalAwarded: 0
     },
@@ -61,7 +73,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const response = msg.value;
       if (api.isValid(response)) {
         return [
-          immutable(response.value[0]),
+          state.merge(response.value[0]),
           [component_.cmd.dispatch(component_.page.readyMsg())]
         ];
       } else {
@@ -152,7 +164,10 @@ const Stat: component_.base.View<{
   );
 };
 
-const Programs: component_.base.View = () => {
+const Programs: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
+  const userIsGov = isPublicSectorEmployee(
+    state.viewerUser ?? { type: UserType.Vendor }
+  );
   return (
     <div className="bg-c-landing-programs-bg py-7">
       <Container>
@@ -180,6 +195,10 @@ const Programs: component_.base.View = () => {
                 symbol_: rightPlacement(iconLinkSymbol("arrow-right"))
               }
             ]}
+            costRecoveryDetails={{
+              show: userIsGov,
+              amount: CWU_COST_RECOVERY_FIGURE
+            }}
           />
           <ProgramCard
             img={prefixPath("/images/illustrations/team_with_us.svg")}
@@ -203,10 +222,15 @@ const Programs: component_.base.View = () => {
                 symbol_: rightPlacement(iconLinkSymbol("arrow-right"))
               }
             ]}
+            costRecoveryDetails={{
+              show: userIsGov,
+              amount: TWU_COST_RECOVERY_FIGURE
+            }}
           />
           <ProgramCard
             img={prefixPath("/images/illustrations/sprint_with_us.svg")}
             title="Sprint With Us"
+            className="mb-4 mb-md-0"
             description={
               <div>
                 <div>
@@ -228,6 +252,10 @@ const Programs: component_.base.View = () => {
                 symbol_: rightPlacement(iconLinkSymbol("arrow-right"))
               }
             ]}
+            costRecoveryDetails={{
+              show: userIsGov,
+              amount: SWU_COST_RECOVERY_FIGURE
+            }}
           />
         </Row>
       </Container>
@@ -465,7 +493,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     <div>
       <Hero {...props} />
       <Stats {...props} />
-      <Programs />
+      <Programs {...props} />
       <AppInfo />
       <VendorRoleInfo />
       <GovRoleInfo />

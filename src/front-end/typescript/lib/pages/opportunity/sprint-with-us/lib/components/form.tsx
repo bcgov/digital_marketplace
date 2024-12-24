@@ -1,4 +1,4 @@
-import { DEFAULT_LOCATION } from "front-end/config";
+import { DEFAULT_LOCATION, SWU_COST_RECOVERY_FIGURE } from "front-end/config";
 import * as Attachments from "front-end/lib/components/attachments";
 import * as FormField from "front-end/lib/components/form-field";
 import * as DateField from "front-end/lib/components/form-field/date";
@@ -19,6 +19,7 @@ import * as api from "front-end/lib/http/api";
 import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases";
 import * as TeamQuestions from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions";
 import Icon from "front-end/lib/views/icon";
+import Link, { routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
@@ -85,6 +86,7 @@ export interface State {
   proposalDeadline: Immutable<DateField.State>;
   assignmentDate: Immutable<DateField.State>;
   totalMaxBudget: Immutable<NumberField.State>;
+  costRecovery: Immutable<NumberField.State>;
   minTeamMembers: Immutable<NumberField.State>;
   mandatorySkills: Immutable<SelectMulti.State>;
   optionalSkills: Immutable<SelectMulti.State>;
@@ -117,6 +119,7 @@ export type Msg =
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"assignmentDate", DateField.Msg>
   | ADT<"totalMaxBudget", NumberField.Msg>
+  | ADT<"costRecovery", NumberField.Msg>
   | ADT<"minTeamMembers", NumberField.Msg>
   | ADT<"mandatorySkills", SelectMulti.Msg>
   | ADT<"optionalSkills", SelectMulti.Msg>
@@ -322,6 +325,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       min: 1
     }
   });
+  const [costRecoveryState, costRecoveryCmds] = NumberField.init({
+    errors: [],
+    child: {
+      value: SWU_COST_RECOVERY_FIGURE,
+      id: "swu-opportunity-cost-recovery"
+    }
+  });
   const [minTeamMembersState, minTeamMembersCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
@@ -496,6 +506,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
       totalMaxBudget: immutable(totalMaxBudgetState),
+      costRecovery: immutable(costRecoveryState),
       minTeamMembers: immutable(minTeamMembersState),
       mandatorySkills: immutable(mandatorySkillsState),
       optionalSkills: immutable(optionalSkillsState),
@@ -529,6 +540,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       ),
       ...component_.cmd.mapMany(totalMaxBudgetCmds, (msg) =>
         adt("totalMaxBudget", msg)
+      ),
+      ...component_.cmd.mapMany(costRecoveryCmds, (msg) =>
+        adt("costRecovery", msg)
       ),
       ...component_.cmd.mapMany(minTeamMembersCmds, (msg) =>
         adt("minTeamMembers", msg)
@@ -1018,6 +1032,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         ]
       });
 
+    case "costRecovery":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["costRecovery"],
+        childUpdate: NumberField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("costRecovery", value)
+      });
+
     case "minTeamMembers":
       return component_.base.updateChild({
         state,
@@ -1297,6 +1320,34 @@ const OverviewView: component_.base.View<Props> = ({
           state={state.totalMaxBudget}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("totalMaxBudget" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col md="8" xs="12">
+        <NumberField.view
+          extraChildProps={{ prefix: "$" }}
+          label="Cost Recovery"
+          placeholder="Cost Recovery"
+          help={
+            <div>
+              <p className="mb-0">
+                See{" "}
+                <Link
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
+                  Service Level Agreement
+                </Link>{" "}
+                for more details on Cost Recovery and Services provided
+              </p>
+            </div>
+          }
+          required
+          disabled={true}
+          state={state.costRecovery}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("costRecovery" as const, value)
           )}
         />
       </Col>
