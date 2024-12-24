@@ -1,8 +1,9 @@
 import { component } from "front-end/lib/framework";
-import Link, { ButtonProps } from "front-end/lib/views/link";
+import Link, { ButtonProps, routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Col } from "reactstrap";
 import { formatAmount } from "shared/lib";
+import { adt } from "shared/lib/types";
 
 export interface Props {
   img: string;
@@ -56,7 +57,11 @@ const ProgramCard: component.base.View<Props> = ({
               <br />
               via Cost Recovery
               <div>
-                <Link className="font-size-small no-wrap">
+                <Link
+                  className="font-size-small no-wrap"
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
                   See Service Level Agreement for details
                 </Link>
               </div>

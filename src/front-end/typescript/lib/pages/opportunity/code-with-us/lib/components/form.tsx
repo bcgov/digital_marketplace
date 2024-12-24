@@ -19,7 +19,7 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import Link, { externalDest } from "front-end/lib/views/link";
+import Link, { externalDest, routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -1049,8 +1049,14 @@ const OverviewView: component_.base.View<Props> = ({
           help={
             <div>
               <p className="mb-0">
-                See <Link>Service Level Agreement</Link> for more details on
-                Cost Recovery and Services provided
+                See{" "}
+                <Link
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
+                  Service Level Agreement
+                </Link>{" "}
+                for more details on Cost Recovery and Services provided
               </p>
             </div>
           }
