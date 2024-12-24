@@ -20,7 +20,7 @@ import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/comp
 import * as TeamQuestions from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions";
 import * as EvaluationPanel from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/evaluation-panel";
 import Icon from "front-end/lib/views/icon";
-import Link from "front-end/lib/views/link";
+import Link, { routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
 import React from "react";
 import { Alert, Col, Row } from "reactstrap";
@@ -1487,8 +1487,14 @@ const OverviewView: component_.base.View<Props> = ({
           help={
             <div>
               <p className="mb-0">
-                See <Link>Service Level Agreement</Link> for more details on
-                Cost Recovery and Services provided
+                See{" "}
+                <Link
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
+                  Service Level Agreement
+                </Link>{" "}
+                for more details on Cost Recovery and Services provided
               </p>
             </div>
           }
