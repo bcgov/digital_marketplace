@@ -1,4 +1,5 @@
 import {
+  CWU_COST_RECOVERY_FIGURE,
   DEFAULT_LOCATION,
   MANDATORY_WEIGHTED_CRITERIA_URL
 } from "front-end/config";
@@ -18,7 +19,7 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import Link, { externalDest } from "front-end/lib/views/link";
+import Link, { externalDest, routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -68,6 +69,7 @@ export interface State {
   teaser: Immutable<LongText.State>;
   location: Immutable<ShortText.State>;
   reward: Immutable<NumberField.State>;
+  costRecovery: Immutable<NumberField.State>;
   skills: Immutable<SelectMulti.State>;
   // If remoteOk
   remoteOk: Immutable<RadioGroup.State<RemoteOk>>;
@@ -93,6 +95,7 @@ export type Msg =
   | ADT<"teaser", LongText.Msg>
   | ADT<"location", ShortText.Msg>
   | ADT<"reward", NumberField.Msg>
+  | ADT<"costRecovery", NumberField.Msg>
   | ADT<"skills", SelectMulti.Msg>
   | ADT<"remoteOk", RadioGroup.Msg<RemoteOk>>
   | ADT<"remoteDesc", LongText.Msg>
@@ -185,6 +188,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       value: opportunity?.reward || null,
       id: "cwu-opportunity-reward",
       min: 1
+    }
+  });
+  const [costRecoveryState, costRecoveryCmds] = NumberField.init({
+    errors: [],
+    child: {
+      value: CWU_COST_RECOVERY_FIGURE,
+      id: "cwu-opportunity-cost-recovery"
     }
   });
   const [skillsState, skillsCmds] = SelectMulti.init({
@@ -343,6 +353,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       teaser: immutable(teaserState),
       location: immutable(locationState),
       reward: immutable(rewardState),
+      costRecovery: immutable(costRecoveryState),
       skills: immutable(skillsState),
       remoteOk: immutable(remoteOkState),
       remoteDesc: immutable(remoteDescState),
@@ -368,6 +379,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         (msg) => adt("location", msg) as Msg
       ),
       ...component_.cmd.mapMany(rewardCmds, (msg) => adt("reward", msg) as Msg),
+      ...component_.cmd.mapMany(
+        costRecoveryCmds,
+        (msg) => adt("costRecovery", msg) as Msg
+      ),
       ...component_.cmd.mapMany(skillsCmds, (msg) => adt("skills", msg) as Msg),
       ...component_.cmd.mapMany(
         remoteOkCmds,
@@ -751,6 +766,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("reward", value)
       });
 
+    case "costRecovery":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["costRecovery"],
+        childUpdate: NumberField.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("costRecovery", value)
+      });
+
     case "skills":
       return component_.base.updateChild({
         state,
@@ -1013,6 +1037,34 @@ const OverviewView: component_.base.View<Props> = ({
           state={state.reward}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("reward" as const, value)
+          )}
+        />
+      </Col>
+
+      <Col md="8" xs="12">
+        <NumberField.view
+          extraChildProps={{ prefix: "$" }}
+          label="Cost Recovery"
+          placeholder="Cost Recovery"
+          help={
+            <div>
+              <p className="mb-0">
+                See{" "}
+                <Link
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
+                  Service Level Agreement
+                </Link>{" "}
+                for more details on Cost Recovery and Services provided
+              </p>
+            </div>
+          }
+          required
+          disabled={true}
+          state={state.costRecovery}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("costRecovery" as const, value)
           )}
         />
       </Col>

@@ -12,6 +12,11 @@ import * as swu from "shared/lib/resources/opportunity/sprint-with-us";
 import { UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import {
+  CWU_COST_RECOVERY_FIGURE,
+  TWU_COST_RECOVERY_FIGURE,
+  SWU_COST_RECOVERY_FIGURE
+} from "front-end/config";
 
 export interface State {
   empty: true;
@@ -100,6 +105,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
               color: "primary" as TextColor
             }
           ]}
+          costRecoveryDetails={{ show: true, amount: CWU_COST_RECOVERY_FIGURE }}
         />
         <ProgramCard
           img={prefixPath("/images/illustrations/team_with_us.svg")}
@@ -132,10 +138,12 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
               color: "primary" as TextColor
             }
           ]}
+          costRecoveryDetails={{ show: true, amount: TWU_COST_RECOVERY_FIGURE }}
         />
         <ProgramCard
           img={prefixPath("/images/illustrations/sprint_with_us.svg")}
           title="Sprint With Us"
+          className="mb-4 mb-md-0"
           description={
             <span>
               Use a <em>Sprint With Us</em> opportunity to procure an Agile
@@ -163,6 +171,7 @@ const view: component_.page.View<State, InnerMsg, Route> = () => {
               color: "primary" as TextColor
             }
           ]}
+          costRecoveryDetails={{ show: true, amount: SWU_COST_RECOVERY_FIGURE }}
         />
       </Row>
     </div>
