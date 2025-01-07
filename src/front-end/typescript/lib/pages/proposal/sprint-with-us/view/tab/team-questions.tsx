@@ -820,8 +820,17 @@ const TeamQuestionResponseEvalView: component_.base.View<
           <Col xs="12">
             <NumberField.view
               extraChildProps={{ suffix: "Points" }}
-              label="Score"
-              hint="hint"
+              label={
+                <>
+                  <span>Score</span>{" "}
+                  {question.minimumScore ? (
+                    <small>
+                      (Minimum score is {question.minimumScore} point
+                      {question.minimumScore === 1 ? "" : "s"})
+                    </small>
+                  ) : null}
+                </>
+              }
               disabled={disabled}
               state={score.score}
               dispatch={component_.base.mapDispatch(dispatch, (value) =>
