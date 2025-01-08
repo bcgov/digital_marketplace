@@ -311,7 +311,7 @@ const create: crud.Create<
         status: validatedStatus.value,
         type: validatedType.value,
         scores: scores.map((score) => ({
-          score: getNumber<number>(score, "score"),
+          score: getNumber<number>(score, "score", undefined, false),
           notes: getString(score, "notes"),
           order: getNumber<number>(score, "order")
         }))
@@ -433,7 +433,7 @@ const update: crud.Update<
               "edit" as const,
               {
                 scores: scores.map((score) => ({
-                  score: getNumber<number>(score, "score"),
+                  score: getNumber<number>(score, "score", undefined, false),
                   notes: getString(score, "notes"),
                   order: getNumber<number>(score, "order")
                 }))
