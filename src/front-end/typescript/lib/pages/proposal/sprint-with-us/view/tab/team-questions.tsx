@@ -776,22 +776,11 @@ const TeamQuestionResponseEvalView: component_.base.View<
       open={isOpen}>
       <p style={{ whiteSpace: "pre-line" }}>{question.question}</p>
       <div className="mb-3 small text-secondary d-flex flex-column flex-sm-row flex-nowrap">
-        <div className="mb-2 mb-sm-0">
-          {countWords(response.response)} / {question.wordLimit} word
-          {question.wordLimit === 1 ? "" : "s"}
-        </div>
+        <div className="mb-2 mb-sm-0">{question.wordLimit} word limit</div>
         <Separator spacing="2" color="secondary" className="d-none d-sm-block">
           |
         </Separator>
-        <div>
-          {response.score === undefined || response.score === null
-            ? `Unscored (${question.score} point${
-                question.score === 1 ? "" : "s"
-              } available)`
-            : `${response.score} / ${question.score} point${
-                question.score === 1 ? "" : "s"
-              }`}
-        </div>
+        <div>Scored out of {question.score}</div>
       </div>
       <Alert color="primary" fade={false} className="mb-4">
         <div style={{ whiteSpace: "pre-line" }}>{question.guideline}</div>
