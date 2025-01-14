@@ -1248,7 +1248,8 @@ const ReviewProposalView: component_.base.View<Props> = ({
   dispatch
 }) => {
   const phaseMembers = Team.getAddedMembers(state.team);
-  const organization = getSelectedOrganization(state);
+  const organization =
+    state.proposal?.organization ?? getSelectedOrganization(state);
   const opportunity = state.opportunity;
   return (
     <Row>

@@ -9,8 +9,8 @@ export { Addendum } from "shared/lib/resources/addendum";
 
 export const DEFAULT_OPPORTUNITY_TITLE = "Untitled";
 export const DEFAULT_QUESTIONS_WEIGHT = 25;
-export const DEFAULT_CODE_CHALLENGE_WEIGHT = 50;
-export const DEFAULT_PRICE_WEIGHT = 25;
+export const DEFAULT_CODE_CHALLENGE_WEIGHT = 65;
+export const DEFAULT_PRICE_WEIGHT = 10;
 export const MAX_RESOURCE_QUESTIONS = 100;
 export const MAX_RESOURCE_QUESTION_WORD_LIMIT = 3000;
 export const DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT = 300;
