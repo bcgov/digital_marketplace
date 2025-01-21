@@ -10,6 +10,7 @@ import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
   allIndividualSWUTeamQuestionResponseEvaluationsComplete,
+  readManySWUProposals,
   readOneSWUAwardedProposal,
   readSubmittedSWUProposalCount,
   updateSWUProposalStatus
@@ -1465,12 +1466,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
           )?.map((result) => result.id) || [];
 
         for (const [index, proposalId] of proposalIds.entries()) {
-          // Set the proposal to QUESTIONS_PANEL_INDIVIDUAL status
+          // Set the proposal to EVALUATION_QUESTIONS_INDIVIDUAL status
           await connection("swuProposalStatuses").transacting(trx).insert({
             id: generateUuid(),
             createdAt: now,
             proposal: proposalId,
-            status: SWUProposalStatus.TeamQuestionsPanelIndividual,
+            status: SWUProposalStatus.EvaluationTeamQuestionsIndividual,
             note: ""
           });
 
@@ -1701,7 +1702,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
             "swuTeamQuestionResponseEvaluations"
           )
             .transacting(trx)
-            .where({ id })
+            .where({ id: evaluationId })
             .update(
               {
                 updatedAt: now
@@ -1724,7 +1725,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
             const result = await updateSWUProposalStatus(
               connection,
               proposalId,
-              SWUProposalStatus.TeamQuestionsPanelConsensus,
+              SWUProposalStatus.EvaluationTeamQuestionsConsensus,
               "",
               session
             );
@@ -1735,6 +1736,35 @@ export const submitIndividualQuestionEvaluations = tryDb<
         }
       )
     );
+
+    // Update opportunity status if all evaluations complete for proposal
+    const updatedSWUProposals = getValidValue(
+      await readManySWUProposals(connection, session, id),
+      undefined
+    );
+    if (!updatedSWUProposals) {
+      throw new Error("unable to read proposals");
+    }
+
+    if (
+      updatedSWUProposals.every(
+        (proposal) =>
+          proposal.status !==
+          SWUProposalStatus.EvaluationTeamQuestionsIndividual
+      )
+    ) {
+      const result = await updateSWUOpportunityStatus(
+        connection,
+        id,
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+        "",
+        session
+      );
+
+      if (!result) {
+        throw new Error("unable to update opportunity");
+      }
+    }
   });
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);
