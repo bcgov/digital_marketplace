@@ -114,12 +114,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsPanel &&
+              SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
               evaluations.reduce(
                 (acc, e) =>
                   acc ||
                   (e.proposal.status ===
-                    SWUProposalStatus.TeamQuestionsPanelIndividual &&
+                    SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
                     e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
                 false as boolean
               )

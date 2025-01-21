@@ -8,8 +8,12 @@ enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
+  EvaluationTeamQuestionsReview = "EVAL_QUESTIONS_REVIEW",
+  EvaluationTeamQuestionsChairSubmission = "EVAL_QUESTIONS_CHAIR_SUBMISSION",
+  EvaluationTeamQuestionsAdminReview = "EVAL_QUESTIONS_ADMIN_REVIEW",
+  EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -32,10 +36,10 @@ enum PreviousSWUOpportunityStatus {
 enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
-  TeamQuestionsPanelIndividual = "QUESTIONS_PANEL_INDIVIDUAL",
-  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONESENSUS",
-  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVALUATION_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVALUATION_QUESTIONS_CONSENSUS",
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS", // TODO: Remove
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS", // TODO: Remove
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -171,8 +175,8 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuProposalStatuses")
-    .where({ status: "QUESTIONS_PANEL_INDIVIDUAL" })
-    .where({ status: "QUESTIONS_PANEL_CONSENSUS" })
+    .where({ status: "EVALUATION_QUESTIONS_INDIVIDUAL" })
+    .orWhere({ status: "EVALUATION_QUESTIONS_CONSENSUS" })
     .del();
 
   await connection.schema.raw(` \
@@ -192,7 +196,11 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuOpportunityStatuses")
-    .where({ status: "EVAL_QUESTIONS_PANEL" })
+    .where({ status: "EVAL_QUESTIONS_INDIVIDUAL" })
+    .orWhere({ status: "EVAL_QUESTIONS_CONSENSUS" })
+    .orWhere({ status: "EVAL_QUESTIONS_REVIEW" })
+    .orWhere({ status: "EVAL_QUESTIONS_CHAIR_SUBMISSION" })
+    .orWhere({ status: "EVAL_QUESTIONS_ADMIN_REVIEW" })
     .del();
 
   await connection.schema.raw(` \

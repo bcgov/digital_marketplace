@@ -57,8 +57,12 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
+  EvaluationTeamQuestionsReview = "EVAL_QUESTIONS_REVIEW",
+  EvaluationTeamQuestionsChairSubmission = "EVAL_QUESTIONS_CHAIR_SUBMISSION",
+  EvaluationTeamQuestionsAdminReview = "EVAL_QUESTIONS_ADMIN_REVIEW",
+  EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -112,7 +116,11 @@ export function isSWUOpportunityStatusInEvaluation(
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
     case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
@@ -124,7 +132,11 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
-  SWUOpportunityStatus.EvaluationTeamQuestionsPanel,
+  SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+  SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+  SWUOpportunityStatus.EvaluationTeamQuestionsReview,
+  SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission,
+  SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview,
   SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
@@ -572,7 +584,7 @@ export function canViewSWUOpportunityProposals(o: SWUOpportunity): boolean {
 export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
   o: SWUOpportunity
 ): boolean {
-  // Return true if the opportunity has ever had the `Panel` status.
+  // Return true if the opportunity has ever had the individual evaluation status.
   return (
     !!o.history &&
     o.history.reduce((acc, record) => {
@@ -580,7 +592,7 @@ export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
         acc ||
         (record.type.tag === "status" &&
           record.type.value ===
-            SWUOpportunityStatus.EvaluationTeamQuestionsPanel)
+            SWUOpportunityStatus.EvaluationTeamQuestionsIndividual)
       );
     }, false as boolean)
   );
@@ -619,7 +631,11 @@ export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
 export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
   switch (o.status) {
     case SWUOpportunityStatus.Published:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
     case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
@@ -653,7 +669,11 @@ export function hasSWUOpportunityPassedTeamQuestionsEvaluation(
       return acc;
     }
     switch (h.type.value) {
-      case SWUOpportunityStatus.EvaluationTeamQuestionsPanel:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
       case SWUOpportunityStatus.EvaluationTeamQuestions:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:

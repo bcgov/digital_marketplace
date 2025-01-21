@@ -324,7 +324,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               proposal: state.proposal.id,
               type:
                 state.proposal.status ===
-                SWUProposalStatus.TeamQuestionsPanelIndividual
+                SWUProposalStatus.EvaluationTeamQuestionsIndividual
                   ? SWUTeamQuestionResponseEvaluationType.Individual
                   : SWUTeamQuestionResponseEvaluationType.Consensus,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
@@ -788,7 +788,8 @@ const TeamQuestionResponseEvalView: component_.base.View<
       <div className="mb-3">
         <ProposalMarkdown box source={response.response || EMPTY_STRING} />
       </div>
-      {proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual ? (
+      {proposal.status ===
+      SWUProposalStatus.EvaluationTeamQuestionsIndividual ? (
         <Row>
           <Col xs="12">
             <LongText.view
@@ -977,7 +978,7 @@ export const component: Tab.Component<State, Msg> = {
       ]);
     }
     switch (propStatus) {
-      case SWUProposalStatus.TeamQuestionsPanelIndividual:
+      case SWUProposalStatus.EvaluationTeamQuestionsIndividual:
         return component_.page.actions.links(
           state.evaluating
             ? state.questionEvaluation

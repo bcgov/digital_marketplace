@@ -886,11 +886,11 @@ export async function readOneSWUTeamQuestionResponseEvaluation(
       evaluation.proposal.opportunity.status
     ) ||
       (evaluation.proposal.status ===
-        SWUProposalStatus.TeamQuestionsPanelIndividual &&
+        SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
         evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual &&
         evaluation.evaluationPanelMember.user.id === session.user.id) ||
       (evaluation.proposal.status ===
-        SWUProposalStatus.TeamQuestionsPanelConsensus &&
+        SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
         ((await isSWUOpportunityEvaluationPanelEvaluator(
           connection,
           session,
@@ -948,7 +948,7 @@ export async function readManyIndividualSWUTeamQuestionResponseEvaluationsForCon
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       proposal.opportunity.status
     ) ||
-      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
+      (proposal.status === SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
         ((await isSWUOpportunityEvaluationPanelEvaluator(
           connection,
           session,
@@ -976,13 +976,13 @@ export async function createSWUTeamQuestionResponseEvaluation(
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    ((proposal.status === SWUProposalStatus.TeamQuestionsPanelIndividual &&
+    ((proposal.status === SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
       (await isSWUOpportunityEvaluationPanelEvaluator(
         connection,
         session,
         proposal.opportunity.id
       ))) ||
-      (proposal.status === SWUProposalStatus.TeamQuestionsPanelConsensus &&
+      (proposal.status === SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
         (await isSWUOpportunityEvaluationPanelChair(
           connection,
           session,
@@ -1000,10 +1000,10 @@ export function editSWUTeamQuestionResponseEvaluation(
     (isAdmin(session) || isGovernment(session)) &&
     evaluation.evaluationPanelMember.user.id === session.user.id &&
     ((evaluation.proposal.status ===
-      SWUProposalStatus.TeamQuestionsPanelIndividual &&
+      SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
       (evaluation.proposal.status ===
-        SWUProposalStatus.TeamQuestionsPanelConsensus &&
+        SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
         evaluation.type === SWUTeamQuestionResponseEvaluationType.Consensus))
   );
 }
@@ -1017,10 +1017,10 @@ export function submitSWUTeamQuestionResponseEvaluation(
     (isAdmin(session) || isGovernment(session)) &&
     evaluation.evaluationPanelMember.user.id === session.user.id &&
     ((evaluation.proposal.status ===
-      SWUProposalStatus.TeamQuestionsPanelIndividual &&
+      SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
       evaluation.type === SWUTeamQuestionResponseEvaluationType.Individual) ||
       (evaluation.proposal.status ===
-        SWUProposalStatus.TeamQuestionsPanelConsensus &&
+        SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
         evaluation.type === SWUTeamQuestionResponseEvaluationType.Consensus))
   );
 }

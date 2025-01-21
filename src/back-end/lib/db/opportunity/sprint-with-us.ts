@@ -1431,12 +1431,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
         )) as RawSWUOpportunity[];
 
       for (const lapsedOpportunity of lapsedOpportunities) {
-        // Set the opportunity to EVAL_QUESTIONS_PANEL status
+        // Set the opportunity to EVAL_QUESTIONS_INDIVIDUAL status
         await connection("swuOpportunityStatuses").transacting(trx).insert({
           id: generateUuid(),
           createdAt: now,
           opportunity: lapsedOpportunity.id,
-          status: SWUOpportunityStatus.EvaluationTeamQuestionsPanel,
+          status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
           note: "This opportunity has closed."
         });
 
