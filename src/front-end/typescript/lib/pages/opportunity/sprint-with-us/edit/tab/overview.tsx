@@ -99,7 +99,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       );
       const evaluations = msg.value[2];
       const canViewEvaluations =
-        canViewSWUOpportunityTeamQuestionResponseEvaluations(opportunity);
+        canViewSWUOpportunityTeamQuestionResponseEvaluations(
+          opportunity,
+          SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
+        );
       return [
         state
           .set("opportunity", opportunity)

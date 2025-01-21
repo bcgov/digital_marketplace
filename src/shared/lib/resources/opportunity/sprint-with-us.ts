@@ -582,17 +582,15 @@ export function canViewSWUOpportunityProposals(o: SWUOpportunity): boolean {
 }
 
 export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
-  o: SWUOpportunity
+  o: SWUOpportunity,
+  status: SWUOpportunityStatus
 ): boolean {
   // Return true if the opportunity has ever had the individual evaluation status.
   return (
     !!o.history &&
     o.history.reduce((acc, record) => {
       return (
-        acc ||
-        (record.type.tag === "status" &&
-          record.type.value ===
-            SWUOpportunityStatus.EvaluationTeamQuestionsIndividual)
+        acc || (record.type.tag === "status" && record.type.value === status)
       );
     }, false as boolean)
   );
