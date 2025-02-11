@@ -1773,3 +1773,67 @@ export const submitIndividualQuestionEvaluations = tryDb<
   }
   return valid(dbResult.value);
 });
+
+export const submitConsensusQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(async ({ id: evaluationId }) => {
+        const [statusRecord] =
+          await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+            "swuTeamQuestionResponseEvaluationStatuses"
+          )
+            .transacting(trx)
+            .insert(
+              {
+                id: generateUuid(),
+                teamQuestionResponseEvaluation: evaluationId,
+                createdAt: now,
+                createdBy: session.user.id,
+                status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                note: evaluationParams.note
+              },
+              "*"
+            );
+
+        // Update evaluation root record
+        await connection<RawSWUTeamQuestionResponseEvaluation>(
+          "swuTeamQuestionResponseEvaluations"
+        )
+          .transacting(trx)
+          .where({ id: evaluationId })
+          .update(
+            {
+              updatedAt: now
+            },
+            "*"
+          );
+
+        if (!statusRecord) {
+          throw new Error("unable to update team question evaluation");
+        }
+      })
+    );
+
+    const result = await updateSWUOpportunityStatus(
+      connection,
+      id,
+      SWUOpportunityStatus.EvaluationTeamQuestionsReview,
+      "",
+      session
+    );
+
+    if (!result) {
+      throw new Error("unable to update opportunity");
+    }
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add note");
+  }
+  return valid(dbResult.value);
+});
