@@ -1304,6 +1304,46 @@ export const component: Tab.Component<State, Msg> = {
                 ]
             : []
         );
+      case SWUProposalStatus.EvaluationTeamQuestionsConsensus:
+        return component_.page.actions.links(
+          state.evaluating
+            ? state.questionEvaluation
+              ? state.questionEvaluation.status ===
+                  SWUTeamQuestionResponseEvaluationStatus.Draft &&
+                state.questionEvaluation.type ===
+                  SWUTeamQuestionResponseEvaluationType.Consensus
+                ? [
+                    {
+                      children: "Edit",
+                      onClick: () => dispatch(adt("startEditing")),
+                      button: true,
+                      loading: isStartEditingLoading,
+                      disabled: isLoading,
+                      symbol_: leftPlacement(iconLinkSymbol("edit")),
+                      color: "primary"
+                    }
+                  ]
+                : []
+              : [
+                  {
+                    children: "Save Draft",
+                    symbol_: leftPlacement(iconLinkSymbol("save")),
+                    loading: isSaveLoading,
+                    disabled: isLoading,
+                    button: true,
+                    color: "success",
+                    onClick: () => dispatch(adt("saveDraft"))
+                  },
+                  {
+                    children: "Cancel",
+                    color: "c-nav-fg-alt",
+                    disabled: isLoading,
+                    onClick: () =>
+                      dispatch(adt("showModal", adt("cancelDraft")) as Msg)
+                  }
+                ]
+            : []
+        );
       // case SWUProposalStatus.EvaluatedTeamQuestions:
       //   return component_.page.actions.links([
       //     ...(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
