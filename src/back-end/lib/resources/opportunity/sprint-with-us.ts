@@ -122,6 +122,10 @@ interface ValidatedUpdateRequestBody {
     | ADT<
         "submitIndividualQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
+    | ADT<
+        "submitConsensusQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
       >;
 }
 
@@ -811,6 +815,11 @@ const update: crud.Update<
         case "submitIndividualQuestionEvaluations":
           return adt(
             "submitIndividualQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
+        case "submitConsensusQuestionEvaluations":
+          return adt(
+            "submitConsensusQuestionEvaluations",
             value as SubmitQuestionEvaluationsWithNoteRequestBody
           );
         default:
@@ -1772,6 +1781,127 @@ const update: crud.Update<
             })
           } as ValidatedUpdateRequestBody);
         }
+        case "submitConsensusQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.evaluations.map<
+              Promise<
+                Validation<
+                  SWUTeamQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (id) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedSWUTeamQuestionResponseEvaluation =
+                await validateSWUTeamQuestionResponseEvaluationId(
+                  connection,
+                  id,
+                  request.session
+                );
+
+              if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedSWUTeamQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !IsValidQuestionEvaluationStatusChange(
+                  validatedSWUTeamQuestionResponseEvaluation.value.status,
+                  SWUTeamQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                  validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                  validatedSWUOpportunity.value.teamQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedSWUOpportunity.value.teamQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(validatedSWUTeamQuestionResponseEvaluation.value);
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitConsensusQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitConsensusQuestionEvaluations" as const, {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as SWUTeamQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         default:
           return invalid({ opportunity: adt("parseFailure" as const) });
       }
@@ -1929,6 +2059,14 @@ const update: crud.Update<
             break;
           case "submitIndividualQuestionEvaluations":
             dbResult = await db.submitIndividualQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "submitConsensusQuestionEvaluations":
+            dbResult = await db.submitConsensusQuestionEvaluations(
               connection,
               request.params.id,
               body.value,

@@ -346,6 +346,6 @@ export function shouldLoadProposalsForTab(tabId: TabId): boolean {
 }
 
 export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
-  const evaluationTabs: TabId[] = ["overview"];
+  const evaluationTabs: TabId[] = ["overview", "consensus"];
   return evaluationTabs.includes(tabId);
 }

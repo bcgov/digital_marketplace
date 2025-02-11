@@ -139,7 +139,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [
           api.opportunities.swu.update<Msg>()(
             opportunity.id,
-            adt("submitIndividualQuestionEvaluations", {
+            adt("submitConsensusQuestionEvaluations", {
               note: "",
               evaluations: state.evaluations.map(({ id }) => id)
             }),
@@ -187,9 +187,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             api.proposals.swu.readMany(opportunity.id)((response) =>
               api.getValidValue(response, state.proposals)
             ),
-            api.evaluations.swu.readMany({ opportunityId: opportunity.id })(
-              (response) => api.getValidValue(response, state.evaluations)
-            ),
+            api.evaluations.swu.readMany({
+              opportunityId: opportunity.id,
+              consensus: true
+            })((response) => api.getValidValue(response, state.evaluations)),
             (newOpp, newProposals, newEvaluations) =>
               adt("onInitResponse", [
                 newOpp,
@@ -452,7 +453,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
   const cardData = makeCardData(opportunity, state.proposals);
-  console.log(state.proposals.length);
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={state.viewerUser} />
@@ -466,7 +466,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           <Col
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
-            <h4 className="mb-0">Overview</h4>
+            <h4 className="mb-0">Consensus</h4>
           </Col>
           <Col xs="12">
             {state.canViewEvaluations && state.proposals.length ? (
