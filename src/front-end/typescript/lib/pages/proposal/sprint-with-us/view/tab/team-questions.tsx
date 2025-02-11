@@ -30,6 +30,7 @@ import {
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  getSWUProponentName,
   NUM_SCORE_DECIMALS,
   SWUProposal,
   SWUProposalStatus,
@@ -53,6 +54,7 @@ import {
 } from "shared/lib/validation/question-evaluation/sprint-with-us";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { leftPlacement, iconLinkSymbol } from "front-end/lib/views/link";
+import Icon from "front-end/lib/views/icon";
 
 interface EvaluationScore {
   score: Immutable<NumberField.State>;
@@ -738,17 +740,15 @@ const TeamQuestionResponsesView: component_.base.View<{
 // TeamQuestionResponseEvalViewProps
 // > = ()
 
-interface TeamQuestionResponseEvalViewProps
+interface TeamQuestionResponseIndividualEvalViewProps
   extends Omit<TeamQuestionResponseViewProps, "toggleAccordion"> {
   score: EvaluationScore;
-  proposal: SWUProposal;
   dispatch: component_.base.Dispatch<Msg>;
   disabled: boolean;
-  // panelEvaluationScores: SWUTeamQuestionResponseEvaluation[]
 }
 
-const TeamQuestionResponseEvalView: component_.base.View<
-  TeamQuestionResponseEvalViewProps
+const TeamQuestionResponseIndividualEvalView: component_.base.View<
+  TeamQuestionResponseIndividualEvalViewProps
 > = ({
   opportunity,
   response,
@@ -756,7 +756,6 @@ const TeamQuestionResponseEvalView: component_.base.View<
   isOpen,
   className,
   dispatch,
-  proposal,
   score,
   disabled
 }) => {
@@ -788,58 +787,53 @@ const TeamQuestionResponseEvalView: component_.base.View<
       <div className="mb-3">
         <ProposalMarkdown box source={response.response || EMPTY_STRING} />
       </div>
-      {proposal.status ===
-      SWUProposalStatus.EvaluationTeamQuestionsIndividual ? (
-        <Row>
-          <Col xs="12">
-            <LongText.view
-              label="Evaluator Notes"
-              extraChildProps={{
-                style: { height: "200px" }
-              }}
-              disabled={disabled}
-              state={score.notes}
-              dispatch={component_.base.mapDispatch(dispatch, (value) =>
-                adt("notesMsg" as const, {
-                  childMsg: value,
-                  rIndex: index
-                })
-              )}
-            />
-          </Col>
-          <Col xs="12">
-            <NumberField.view
-              extraChildProps={{ suffix: "Points" }}
-              label={
-                <>
-                  <span>Score</span>{" "}
-                  {question.minimumScore ? (
-                    <small>
-                      (Minimum score is {question.minimumScore} point
-                      {question.minimumScore === 1 ? "" : "s"})
-                    </small>
-                  ) : null}
-                </>
-              }
-              disabled={disabled}
-              state={score.score}
-              dispatch={component_.base.mapDispatch(dispatch, (value) =>
-                adt("scoreMsg" as const, {
-                  childMsg: value,
-                  rIndex: index
-                })
-              )}
-            />
-          </Col>
-        </Row>
-      ) : (
-        <div />
-      )}
+      <Row>
+        <Col xs="12">
+          <LongText.view
+            label="Evaluator Notes"
+            extraChildProps={{
+              style: { height: "200px" }
+            }}
+            disabled={disabled}
+            state={score.notes}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("notesMsg" as const, {
+                childMsg: value,
+                rIndex: index
+              })
+            )}
+          />
+        </Col>
+        <Col xs="12">
+          <NumberField.view
+            extraChildProps={{ suffix: "Points" }}
+            label={
+              <>
+                <span>Score</span>{" "}
+                {question.minimumScore ? (
+                  <small>
+                    (Minimum score is {question.minimumScore} point
+                    {question.minimumScore === 1 ? "" : "s"})
+                  </small>
+                ) : null}
+              </>
+            }
+            disabled={disabled}
+            state={score.score}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("scoreMsg" as const, {
+                childMsg: value,
+                rIndex: index
+              })
+            )}
+          />
+        </Col>
+      </Row>
     </Accordion>
   );
 };
 
-const TeamQuestionResponsesEvalView: component_.base.View<{
+const TeamQuestionResponsesIndividualEvalView: component_.base.View<{
   state: State;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ state, dispatch }) => {
@@ -876,9 +870,9 @@ const TeamQuestionResponsesEvalView: component_.base.View<{
           <Col xs="12">
             {show ? (
               <div>
-                <h3 className="mb-4">Team Questions{"'"} Responses</h3>
+                <h3 className="mb-4">{getSWUProponentName(state.proposal)}</h3>
                 {state.proposal.teamQuestionResponses.map((r, i, rs) => (
-                  <TeamQuestionResponseEvalView
+                  <TeamQuestionResponseIndividualEvalView
                     key={`swu-proposal-team-question-response-evaluation-${i}`}
                     className={i < rs.length - 1 ? "mb-4" : ""}
                     opportunity={state.opportunity}
@@ -886,9 +880,294 @@ const TeamQuestionResponsesEvalView: component_.base.View<{
                     index={i}
                     response={r}
                     score={state.evaluationScores[i]}
-                    proposal={state.proposal}
                     dispatch={dispatch}
                     disabled={!state.isEditing || isLoading}
+                  />
+                ))}
+              </div>
+            ) : (
+              "This proposal's team questions will be available once the opportunity closes."
+            )}
+          </Col>
+        </Row>
+      </div>
+    </div>
+  );
+};
+
+interface TeamQuestionResponseChairEvalViewProps
+  extends Omit<TeamQuestionResponseViewProps, "toggleAccordion"> {
+  score: EvaluationScore;
+  dispatch: component_.base.Dispatch<Msg>;
+  disabled: boolean;
+  panelEvaluationScores: State["panelQuestionEvaluations"];
+}
+
+const TeamQuestionResponseChairEvalView: component_.base.View<
+  TeamQuestionResponseChairEvalViewProps
+> = ({
+  opportunity,
+  response,
+  index,
+  isOpen,
+  className,
+  dispatch,
+  score,
+  disabled,
+  panelEvaluationScores
+}) => {
+  const question = getQuestionByOrder(opportunity, response.order);
+  if (!question) {
+    return null;
+  }
+  const currentScore = FormField.getValue(score.score);
+  const hasScoreBelowMinimum =
+    question.minimumScore &&
+    currentScore &&
+    currentScore < question.minimumScore;
+  const hasPanelScoreBelowMinimum = panelEvaluationScores.some(
+    (panelEvaluationScore) => {
+      const score = panelEvaluationScore.scores.find(
+        ({ order }) => question.order === order
+      );
+      return (
+        question.minimumScore && score && score.score < question.minimumScore
+      );
+    }
+  );
+  return (
+    <Accordion
+      className={className}
+      toggle={() => dispatch(adt("toggleAccordion", index))}
+      color="info"
+      title={
+        <div className="d-flex align-items-center flex-nowrap">
+          <span className="mr-3">Question {index + 1}</span>
+          {hasScoreBelowMinimum ? (
+            <Icon
+              name="exclamation-triangle"
+              color="danger"
+              width={1.25}
+              height={1.25}
+            />
+          ) : hasPanelScoreBelowMinimum ? (
+            <Icon
+              name="exclamation-circle"
+              color="warning"
+              width={1.25}
+              height={1.25}
+            />
+          ) : null}
+        </div>
+      }
+      titleClassName="h3 mb-0"
+      chevronWidth={1.5}
+      chevronHeight={1.5}
+      open={isOpen}>
+      <p style={{ whiteSpace: "pre-line" }}>{question.question}</p>
+      <Alert color="primary" fade={false} className="mb-4">
+        <div style={{ whiteSpace: "pre-line" }}>{question.guideline}</div>
+      </Alert>
+      <div className="mb-4">
+        <ProposalMarkdown
+          className="response-consensus"
+          box
+          source={response.response || EMPTY_STRING}
+        />
+      </div>
+      <div>
+        {panelEvaluationScores.map((panelEvaluationScore) => {
+          const questionEvaluationScore = panelEvaluationScore.scores.find(
+            ({ order }) => order === question.order
+          );
+          if (!questionEvaluationScore) {
+            return null;
+          }
+          return (
+            <div
+              key={`swu-proposal-team-question-response-evaluation-individual-${panelEvaluationScore.evaluationPanelMember.order}`}
+              className="pb-4 mb-4 border-bottom">
+              <Row>
+                <Col xs="3">
+                  <div className="d-flex h-100">
+                    <div
+                      className={[
+                        "flex-shrink-0 mr-3",
+                        question.minimumScore &&
+                        questionEvaluationScore.score < question.minimumScore
+                          ? "bg-warning"
+                          : ""
+                      ].join(" ")}
+                      style={{ width: "0.25em" }}
+                    />
+                    <div
+                      className="text-center mr-auto ml-auto"
+                      style={{
+                        overflowWrap: "break-word",
+                        overflowY: "scroll"
+                      }}>
+                      {panelEvaluationScore.evaluationPanelMember.user.name}
+                    </div>
+                  </div>
+                </Col>
+                <Col xs="9">
+                  <div className="d-flex align-items-start">
+                    <div className="form-control chair-evaluation panel-score disabled mr-3">
+                      {questionEvaluationScore.score}
+                    </div>
+                    <div className="form-control chair-evaluation panel-notes disabled">
+                      {questionEvaluationScore.notes}
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </div>
+          );
+        })}
+      </div>
+      <div>
+        <h5 className="mb-4">Consensus</h5>
+        <Row>
+          <Col xs="3">
+            <div className="d-flex h-100">
+              <div
+                className={[
+                  "flex-shrink-0 mr-3 mb-3",
+                  hasScoreBelowMinimum ? "bg-danger" : ""
+                ].join(" ")}
+                style={{ width: "0.25em" }}
+              />
+              <div
+                className="text-center mr-auto ml-auto"
+                style={{ wordBreak: "break-word", overflowY: "scroll" }}>
+                Consensus Score
+              </div>
+            </div>
+          </Col>
+          <Col xs="9">
+            <div className="d-flex align-items-start">
+              <NumberField.view
+                className={[
+                  "chair-evaluation mr-3",
+                  hasScoreBelowMinimum ? "warn" : ""
+                ].join(" ")}
+                extraChildProps={{ suffix: "points" }}
+                disabled={disabled}
+                state={score.score}
+                dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                  adt("scoreMsg" as const, {
+                    childMsg: value,
+                    rIndex: index
+                  })
+                )}
+                // style={{ width: "8.875em" }}
+              />
+              <div className="w-100 chair-evaluation consensus-notes-container">
+                <LongText.view
+                  extraChildProps={{
+                    style: {
+                      height: "calc(((0.75rem + (4em * 1.5)) + 2px))"
+                    }
+                  }}
+                  {...(hasScoreBelowMinimum ? { className: "warn" } : {})}
+                  disabled={disabled}
+                  state={score.notes}
+                  dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                    adt("notesMsg" as const, {
+                      childMsg: value,
+                      rIndex: index
+                    })
+                  )}
+                />
+
+                {/* {(FormField.isValid(score.notes) ||
+                  (!FormField.getValue(score.notes) &&
+                    FormField.isValid(score.notes))) &&
+                hasScoreBelowMinimum ? (
+                  <small
+                    className="form-text text-secondary pt-1 align-center"
+                    style={{ marginTop: "-1.25em" }}>
+                    <Icon
+                      color="danger"
+                      name="exclamation-triangle"
+                      height={0.875}
+                    />{" "}
+                    Submitting this score will disqualify this proponent.
+                  </small>
+                ) : null} */}
+                {!FormField.isValid(
+                  score.notes
+                ) ? null : hasScoreBelowMinimum ? (
+                  <small
+                    className="form-text text-secondary pt-1 align-center"
+                    style={{ marginTop: "-1.25em" }}>
+                    <Icon
+                      color="danger"
+                      name="exclamation-triangle"
+                      height={0.875}
+                    />{" "}
+                    Submitting this score will disqualify this proponent.
+                  </small>
+                ) : null}
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </div>
+    </Accordion>
+  );
+};
+
+const TeamQuestionResponsesChairEvalView: component_.base.View<{
+  state: State;
+  dispatch: component_.base.Dispatch<Msg>;
+}> = ({ state, dispatch }) => {
+  const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
+    state.opportunity
+  );
+  const isStartEditingLoading = state.startEditingLoading > 0;
+  const isSaveLoading = state.saveLoading > 0;
+  const isLoading = isStartEditingLoading || isSaveLoading;
+  return (
+    <div>
+      <ViewTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
+      {state.proposal.questionsScore !== null &&
+      state.proposal.questionsScore !== undefined ? (
+        <Row className="mt-5">
+          <Col xs="12">
+            <ReportCardList
+              reportCards={[
+                {
+                  icon: "star-full",
+                  iconColor: "c-report-card-icon-highlight",
+                  name: "Team Questions Score",
+                  value: `${String(
+                    state.proposal.questionsScore.toFixed(NUM_SCORE_DECIMALS)
+                  )}%`
+                }
+              ]}
+            />
+          </Col>
+        </Row>
+      ) : null}
+      <div className="mt-5 pt-5 border-top">
+        <Row>
+          <Col xs="12">
+            {show ? (
+              <div>
+                <h3 className="mb-4">{getSWUProponentName(state.proposal)}</h3>
+                {state.proposal.teamQuestionResponses.map((r, i, rs) => (
+                  <TeamQuestionResponseChairEvalView
+                    key={`swu-proposal-team-question-response-evaluation-${i}`}
+                    className={i < rs.length - 1 ? "mb-4" : ""}
+                    opportunity={state.opportunity}
+                    isOpen={state.openAccordions.has(i)}
+                    index={i}
+                    response={r}
+                    score={state.evaluationScores[i]}
+                    dispatch={dispatch}
+                    disabled={!state.isEditing || isLoading}
+                    panelEvaluationScores={state.panelQuestionEvaluations}
                   />
                 ))}
               </div>
@@ -907,7 +1186,14 @@ const view: component_.base.ComponentView<State, Msg> = ({
   dispatch
 }) => {
   return state.evaluating ? (
-    <TeamQuestionResponsesEvalView state={state} dispatch={dispatch} />
+    state.panelQuestionEvaluations.length ? (
+      <TeamQuestionResponsesChairEvalView state={state} dispatch={dispatch} />
+    ) : (
+      <TeamQuestionResponsesIndividualEvalView
+        state={state}
+        dispatch={dispatch}
+      />
+    )
   ) : (
     <TeamQuestionResponsesView state={state} dispatch={dispatch} />
   );
