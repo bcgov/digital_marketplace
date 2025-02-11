@@ -6,6 +6,7 @@ import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
 import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
+import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
 import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
@@ -126,8 +127,8 @@ export interface Tabs {
   >;
   consensus: TabbedPage.Tab<
     Params,
-    SummaryTab.State,
-    SummaryTab.InnerMsg,
+    ConsensusTab.State,
+    ConsensusTab.InnerMsg,
     InitResponse
   >;
 }
@@ -243,8 +244,7 @@ export function idToDefinition<K extends TabId>(
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "consensus":
       return {
-        // TODO: Create tab
-        component: SummaryTab.component,
+        component: ConsensusTab.component,
         icon: "check-double",
         title: "Consensus"
       } as TabbedPage.TabDefinition<Tabs, K>;
@@ -336,6 +336,7 @@ export function makeSidebarState(
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
   const proposalTabs: TabId[] = [
     "overview",
+    "consensus",
     "proposals",
     "teamQuestions",
     "codeChallenge",
