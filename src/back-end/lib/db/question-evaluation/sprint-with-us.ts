@@ -183,20 +183,19 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
 >(async (connection, session, id, isConsensus) => {
   const query = generateSWUTeamQuestionResponseEvaluationQuery(connection)
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
-    .where({ "swuProposals.opportunity": id });
-
-  // If not reading consensus evaluations, scope results to those they have
-  // authored
-  if (!isConsensus) {
-    query
-      .join(
-        "swuEvaluationPanelMembers",
-        "swuEvaluationPanelMembers.id",
-        "=",
-        "evaluations.evaluationPanelMember"
-      )
-      .andWhere({ "swuEvaluationPanelMembers.user": session.user.id });
-  }
+    .join(
+      "swuEvaluationPanelMembers",
+      "swuEvaluationPanelMembers.id",
+      "=",
+      "evaluations.evaluationPanelMember"
+    )
+    .where({
+      "swuEvaluationPanelMembers.user": session.user.id,
+      "swuProposals.opportunity": id,
+      "evaluations.type": isConsensus
+        ? SWUTeamQuestionResponseEvaluationType.Consensus
+        : SWUTeamQuestionResponseEvaluationType.Individual
+    });
 
   const results = await Promise.all(
     (

@@ -54,7 +54,7 @@ import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageQuestionEvaluationIndividualSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-individual";
 import * as PageQuestionEvaluationIndividualSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-individual";
 import * as PageQuestionEvaluationConsensusSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-consensus";
-import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-individual";
+import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-consensus";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";

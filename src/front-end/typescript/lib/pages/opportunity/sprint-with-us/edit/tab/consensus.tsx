@@ -23,7 +23,7 @@ import React from "react";
 import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
-  isSWUOpportunityAcceptingProposals,
+  isSWUOpportunityStatusInEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus,
   UpdateValidationErrors
@@ -101,7 +101,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const canViewEvaluations =
         canViewSWUOpportunityTeamQuestionResponseEvaluations(
           opportunity,
-          SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
+          SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
         );
       return [
         state
@@ -117,12 +117,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
+              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
               evaluations.reduce(
                 (acc, e) =>
                   acc ||
                   (e.proposal.status ===
-                    SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
+                    SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
                     e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
                 false as boolean
               )
@@ -139,7 +139,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [
           api.opportunities.swu.update<Msg>()(
             opportunity.id,
-            adt("submitIndividualQuestionEvaluations", {
+            adt("submitConsensusQuestionEvaluations", {
               note: "",
               evaluations: state.evaluations.map(({ id }) => id)
             }),
@@ -187,9 +187,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             api.proposals.swu.readMany(opportunity.id)((response) =>
               api.getValidValue(response, state.proposals)
             ),
-            api.evaluations.swu.readMany({ opportunityId: opportunity.id })(
-              (response) => api.getValidValue(response, state.evaluations)
-            ),
+            api.evaluations.swu.readMany({
+              opportunityId: opportunity.id,
+              consensus: true
+            })((response) => api.getValidValue(response, state.evaluations)),
             (newOpp, newProposals, newEvaluations) =>
               adt("onInitResponse", [
                 newOpp,
@@ -218,12 +219,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
-  if (isSWUOpportunityAcceptingProposals(opportunity)) {
-    return (
-      <div>
-        Evaluations will be displayed here once this opportunity has closed.
-      </div>
-    );
+  if (
+    isSWUOpportunityStatusInEvaluation(opportunity.status) ||
+    state.opportunity.status === SWUOpportunityStatus.Awarded
+  ) {
+    return <div>Evaluators have not completed their evaluations yet.</div>;
   } else {
     return <div>No proposals were submitted to this opportunity.</div>;
   }
@@ -243,7 +243,7 @@ const ContextMenuCell: component_.base.View<{
     <Link
       disabled={disabled}
       dest={routeDest(
-        adt("questionEvaluationIndividualSWUEdit", {
+        adt("questionEvaluationConsensusSWUEdit", {
           ...proposalRouteParams,
           evaluationId: evaluation.id
         })
@@ -254,7 +254,7 @@ const ContextMenuCell: component_.base.View<{
     <Link
       disabled={disabled}
       dest={routeDest(
-        adt("questionEvaluationIndividualSWUCreate", proposalRouteParams)
+        adt("questionEvaluationConsensusSWUCreate", proposalRouteParams)
       )}>
       Start Evaluation
     </Link>
@@ -283,9 +283,9 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
     <div>
       <Link
         symbol_={leftPlacement(
-          warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
+          warn ? iconLinkSymbol("exclamation-triangle") : emptyIconLinkSymbol()
         )}
-        symbolClassName="text-warning"
+        symbolClassName="text-danger"
         disabled={disabled}
         dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
         {getSWUProponentName(proposal)}
@@ -466,7 +466,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           <Col
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
-            <h4 className="mb-0">Overview</h4>
+            <h4 className="mb-0">Consensus</h4>
           </Col>
           <Col xs="12">
             {state.canViewEvaluations && state.proposals.length ? (
