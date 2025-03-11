@@ -22,7 +22,6 @@ import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType,
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { generateUuid } from "back-end/lib";
@@ -138,8 +137,7 @@ export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
       const query = generateSWUTeamQuestionResponseEvaluationQuery(
         connection
       ).where({
-        "evaluations.proposal": id,
-        "evaluations.type": SWUTeamQuestionResponseEvaluationType.Individual
+        "evaluations.proposal": id
       });
 
       const results = await Promise.all(
@@ -180,7 +178,7 @@ export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id, boolean],
   SWUTeamQuestionResponseEvaluation[]
->(async (connection, session, id, isConsensus) => {
+>(async (connection, session, id) => {
   const query = generateSWUTeamQuestionResponseEvaluationQuery(connection)
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
     .join(
@@ -191,10 +189,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
     )
     .where({
       "swuEvaluationPanelMembers.user": session.user.id,
-      "swuProposals.opportunity": id,
-      "evaluations.type": isConsensus
-        ? SWUTeamQuestionResponseEvaluationType.Consensus
-        : SWUTeamQuestionResponseEvaluationType.Individual
+      "swuProposals.opportunity": id
     });
 
   const results = await Promise.all(
@@ -261,8 +256,8 @@ export const readOwnSWUTeamQuestionResponseEvaluations = tryDb<
 });
 
 export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember =
-  tryDb<[Id, Id, SWUTeamQuestionResponseEvaluationType, Session], Id | null>(
-    async (connection, proposalId, evaluationPanelMemberId, type, session) => {
+  tryDb<[Id, Id, Session], Id | null>(
+    async (connection, proposalId, evaluationPanelMemberId, session) => {
       if (!session) {
         return valid(null);
       }
@@ -272,8 +267,7 @@ export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPane
         )
           .where({
             proposal: proposalId,
-            evaluationPanelMember: evaluationPanelMemberId,
-            type
+            evaluationPanelMember: evaluationPanelMemberId
           })
           .select("id")
           .first()

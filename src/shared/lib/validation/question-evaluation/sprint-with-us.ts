@@ -5,9 +5,7 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreBody,
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   parseSWUTeamQuestionResponseEvaluationStatus,
-  parseSWUTeamQuestionResponseEvaluationType,
-  SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType
+  SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import {
   ArrayValidation,
@@ -41,14 +39,6 @@ function makeValidateSWUTeamQuestionResponseEvaluationEnum<T>(
     return valid(parsed);
   };
 }
-
-export const validateSWUTeamQuestionResponseEvaluationType =
-  makeValidateSWUTeamQuestionResponseEvaluationEnum<SWUTeamQuestionResponseEvaluationType>(
-    parseSWUTeamQuestionResponseEvaluationType,
-    (raw) =>
-      `"${raw}" is not a valid SprintWithUs team question response evaluation type.`,
-    (raw, isOneOf) => `"${raw}" is not one of: ${isOneOf.join(", ")}`
-  );
 
 export const validateSWUTeamQuestionResponseEvaluationStatus =
   makeValidateSWUTeamQuestionResponseEvaluationEnum<SWUTeamQuestionResponseEvaluationStatus>(

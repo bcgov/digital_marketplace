@@ -20,7 +20,6 @@ import {
   CreateValidationErrors,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType,
   CreateRequestBody as SharedCreateRequestBody,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors,
@@ -214,25 +213,11 @@ const create: crud.Create<
       };
     },
     async validateRequestBody(request) {
-      const { proposal, type, scores, status } = request.body;
+      const { proposal, scores, status } = request.body;
 
       if (!permissions.isSignedIn(request.session)) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
-
-      const validatedType =
-        questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationType(
-          type,
-          [
-            SWUTeamQuestionResponseEvaluationType.Consensus,
-            SWUTeamQuestionResponseEvaluationType.Individual
-          ]
-        );
-      if (isInvalid(validatedType)) {
-        return invalid({
-          type: validatedType.value
         });
       }
 
@@ -288,7 +273,6 @@ const create: crud.Create<
           connection,
           validatedSWUProposal.value.id,
           validatedSWUPanelEvaluationPanelMember.value.id,
-          validatedType.value,
           request.session
         );
       if (isInvalid(dbResultEvaluation)) {
@@ -309,7 +293,6 @@ const create: crud.Create<
         proposal: validatedSWUProposal.value.id,
         evaluationPanelMember: validatedSWUPanelEvaluationPanelMember.value.id,
         status: validatedStatus.value,
-        type: validatedType.value,
         scores: scores.map((score) => ({
           score: getNumber<number>(score, "score", undefined, false),
           notes: getString(score, "notes"),
@@ -419,9 +402,7 @@ const update: crud.Update<
           // Only drafts and submitted consensuses can be edited
           if (
             validatedSWUTeamQuestionResponseEvaluation.value.status !==
-              SWUTeamQuestionResponseEvaluationStatus.Draft &&
-            validatedSWUTeamQuestionResponseEvaluation.value.type !==
-              SWUTeamQuestionResponseEvaluationType.Consensus
+            SWUTeamQuestionResponseEvaluationStatus.Draft
           ) {
             return invalid({
               permissions: [permissions.ERROR_MESSAGE]

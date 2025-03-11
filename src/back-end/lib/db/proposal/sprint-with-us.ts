@@ -61,10 +61,7 @@ import {
   UpdateEditRequestBody,
   UpdateTeamQuestionScoreBody
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluationStatus } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, userToUserSlim, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -2157,7 +2154,6 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
       )
       .where({
         "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted,
-        "evaluations.type": SWUTeamQuestionResponseEvaluationType.Individual,
         "evaluations.proposal": proposalId
       })
       .count("*"),

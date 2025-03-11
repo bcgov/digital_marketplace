@@ -43,7 +43,6 @@ import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType,
   UpdateValidationErrors
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
@@ -84,9 +83,17 @@ export type InnerMsg =
     >
   | ADT<"cancelEditing">
   | ADT<"cancel">
-  | ADT<"saveDraft">
+  | ADT<"saveEvaluationDraft">
+  | ADT<"saveConsensusDraft">
   | ADT<
-      "onSaveDraftResponse",
+      "onSaveEvaluationDraftResponse",
+      api.ResponseValidation<
+        SWUTeamQuestionResponseEvaluation,
+        CreateValidationErrors
+      >
+    >
+  | ADT<
+      "onSaveConsensusDraftResponse",
       api.ResponseValidation<
         SWUTeamQuestionResponseEvaluation,
         CreateValidationErrors
@@ -312,7 +319,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           )
         ]
       ];
-    case "saveDraft": {
+    case "saveEvaluationDraft": {
       const scores = getValues(state);
       if (scores === null) {
         return [state, []];
@@ -324,20 +331,36 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           api.evaluations.swu.create<Msg>()(
             {
               proposal: state.proposal.id,
-              type:
-                state.proposal.status ===
-                SWUProposalStatus.EvaluationTeamQuestionsIndividual
-                  ? SWUTeamQuestionResponseEvaluationType.Individual
-                  : SWUTeamQuestionResponseEvaluationType.Consensus,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
               scores
             },
-            (response) => adt("onSaveDraftResponse", response)
+            (response) => adt("onSaveEvaluationDraftResponse", response)
           )
         ]
       ];
     }
-    case "onSaveDraftResponse": {
+    case "saveConsensusDraft": {
+      const scores = getValues(state);
+      if (scores === null) {
+        return [state, []];
+      }
+
+      return [
+        startSaveLoading(state),
+        [
+          // TODO: use consensus endpoint
+          api.evaluations.swu.create<Msg>()(
+            {
+              proposal: state.proposal.id,
+              status: SWUTeamQuestionResponseEvaluationStatus.Draft,
+              scores
+            },
+            (response) => adt("onSaveConsensusDraftResponse", response)
+          )
+        ]
+      ];
+    }
+    case "onSaveEvaluationDraftResponse": {
       state = stopSaveLoading(state);
       const result = msg.value;
       switch (result.tag) {
@@ -354,18 +377,84 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               ...evaluationScoreCmds,
               component_.cmd.dispatch(
                 component_.global.newRouteMsg(
-                  adt(
-                    result.value.type ===
-                      SWUTeamQuestionResponseEvaluationType.Individual
-                      ? "questionEvaluationIndividualSWUEdit"
-                      : "questionEvaluationConsensusSWUEdit",
-                    {
-                      proposalId: state.proposal.id,
-                      opportunityId: state.proposal.opportunity.id,
-                      evaluationId: result.value.id,
-                      tab: "teamQuestions" as const
-                    }
-                  ) as Route
+                  adt("questionEvaluationIndividualSWUEdit", {
+                    proposalId: state.proposal.id,
+                    opportunityId: state.proposal.opportunity.id,
+                    evaluationId: result.value.id,
+                    tab: "teamQuestions" as const
+                  }) as Route
+                )
+              ),
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.questionEvaluationDraftCreated.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let evaluationScores = state.evaluationScores;
+          if (result.value) {
+            evaluationScores = (result.value.scores ?? []).map((e, i) => ({
+              notes: FormField.setErrors(
+                evaluationScores[i].notes,
+                e.notes || []
+              ),
+              score: FormField.setErrors(
+                evaluationScores[i].score,
+                e.score || []
+              )
+            }));
+          }
+          return [
+            state.set("evaluationScores", evaluationScores),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationDraftCreated.error)
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationDraftCreated.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "onSaveConsensusDraftResponse": {
+      state = stopSaveLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [evaluationScoreStates, evaluationScoreCmds] =
+            initEvaluationScores(
+              state.opportunity,
+              state.proposal,
+              result.value
+            );
+          return [
+            state.set("evaluationScores", evaluationScoreStates),
+            [
+              ...evaluationScoreCmds,
+              component_.cmd.dispatch(
+                component_.global.newRouteMsg(
+                  adt("questionEvaluationConsensusSWUEdit", {
+                    proposalId: state.proposal.id,
+                    opportunityId: state.proposal.opportunity.id,
+                    evaluationId: result.value.id,
+                    tab: "teamQuestions" as const
+                  }) as Route
                 )
               ),
               component_.cmd.dispatch(
@@ -1269,9 +1358,7 @@ export const component: Tab.Component<State, Msg> = {
           state.evaluating
             ? state.questionEvaluation
               ? state.questionEvaluation.status ===
-                  SWUTeamQuestionResponseEvaluationStatus.Draft &&
-                state.questionEvaluation.type ===
-                  SWUTeamQuestionResponseEvaluationType.Individual
+                SWUTeamQuestionResponseEvaluationStatus.Draft
                 ? [
                     {
                       children: "Edit",
@@ -1292,7 +1379,7 @@ export const component: Tab.Component<State, Msg> = {
                     disabled: isLoading,
                     button: true,
                     color: "success",
-                    onClick: () => dispatch(adt("saveDraft"))
+                    onClick: () => dispatch(adt("saveEvaluationDraft"))
                   },
                   {
                     children: "Cancel",
@@ -1309,9 +1396,7 @@ export const component: Tab.Component<State, Msg> = {
           state.evaluating
             ? state.questionEvaluation
               ? state.questionEvaluation.status ===
-                  SWUTeamQuestionResponseEvaluationStatus.Draft &&
-                state.questionEvaluation.type ===
-                  SWUTeamQuestionResponseEvaluationType.Consensus
+                SWUTeamQuestionResponseEvaluationStatus.Draft
                 ? [
                     {
                       children: "Edit",
@@ -1332,7 +1417,7 @@ export const component: Tab.Component<State, Msg> = {
                     disabled: isLoading,
                     button: true,
                     color: "success",
-                    onClick: () => dispatch(adt("saveDraft"))
+                    onClick: () => dispatch(adt("saveConsensusDraft"))
                   },
                   {
                     children: "Cancel",
