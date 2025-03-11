@@ -192,7 +192,6 @@ interface RawSWUOpportunityHistoryRecord
 
 export interface RawSWUEvaluationPanelMember
   extends Omit<SWUEvaluationPanelMember, "user"> {
-  id: Id;
   opportunityVersion: Id;
   user: Id;
 }
@@ -1126,7 +1125,6 @@ export const createSWUOpportunity = tryDb<
         .transacting(trx)
         .insert({
           ...member,
-          id: generateUuid(),
           opportunityVersion: opportunityVersionRecord.id
         });
     }
@@ -1287,7 +1285,6 @@ export const updateSWUOpportunityVersion = tryDb<
         .transacting(trx)
         .insert({
           ...member,
-          id: generateUuid(),
           opportunityVersion: versionRecord.id
         });
     }
@@ -1578,11 +1575,10 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
-// TODO: add indexes
-export const readOneSWUEvaluationPanelMemberWithId = tryDb<
+export const readOneSWUEvaluationPanelMember = tryDb<
   [Id, Id],
-  (SWUEvaluationPanelMember & { id: Id }) | null
->(async (connection, user, opportunity) => {
+  SWUEvaluationPanelMember | null
+>(async (connection, opportunity, user) => {
   const raw = await connection<RawSWUEvaluationPanelMember>(
     "swuEvaluationPanelMembers"
   )
@@ -1597,29 +1593,6 @@ export const readOneSWUEvaluationPanelMemberWithId = tryDb<
       "swuEvaluationPanelMembers.user": user
     })
     .select("swuEvaluationPanelMembers.*")
-    .first();
-
-  return valid(
-    raw
-      ? {
-          ...(await rawEvaluationPanelMemberToEvaluationPanelMember(
-            connection,
-            raw
-          )),
-          id: raw.id
-        }
-      : null
-  );
-});
-
-export const readOneSWUEvaluationPanelMemberById = tryDb<
-  [Id],
-  SWUEvaluationPanelMember | null
->(async (connection, id) => {
-  const raw = await connection<RawSWUEvaluationPanelMember>(
-    "swuEvaluationPanelMembers"
-  )
-    .where("id", id)
     .first();
 
   return valid(

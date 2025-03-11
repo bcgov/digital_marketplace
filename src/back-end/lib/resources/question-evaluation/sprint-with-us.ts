@@ -256,7 +256,7 @@ const create: crud.Create<
       }
 
       const validatedSWUPanelEvaluationPanelMember =
-        await db.readOneSWUEvaluationPanelMemberWithId(
+        await db.readOneSWUEvaluationPanelMember(
           connection,
           request.session.user.id,
           validatedSWUProposal.value.opportunity.id
@@ -272,7 +272,7 @@ const create: crud.Create<
         await db.readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember(
           connection,
           validatedSWUProposal.value.id,
-          validatedSWUPanelEvaluationPanelMember.value.id,
+          validatedSWUPanelEvaluationPanelMember.value.user.id,
           request.session
         );
       if (isInvalid(dbResultEvaluation)) {
@@ -291,7 +291,8 @@ const create: crud.Create<
       return valid({
         session: request.session,
         proposal: validatedSWUProposal.value.id,
-        evaluationPanelMember: validatedSWUPanelEvaluationPanelMember.value.id,
+        evaluationPanelMember:
+          validatedSWUPanelEvaluationPanelMember.value.user.id,
         status: validatedStatus.value,
         scores: scores.map((score) => ({
           score: getNumber<number>(score, "score", undefined, false),
