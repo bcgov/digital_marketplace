@@ -3,12 +3,7 @@ import {
   readOneSWUOpportunity
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
-import {
-  Connection,
-  Transaction,
-  readOneSWUProposalSlim,
-  tryDb
-} from "back-end/lib/db";
+import { Connection, readOneSWUProposalSlim, tryDb } from "back-end/lib/db";
 import {
   AuthenticatedSession,
   Session,
@@ -18,9 +13,7 @@ import { Id } from "shared/lib/types";
 import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateRequestBody,
-  CreateSWUTeamQuestionResponseEvaluationScoreBody,
   SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -33,7 +26,8 @@ export interface CreateSWUTeamQuestionResponseEvaluationParams
 
 interface UpdateSWUTeamQuestionResponseEvaluationParams
   extends UpdateEditRequestBody {
-  id: Id;
+  proposal: Id;
+  evaluationPanelMember: Id;
 }
 
 export interface SWUTeamQuestionResponseEvaluationStatusRecord {
@@ -52,24 +46,28 @@ export interface RawSWUTeamQuestionResponseEvaluation
   > {
   proposal: Id;
   evaluationPanelMember: Id;
-  scores: RawSWUTeamQuestionResponseEvaluationScores[];
+  questionOrder: number;
+  score: number;
+  notes: string;
 }
 
-export type RawSWUTeamQuestionResponseEvaluationScores =
-  SWUTeamQuestionResponseEvaluation["scores"][number] & {
-    teamQuestionResponseEvaluation: Id;
-  };
-
-async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+async function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
-  raw: RawSWUTeamQuestionResponseEvaluation
+  raw: RawSWUTeamQuestionResponseEvaluation[]
 ): Promise<SWUTeamQuestionResponseEvaluation> {
+  if (!raw.length) {
+    throw new Error("unable to process team question response evaluation");
+  }
+
   const {
     proposal: proposalId,
     evaluationPanelMember: evaluationPanelMemberId,
+    questionOrder,
+    score,
+    notes,
     ...restOfRaw
-  } = raw;
+  } = raw[0];
 
   const proposal =
     session &&
@@ -95,9 +93,11 @@ async function rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation
 
   return {
     ...restOfRaw,
-    scores: raw.scores.map(
-      ({ teamQuestionResponseEvaluation, ...scores }) => scores
-    ),
+    scores: raw.map(({ questionOrder, score, notes }) => ({
+      order: questionOrder,
+      score,
+      notes
+    })),
     proposal,
     evaluationPanelMember
   };
@@ -134,37 +134,29 @@ export const isSWUOpportunityEvaluationPanelChair =
 export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
   tryDb<[AuthenticatedSession, Id], SWUTeamQuestionResponseEvaluation[]>(
     async (connection, session, id) => {
-      const query = generateSWUTeamQuestionResponseEvaluationQuery(
+      const results = await generateSWUTeamQuestionResponseEvaluationQuery(
         connection
       ).where({
         "evaluations.proposal": id
       });
 
-      const results = await Promise.all(
-        (
-          await query
-        ).map(async (result: RawSWUTeamQuestionResponseEvaluation) => {
-          result.scores =
-            getValidValue(
-              await readManyTeamQuestionResponseEvaluationScores(
-                connection,
-                result.id
-              ),
-              []
-            ) ?? [];
-          return result;
-        })
-      );
-
       if (!results) {
         throw new Error("unable to read evaluations");
       }
 
+      const groupedResults = results.reduce<
+        Record<string, RawSWUTeamQuestionResponseEvaluation[]>
+      >((acc, rawEvaluation) => {
+        acc[rawEvaluation.evaluationPanelMember] ??= [];
+        acc[rawEvaluation.evaluationPanelMember].push(rawEvaluation);
+        return acc;
+      }, {});
+
       return valid(
         await Promise.all(
-          results.map(
+          Object.values(groupedResults).map(
             async (result) =>
-              await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+              await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
                 connection,
                 session,
                 result
@@ -176,76 +168,35 @@ export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
   );
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
-  [AuthenticatedSession, Id, boolean],
+  [AuthenticatedSession, Id],
   SWUTeamQuestionResponseEvaluation[]
 >(async (connection, session, id) => {
-  const query = generateSWUTeamQuestionResponseEvaluationQuery(connection)
+  const results = await generateSWUTeamQuestionResponseEvaluationQuery(
+    connection
+  )
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
-    .join(
-      "swuEvaluationPanelMembers",
-      "swuEvaluationPanelMembers.id",
-      "=",
-      "evaluations.evaluationPanelMember"
-    )
     .where({
       "swuEvaluationPanelMembers.user": session.user.id,
       "swuProposals.opportunity": id
     });
 
-  const results = await Promise.all(
-    (
-      await query
-    ).map(async (result: RawSWUTeamQuestionResponseEvaluation) => {
-      result.scores =
-        getValidValue(
-          await readManyTeamQuestionResponseEvaluationScores(
-            connection,
-            result.id
-          ),
-          []
-        ) ?? [];
-      return result;
-    })
-  );
-
   if (!results) {
     throw new Error("unable to read evaluations");
   }
 
-  return valid(
-    await Promise.all(
-      results.map(
-        async (result) =>
-          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
-            connection,
-            session,
-            result
-          )
-      )
-    )
-  );
-});
-
-export const readOwnSWUTeamQuestionResponseEvaluations = tryDb<
-  [AuthenticatedSession],
-  SWUTeamQuestionResponseEvaluation[]
->(async (connection, session) => {
-  const evaluations = await generateSWUTeamQuestionResponseEvaluationQuery(
-    connection
-  )
-    .join(
-      "evaluationPanelMembers epm",
-      "epm.id",
-      "=",
-      "evaluations.evaluationPanelMember"
-    )
-    .andWhere({ "epm.user": session.user.id });
+  const groupedResults = results.reduce<
+    Record<string, RawSWUTeamQuestionResponseEvaluation[]>
+  >((acc, rawEvaluation) => {
+    acc[rawEvaluation.proposal] ??= [];
+    acc[rawEvaluation.proposal].push(rawEvaluation);
+    return acc;
+  }, {});
 
   return valid(
     await Promise.all(
-      evaluations.map(
+      Object.values(groupedResults).map(
         async (result) =>
-          await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+          await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
             connection,
             session,
             result
@@ -277,47 +228,20 @@ export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPane
     }
   );
 
-export const readManyTeamQuestionResponseEvaluationScores = tryDb<
-  [Id],
-  RawSWUTeamQuestionResponseEvaluationScores[]
->(async (connection, teamQuestionResponseEvaluationId) => {
-  const results = await connection<RawSWUTeamQuestionResponseEvaluationScores>(
-    "swuTeamQuestionResponseEvaluationScores"
-  ).where({ teamQuestionResponseEvaluation: teamQuestionResponseEvaluationId });
-
-  if (!results) {
-    throw new Error(
-      "unable to read proposal team question response evaluations"
-    );
-  }
-
-  return valid(results);
-});
-
 export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
-  [Id, AuthenticatedSession],
+  [Id, Id, AuthenticatedSession],
   SWUTeamQuestionResponseEvaluation | null
->(async (connection, id, session) => {
+>(async (connection, proposalId, evaluationPanelMemberId, session) => {
   const result = await generateSWUTeamQuestionResponseEvaluationQuery(
     connection
-  )
-    .where({ "evaluations.id": id })
-    .first<RawSWUTeamQuestionResponseEvaluation>();
-
-  if (result) {
-    result.scores =
-      getValidValue(
-        await readManyTeamQuestionResponseEvaluationScores(
-          connection,
-          result.id
-        ),
-        []
-      ) ?? [];
-  }
+  ).where({
+    "evaluations.evaluationPanelMember": evaluationPanelMemberId,
+    "evaluations.proposal": proposalId
+  });
 
   return valid(
     result
-      ? await rawTeamQuestionResponseEvaluationToTeamQuestionResponseEvaluation(
+      ? await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
           connection,
           session,
           result
@@ -331,71 +255,63 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
   SWUTeamQuestionResponseEvaluation
 >(async (connection, evaluation, session) => {
   const now = new Date();
-  const evaluationId = await connection.transaction(async (trx) => {
-    const { status, scores, ...restOfEvaluation } = evaluation;
+  const [proposalId, evaluationPanelMemberId] = await connection.transaction(
+    async (trx) => {
+      const { status, scores, ...restOfEvaluation } = evaluation;
 
-    // Create root record for evaluation
-    const [evaluationRootRecord] =
-      await connection<RawSWUTeamQuestionResponseEvaluation>(
-        "swuTeamQuestionResponseEvaluations"
-      )
-        .transacting(trx)
-        .insert(
-          {
-            ...restOfEvaluation,
-            id: generateUuid(),
-            createdAt: now,
-            updatedAt: now
-          },
-          "*"
-        );
+      // Create root record for evaluation
+      const [evaluationRootRecord] =
+        await connection<RawSWUTeamQuestionResponseEvaluation>(
+          "swuTeamQuestionResponseEvaluations"
+        )
+          .transacting(trx)
+          .insert(
+            {
+              ...restOfEvaluation,
+              id: generateUuid(),
+              createdAt: now,
+              updatedAt: now
+            },
+            "*"
+          );
 
-    if (!evaluationRootRecord) {
-      throw new Error("unable to create team question evaluation");
+      if (!evaluationRootRecord) {
+        throw new Error("unable to create team question evaluation");
+      }
+
+      // Create a evaluation status record
+      const [evaluationStatusRecord] =
+        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+          "swuTeamQuestionResponseEvaluationStatuses"
+        )
+          .transacting(trx)
+          .insert(
+            {
+              id: generateUuid(),
+              teamQuestionResponseEvaluation: evaluationRootRecord.id,
+              status,
+              createdAt: now,
+              createdBy: session.user.id,
+              note: ""
+            },
+            "*"
+          );
+
+      if (!evaluationStatusRecord) {
+        throw new Error("unable to create team question evaluation status");
+      }
+
+      return [
+        evaluationRootRecord.proposal,
+        evaluationRootRecord.evaluationPanelMember
+      ];
     }
-
-    // Create a evaluation status record
-    const [evaluationStatusRecord] =
-      await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-        "swuTeamQuestionResponseEvaluationStatuses"
-      )
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            teamQuestionResponseEvaluation: evaluationRootRecord.id,
-            status,
-            createdAt: now,
-            createdBy: session.user.id,
-            note: ""
-          },
-          "*"
-        );
-
-    if (!evaluationStatusRecord) {
-      throw new Error("unable to create team question evaluation status");
-    }
-
-    // Create evaluation scores
-    for (const score of scores) {
-      await connection<
-        SWUTeamQuestionResponseEvaluationScores & {
-          teamQuestionResponseEvaluation: Id;
-        }
-      >("swuTeamQuestionResponseEvaluationScores")
-        .transacting(trx)
-        .insert({
-          ...score,
-          teamQuestionResponseEvaluation: evaluationRootRecord.id
-        });
-    }
-
-    return evaluationRootRecord.id;
-  });
+  );
 
   const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
     connection,
-    evaluationId,
+    proposalId,
+    evaluationPanelMemberId,
     session
   );
   if (isInvalid(dbResult) || !dbResult.value) {
@@ -407,119 +323,41 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
 export const updateSWUTeamQuestionResponseEvaluation = tryDb<
   [UpdateSWUTeamQuestionResponseEvaluationParams, AuthenticatedSession],
   SWUTeamQuestionResponseEvaluation
->(async (connection, proposal, session) => {
+>(async (connection, evaluation, session) => {
   const now = new Date();
-  const { id, scores } = proposal;
+  const { proposal, evaluationPanelMember, scores } = evaluation;
   return valid(
     await connection.transaction(async (trx) => {
       // Update timestamp
-      const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
-        "swuTeamQuestionResponseEvaluations"
-      )
-        .transacting(trx)
-        .where({ id })
-        .update(
-          {
-            updatedAt: now
-          },
-          "*"
-        );
-
-      if (!result) {
-        throw new Error("unable to update team question evaluation");
-      }
-      // Update scores
-      await updateSWUTeamQuestionResponseEvaluationScores(
-        trx,
-        result.id,
-        scores
-      );
-
-      const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
-        trx,
-        result.id,
-        session
-      );
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update team question evaluation");
-      }
-      return dbResult.value;
-    })
-  );
-});
-
-async function updateSWUTeamQuestionResponseEvaluationScores(
-  connection: Transaction,
-  evaluationId: Id,
-  scores: CreateSWUTeamQuestionResponseEvaluationScoreBody[]
-): Promise<void> {
-  // Remove existing and recreate
-  await connection("swuTeamQuestionResponseEvaluationScores")
-    .where({ teamQuestionResponseEvaluation: evaluationId })
-    .delete();
-
-  for (const score of scores) {
-    await connection<
-      SWUTeamQuestionResponseEvaluationScores & {
-        teamQuestionResponseEvaluation: Id;
-      }
-    >("swuTeamQuestionResponseEvaluationScores").insert({
-      ...score,
-      teamQuestionResponseEvaluation: evaluationId
-    });
-  }
-}
-
-export const updateSWUTeamQuestionResponseEvaluationStatus = tryDb<
-  [Id, SWUTeamQuestionResponseEvaluationStatus, string, AuthenticatedSession],
-  SWUTeamQuestionResponseEvaluation
->(async (connection, evaluationId, status, note, session) => {
-  const now = new Date();
-  return valid(
-    await connection.transaction(async (trx) => {
-      const [statusRecord] =
-        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-          "swuTeamQuestionResponseEvaluationStatuses"
+      for (const { order: questionOrder, score, notes } of scores) {
+        const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
+          "swuTeamQuestionResponseEvaluations"
         )
           .transacting(trx)
-          .insert(
+          .where({ proposal, evaluationPanelMember, questionOrder })
+          .update(
             {
-              id: generateUuid(),
-              teamQuestionResponseEvaluation: evaluationId,
-              createdAt: now,
-              createdBy: session.user.id,
-              status,
-              note
+              score,
+              notes,
+              updatedAt: now
             },
             "*"
           );
 
-      // Update proposal root record
-      await connection<RawSWUTeamQuestionResponseEvaluation>(
-        "swuTeamQuestionResponseEvaluations"
-      )
-        .transacting(trx)
-        .where({ id: evaluationId })
-        .update(
-          {
-            updatedAt: now
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update team question evaluation");
+        if (!result) {
+          throw new Error("unable to update team question evaluation");
+        }
       }
 
       const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
         trx,
-        statusRecord.teamQuestionResponseEvaluation,
+        proposal,
+        evaluationPanelMember,
         session
       );
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update team question evaluation");
       }
-
       return dbResult.value;
     })
   );
@@ -545,10 +383,12 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
       "evaluations.id",
       "evaluations.proposal",
       "evaluations.evaluationPanelMember",
-      "evaluations.type",
       connection.raw(
         '(CASE WHEN evaluations."updatedAt" > statuses."createdAt" THEN evaluations."updatedAt" ELSE statuses."createdAt" END) AS "updatedAt" '
       ),
+      "evaluations.questionOrder",
+      "evaluations.score",
+      "evaluations.notes",
       "statuses.status",
       "statuses.createdAt"
     );

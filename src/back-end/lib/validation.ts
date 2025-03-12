@@ -1015,19 +1015,17 @@ export async function validateDraftProposalOrganization(
   );
 }
 
-export async function validateSWUTeamQuestionResponseEvaluationId(
+export async function validateSWUTeamQuestionResponseEvaluation(
   connection: db.Connection,
-  evaluationId: Id,
+  proposalId: Id,
+  userId: Id,
   session: AuthenticatedSession
 ): Promise<Validation<SWUTeamQuestionResponseEvaluation>> {
   try {
-    const validatedId = validateUUID(evaluationId);
-    if (isInvalid(validatedId)) {
-      return validatedId;
-    }
     const dbResult = await db.readOneSWUTeamQuestionResponseEvaluation(
       connection,
-      evaluationId,
+      proposalId,
+      userId,
       session
     );
     if (isInvalid(dbResult)) {

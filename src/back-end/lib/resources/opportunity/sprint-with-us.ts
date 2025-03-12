@@ -14,7 +14,7 @@ import {
   validateAttachments,
   validateSWUOpportunityId,
   validateSWUEvaluationPanelMembers,
-  validateSWUTeamQuestionResponseEvaluationId
+  validateSWUTeamQuestionResponseEvaluation
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import {
@@ -140,7 +140,7 @@ interface ValidatedUpdateWithNoteRequestBody
 }
 
 interface ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
-  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "evaluations"> {
+  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "proposals"> {
   evaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
@@ -1446,7 +1446,7 @@ const update: crud.Update<
           }
           return valid({
             session: request.session,
-            body: adt("submitForReview", validatedSubmitNote.value)
+            body: adt("submitForReview" as const, validatedSubmitNote.value)
           } as ValidatedUpdateRequestBody);
         }
         case "publish": {
@@ -1662,14 +1662,14 @@ const update: crud.Update<
         }
         case "submitIndividualQuestionEvaluations": {
           const validations = await Promise.all(
-            request.body.value.evaluations.map<
+            request.body.value.proposals.map<
               Promise<
                 Validation<
                   SWUTeamQuestionResponseEvaluation,
                   UpdateValidationErrors
                 >
               >
-            >(async (id) => {
+            >(async (proposalId) => {
               // Satisfy the compiler.
               if (!permissions.isSignedIn(request.session)) {
                 return invalid({
@@ -1678,9 +1678,10 @@ const update: crud.Update<
               }
 
               const validatedSWUTeamQuestionResponseEvaluation =
-                await validateSWUTeamQuestionResponseEvaluationId(
+                await validateSWUTeamQuestionResponseEvaluation(
                   connection,
-                  id,
+                  proposalId,
+                  request.session.user.id,
                   request.session
                 );
 
@@ -1783,14 +1784,14 @@ const update: crud.Update<
         }
         case "submitConsensusQuestionEvaluations": {
           const validations = await Promise.all(
-            request.body.value.evaluations.map<
+            request.body.value.proposals.map<
               Promise<
                 Validation<
                   SWUTeamQuestionResponseEvaluation,
                   UpdateValidationErrors
                 >
               >
-            >(async (id) => {
+            >(async (proposalId) => {
               // Satisfy the compiler.
               if (!permissions.isSignedIn(request.session)) {
                 return invalid({
@@ -1799,9 +1800,10 @@ const update: crud.Update<
               }
 
               const validatedSWUTeamQuestionResponseEvaluation =
-                await validateSWUTeamQuestionResponseEvaluationId(
+                await validateSWUTeamQuestionResponseEvaluation(
                   connection,
-                  id,
+                  proposalId,
+                  request.session.user.id,
                   request.session
                 );
 

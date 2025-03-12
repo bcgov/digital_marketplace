@@ -141,7 +141,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             opportunity.id,
             adt("submitIndividualQuestionEvaluations", {
               note: "",
-              evaluations: state.evaluations.map(({ id }) => id)
+              proposals: state.evaluations.map(({ proposal: { id } }) => id)
             }),
             (response) => adt("onSubmitResponse", response)
           )

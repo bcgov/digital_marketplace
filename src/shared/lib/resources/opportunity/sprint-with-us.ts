@@ -440,7 +440,7 @@ export interface UpdateWithNoteValidationErrors
 
 export interface SubmitQuestionEvaluationsWithNoteRequestBody {
   note: string;
-  evaluations: Id[];
+  proposals: Id[];
 }
 
 type UpdateADTErrors =
