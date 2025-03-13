@@ -1652,7 +1652,12 @@ export const submitIndividualQuestionEvaluations = tryDb<
   await connection.transaction(async (trx) => {
     await Promise.all(
       evaluationParams.evaluations.map(
-        async ({ id: evaluationId, proposal: { id: proposalId } }) => {
+        async ({
+          evaluationPanelMember: {
+            user: { id: evaluationPanelMemberId }
+          },
+          proposal: { id: proposalId }
+        }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
               "swuTeamQuestionResponseEvaluationStatuses"
@@ -1660,8 +1665,8 @@ export const submitIndividualQuestionEvaluations = tryDb<
               .transacting(trx)
               .insert(
                 {
-                  id: generateUuid(),
-                  teamQuestionResponseEvaluation: evaluationId,
+                  evaluationPanelMember: evaluationPanelMemberId,
+                  proposal: proposalId,
                   createdAt: now,
                   createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
@@ -1675,7 +1680,10 @@ export const submitIndividualQuestionEvaluations = tryDb<
             "swuTeamQuestionResponseEvaluations"
           )
             .transacting(trx)
-            .where({ id: evaluationId })
+            .where({
+              proposal: proposalId,
+              evaluationPanelMember: evaluationPanelMemberId
+            })
             .update(
               {
                 updatedAt: now
@@ -1754,41 +1762,50 @@ export const submitConsensusQuestionEvaluations = tryDb<
   const now = new Date();
   await connection.transaction(async (trx) => {
     await Promise.all(
-      evaluationParams.evaluations.map(async ({ id: evaluationId }) => {
-        const [statusRecord] =
-          await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-            "swuTeamQuestionResponseEvaluationStatuses"
+      evaluationParams.evaluations.map(
+        async ({
+          evaluationPanelMember: {
+            user: { id: evaluationPanelMemberId }
+          },
+          proposal: { id: proposalId }
+        }) => {
+          const [statusRecord] =
+            await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+              "swuTeamQuestionResponseEvaluationStatuses"
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember: evaluationPanelMemberId,
+                  createdAt: now,
+                  createdBy: session.user.id,
+                  status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            "swuTeamQuestionResponseEvaluations"
           )
             .transacting(trx)
-            .insert(
+            .where({
+              proposal: proposalId,
+              evaluationPanelMember: evaluationPanelMemberId
+            })
+            .update(
               {
-                id: generateUuid(),
-                teamQuestionResponseEvaluation: evaluationId,
-                createdAt: now,
-                createdBy: session.user.id,
-                status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
-                note: evaluationParams.note
+                updatedAt: now
               },
               "*"
             );
 
-        // Update evaluation root record
-        await connection<RawSWUTeamQuestionResponseEvaluation>(
-          "swuTeamQuestionResponseEvaluations"
-        )
-          .transacting(trx)
-          .where({ id: evaluationId })
-          .update(
-            {
-              updatedAt: now
-            },
-            "*"
-          );
-
-        if (!statusRecord) {
-          throw new Error("unable to update team question evaluation");
+          if (!statusRecord) {
+            throw new Error("unable to update team question evaluation");
+          }
         }
-      })
+      )
     );
 
     const result = await updateSWUOpportunityStatus(

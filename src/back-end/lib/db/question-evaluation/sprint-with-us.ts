@@ -31,8 +31,8 @@ interface UpdateSWUTeamQuestionResponseEvaluationParams
 }
 
 export interface SWUTeamQuestionResponseEvaluationStatusRecord {
-  id: Id;
-  teamQuestionResponseEvaluation: Id;
+  proposal: Id;
+  evaluationPanelMember: Id;
   createdAt: Date;
   createdBy: Id;
   status: SWUTeamQuestionResponseEvaluationStatus;
@@ -287,8 +287,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
           .transacting(trx)
           .insert(
             {
-              id: generateUuid(),
-              teamQuestionResponseEvaluation: evaluationRootRecord.id,
+              evaluationPanelMember: evaluationRootRecord.evaluationPanelMember,
+              proposal: evaluationRootRecord.proposal,
               status,
               createdAt: now,
               createdBy: session.user.id,
@@ -368,7 +368,12 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
 ) {
   const query = connection("swuTeamQuestionResponseEvaluations as evaluations")
     .join("swuTeamQuestionResponseEvaluationStatuses as statuses", function () {
-      this.on("evaluations.id", "=", "statuses.teamQuestionResponseEvaluation")
+      this.on(
+        "evaluations.evaluationPanelMember",
+        "=",
+        "statuses.evaluationPanelMember"
+      )
+        .andOn("evaluations.proposal", "=", "statuses.proposal")
         .andOnNotNull("statuses.status")
         .andOn(
           "statuses.createdAt",
