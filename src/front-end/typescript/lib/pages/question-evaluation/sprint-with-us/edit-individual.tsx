@@ -47,8 +47,9 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.opportunities.swu.readOne()(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            api.evaluations.swu.readOne()(evaluationId, (response) =>
-              api.isValid(response) ? response.value : null
+            api.proposals.swu.teamQuestions.evaluations.readOne(proposalId)(
+              evaluationId,
+              (response) => (api.isValid(response) ? response.value : null)
             ),
             (proposal, opportunity, evaluation) => {
               if (!proposal || !opportunity || !evaluation)

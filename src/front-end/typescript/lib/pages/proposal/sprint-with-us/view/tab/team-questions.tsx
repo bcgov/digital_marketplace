@@ -76,9 +76,14 @@ export type InnerMsg =
   | ADT<"toggleAccordion", number>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"startEditing">
+  | ADT<"startEditingEvaluation">
   | ADT<
-      "onStartEditingResponse",
+      "onStartEditingEvaluationResponse",
+      api.ResponseValidation<SWUTeamQuestionResponseEvaluation, string[]>
+    >
+  | ADT<"startEditingConsensus">
+  | ADT<
+      "onStartEditingConsensusResponse",
       api.ResponseValidation<SWUTeamQuestionResponseEvaluation, string[]>
     >
   | ADT<"cancelEditing">
@@ -99,9 +104,17 @@ export type InnerMsg =
         CreateValidationErrors
       >
     >
-  | ADT<"saveChanges">
+  | ADT<"saveEvaluationChanges">
   | ADT<
-      "onSaveChangesResponse",
+      "onSaveEvaluationChangesResponse",
+      api.ResponseValidation<
+        SWUTeamQuestionResponseEvaluation,
+        UpdateValidationErrors
+      >
+    >
+  | ADT<"saveConsensusChanges">
+  | ADT<
+      "onSaveConsensusChangesResponse",
       api.ResponseValidation<
         SWUTeamQuestionResponseEvaluation,
         UpdateValidationErrors
@@ -253,19 +266,56 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         return [state, []];
       }
       return [state.set("showModal", null), []];
-    case "startEditing": {
+    case "startEditingEvaluation": {
       const evaluation = state.questionEvaluation;
       if (!evaluation) return [state, []];
       return [
         startStartEditingLoading(state),
         [
-          api.evaluations.swu.readOne<Msg>()(evaluation.id, (result) =>
-            adt("onStartEditingResponse", result)
+          api.proposals.swu.teamQuestions.evaluations.readOne<Msg>(
+            state.proposal.id
+          )(evaluation.evaluationPanelMember.user.id, (result) =>
+            adt("onStartEditingEvaluationResponse", result)
           )
         ]
       ];
     }
-    case "onStartEditingResponse": {
+    case "onStartEditingEvaluationResponse": {
+      const evaluation = state.questionEvaluation;
+      if (!evaluation) return [state, []];
+      const evaluationResult = msg.value;
+      state = stopStartEditingLoading(state);
+      if (!api.isValid(evaluationResult)) {
+        return [state, []];
+      }
+      const [evaluationScoreStates, evaluationScoreCmds] = initEvaluationScores(
+        state.opportunity,
+        state.proposal,
+        evaluationResult.value,
+        true
+      );
+      return [
+        state
+          .set("isEditing", true)
+          .set("evaluationScores", evaluationScoreStates),
+        evaluationScoreCmds
+      ];
+    }
+    case "startEditingConsensus": {
+      const evaluation = state.questionEvaluation;
+      if (!evaluation) return [state, []];
+      return [
+        startStartEditingLoading(state),
+        [
+          api.proposals.swu.teamQuestions.evaluations.readOne<Msg>(
+            state.proposal.id
+          )(evaluation.evaluationPanelMember.user.id, (result) =>
+            adt("onStartEditingConsensusResponse", result)
+          )
+        ]
+      ];
+    }
+    case "onStartEditingConsensusResponse": {
       const evaluation = state.questionEvaluation;
       if (!evaluation) return [state, []];
       const evaluationResult = msg.value;
@@ -328,7 +378,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startSaveLoading(state),
         [
-          api.evaluations.swu.create<Msg>()(
+          api.proposals.swu.teamQuestions.evaluations.create<Msg>(
+            state.proposal.id
+          )(
             {
               proposal: state.proposal.id,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
@@ -504,7 +556,95 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
       }
     }
-    case "saveChanges": {
+    case "saveEvaluationChanges": {
+      const scores = getValues(state);
+      if (scores === null) {
+        return [state, []];
+      }
+
+      return [
+        startSaveLoading(state),
+        state.questionEvaluation
+          ? [
+              api.proposals.swu.teamQuestions.evaluations.update<Msg>(
+                state.proposal.id
+              )(
+                state.questionEvaluation.evaluationPanelMember.user.id,
+                adt("edit", { scores }),
+                (response) => adt("onSaveEvaluationChangesResponse", response)
+              )
+            ]
+          : []
+      ];
+    }
+    case "onSaveEvaluationChangesResponse": {
+      state = stopSaveLoading(state);
+      const result = msg.value;
+      switch (result.tag) {
+        case "valid": {
+          const [evaluationScoreStates, evaluationScoreCmds] =
+            initEvaluationScores(
+              state.opportunity,
+              state.proposal,
+              result.value
+            );
+          return [
+            state
+              .set("questionEvaluation", result.value)
+              .set("evaluationScores", evaluationScoreStates)
+              .set("isEditing", false),
+            [
+              ...evaluationScoreCmds,
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.questionEvaluationChangesSaved.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid": {
+          let evaluationScores = state.evaluationScores;
+          if (result.value.evaluation?.tag === "edit") {
+            evaluationScores = (result.value.evaluation.value.scores ?? []).map(
+              (e, i) => ({
+                notes: FormField.setErrors(
+                  evaluationScores[i].notes,
+                  e.notes || []
+                ),
+                score: FormField.setErrors(
+                  evaluationScores[i].score,
+                  e.score || []
+                )
+              })
+            );
+          }
+          return [
+            state.set("evaluationScores", evaluationScores),
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationChangesSaved.error)
+                )
+              )
+            ]
+          ];
+        }
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.questionEvaluationChangesSaved.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
+    case "saveConsensusChanges": {
       const scores = getValues(state);
       if (scores === null) {
         return [state, []];
@@ -517,13 +657,13 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.evaluations.swu.update<Msg>()(
                 state.questionEvaluation.id,
                 adt("edit", { scores }),
-                (response) => adt("onSaveChangesResponse", response)
+                (response) => adt("onSaveEvaluationChangesResponse", response)
               )
             ]
           : []
       ];
     }
-    case "onSaveChangesResponse": {
+    case "onSaveConsensusChangesResponse": {
       state = stopSaveLoading(state);
       const result = msg.value;
       switch (result.tag) {
@@ -1342,7 +1482,12 @@ export const component: Tab.Component<State, Msg> = {
           disabled: isLoading,
           button: true,
           color: "success",
-          onClick: () => dispatch(adt("saveChanges"))
+          onClick: () =>
+            dispatch(
+              state.panelQuestionEvaluations.length
+                ? adt("saveConsensusChanges")
+                : adt("saveEvaluationChanges")
+            )
         },
         {
           children: "Cancel",
@@ -1362,7 +1507,7 @@ export const component: Tab.Component<State, Msg> = {
                 ? [
                     {
                       children: "Edit",
-                      onClick: () => dispatch(adt("startEditing")),
+                      onClick: () => dispatch(adt("startEditingEvaluation")),
                       button: true,
                       loading: isStartEditingLoading,
                       disabled: isLoading,
@@ -1400,7 +1545,7 @@ export const component: Tab.Component<State, Msg> = {
                 ? [
                     {
                       children: "Edit",
-                      onClick: () => dispatch(adt("startEditing")),
+                      onClick: () => dispatch(adt("startEditingConsensus")),
                       button: true,
                       loading: isStartEditingLoading,
                       disabled: isLoading,
