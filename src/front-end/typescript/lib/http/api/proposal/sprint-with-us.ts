@@ -4,7 +4,7 @@ import { compareNumbers, compareDates } from "shared/lib";
 import { Id } from "shared/lib/types";
 import { isValid, ResponseValidation } from "shared/lib/http";
 import { component } from "front-end/lib/framework";
-export * as teamQuestions from "front-end/lib/http/api/proposal/sprint-with-us/";
+export * as teamQuestions from "front-end/lib/http/api/proposal/sprint-with-us/team-questions";
 
 const NAMESPACE = "proposals/sprint-with-us";
 

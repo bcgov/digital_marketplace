@@ -1,7 +1,7 @@
 import * as crud from "front-end/lib/http/crud";
 import * as Resource from "shared/lib/resources/question-evaluation/sprint-with-us";
-import { compareNumbers } from "shared/lib";
 import { Id } from "shared/lib/types";
+import { rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation } from "front-end/lib/http/api/question-evaluation/sprint-with-us";
 
 const NAMESPACE = (proposalId: Id) =>
   `proposal/sprint-with-us/${proposalId}/team-questions/evaluations`;
@@ -45,26 +45,4 @@ export function update<Msg>(
     NAMESPACE(proposalId),
     rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation
   );
-}
-
-// Raw Conversion
-
-interface RawSWUTeamQuestionResponseEvaluation
-  extends Omit<
-    Resource.SWUTeamQuestionResponseEvaluation,
-    "createdAt" | "updatedAt"
-  > {
-  createdAt: string;
-  updatedAt: string;
-}
-
-function rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation(
-  raw: RawSWUTeamQuestionResponseEvaluation
-): Resource.SWUTeamQuestionResponseEvaluation {
-  return {
-    ...raw,
-    createdAt: new Date(raw.createdAt),
-    updatedAt: new Date(raw.updatedAt),
-    scores: raw.scores.sort((a, b) => compareNumbers(a.order, b.order))
-  };
 }
