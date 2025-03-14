@@ -42,6 +42,7 @@ import codeWithUsSubscriberResource from "back-end/lib/resources/subscribers/cod
 import sprintWithUsSubscriberResource from "back-end/lib/resources/subscribers/sprint-with-us";
 import teamWithUsSubscriberResource from "back-end/lib/resources/subscribers/team-with-us";
 import sprintWithUsQuestionEvaluationResource from "back-end/lib/resources/question-evaluation/sprint-with-us";
+import sprintWithUsProposalTeamQuestionEvaluationResource from "back-end/lib/resources/proposal/sprint-with-us/team-questions/evaluations";
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
@@ -162,7 +163,8 @@ export function createRouter(connection: Connection): AppRouter {
     userResource,
     metricsResource,
     emailNotificationsResource,
-    sprintWithUsQuestionEvaluationResource
+    sprintWithUsQuestionEvaluationResource,
+    sprintWithUsProposalTeamQuestionEvaluationResource
   ];
 
   // Define CRUD routes.
