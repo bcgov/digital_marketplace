@@ -4,7 +4,7 @@ import { Id } from "shared/lib/types";
 import { rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation } from "front-end/lib/http/api/question-evaluation/sprint-with-us";
 
 const NAMESPACE = (opportunityId: Id) =>
-  `proposal/sprint-with-us/${opportunityId}/team-questions/evaluations`;
+  `opportunity/sprint-with-us/${opportunityId}/team-questions/evaluations`;
 
 /**
  * Parses URL parameters prior to creating a read request for many SWU proposals
