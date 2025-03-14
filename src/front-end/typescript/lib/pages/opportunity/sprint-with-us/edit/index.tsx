@@ -110,10 +110,14 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 )
               : component_.cmd.dispatch(valid([])),
             Tab.shouldLoadEvaluationsForTab(tabId)
-              ? api.evaluations.swu.readMany({
-                  opportunityId: routeParams.opportunityId,
-                  consensus: tabId === "consensus"
-                })((response) => response)
+              ? tabId === "consensus"
+                ? api.evaluations.swu.readMany({
+                    opportunityId: routeParams.opportunityId,
+                    consensus: true
+                  })((response) => response)
+                : api.opportunities.swu.teamQuestions.evaluations.readMany(
+                    routeParams.opportunityId
+                  )((response) => response)
               : component_.cmd.dispatch(valid([])),
             (opportunity, proposals, evaluations) =>
               adt("onInitResponse", [
