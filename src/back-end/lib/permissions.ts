@@ -918,8 +918,7 @@ export async function readOneSWUTeamQuestionResponseConsensus(
 export async function readManySWUTeamQuestionResponseEvaluations(
   connection: Connection,
   session: Session,
-  opportunity: SWUOpportunity,
-  isConsensus: boolean
+  opportunity: SWUOpportunity
 ): Promise<boolean> {
   return (
     !!session &&
@@ -927,24 +926,36 @@ export async function readManySWUTeamQuestionResponseEvaluations(
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       opportunity.status
     ) ||
-      (isConsensus
-        ? (await isSWUOpportunityEvaluationPanelEvaluator(
-            connection,
-            session,
-            opportunity.id
-          )) ||
-          (await isSWUOpportunityEvaluationPanelChair(
-            connection,
-            session,
-            opportunity.id
-          ))
-        : // Filtered to authored evaluations elsewhere when evaluation is
-          // individual
-          await isSWUOpportunityEvaluationPanelEvaluator(
-            connection,
-            session,
-            opportunity.id
-          )))
+      // Filtered to authored evaluations elsewhere
+      (await isSWUOpportunityEvaluationPanelEvaluator(
+        connection,
+        session,
+        opportunity.id
+      )))
+  );
+}
+
+export async function readManySWUTeamQuestionResponseConsensuses(
+  connection: Connection,
+  session: Session,
+  opportunity: SWUOpportunity
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+      opportunity.status
+    ) ||
+      (await isSWUOpportunityEvaluationPanelEvaluator(
+        connection,
+        session,
+        opportunity.id
+      )) ||
+      (await isSWUOpportunityEvaluationPanelChair(
+        connection,
+        session,
+        opportunity.id
+      )))
   );
 }
 
