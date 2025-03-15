@@ -20,6 +20,19 @@ export function create<Msg>(
   );
 }
 
+export function readMany<Msg>(
+  proposalId: Id
+): crud.ReadManyAction<
+  Resource.SWUTeamQuestionResponseEvaluation,
+  string[],
+  Msg
+> {
+  return crud.makeReadManyAction(
+    NAMESPACE(proposalId),
+    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation
+  );
+}
+
 export function readOne<Msg>(
   proposalId: Id
 ): crud.ReadOneAction<
