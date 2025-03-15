@@ -50,8 +50,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.evaluations.swu.readOne()(evaluationId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            api.evaluations.swu.readMany({ proposalId })((response) =>
-              api.isValid(response) ? response.value : null
+            api.proposals.swu.teamQuestions.evaluations.readMany(proposalId)(
+              (response) => (api.isValid(response) ? response.value : null)
             ),
             (proposal, opportunity, evaluation, panelEvaluations) => {
               if (!proposal || !opportunity || !evaluation || !panelEvaluations)
