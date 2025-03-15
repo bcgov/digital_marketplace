@@ -131,41 +131,41 @@ export const isSWUOpportunityEvaluationPanelEvaluator =
 export const isSWUOpportunityEvaluationPanelChair =
   makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
 
-export const readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus =
-  tryDb<[AuthenticatedSession, Id], SWUTeamQuestionResponseEvaluation[]>(
-    async (connection, session, id) => {
-      const results = await generateSWUTeamQuestionResponseEvaluationQuery(
-        connection
-      ).where({
-        "evaluations.proposal": id
-      });
+export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
+  [AuthenticatedSession, Id],
+  SWUTeamQuestionResponseEvaluation[]
+>(async (connection, session, id) => {
+  const results = await generateSWUTeamQuestionResponseEvaluationQuery(
+    connection
+  ).where({
+    "evaluations.proposal": id
+  });
 
-      if (!results) {
-        throw new Error("unable to read evaluations");
-      }
+  if (!results) {
+    throw new Error("unable to read evaluations");
+  }
 
-      const groupedResults = results.reduce<
-        Record<string, RawSWUTeamQuestionResponseEvaluation[]>
-      >((acc, rawEvaluation) => {
-        acc[rawEvaluation.evaluationPanelMember] ??= [];
-        acc[rawEvaluation.evaluationPanelMember].push(rawEvaluation);
-        return acc;
-      }, {});
+  const groupedResults = results.reduce<
+    Record<string, RawSWUTeamQuestionResponseEvaluation[]>
+  >((acc, rawEvaluation) => {
+    acc[rawEvaluation.evaluationPanelMember] ??= [];
+    acc[rawEvaluation.evaluationPanelMember].push(rawEvaluation);
+    return acc;
+  }, {});
 
-      return valid(
-        await Promise.all(
-          Object.values(groupedResults).map(
-            async (result) =>
-              await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-                connection,
-                session,
-                result
-              )
+  return valid(
+    await Promise.all(
+      Object.values(groupedResults).map(
+        async (result) =>
+          await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
+            connection,
+            session,
+            result
           )
-        )
-      );
-    }
+      )
+    )
   );
+});
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id],
@@ -205,28 +205,6 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
     )
   );
 });
-
-export const readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember =
-  tryDb<[Id, Id, Session], Id | null>(
-    async (connection, proposalId, evaluationPanelMemberId, session) => {
-      if (!session) {
-        return valid(null);
-      }
-      const result = (
-        await connection<RawSWUTeamQuestionResponseEvaluation>(
-          "swuTeamQuestionResponseEvaluations"
-        )
-          .where({
-            proposal: proposalId,
-            evaluationPanelMember: evaluationPanelMemberId
-          })
-          .select("id")
-          .first()
-      )?.id;
-
-      return valid(result ? result : null);
-    }
-  );
 
 export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
   [Id, Id, AuthenticatedSession],

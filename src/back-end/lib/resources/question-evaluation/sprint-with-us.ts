@@ -84,7 +84,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       }
 
       if (
-        !(await permissions.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+        !(await permissions.readManySWUTeamQuestionResponseEvaluationsForConsensus(
           connection,
           request.session,
           validatedSWUProposal.value
@@ -93,7 +93,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
       const dbResult =
-        await db.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+        await db.readManySWUTeamQuestionResponseEvaluationsForConsensus(
           connection,
           request.session,
           request.query.proposal
@@ -253,7 +253,7 @@ const create: crud.Create<
 
       // Check for existing evaluation on this proposal, authored by this user
       const dbResultEvaluation =
-        await db.readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember(
+        await db.readOneSWUTeamQuestionResponseEvaluation(
           connection,
           validatedSWUProposal.value.id,
           validatedSWUPanelEvaluationPanelMember.value.user.id,

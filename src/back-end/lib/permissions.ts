@@ -959,7 +959,7 @@ export async function readManySWUTeamQuestionResponseConsensuses(
   );
 }
 
-export async function readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
+export async function readManySWUTeamQuestionResponseEvaluationsForConsensus(
   connection: Connection,
   session: Session,
   proposal: SWUProposal

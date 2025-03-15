@@ -57,6 +57,52 @@ type UpdateRequestBody = SharedUpdateRequestBody | null;
 const routeNamespace =
   "proposal/sprint-with-us/:proposalId/team-questions/evaluations";
 
+const readMany: crud.ReadMany<Session, db.Connection> = (
+  connection: db.Connection
+) => {
+  return nullRequestBodyHandler<
+    JsonResponseBody<SWUTeamQuestionResponseEvaluation[] | string[]>,
+    Session
+  >(async (request) => {
+    const respond = (
+      code: number,
+      body: SWUTeamQuestionResponseEvaluation[] | string[]
+    ) => basicResponse(code, request.session, makeJsonResponseBody(body));
+    if (!permissions.isSignedIn(request.session)) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+
+    const validatedSWUProposal = await validateSWUProposalId(
+      connection,
+      request.params.proposalId,
+      request.session
+    );
+    if (isInvalid(validatedSWUProposal)) {
+      return respond(404, ["Sprint With Us proposal not found."]);
+    }
+
+    if (
+      !(await permissions.readManySWUTeamQuestionResponseEvaluationsForConsensus(
+        connection,
+        request.session,
+        validatedSWUProposal.value
+      ))
+    ) {
+      return respond(401, [permissions.ERROR_MESSAGE]);
+    }
+    const dbResult =
+      await db.readManySWUTeamQuestionResponseEvaluationsForConsensus(
+        connection,
+        request.session,
+        request.params.proposalId
+      );
+    if (isInvalid(dbResult)) {
+      return respond(503, [db.ERROR_MESSAGE]);
+    }
+    return respond(200, dbResult.value);
+  });
+};
+
 const readOne: crud.ReadOne<Session, db.Connection> = (
   connection: db.Connection
 ) => {
@@ -374,6 +420,7 @@ const update: crud.Update<
 
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
+  readMany,
   readOne,
   create,
   update
