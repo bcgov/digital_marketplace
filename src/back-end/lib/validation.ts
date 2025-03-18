@@ -1019,14 +1019,16 @@ export async function validateSWUTeamQuestionResponseEvaluation(
   connection: db.Connection,
   proposalId: Id,
   userId: Id,
-  session: AuthenticatedSession
+  session: AuthenticatedSession,
+  consensus = false
 ): Promise<Validation<SWUTeamQuestionResponseEvaluation>> {
   try {
     const dbResult = await db.readOneSWUTeamQuestionResponseEvaluation(
       connection,
       proposalId,
       userId,
-      session
+      session,
+      consensus
     );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);
