@@ -135,7 +135,7 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
-        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/individual/create"
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/evaluations/create"
       ),
       makeRoute({ params, query }) {
         return {
@@ -150,7 +150,7 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
-        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/individual/:evaluationId/edit"
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/evaluations/:userId/edit"
       ),
       makeRoute({ params, query }) {
         return {
@@ -158,7 +158,7 @@ const router: router_.Router<Route> = {
           value: {
             proposalId: params.proposalId || "",
             opportunityId: params.opportunityId || "",
-            evaluationId: params.evaluationId || "",
+            userId: params.userId || "",
             tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
@@ -166,7 +166,7 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
-        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/consensus/create"
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/consensus/create"
       ),
       makeRoute({ params, query }) {
         return {
@@ -181,7 +181,7 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
-        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/question-evaluations/consensus/:evaluationId/edit"
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/consensus/:userId/edit"
       ),
       makeRoute({ params, query }) {
         return {
@@ -189,7 +189,7 @@ const router: router_.Router<Route> = {
           value: {
             proposalId: params.proposalId || "",
             opportunityId: params.opportunityId || "",
-            evaluationId: params.evaluationId || "",
+            userId: params.userId || "",
             tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
@@ -792,7 +792,7 @@ const router: router_.Router<Route> = {
             route.value.opportunityId
           }/proposals/${
             route.value.proposalId
-          }/question-evaluations/individual/create${
+          }/team-questions/evaauations/create${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -800,11 +800,9 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/sprint-with-us/${
             route.value.opportunityId
-          }/proposals/${
-            route.value.proposalId
-          }/question-evaluations/individual/${route.value.evaluationId}/edit${
-            route.value.tab ? `?tab=${route.value.tab}` : ""
-          }`
+          }/proposals/${route.value.proposalId}/team-questions/evaauations/${
+            route.value.userId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "questionEvaluationConsensusSWUCreate":
         return prefixPath(
@@ -812,7 +810,7 @@ const router: router_.Router<Route> = {
             route.value.opportunityId
           }/proposals/${
             route.value.proposalId
-          }/question-evaluations/consensus/create${
+          }/team-questions/consensus/create${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -820,11 +818,9 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/sprint-with-us/${
             route.value.opportunityId
-          }/proposals/${
-            route.value.proposalId
-          }/question-evaluations/consensus/${route.value.evaluationId}/edit${
-            route.value.tab ? `?tab=${route.value.tab}` : ""
-          }`
+          }/proposals/${route.value.proposalId}/team-questions/consensus/${
+            route.value.userId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
       case "proposalSWUExportOne":
         return prefixPath(

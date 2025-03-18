@@ -17,7 +17,6 @@ import {
   SWUTeamQuestionResponseEvaluationStatus,
   UpdateEditRequestBody
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
-import { generateUuid } from "back-end/lib";
 
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {
@@ -271,7 +270,6 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
           .insert(
             {
               ...restOfEvaluation,
-              id: generateUuid(),
               createdAt: now,
               updatedAt: now
             },
@@ -400,12 +398,12 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
           "=",
           connection.raw(
             `(select max("createdAt") from "${evaluationStatusTableName}" as statuses2 where \
-            statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)`
+              statuses2."evaluationPanelMember" = evaluations."evaluationPanelMember" and statuses2."proposal" = evaluations."proposal" \
+              and statuses2.status is not null)`
           )
         );
     })
     .select<RawSWUTeamQuestionResponseEvaluation[]>(
-      "evaluations.id",
       "evaluations.proposal",
       "evaluations.evaluationPanelMember",
       connection.raw(

@@ -433,7 +433,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationIndividualSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    evaluationId: result.value.id,
+                    userId: result.value.evaluationPanelMember.user.id,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -505,7 +505,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationConsensusSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    evaluationId: result.value.id,
+                    userId: result.value.evaluationPanelMember.user.id,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -658,7 +658,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.proposals.swu.teamQuestions.consensuses.update<Msg>(
                 state.proposal.id
               )(
-                state.questionEvaluation.id,
+                state.questionEvaluation.evaluationPanelMember.user.id,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
               )

@@ -28,7 +28,6 @@ export interface SWUTeamQuestionResponseEvaluationScores {
 }
 
 export interface SWUTeamQuestionResponseEvaluation {
-  id: Id;
   proposal: SWUProposalSlim;
   evaluationPanelMember: SWUEvaluationPanelMember;
   status: SWUTeamQuestionResponseEvaluationStatus;

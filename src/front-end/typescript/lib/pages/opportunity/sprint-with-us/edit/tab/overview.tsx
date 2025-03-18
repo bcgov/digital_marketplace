@@ -245,7 +245,7 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationIndividualSWUEdit", {
           ...proposalRouteParams,
-          evaluationId: evaluation.id
+          userId: evaluation.evaluationPanelMember.user.id
         })
       )}>
       Edit
