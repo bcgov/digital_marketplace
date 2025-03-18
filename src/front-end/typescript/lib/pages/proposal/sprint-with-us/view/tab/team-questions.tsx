@@ -400,8 +400,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startSaveLoading(state),
         [
-          // TODO: use consensus endpoint
-          api.evaluations.swu.create<Msg>()(
+          api.proposals.swu.teamQuestions.consensuses.create<Msg>(
+            state.proposal.id
+          )(
             {
               proposal: state.proposal.id,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
@@ -654,7 +655,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         startSaveLoading(state),
         state.questionEvaluation
           ? [
-              api.evaluations.swu.update<Msg>()(
+              api.proposals.swu.teamQuestions.consensuses.update<Msg>(
+                state.proposal.id
+              )(
                 state.questionEvaluation.id,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
