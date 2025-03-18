@@ -5,7 +5,9 @@ import {
   Transaction,
   isUserOwnerOrAdminOfOrg,
   tryDb,
-  RawSWUTeamQuestionResponseEvaluation
+  RawSWUTeamQuestionResponseEvaluation,
+  EVALUATOR_EVALUATION_TABLE_NAME,
+  EVALUATOR_EVALUATION_STATUS_TABLE_NAME
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
@@ -2130,11 +2132,11 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
     [{ count: evaluatorsCount }]
   ] = await Promise.all([
     connection<RawSWUTeamQuestionResponseEvaluation>(
-      "swuTeamQuestionResponseEvaluations as evaluations"
+      `${EVALUATOR_EVALUATION_TABLE_NAME} as evaluations`
     )
       .transacting(trx)
       .join(
-        "swuTeamQuestionResponseEvaluationStatuses as statuses",
+        `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`,
         function () {
           this.on(
             "evaluations.id",
@@ -2146,8 +2148,8 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
               "statuses.createdAt",
               "=",
               connection.raw(
-                '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
-                  statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)'
+                `(select max("createdAt") from "${EVALUATOR_EVALUATION_STATUS_TABLE_NAME}" as statuses2 where \
+                  statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)`
               )
             );
         }

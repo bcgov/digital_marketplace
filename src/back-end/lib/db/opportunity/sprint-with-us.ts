@@ -1,6 +1,9 @@
 import { generateUuid } from "back-end/lib";
 import {
+  CHAIR_EVALUATION_STATUS_TABLE_NAME,
   Connection,
+  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  EVALUATOR_EVALUATION_TABLE_NAME,
   RawSWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatusRecord,
   Transaction,
@@ -1660,7 +1663,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
         }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              "swuTeamQuestionResponseEvaluationStatuses"
+              EVALUATOR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1677,7 +1680,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            "swuTeamQuestionResponseEvaluations"
+            EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({
@@ -1771,7 +1774,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
         }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              "swuTeamQuestionResponseEvaluationStatuses"
+              CHAIR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1787,7 +1790,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            "swuTeamQuestionResponseEvaluations"
+            CHAIR_EVALUATION_STATUS_TABLE_NAME
           )
             .transacting(trx)
             .where({

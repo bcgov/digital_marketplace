@@ -51,6 +51,15 @@ export interface RawSWUTeamQuestionResponseEvaluation
   notes: string;
 }
 
+export const CHAIR_EVALUATION_TABLE_NAME =
+  "swuTeamQuestionResponseChairEvaluations";
+export const EVALUATOR_EVALUATION_TABLE_NAME =
+  "swuTeamQuestionResponseEvaluatorEvaluations";
+export const CHAIR_EVALUATION_STATUS_TABLE_NAME =
+  "swuTeamQuestionResponseChairEvaluationStatuses";
+export const EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
+  "swuTeamQuestionResponseEvaluatorEvaluationStatuses";
+
 async function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
@@ -207,31 +216,44 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
 });
 
 export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
-  [Id, Id, AuthenticatedSession],
+  [Id, Id, AuthenticatedSession, boolean?],
   SWUTeamQuestionResponseEvaluation | null
->(async (connection, proposalId, evaluationPanelMemberId, session) => {
-  const result = await generateSWUTeamQuestionResponseEvaluationQuery(
-    connection
-  ).where({
-    "evaluations.evaluationPanelMember": evaluationPanelMemberId,
-    "evaluations.proposal": proposalId
-  });
+>(
+  async (
+    connection,
+    proposalId,
+    evaluationPanelMemberId,
+    session,
+    consensus = false
+  ) => {
+    const result = await generateSWUTeamQuestionResponseEvaluationQuery(
+      connection,
+      consensus
+    ).where({
+      "evaluations.evaluationPanelMember": evaluationPanelMemberId,
+      "evaluations.proposal": proposalId
+    });
 
-  return valid(
-    result
-      ? await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-          connection,
-          session,
-          result
-        )
-      : null
-  );
-});
+    return valid(
+      result
+        ? await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
+            connection,
+            session,
+            result
+          )
+        : null
+    );
+  }
+);
 
 export const createSWUTeamQuestionResponseEvaluation = tryDb<
-  [CreateSWUTeamQuestionResponseEvaluationParams, AuthenticatedSession],
+  [
+    CreateSWUTeamQuestionResponseEvaluationParams,
+    AuthenticatedSession,
+    boolean?
+  ],
   SWUTeamQuestionResponseEvaluation
->(async (connection, evaluation, session) => {
+>(async (connection, evaluation, session, consensus = false) => {
   const now = new Date();
   const [proposalId, evaluationPanelMemberId] = await connection.transaction(
     async (trx) => {
@@ -240,7 +262,9 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
       // Create root record for evaluation
       const [evaluationRootRecord] =
         await connection<RawSWUTeamQuestionResponseEvaluation>(
-          "swuTeamQuestionResponseEvaluations"
+          consensus
+            ? CHAIR_EVALUATION_TABLE_NAME
+            : EVALUATOR_EVALUATION_TABLE_NAME
         )
           .transacting(trx)
           .insert(
@@ -260,7 +284,9 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
       // Create a evaluation status record
       const [evaluationStatusRecord] =
         await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-          "swuTeamQuestionResponseEvaluationStatuses"
+          consensus
+            ? CHAIR_EVALUATION_STATUS_TABLE_NAME
+            : EVALUATOR_EVALUATION_STATUS_TABLE_NAME
         )
           .transacting(trx)
           .insert(
@@ -290,7 +316,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
     connection,
     proposalId,
     evaluationPanelMemberId,
-    session
+    session,
+    consensus
   );
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error("unable to create team question evaluation");
@@ -299,9 +326,13 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
 });
 
 export const updateSWUTeamQuestionResponseEvaluation = tryDb<
-  [UpdateSWUTeamQuestionResponseEvaluationParams, AuthenticatedSession],
+  [
+    UpdateSWUTeamQuestionResponseEvaluationParams,
+    AuthenticatedSession,
+    boolean?
+  ],
   SWUTeamQuestionResponseEvaluation
->(async (connection, evaluation, session) => {
+>(async (connection, evaluation, session, consensus = false) => {
   const now = new Date();
   const { proposal, evaluationPanelMember, scores } = evaluation;
   return valid(
@@ -309,7 +340,9 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
       // Update timestamp
       for (const { order: questionOrder, score, notes } of scores) {
         const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
-          "swuTeamQuestionResponseEvaluations"
+          consensus
+            ? CHAIR_EVALUATION_TABLE_NAME
+            : EVALUATOR_EVALUATION_TABLE_NAME
         )
           .transacting(trx)
           .where({ proposal, evaluationPanelMember, questionOrder })
@@ -331,7 +364,8 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
         trx,
         proposal,
         evaluationPanelMember,
-        session
+        session,
+        consensus
       );
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update team question evaluation");
@@ -342,10 +376,17 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
 });
 
 function generateSWUTeamQuestionResponseEvaluationQuery(
-  connection: Connection
+  connection: Connection,
+  consensus = false
 ) {
-  const query = connection("swuTeamQuestionResponseEvaluations as evaluations")
-    .join("swuTeamQuestionResponseEvaluationStatuses as statuses", function () {
+  const evaluationTableName = consensus
+    ? CHAIR_EVALUATION_TABLE_NAME
+    : EVALUATOR_EVALUATION_TABLE_NAME;
+  const evaluationStatusTableName = consensus
+    ? CHAIR_EVALUATION_STATUS_TABLE_NAME
+    : EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
+  const query = connection(`${evaluationTableName} as evaluations`)
+    .join(`${evaluationStatusTableName} as statuses`, function () {
       this.on(
         "evaluations.evaluationPanelMember",
         "=",
@@ -357,8 +398,8 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
           "statuses.createdAt",
           "=",
           connection.raw(
-            '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
-            statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)'
+            `(select max("createdAt") from "${evaluationStatusTableName}" as statuses2 where \
+            statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)`
           )
         );
     })
