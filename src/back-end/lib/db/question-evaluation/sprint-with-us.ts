@@ -177,11 +177,12 @@ export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
 });
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
-  [AuthenticatedSession, Id],
+  [AuthenticatedSession, Id, boolean?],
   SWUTeamQuestionResponseEvaluation[]
->(async (connection, session, id) => {
+>(async (connection, session, id, consensus = false) => {
   const results = await generateSWUTeamQuestionResponseEvaluationQuery(
-    connection
+    connection,
+    consensus
   )
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
     .where({
