@@ -990,6 +990,22 @@ export function readOwnSWUTeamQuestionResponseEvaluations(
   return isGovernment(session) || isAdmin(session);
 }
 
+export async function createSWUTeamQuestionResponseConsensus(
+  connection: Connection,
+  session: Session,
+  proposal: SWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    proposal.status === SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
+    (await isSWUOpportunityEvaluationPanelChair(
+      connection,
+      session,
+      proposal.opportunity.id
+    ))
+  );
+}
 export async function createSWUTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
@@ -998,18 +1014,12 @@ export async function createSWUTeamQuestionResponseEvaluation(
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    ((proposal.status === SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
-      (await isSWUOpportunityEvaluationPanelEvaluator(
-        connection,
-        session,
-        proposal.opportunity.id
-      ))) ||
-      (proposal.status === SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
-        (await isSWUOpportunityEvaluationPanelChair(
-          connection,
-          session,
-          proposal.opportunity.id
-        ))))
+    proposal.status === SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
+    (await isSWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      proposal.opportunity.id
+    ))
   );
 }
 
