@@ -158,7 +158,7 @@ const create: crud.Create<
       };
     },
     async validateRequestBody(request) {
-      const { proposal, scores, status } = request.body;
+      const { scores, status } = request.body;
 
       if (!permissions.isSignedIn(request.session)) {
         return invalid({
@@ -179,7 +179,7 @@ const create: crud.Create<
 
       const validatedSWUProposal = await validateSWUProposalId(
         connection,
-        proposal,
+        request.params.proposalId,
         request.session
       );
       if (isInvalid(validatedSWUProposal)) {

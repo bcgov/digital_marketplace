@@ -382,7 +382,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.proposal.id
           )(
             {
-              proposal: state.proposal.id,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
               scores
             },
@@ -404,7 +403,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.proposal.id
           )(
             {
-              proposal: state.proposal.id,
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
               scores
             },
