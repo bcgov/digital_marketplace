@@ -187,10 +187,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             api.proposals.swu.readMany(opportunity.id)((response) =>
               api.getValidValue(response, state.proposals)
             ),
-            api.evaluations.swu.readMany({
-              opportunityId: opportunity.id,
-              consensus: true
-            })((response) => api.getValidValue(response, state.evaluations)),
+            api.opportunities.swu.teamQuestions.consensuses.readMany(
+              opportunity.id
+            )((response) => response),
             (newOpp, newProposals, newEvaluations) =>
               adt("onInitResponse", [
                 newOpp,
