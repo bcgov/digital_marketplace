@@ -36,6 +36,7 @@ import * as questionEvaluationValidation from "shared/lib/validation/question-ev
 interface ValidatedCreateRequestBody extends SharedCreateRequestBody {
   session: AuthenticatedSession;
   evaluationPanelMember: Id;
+  proposal: Id;
 }
 
 interface ValidatedUpdateRequestBody {
@@ -46,7 +47,7 @@ interface ValidatedUpdateRequestBody {
 type ValidatedUpdateEditRequestBody = Omit<
   ValidatedCreateRequestBody,
   "proposal" | "evaluationPanelMember" | "status" | "type" | "session"
-> & { proposalId: Id; userId: Id };
+>;
 
 type CreateRequestBody = Omit<SharedCreateRequestBody, "status"> & {
   status: string;
@@ -121,7 +122,7 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
       await validateSWUTeamQuestionResponseEvaluation(
         connection,
         request.params.proposalId,
-        request.params.userId,
+        request.params.id,
         request.session
       );
     if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {

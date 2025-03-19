@@ -36,6 +36,7 @@ import * as questionEvaluationValidation from "shared/lib/validation/question-ev
 interface ValidatedCreateRequestBody extends SharedCreateRequestBody {
   session: AuthenticatedSession;
   evaluationPanelMember: Id;
+  proposal: Id;
 }
 
 interface ValidatedUpdateRequestBody {

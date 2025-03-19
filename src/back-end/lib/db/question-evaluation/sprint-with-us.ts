@@ -21,6 +21,7 @@ import {
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {
   evaluationPanelMember: Id;
+  proposal: Id;
 }
 
 interface UpdateSWUTeamQuestionResponseEvaluationParams
@@ -185,7 +186,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   )
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
     .where({
-      "swuEvaluationPanelMembers.user": session.user.id,
+      "evaluations.evaluationPanelMember": session.user.id,
       "swuProposals.opportunity": id
     });
 
@@ -235,7 +236,7 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
     });
 
     return valid(
-      result
+      result.length
         ? await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
             connection,
             session,
@@ -259,25 +260,30 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
     async (trx) => {
       const { status, scores, ...restOfEvaluation } = evaluation;
 
-      // Create root record for evaluation
-      const [evaluationRootRecord] =
-        await connection<RawSWUTeamQuestionResponseEvaluation>(
-          consensus
-            ? CHAIR_EVALUATION_TABLE_NAME
-            : EVALUATOR_EVALUATION_TABLE_NAME
-        )
-          .transacting(trx)
-          .insert(
-            {
-              ...restOfEvaluation,
-              createdAt: now,
-              updatedAt: now
-            },
-            "*"
-          );
+      for (const score of scores) {
+        // Create root record for evaluation
+        const [evaluationRootRecord] =
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            consensus
+              ? CHAIR_EVALUATION_TABLE_NAME
+              : EVALUATOR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .insert(
+              {
+                ...restOfEvaluation,
+                questionOrder: score.order,
+                score: score.score,
+                notes: score.notes,
+                createdAt: now,
+                updatedAt: now
+              },
+              "*"
+            );
 
-      if (!evaluationRootRecord) {
-        throw new Error("unable to create team question evaluation");
+        if (!evaluationRootRecord) {
+          throw new Error("unable to create team question evaluation");
+        }
       }
 
       // Create a evaluation status record
@@ -290,8 +296,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
           .transacting(trx)
           .insert(
             {
-              evaluationPanelMember: evaluationRootRecord.evaluationPanelMember,
-              proposal: evaluationRootRecord.proposal,
+              evaluationPanelMember: restOfEvaluation.evaluationPanelMember,
+              proposal: restOfEvaluation.proposal,
               status,
               createdAt: now,
               createdBy: session.user.id,
@@ -305,8 +311,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
       }
 
       return [
-        evaluationRootRecord.proposal,
-        evaluationRootRecord.evaluationPanelMember
+        restOfEvaluation.proposal,
+        restOfEvaluation.evaluationPanelMember
       ];
     }
   );
