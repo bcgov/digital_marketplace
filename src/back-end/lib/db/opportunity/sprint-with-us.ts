@@ -1581,7 +1581,7 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
 export const readOneSWUEvaluationPanelMember = tryDb<
   [Id, Id],
   SWUEvaluationPanelMember | null
->(async (connection, opportunity, user) => {
+>(async (connection, user, opportunity) => {
   const raw = await connection<RawSWUEvaluationPanelMember>(
     "swuEvaluationPanelMembers"
   )
