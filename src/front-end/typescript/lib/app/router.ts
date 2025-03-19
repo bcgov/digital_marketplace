@@ -792,7 +792,7 @@ const router: router_.Router<Route> = {
             route.value.opportunityId
           }/proposals/${
             route.value.proposalId
-          }/team-questions/evaauations/create${
+          }/team-questions/evaluations/create${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -800,7 +800,7 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/sprint-with-us/${
             route.value.opportunityId
-          }/proposals/${route.value.proposalId}/team-questions/evaauations/${
+          }/proposals/${route.value.proposalId}/team-questions/evaluations/${
             route.value.userId
           }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
