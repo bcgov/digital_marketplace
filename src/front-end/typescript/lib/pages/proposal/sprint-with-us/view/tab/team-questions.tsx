@@ -307,7 +307,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [
         startStartEditingLoading(state),
         [
-          api.proposals.swu.teamQuestions.evaluations.readOne<Msg>(
+          api.proposals.swu.teamQuestions.consensuses.readOne<Msg>(
             state.proposal.id
           )(evaluation.evaluationPanelMember.user.id, (result) =>
             adt("onStartEditingConsensusResponse", result)

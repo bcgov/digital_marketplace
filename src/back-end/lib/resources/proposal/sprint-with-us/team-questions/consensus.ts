@@ -173,7 +173,8 @@ const create: crud.Create<
           connection,
           validatedSWUProposal.value.id,
           validatedSWUPanelEvaluationPanelMember.value.user.id,
-          request.session
+          request.session,
+          true
         );
       if (isInvalid(dbResultEvaluation)) {
         return invalid({
@@ -273,7 +274,7 @@ const update: crud.Update<
         await validateSWUTeamQuestionResponseEvaluation(
           connection,
           request.params.proposalId,
-          request.params.userId,
+          request.params.id,
           request.session,
           true
         );
@@ -287,7 +288,7 @@ const update: crud.Update<
       }
 
       if (
-        !permissions.editSWUTeamQuestionResponseEvaluation(
+        !permissions.editSWUTeamQuestionResponseConsensus(
           request.session,
           validatedSWUTeamQuestionResponseEvaluation.value
         )
@@ -335,7 +336,7 @@ const update: crud.Update<
               {
                 ...body.value,
                 proposal: request.params.proposalId,
-                evaluationPanelMember: request.params.userId
+                evaluationPanelMember: request.params.id
               },
               session
             );

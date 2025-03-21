@@ -32,7 +32,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
 
     const validatedSWUOpportunity = await validateSWUOpportunityId(
       connection,
-      request.query.opportunity,
+      request.params.opportunityId,
       request.session
     );
     if (isInvalid(validatedSWUOpportunity)) {
@@ -51,9 +51,10 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
     const dbResult = await db.readManySWUTeamQuestionResponseEvaluations(
       connection,
       request.session,
-      request.query.opportunity,
+      request.params.opportunityId,
       true
     );
+    console.log(dbResult.value);
     if (isInvalid(dbResult)) {
       return respond(503, [db.ERROR_MESSAGE]);
     }
