@@ -151,7 +151,7 @@ export async function up(connection: Knex): Promise<void> {
     table.string("note");
     table.timestamp("createdAt").notNullable();
     table.uuid("createdBy").references("id").inTable("users");
-    table.primary(["proposal", "evaluationPanelMember"]);
+    table.primary(["proposal", "evaluationPanelMember", "createdAt"]);
   }
 
   await connection.schema.createTable(
