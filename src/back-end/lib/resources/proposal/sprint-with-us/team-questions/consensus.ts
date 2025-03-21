@@ -338,7 +338,8 @@ const update: crud.Update<
                 proposal: request.params.proposalId,
                 evaluationPanelMember: request.params.id
               },
-              session
+              session,
+              true
             );
             break;
         }
