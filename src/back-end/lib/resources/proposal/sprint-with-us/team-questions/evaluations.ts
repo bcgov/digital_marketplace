@@ -318,7 +318,7 @@ const update: crud.Update<
         await validateSWUTeamQuestionResponseEvaluation(
           connection,
           request.params.proposalId,
-          request.params.userId,
+          request.params.id,
           request.session
         );
       if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
@@ -389,7 +389,7 @@ const update: crud.Update<
               {
                 ...body.value,
                 proposal: request.params.proposalId,
-                evaluationPanelMember: request.params.userId
+                evaluationPanelMember: request.params.id
               },
               session
             );
