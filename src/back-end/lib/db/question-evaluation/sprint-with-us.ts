@@ -403,8 +403,8 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
           "statuses.createdAt",
           "=",
           connection.raw(
-            `(select max("createdAt") from "${evaluationStatusTableName}" as statuses2 where \
-              statuses2."evaluationPanelMember" = evaluations."evaluationPanelMember" and statuses2."proposal" = evaluations."proposal" \
+            `(select max("createdAt") from "${evaluationStatusTableName}" as statuses2 where
+              statuses2."evaluationPanelMember" = evaluations."evaluationPanelMember" and statuses2."proposal" = evaluations."proposal"
               and statuses2.status is not null)`
           )
         );

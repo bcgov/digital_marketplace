@@ -5,9 +5,8 @@ import {
   Transaction,
   isUserOwnerOrAdminOfOrg,
   tryDb,
-  RawSWUTeamQuestionResponseEvaluation,
-  EVALUATOR_EVALUATION_TABLE_NAME,
-  EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  SWUTeamQuestionResponseEvaluationStatusRecord
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
@@ -2131,35 +2130,24 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
     [{ count: submittedIndividualEvaluationsCount }],
     [{ count: evaluatorsCount }]
   ] = await Promise.all([
-    connection<RawSWUTeamQuestionResponseEvaluation>(
-      `${EVALUATOR_EVALUATION_TABLE_NAME} as evaluations`
+    connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+      `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`
     )
       .transacting(trx)
-      .join(
-        `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`,
-        function () {
-          this.on(
-            "evaluations.evaluationPanelMember",
-            "=",
-            "statuses.evaluationPanelMember"
-          )
-            .andOn("evaluations.proposal", "=", "statuses.proposal")
-            .andOn(
-              "statuses.createdAt",
-              "=",
-              connection.raw(
-                `(select max("createdAt") from "${EVALUATOR_EVALUATION_STATUS_TABLE_NAME}" as statuses2 where \
-                  statuses2."evaluationPanelMember" = evaluations."evaluationPanelMember" and statuses2."proposal" = evaluations."proposal" \
-                  and statuses2.status is not null)`
-              )
-            );
-        }
+      .from(
+        connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+          `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`
+        )
+          .transacting(trx)
+          .max("createdAt")
+          .where({
+            status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+            proposal: proposalId
+          })
+          .groupBy("evaluationPanelMember", "proposal")
+          .as("submittedIndividualEvaluations")
       )
-      .where({
-        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted,
-        "evaluations.proposal": proposalId
-      })
-      .count("*"),
+      .count<Record<string, number>[]>("*"),
     connection<RawSWUEvaluationPanelMember>(
       "swuEvaluationPanelMembers as members"
     )
@@ -2178,8 +2166,7 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
       .where({
         evaluator: true
       })
-      .count("*")
+      .count<Record<string, number>[]>("*")
   ]);
-
   return submittedIndividualEvaluationsCount === evaluatorsCount;
 }
