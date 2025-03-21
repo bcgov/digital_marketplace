@@ -54,7 +54,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       request.params.opportunityId,
       true
     );
-    console.log(dbResult.value);
+
     if (isInvalid(dbResult)) {
       return respond(503, [db.ERROR_MESSAGE]);
     }

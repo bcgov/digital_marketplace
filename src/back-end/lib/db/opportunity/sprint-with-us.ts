@@ -1,6 +1,7 @@
 import { generateUuid } from "back-end/lib";
 import {
   CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  CHAIR_EVALUATION_TABLE_NAME,
   Connection,
   EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
   EVALUATOR_EVALUATION_TABLE_NAME,
@@ -1780,6 +1781,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
               .insert(
                 {
                   evaluationPanelMember: evaluationPanelMemberId,
+                  proposal: proposalId,
                   createdAt: now,
                   createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
@@ -1790,7 +1792,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            CHAIR_EVALUATION_STATUS_TABLE_NAME
+            CHAIR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({

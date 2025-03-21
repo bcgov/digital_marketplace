@@ -844,11 +844,15 @@ const update: crud.Update<
       const swuOpportunity = validatedSWUOpportunity.value;
 
       if (
-        !(await permissions.editSWUOpportunity(
-          connection,
-          request.session,
-          request.params.id
-        )) ||
+        (![
+          "submitIndividualQuestionEvaluations",
+          "submitConsensusQuestionEvaluations"
+        ].includes(request.body.tag) &&
+          !(await permissions.editSWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          ))) ||
         !permissions.isSignedIn(request.session)
       ) {
         return invalid({
@@ -1446,7 +1450,7 @@ const update: crud.Update<
           }
           return valid({
             session: request.session,
-            body: adt("submitForReview" as const, validatedSubmitNote.value)
+            body: adt("submitForReview", validatedSubmitNote.value)
           } as ValidatedUpdateRequestBody);
         }
         case "publish": {
@@ -1774,7 +1778,7 @@ const update: crud.Update<
           }
           return valid({
             session: request.session,
-            body: adt("submitIndividualQuestionEvaluations" as const, {
+            body: adt("submitIndividualQuestionEvaluations", {
               note: validatedSubmissionNote.value,
               evaluations: validations.map(
                 ({ value }) => value
@@ -1804,13 +1808,14 @@ const update: crud.Update<
                   connection,
                   proposalId,
                   request.session.user.id,
-                  request.session
+                  request.session,
+                  true
                 );
 
               if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
                 return invalid({
                   opportunity: adt(
-                    "submitIndividualQuestionEvaluations" as const,
+                    "submitConsensusQuestionEvaluations" as const,
                     getInvalidValue(
                       validatedSWUTeamQuestionResponseEvaluation,
                       []
@@ -1820,7 +1825,7 @@ const update: crud.Update<
               }
 
               if (
-                !permissions.editSWUTeamQuestionResponseEvaluation(
+                !permissions.editSWUTeamQuestionResponseConsensus(
                   request.session,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
@@ -1865,7 +1870,7 @@ const update: crud.Update<
               }
 
               if (
-                !permissions.submitSWUTeamQuestionResponseEvaluation(
+                !permissions.submitSWUTeamQuestionResponseConsensus(
                   request.session,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
@@ -1896,7 +1901,7 @@ const update: crud.Update<
           }
           return valid({
             session: request.session,
-            body: adt("submitConsensusQuestionEvaluations" as const, {
+            body: adt("submitConsensusQuestionEvaluations", {
               note: validatedSubmissionNote.value,
               evaluations: validations.map(
                 ({ value }) => value
