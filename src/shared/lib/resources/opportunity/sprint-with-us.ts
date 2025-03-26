@@ -651,6 +651,19 @@ export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
   }
 }
 
+export function canChangeEvaluationPanel(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Draft:
+    case SWUOpportunityStatus.UnderReview:
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
   return (
     isDateInThePast(o.proposalDeadline) &&
