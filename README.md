@@ -411,4 +411,4 @@ The Digital Marketplace is currently operated by the Procurement Services Branch
 
 ## Credits
 
-This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used by the Procurement Concierge Program's web app are documented in `docs/open-source-licenses.txt`.
+This project would not have been possible by the incredible work done by open source project maintainers. The licenses for open source projects used are documented in `docs/open-source-licenses.txt`.
