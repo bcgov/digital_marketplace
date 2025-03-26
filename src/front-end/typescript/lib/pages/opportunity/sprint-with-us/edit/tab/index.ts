@@ -5,6 +5,7 @@ import * as AddendaTab from "front-end/lib/pages/opportunity/sprint-with-us/edit
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
+import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation-panel";
 import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
@@ -75,6 +76,12 @@ export interface Tabs {
     Params,
     OpportunityTab.State,
     OpportunityTab.InnerMsg,
+    InitResponse
+  >;
+  evaluationPanel: TabbedPage.Tab<
+    Params,
+    EvaluationPanelTab.State,
+    EvaluationPanelTab.InnerMsg,
     InitResponse
   >;
   addenda: TabbedPage.Tab<
@@ -152,6 +159,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "instructions":
     case "overview":
     case "consensus":
+    case "evaluationPanel":
       return raw;
     default:
       return null;
@@ -175,6 +183,7 @@ export function canGovUserViewTab(
     case "codeChallenge":
     case "teamScenario":
     case "proposals":
+    case "evaluationPanel":
       return isOpportunityOwnerOrAdmin;
     case "instructions":
     case "overview":
@@ -193,6 +202,12 @@ export function idToDefinition<K extends TabId>(
         component: OpportunityTab.component,
         icon: "file-code",
         title: "Opportunity"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "evaluationPanel":
+      return {
+        component: EvaluationPanelTab.component,
+        icon: "users",
+        title: "Evaluation Panel"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "addenda":
       return {
@@ -290,6 +305,9 @@ export function makeSidebarState(
       makeSidebarLink("summary", opportunity.id, activeTab),
       adt("heading", "Opportunity Management"),
       makeSidebarLink("opportunity", opportunity.id, activeTab),
+      ...(canGovUserViewTabs("evaluationPanel")
+        ? [makeSidebarLink("evaluationPanel", opportunity.id, activeTab)]
+        : []),
       //Only show Addenda sidebar link if opportunity can have addenda.
       ...(canAddAddendumToSWUOpportunity(opportunity)
         ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
