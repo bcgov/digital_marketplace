@@ -26,7 +26,7 @@ export function validateFileName(
   name: string,
   validExtensions: readonly string[] = []
 ): Validation<string> {
-  const validatedName = validateGenericString(name, "File name", 1, 255);
+  const validatedName = validateGenericString(name, "File name", 1, 255); 
   if (isValid(validatedName) && validExtensions.length > 0) {
     const extension = name.match(/\.([a-zA-Z0-9]+)$/);
     if (
