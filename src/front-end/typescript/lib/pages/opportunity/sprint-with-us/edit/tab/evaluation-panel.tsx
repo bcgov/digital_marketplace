@@ -7,7 +7,7 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import * as toasts from "front-end/lib/pages/content/lib/toasts";
+import * as toasts from "front-end/lib/pages/opportunity/sprint-with-us/lib/toasts";
 import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
@@ -15,7 +15,9 @@ import React from "react";
 import { Col, Row } from "reactstrap";
 import {
   canChangeEvaluationPanel,
-  SWUOpportunity
+  SWUOpportunity,
+  UpdateEditValidationErrors,
+  UpdateValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
 
@@ -23,6 +25,7 @@ export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
   evaluationPanel: Immutable<EvaluationPanel.State> | null;
   startEditingLoading: number;
+  startSaveLoading: number;
   isEditing: boolean;
 }
 
@@ -34,7 +37,12 @@ export type InnerMsg =
       "onStartEditingResponse",
       api.ResponseValidation<SWUOpportunity, string[]>
     >
-  | ADT<"cancelEditing">;
+  | ADT<"cancelEditing">
+  | ADT<"save">
+  | ADT<
+      "onSaveResponse",
+      api.ResponseValidation<SWUOpportunity, UpdateEditValidationErrors>
+    >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -64,6 +72,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       opportunity: null,
       evaluationPanel: null,
       startEditingLoading: 0,
+      startSaveLoading: 0,
       isEditing: false
     },
     []
@@ -72,6 +81,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
 
 const startStartEditingLoading = makeStartLoading<State>("startEditingLoading");
 const stopStartEditingLoading = makeStopLoading<State>("startEditingLoading");
+const startSaveLoading = makeStartLoading<State>("startSaveLoading");
+const stopSaveLoading = makeStopLoading<State>("startSaveLoading");
 
 const update: component_.page.Update<State, InnerMsg, Route> = ({
   state,
@@ -144,6 +155,94 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       });
       return resetEvaluationPanel(state, opportunity);
     }
+    case "save": {
+      const opportunity = state.opportunity;
+      const evaluationPaenl = state.evaluationPanel;
+      if (!opportunity || !evaluationPaenl) return [state, []];
+      const values = EvaluationPanel.getValues(evaluationPaenl);
+      return [
+        startSaveLoading(state),
+        [
+          api.opportunities.swu.update<Msg>()(
+            opportunity.id,
+            adt("editEvaluationPanel", values),
+            (
+              response: api.ResponseValidation<
+                SWUOpportunity,
+                UpdateValidationErrors
+              >
+            ) => {
+              return adt(
+                "onSaveResponse",
+                api.mapInvalid(response, (errors) => {
+                  if (
+                    errors.opportunity &&
+                    errors.opportunity.tag === "editEvaluationPanel"
+                  ) {
+                    return errors.opportunity.value;
+                  } else {
+                    return {};
+                  }
+                })
+              );
+            }
+          )
+        ]
+      ];
+    }
+    case "onSaveResponse": {
+      state = stopSaveLoading(state);
+      const response = msg.value;
+      switch (response.tag) {
+        case "valid": {
+          state = state.set("isEditing", false);
+          const [resetState, resetCmds] = resetEvaluationPanel(
+            state,
+            response.value
+          );
+          return [
+            resetState,
+            [
+              ...resetCmds,
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("success", toasts.changesPublished.success)
+                )
+              )
+            ]
+          ];
+        }
+        case "invalid":
+          state = state.update(
+            "evaluationPanel",
+            (ep) =>
+              ep &&
+              EvaluationPanel.setErrors(ep, response.value.evaluationPanel)
+          );
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.changesPublished.error)
+                )
+              )
+            ]
+          ];
+        case "unhandled":
+        default:
+          return [
+            state,
+            [
+              component_.cmd.dispatch(
+                component_.global.showToastMsg(
+                  adt("error", toasts.changesPublished.error)
+                )
+              )
+            ]
+          ];
+      }
+    }
     default:
       return [state, []];
   }
@@ -162,6 +261,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
         viewerUser={state.viewerUser}
       />
       <div className="mt-5 pt-5 border-top">
+        <h2 className="mb-3">Evaluation Panel</h2>
         <Row>
           <Col xs="12">
             <EvaluationPanel.view
@@ -191,8 +291,21 @@ export const component: Tab.Component<State, InnerMsg> = {
     if (!state.opportunity || !canChangeEvaluationPanel(state.opportunity))
       return component_.page.actions.none();
     const isEditingLoading = state.startEditingLoading > 0;
+    const isSaveLoading = state.startSaveLoading > 0;
+    const isLoading = isEditingLoading || isSaveLoading;
+    const isValid =
+      state.evaluationPanel && EvaluationPanel.isValid(state.evaluationPanel);
     return state.isEditing
       ? component_.page.actions.links([
+          {
+            children: "Save Changes",
+            onClick: () => dispatch(adt("save") as Msg),
+            button: true,
+            loading: isLoading,
+            disabled: isLoading || !isValid,
+            symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
+            color: "primary"
+          },
           {
             children: "Cancel",
             onClick: () => dispatch(adt("cancelEditing") as Msg)
@@ -203,8 +316,8 @@ export const component: Tab.Component<State, InnerMsg> = {
             children: "Edit",
             onClick: () => dispatch(adt("startEditing")),
             button: true,
-            loading: isEditingLoading,
-            disabled: isEditingLoading,
+            loading: isLoading,
+            disabled: isLoading,
             symbol_: leftPlacement(iconLinkSymbol("user-edit")),
             color: "primary"
           }
