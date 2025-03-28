@@ -43,7 +43,8 @@ import {
   UpdateWithNoteRequestBody,
   CreateSWUEvaluationPanelMemberBody,
   CreateSWUEvaluationPanelMemberValidationErrors,
-  SubmitQuestionEvaluationsWithNoteRequestBody
+  SubmitQuestionEvaluationsWithNoteRequestBody,
+  canChangeEvaluationPanel
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
@@ -126,7 +127,8 @@ interface ValidatedUpdateRequestBody {
     | ADT<
         "submitConsensusQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
-      >;
+      >
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
@@ -822,6 +824,11 @@ const update: crud.Update<
             "submitConsensusQuestionEvaluations",
             value as SubmitQuestionEvaluationsWithNoteRequestBody
           );
+        case "editEvaluationPanel":
+          return adt(
+            "editEvaluationPanel",
+            value as CreateSWUEvaluationPanelMemberBody[]
+          );
         default:
           return null;
       }
@@ -846,7 +853,8 @@ const update: crud.Update<
       if (
         (![
           "submitIndividualQuestionEvaluations",
-          "submitConsensusQuestionEvaluations"
+          "submitConsensusQuestionEvaluations",
+          "edutEvaluationPanel"
         ].includes(request.body.tag) &&
           !(await permissions.editSWUOpportunity(
             connection,
@@ -1909,6 +1917,41 @@ const update: crud.Update<
             })
           } as ValidatedUpdateRequestBody);
         }
+        case "editEvaluationPanel": {
+          if (
+            !canChangeEvaluationPanel(swuOpportunity) ||
+            !permissions.editSWUEvaluationPanel(
+              connection,
+              request.session,
+              swuOpportunity.id
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedEvaluationPanel =
+            await validateSWUEvaluationPanelMembers(
+              connection,
+              request.body.value
+            );
+          if (
+            isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("editEvaluationPanel" as const, {
+              ...swuOpportunity,
+              evaluationPanel: validatedEvaluationPanel.value
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         default:
           return invalid({ opportunity: adt("parseFailure" as const) });
       }
@@ -2077,6 +2120,13 @@ const update: crud.Update<
               connection,
               request.params.id,
               body.value,
+              session
+            );
+            break;
+          case "editEvaluationPanel":
+            dbResult = await db.updateSWUOpportunityVersion(
+              connection,
+              { ...body.value, id: request.params.id },
               session
             );
             break;

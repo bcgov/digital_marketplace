@@ -424,7 +424,8 @@ export type UpdateRequestBody =
   | ADT<
       "submitConsensusQuestionEvaluations",
       SubmitQuestionEvaluationsWithNoteRequestBody
-    >;
+    >
+  | ADT<"editEvaluationPanel", CreateSWUEvaluationPanelMemberBody[]>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -455,6 +456,7 @@ type UpdateADTErrors =
   | ADT<"addNote", UpdateWithNoteValidationErrors>
   | ADT<"submitIndividualQuestionEvaluations", string[]>
   | ADT<"submitConsensusQuestionEvaluations", string[]>
+  | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
