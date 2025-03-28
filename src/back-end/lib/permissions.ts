@@ -1083,6 +1083,23 @@ export function submitSWUTeamQuestionResponseEvaluation(
   );
 }
 
+export async function editSWUEvaluationPanel(
+  connection: Connection,
+  session: Session,
+  opportunityId: Id
+) {
+  return (
+    !!session &&
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (await isSWUOpportunityAuthor(
+          connection,
+          session.user,
+          opportunityId
+        ))))
+  );
+}
+
 // TWU Opportunities
 
 export function createTWUOpportunity(
