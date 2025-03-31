@@ -26,6 +26,7 @@ export function validateFileName(
   name: string,
   validExtensions: readonly string[] = []
 ): Validation<string> {
+  //OS limit for file name length is typically 256
   const validatedName = validateGenericString(name, "File name", 1, 255); 
   if (isValid(validatedName) && validExtensions.length > 0) {
     const extension = name.match(/\.([a-zA-Z0-9]+)$/);
