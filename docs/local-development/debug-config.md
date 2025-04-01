@@ -105,7 +105,7 @@ This will display server logs:
 [hooks] Invoked swuCrudHook at Thu Nov 24 2022 16:02:55 GMT-0800 (Pacific Standard Time)
 ```
 
-### Debugging with Source Maps and Node Inspector
+### Debugging with Source Maps
 
 For debugging with IDE integration and source maps, use the following:
 
