@@ -67,7 +67,7 @@ import { Id } from "shared/lib/types";
 import {
   isSWUOpportunityEvaluationPanelChair,
   isSWUOpportunityEvaluationPanelEvaluator
-} from "./db/question-evaluation/sprint-with-us";
+} from "./db/evaluations/sprint-with-us/team-questions";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 
 export const ERROR_MESSAGE =
