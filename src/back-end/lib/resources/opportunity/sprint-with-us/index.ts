@@ -1947,7 +1947,17 @@ const update: crud.Update<
           return valid({
             session: request.session,
             body: adt("editEvaluationPanel" as const, {
-              ...swuOpportunity,
+              ...omit(
+                swuOpportunity,
+                "addenda",
+                "history",
+                "publishedAt",
+                "reporting",
+                "status",
+                "subscribed",
+                "updatedAt",
+                "updatedBy"
+              ),
               evaluationPanel: validatedEvaluationPanel.value
             })
           } as ValidatedUpdateRequestBody);
