@@ -659,7 +659,6 @@ export function canChangeEvaluationPanel(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.UnderReview:
     case SWUOpportunityStatus.Published:
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       return true;
     default:
       return false;
