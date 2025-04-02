@@ -5,7 +5,8 @@ import {
   Transaction,
   isUserOwnerOrAdminOfOrg,
   tryDb,
-  RawSWUTeamQuestionResponseEvaluation
+  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  SWUTeamQuestionResponseEvaluationStatusRecord
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
@@ -61,10 +62,7 @@ import {
   UpdateEditRequestBody,
   UpdateTeamQuestionScoreBody
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluationStatus } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, userToUserSlim, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -2132,35 +2130,24 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
     [{ count: submittedIndividualEvaluationsCount }],
     [{ count: evaluatorsCount }]
   ] = await Promise.all([
-    connection<RawSWUTeamQuestionResponseEvaluation>(
-      "swuTeamQuestionResponseEvaluations as evaluations"
+    connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+      `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`
     )
       .transacting(trx)
-      .join(
-        "swuTeamQuestionResponseEvaluationStatuses as statuses",
-        function () {
-          this.on(
-            "evaluations.id",
-            "=",
-            "statuses.teamQuestionResponseEvaluation"
-          )
-            .andOnNotNull("statuses.status")
-            .andOn(
-              "statuses.createdAt",
-              "=",
-              connection.raw(
-                '(select max("createdAt") from "swuTeamQuestionResponseEvaluationStatuses" as statuses2 where \
-                  statuses2."teamQuestionResponseEvaluation" = evaluations.id and statuses2.status is not null)'
-              )
-            );
-        }
+      .from(
+        connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+          `${EVALUATOR_EVALUATION_STATUS_TABLE_NAME} as statuses`
+        )
+          .transacting(trx)
+          .max("createdAt")
+          .where({
+            status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+            proposal: proposalId
+          })
+          .groupBy("evaluationPanelMember", "proposal")
+          .as("submittedIndividualEvaluations")
       )
-      .where({
-        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted,
-        "evaluations.type": SWUTeamQuestionResponseEvaluationType.Individual,
-        "evaluations.proposal": proposalId
-      })
-      .count("*"),
+      .count<Record<string, number>[]>("*"),
     connection<RawSWUEvaluationPanelMember>(
       "swuEvaluationPanelMembers as members"
     )
@@ -2179,8 +2166,7 @@ export async function allIndividualSWUTeamQuestionResponseEvaluationsComplete(
       .where({
         evaluator: true
       })
-      .count("*")
+      .count<Record<string, number>[]>("*")
   ]);
-
   return submittedIndividualEvaluationsCount === evaluatorsCount;
 }

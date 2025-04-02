@@ -9,22 +9,18 @@ import {
   wrapRespond
 } from "back-end/lib/server";
 import {
-  validateSWUOpportunityId,
   validateSWUProposalId,
-  validateSWUTeamQuestionResponseEvaluationId
+  validateSWUTeamQuestionResponseEvaluation
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import { getNumber, getString } from "shared/lib";
 import {
-  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   CreateValidationErrors,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus,
-  SWUTeamQuestionResponseEvaluationType,
   CreateRequestBody as SharedCreateRequestBody,
   UpdateRequestBody as SharedUpdateRequestBody,
-  UpdateValidationErrors,
-  isValidStatusChange
+  UpdateValidationErrors
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, Id, adt } from "shared/lib/types";
@@ -40,124 +36,27 @@ import * as questionEvaluationValidation from "shared/lib/validation/question-ev
 interface ValidatedCreateRequestBody extends SharedCreateRequestBody {
   session: AuthenticatedSession;
   evaluationPanelMember: Id;
+  proposal: Id;
 }
 
 interface ValidatedUpdateRequestBody {
   session: AuthenticatedSession;
-  body: ADT<"edit", ValidatedUpdateEditRequestBody> | ADT<"submit", string>;
+  body: ADT<"edit", ValidatedUpdateEditRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
   ValidatedCreateRequestBody,
   "proposal" | "evaluationPanelMember" | "status" | "type" | "session"
->;
+> & { proposalId: Id; userId: Id };
 
 type CreateRequestBody = Omit<SharedCreateRequestBody, "type" | "status"> & {
   status: string;
-  type: string;
 };
 
 type UpdateRequestBody = SharedUpdateRequestBody | null;
 
-const routeNamespace = "question-evaluations/sprint-with-us";
-
-const readMany: crud.ReadMany<Session, db.Connection> = (
-  connection: db.Connection
-) => {
-  return nullRequestBodyHandler<
-    JsonResponseBody<SWUTeamQuestionResponseEvaluation[] | string[]>,
-    Session
-  >(async (request) => {
-    const respond = (
-      code: number,
-      body: SWUTeamQuestionResponseEvaluation[] | string[]
-    ) => basicResponse(code, request.session, makeJsonResponseBody(body));
-    if (request.query.proposal) {
-      if (!permissions.isSignedIn(request.session)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-
-      const validatedSWUProposal = await validateSWUProposalId(
-        connection,
-        request.query.proposal,
-        request.session
-      );
-      if (isInvalid(validatedSWUProposal)) {
-        return respond(404, ["Sprint With Us proposal not found."]);
-      }
-
-      if (
-        !(await permissions.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
-          connection,
-          request.session,
-          validatedSWUProposal.value
-        ))
-      ) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const dbResult =
-        await db.readManyIndividualSWUTeamQuestionResponseEvaluationsForConsensus(
-          connection,
-          request.session,
-          request.query.proposal
-        );
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
-    } else if (request.query.opportunity) {
-      if (!permissions.isSignedIn(request.session)) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-
-      const validatedSWUOpportunity = await validateSWUOpportunityId(
-        connection,
-        request.query.opportunity,
-        request.session
-      );
-      if (isInvalid(validatedSWUOpportunity)) {
-        return respond(404, ["Sprint With Us opportunity not found."]);
-      }
-
-      const isConsensus = Boolean(request.query.consensus);
-      if (
-        !(await permissions.readManySWUTeamQuestionResponseEvaluations(
-          connection,
-          request.session,
-          validatedSWUOpportunity.value,
-          isConsensus
-        ))
-      ) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const dbResult = await db.readManySWUTeamQuestionResponseEvaluations(
-        connection,
-        request.session,
-        request.query.opportunity,
-        isConsensus
-      );
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
-    } else {
-      if (
-        !permissions.isSignedIn(request.session) ||
-        !permissions.readOwnSWUTeamQuestionResponseEvaluations(request.session)
-      ) {
-        return respond(401, [permissions.ERROR_MESSAGE]);
-      }
-      const dbResult = await db.readOwnSWUTeamQuestionResponseEvaluations(
-        connection,
-        request.session
-      );
-      if (isInvalid(dbResult)) {
-        return respond(503, [db.ERROR_MESSAGE]);
-      }
-      return respond(200, dbResult.value);
-    }
-  });
-};
+const routeNamespace =
+  "proposal/sprint-with-us/:proposalId/team-questions/consensus";
 
 const readOne: crud.ReadOne<Session, db.Connection> = (
   connection: db.Connection
@@ -174,17 +73,18 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
       return respond(401, [permissions.ERROR_MESSAGE]);
     }
     const validatedSWUTeamQuestionResponseEvaluation =
-      await validateSWUTeamQuestionResponseEvaluationId(
+      await validateSWUTeamQuestionResponseEvaluation(
         connection,
+        request.params.proposalId,
         request.params.id,
-        request.session
+        request.session,
+        true
       );
     if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
       return respond(404, ["Evaluation not found."]);
     }
     if (
-      !(await permissions.readOneSWUTeamQuestionResponseEvaluation(
-        connection,
+      !(await permissions.readOneSWUTeamQuestionResponseConsensus(
         request.session,
         validatedSWUTeamQuestionResponseEvaluation.value
       ))
@@ -208,31 +108,16 @@ const create: crud.Create<
         request.body.tag === "json" ? request.body.value : {};
       return {
         proposal: getString(body, "proposal"),
-        type: getString(body, "type"),
         status: getString(body, "status"),
         scores: get(body, "scores")
       };
     },
     async validateRequestBody(request) {
-      const { proposal, type, scores, status } = request.body;
+      const { scores, status } = request.body;
 
       if (!permissions.isSignedIn(request.session)) {
         return invalid({
           permissions: [permissions.ERROR_MESSAGE]
-        });
-      }
-
-      const validatedType =
-        questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationType(
-          type,
-          [
-            SWUTeamQuestionResponseEvaluationType.Consensus,
-            SWUTeamQuestionResponseEvaluationType.Individual
-          ]
-        );
-      if (isInvalid(validatedType)) {
-        return invalid({
-          type: validatedType.value
         });
       }
 
@@ -249,7 +134,7 @@ const create: crud.Create<
 
       const validatedSWUProposal = await validateSWUProposalId(
         connection,
-        proposal,
+        request.params.proposalId,
         request.session
       );
       if (isInvalid(validatedSWUProposal)) {
@@ -259,7 +144,7 @@ const create: crud.Create<
       }
 
       if (
-        !(await permissions.createSWUTeamQuestionResponseEvaluation(
+        !(await permissions.createSWUTeamQuestionResponseConsensus(
           connection,
           request.session,
           validatedSWUProposal.value
@@ -271,7 +156,7 @@ const create: crud.Create<
       }
 
       const validatedSWUPanelEvaluationPanelMember =
-        await db.readOneSWUEvaluationPanelMemberWithId(
+        await db.readOneSWUEvaluationPanelMember(
           connection,
           request.session.user.id,
           validatedSWUProposal.value.opportunity.id
@@ -284,12 +169,12 @@ const create: crud.Create<
 
       // Check for existing evaluation on this proposal, authored by this user
       const dbResultEvaluation =
-        await db.readOneSWUTeamQuestionResponseEvaluationByProposalAndEvaluationPanelMember(
+        await db.readOneSWUTeamQuestionResponseEvaluation(
           connection,
           validatedSWUProposal.value.id,
-          validatedSWUPanelEvaluationPanelMember.value.id,
-          validatedType.value,
-          request.session
+          validatedSWUPanelEvaluationPanelMember.value.user.id,
+          request.session,
+          true
         );
       if (isInvalid(dbResultEvaluation)) {
         return invalid({
@@ -299,7 +184,7 @@ const create: crud.Create<
       if (dbResultEvaluation.value) {
         return invalid({
           conflict: [
-            "You already have an team question evaluation for this proposal."
+            "You already have a team question evaluation for this proposal."
           ]
         });
       }
@@ -307,9 +192,9 @@ const create: crud.Create<
       return valid({
         session: request.session,
         proposal: validatedSWUProposal.value.id,
-        evaluationPanelMember: validatedSWUPanelEvaluationPanelMember.value.id,
+        evaluationPanelMember:
+          validatedSWUPanelEvaluationPanelMember.value.user.id,
         status: validatedStatus.value,
-        type: validatedType.value,
         scores: scores.map((score) => ({
           score: getNumber<number>(score, "score", undefined, false),
           notes: getString(score, "notes"),
@@ -328,7 +213,8 @@ const create: crud.Create<
         const dbResult = await db.createSWUTeamQuestionResponseEvaluation(
           connection,
           omit(request.body, "session"),
-          request.body.session
+          request.body.session,
+          true
         );
         if (isInvalid(dbResult)) {
           return basicResponse(
@@ -371,8 +257,6 @@ const update: crud.Update<
           return adt("edit", {
             scores: get(value, "scores")
           });
-        case "submit":
-          return adt("submit", getString(body, "value", ""));
         default:
           return null;
       }
@@ -387,10 +271,12 @@ const update: crud.Update<
         });
       }
       const validatedSWUTeamQuestionResponseEvaluation =
-        await validateSWUTeamQuestionResponseEvaluationId(
+        await validateSWUTeamQuestionResponseEvaluation(
           connection,
+          request.params.proposalId,
           request.params.id,
-          request.session
+          request.session,
+          true
         );
       if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
         return invalid({
@@ -402,7 +288,7 @@ const update: crud.Update<
       }
 
       if (
-        !permissions.editSWUTeamQuestionResponseEvaluation(
+        !permissions.editSWUTeamQuestionResponseConsensus(
           request.session,
           validatedSWUTeamQuestionResponseEvaluation.value
         )
@@ -415,18 +301,6 @@ const update: crud.Update<
       switch (request.body.tag) {
         case "edit": {
           const scores = request.body.value.scores;
-
-          // Only drafts and submitted consensuses can be edited
-          if (
-            validatedSWUTeamQuestionResponseEvaluation.value.status !==
-              SWUTeamQuestionResponseEvaluationStatus.Draft &&
-            validatedSWUTeamQuestionResponseEvaluation.value.type !==
-              SWUTeamQuestionResponseEvaluationType.Consensus
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
           return valid({
             session: request.session,
             body: adt(
@@ -440,68 +314,6 @@ const update: crud.Update<
               } as ValidatedUpdateEditRequestBody
             )
           });
-        }
-        case "submit": {
-          if (
-            !isValidStatusChange(
-              validatedSWUTeamQuestionResponseEvaluation.value.status,
-              SWUTeamQuestionResponseEvaluationStatus.Submitted
-            )
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
-
-          const fullOpportunity = await db.readOneSWUOpportunity(
-            connection,
-            validatedSWUTeamQuestionResponseEvaluation.value.proposal
-              .opportunity.id,
-            request.session
-          );
-
-          const validatedScores =
-            questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
-              validatedSWUTeamQuestionResponseEvaluation.value.scores,
-              fullOpportunity.value?.teamQuestions ?? []
-            );
-
-          if (
-            isInvalid<
-              CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
-            >(validatedScores) ||
-            validatedScores.value.length !==
-              fullOpportunity.value?.teamQuestions.length
-          ) {
-            return invalid({
-              evaluation: adt("submit" as const, [
-                "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
-              ])
-            });
-          }
-
-          if (
-            !permissions.submitSWUTeamQuestionResponseEvaluation(
-              request.session,
-              validatedSWUTeamQuestionResponseEvaluation.value
-            )
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
-
-          const validatedSubmissionNote =
-            questionEvaluationValidation.validateNote(request.body.value);
-          if (isInvalid(validatedSubmissionNote)) {
-            return invalid({
-              evaluation: adt("submit" as const, validatedSubmissionNote.value)
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt("submit" as const, validatedSubmissionNote.value)
-          } as ValidatedUpdateRequestBody);
         }
         default:
           return invalid({ evaluation: adt("parseFailure" as const) });
@@ -521,17 +333,13 @@ const update: crud.Update<
           case "edit":
             dbResult = await db.updateSWUTeamQuestionResponseEvaluation(
               connection,
-              { ...body.value, id: request.params.id },
-              session
-            );
-            break;
-          case "submit":
-            dbResult = await db.updateSWUTeamQuestionResponseEvaluationStatus(
-              connection,
-              request.params.id,
-              SWUTeamQuestionResponseEvaluationStatus.Submitted,
-              body.value,
-              session
+              {
+                ...body.value,
+                proposal: request.params.proposalId,
+                evaluationPanelMember: request.params.id
+              },
+              session,
+              true
             );
             break;
         }
@@ -562,7 +370,6 @@ const update: crud.Update<
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
-  readMany,
   create,
   update
 };

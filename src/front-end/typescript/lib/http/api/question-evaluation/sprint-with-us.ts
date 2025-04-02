@@ -88,7 +88,7 @@ interface RawSWUTeamQuestionResponseEvaluation
   updatedAt: string;
 }
 
-function rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation(
+export function rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation(
   raw: RawSWUTeamQuestionResponseEvaluation
 ): Resource.SWUTeamQuestionResponseEvaluation {
   return {

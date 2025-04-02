@@ -56,4 +56,4 @@ export * from "back-end/lib/db/subscribers/sprint-with-us";
 export * from "back-end/lib/db/subscribers/team-with-us";
 export * from "back-end/lib/db/user";
 export * from "back-end/lib/db/service-area";
-export * from "back-end/lib/db/question-evaluation/sprint-with-us";
+export * from "back-end/lib/db/evaluations/sprint-with-us/team-questions";

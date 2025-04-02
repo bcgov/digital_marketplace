@@ -1,6 +1,10 @@
 import { generateUuid } from "back-end/lib";
 import {
+  CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  CHAIR_EVALUATION_TABLE_NAME,
   Connection,
+  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  EVALUATOR_EVALUATION_TABLE_NAME,
   RawSWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatusRecord,
   Transaction,
@@ -10,6 +14,7 @@ import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
   allIndividualSWUTeamQuestionResponseEvaluationsComplete,
+  readManySWUProposals,
   readOneSWUAwardedProposal,
   readSubmittedSWUProposalCount,
   updateSWUProposalStatus
@@ -191,7 +196,6 @@ interface RawSWUOpportunityHistoryRecord
 
 export interface RawSWUEvaluationPanelMember
   extends Omit<SWUEvaluationPanelMember, "user"> {
-  id: Id;
   opportunityVersion: Id;
   user: Id;
 }
@@ -1125,7 +1129,6 @@ export const createSWUOpportunity = tryDb<
         .transacting(trx)
         .insert({
           ...member,
-          id: generateUuid(),
           opportunityVersion: opportunityVersionRecord.id
         });
     }
@@ -1286,7 +1289,6 @@ export const updateSWUOpportunityVersion = tryDb<
         .transacting(trx)
         .insert({
           ...member,
-          id: generateUuid(),
           opportunityVersion: versionRecord.id
         });
     }
@@ -1431,12 +1433,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
         )) as RawSWUOpportunity[];
 
       for (const lapsedOpportunity of lapsedOpportunities) {
-        // Set the opportunity to EVAL_QUESTIONS_PANEL status
+        // Set the opportunity to EVAL_QUESTIONS_INDIVIDUAL status
         await connection("swuOpportunityStatuses").transacting(trx).insert({
           id: generateUuid(),
           createdAt: now,
           opportunity: lapsedOpportunity.id,
-          status: SWUOpportunityStatus.EvaluationTeamQuestionsPanel,
+          status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
           note: "This opportunity has closed."
         });
 
@@ -1465,12 +1467,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
           )?.map((result) => result.id) || [];
 
         for (const [index, proposalId] of proposalIds.entries()) {
-          // Set the proposal to QUESTIONS_PANEL_INDIVIDUAL status
+          // Set the proposal to EVALUATION_QUESTIONS_INDIVIDUAL status
           await connection("swuProposalStatuses").transacting(trx).insert({
             id: generateUuid(),
             createdAt: now,
             proposal: proposalId,
-            status: SWUProposalStatus.TeamQuestionsPanelIndividual,
+            status: SWUProposalStatus.EvaluationTeamQuestionsIndividual,
             note: ""
           });
 
@@ -1577,10 +1579,9 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
-// TODO: add indexes
-export const readOneSWUEvaluationPanelMemberWithId = tryDb<
+export const readOneSWUEvaluationPanelMember = tryDb<
   [Id, Id],
-  (SWUEvaluationPanelMember & { id: Id }) | null
+  SWUEvaluationPanelMember | null
 >(async (connection, user, opportunity) => {
   const raw = await connection<RawSWUEvaluationPanelMember>(
     "swuEvaluationPanelMembers"
@@ -1596,29 +1597,6 @@ export const readOneSWUEvaluationPanelMemberWithId = tryDb<
       "swuEvaluationPanelMembers.user": user
     })
     .select("swuEvaluationPanelMembers.*")
-    .first();
-
-  return valid(
-    raw
-      ? {
-          ...(await rawEvaluationPanelMemberToEvaluationPanelMember(
-            connection,
-            raw
-          )),
-          id: raw.id
-        }
-      : null
-  );
-});
-
-export const readOneSWUEvaluationPanelMemberById = tryDb<
-  [Id],
-  SWUEvaluationPanelMember | null
->(async (connection, id) => {
-  const raw = await connection<RawSWUEvaluationPanelMember>(
-    "swuEvaluationPanelMembers"
-  )
-    .where("id", id)
     .first();
 
   return valid(
@@ -1678,16 +1656,21 @@ export const submitIndividualQuestionEvaluations = tryDb<
   await connection.transaction(async (trx) => {
     await Promise.all(
       evaluationParams.evaluations.map(
-        async ({ id: evaluationId, proposal: { id: proposalId } }) => {
+        async ({
+          evaluationPanelMember: {
+            user: { id: evaluationPanelMemberId }
+          },
+          proposal: { id: proposalId }
+        }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              "swuTeamQuestionResponseEvaluationStatuses"
+              EVALUATOR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
                 {
-                  id: generateUuid(),
-                  teamQuestionResponseEvaluation: evaluationId,
+                  evaluationPanelMember: evaluationPanelMemberId,
+                  proposal: proposalId,
                   createdAt: now,
                   createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
@@ -1698,10 +1681,13 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            "swuTeamQuestionResponseEvaluations"
+            EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
-            .where({ id })
+            .where({
+              proposal: proposalId,
+              evaluationPanelMember: evaluationPanelMemberId
+            })
             .update(
               {
                 updatedAt: now
@@ -1724,7 +1710,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
             const result = await updateSWUProposalStatus(
               connection,
               proposalId,
-              SWUProposalStatus.TeamQuestionsPanelConsensus,
+              SWUProposalStatus.EvaluationTeamQuestionsConsensus,
               "",
               session
             );
@@ -1735,6 +1721,109 @@ export const submitIndividualQuestionEvaluations = tryDb<
         }
       )
     );
+
+    // Update opportunity status if all evaluations complete for proposal
+    const updatedSWUProposals = getValidValue(
+      await readManySWUProposals(connection, session, id),
+      undefined
+    );
+    if (!updatedSWUProposals) {
+      throw new Error("unable to read proposals");
+    }
+
+    if (
+      updatedSWUProposals.every(
+        (proposal) =>
+          proposal.status !==
+          SWUProposalStatus.EvaluationTeamQuestionsIndividual
+      )
+    ) {
+      const result = await updateSWUOpportunityStatus(
+        connection,
+        id,
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+        "",
+        session
+      );
+
+      if (!result) {
+        throw new Error("unable to update opportunity");
+      }
+    }
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add note");
+  }
+  return valid(dbResult.value);
+});
+
+export const submitConsensusQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({
+          evaluationPanelMember: {
+            user: { id: evaluationPanelMemberId }
+          },
+          proposal: { id: proposalId }
+        }) => {
+          const [statusRecord] =
+            await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+              CHAIR_EVALUATION_STATUS_TABLE_NAME
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember: evaluationPanelMemberId,
+                  proposal: proposalId,
+                  createdAt: now,
+                  createdBy: session.user.id,
+                  status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            CHAIR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({
+              proposal: proposalId,
+              evaluationPanelMember: evaluationPanelMemberId
+            })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update team question evaluation");
+          }
+        }
+      )
+    );
+
+    const result = await updateSWUOpportunityStatus(
+      connection,
+      id,
+      SWUOpportunityStatus.EvaluationTeamQuestionsReview,
+      "",
+      session
+    );
+
+    if (!result) {
+      throw new Error("unable to update opportunity");
+    }
   });
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);

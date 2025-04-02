@@ -1,20 +1,7 @@
-import { ADT, BodyWithErrors, Id } from "shared/lib/types";
+import { ADT, BodyWithErrors } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 import { SWUEvaluationPanelMember } from "src/shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposalSlim } from "src/shared/lib/resources/proposal/sprint-with-us";
-
-export function parseSWUTeamQuestionResponseEvaluationType(
-  raw: string
-): SWUTeamQuestionResponseEvaluationType | null {
-  switch (raw) {
-    case SWUTeamQuestionResponseEvaluationType.Consensus:
-      return SWUTeamQuestionResponseEvaluationType.Consensus;
-    case SWUTeamQuestionResponseEvaluationType.Individual:
-      return SWUTeamQuestionResponseEvaluationType.Individual;
-    default:
-      return null;
-  }
-}
 
 export function parseSWUTeamQuestionResponseEvaluationStatus(
   raw: string
@@ -29,11 +16,6 @@ export function parseSWUTeamQuestionResponseEvaluationStatus(
   }
 }
 
-export enum SWUTeamQuestionResponseEvaluationType {
-  Consensus = "CONSENSUS",
-  Individual = "INDIVIDUAL"
-}
-
 export enum SWUTeamQuestionResponseEvaluationStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED"
@@ -46,11 +28,9 @@ export interface SWUTeamQuestionResponseEvaluationScores {
 }
 
 export interface SWUTeamQuestionResponseEvaluation {
-  id: Id;
   proposal: SWUProposalSlim;
   evaluationPanelMember: SWUEvaluationPanelMember;
   status: SWUTeamQuestionResponseEvaluationStatus;
-  type: SWUTeamQuestionResponseEvaluationType;
   scores: SWUTeamQuestionResponseEvaluationScores[];
   createdAt: Date;
   updatedAt: Date;
@@ -72,8 +52,6 @@ export type CreateSWUTeamQuestionResponseEvaluationScoreBody =
   SWUTeamQuestionResponseEvaluationScores;
 
 export interface CreateRequestBody {
-  proposal: Id;
-  type: SWUTeamQuestionResponseEvaluationType;
   status: CreateSWUTeamQuestionResponseEvaluationStatus;
   scores: CreateSWUTeamQuestionResponseEvaluationScoreBody[];
 }

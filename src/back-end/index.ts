@@ -41,7 +41,10 @@ import sessionResource from "back-end/lib/resources/session";
 import codeWithUsSubscriberResource from "back-end/lib/resources/subscribers/code-with-us";
 import sprintWithUsSubscriberResource from "back-end/lib/resources/subscribers/sprint-with-us";
 import teamWithUsSubscriberResource from "back-end/lib/resources/subscribers/team-with-us";
-import sprintWithUsQuestionEvaluationResource from "back-end/lib/resources/question-evaluation/sprint-with-us";
+import sprintWithUsProposalTeamQuestionEvaluationResource from "back-end/lib/resources/proposal/sprint-with-us/team-questions/evaluations";
+import sprintWithUsOpportunityTeamQuestionEvaluationResource from "back-end/lib/resources/opportunity/sprint-with-us/team-questions/evaluations";
+import sprintWithUsProposalTeamQuestionConsensusResource from "back-end/lib/resources/proposal/sprint-with-us/team-questions/consensus";
+import sprintWithUsOpportunityTeamQuestionConsensusResource from "back-end/lib/resources/opportunity/sprint-with-us/team-questions/consensus";
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
@@ -162,7 +165,10 @@ export function createRouter(connection: Connection): AppRouter {
     userResource,
     metricsResource,
     emailNotificationsResource,
-    sprintWithUsQuestionEvaluationResource
+    sprintWithUsProposalTeamQuestionEvaluationResource,
+    sprintWithUsOpportunityTeamQuestionEvaluationResource,
+    sprintWithUsProposalTeamQuestionConsensusResource,
+    sprintWithUsOpportunityTeamQuestionConsensusResource
   ];
 
   // Define CRUD routes.

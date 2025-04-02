@@ -8,8 +8,12 @@ enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationTeamQuestionsPanel = "EVAL_QUESTIONS_PANEL",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
+  EvaluationTeamQuestionsReview = "EVAL_QUESTIONS_REVIEW",
+  EvaluationTeamQuestionsChairSubmission = "EVAL_QUESTIONS_CHAIR_SUBMISSION",
+  EvaluationTeamQuestionsAdminReview = "EVAL_QUESTIONS_ADMIN_REVIEW",
+  EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -32,10 +36,10 @@ enum PreviousSWUOpportunityStatus {
 enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
-  TeamQuestionsPanelIndividual = "QUESTIONS_PANEL_INDIVIDUAL",
-  TeamQuestionsPanelConsensus = "QUESTIONS_PANEL_CONESENSUS",
-  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVALUATION_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVALUATION_QUESTIONS_CONSENSUS",
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS", // TODO: Remove
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS", // TODO: Remove
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -59,11 +63,6 @@ enum PreviousSWUProposalStatus {
   NotAwarded = "NOT_AWARDED",
   Disqualified = "DISQUALIFIED",
   Withdrawn = "WITHDRAWN"
-}
-
-enum SWUTeamQuestionResponseEvaluationType {
-  Consensus = "CONSENSUS",
-  Individual = "INDIVIDUAL"
 }
 
 export enum SWUTeamQuestionResponseEvaluationStatus {
@@ -100,66 +99,74 @@ export async function up(connection: Knex): Promise<void> {
   `);
   logger.info("Modified constraint on swuOpportunityStatuses");
 
-  await connection.schema.createTable(
-    "swuTeamQuestionResponseEvaluations",
-    (table) => {
-      table
-        .uuid("proposal")
-        .references("id")
-        .inTable("swuProposals")
-        .notNullable()
-        .onDelete("CASCADE");
-      table
-        .uuid("evaluationPanelMember")
-        .references("id")
-        .inTable("swuEvaluationPanelMembers")
-        .notNullable()
-        .onDelete("CASCADE");
-      table.uuid("id").primary().unique().notNullable();
-      table
-        .enu("type", Object.values(SWUTeamQuestionResponseEvaluationType))
-        .notNullable();
-      table.timestamp("createdAt").notNullable();
-      table.timestamp("updatedAt").notNullable();
-    }
-  );
-  logger.info("Created swuTeamQuestionResponseEvaluations table.");
+  function evaluationsColumnsSchema(table: Knex.TableBuilder) {
+    table
+      .uuid("proposal")
+      .references("id")
+      .inTable("swuProposals")
+      .notNullable()
+      .onDelete("CASCADE");
+    table.integer("questionOrder").notNullable();
+    table
+      .uuid("evaluationPanelMember")
+      .references("id")
+      .inTable("users")
+      .notNullable()
+      .onDelete("CASCADE");
+    table.timestamp("createdAt").notNullable();
+    table.timestamp("updatedAt").notNullable();
+    table.float("score").notNullable();
+    table.text("notes").notNullable();
+    table.primary(["proposal", "evaluationPanelMember", "questionOrder"]);
+  }
 
   await connection.schema.createTable(
-    "swuTeamQuestionResponseEvaluationScores",
-    (table) => {
-      table
-        .uuid("teamQuestionResponseEvaluation")
-        .references("id")
-        .inTable("swuTeamQuestionResponseEvaluations")
-        .notNullable()
-        .onDelete("CASCADE");
-      table.integer("order").notNullable();
-      table.float("score").notNullable();
-      table.text("notes").notNullable();
-    }
+    "swuTeamQuestionResponseEvaluatorEvaluations",
+    evaluationsColumnsSchema
   );
-  logger.info("Created swuTeamQuestionResponseEvaluationScores table.");
+  logger.info("Created swuTeamQuestionResponseEvaluatorEvaluations table.");
 
   await connection.schema.createTable(
-    "swuTeamQuestionResponseEvaluationStatuses",
-    (table) => {
-      table.uuid("id").primary().unique().notNullable();
-      table.timestamp("createdAt").notNullable();
-      table.uuid("createdBy").references("id").inTable("users");
-      table
-        .uuid("teamQuestionResponseEvaluation")
-        .references("id")
-        .inTable("swuTeamQuestionResponseEvaluations")
-        .notNullable()
-        .onDelete("CASCADE");
-      table
-        .enu("status", Object.values(SWUTeamQuestionResponseEvaluationStatus))
-        .notNullable();
-      table.string("note");
-    }
+    "swuTeamQuestionResponseChairEvaluations",
+    evaluationsColumnsSchema
   );
-  logger.info("Created swuTeamQuestionResponseEvaluationStatuses table.");
+  logger.info("Created swuTeamQuestionResponseChairEvaluations table.");
+
+  function evaluationStatusesColumns(table: Knex.TableBuilder) {
+    table
+      .uuid("proposal")
+      .references("id")
+      .inTable("swuProposals")
+      .notNullable()
+      .onDelete("CASCADE");
+    table
+      .uuid("evaluationPanelMember")
+      .references("id")
+      .inTable("users")
+      .notNullable()
+      .onDelete("CASCADE");
+    table
+      .enu("status", Object.values(SWUTeamQuestionResponseEvaluationStatus))
+      .notNullable();
+    table.string("note");
+    table.timestamp("createdAt").notNullable();
+    table.uuid("createdBy").references("id").inTable("users");
+    table.primary(["proposal", "evaluationPanelMember", "createdAt"]);
+  }
+
+  await connection.schema.createTable(
+    "swuTeamQuestionResponseEvaluatorEvaluationStatuses",
+    evaluationStatusesColumns
+  );
+  logger.info(
+    "Created swuTeamQuestionResponseEvaluatorEvaluationStatuses table."
+  );
+
+  await connection.schema.createTable(
+    "swuTeamQuestionResponseChairEvaluationStatuses",
+    evaluationStatusesColumns
+  );
+  logger.info("Created swuTeamQuestionResponseChairEvaluationStatuses table.");
 }
 
 export async function down(connection: Knex): Promise<void> {
@@ -171,8 +178,8 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuProposalStatuses")
-    .where({ status: "QUESTIONS_PANEL_INDIVIDUAL" })
-    .where({ status: "QUESTIONS_PANEL_CONSENSUS" })
+    .where({ status: "EVALUATION_QUESTIONS_INDIVIDUAL" })
+    .orWhere({ status: "EVALUATION_QUESTIONS_CONSENSUS" })
     .del();
 
   await connection.schema.raw(` \
@@ -192,7 +199,11 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuOpportunityStatuses")
-    .where({ status: "EVAL_QUESTIONS_PANEL" })
+    .where({ status: "EVAL_QUESTIONS_INDIVIDUAL" })
+    .orWhere({ status: "EVAL_QUESTIONS_CONSENSUS" })
+    .orWhere({ status: "EVAL_QUESTIONS_REVIEW" })
+    .orWhere({ status: "EVAL_QUESTIONS_CHAIR_SUBMISSION" })
+    .orWhere({ status: "EVAL_QUESTIONS_ADMIN_REVIEW" })
     .del();
 
   await connection.schema.raw(` \
@@ -205,13 +216,22 @@ export async function down(connection: Knex): Promise<void> {
   logger.info("Reverted constraint on swuOpportunityStatuses");
 
   await connection.schema.dropTable(
-    "swuTeamQuestionResponseEvaluationStatuses"
+    "swuTeamQuestionResponseEvaluatorEvaluationStatuses"
   );
-  logger.info("Dropped table swuTeamQuestionResponseEvaluationStatuses");
+  logger.info(
+    "Dropped table swuTeamQuestionResponseEvaluatorEvaluationStatuses"
+  );
 
-  await connection.schema.dropTable("swuTeamQuestionResponseEvaluationScores");
-  logger.info("Dropped table swuTeamQuestionResponseEvaluationScores");
+  await connection.schema.dropTable(
+    "swuTeamQuestionResponseChairEvaluationStatuses"
+  );
+  logger.info("Dropped table swuTeamQuestionResponseChairEvaluationStatuses");
 
-  await connection.schema.dropTable("swuTeamQuestionResponseEvaluations");
-  logger.info("Dropped table swuTeamQuestionResponseEvaluations");
+  await connection.schema.dropTable(
+    "swuTeamQuestionResponseEvaluatorEvaluations"
+  );
+  logger.info("Dropped table swuTeamQuestionResponseEvaluatorEvaluations");
+
+  await connection.schema.dropTable("swuTeamQuestionResponseChairEvaluations");
+  logger.info("Dropped table swuTeamQuestionResponseChairEvaluations");
 }
