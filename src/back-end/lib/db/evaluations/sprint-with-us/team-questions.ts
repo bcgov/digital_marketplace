@@ -391,24 +391,47 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
     ? CHAIR_EVALUATION_STATUS_TABLE_NAME
     : EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
   const query = connection(`${evaluationTableName} as evaluations`)
-    .join(`${evaluationStatusTableName} as statuses`, function () {
-      this.on(
-        "evaluations.evaluationPanelMember",
-        "=",
-        "statuses.evaluationPanelMember"
-      )
-        .andOn("evaluations.proposal", "=", "statuses.proposal")
-        .andOnNotNull("statuses.status")
-        .andOn(
-          "statuses.createdAt",
+    .join(
+      connection.raw(
+        "(??) as statuses",
+        connection(`${evaluationStatusTableName}`)
+          .select("evaluationPanelMember", "proposal", "status", "createdAt")
+          .rowNumber("rn", function () {
+            this.orderBy("createdAt", "desc").partitionBy([
+              "evaluationPanelMember",
+              "proposal"
+            ]);
+          })
+      ),
+      function () {
+        this.on(
+          "evaluations.evaluationPanelMember",
           "=",
-          connection.raw(
-            `(select max("createdAt") from "${evaluationStatusTableName}" as statuses2 where
-              statuses2."evaluationPanelMember" = evaluations."evaluationPanelMember" and statuses2."proposal" = evaluations."proposal"
-              and statuses2.status is not null)`
-          )
-        );
-    })
+          "statuses.evaluationPanelMember"
+        )
+          .andOn("evaluations.proposal", "=", "statuses.proposal")
+          .andOn("statuses.rn", "=", connection.raw(1));
+      }
+    )
+    .join("swuProposals as proposals", "evaluations.proposal", "proposals.id")
+    .join(
+      "swuEvaluationPanelMembers as members",
+      "evaluations.evaluationPanelMember",
+      "members.user"
+    )
+    .join(
+      connection.raw(
+        "(??) as versions",
+        connection("swuOpportunityVersions")
+          .select("opportunity", "id")
+          .rowNumber("rn", function () {
+            this.orderBy("createdAt", "desc").partitionBy("opportunity");
+          })
+      ),
+      function () {
+        this.on("proposals.opportunity", "=", "versions.opportunity");
+      }
+    )
     .select<RawSWUTeamQuestionResponseEvaluation[]>(
       "evaluations.proposal",
       "evaluations.evaluationPanelMember",
@@ -420,7 +443,11 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
       "evaluations.notes",
       "statuses.status",
       "statuses.createdAt"
-    );
+    )
+    .where({
+      "members.opportunityVersion": connection.raw("versions.id"),
+      "versions.rn": 1
+    });
 
   return query;
 }
