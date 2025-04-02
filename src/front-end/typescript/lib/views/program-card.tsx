@@ -1,7 +1,9 @@
 import { component } from "front-end/lib/framework";
-import Link, { ButtonProps } from "front-end/lib/views/link";
+import Link, { ButtonProps, routeDest } from "front-end/lib/views/link";
 import React from "react";
 import { Col } from "reactstrap";
+import { formatAmount } from "shared/lib";
+import { adt } from "shared/lib/types";
 
 export interface Props {
   img: string;
@@ -10,6 +12,10 @@ export interface Props {
   className?: string;
   links: ButtonProps[];
   wideLinks?: boolean;
+  costRecoveryDetails: {
+    amount: number;
+    show: boolean;
+  };
 }
 
 /**
@@ -24,7 +30,8 @@ const ProgramCard: component.base.View<Props> = ({
   description,
   links,
   wideLinks,
-  className
+  className,
+  costRecoveryDetails
 }) => {
   return (
     <Col xs="12" md="4" className={className}>
@@ -41,6 +48,25 @@ const ProgramCard: component.base.View<Props> = ({
           className={`mt-auto d-flex flex-column ${
             wideLinks ? "align-self-stretch" : ""
           } `}>
+          {costRecoveryDetails.show ? (
+            <div className="mx-auto mb-3">
+              Price:{" "}
+              <b className="font-size-large">
+                {formatAmount(costRecoveryDetails.amount, "$")} CAD
+              </b>
+              <br />
+              via Cost Recovery
+              <div>
+                <Link
+                  className="font-size-small no-wrap"
+                  dest={routeDest(
+                    adt("contentView", "service-level-agreement")
+                  )}>
+                  See Service Level Agreement for details
+                </Link>
+              </div>
+            </div>
+          ) : null}
           {links.map((link, index) => (
             <Link
               {...link}

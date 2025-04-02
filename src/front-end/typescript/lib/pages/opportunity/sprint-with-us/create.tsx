@@ -172,7 +172,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 component_.cmd.dispatch(
                   component_.global.showToastMsg(
                     adt(
-                      "success",
+                      "error",
                       isPublish
                         ? toasts.published.error
                         : toasts.statusChanged.error(intendedStatus)

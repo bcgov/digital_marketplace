@@ -91,7 +91,7 @@ export interface ViewProps<
   required?: boolean;
   disabled?: boolean;
   placeholder?: string;
-  label?: string;
+  label?: string | component_.base.ViewElementChildren;
   help?: component_.base.ViewElementChildren;
   hint?: component_.base.ViewElementChildren;
   action?: {

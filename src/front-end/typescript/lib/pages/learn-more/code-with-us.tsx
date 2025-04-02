@@ -1,4 +1,7 @@
-import { CWU_PAYMENT_OPTIONS_URL } from "front-end/config";
+import {
+  CWU_PAYMENT_OPTIONS_URL,
+  CWU_COST_RECOVERY_FIGURE
+} from "front-end/config";
 import { makePageMetadata, prefixPath } from "front-end/lib";
 import { Route, SharedState } from "front-end/lib/app/types";
 import { component as component_ } from "front-end/lib/framework";
@@ -14,8 +17,12 @@ import { Col, Container, Row } from "reactstrap";
 import { COPY } from "shared/config";
 import { ADT, adt } from "shared/lib/types";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { User } from "shared/lib/resources/user";
+import { formatAmount } from "shared/lib";
+import { CostRecoveryLearnMore } from "front-end/lib/pages/learn-more";
 
 export interface State {
+  viewerUser?: User;
   isVendorAccordionOpen: boolean;
   isPublicSectorAccordionOpen: boolean;
 }
@@ -35,8 +42,9 @@ const init: component_.page.Init<
   State,
   InnerMsg,
   Route
-> = () => [
+> = ({ shared }) => [
   {
+    viewerUser: shared.session?.user,
     isVendorAccordionOpen: true,
     isPublicSectorAccordionOpen: false
   },
@@ -57,7 +65,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const TitleView: component_.base.View = () => {
+const TitleView: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   return (
     <div className="bg-c-learn-more-bg pt-4 pb-6 pb-md-7">
       <Container>
@@ -73,10 +81,22 @@ const TitleView: component_.base.View = () => {
               organizations in {COPY.region.name.long} to pay developers for
               code.
             </p>
+            <CostRecoveryLearnMore user={state.viewerUser}>
+              <>
+                *Code With Us is funded via Cost Recovery and charges{" "}
+                <b className="font-size-large">
+                  {formatAmount(CWU_COST_RECOVERY_FIGURE, "$")} CAD
+                </b>{" "}
+                per competition.
+              </>
+            </CostRecoveryLearnMore>
           </Col>
-          <Col md="4">
+          <Col md="4" className="align-self-end">
             <img
-              style={{ maxWidth: "250px" }}
+              style={{
+                maxWidth: "250px",
+                transform: "translateY(-48px)"
+              }}
               className="d-none d-md-block position-absolute ml-6"
               src={prefixPath(
                 "/images/illustrations/code_with_us_learn_more.svg"
@@ -256,7 +276,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
 }) => {
   return (
     <div className="d-flex flex-column flex-grow-1">
-      <TitleView />
+      <TitleView state={state} dispatch={dispatch} />
       <VendorView state={state} dispatch={dispatch} />
       <PublicSectorView state={state} dispatch={dispatch} />
       <div className="flex-grow-1 bg-white"></div>

@@ -14,7 +14,7 @@ import {
   validateAttachments,
   validateSWUOpportunityId,
   validateSWUEvaluationPanelMembers,
-  validateSWUTeamQuestionResponseEvaluationId
+  validateSWUTeamQuestionResponseEvaluation
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import {
@@ -122,6 +122,10 @@ interface ValidatedUpdateRequestBody {
     | ADT<
         "submitIndividualQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
+    | ADT<
+        "submitConsensusQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
       >;
 }
 
@@ -136,7 +140,7 @@ interface ValidatedUpdateWithNoteRequestBody
 }
 
 interface ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
-  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "evaluations"> {
+  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "proposals"> {
   evaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
@@ -813,6 +817,11 @@ const update: crud.Update<
             "submitIndividualQuestionEvaluations",
             value as SubmitQuestionEvaluationsWithNoteRequestBody
           );
+        case "submitConsensusQuestionEvaluations":
+          return adt(
+            "submitConsensusQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
         default:
           return null;
       }
@@ -835,11 +844,15 @@ const update: crud.Update<
       const swuOpportunity = validatedSWUOpportunity.value;
 
       if (
-        !(await permissions.editSWUOpportunity(
-          connection,
-          request.session,
-          request.params.id
-        )) ||
+        (![
+          "submitIndividualQuestionEvaluations",
+          "submitConsensusQuestionEvaluations"
+        ].includes(request.body.tag) &&
+          !(await permissions.editSWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          ))) ||
         !permissions.isSignedIn(request.session)
       ) {
         return invalid({
@@ -1653,14 +1666,14 @@ const update: crud.Update<
         }
         case "submitIndividualQuestionEvaluations": {
           const validations = await Promise.all(
-            request.body.value.evaluations.map<
+            request.body.value.proposals.map<
               Promise<
                 Validation<
                   SWUTeamQuestionResponseEvaluation,
                   UpdateValidationErrors
                 >
               >
-            >(async (id) => {
+            >(async (proposalId) => {
               // Satisfy the compiler.
               if (!permissions.isSignedIn(request.session)) {
                 return invalid({
@@ -1669,9 +1682,10 @@ const update: crud.Update<
               }
 
               const validatedSWUTeamQuestionResponseEvaluation =
-                await validateSWUTeamQuestionResponseEvaluationId(
+                await validateSWUTeamQuestionResponseEvaluation(
                   connection,
-                  id,
+                  proposalId,
+                  request.session.user.id,
                   request.session
                 );
 
@@ -1764,7 +1778,130 @@ const update: crud.Update<
           }
           return valid({
             session: request.session,
-            body: adt("submitIndividualQuestionEvaluations" as const, {
+            body: adt("submitIndividualQuestionEvaluations", {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as SWUTeamQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
+        case "submitConsensusQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.proposals.map<
+              Promise<
+                Validation<
+                  SWUTeamQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (proposalId) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedSWUTeamQuestionResponseEvaluation =
+                await validateSWUTeamQuestionResponseEvaluation(
+                  connection,
+                  proposalId,
+                  request.session.user.id,
+                  request.session,
+                  true
+                );
+
+              if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedSWUTeamQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editSWUTeamQuestionResponseConsensus(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !IsValidQuestionEvaluationStatusChange(
+                  validatedSWUTeamQuestionResponseEvaluation.value.status,
+                  SWUTeamQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                  validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                  validatedSWUOpportunity.value.teamQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedSWUOpportunity.value.teamQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitSWUTeamQuestionResponseConsensus(
+                  request.session,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(validatedSWUTeamQuestionResponseEvaluation.value);
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitConsensusQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitConsensusQuestionEvaluations", {
               note: validatedSubmissionNote.value,
               evaluations: validations.map(
                 ({ value }) => value
@@ -1929,6 +2066,14 @@ const update: crud.Update<
             break;
           case "submitIndividualQuestionEvaluations":
             dbResult = await db.submitIndividualQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "submitConsensusQuestionEvaluations":
+            dbResult = await db.submitConsensusQuestionEvaluations(
               connection,
               request.params.id,
               body.value,

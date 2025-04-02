@@ -1015,20 +1015,20 @@ export async function validateDraftProposalOrganization(
   );
 }
 
-export async function validateSWUTeamQuestionResponseEvaluationId(
+export async function validateSWUTeamQuestionResponseEvaluation(
   connection: db.Connection,
-  evaluationId: Id,
-  session: AuthenticatedSession
+  proposalId: Id,
+  userId: Id,
+  session: AuthenticatedSession,
+  consensus = false
 ): Promise<Validation<SWUTeamQuestionResponseEvaluation>> {
   try {
-    const validatedId = validateUUID(evaluationId);
-    if (isInvalid(validatedId)) {
-      return validatedId;
-    }
     const dbResult = await db.readOneSWUTeamQuestionResponseEvaluation(
       connection,
-      evaluationId,
-      session
+      proposalId,
+      userId,
+      session,
+      consensus
     );
     if (isInvalid(dbResult)) {
       return invalid([db.ERROR_MESSAGE]);

@@ -6,7 +6,6 @@ const logger = makeDomainLogger(consoleAdapter, "migrations");
 
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable("swuEvaluationPanelMembers", (table) => {
-    table.uuid("id").primary().unique().notNullable();
     table
       .uuid("opportunityVersion")
       .references("id")
@@ -22,6 +21,7 @@ export async function up(connection: Knex): Promise<void> {
     table.boolean("chair").notNullable().defaultTo(false).notNullable();
     table.boolean("evaluator").notNullable().defaultTo(true).notNullable();
     table.integer("order").notNullable();
+    table.primary(["opportunityVersion", "user"]);
   });
 
   await connection.schema.raw(`
@@ -34,7 +34,6 @@ export async function up(connection: Knex): Promise<void> {
   logger.info("Created swuEvaluationPanelMembers table.");
 
   await connection.schema.createTable("twuEvaluationPanelMembers", (table) => {
-    table.uuid("id").primary().unique().notNullable();
     table
       .uuid("opportunityVersion")
       .references("id")

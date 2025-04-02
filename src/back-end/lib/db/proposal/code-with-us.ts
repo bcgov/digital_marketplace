@@ -180,7 +180,7 @@ async function rawCWUProposalSlimToCWUProposalSlim(
     : null;
   const proponentOrganization = proponentOrganizationId
     ? getValidValue(
-        await readOneOrganization(connection, proponentOrganizationId),
+        await readOneOrganization(connection, proponentOrganizationId, true),
         undefined
       )
     : null;

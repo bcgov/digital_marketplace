@@ -9,6 +9,7 @@ import {
   RawAddendum,
   rawAddendumToAddendum
 } from "front-end/lib/http/api/addendum/lib";
+export * as teamQuestions from "front-end/lib/http/api/opportunity/sprint-with-us/team-questions";
 
 const NAMESPACE = "opportunities/sprint-with-us";
 

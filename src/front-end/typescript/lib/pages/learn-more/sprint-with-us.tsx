@@ -13,8 +13,13 @@ import { Col, Container, Row } from "reactstrap";
 import { COPY, VENDOR_IDP_NAME } from "shared/config";
 import { ADT, adt } from "shared/lib/types";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { CostRecoveryLearnMore } from "front-end/lib/pages/learn-more";
+import { formatAmount } from "shared/lib";
+import { SWU_COST_RECOVERY_FIGURE } from "front-end/config";
+import { User } from "shared/lib/resources/user";
 
 export interface State {
+  viewerUser?: User;
   isWhatToExpectAccordionOpen: boolean;
   isHowToApplyAccordionOpen: boolean;
 }
@@ -34,8 +39,9 @@ const init: component_.page.Init<
   State,
   InnerMsg,
   Route
-> = () => [
+> = ({ shared }) => [
   {
+    viewerUser: shared.session?.user,
     isWhatToExpectAccordionOpen: true,
     isHowToApplyAccordionOpen: true
   },
@@ -56,7 +62,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const TitleView: component_.base.View = () => {
+const TitleView: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
   return (
     <div className="bg-c-learn-more-bg pt-4 pb-6 pb-md-7">
       <Container>
@@ -71,10 +77,19 @@ const TitleView: component_.base.View = () => {
               <em>Sprint With Us</em> is a procurement mechanism that allows the{" "}
               {COPY.gov.name.short} to procure Agile software development teams.
             </p>
+            <CostRecoveryLearnMore user={state.viewerUser}>
+              <>
+                *Sprint With Us is funded via Cost Recovery and charges{" "}
+                <b className="font-size-large">
+                  {formatAmount(SWU_COST_RECOVERY_FIGURE, "$")} CAD
+                </b>{" "}
+                per competition.
+              </>
+            </CostRecoveryLearnMore>
           </Col>
-          <Col md="4">
+          <Col md="4" className="align-self-end">
             <img
-              style={{ maxWidth: "213px" }}
+              style={{ maxWidth: "213px", transform: "translateY(-48px)" }}
               className="d-none d-md-block position-absolute mt-n5 ml-6"
               src={prefixPath(
                 "/images/illustrations/sprint_with_us_learn_more.svg"
@@ -286,7 +301,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
 }) => {
   return (
     <div className="d-flex flex-column flex-grow-1">
-      <TitleView />
+      <TitleView state={state} dispatch={dispatch} />
       <WhatToExpectView state={state} dispatch={dispatch} />
       <HowToApplyView state={state} dispatch={dispatch} />
       <div className="flex-grow-1 bg-white"></div>

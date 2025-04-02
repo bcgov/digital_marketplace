@@ -1,7 +1,4 @@
-import {
-  TOAST_AUTO_DISMISS_DURATION,
-  TWU_BANNER_ACKNOWLEDGED
-} from "front-end/config";
+import { TOAST_AUTO_DISMISS_DURATION } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import router from "front-end/lib/app/router";
 import {
@@ -57,7 +54,7 @@ import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageQuestionEvaluationIndividualSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-individual";
 import * as PageQuestionEvaluationIndividualSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-individual";
 import * as PageQuestionEvaluationConsensusSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-consensus";
-import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-individual";
+import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-consensus";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
@@ -962,20 +959,6 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         childMsg: msg.value,
         mapChildMsg: adtCurried<ADT<"nav", Nav.Msg>>("nav")
       });
-
-    case "setShowTWUBanner":
-      return [
-        state.set("showTWUBanner", msg.value),
-        !msg.value
-          ? [
-              component.cmd.localStorage.setItem(
-                TWU_BANNER_ACKNOWLEDGED,
-                TWU_BANNER_ACKNOWLEDGED,
-                adt("noop") as Msg
-              )
-            ]
-          : []
-      ];
 
     case "pageOrgEdit":
       return component.app.updatePage({

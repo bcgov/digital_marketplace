@@ -11,6 +11,7 @@ import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import * as toasts from "front-end/lib/pages/opportunity/sprint-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import Link, {
+  emptyIconLinkSymbol,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -19,7 +20,7 @@ import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
   isSWUOpportunityAcceptingProposals,
@@ -98,7 +99,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       );
       const evaluations = msg.value[2];
       const canViewEvaluations =
-        canViewSWUOpportunityTeamQuestionResponseEvaluations(opportunity);
+        canViewSWUOpportunityTeamQuestionResponseEvaluations(
+          opportunity,
+          SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
+        );
       return [
         state
           .set("opportunity", opportunity)
@@ -113,12 +117,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsPanel &&
+              SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
               evaluations.reduce(
                 (acc, e) =>
                   acc ||
                   (e.proposal.status ===
-                    SWUProposalStatus.TeamQuestionsPanelIndividual &&
+                    SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
                     e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
                 false as boolean
               )
@@ -137,7 +141,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             opportunity.id,
             adt("submitIndividualQuestionEvaluations", {
               note: "",
-              evaluations: state.evaluations.map(({ id }) => id)
+              proposals: state.evaluations.map(({ proposal: { id } }) => id)
             }),
             (response) => adt("onSubmitResponse", response)
           )
@@ -183,9 +187,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             api.proposals.swu.readMany(opportunity.id)((response) =>
               api.getValidValue(response, state.proposals)
             ),
-            api.evaluations.swu.readMany({ opportunityId: opportunity.id })(
-              (response) => api.getValidValue(response, state.evaluations)
-            ),
+            api.opportunities.swu.teamQuestions.evaluations.readMany(
+              opportunity.id
+            )((response) => api.getValidValue(response, state.evaluations)),
             (newOpp, newProposals, newEvaluations) =>
               adt("onInitResponse", [
                 newOpp,
@@ -241,7 +245,7 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationIndividualSWUEdit", {
           ...proposalRouteParams,
-          evaluationId: evaluation.id
+          userId: evaluation.evaluationPanelMember.user.id
         })
       )}>
       Edit
@@ -261,12 +265,14 @@ interface ProponentCellProps {
   proposal: SWUProposalSlim;
   opportunity: SWUOpportunity;
   disabled: boolean;
+  warn: boolean;
 }
 
 const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   opportunity,
-  disabled
+  disabled,
+  warn
 }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
@@ -276,6 +282,10 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
   return (
     <div>
       <Link
+        symbol_={leftPlacement(
+          warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
+        )}
+        symbolClassName="text-warning"
         disabled={disabled}
         dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
         {getSWUProponentName(proposal)}
@@ -301,6 +311,14 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const isLoading = isSubmitLoading;
   return state.proposals.map((p) => {
     const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
+    const hasScoreBelowMinimum = (
+      state.opportunity?.teamQuestions ?? []
+    ).reduce((acc, tq) => {
+      const score = evaluation?.scores[tq.order]?.score;
+      return (
+        acc || Boolean(tq.minimumScore && score && score < tq.minimumScore)
+      );
+    }, false);
     return [
       {
         className: "text-wrap",
@@ -309,16 +327,31 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             proposal={p}
             opportunity={opportunity}
             disabled={isLoading}
+            warn={hasScoreBelowMinimum}
           />
         )
       },
       ...opportunity.teamQuestions.map((tq) => {
         const score = evaluation?.scores[tq.order]?.score;
+        const scoreBelowMinimum =
+          score && tq.minimumScore && score < tq.minimumScore;
         return {
           className: "text-center",
           children: (
             <div>
-              {score ? `${score.toFixed(NUM_SCORE_DECIMALS)}` : EMPTY_STRING}
+              {score ? (
+                scoreBelowMinimum ? (
+                  <Badge
+                    pill={true}
+                    className="text-danger below-minimum-score">
+                    {+score.toFixed(NUM_SCORE_DECIMALS)}
+                  </Badge>
+                ) : (
+                  +score.toFixed(NUM_SCORE_DECIMALS)
+                )
+              ) : (
+                EMPTY_STRING
+              )}
             </div>
           )
         };
@@ -341,18 +374,15 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
   return [
     {
       children: "Participant",
-      className: "text-nowrap",
-      style: { width: "100%", minWidth: "200px" }
+      className: "text-nowrap"
     },
     ...(state.opportunity?.teamQuestions.map((tq) => ({
       children: `Q${tq.order + 1}`,
-      className: "text-nowrap text-center",
-      style: { width: "0px" }
+      className: "text-nowrap text-center"
     })) ?? []),
     {
       children: "Action",
-      className: "text-nowrap text-center",
-      style: { width: "0px" }
+      className: "text-nowrap text-center"
     }
   ];
 }

@@ -16,7 +16,7 @@ import { UserType } from "shared/lib/resources/user";
 export type RouteParams = {
   opportunityId: Id;
   proposalId: Id;
-  evaluationId: Id;
+  userId: Id;
   tab?: Tab.TabId;
 };
 
@@ -30,7 +30,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
   return isUserType({
     userType: [UserType.Admin, UserType.Government],
     success({ routePath, routeParams, shared }) {
-      const { opportunityId, proposalId, evaluationId } = routeParams;
+      const { opportunityId, proposalId, userId } = routeParams;
       return [
         valid(
           immutable({
@@ -47,8 +47,9 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.opportunities.swu.readOne()(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            api.evaluations.swu.readOne()(evaluationId, (response) =>
-              api.isValid(response) ? response.value : null
+            api.proposals.swu.teamQuestions.evaluations.readOne(proposalId)(
+              userId,
+              (response) => (api.isValid(response) ? response.value : null)
             ),
             (proposal, opportunity, evaluation) => {
               if (!proposal || !opportunity || !evaluation)
