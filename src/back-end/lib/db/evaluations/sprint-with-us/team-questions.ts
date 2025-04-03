@@ -1,9 +1,15 @@
 import {
+  RawSWUEvaluationPanelMember,
   readOneSWUEvaluationPanelMember,
   readOneSWUOpportunity
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
-import { Connection, readOneSWUProposalSlim, tryDb } from "back-end/lib/db";
+import {
+  Connection,
+  readOneSWUProposalSlim,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import {
   AuthenticatedSession,
   Session,
@@ -379,6 +385,80 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
     })
   );
 });
+
+/**
+ * All evaluations have been submitted when every evaluator has evaluated every
+ * question for every proponent
+ */
+export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
+  connection: Connection,
+  trx: Transaction,
+  opportunityId: string,
+  proposalsCount: number
+) {
+  const [
+    [{ count: submittedEvaluatorEvaluationsCount }],
+    [{ count: evaluatorsCount }],
+    [{ count: questionsCount }]
+  ] = await Promise.all([
+    generateSWUTeamQuestionResponseEvaluationQuery(connection)
+      .transacting(trx)
+      .clearSelect()
+      .where({
+        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
+      })
+      .count<Record<string, number>[]>("*"),
+    // Evaluators for the most recent version
+    connection<RawSWUEvaluationPanelMember>(
+      "swuEvaluationPanelMembers as members"
+    )
+      .transacting(trx)
+      .join(
+        connection.raw(
+          "(??) as versions",
+          connection("swuOpportunityVersions")
+            .select("opportunity", "id")
+            .rowNumber("rn", function () {
+              this.orderBy("createdAt", "desc").partitionBy("opportunity");
+            })
+        ),
+        function () {
+          this.on("members.opportunityVersion", "=", "versions.id");
+        }
+      )
+      .where({
+        evaluator: true,
+        "versions.opportunity": opportunityId,
+        "versions.rn": 1
+      })
+      .count<Record<string, number>[]>("*"),
+    // Questions for the most recent version
+    connection<RawSWUEvaluationPanelMember>("swuTeamQuestions as questions")
+      .transacting(trx)
+      .join(
+        connection.raw(
+          "(??) as versions",
+          connection("swuOpportunityVersions")
+            .select("opportunity", "id")
+            .rowNumber("rn", function () {
+              this.orderBy("createdAt", "desc").partitionBy("opportunity");
+            })
+        ),
+        function () {
+          this.on("questions.opportunityVersion", "=", "versions.id");
+        }
+      )
+      .where({
+        "versions.opportunity": opportunityId,
+        "versions.rn": 1
+      })
+      .count<Record<string, number>[]>("*")
+  ]);
+  return (
+    submittedEvaluatorEvaluationsCount ===
+    evaluatorsCount * proposalsCount * questionsCount
+  );
+}
 
 function generateSWUTeamQuestionResponseEvaluationQuery(
   connection: Connection,
