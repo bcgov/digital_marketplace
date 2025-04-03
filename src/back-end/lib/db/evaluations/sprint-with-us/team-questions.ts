@@ -407,7 +407,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       .where({
         "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
       })
-      .count<Record<string, number>[]>("*"),
+      .count("*"),
     // Evaluators for the most recent version
     connection<RawSWUEvaluationPanelMember>(
       "swuEvaluationPanelMembers as members"
@@ -431,7 +431,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
         "versions.opportunity": opportunityId,
         "versions.rn": 1
       })
-      .count<Record<string, number>[]>("*"),
+      .count("*"),
     // Questions for the most recent version
     connection<RawSWUEvaluationPanelMember>("swuTeamQuestions as questions")
       .transacting(trx)
@@ -452,11 +452,11 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
         "versions.opportunity": opportunityId,
         "versions.rn": 1
       })
-      .count<Record<string, number>[]>("*")
+      .count("*")
   ]);
   return (
-    submittedEvaluatorEvaluationsCount ===
-    evaluatorsCount * proposalsCount * questionsCount
+    Number(submittedEvaluatorEvaluationsCount) ===
+    Number(evaluatorsCount) * proposalsCount * Number(questionsCount)
   );
 }
 
