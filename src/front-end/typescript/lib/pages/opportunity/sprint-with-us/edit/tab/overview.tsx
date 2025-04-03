@@ -32,8 +32,7 @@ import {
   compareSWUProposalAnonymousProponentNumber,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
@@ -121,9 +120,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               evaluations.reduce(
                 (acc, e) =>
                   acc ||
-                  (e.proposal.status ===
-                    SWUProposalStatus.EvaluationTeamQuestionsIndividual &&
-                    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
+                  e.status === SWUTeamQuestionResponseEvaluationStatus.Draft,
                 false as boolean
               )
           ),

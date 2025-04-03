@@ -50,10 +50,8 @@ export function swuProposalPhaseTypeToTitleCase(
 export enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
-  EvaluationTeamQuestionsIndividual = "EVALUATION_QUESTIONS_INDIVIDUAL",
-  EvaluationTeamQuestionsConsensus = "EVALUATION_QUESTIONS_CONSENSUS",
-  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS", // TODO: Remove
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS", // TODO: Remove
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -109,8 +107,6 @@ function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
       return 0;
     case SWUProposalStatus.NotAwarded:
       return 1;
-    case SWUProposalStatus.EvaluationTeamQuestionsIndividual:
-    case SWUProposalStatus.EvaluationTeamQuestionsConsensus:
     case SWUProposalStatus.UnderReviewTeamQuestions:
     case SWUProposalStatus.EvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
