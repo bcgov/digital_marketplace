@@ -1820,18 +1820,6 @@ export const submitConsensusQuestionEvaluations = tryDb<
         }
       )
     );
-
-    const result = await updateSWUOpportunityStatus(
-      connection,
-      id,
-      SWUOpportunityStatus.EvaluationTeamQuestionsReview,
-      "",
-      session
-    );
-
-    if (!result) {
-      throw new Error("unable to update opportunity");
-    }
   });
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);

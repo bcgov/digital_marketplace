@@ -1194,9 +1194,6 @@ export const component: Tab.Component<State, Msg> = {
         });
       case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-      case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
-      case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
-      case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
       case SWUOpportunityStatus.EvaluationTeamQuestions:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:

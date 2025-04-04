@@ -20,9 +20,6 @@ export function swuOpportunityStatusToColor(
       return "success";
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
       return "warning";
     case SWUOpportunityStatus.EvaluationTeamQuestions:
       return "warning";
@@ -51,9 +48,6 @@ export function swuOpportunityStatusToTitleCase(
       return "Published";
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsReview:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsChairSubmission:
-    case SWUOpportunityStatus.EvaluationTeamQuestionsAdminReview:
       return "Evaluation";
     case SWUOpportunityStatus.EvaluationTeamQuestions:
       return "Team Questions";
