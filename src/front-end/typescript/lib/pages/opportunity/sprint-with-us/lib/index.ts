@@ -113,6 +113,12 @@ export function swuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === SWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestions ||
+      o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
+      o.status === SWUOpportunityStatus.EvaluationTeamScenario
+    ) {
+      return "Evaluation";
     } else {
       return "Closed";
     }
@@ -130,6 +136,12 @@ export function swuOpportunityToPublicColor(
   } else {
     if (isOpen(o)) {
       return "success";
+    } else if (
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestions ||
+      o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
+      o.status === SWUOpportunityStatus.EvaluationTeamScenario
+    ) {
+      return "warning";
     } else {
       return "danger";
     }

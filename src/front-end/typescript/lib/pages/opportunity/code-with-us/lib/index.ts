@@ -63,6 +63,8 @@ export function cwuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === CWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (o.status === CWUOpportunityStatus.Evaluation) {
+      return "Evaluation";
     } else {
       return "Closed";
     }
@@ -80,6 +82,8 @@ export function cwuOpportunityToPublicColor(
   } else {
     if (isOpen(o)) {
       return "success";
+    } else if (o.status === CWUOpportunityStatus.Evaluation) {
+      return "warning";
     } else {
       return "danger";
     }
