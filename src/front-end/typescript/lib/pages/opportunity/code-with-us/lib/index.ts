@@ -116,7 +116,6 @@ export function cwuOpportunityStatusToPresentTenseVerb(
     case CWUOpportunityStatus.Draft:
       return "Update";
   }
-  return "Submit";
 }
 
 export function cwuOpportunityStatusToPastTenseVerb(
