@@ -48,7 +48,8 @@ import {
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
-  isValidStatusChange as IsValidQuestionEvaluationStatusChange,
+  isValidEvaluationStatusChange as IsValidQuestionEvaluationStatusChange,
+  isValidConsensusStatusChange as IsValidQuestionConsensusStatusChange,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -1844,7 +1845,7 @@ const update: crud.Update<
               }
 
               if (
-                !IsValidQuestionEvaluationStatusChange(
+                !IsValidQuestionConsensusStatusChange(
                   validatedSWUTeamQuestionResponseEvaluation.value.status,
                   SWUTeamQuestionResponseEvaluationStatus.Submitted
                 )

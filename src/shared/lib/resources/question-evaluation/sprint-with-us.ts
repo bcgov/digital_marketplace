@@ -93,12 +93,25 @@ export interface UpdateValidationErrors extends BodyWithErrors {
   evaluation?: UpdateADTErrors;
 }
 
-export function isValidStatusChange(
+export function isValidEvaluationStatusChange(
   from: SWUTeamQuestionResponseEvaluationStatus,
   to: SWUTeamQuestionResponseEvaluationStatus
 ): boolean {
   switch (from) {
     case SWUTeamQuestionResponseEvaluationStatus.Draft:
+      return SWUTeamQuestionResponseEvaluationStatus.Submitted === to;
+    default:
+      return false;
+  }
+}
+
+export function isValidConsensusStatusChange(
+  from: SWUTeamQuestionResponseEvaluationStatus,
+  to: SWUTeamQuestionResponseEvaluationStatus
+): boolean {
+  switch (from) {
+    case SWUTeamQuestionResponseEvaluationStatus.Draft:
+    case SWUTeamQuestionResponseEvaluationStatus.Submitted:
       return SWUTeamQuestionResponseEvaluationStatus.Submitted === to;
     default:
       return false;

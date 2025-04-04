@@ -1540,20 +1540,17 @@ export const component: Tab.Component<State, Msg> = {
         return component_.page.actions.links(
           state.evaluating
             ? state.questionEvaluation
-              ? state.questionEvaluation.status ===
-                SWUTeamQuestionResponseEvaluationStatus.Draft
-                ? [
-                    {
-                      children: "Edit",
-                      onClick: () => dispatch(adt("startEditingConsensus")),
-                      button: true,
-                      loading: isStartEditingLoading,
-                      disabled: isLoading,
-                      symbol_: leftPlacement(iconLinkSymbol("edit")),
-                      color: "primary"
-                    }
-                  ]
-                : []
+              ? [
+                  {
+                    children: "Edit",
+                    onClick: () => dispatch(adt("startEditingConsensus")),
+                    button: true,
+                    loading: isStartEditingLoading,
+                    disabled: isLoading,
+                    symbol_: leftPlacement(iconLinkSymbol("edit")),
+                    color: "primary"
+                  }
+                ]
               : [
                   {
                     children: "Save Draft",
@@ -1574,45 +1571,6 @@ export const component: Tab.Component<State, Msg> = {
                 ]
             : []
         );
-      // case SWUProposalStatus.EvaluatedTeamQuestions:
-      //   return component_.page.actions.links([
-      //     ...(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
-      //       ? [
-      //           {
-      //             children: "Screen In",
-      //             symbol_: leftPlacement(iconLinkSymbol("stars")),
-      //             loading: isScreenToFromLoading,
-      //             disabled: isScreenToFromLoading,
-      //             button: true,
-      //             color: "primary" as const,
-      //             onClick: () => dispatch(adt("screenIn" as const))
-      //           }
-      //         ]
-      //       : []),
-      //     {
-      //       children: "Edit Score",
-      //       symbol_: leftPlacement(iconLinkSymbol("star-full")),
-      //       disabled: isScreenToFromLoading,
-      //       button: true,
-      //       color: "info",
-      //       onClick: () => dispatch(adt("showModal", "enterScore" as const))
-      //     }
-      //   ]) as component_.page.Actions;
-      // case SWUProposalStatus.UnderReviewCodeChallenge:
-      //   if (hasSWUOpportunityPassedCodeChallenge(state.opportunity)) {
-      //     return component_.page.actions.none();
-      //   }
-      //   return component_.page.actions.links([
-      //     {
-      //       children: "Screen Out",
-      //       symbol_: leftPlacement(iconLinkSymbol("ban")),
-      //       loading: isScreenToFromLoading,
-      //       disabled: isScreenToFromLoading,
-      //       button: true,
-      //       color: "danger",
-      //       onClick: () => dispatch(adt("screenOut" as const))
-      //     }
-      //   ]);
       default:
         return component_.page.actions.none();
     }
