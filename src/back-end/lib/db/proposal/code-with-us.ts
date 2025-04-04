@@ -9,6 +9,7 @@ import {
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateCWUOpportunityQuery,
+  readOneCWUOpportunity,
   readOneCWUOpportunitySlim,
   updateCWUOpportunityStatus
 } from "back-end/lib/db/opportunity/code-with-us";
@@ -22,6 +23,7 @@ import {
 import { valid } from "shared/lib/http";
 import { FileRecord } from "shared/lib/resources/file";
 import {
+  CWUOpportunity,
   CWUOpportunityStatus,
   privateOpportunitiesStatuses,
   publicOpportunityStatuses
@@ -857,6 +859,7 @@ export const updateCWUProposalStatus = tryDb<
   CWUProposal
 >(async (connection, proposalId, status, note, session) => {
   const now = new Date();
+  console.log("updateCWUProposalStatus", proposalId, status, note, session);
   return valid(
     await connection.transaction(async (trx) => {
       const [result] = await connection<
@@ -893,7 +896,21 @@ export const updateCWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // If status is changing to or from Evaluated, check opportunity processing status
+      if (
+        status === CWUProposalStatus.Evaluated ||
+        status === CWUProposalStatus.Disqualified
+      ) {
+        const opportunityId = dbResult.value.opportunity.id;
+        await checkAndUpdateCWUOpportunityProcessingStatus(
+          connection,
+          opportunityId,
+          session
+        );
+      }
+
       return dbResult.value;
+      // return valid(dbResult.value);
     })
   );
 });
@@ -966,14 +983,104 @@ export const updateCWUProposalScore = tryDb<
       }
 
       const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal");
       }
+
+      // Get opportunity id for this proposal
+      const opportunityId = dbResult.value.opportunity.id;
+
+      // Check if all proposals for this opportunity are evaluated
+      await checkAndUpdateCWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
       return dbResult.value;
     })
   );
 });
+
+/**
+ * Checks if all proposals for a CWU opportunity are evaluated and
+ * updates the opportunity status accordingly.
+ */
+async function checkAndUpdateCWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all proposals for this opportunity that are not withdrawn, disqualified, or draft
+  const activeProposals = await connection("cwuProposals")
+    .join("cwuProposalStatuses as status", function () {
+      this.on("cwuProposals.id", "=", "status.proposal").andOn(function () {
+        this.on(function () {
+          this.on(
+            "status.createdAt",
+            "=",
+            connection.raw(
+              '(select max("createdAt") from "cwuProposalStatuses" as s2 where s2.proposal = "cwuProposals".id and s2.status is not null)'
+            )
+          );
+        });
+      });
+    })
+    .where({ "cwuProposals.opportunity": opportunityId })
+    .whereNotIn("status.status", [
+      CWUProposalStatus.Withdrawn,
+      CWUProposalStatus.Disqualified,
+      CWUProposalStatus.Draft
+    ])
+    .select("status.status");
+
+  // Get current opportunity status
+  const currentOpportunity = await connection("cwuOpportunities")
+    .join("cwuOpportunityStatuses as status", function () {
+      this.on("cwuOpportunities.id", "=", "status.opportunity").andOn(
+        function () {
+          this.on(function () {
+            this.on(
+              "status.createdAt",
+              "=",
+              connection.raw(
+                '(select max("createdAt") from "cwuOpportunityStatuses" as s2 where s2.opportunity = "cwuOpportunities".id)'
+              )
+            );
+          });
+        }
+      );
+    })
+    .where({ "cwuOpportunities.id": opportunityId })
+    .select("status.status")
+    .first();
+
+  if (!currentOpportunity) {
+    return; // Opportunity not found
+  }
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === CWUProposalStatus.Evaluated
+  ).length;
+
+  // All proposals are evaluated and opportunity is in EVALUATION, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === CWUOpportunityStatus.Evaluation
+  ) {
+    await updateCWUOpportunityStatus(
+      connection,
+      opportunityId,
+      CWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated.",
+      session
+    );
+  }
+}
 
 export const awardCWUProposal = tryDb<
   [Id, string, AuthenticatedSession],
@@ -1192,3 +1299,105 @@ export const readManyCWUProposalAuthors = tryDb<[Id], User[]>(
     );
   }
 );
+
+/**
+ * Checks if all proposals for a CWU opportunity are in EVALUATED state.
+ * If yes, changes opportunity to PROCESSING state.
+ * If any proposal is not evaluated and opportunity is in PROCESSING state,
+ * changes it back to EVALUATION state.
+ */
+export const updateCWUOpportunityProcessingStatus = tryDb<
+  [Id, AuthenticatedSession],
+  CWUOpportunity
+>(async (connection, opportunityId, session) => {
+  // Get all proposals for this opportunity that are not withdrawn or disqualified
+  const proposals = await connection<RawCWUProposalSlim>("cwuProposals")
+    .join("cwuProposalStatuses", function () {
+      this.on(
+        "cwuProposals.id",
+        "=",
+        "cwuProposalStatuses.proposal"
+      ).andOnNotNull("cwuProposalStatuses.status");
+    })
+    .where({
+      "cwuProposals.opportunity": opportunityId
+    })
+    .whereNotIn("cwuProposalStatuses.status", [
+      CWUProposalStatus.Withdrawn,
+      CWUProposalStatus.Disqualified,
+      CWUProposalStatus.Draft
+    ])
+    .select("cwuProposalStatuses.status")
+    .orderBy("cwuProposalStatuses.createdAt", "desc")
+    .groupBy(
+      "cwuProposals.id",
+      "cwuProposalStatuses.status",
+      "cwuProposalStatuses.createdAt"
+    );
+
+  // Get current opportunity status
+  const currentOpportunity = await connection<{ status: CWUOpportunityStatus }>(
+    "cwuOpportunityStatuses"
+  )
+    .where("opportunity", opportunityId)
+    .select("status")
+    .orderBy("createdAt", "desc")
+    .first();
+
+  if (!currentOpportunity) {
+    throw new Error("unable to find opportunity");
+  }
+
+  const currentStatus = currentOpportunity.status;
+
+  // Count how many proposals are in each relevant state
+  const evaluatedCount = proposals.filter(
+    (p) => p.status === CWUProposalStatus.Evaluated
+  ).length;
+  const totalProposalsCount = proposals.length;
+
+  let newStatus = currentStatus;
+  let note = "";
+
+  // All proposals are evaluated and opportunity is in EVALUATION, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === CWUOpportunityStatus.Evaluation
+  ) {
+    newStatus = CWUOpportunityStatus.Processing;
+    note =
+      "Automatically moved to Processing as all proposals have been evaluated.";
+  }
+  // Not all proposals are evaluated and opportunity is in PROCESSING, change back to EVALUATION
+  else if (
+    evaluatedCount < totalProposalsCount &&
+    currentStatus === CWUOpportunityStatus.Processing
+  ) {
+    newStatus = CWUOpportunityStatus.Evaluation;
+    note =
+      "Automatically moved back to Evaluation as not all proposals have been evaluated.";
+  }
+
+  // If status needs to change, update it
+  if (newStatus !== currentStatus) {
+    return await updateCWUOpportunityStatus(
+      connection,
+      opportunityId,
+      newStatus,
+      note,
+      session
+    );
+  }
+
+  // Otherwise return the current opportunity
+  const dbResult = await readOneCWUOpportunity(
+    connection,
+    opportunityId,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to read opportunity");
+  }
+  return valid(dbResult.value);
+});

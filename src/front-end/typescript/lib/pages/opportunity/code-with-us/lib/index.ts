@@ -20,6 +20,8 @@ export function cwuOpportunityStatusToColor(
       return "success";
     case CWUOpportunityStatus.Evaluation:
       return "warning";
+    case CWUOpportunityStatus.Processing:
+      return "primary";
     case CWUOpportunityStatus.Awarded:
       return "success";
     case CWUOpportunityStatus.Suspended:
@@ -27,6 +29,7 @@ export function cwuOpportunityStatusToColor(
     case CWUOpportunityStatus.Canceled:
       return "danger";
   }
+  return "secondary";
 }
 
 export function cwuOpportunityStatusToTitleCase(
@@ -41,13 +44,16 @@ export function cwuOpportunityStatusToTitleCase(
       return "Published";
     case CWUOpportunityStatus.Evaluation:
       return "Evaluation";
+    case CWUOpportunityStatus.Processing:
+      return "Processing";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
     case CWUOpportunityStatus.Suspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
-      return "Cancelled"; // Use British spelling for copy.
+      return "Canceled";
   }
+  return "Unknown";
 }
 
 export function cwuOpportunityToPublicStatus(
@@ -65,6 +71,8 @@ export function cwuOpportunityToPublicStatus(
       return "Canceled";
     } else if (o.status === CWUOpportunityStatus.Evaluation) {
       return "Evaluation";
+    } else if (o.status === CWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
       return "Closed";
     }
@@ -104,10 +112,13 @@ export function cwuOpportunityStatusToPresentTenseVerb(
       return "Publish";
     case CWUOpportunityStatus.Awarded:
       return "Award";
+    case CWUOpportunityStatus.Processing:
+      return "Process";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
-      return "Update";
+      return "Submit";
   }
+  return "Submit";
 }
 
 export function cwuOpportunityStatusToPastTenseVerb(
@@ -124,10 +135,13 @@ export function cwuOpportunityStatusToPastTenseVerb(
       return "Published";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
+    case CWUOpportunityStatus.Processing:
+      return "Processed";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
-      return "Updated";
+      return "Submitted";
   }
+  return "Submitted";
 }
 
 export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {
