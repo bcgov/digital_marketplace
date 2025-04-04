@@ -31,7 +31,7 @@ import {
   isInvalid,
   valid
 } from "shared/lib/validation";
-import * as questionEvaluationValidation from "shared/lib/validation/question-evaluation/sprint-with-us";
+import * as questionEvaluationValidation from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 interface ValidatedCreateRequestBody extends SharedCreateRequestBody {
   session: AuthenticatedSession;
