@@ -29,7 +29,6 @@ export function cwuOpportunityStatusToColor(
     case CWUOpportunityStatus.Canceled:
       return "danger";
   }
-  return "secondary";
 }
 
 export function cwuOpportunityStatusToTitleCase(
@@ -51,7 +50,7 @@ export function cwuOpportunityStatusToTitleCase(
     case CWUOpportunityStatus.Suspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
-      return "Canceled";
+      return "Cancelled"; // Use British spelling for copy.
   }
   return "Unknown";
 }
@@ -116,7 +115,7 @@ export function cwuOpportunityStatusToPresentTenseVerb(
       return "Process";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
-      return "Submit";
+      return "Update";
   }
   return "Submit";
 }
@@ -139,9 +138,8 @@ export function cwuOpportunityStatusToPastTenseVerb(
       return "Processed";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
-      return "Submitted";
+      return "Updated";
   }
-  return "Submitted";
 }
 
 export function cwuOpportunityEventToTitleCase(e: CWUOpportunityEvent): string {

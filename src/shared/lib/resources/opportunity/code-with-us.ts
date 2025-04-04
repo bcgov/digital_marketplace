@@ -146,8 +146,7 @@ export function canViewCWUOpportunityProposals(o: CWUOpportunity): boolean {
       (acc, record) =>
         acc ||
         (record.type.tag === "status" &&
-          (record.type.value === CWUOpportunityStatus.Evaluation ||
-            record.type.value === CWUOpportunityStatus.Processing)),
+          record.type.value === CWUOpportunityStatus.Evaluation),
       false as boolean
     )
   );
@@ -272,15 +271,13 @@ export function isValidStatusChange(
       return [
         CWUOpportunityStatus.Canceled,
         CWUOpportunityStatus.Suspended,
-        CWUOpportunityStatus.Awarded,
         CWUOpportunityStatus.Processing
       ].includes(to);
     case CWUOpportunityStatus.Processing:
       return [
         CWUOpportunityStatus.Canceled,
         CWUOpportunityStatus.Suspended,
-        CWUOpportunityStatus.Awarded,
-        CWUOpportunityStatus.Evaluation
+        CWUOpportunityStatus.Awarded
       ].includes(to);
     case CWUOpportunityStatus.Suspended:
       return [
@@ -294,7 +291,6 @@ export function isValidStatusChange(
 
 export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
   switch (o.status) {
-    case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Processing:
     case CWUOpportunityStatus.Awarded:
       return true;
@@ -314,10 +310,7 @@ export function canCWUOpportunityDetailsBeEdited(
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Suspended:
       return adminsOnly;
-    case CWUOpportunityStatus.Evaluation:
-    case CWUOpportunityStatus.Processing:
-    case CWUOpportunityStatus.Awarded:
-    case CWUOpportunityStatus.Canceled:
+    default:
       return false;
   }
 }
