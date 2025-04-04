@@ -43,7 +43,7 @@ import {
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
   UpdateValidationErrors
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
 import {

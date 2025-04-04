@@ -37,7 +37,7 @@ import {
 import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/question-evaluation/sprint-with-us";

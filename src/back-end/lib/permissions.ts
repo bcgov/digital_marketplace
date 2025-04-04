@@ -68,7 +68,7 @@ import {
   isSWUOpportunityEvaluationPanelChair,
   isSWUOpportunityEvaluationPanelEvaluator
 } from "./db/evaluations/sprint-with-us/team-questions";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";

@@ -6,7 +6,7 @@ import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
   parseSWUTeamQuestionResponseEvaluationStatus,
   SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import {
   ArrayValidation,
   getInvalidValue,

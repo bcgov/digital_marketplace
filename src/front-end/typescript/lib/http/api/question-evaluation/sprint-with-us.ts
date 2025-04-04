@@ -1,5 +1,5 @@
 import * as crud from "front-end/lib/http/crud";
-import * as Resource from "shared/lib/resources/question-evaluation/sprint-with-us";
+import * as Resource from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { compareNumbers } from "shared/lib";
 import { Id } from "shared/lib/types";
 

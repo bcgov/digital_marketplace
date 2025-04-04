@@ -80,7 +80,7 @@ import {
   validateSWUEvaluationPanelMemberChair,
   validateSWUEvaluationPanelMemberEvaluator
 } from "shared/lib/validation/opportunity/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 /**
  * TWU - Team With Us Validation

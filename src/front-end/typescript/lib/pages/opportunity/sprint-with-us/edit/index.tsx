@@ -26,7 +26,7 @@ import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: SWUOpportunity | null;

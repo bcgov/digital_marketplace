@@ -52,7 +52,7 @@ import {
   isValidConsensusStatusChange,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
 import {

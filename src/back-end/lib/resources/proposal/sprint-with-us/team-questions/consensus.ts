@@ -21,7 +21,7 @@ import {
   CreateRequestBody as SharedCreateRequestBody,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, Id, adt } from "shared/lib/types";
 import {

@@ -8,7 +8,7 @@ import {
   nullRequestBodyHandler
 } from "back-end/lib/server";
 import { validateSWUOpportunityId } from "back-end/lib/validation";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { Session } from "shared/lib/resources/session";
 import { isInvalid } from "shared/lib/validation";
 
