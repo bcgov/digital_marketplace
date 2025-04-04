@@ -52,7 +52,6 @@ export function cwuOpportunityStatusToTitleCase(
     case CWUOpportunityStatus.Canceled:
       return "Cancelled"; // Use British spelling for copy.
   }
-  return "Unknown";
 }
 
 export function cwuOpportunityToPublicStatus(
