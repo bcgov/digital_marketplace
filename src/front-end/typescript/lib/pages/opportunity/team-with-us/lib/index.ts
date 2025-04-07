@@ -1,6 +1,7 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
 import { flatten, startCase, uniq } from "lodash";
+import { isDateInThePast } from "shared/lib";
 import {
   isOpen,
   TWUOpportunity,
@@ -120,6 +121,12 @@ export function twuOpportunityToPublicStatus(
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "Evaluation";
+    } else if (
+      o.status === TWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
     } else if (o.status === TWUOpportunityStatus.Processing) {
       return "Processing";
     } else {
@@ -143,6 +150,12 @@ export function twuOpportunityToPublicColor(
       o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
+      return "warning";
+    } else if (
+      o.status === TWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
       return "warning";
     } else if (o.status === TWUOpportunityStatus.Processing) {
       return "primary";

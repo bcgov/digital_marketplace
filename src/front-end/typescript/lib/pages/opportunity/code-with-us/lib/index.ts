@@ -1,5 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { isDateInThePast } from "shared/lib";
 import {
   CWUOpportunity,
   CWUOpportunityEvent,
@@ -69,6 +70,12 @@ export function cwuOpportunityToPublicStatus(
       return "Canceled";
     } else if (o.status === CWUOpportunityStatus.Evaluation) {
       return "Evaluation";
+    } else if (
+      o.status === CWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
     } else if (o.status === CWUOpportunityStatus.Processing) {
       return "Processing";
     } else {
@@ -89,6 +96,12 @@ export function cwuOpportunityToPublicColor(
     if (isOpen(o)) {
       return "success";
     } else if (o.status === CWUOpportunityStatus.Evaluation) {
+      return "warning";
+    } else if (
+      o.status === CWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
       return "warning";
     } else if (o.status === CWUOpportunityStatus.Processing) {
       return "primary";

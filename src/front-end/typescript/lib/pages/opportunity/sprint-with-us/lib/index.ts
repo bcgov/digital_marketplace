@@ -1,5 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { isDateInThePast } from "shared/lib";
 import {
   isOpen,
   SWUOpportunity,
@@ -123,6 +124,12 @@ export function swuOpportunityToPublicStatus(
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {
       return "Evaluation";
+    } else if (
+      o.status === SWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
     } else if (o.status === SWUOpportunityStatus.Processing) {
       return "Processing";
     } else {
@@ -147,6 +154,12 @@ export function swuOpportunityToPublicColor(
       o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {
+      return "warning";
+    } else if (
+      o.status === SWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
       return "warning";
     } else if (o.status === SWUOpportunityStatus.Processing) {
       return "primary";
