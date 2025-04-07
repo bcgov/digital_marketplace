@@ -47,6 +47,7 @@ export interface State extends Tab.Params {
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
+  isChair: boolean;
 }
 
 export type InnerMsg =
@@ -74,7 +75,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       areEvaluationsValid: false,
       evaluations: [],
       proposals: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      isChair: false
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -99,6 +101,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           opportunity,
           SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
         );
+      const isChair =
+        state.viewerUser.id ===
+        opportunity.evaluationPanel?.find(({ chair }) => chair)?.user.id;
       return [
         state
           .set("opportunity", opportunity)
@@ -108,13 +113,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Determine whether the "Submit" button should be shown at all.
           // Can be submitted if...
           // - Opportunity has the appropriate status
-          // - All proposals have the appropriate status
           // - All questions have been evaluated.
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
-          ),
+              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus && isChair
+          )
+          .set("isChair", isChair),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -220,7 +225,8 @@ const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
-}> = ({ disabled, proposal, evaluation }) => {
+  isChair: boolean;
+}> = ({ disabled, proposal, evaluation, isChair }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -235,7 +241,7 @@ const ContextMenuCell: component_.base.View<{
           userId: evaluation.evaluationPanelMember.user.id
         })
       )}>
-      Edit
+      {isChair ? "Edit" : "View"}
     </Link>
   ) : (
     <Link
@@ -350,6 +356,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             disabled={isLoading}
             proposal={p}
             evaluation={evaluation}
+            isChair={state.isChair}
           />
         )
       }
