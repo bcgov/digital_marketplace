@@ -69,6 +69,7 @@ export interface State extends Tab.Params {
   openAccordions: Set<number>;
   evaluationScores: EvaluationScore[];
   isEditing: boolean;
+  isAuthor: boolean;
 }
 
 export type InnerMsg =
@@ -233,7 +234,10 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
         params.proposal.teamQuestionResponses.map((p, i) => i)
       ),
       evaluationScores: evaluationScoreStates,
-      isEditing: !params.questionEvaluation
+      isEditing: !params.questionEvaluation,
+      isAuthor:
+        params.questionEvaluation?.evaluationPanelMember.user.id ===
+        params.viewerUser.id
     },
     evaluationScoreCmds
   ];
@@ -1395,7 +1399,11 @@ const TeamQuestionResponsesChairEvalView: component_.base.View<{
                     response={r}
                     score={state.evaluationScores[i]}
                     dispatch={dispatch}
-                    disabled={!state.isEditing || isLoading}
+                    disabled={
+                      !state.isEditing ||
+                      isLoading ||
+                      Boolean(state.questionEvaluation && !state.isAuthor)
+                    }
                     panelEvaluationScores={state.panelQuestionEvaluations}
                   />
                 ))}
@@ -1540,17 +1548,19 @@ export const component: Tab.Component<State, Msg> = {
         return component_.page.actions.links(
           state.evaluating
             ? state.questionEvaluation
-              ? [
-                  {
-                    children: "Edit",
-                    onClick: () => dispatch(adt("startEditingConsensus")),
-                    button: true,
-                    loading: isStartEditingLoading,
-                    disabled: isLoading,
-                    symbol_: leftPlacement(iconLinkSymbol("edit")),
-                    color: "primary"
-                  }
-                ]
+              ? state.isAuthor
+                ? [
+                    {
+                      children: "Edit",
+                      onClick: () => dispatch(adt("startEditingConsensus")),
+                      button: true,
+                      loading: isStartEditingLoading,
+                      disabled: isLoading,
+                      symbol_: leftPlacement(iconLinkSymbol("edit")),
+                      color: "primary"
+                    }
+                  ]
+                : []
               : [
                   {
                     children: "Save Draft",
