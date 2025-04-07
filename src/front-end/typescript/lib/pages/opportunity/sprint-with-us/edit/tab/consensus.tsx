@@ -243,7 +243,7 @@ const ContextMenuCell: component_.base.View<{
       )}>
       {isChair ? "Edit" : "View"}
     </Link>
-  ) : (
+  ) : isChair ? (
     <Link
       disabled={disabled}
       dest={routeDest(
@@ -251,7 +251,7 @@ const ContextMenuCell: component_.base.View<{
       )}>
       Start Evaluation
     </Link>
-  );
+  ) : null;
 };
 
 interface ProponentCellProps {
