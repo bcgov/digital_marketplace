@@ -34,10 +34,16 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
+import { isAdmin } from "shared/lib/resources/user";
+
+type ModalId = "submit";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -48,6 +54,7 @@ export interface State extends Tab.Params {
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
   isChair: boolean;
+  showModal: ModalId | null;
 }
 
 export type InnerMsg =
@@ -57,7 +64,9 @@ export type InnerMsg =
   | ADT<
       "onSubmitResponse",
       api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
-    >;
+    >
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -76,7 +85,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       evaluations: [],
       proposals: [],
       table: immutable(tableState),
-      isChair: false
+      isChair: false,
+      showModal: null
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -123,6 +133,12 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
+
+    case "showModal":
+      return [state.set("showModal", msg.value), []];
+
+    case "hideModal":
+      return [state.set("showModal", null), []];
 
     case "submit": {
       const opportunity = state.opportunity;
@@ -480,13 +496,45 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  getModal: (state) => {
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.modal.hide();
+    switch (state.showModal) {
+      case "submit":
+        return component_.page.modal.show({
+          title: "Please Confirm",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Scores for Consensus",
+              icon: "paper-plane",
+              color: "info",
+              button: true,
+              msg: adt("submit") as Msg
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () =>
+            "By submitting this consensus, you, as the chair, along with the" +
+            "panelists, confirm your agreement with the consensus scores and" +
+            "comments."
+        });
+      case null:
+        return component_.page.modal.hide();
+    }
+  },
+
   onInitResponse(response) {
     return adt("onInitResponse", response);
   },
 
   getActions: ({ state, dispatch }) => {
     const opportunity = state.opportunity;
-    if (!opportunity || !state.canEvaluationsBeSubmitted) {
+    if (!opportunity) {
       return component_.page.actions.none();
     }
     const isLoading = state.submitLoading;
@@ -503,18 +551,37 @@ export const component: Tab.Component<State, Msg> = {
           ),
         true as boolean
       );
-    return component_.page.actions.links([
-      {
-        children: "Submit Scores for Consensus",
-        symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
-        color: "primary",
-        button: true,
-        loading: isLoading,
-        disabled: (() => {
-          return isLoading || !areEvaluationsValid;
-        })(),
-        onClick: () => dispatch(adt("submit") as Msg)
-      }
-    ]);
+    return state.canEvaluationsBeSubmitted
+      ? component_.page.actions.links([
+          {
+            children: "Submit Scores for Consensus",
+            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            color: "primary",
+            button: true,
+            loading: isLoading,
+            disabled: (() => {
+              return isLoading || !areEvaluationsValid;
+            })(),
+            onClick: () => dispatch(adt("submit") as Msg)
+          }
+        ])
+      : state.evaluations.every(
+          ({ status }) =>
+            status === SWUTeamQuestionResponseEvaluationStatus.Submitted
+        ) && isAdmin(state.viewerUser)
+      ? component_.page.actions.links([
+          {
+            children: "Submit Final Consensus Scores",
+            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            color: "primary",
+            button: true,
+            loading: isLoading,
+            disabled: (() => {
+              return isLoading;
+            })(),
+            onClick: () => dispatch(adt("showModal", "complete") as Msg)
+          }
+        ])
+      : component_.page.actions.none();
   }
 };
