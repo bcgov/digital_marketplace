@@ -1005,48 +1005,19 @@ async function checkAndUpdateCWUOpportunityProcessingStatus(
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all proposals for this opportunity that are not withdrawn, disqualified, or draft
-  const activeProposals = await connection("cwuProposals")
-    .join("cwuProposalStatuses as status", function () {
-      this.on("cwuProposals.id", "=", "status.proposal").andOn(function () {
-        this.on(function () {
-          this.on(
-            "status.createdAt",
-            "=",
-            connection.raw(
-              '(select max("createdAt") from "cwuProposalStatuses" as s2 where s2.proposal = "cwuProposals".id and s2.status is not null)'
-            )
-          );
-        });
-      });
-    })
-    .where({ "cwuProposals.opportunity": opportunityId })
-    .whereNotIn("status.status", [
+  // Get all active proposals using the existing query generator
+  const activeProposals = await generateCWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
       CWUProposalStatus.Withdrawn,
       CWUProposalStatus.Disqualified,
       CWUProposalStatus.Draft
-    ])
-    .select("status.status");
+    ]);
 
-  // Get current opportunity status
-  const currentOpportunity = await connection("cwuOpportunities")
-    .join("cwuOpportunityStatuses as status", function () {
-      this.on("cwuOpportunities.id", "=", "status.opportunity").andOn(
-        function () {
-          this.on(function () {
-            this.on(
-              "status.createdAt",
-              "=",
-              connection.raw(
-                '(select max("createdAt") from "cwuOpportunityStatuses" as s2 where s2.opportunity = "cwuOpportunities".id)'
-              )
-            );
-          });
-        }
-      );
-    })
-    .where({ "cwuOpportunities.id": opportunityId })
-    .select("status.status")
+  // Get current opportunity status using the existing opportunity query generator
+  const currentOpportunity = await generateCWUOpportunityQuery(connection)
+    .where({ "opp.id": opportunityId })
+    .select("stat.status")
     .first();
 
   if (!currentOpportunity) {

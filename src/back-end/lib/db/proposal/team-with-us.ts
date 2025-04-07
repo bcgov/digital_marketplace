@@ -1699,23 +1699,10 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all proposals for this opportunity that are in the challenge phase (not withdrawn, disqualified, or draft)
-  const activeProposals = await connection("twuProposals")
-    .join("twuProposalStatuses as status", function () {
-      this.on("twuProposals.id", "=", "status.proposal").andOn(function () {
-        this.on(function () {
-          this.on(
-            "status.createdAt",
-            "=",
-            connection.raw(
-              '(select max("createdAt") from "twuProposalStatuses" as s2 where s2.proposal = "twuProposals".id and s2.status is not null)'
-            )
-          );
-        });
-      });
-    })
-    .where({ "twuProposals.opportunity": opportunityId })
-    .whereNotIn("status.status", [
+  // Get all active proposals using the existing query generator
+  const activeProposals = await generateTWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
       TWUProposalStatus.Withdrawn,
       TWUProposalStatus.Disqualified,
       TWUProposalStatus.Draft,
@@ -1723,28 +1710,12 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
       TWUProposalStatus.Submitted,
       TWUProposalStatus.UnderReviewResourceQuestions,
       TWUProposalStatus.EvaluatedResourceQuestions
-    ])
-    .select("status.status");
+    ]);
 
-  // Get current opportunity status
-  const currentOpportunity = await connection("twuOpportunities")
-    .join("twuOpportunityStatuses as status", function () {
-      this.on("twuOpportunities.id", "=", "status.opportunity").andOn(
-        function () {
-          this.on(function () {
-            this.on(
-              "status.createdAt",
-              "=",
-              connection.raw(
-                '(select max("createdAt") from "twuOpportunityStatuses" as s2 where s2.opportunity = "twuOpportunities".id)'
-              )
-            );
-          });
-        }
-      );
-    })
-    .where({ "twuOpportunities.id": opportunityId })
-    .select("status.status")
+  // Get current opportunity status using the existing opportunity query generator
+  const currentOpportunity = await generateTWUOpportunityQuery(connection)
+    .where({ "opportunities.id": opportunityId })
+    .select("statuses.status")
     .first();
 
   if (!currentOpportunity) {
