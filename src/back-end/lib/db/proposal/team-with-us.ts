@@ -993,7 +993,7 @@ export const updateTWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // If proposal status is changing to EvaluatedChallenge or Disqualified, check opportunity "Processing" status
+      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
       if (
         status === TWUProposalStatus.EvaluatedChallenge ||
         status === TWUProposalStatus.Disqualified

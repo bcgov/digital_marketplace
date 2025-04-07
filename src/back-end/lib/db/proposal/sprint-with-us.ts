@@ -1267,7 +1267,7 @@ export const updateSWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // If proposal status is changing to EvaluatedTeamScenario or Disqualified, check opportunity "Processing" status
+      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
       if (
         status === SWUProposalStatus.EvaluatedTeamScenario ||
         status === SWUProposalStatus.Disqualified

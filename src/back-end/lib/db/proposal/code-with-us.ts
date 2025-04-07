@@ -983,10 +983,8 @@ export const updateCWUProposalScore = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // Get opportunity id for this proposal
+      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
       const opportunityId = dbResult.value.opportunity.id;
-
-      // Check if all proposals for this opportunity are evaluated
       await checkAndUpdateCWUOpportunityProcessingStatus(
         trx,
         opportunityId,
