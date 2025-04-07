@@ -72,7 +72,7 @@ export function cwuOpportunityToPublicStatus(
     } else if (o.status === CWUOpportunityStatus.Processing) {
       return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }

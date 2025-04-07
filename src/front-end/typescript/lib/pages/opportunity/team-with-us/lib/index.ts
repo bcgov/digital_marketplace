@@ -123,7 +123,7 @@ export function twuOpportunityToPublicStatus(
     } else if (o.status === TWUOpportunityStatus.Processing) {
       return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }

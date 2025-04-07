@@ -24,6 +24,8 @@ export function swuOpportunityStatusToColor(
       return "warning";
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return "warning";
+    case SWUOpportunityStatus.Processing:
+      return "primary";
     case SWUOpportunityStatus.Awarded:
       return "success";
     case SWUOpportunityStatus.Suspended:
@@ -49,6 +51,8 @@ export function swuOpportunityStatusToTitleCase(
       return "Code Challenge";
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return "Team Scenario";
+    case SWUOpportunityStatus.Processing:
+      return "Processing";
     case SWUOpportunityStatus.Awarded:
       return "Awarded";
     case SWUOpportunityStatus.Suspended:
@@ -119,8 +123,10 @@ export function swuOpportunityToPublicStatus(
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {
       return "Evaluation";
+    } else if (o.status === SWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }
@@ -142,6 +148,8 @@ export function swuOpportunityToPublicColor(
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {
       return "warning";
+    } else if (o.status === SWUOpportunityStatus.Processing) {
+      return "primary";
     } else {
       return "danger";
     }

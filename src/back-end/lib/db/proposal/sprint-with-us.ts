@@ -1267,6 +1267,19 @@ export const updateSWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // If proposal status is changing to EvaluatedTeamScenario or Disqualified, check opportunity "Processing" status
+      if (
+        status === SWUProposalStatus.EvaluatedTeamScenario ||
+        status === SWUProposalStatus.Disqualified
+      ) {
+        const opportunityId = dbResult.value.opportunity.id;
+        await checkAndUpdateSWUOpportunityProcessingStatus(
+          trx,
+          opportunityId,
+          session
+        );
+      }
+
       return dbResult.value;
     })
   );
@@ -1545,6 +1558,14 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal scores");
       }
+
+      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateSWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
       return dbResult.value;
     })
@@ -2079,3 +2100,88 @@ export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+/**
+ * This function checks if all proposals for an SWU opportunity are evaluated for the Team Scenario phase
+ * If all proposals are evaluated, it automatically changes the opportunity status to Processing
+ */
+async function checkAndUpdateSWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all proposals for this opportunity that are in the team scenario phase (not withdrawn, disqualified, or draft)
+  const activeProposals = await connection("swuProposals")
+    .join("swuProposalStatuses as status", function () {
+      this.on("swuProposals.id", "=", "status.proposal").andOn(function () {
+        this.on(function () {
+          this.on(
+            "status.createdAt",
+            "=",
+            connection.raw(
+              '(select max("createdAt") from "swuProposalStatuses" as s2 where s2.proposal = "swuProposals".id)'
+            )
+          );
+        });
+      });
+    })
+    .where({ "swuProposals.opportunity": opportunityId })
+    .whereNotIn("status.status", [
+      SWUProposalStatus.Withdrawn,
+      SWUProposalStatus.Disqualified,
+      SWUProposalStatus.Draft,
+      // Exclude proposals that didn't make it to the team scenario phase
+      SWUProposalStatus.Submitted,
+      SWUProposalStatus.UnderReviewTeamQuestions,
+      SWUProposalStatus.EvaluatedTeamQuestions,
+      SWUProposalStatus.UnderReviewCodeChallenge,
+      SWUProposalStatus.EvaluatedCodeChallenge
+    ])
+    .select("status.status");
+
+  // Get current opportunity status
+  const currentOpportunity = await connection("swuOpportunities")
+    .join("swuOpportunityStatuses as status", function () {
+      this.on("swuOpportunities.id", "=", "status.opportunity").andOn(
+        function () {
+          this.on(function () {
+            this.on(
+              "status.createdAt",
+              "=",
+              connection.raw(
+                '(select max("createdAt") from "swuOpportunityStatuses" as s2 where s2.opportunity = "swuOpportunities".id)'
+              )
+            );
+          });
+        }
+      );
+    })
+    .where({ "swuOpportunities.id": opportunityId })
+    .select("status.status")
+    .first();
+
+  if (!currentOpportunity) {
+    return; // Opportunity not found
+  }
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === SWUProposalStatus.EvaluatedTeamScenario
+  ).length;
+
+  // All proposals are evaluated in team scenario phase and opportunity is in EVALUATION_TEAM_SCENARIO, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === SWUOpportunityStatus.EvaluationTeamScenario
+  ) {
+    await updateSWUOpportunityStatus(
+      connection,
+      opportunityId,
+      SWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated in the Team Scenario phase.",
+      session
+    );
+  }
+}
