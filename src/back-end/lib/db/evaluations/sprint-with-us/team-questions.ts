@@ -192,7 +192,10 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   )
     .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
     .where({
-      "evaluations.evaluationPanelMember": session.user.id,
+      // There are many evaluations, but only one consensus
+      ...(consensus
+        ? {}
+        : { "evaluations.evaluationPanelMember": session.user.id }),
       "swuProposals.opportunity": id
     });
 
