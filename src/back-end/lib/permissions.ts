@@ -938,20 +938,21 @@ export async function readManySWUTeamQuestionResponseConsensuses(
 ): Promise<boolean> {
   return (
     !!session &&
-    (isAdmin(session) || isGovernment(session)) &&
-    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-      opportunity.status
-    ) ||
-      (await isSWUOpportunityEvaluationPanelEvaluator(
-        connection,
-        session,
-        opportunity.id
-      )) ||
-      (await isSWUOpportunityEvaluationPanelChair(
-        connection,
-        session,
-        opportunity.id
-      )))
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+          opportunity.status
+        ) ||
+          (await isSWUOpportunityEvaluationPanelEvaluator(
+            connection,
+            session,
+            opportunity.id
+          )) ||
+          (await isSWUOpportunityEvaluationPanelChair(
+            connection,
+            session,
+            opportunity.id
+          )))))
   );
 }
 
