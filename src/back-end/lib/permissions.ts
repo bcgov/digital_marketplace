@@ -901,13 +901,14 @@ export async function readOneSWUTeamQuestionResponseConsensus(
 ): Promise<boolean> {
   return (
     !!session &&
-    (isAdmin(session) || isGovernment(session)) &&
-    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-      evaluation.proposal.opportunity.status
-    ) ||
-      (evaluation.proposal.opportunity.status ===
-        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
-        evaluation.evaluationPanelMember.user.id === session.user.id))
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+          evaluation.proposal.opportunity.status
+        ) ||
+          (evaluation.proposal.opportunity.status ===
+            SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
+            evaluation.evaluationPanelMember.user.id === session.user.id))))
   );
 }
 
@@ -963,22 +964,23 @@ export async function readManySWUTeamQuestionResponseEvaluationsForConsensus(
 ): Promise<boolean> {
   return (
     !!session &&
-    (isAdmin(session) || isGovernment(session)) &&
-    (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-      proposal.opportunity.status
-    ) ||
-      (proposal.opportunity.status ===
-        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
-        ((await isSWUOpportunityEvaluationPanelEvaluator(
-          connection,
-          session,
-          proposal.opportunity.id
-        )) ||
-          (await isSWUOpportunityEvaluationPanelChair(
-            connection,
-            session,
-            proposal.opportunity.id
-          )))))
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+          proposal.opportunity.status
+        ) ||
+          (proposal.opportunity.status ===
+            SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
+            ((await isSWUOpportunityEvaluationPanelEvaluator(
+              connection,
+              session,
+              proposal.opportunity.id
+            )) ||
+              (await isSWUOpportunityEvaluationPanelChair(
+                connection,
+                session,
+                proposal.opportunity.id
+              )))))))
   );
 }
 
