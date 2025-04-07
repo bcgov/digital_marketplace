@@ -993,6 +993,19 @@ export const updateTWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // If proposal status is changing to EvaluatedChallenge or Disqualified, check opportunity "Processing" status
+      if (
+        status === TWUProposalStatus.EvaluatedChallenge ||
+        status === TWUProposalStatus.Disqualified
+      ) {
+        const opportunityId = dbResult.value.opportunity.id;
+        await checkAndUpdateTWUOpportunityProcessingStatus(
+          trx,
+          opportunityId,
+          session
+        );
+      }
+
       return dbResult.value;
     })
   );
@@ -1199,6 +1212,14 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal scores");
       }
+
+      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateTWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
       return dbResult.value;
     })
@@ -1668,3 +1689,86 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+/**
+ * Checks if all proposals for a TWU opportunity that have reached the Challenge phase are evaluated
+ * and updates the opportunity status accordingly.
+ */
+async function checkAndUpdateTWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all proposals for this opportunity that are in the challenge phase (not withdrawn, disqualified, or draft)
+  const activeProposals = await connection("twuProposals")
+    .join("twuProposalStatuses as status", function () {
+      this.on("twuProposals.id", "=", "status.proposal").andOn(function () {
+        this.on(function () {
+          this.on(
+            "status.createdAt",
+            "=",
+            connection.raw(
+              '(select max("createdAt") from "twuProposalStatuses" as s2 where s2.proposal = "twuProposals".id and s2.status is not null)'
+            )
+          );
+        });
+      });
+    })
+    .where({ "twuProposals.opportunity": opportunityId })
+    .whereNotIn("status.status", [
+      TWUProposalStatus.Withdrawn,
+      TWUProposalStatus.Disqualified,
+      TWUProposalStatus.Draft,
+      // Exclude proposals that didn't make it to the challenge phase
+      TWUProposalStatus.Submitted,
+      TWUProposalStatus.UnderReviewResourceQuestions,
+      TWUProposalStatus.EvaluatedResourceQuestions
+    ])
+    .select("status.status");
+
+  // Get current opportunity status
+  const currentOpportunity = await connection("twuOpportunities")
+    .join("twuOpportunityStatuses as status", function () {
+      this.on("twuOpportunities.id", "=", "status.opportunity").andOn(
+        function () {
+          this.on(function () {
+            this.on(
+              "status.createdAt",
+              "=",
+              connection.raw(
+                '(select max("createdAt") from "twuOpportunityStatuses" as s2 where s2.opportunity = "twuOpportunities".id)'
+              )
+            );
+          });
+        }
+      );
+    })
+    .where({ "twuOpportunities.id": opportunityId })
+    .select("status.status")
+    .first();
+
+  if (!currentOpportunity) {
+    return; // Opportunity not found
+  }
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === TWUProposalStatus.EvaluatedChallenge
+  ).length;
+
+  // All proposals are evaluated in challenge phase and opportunity is in EVALUATION_CHALLENGE, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === TWUOpportunityStatus.EvaluationChallenge
+  ) {
+    await updateTWUOpportunityStatus(
+      connection,
+      opportunityId,
+      TWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated in the Challenge phase.",
+      session
+    );
+  }
+}

@@ -24,6 +24,8 @@ export function twuOpportunityStatusToColor(
       return "warning";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "warning";
+    case TWUOpportunityStatus.Processing:
+      return "primary";
     case TWUOpportunityStatus.Awarded:
       return "success";
     case TWUOpportunityStatus.Suspended:
@@ -47,6 +49,8 @@ export function twuOpportunityStatusToTitleCase(
       return "Resource Questions";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "Evaluation Challenge";
+    case TWUOpportunityStatus.Processing:
+      return "Processing";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
     case TWUOpportunityStatus.Suspended:
@@ -116,6 +120,8 @@ export function twuOpportunityToPublicStatus(
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "Evaluation";
+    } else if (o.status === TWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
       return "Closed";
     }
@@ -138,6 +144,8 @@ export function twuOpportunityToPublicColor(
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "warning";
+    } else if (o.status === TWUOpportunityStatus.Processing) {
+      return "primary";
     } else {
       return "danger";
     }

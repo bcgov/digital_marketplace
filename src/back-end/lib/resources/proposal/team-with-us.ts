@@ -1074,10 +1074,8 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team scenario stage
-          if (
-            twuOpportunity.status !== TWUOpportunityStatus.EvaluationChallenge
-          ) {
+          // To award the opportunity, it must be in Processing stage
+          if (twuOpportunity.status !== TWUOpportunityStatus.Processing) {
             return invalid({
               permissions: [
                 "The opportunity is not in the correct stage of evaluation to perform that action."

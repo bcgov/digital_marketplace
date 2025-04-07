@@ -90,6 +90,8 @@ export function cwuOpportunityToPublicColor(
       return "success";
     } else if (o.status === CWUOpportunityStatus.Evaluation) {
       return "warning";
+    } else if (o.status === CWUOpportunityStatus.Processing) {
+      return "primary";
     } else {
       return "danger";
     }
