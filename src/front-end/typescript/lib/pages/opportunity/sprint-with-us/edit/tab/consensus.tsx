@@ -43,7 +43,7 @@ import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 import { isAdmin } from "shared/lib/resources/user";
 
-type ModalId = "submit";
+type ModalId = "submit" | "complete";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -522,6 +522,36 @@ export const component: Tab.Component<State, Msg> = {
             "By submitting this consensus, you, as the chair, along with the" +
             "panelists, confirm your agreement with the consensus scores and" +
             "comments."
+        });
+      case "complete":
+        return component_.page.modal.show({
+          title: "Please Confirm",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Final Consensus Scores",
+              icon: "paper-plane",
+              color: "info",
+              button: true,
+              msg: adt("hideModal") as Msg
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () => (
+            <>
+              <p className="mb-4">
+                By submitting final consensus scores, you are about to lock in
+                all proponent scores and move on to short-listing stage
+              </p>
+              <p className="mb-0">
+                Are you sure you want to submit final consensus scores?
+              </p>
+            </>
+          )
         });
       case null:
         return component_.page.modal.hide();
