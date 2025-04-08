@@ -43,7 +43,7 @@ import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 import { isAdmin } from "shared/lib/resources/user";
 
-type ModalId = "submit" | "complete";
+type ModalId = "submit" | "finalize";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -523,7 +523,7 @@ export const component: Tab.Component<State, Msg> = {
             "panelists, confirm your agreement with the consensus scores and" +
             "comments."
         });
-      case "complete":
+      case "finalize":
         return component_.page.modal.show({
           title: "Please Confirm",
           onCloseMsg: adt("hideModal") as Msg,
@@ -581,7 +581,26 @@ export const component: Tab.Component<State, Msg> = {
           ),
         true as boolean
       );
-    return state.canEvaluationsBeSubmitted
+    const canEvaluationsBeFinalized =
+      state.evaluations.every(
+        ({ status }) =>
+          status === SWUTeamQuestionResponseEvaluationStatus.Submitted
+      ) && isAdmin(state.viewerUser);
+    return canEvaluationsBeFinalized
+      ? component_.page.actions.links([
+          {
+            children: "Submit Final Consensus Scores",
+            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            color: "primary",
+            button: true,
+            loading: isLoading,
+            disabled: (() => {
+              return isLoading;
+            })(),
+            onClick: () => dispatch(adt("showModal", "finalize") as Msg)
+          }
+        ])
+      : state.canEvaluationsBeSubmitted
       ? component_.page.actions.links([
           {
             children: "Submit Scores for Consensus",
@@ -593,23 +612,6 @@ export const component: Tab.Component<State, Msg> = {
               return isLoading || !areEvaluationsValid;
             })(),
             onClick: () => dispatch(adt("submit") as Msg)
-          }
-        ])
-      : state.evaluations.every(
-          ({ status }) =>
-            status === SWUTeamQuestionResponseEvaluationStatus.Submitted
-        ) && isAdmin(state.viewerUser)
-      ? component_.page.actions.links([
-          {
-            children: "Submit Final Consensus Scores",
-            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
-            color: "primary",
-            button: true,
-            loading: isLoading,
-            disabled: (() => {
-              return isLoading;
-            })(),
-            onClick: () => dispatch(adt("showModal", "complete") as Msg)
           }
         ])
       : component_.page.actions.none();
