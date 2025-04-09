@@ -993,6 +993,19 @@ export const updateTWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
+      if (
+        status === TWUProposalStatus.EvaluatedChallenge ||
+        status === TWUProposalStatus.Disqualified
+      ) {
+        const opportunityId = dbResult.value.opportunity.id;
+        await checkAndUpdateTWUOpportunityProcessingStatus(
+          trx,
+          opportunityId,
+          session
+        );
+      }
+
       return dbResult.value;
     })
   );
@@ -1199,6 +1212,14 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal scores");
       }
+
+      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateTWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
       return dbResult.value;
     })
@@ -1668,3 +1689,57 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+/**
+ * Checks if all proposals for a TWU opportunity that have reached the Challenge phase are evaluated
+ * and updates the opportunity status accordingly.
+ */
+async function checkAndUpdateTWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all active proposals using the existing query generator
+  const activeProposals = await generateTWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
+      TWUProposalStatus.Withdrawn,
+      TWUProposalStatus.Disqualified,
+      TWUProposalStatus.Draft,
+      // Exclude proposals that didn't make it to the challenge phase
+      TWUProposalStatus.Submitted,
+      TWUProposalStatus.UnderReviewResourceQuestions,
+      TWUProposalStatus.EvaluatedResourceQuestions
+    ]);
+
+  // Get current opportunity status using the existing opportunity query generator
+  const currentOpportunity = await generateTWUOpportunityQuery(connection)
+    .where({ "opportunities.id": opportunityId })
+    .select("statuses.status")
+    .first();
+
+  if (!currentOpportunity) {
+    return; // Opportunity not found
+  }
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === TWUProposalStatus.EvaluatedChallenge
+  ).length;
+
+  // All proposals are evaluated in challenge phase and opportunity is in EVALUATION_CHALLENGE, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === TWUOpportunityStatus.EvaluationChallenge
+  ) {
+    await updateTWUOpportunityStatus(
+      connection,
+      opportunityId,
+      TWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated in the Challenge phase.",
+      session
+    );
+  }
+}

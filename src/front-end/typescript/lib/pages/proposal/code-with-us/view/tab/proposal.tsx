@@ -621,6 +621,10 @@ export const component: Tab.Component<State, Msg> = {
     const proposal = state.proposal;
     if (!proposal) return component_.page.actions.none();
     const propStatus = proposal.status;
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.actions.none();
+    const isProcessing = opportunity.status === "PROCESSING";
+
     switch (propStatus) {
       case CWUProposalStatus.UnderReview:
         return component_.page.actions.links([
@@ -650,6 +654,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: "Award",
                   symbol_: leftPlacement(iconLinkSymbol("award")),
+                  disabled: !isProcessing,
                   onClick: () => dispatch(adt("showModal", "award" as const))
                 },
                 {
@@ -678,6 +683,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol("award")),
             button: true,
             color: "primary",
+            disabled: !isProcessing,
             onClick: () => dispatch(adt("showModal", "award" as const))
           }
         ]);

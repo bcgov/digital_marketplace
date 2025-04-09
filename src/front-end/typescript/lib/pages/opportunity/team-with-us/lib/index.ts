@@ -1,6 +1,7 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
 import { flatten, startCase, uniq } from "lodash";
+import { isDateInThePast } from "shared/lib";
 import {
   isOpen,
   TWUOpportunity,
@@ -24,10 +25,12 @@ export function twuOpportunityStatusToColor(
       return "warning";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "warning";
+    case TWUOpportunityStatus.Processing:
+      return "warning";
     case TWUOpportunityStatus.Awarded:
       return "success";
     case TWUOpportunityStatus.Suspended:
-      return "secondary";
+      return "danger";
     case TWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -47,6 +50,8 @@ export function twuOpportunityStatusToTitleCase(
       return "Resource Questions";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "Evaluation Challenge";
+    case TWUOpportunityStatus.Processing:
+      return "Processing";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
     case TWUOpportunityStatus.Suspended:
@@ -111,8 +116,23 @@ export function twuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === TWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (o.status === TWUOpportunityStatus.Suspended) {
+      return "Suspended";
+    } else if (
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationChallenge
+    ) {
+      return "Evaluation";
+    } else if (
+      o.status === TWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
+    } else if (o.status === TWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }
@@ -128,8 +148,25 @@ export function twuOpportunityToPublicColor(
   } else {
     if (isOpen(o)) {
       return "success";
-    } else {
+    } else if (
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationChallenge
+    ) {
+      return "warning";
+    } else if (
+      o.status === TWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
+      return "warning";
+    } else if (o.status === TWUOpportunityStatus.Processing) {
+      return "warning";
+    } else if (o.status === TWUOpportunityStatus.Suspended) {
       return "danger";
+    } else if (o.status === TWUOpportunityStatus.Canceled) {
+      return "danger";
+    } else {
+      return "success";
     }
   }
 }

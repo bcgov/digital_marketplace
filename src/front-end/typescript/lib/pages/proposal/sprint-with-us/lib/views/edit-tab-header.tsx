@@ -16,6 +16,10 @@ import { Col, Row } from "reactstrap";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
+import {
+  swuOpportunityToPublicColor,
+  swuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/sprint-with-us/lib";
 
 export interface Props {
   proposal: SWUProposal;
@@ -43,7 +47,16 @@ const ViewTabHeader: component.base.View<Props> = ({
   ];
   const items = [
     {
-      name: "Status",
+      name: "Opportunity Status",
+      children: (
+        <Badge
+          text={swuOpportunityToPublicStatus(proposal.opportunity, viewerUser)}
+          color={swuOpportunityToPublicColor(proposal.opportunity, viewerUser)}
+        />
+      )
+    },
+    {
+      name: "Proposal Status",
       children: (
         <Badge
           text={swuProposalStatusToTitleCase(propStatus, viewerUser.type)}

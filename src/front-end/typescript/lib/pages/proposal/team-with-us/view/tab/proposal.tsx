@@ -466,6 +466,9 @@ export const component: Tab.Component<State, Msg> = {
   getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
     const propStatus = proposal.status;
+    const opportunity = state.opportunity;
+    const isProcessing = opportunity?.status === "PROCESSING";
+
     switch (propStatus) {
       case TWUProposalStatus.UnderReviewResourceQuestions:
       case TWUProposalStatus.UnderReviewChallenge:
@@ -487,6 +490,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol("award")),
             button: true,
             color: "primary",
+            disabled: !isProcessing,
             onClick: () => dispatch(adt("showModal", "award" as const))
           },
           {
@@ -505,6 +509,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol("award")),
             button: true,
             color: "primary",
+            disabled: !isProcessing,
             onClick: () => dispatch(adt("showModal", "award" as const))
           }
         ]);

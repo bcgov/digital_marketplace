@@ -58,6 +58,7 @@ export interface State extends Tab.Params {
   screenToFromLoading: Id | null;
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
+  allProposalsScored: boolean;
   table: Immutable<Table.State>;
 }
 
@@ -98,6 +99,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       canViewProposals: false,
       canProposalsBeScreened: false,
+      allProposalsScored: false,
       table: immutable(tableState)
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
@@ -137,12 +139,26 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
           false as boolean
         );
+
+      /**
+       * Check if all proposals have been scored for code challenge
+       * or are disqualified (which means they don't need to be scored)
+       */
+      const allProposalsScored =
+        proposals.length > 0 &&
+        proposals.every(
+          (p) =>
+            p.challengeScore !== undefined ||
+            p.status === SWUProposalStatus.Disqualified
+        );
+
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          .set("canProposalsBeScreened", canProposalsBeScreened),
+          .set("canProposalsBeScreened", canProposalsBeScreened)
+          .set("allProposalsScored", allProposalsScored),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -150,6 +166,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "completeCodeChallenge": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
+      // Don't allow completing code challenge if not all proposals have been scored
+      if (!state.allProposalsScored) {
+        return [
+          state.set("showModal", null),
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt("error", {
+                  title: "Incomplete Evaluation",
+                  body: "You must score all proponents before moving to the Team Scenario evaluation step."
+                })
+              )
+            )
+          ]
+        ];
+      }
       state = state.set("showModal", null);
       return [
         startCompleteCodeChallengeLoading(state),

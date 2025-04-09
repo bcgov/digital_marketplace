@@ -893,6 +893,19 @@ export const updateCWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
+      if (
+        status === CWUProposalStatus.Evaluated ||
+        status === CWUProposalStatus.Disqualified
+      ) {
+        const opportunityId = dbResult.value.opportunity.id;
+        await checkAndUpdateCWUOpportunityProcessingStatus(
+          trx,
+          opportunityId,
+          session
+        );
+      }
+
       return dbResult.value;
     })
   );
@@ -970,10 +983,68 @@ export const updateCWUProposalScore = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateCWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
+
       return dbResult.value;
     })
   );
 });
+
+/**
+ * Checks if all proposals for a CWU opportunity are evaluated and
+ * updates the opportunity status accordingly.
+ */
+async function checkAndUpdateCWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all active proposals using the existing query generator
+  const activeProposals = await generateCWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
+      CWUProposalStatus.Withdrawn,
+      CWUProposalStatus.Disqualified,
+      CWUProposalStatus.Draft
+    ]);
+
+  // Get current opportunity status using the existing opportunity query generator
+  const currentOpportunity = await generateCWUOpportunityQuery(connection)
+    .where({ "opp.id": opportunityId })
+    .select("stat.status")
+    .first();
+
+  if (!currentOpportunity) {
+    return; // Opportunity not found
+  }
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === CWUProposalStatus.Evaluated
+  ).length;
+
+  // All proposals are evaluated and opportunity is in EVALUATION, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === CWUOpportunityStatus.Evaluation
+  ) {
+    await updateCWUOpportunityStatus(
+      connection,
+      opportunityId,
+      CWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated.",
+      session
+    );
+  }
+}
 
 export const awardCWUProposal = tryDb<
   [Id, string, AuthenticatedSession],

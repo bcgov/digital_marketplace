@@ -55,6 +55,10 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
+import {
+  SWUProposalStatus,
+  isSWUProposalInCodeChallenge
+} from "shared/lib/resources/proposal/sprint-with-us";
 
 interface ValidatedCreateSWUOpportunityPhaseBody
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
@@ -1394,6 +1398,33 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
+
+          // Check that all proposals have team questions scores
+          const proposals = getValidValue(
+            await db.readManySWUProposals(
+              connection,
+              request.session,
+              validatedSWUOpportunity.value.id
+            ),
+            []
+          );
+
+          // If there are proposals but some don't have scores and are not disqualified, return an error
+          if (
+            proposals?.length &&
+            !proposals.every(
+              (p) =>
+                p.questionsScore !== undefined ||
+                p.status === SWUProposalStatus.Disqualified
+            )
+          ) {
+            return invalid({
+              permissions: [
+                "You must score all proponents before moving to the Code Challenge evaluation step."
+              ]
+            });
+          }
+
           // Ensure there is at least one screened in proponent
           const screenedInCCProponentCount = getValidValue(
             await db.countScreenedInSWUCodeChallenge(
@@ -1436,6 +1467,40 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
+
+          // Check that all proposals have code challenge scores
+          const proposals = getValidValue(
+            await db.readManySWUProposals(
+              connection,
+              request.session,
+              validatedSWUOpportunity.value.id
+            ),
+            []
+          );
+
+          // Filter proposals to include only those in the code challenge phase
+          const codeProposals = proposals?.filter(
+            (p) =>
+              isSWUProposalInCodeChallenge(p) ||
+              p.status === SWUProposalStatus.Disqualified
+          );
+
+          // If there are code challenge proposals but some don't have scores and are not disqualified, return an error
+          if (
+            codeProposals?.length &&
+            !codeProposals.every(
+              (p) =>
+                p.challengeScore !== undefined ||
+                p.status === SWUProposalStatus.Disqualified
+            )
+          ) {
+            return invalid({
+              permissions: [
+                "You must score all proponents before moving to the Team Scenario evaluation step."
+              ]
+            });
+          }
+
           // Ensure there is at least one screened in proponent
           const screenedInTSProponentCount = getValidValue(
             await db.countScreenInSWUTeamScenario(
