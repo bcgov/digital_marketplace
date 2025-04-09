@@ -579,7 +579,6 @@ const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
   readMany,
-  // create: null,
   update,
   delete: delete_
 };
