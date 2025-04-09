@@ -26,11 +26,11 @@ export function twuOpportunityStatusToColor(
     case TWUOpportunityStatus.EvaluationChallenge:
       return "warning";
     case TWUOpportunityStatus.Processing:
-      return "primary";
+      return "warning";
     case TWUOpportunityStatus.Awarded:
       return "success";
     case TWUOpportunityStatus.Suspended:
-      return "secondary";
+      return "danger";
     case TWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -116,6 +116,8 @@ export function twuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === TWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (o.status === TWUOpportunityStatus.Suspended) {
+      return "Suspended";
     } else if (
       o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
@@ -158,9 +160,13 @@ export function twuOpportunityToPublicColor(
       // If deadline has passed but status is still Published, use warning color
       return "warning";
     } else if (o.status === TWUOpportunityStatus.Processing) {
-      return "primary";
-    } else {
+      return "warning";
+    } else if (o.status === TWUOpportunityStatus.Suspended) {
       return "danger";
+    } else if (o.status === TWUOpportunityStatus.Canceled) {
+      return "danger";
+    } else {
+      return "success";
     }
   }
 }
