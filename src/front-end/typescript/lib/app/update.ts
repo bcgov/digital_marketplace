@@ -1364,7 +1364,13 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "pageUserList":
-      return component.app.updatePage({
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageUserList.State,
+        PageUserList.Msg,
+        Route
+      >({
         ...defaultPageUpdateParams,
         mapPageMsg: (value) => adt("pageUserList", value),
         pageStatePath: ["pages", "userList"],

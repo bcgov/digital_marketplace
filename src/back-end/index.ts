@@ -72,6 +72,7 @@ import {
 } from "shared/lib/resources/file";
 import { Session } from "shared/lib/resources/session";
 import { isValid } from "shared/lib/validation";
+import { ServerHttpMethod } from "back-end/lib/types";
 
 type BasicCrudResource = CrudResource<Session, Connection>;
 
@@ -182,8 +183,19 @@ export function createRouter(connection: Connection): AppRouter {
     ])
   ])(resources);
 
+  // Add custom export contact list route
+  const customRoutes = [
+    {
+      method: ServerHttpMethod.Get,
+      path: "/api/users/export-contact-list",
+      handler: userResource.custom.exportContactList(connection)
+    }
+  ];
+
   // Collect all routes.
   let allRoutes = flow([
+    // Custom API routes (placed first to take priority)
+    flippedConcat(customRoutes),
     // API routes.
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
