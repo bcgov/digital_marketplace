@@ -18,7 +18,18 @@ import {
 import Badge from "front-end/lib/views/badge";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import {
+  Button,
+  Col,
+  Row,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  FormGroup,
+  Label,
+  Input
+} from "reactstrap";
 import { compareStrings } from "shared/lib";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -31,9 +42,31 @@ interface TableUser extends User {
 export interface State {
   table: Immutable<Table.State>;
   users: TableUser[];
+  showExportModal: boolean;
+  exportLoading: boolean;
+  exportOptions: {
+    userTypes: {
+      gov: boolean;
+      vendor: boolean;
+    };
+    fields: {
+      firstName: boolean;
+      lastName: boolean;
+      email: boolean;
+      organizationName: boolean;
+    };
+  };
 }
 
-type InnerMsg = ADT<"onInitResponse", TableUser[]> | ADT<"table", Table.Msg>;
+type InnerMsg =
+  | ADT<"onInitResponse", TableUser[]>
+  | ADT<"table", Table.Msg>
+  | ADT<"showExportModal">
+  | ADT<"hideExportModal">
+  | ADT<"toggleUserType", keyof State["exportOptions"]["userTypes"]>
+  | ADT<"toggleField", keyof State["exportOptions"]["fields"]>
+  | ADT<"exportContactList">
+  | ADT<"exportComplete">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -46,7 +79,21 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
   return [
     {
       users: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      showExportModal: false,
+      exportLoading: false,
+      exportOptions: {
+        userTypes: {
+          gov: true,
+          vendor: true
+        },
+        fields: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          organizationName: true
+        }
+      }
     },
     [
       component_.cmd.dispatch(component_.page.readyMsg()),
@@ -134,6 +181,69 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         childMsg: msg.value,
         mapChildMsg: (value) => ({ tag: "table", value })
       });
+    case "showExportModal":
+      return [state.set("showExportModal", true), []];
+    case "hideExportModal":
+      return [state.set("showExportModal", false), []];
+    case "toggleUserType":
+      return [
+        state.update("exportOptions", (options) => ({
+          ...options,
+          userTypes: {
+            ...options.userTypes,
+            [msg.value]: !options.userTypes[msg.value]
+          }
+        })),
+        []
+      ];
+    case "toggleField":
+      return [
+        state.update("exportOptions", (options) => ({
+          ...options,
+          fields: {
+            ...options.fields,
+            [msg.value]: !options.fields[msg.value]
+          }
+        })),
+        []
+      ];
+    case "exportContactList": {
+      const { userTypes, fields } = state.exportOptions;
+
+      // Build query parameters
+      const selectedUserTypes = Object.entries(userTypes)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([type]) => type);
+
+      const selectedFields = Object.entries(fields)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([field]) => field);
+
+      // Make sure there's at least one user type and field selected
+      if (!selectedUserTypes.length || !selectedFields.length) {
+        return [state, []];
+      }
+
+      // Build the download URL with query parameters
+      const userTypesParam = selectedUserTypes.join(",");
+      const fieldsParam = selectedFields.join(",");
+      const downloadUrl = `/api/users/export-contact-list?userTypes=${userTypesParam}&fields=${fieldsParam}`;
+
+      // Create a hidden anchor and trigger the download
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = "dm-contacts.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      return [
+        state.set("showExportModal", false).set("exportLoading", true),
+        [component_.cmd.dispatch(adt("exportComplete"))]
+      ];
+    }
+    case "exportComplete":
+      return [state.set("exportLoading", false), []];
     default:
       return [state, []];
   }
@@ -197,6 +307,132 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
+interface ExportModalProps {
+  state: Immutable<State>;
+  dispatch: component_.base.Dispatch<Msg>;
+}
+
+const ExportModal: component_.base.View<ExportModalProps> = ({
+  state,
+  dispatch
+}) => {
+  const { exportOptions, showExportModal, exportLoading } = state;
+  const isLoading = exportLoading;
+
+  // Check if at least one user type and one field is selected
+  const hasUserTypeSelected = Object.values(exportOptions.userTypes).some(
+    (v) => v
+  );
+  const hasFieldSelected = Object.values(exportOptions.fields).some((v) => v);
+  const canExport = hasUserTypeSelected && hasFieldSelected && !isLoading;
+
+  return (
+    <Modal
+      isOpen={showExportModal}
+      toggle={() => dispatch(adt("hideExportModal"))}>
+      <ModalHeader toggle={() => dispatch(adt("hideExportModal"))}>
+        Export Contact List
+      </ModalHeader>
+      <ModalBody>
+        <div className="mb-4">
+          <h5>Select User Types</h5>
+          <FormGroup check className="mb-2">
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.userTypes.gov}
+                onChange={() =>
+                  dispatch(adt("toggleUserType" as const, "gov" as const))
+                }
+              />{" "}
+              Government Users
+            </Label>
+          </FormGroup>
+          <FormGroup check>
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.userTypes.vendor}
+                onChange={() =>
+                  dispatch(adt("toggleUserType" as const, "vendor" as const))
+                }
+              />{" "}
+              Vendor Users
+            </Label>
+          </FormGroup>
+        </div>
+
+        <div>
+          <h5>Select Fields to Export</h5>
+          <FormGroup check className="mb-2">
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.fields.firstName}
+                onChange={() =>
+                  dispatch(adt("toggleField" as const, "firstName" as const))
+                }
+              />{" "}
+              First Name
+            </Label>
+          </FormGroup>
+          <FormGroup check className="mb-2">
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.fields.lastName}
+                onChange={() =>
+                  dispatch(adt("toggleField" as const, "lastName" as const))
+                }
+              />{" "}
+              Last Name
+            </Label>
+          </FormGroup>
+          <FormGroup check className="mb-2">
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.fields.email}
+                onChange={() =>
+                  dispatch(adt("toggleField" as const, "email" as const))
+                }
+              />{" "}
+              Email
+            </Label>
+          </FormGroup>
+          <FormGroup check>
+            <Label check>
+              <Input
+                type="checkbox"
+                checked={exportOptions.fields.organizationName}
+                onChange={() =>
+                  dispatch(
+                    adt("toggleField" as const, "organizationName" as const)
+                  )
+                }
+              />{" "}
+              Organization Name
+            </Label>
+          </FormGroup>
+        </div>
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          color="secondary"
+          onClick={() => dispatch(adt("hideExportModal"))}>
+          Cancel
+        </Button>
+        <Button
+          color="primary"
+          onClick={() => dispatch(adt("exportContactList"))}
+          disabled={!canExport}>
+          {isLoading ? "Exporting..." : "Export"}
+        </Button>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
 const view: component_.page.View<State, InnerMsg, Route> = ({
   state,
   dispatch
@@ -208,13 +444,23 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   return (
     <Row>
       <Col xs="12">
-        <h1 className="mb-5">Digital Marketplace Users</h1>
+        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+          <h1 className="mb-3 mb-md-0">Digital Marketplace Users</h1>
+          <Button
+            color="primary"
+            onClick={() => dispatch(adt("showExportModal"))}
+            disabled={state.exportLoading}>
+            Export Contact List
+          </Button>
+        </div>
         <Table.view
           headCells={tableHeadCells()}
           bodyRows={tableBodyRows(state)}
           state={state.table}
           dispatch={dispatchTable}
         />
+
+        <ExportModal state={state} dispatch={dispatch} />
       </Col>
     </Row>
   );
