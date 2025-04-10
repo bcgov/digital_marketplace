@@ -160,6 +160,77 @@ export async function up(connection: Knex): Promise<void> {
   `);
 
   logger.info("Created twuEvaluationPanelMembers table.");
+
+  const twuOpportunitiesQuery = connection("twuOpportunities as opportunities")
+    .join(
+      connection.raw(
+        "(??) as versions",
+        connection("twuOpportunityVersions")
+          .select("opportunity", "id")
+          .rowNumber("rn", function () {
+            this.orderBy("createdAt", "desc").partitionBy("opportunity");
+          })
+      ),
+      function () {
+        this.on("opportunities.id", "=", "versions.opportunity");
+      }
+    )
+    .where({
+      "versions.rn": 1
+    });
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??)", [
+        "twuEvaluationPanelMembers",
+        "opportunityVersion",
+        "user",
+        "chair",
+        "evaluator",
+        "order"
+      ])
+    )
+    .insert(
+      twuOpportunitiesQuery.select(
+        "versions.id as opportunityVersion",
+        "opportunities.createdBy as user",
+        connection.raw("(SELECT true as chair)"),
+        connection.raw("(SELECT true as evaluator)"),
+        connection.raw("(SELECT 0 as order)")
+      )
+    );
+
+  logger.info("Ported opportunity creator to TWU evaluation panel chair");
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??)", [
+        "twuEvaluationPanelMembers",
+        "opportunityVersion",
+        "user",
+        "chair",
+        "evaluator",
+        "order"
+      ])
+    )
+    .insert(
+      twuOpportunitiesQuery.clearSelect().select(
+        "versions.id as opportunityVersion",
+        connection.raw("??", [
+          connection("users")
+            .select("id")
+            .where({
+              idpUsername: MIGRATION_IDP_USERNAME
+            })
+            .as("user")
+        ]),
+        connection.raw("(SELECT false as chair)"),
+        connection.raw("(SELECT true as evaluator)"),
+        connection.raw("(SELECT 1 as order)")
+      )
+    );
+
+  logger.info("Added migration user as TWU evaluation panel evaluator");
 }
 
 export async function down(connection: Knex): Promise<void> {
