@@ -10,7 +10,7 @@ enum SWUOpportunityStatus {
   Published = "PUBLISHED",
   EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
+  DeprecatedEvaluationTeamQuestions = "DEPRECATED_EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -34,7 +34,7 @@ enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
   UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  DeprecatedEvaluatedTeamQuestions = "DEPRECATED_EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -73,6 +73,11 @@ export async function up(connection: Knex): Promise<void> {
     '
   );
 
+  // Unused status; deprecate
+  await connection("swuProposalStatuses")
+    .update({ status: SWUProposalStatus.DeprecatedEvaluatedTeamQuestions })
+    .where({ status: PreviousSWUProposalStatus.EvaluatedTeamQuestions });
+
   await connection.schema.raw(` \
     ALTER TABLE "swuProposalStatuses" \
     ADD CONSTRAINT "swuProposalStatuses_status_check" \
@@ -86,6 +91,46 @@ export async function up(connection: Knex): Promise<void> {
       DROP CONSTRAINT "swuOpportunityStatuses_status_check" \
     '
   );
+
+  const opportunitiesWithStatusAndStatusId = await connection(
+    "swuOpportunities as opportunities"
+  )
+    .join(
+      connection.raw(
+        "(??) as statuses",
+        connection("swuOpportunityStatuses")
+          .select("opportunity", "id", "status")
+          .rowNumber("rn", function () {
+            this.orderBy("createdAt", "desc").partitionBy("opportunity");
+          })
+      ),
+      function () {
+        this.on("opportunities.id", "=", "statuses.opportunity").andOnNotNull(
+          "statuses.status"
+        );
+      }
+    )
+    .where({
+      "statuses.rn": 1
+    })
+    .select("opportunities.id", "statuses.id as statusId", "statuses.status");
+
+  const inProgressStatuses = opportunitiesWithStatusAndStatusId.reduce(
+    (inProgressStatuses, { statusId, status }) => {
+      return status === PreviousSWUOpportunityStatus.EvaluationTeamQuestions
+        ? [...inProgressStatuses, statusId]
+        : inProgressStatuses;
+    },
+    []
+  );
+  await connection("swuOpportunityStatuses")
+    .update({ status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual })
+    .where("id", "in", inProgressStatuses);
+
+  // Maintain deprecated status for historical purposes
+  await connection("swuOpportunityStatuses")
+    .update({ status: SWUOpportunityStatus.DeprecatedEvaluationTeamQuestions })
+    .where({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
 
   await connection.schema.raw(` \
     ALTER TABLE "swuOpportunityStatuses" \
@@ -173,9 +218,8 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuProposalStatuses")
-    .where({ status: "EVALUATION_QUESTIONS_INDIVIDUAL" })
-    .orWhere({ status: "EVALUATION_QUESTIONS_CONSENSUS" })
-    .del();
+    .where({ status: SWUProposalStatus.DeprecatedEvaluatedTeamQuestions })
+    .update({ status: PreviousSWUProposalStatus.EvaluatedTeamQuestions });
 
   await connection.schema.raw(` \
     ALTER TABLE "swuProposalStatuses" \
@@ -194,12 +238,17 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuOpportunityStatuses")
-    .where({ status: "EVAL_QUESTIONS_INDIVIDUAL" })
-    .orWhere({ status: "EVAL_QUESTIONS_CONSENSUS" })
-    .orWhere({ status: "EVAL_QUESTIONS_REVIEW" })
-    .orWhere({ status: "EVAL_QUESTIONS_CHAIR_SUBMISSION" })
-    .orWhere({ status: "EVAL_QUESTIONS_ADMIN_REVIEW" })
-    .del();
+    .where({ status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus })
+    .delete();
+
+  await connection("swuOpportunityStatuses")
+    .where({
+      status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
+    })
+    .orWhere({
+      status: SWUOpportunityStatus.DeprecatedEvaluationTeamQuestions
+    })
+    .update({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
 
   await connection.schema.raw(` \
     ALTER TABLE "swuOpportunityStatuses" \
