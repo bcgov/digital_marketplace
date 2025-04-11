@@ -1,3 +1,4 @@
+import { generateUuid } from "back-end/lib";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import { Knex } from "knex";
@@ -10,7 +11,6 @@ enum SWUOpportunityStatus {
   Published = "PUBLISHED",
   EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
-  DeprecatedEvaluationTeamQuestions = "DEPRECATED_EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -92,45 +92,34 @@ export async function up(connection: Knex): Promise<void> {
     '
   );
 
-  const opportunitiesWithStatusAndStatusId = await connection(
-    "swuOpportunities as opportunities"
-  )
-    .join(
-      connection.raw(
-        "(??) as statuses",
-        connection("swuOpportunityStatuses")
-          .select("opportunity", "id", "status")
-          .rowNumber("rn", function () {
-            this.orderBy("createdAt", "desc").partitionBy("opportunity");
-          })
-      ),
-      function () {
-        this.on("opportunities.id", "=", "statuses.opportunity").andOnNotNull(
-          "statuses.status"
-        );
-      }
-    )
-    .where({
-      "statuses.rn": 1
-    })
-    .select("opportunities.id", "statuses.id as statusId", "statuses.status");
-
-  const inProgressStatuses = opportunitiesWithStatusAndStatusId.reduce(
-    (inProgressStatuses, { statusId, status }) => {
-      return status === PreviousSWUOpportunityStatus.EvaluationTeamQuestions
-        ? [...inProgressStatuses, statusId]
-        : inProgressStatuses;
-    },
-    []
-  );
   await connection("swuOpportunityStatuses")
     .update({ status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual })
-    .where("id", "in", inProgressStatuses);
-
-  // Maintain deprecated status for historical purposes
-  await connection("swuOpportunityStatuses")
-    .update({ status: SWUOpportunityStatus.DeprecatedEvaluationTeamQuestions })
     .where({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
+
+  // Would've done this with an INSERT SELECT but had trouble generating a UUID without
+  // creating the uuid-ossp extension.
+  const codeChallengeStatuses = await connection(
+    "swuOpportunityStatuses as statuses"
+  ).where({
+    "statuses.status": SWUOpportunityStatus.EvaluationCodeChallenge
+  });
+
+  await connection("swuOpportunityStatuses").insert(
+    codeChallengeStatuses.map((status) => {
+      const createdAt = new Date(status.createdAt);
+      // Seems unlikely to conflict with existing records.
+      createdAt.setMilliseconds(createdAt.getMilliseconds() - 1);
+      return {
+        id: generateUuid(),
+        createdAt,
+        createdBy: status.createdBy,
+        opportunity: status.opportunity,
+        status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+        event: null,
+        note: null
+      };
+    })
+  );
 
   await connection.schema.raw(` \
     ALTER TABLE "swuOpportunityStatuses" \
@@ -390,9 +379,6 @@ export async function down(connection: Knex): Promise<void> {
   await connection("swuOpportunityStatuses")
     .where({
       status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
-    })
-    .orWhere({
-      status: SWUOpportunityStatus.DeprecatedEvaluationTeamQuestions
     })
     .update({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
 
