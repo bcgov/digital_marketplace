@@ -155,7 +155,7 @@ export async function up(connection: Knex): Promise<void> {
       .onDelete("CASCADE");
     table.timestamp("createdAt").notNullable();
     table.timestamp("updatedAt").notNullable();
-    table.float("score").notNullable();
+    table.float("score");
     table.text("notes").notNullable();
     table.primary(["proposal", "evaluationPanelMember", "questionOrder"]);
   }
