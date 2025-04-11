@@ -19,6 +19,7 @@ export async function up(connection: Knex): Promise<void> {
       type: UserType.Government,
       status: UserStatus.Active,
       name: MIGRATION_IDP_USERNAME.toUpperCase(),
+      email: `${MIGRATION_IDP_USERNAME}@gov.bc.ca`,
       idpUsername: MIGRATION_IDP_USERNAME,
       idpId: MIGRATION_IDP_USERNAME
     },
