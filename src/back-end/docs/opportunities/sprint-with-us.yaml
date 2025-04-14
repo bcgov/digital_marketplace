@@ -92,7 +92,6 @@ paths:
                       publish,
                       startCodeChallenge,
                       startTeamScenario,
-                      suspend,
                       cancel,
                       addAddendum
                     ]
@@ -107,8 +106,6 @@ paths:
                 $ref: "#/components/examples/startCodeChallengeForSWUOpportunity"
               startTeamScenario:
                 $ref: "#/components/examples/startTeamScenarioForSWUOpportunity"
-              suspend:
-                $ref: "#/components/examples/suspendSWUOpportunity"
               cancel:
                 $ref: "#/components/examples/cancelSWUOpportunity"
               addAddendum:
@@ -336,12 +333,6 @@ components:
       value:
         tag: startTeamScenario
         value: Team scenario started
-
-    suspendSWUOpportunity:
-      summary: Request body for suspending a Sprint-With-Us opportunity
-      value:
-        tag: suspend
-        value: Suspended for now
 
     cancelSWUOpportunity:
       summary: Request body for canceling a Sprint-With-Us opportunity

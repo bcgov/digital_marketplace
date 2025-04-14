@@ -61,7 +61,6 @@ const opportunityStatusOptions = [
   { label: "Draft", value: "draft" } as const,
   { label: "Under Review", value: "under_review" } as const,
   { label: "Published", value: "published" } as const,
-  { label: "Suspended", value: "suspended" } as const,
   { label: "Evaluation", value: "evaluation" } as const,
   { label: "Awarded", value: "awarded" } as const
 ];
@@ -366,12 +365,6 @@ function doesOppHaveStatus(
         CWUO.CWUOpportunityStatus.Published,
         SWUO.SWUOpportunityStatus.Published,
         TWUO.TWUOpportunityStatus.Published
-      ].includes(opp.value.status)) ||
-    (oppStatus === "suspended" &&
-      [
-        CWUO.CWUOpportunityStatus.Suspended,
-        SWUO.SWUOpportunityStatus.Suspended,
-        TWUO.TWUOpportunityStatus.Suspended
       ].includes(opp.value.status)) ||
     (oppStatus === "evaluation" &&
       [
