@@ -273,6 +273,57 @@ function makePublicSectorBodyRows(
     });
 }
 
+function makePanelBodyRows(
+  swuOpportunities: SWUO.SWUOpportunitySlim[],
+  _viewerUser: User
+): Table.BodyRows {
+  return swuOpportunities
+    .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
+    .map((opportunity) => {
+      return [
+        {
+          children: (
+            <div>
+              <Link
+                dest={routeDest(
+                  adt("opportunitySWUEdit" as const, {
+                    opportunityId: opportunity.id
+                  })
+                )}>
+                {opportunity.title || "Untitled Sprint With Us Opportunity"}
+              </Link>
+              <div className="small text-secondary text-uppercase">
+                Sprint With Us
+              </div>
+            </div>
+          )
+        },
+        {
+          children: (
+            <Badge
+              color={oppHelpers(
+                adt("swu" as const, opportunity)
+              ).dashboard.getOppStatusColor(opportunity.status)}
+              text={oppHelpers(
+                adt("swu" as const, opportunity)
+              ).dashboard.getOppStatusText(opportunity.status)}
+            />
+          )
+        },
+        {
+          children: (
+            <div>
+              {formatDate(opportunity.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {opportunity.createdBy?.name}
+              </div>
+            </div>
+          )
+        }
+      ];
+    });
+}
+
 const init: component_.page.Init<
   RouteParams,
   SharedState,
@@ -503,12 +554,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 )
                 .setIn(
                   ["panelTable", "bodyRows"],
-                  makePublicSectorBodyRows(
-                    [],
-                    panelOpportunities,
-                    [],
-                    state.viewerUser
-                  )
+                  makePanelBodyRows(panelOpportunities, state.viewerUser)
                 ),
               [component_.cmd.dispatch(component_.page.readyMsg())]
             ];
@@ -666,7 +712,7 @@ const GovTabs: component_.base.View<GovTabsProps> = ({
     },
     {
       ...getTabInfo("panel-opportunities"),
-      text: "Panel Opportunities"
+      text: "Evaluations"
     }
   ];
 
