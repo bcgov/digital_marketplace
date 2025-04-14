@@ -12,8 +12,6 @@ import {
   newCWUOpportunityPublishedT,
   readyForEvalCWUOpportunityT,
   successfulCWUPublicationT,
-  suspendedCWUOpportunityActionedT,
-  suspendedCWUOpportunitySubscribedT,
   updatedCWUOpportunityT
 } from "back-end/lib/mailer/notifications/opportunity/code-with-us";
 import {
@@ -24,8 +22,6 @@ import {
   newSWUOpportunitySubmittedForReviewT,
   readyForEvalSWUOpportunityT,
   successfulSWUPublicationT,
-  suspendedSWUOpportunityActionedT,
-  suspendedSWUOpportunitySubscribedT,
   updatedSWUOpportunityT
 } from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
 import { organizationArchivedT } from "back-end/lib/mailer/notifications/organization";
@@ -171,28 +167,11 @@ async function makeEmailNotificationReference(): Promise<
       emails: [
         ...(await newCWUOpportunityPublishedT(
           [mocks.vendorUser],
-          mocks.cwuOpportunity,
-          false
+          mocks.cwuOpportunity
         )),
         ...(await successfulCWUPublicationT(
           mocks.govUser,
-          mocks.cwuOpportunity,
-          false
-        ))
-      ]
-    },
-    {
-      title: "CWU Opportunity Re-published after being suspended",
-      emails: [
-        ...(await newCWUOpportunityPublishedT(
-          [mocks.vendorUser],
-          mocks.publishedCWUOpportunity,
-          true
-        )),
-        ...(await successfulCWUPublicationT(
-          mocks.govUser,
-          mocks.publishedCWUOpportunity,
-          true
+          mocks.cwuOpportunity
         ))
       ]
     },
@@ -211,19 +190,6 @@ async function makeEmailNotificationReference(): Promise<
           mocks.cwuOpportunity
         )),
         ...(await cancelledCWUOpportunityActionedT(
-          mocks.govUser,
-          mocks.cwuOpportunity
-        ))
-      ]
-    },
-    {
-      title: "CWU Opportunity Suspended",
-      emails: [
-        ...(await suspendedCWUOpportunitySubscribedT(
-          mocks.vendorUser,
-          mocks.cwuOpportunity
-        )),
-        ...(await suspendedCWUOpportunityActionedT(
           mocks.govUser,
           mocks.cwuOpportunity
         ))
@@ -278,28 +244,11 @@ async function makeEmailNotificationReference(): Promise<
       emails: [
         ...(await newSWUOpportunityPublishedT(
           [mocks.vendorUser],
-          mocks.swuOpportunity,
-          false
+          mocks.swuOpportunity
         )),
         ...(await successfulSWUPublicationT(
           mocks.govUser,
-          mocks.swuOpportunity,
-          false
-        ))
-      ]
-    },
-    {
-      title: "SWU Opportunity Re-published after being suspended",
-      emails: [
-        ...(await newSWUOpportunityPublishedT(
-          [mocks.vendorUser],
-          mocks.publishedSWUOpportunity,
-          true
-        )),
-        ...(await successfulSWUPublicationT(
-          mocks.govUser,
-          mocks.publishedSWUOpportunity,
-          true
+          mocks.swuOpportunity
         ))
       ]
     },
@@ -331,19 +280,6 @@ async function makeEmailNotificationReference(): Promise<
           mocks.swuOpportunity
         )),
         ...(await cancelledSWUOpportunityActionedT(
-          mocks.govUser,
-          mocks.swuOpportunity
-        ))
-      ]
-    },
-    {
-      title: "SWU Opportunity Suspended",
-      emails: [
-        ...(await suspendedSWUOpportunitySubscribedT(
-          mocks.vendorUser,
-          mocks.swuOpportunity
-        )),
-        ...(await suspendedSWUOpportunityActionedT(
           mocks.govUser,
           mocks.swuOpportunity
         ))

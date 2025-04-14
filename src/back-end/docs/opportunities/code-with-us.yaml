@@ -85,7 +85,7 @@ paths:
               properties:
                 tag:
                   type: string
-                  enum: [edit, publish, suspend, cancel, addAddendum]
+                  enum: [edit, publish, cancel, addAddendum]
                 value:
                   type: object
             examples:
@@ -93,8 +93,6 @@ paths:
                 $ref: "#/components/examples/editCWUOpportunity"
               publish:
                 $ref: "#/components/examples/publishCWUOpportunity"
-              suspend:
-                $ref: "#/components/examples/suspendCWUOpportunity"
               cancel:
                 $ref: "#/components/examples/cancelCWUOpportunity"
               addAddendum:
@@ -229,12 +227,6 @@ components:
       value:
         tag: publish
         value: Published
-
-    suspendCWUOpportunity:
-      summary: Request body for suspending a Code-With-Us opportunity
-      value:
-        tag: suspend
-        value: Suspended for now
 
     cancelCWUOpportunity:
       summary: Request body for canceling a Code-With-Us opportunity

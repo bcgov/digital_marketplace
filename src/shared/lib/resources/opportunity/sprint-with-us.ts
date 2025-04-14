@@ -61,7 +61,6 @@ export enum SWUOpportunityStatus {
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 
@@ -98,8 +97,6 @@ export function parseSWUOpportunityStatus(
       return SWUOpportunityStatus.EvaluationTeamScenario;
     case SWUOpportunityStatus.Awarded:
       return SWUOpportunityStatus.Awarded;
-    case SWUOpportunityStatus.Suspended:
-      return SWUOpportunityStatus.Suspended;
     case SWUOpportunityStatus.Canceled:
       return SWUOpportunityStatus.Canceled;
     default:
@@ -131,8 +128,7 @@ export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
 export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Draft,
   SWUOpportunityStatus.UnderReview,
-  SWUOpportunityStatus.Canceled,
-  SWUOpportunityStatus.Suspended
+  SWUOpportunityStatus.Canceled
 ];
 
 export function isSWUOpportunityAcceptingProposals(
@@ -147,8 +143,7 @@ export function isSWUOpportunityAcceptingProposals(
 export function isUnpublished(o: Pick<SWUOpportunity, "status">): boolean {
   return (
     o.status === SWUOpportunityStatus.Draft ||
-    o.status === SWUOpportunityStatus.UnderReview ||
-    o.status === SWUOpportunityStatus.Suspended
+    o.status === SWUOpportunityStatus.UnderReview
   );
 }
 
@@ -167,8 +162,7 @@ export function isClosed(
 export const editableOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Draft,
   SWUOpportunityStatus.UnderReview,
-  SWUOpportunityStatus.Published,
-  SWUOpportunityStatus.Suspended
+  SWUOpportunityStatus.Published
 ];
 
 export interface SWUOpportunity {
@@ -445,38 +439,26 @@ export function isValidStatusChange(
         SWUOpportunityStatus.Published
       ].includes(to);
     case SWUOpportunityStatus.UnderReview:
-      return [
-        SWUOpportunityStatus.Published,
-        SWUOpportunityStatus.Suspended
-      ].includes(to);
+      return [SWUOpportunityStatus.Published].includes(to);
     case SWUOpportunityStatus.Published:
       return [
         SWUOpportunityStatus.Canceled,
-        SWUOpportunityStatus.Suspended,
         SWUOpportunityStatus.EvaluationTeamQuestions
       ].includes(to);
     case SWUOpportunityStatus.EvaluationTeamQuestions:
       return [
         SWUOpportunityStatus.Canceled,
-        SWUOpportunityStatus.Suspended,
         SWUOpportunityStatus.EvaluationCodeChallenge
       ].includes(to);
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return [
         SWUOpportunityStatus.Canceled,
-        SWUOpportunityStatus.Suspended,
         SWUOpportunityStatus.EvaluationTeamScenario
       ].includes(to);
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return [
         SWUOpportunityStatus.Canceled,
-        SWUOpportunityStatus.Suspended,
         SWUOpportunityStatus.Awarded
-      ].includes(to);
-    case SWUOpportunityStatus.Suspended:
-      return [
-        SWUOpportunityStatus.Published,
-        SWUOpportunityStatus.Canceled
       ].includes(to);
     default:
       return false;
@@ -538,7 +520,6 @@ export function canSWUOpportunityDetailsBeEdited(
     case SWUOpportunityStatus.UnderReview:
       return true;
     case SWUOpportunityStatus.Published:
-    case SWUOpportunityStatus.Suspended:
       return adminsOnly;
     default:
       return false;
@@ -566,7 +547,6 @@ export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
-    case SWUOpportunityStatus.Suspended:
     case SWUOpportunityStatus.Canceled:
       return true;
     default:
@@ -579,8 +559,7 @@ export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
     isDateInThePast(o.proposalDeadline) &&
     o.status !== SWUOpportunityStatus.Published &&
     o.status !== SWUOpportunityStatus.Draft &&
-    o.status !== SWUOpportunityStatus.UnderReview &&
-    o.status !== SWUOpportunityStatus.Suspended
+    o.status !== SWUOpportunityStatus.UnderReview
   );
 }
 

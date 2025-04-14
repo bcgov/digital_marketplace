@@ -401,10 +401,6 @@ export function cancelCWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 
-export function suspendCWUOpportunity(session: Session): boolean {
-  return isAdmin(session);
-}
-
 // CWU Proposals.
 
 export async function readManyCWUProposals(
@@ -663,10 +659,6 @@ export async function addSWUAddendum(
 }
 
 export function cancelSWUOpportunity(session: Session): boolean {
-  return isAdmin(session);
-}
-
-export function suspendSWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 
@@ -945,10 +937,6 @@ export async function addTWUAddendum(
 }
 
 export function cancelTWUOpportunity(session: Session): boolean {
-  return isAdmin(session);
-}
-
-export function suspendTWUOpportunity(session: Session): boolean {
   return isAdmin(session);
 }
 

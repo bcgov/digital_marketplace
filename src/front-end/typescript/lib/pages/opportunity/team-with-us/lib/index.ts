@@ -26,8 +26,6 @@ export function twuOpportunityStatusToColor(
       return "warning";
     case TWUOpportunityStatus.Awarded:
       return "success";
-    case TWUOpportunityStatus.Suspended:
-      return "secondary";
     case TWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -49,8 +47,6 @@ export function twuOpportunityStatusToTitleCase(
       return "Evaluation Challenge";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
-    case TWUOpportunityStatus.Suspended:
-      return "Suspended";
     case TWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
   }
@@ -68,8 +64,6 @@ export function twuOpportunityStatusToPresentTenseVerb(
       return "Publish";
     case TWUOpportunityStatus.Awarded:
       return "Award";
-    case TWUOpportunityStatus.Suspended:
-      return "Suspend";
     case TWUOpportunityStatus.Canceled:
       return "Cancel";
     default:
@@ -89,8 +83,6 @@ export function twuOpportunityStatusToPastTenseVerb(
       return "Published";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
-    case TWUOpportunityStatus.Suspended:
-      return "Suspended";
     case TWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
     default:
