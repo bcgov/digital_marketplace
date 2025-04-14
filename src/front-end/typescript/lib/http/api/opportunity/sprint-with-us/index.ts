@@ -22,13 +22,11 @@ export function create<Msg>(): crud.CreateAction<
   return crud.makeCreateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
 }
 
-export function readMany<Msg>(): crud.ReadManyAction<
-  Resource.SWUOpportunitySlim,
-  string[],
-  Msg
-> {
+export function readMany<Msg>(
+  query?: string
+): crud.ReadManyAction<Resource.SWUOpportunitySlim, string[], Msg> {
   return crud.makeReadManyAction(
-    NAMESPACE,
+    query ? `${NAMESPACE}${query}` : NAMESPACE,
     (a: Resource.SWUOpportunitySlim) => a
   );
 }
