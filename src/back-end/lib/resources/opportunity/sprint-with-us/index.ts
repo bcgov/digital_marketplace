@@ -1921,11 +1921,11 @@ const update: crud.Update<
         case "editEvaluationPanel": {
           if (
             !canChangeEvaluationPanel(swuOpportunity) ||
-            !permissions.editSWUEvaluationPanel(
+            !(await permissions.editSWUEvaluationPanel(
               connection,
               request.session,
               swuOpportunity.id
-            )
+            ))
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
