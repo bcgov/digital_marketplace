@@ -455,7 +455,7 @@ const init: component_.page.Init<
                 api.getValidValue(response, [])
               ),
               // get panel opportunities
-              api.opportunities.swu.readMany("?panelMember=true")((response) =>
+              api.opportunities.swu.readMany("panelMember=true")((response) =>
                 api.getValidValue(response, [])
               ),
               (cwu, swu, twu, panelOpps) =>
