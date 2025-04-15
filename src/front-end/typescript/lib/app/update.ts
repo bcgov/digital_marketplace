@@ -51,10 +51,10 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
-import * as PageQuestionEvaluationIndividualSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-individual";
-import * as PageQuestionEvaluationIndividualSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-individual";
-import * as PageQuestionEvaluationConsensusSWUCreate from "front-end/lib/pages/question-evaluation/sprint-with-us/create-consensus";
-import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/question-evaluation/sprint-with-us/edit-consensus";
+import * as PageQuestionEvaluationIndividualSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-individual";
+import * as PageQuestionEvaluationIndividualSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
+import * as PageQuestionEvaluationConsensusSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-consensus";
+import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-consensus";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";

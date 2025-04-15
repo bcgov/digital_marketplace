@@ -21,7 +21,7 @@ import {
   CreateRequestBody as SharedCreateRequestBody,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, Id, adt } from "shared/lib/types";
 import {
@@ -31,7 +31,7 @@ import {
   isInvalid,
   valid
 } from "shared/lib/validation";
-import * as questionEvaluationValidation from "shared/lib/validation/question-evaluation/sprint-with-us";
+import * as questionEvaluationValidation from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 interface ValidatedCreateRequestBody extends SharedCreateRequestBody {
   session: AuthenticatedSession;

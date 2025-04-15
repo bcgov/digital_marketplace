@@ -34,10 +34,10 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
-import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/question-evaluation/sprint-with-us";
+import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;

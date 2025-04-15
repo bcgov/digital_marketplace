@@ -9,7 +9,7 @@ import * as TeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/vi
 import { routeDest } from "front-end/lib/views/link";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 

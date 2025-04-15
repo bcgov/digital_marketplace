@@ -43,13 +43,13 @@ import {
   SWUTeamQuestionResponseEvaluationScores,
   SWUTeamQuestionResponseEvaluationStatus,
   UpdateValidationErrors
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
 import {
   validateSWUTeamQuestionResponseEvaluationScoreNotes,
   validateSWUTeamQuestionResponseEvaluationScoreScore
-} from "shared/lib/validation/question-evaluation/sprint-with-us";
+} from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { leftPlacement, iconLinkSymbol } from "front-end/lib/views/link";
 import Icon from "front-end/lib/views/icon";

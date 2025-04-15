@@ -52,7 +52,7 @@ import {
   isValidConsensusStatusChange,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
 import {
@@ -69,7 +69,7 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/sprint-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
-import * as questionEvaluationValidation from "shared/lib/validation/question-evaluation/sprint-with-us";
+import * as questionEvaluationValidation from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 interface ValidatedCreateSWUOpportunityPhaseBody
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {

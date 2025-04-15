@@ -22,7 +22,7 @@ import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus,
   UpdateEditRequestBody
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 export interface CreateSWUTeamQuestionResponseEvaluationParams
   extends CreateRequestBody {

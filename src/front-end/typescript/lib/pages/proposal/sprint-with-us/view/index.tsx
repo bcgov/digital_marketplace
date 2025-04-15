@@ -26,7 +26,7 @@ import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { getTeamQuestionsOpportunityTab } from "./tab/team-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {

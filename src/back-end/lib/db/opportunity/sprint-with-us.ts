@@ -50,7 +50,7 @@ import {
 import {
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
