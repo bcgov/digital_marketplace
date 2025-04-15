@@ -1,5 +1,6 @@
 import { generateUuid } from "back-end/lib";
 import {
+  allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted,
   CHAIR_EVALUATION_STATUS_TABLE_NAME,
   CHAIR_EVALUATION_TABLE_NAME,
   Connection,
@@ -13,11 +14,8 @@ import {
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
-  allIndividualSWUTeamQuestionResponseEvaluationsComplete,
-  readManySWUProposals,
   readOneSWUAwardedProposal,
-  readSubmittedSWUProposalCount,
-  updateSWUProposalStatus
+  readSubmittedSWUProposalCount
 } from "back-end/lib/db/proposal/sprint-with-us";
 import { RawSWUOpportunitySubscriber } from "back-end/lib/db/subscribers/sprint-with-us";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
@@ -1215,6 +1213,25 @@ export const updateSWUOpportunityVersion = tryDb<
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
+    const prevPanel: RawSWUEvaluationPanelMember[] =
+      await connection<RawSWUEvaluationPanelMember>(
+        "swuEvaluationPanelMembers as sepm"
+      )
+        .select("sepm.*")
+        .join(
+          "swuOpportunityVersions as sov",
+          "sepm.opportunityVersion",
+          "=",
+          "sov.id"
+        )
+        .where(
+          "sov.createdAt",
+          "=",
+          connection<Date>("swuOpportunityVersions as sov2")
+            .max("createdAt")
+            .where("sov2.opportunity", "=", restOfOpportunity.id)
+        );
+
     const [versionRecord] = await connection<SWUOpportunityVersionRecord>(
       "swuOpportunityVersions"
     )
@@ -1285,12 +1302,30 @@ export const updateSWUOpportunityVersion = tryDb<
 
     // Create evaluation panel
     for (const member of evaluationPanel) {
-      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
-        .transacting(trx)
-        .insert({
-          ...member,
-          opportunityVersion: versionRecord.id
-        });
+      const prevMember = prevPanel.find(({ user }) => user === member.user);
+      if (prevMember) {
+        await connection<RawSWUEvaluationPanelMember>(
+          "swuEvaluationPanelMembers"
+        )
+          .transacting(trx)
+          .where({
+            user: prevMember.user,
+            opportunityVersion: prevMember.opportunityVersion
+          })
+          .update({
+            ...member,
+            opportunityVersion: versionRecord.id
+          });
+      } else {
+        await connection<RawSWUEvaluationPanelMember>(
+          "swuEvaluationPanelMembers"
+        )
+          .transacting(trx)
+          .insert({
+            ...member,
+            opportunityVersion: versionRecord.id
+          });
+      }
     }
 
     // Add an 'edit' change record
@@ -1467,12 +1502,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
           )?.map((result) => result.id) || [];
 
         for (const [index, proposalId] of proposalIds.entries()) {
-          // Set the proposal to EVALUATION_QUESTIONS_INDIVIDUAL status
+          // Set the proposal to UNDER_REVIEW_QUESTIONS status
           await connection("swuProposalStatuses").transacting(trx).insert({
             id: generateUuid(),
             createdAt: now,
             proposal: proposalId,
-            status: SWUProposalStatus.EvaluationTeamQuestionsIndividual,
+            status: SWUProposalStatus.UnderReviewTeamQuestions,
             note: ""
           });
 
@@ -1698,44 +1733,17 @@ export const submitIndividualQuestionEvaluations = tryDb<
           if (!statusRecord) {
             throw new Error("unable to update team question evaluation");
           }
-
-          if (
-            await allIndividualSWUTeamQuestionResponseEvaluationsComplete(
-              connection,
-              trx,
-              proposalId,
-              id
-            )
-          ) {
-            const result = await updateSWUProposalStatus(
-              connection,
-              proposalId,
-              SWUProposalStatus.EvaluationTeamQuestionsConsensus,
-              "",
-              session
-            );
-            if (isInvalid(result)) {
-              throw new Error("unable to update proposal");
-            }
-          }
         }
       )
     );
 
-    // Update opportunity status if all evaluations complete for proposal
-    const updatedSWUProposals = getValidValue(
-      await readManySWUProposals(connection, session, id),
-      undefined
-    );
-    if (!updatedSWUProposals) {
-      throw new Error("unable to read proposals");
-    }
-
+    // Update opportunity status if all evaluations complete
     if (
-      updatedSWUProposals.every(
-        (proposal) =>
-          proposal.status !==
-          SWUProposalStatus.EvaluationTeamQuestionsIndividual
+      await allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
+        connection,
+        trx,
+        id,
+        evaluationParams.evaluations.map(({ proposal }) => proposal.id).length
       )
     ) {
       const result = await updateSWUOpportunityStatus(
@@ -1812,18 +1820,6 @@ export const submitConsensusQuestionEvaluations = tryDb<
         }
       )
     );
-
-    const result = await updateSWUOpportunityStatus(
-      connection,
-      id,
-      SWUOpportunityStatus.EvaluationTeamQuestionsReview,
-      "",
-      session
-    );
-
-    if (!result) {
-      throw new Error("unable to update opportunity");
-    }
   });
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);

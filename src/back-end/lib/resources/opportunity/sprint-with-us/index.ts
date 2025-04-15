@@ -43,11 +43,13 @@ import {
   UpdateWithNoteRequestBody,
   CreateSWUEvaluationPanelMemberBody,
   CreateSWUEvaluationPanelMemberValidationErrors,
-  SubmitQuestionEvaluationsWithNoteRequestBody
+  SubmitQuestionEvaluationsWithNoteRequestBody,
+  canChangeEvaluationPanel
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
-  isValidStatusChange as IsValidQuestionEvaluationStatusChange,
+  isValidEvaluationStatusChange,
+  isValidConsensusStatusChange,
   SWUTeamQuestionResponseEvaluation,
   SWUTeamQuestionResponseEvaluationStatus
 } from "shared/lib/resources/question-evaluation/sprint-with-us";
@@ -126,7 +128,8 @@ interface ValidatedUpdateRequestBody {
     | ADT<
         "submitConsensusQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
-      >;
+      >
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
@@ -822,6 +825,11 @@ const update: crud.Update<
             "submitConsensusQuestionEvaluations",
             value as SubmitQuestionEvaluationsWithNoteRequestBody
           );
+        case "editEvaluationPanel":
+          return adt(
+            "editEvaluationPanel",
+            value as CreateSWUEvaluationPanelMemberBody[]
+          );
         default:
           return null;
       }
@@ -846,7 +854,8 @@ const update: crud.Update<
       if (
         (![
           "submitIndividualQuestionEvaluations",
-          "submitConsensusQuestionEvaluations"
+          "submitConsensusQuestionEvaluations",
+          "edutEvaluationPanel"
         ].includes(request.body.tag) &&
           !(await permissions.editSWUOpportunity(
             connection,
@@ -1713,7 +1722,7 @@ const update: crud.Update<
               }
 
               if (
-                !IsValidQuestionEvaluationStatusChange(
+                !isValidEvaluationStatusChange(
                   validatedSWUTeamQuestionResponseEvaluation.value.status,
                   SWUTeamQuestionResponseEvaluationStatus.Submitted
                 )
@@ -1836,7 +1845,7 @@ const update: crud.Update<
               }
 
               if (
-                !IsValidQuestionEvaluationStatusChange(
+                !isValidConsensusStatusChange(
                   validatedSWUTeamQuestionResponseEvaluation.value.status,
                   SWUTeamQuestionResponseEvaluationStatus.Submitted
                 )
@@ -1906,6 +1915,51 @@ const update: crud.Update<
               evaluations: validations.map(
                 ({ value }) => value
               ) as SWUTeamQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
+        case "editEvaluationPanel": {
+          if (
+            !canChangeEvaluationPanel(swuOpportunity) ||
+            !(await permissions.editSWUEvaluationPanel(
+              connection,
+              request.session,
+              swuOpportunity.id
+            ))
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedEvaluationPanel =
+            await validateSWUEvaluationPanelMembers(
+              connection,
+              request.body.value
+            );
+          if (
+            isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("editEvaluationPanel" as const, {
+              ...omit(
+                swuOpportunity,
+                "addenda",
+                "history",
+                "publishedAt",
+                "reporting",
+                "status",
+                "subscribed",
+                "updatedAt",
+                "updatedBy"
+              ),
+              evaluationPanel: validatedEvaluationPanel.value
             })
           } as ValidatedUpdateRequestBody);
         }
@@ -2077,6 +2131,13 @@ const update: crud.Update<
               connection,
               request.params.id,
               body.value,
+              session
+            );
+            break;
+          case "editEvaluationPanel":
+            dbResult = await db.updateSWUOpportunityVersion(
+              connection,
+              { ...body.value, id: request.params.id },
               session
             );
             break;

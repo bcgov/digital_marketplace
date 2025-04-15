@@ -10,9 +10,6 @@ enum SWUOpportunityStatus {
   Published = "PUBLISHED",
   EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
-  EvaluationTeamQuestionsReview = "EVAL_QUESTIONS_REVIEW",
-  EvaluationTeamQuestionsChairSubmission = "EVAL_QUESTIONS_CHAIR_SUBMISSION",
-  EvaluationTeamQuestionsAdminReview = "EVAL_QUESTIONS_ADMIN_REVIEW",
   EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
@@ -36,10 +33,8 @@ enum PreviousSWUOpportunityStatus {
 enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
-  EvaluationTeamQuestionsIndividual = "EVALUATION_QUESTIONS_INDIVIDUAL",
-  EvaluationTeamQuestionsConsensus = "EVALUATION_QUESTIONS_CONSENSUS",
-  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS", // TODO: Remove
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS", // TODO: Remove
+  UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
+  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",

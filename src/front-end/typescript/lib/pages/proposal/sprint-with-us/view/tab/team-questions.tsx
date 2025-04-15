@@ -27,14 +27,13 @@ import {
   // hasSWUOpportunityPassedCodeChallenge,
   hasSWUOpportunityPassedTeamQuestions,
   hasSWUOpportunityPassedTeamQuestionsEvaluation,
-  SWUOpportunity
+  SWUOpportunity,
+  SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
   SWUProposal,
-  SWUProposalStatus,
-  // SWUProposalStatus,
   SWUProposalTeamQuestionResponse
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
@@ -1470,7 +1469,7 @@ export const component: Tab.Component<State, Msg> = {
 
   getActions: ({ state, dispatch }) => {
     const proposal = state.proposal;
-    const propStatus = proposal.status;
+    const oppStatus = proposal.opportunity.status;
     const isSaveLoading = state.saveLoading > 0;
     const isStartEditingLoading = state.startEditingLoading > 0;
     const isLoading = isSaveLoading || isStartEditingLoading;
@@ -1498,8 +1497,8 @@ export const component: Tab.Component<State, Msg> = {
         }
       ]);
     }
-    switch (propStatus) {
-      case SWUProposalStatus.EvaluationTeamQuestionsIndividual:
+    switch (oppStatus) {
+      case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
         return component_.page.actions.links(
           state.evaluating
             ? state.questionEvaluation
@@ -1537,24 +1536,21 @@ export const component: Tab.Component<State, Msg> = {
                 ]
             : []
         );
-      case SWUProposalStatus.EvaluationTeamQuestionsConsensus:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
         return component_.page.actions.links(
           state.evaluating
             ? state.questionEvaluation
-              ? state.questionEvaluation.status ===
-                SWUTeamQuestionResponseEvaluationStatus.Draft
-                ? [
-                    {
-                      children: "Edit",
-                      onClick: () => dispatch(adt("startEditingConsensus")),
-                      button: true,
-                      loading: isStartEditingLoading,
-                      disabled: isLoading,
-                      symbol_: leftPlacement(iconLinkSymbol("edit")),
-                      color: "primary"
-                    }
-                  ]
-                : []
+              ? [
+                  {
+                    children: "Edit",
+                    onClick: () => dispatch(adt("startEditingConsensus")),
+                    button: true,
+                    loading: isStartEditingLoading,
+                    disabled: isLoading,
+                    symbol_: leftPlacement(iconLinkSymbol("edit")),
+                    color: "primary"
+                  }
+                ]
               : [
                   {
                     children: "Save Draft",
@@ -1575,45 +1571,6 @@ export const component: Tab.Component<State, Msg> = {
                 ]
             : []
         );
-      // case SWUProposalStatus.EvaluatedTeamQuestions:
-      //   return component_.page.actions.links([
-      //     ...(canSWUOpportunityBeScreenedInToCodeChallenge(state.opportunity)
-      //       ? [
-      //           {
-      //             children: "Screen In",
-      //             symbol_: leftPlacement(iconLinkSymbol("stars")),
-      //             loading: isScreenToFromLoading,
-      //             disabled: isScreenToFromLoading,
-      //             button: true,
-      //             color: "primary" as const,
-      //             onClick: () => dispatch(adt("screenIn" as const))
-      //           }
-      //         ]
-      //       : []),
-      //     {
-      //       children: "Edit Score",
-      //       symbol_: leftPlacement(iconLinkSymbol("star-full")),
-      //       disabled: isScreenToFromLoading,
-      //       button: true,
-      //       color: "info",
-      //       onClick: () => dispatch(adt("showModal", "enterScore" as const))
-      //     }
-      //   ]) as component_.page.Actions;
-      // case SWUProposalStatus.UnderReviewCodeChallenge:
-      //   if (hasSWUOpportunityPassedCodeChallenge(state.opportunity)) {
-      //     return component_.page.actions.none();
-      //   }
-      //   return component_.page.actions.links([
-      //     {
-      //       children: "Screen Out",
-      //       symbol_: leftPlacement(iconLinkSymbol("ban")),
-      //       loading: isScreenToFromLoading,
-      //       disabled: isScreenToFromLoading,
-      //       button: true,
-      //       color: "danger",
-      //       onClick: () => dispatch(adt("screenOut" as const))
-      //     }
-      //   ]);
       default:
         return component_.page.actions.none();
     }

@@ -32,13 +32,9 @@ import {
   compareSWUProposalAnonymousProponentNumber,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/question-evaluation/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/question-evaluation/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/question-evaluation/sprint-with-us";
@@ -117,15 +113,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
-              evaluations.reduce(
-                (acc, e) =>
-                  acc ||
-                  (e.proposal.status ===
-                    SWUProposalStatus.EvaluationTeamQuestionsConsensus &&
-                    e.status === SWUTeamQuestionResponseEvaluationStatus.Draft),
-                false as boolean
-              )
+              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
           ),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];

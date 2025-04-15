@@ -518,8 +518,6 @@ export const component: Tab.Component<State, Msg> = {
             onClick: () => dispatch(adt("showModal", "award" as const))
           }
         ]);
-      case SWUProposalStatus.EvaluationTeamQuestionsIndividual:
-      case SWUProposalStatus.EvaluationTeamQuestionsConsensus:
       case SWUProposalStatus.Draft:
       case SWUProposalStatus.Submitted:
       case SWUProposalStatus.Withdrawn:
