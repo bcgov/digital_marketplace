@@ -26,7 +26,7 @@ export function readMany<Msg>(
   query?: string
 ): crud.ReadManyAction<Resource.SWUOpportunitySlim, string[], Msg> {
   return crud.makeReadManyAction(
-    query ? `${NAMESPACE}${query}` : NAMESPACE,
+    `${NAMESPACE}${query ?? ""}`,
     (a: Resource.SWUOpportunitySlim) => a
   );
 }
