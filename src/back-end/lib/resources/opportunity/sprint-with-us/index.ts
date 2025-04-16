@@ -1713,6 +1713,7 @@ const update: crud.Update<
               if (
                 !permissions.editSWUTeamQuestionResponseEvaluation(
                   request.session,
+                  swuOpportunity,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
               ) {
@@ -1758,6 +1759,7 @@ const update: crud.Update<
               if (
                 !permissions.submitSWUTeamQuestionResponseEvaluation(
                   request.session,
+                  swuOpportunity,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
               ) {
@@ -1836,6 +1838,7 @@ const update: crud.Update<
               if (
                 !permissions.editSWUTeamQuestionResponseConsensus(
                   request.session,
+                  swuOpportunity,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
               ) {
@@ -1881,6 +1884,7 @@ const update: crud.Update<
               if (
                 !permissions.submitSWUTeamQuestionResponseConsensus(
                   request.session,
+                  swuOpportunity,
                   validatedSWUTeamQuestionResponseEvaluation.value
                 )
               ) {

@@ -1691,12 +1691,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
   await connection.transaction(async (trx) => {
     await Promise.all(
       evaluationParams.evaluations.map(
-        async ({
-          evaluationPanelMember: {
-            user: { id: evaluationPanelMemberId }
-          },
-          proposal: { id: proposalId }
-        }) => {
+        async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
               EVALUATOR_EVALUATION_STATUS_TABLE_NAME
@@ -1704,8 +1699,8 @@ export const submitIndividualQuestionEvaluations = tryDb<
               .transacting(trx)
               .insert(
                 {
-                  evaluationPanelMember: evaluationPanelMemberId,
-                  proposal: proposalId,
+                  evaluationPanelMember,
+                  proposal,
                   createdAt: now,
                   createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
@@ -1720,8 +1715,8 @@ export const submitIndividualQuestionEvaluations = tryDb<
           )
             .transacting(trx)
             .where({
-              proposal: proposalId,
-              evaluationPanelMember: evaluationPanelMemberId
+              proposal,
+              evaluationPanelMember
             })
             .update(
               {
@@ -1743,7 +1738,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
         connection,
         trx,
         id,
-        evaluationParams.evaluations.map(({ proposal }) => proposal.id).length
+        evaluationParams.evaluations.map(({ proposal }) => proposal).length
       )
     ) {
       const result = await updateSWUOpportunityStatus(
@@ -1775,12 +1770,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
   await connection.transaction(async (trx) => {
     await Promise.all(
       evaluationParams.evaluations.map(
-        async ({
-          evaluationPanelMember: {
-            user: { id: evaluationPanelMemberId }
-          },
-          proposal: { id: proposalId }
-        }) => {
+        async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
               CHAIR_EVALUATION_STATUS_TABLE_NAME
@@ -1788,8 +1778,8 @@ export const submitConsensusQuestionEvaluations = tryDb<
               .transacting(trx)
               .insert(
                 {
-                  evaluationPanelMember: evaluationPanelMemberId,
-                  proposal: proposalId,
+                  evaluationPanelMember,
+                  proposal,
                   createdAt: now,
                   createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
@@ -1804,8 +1794,8 @@ export const submitConsensusQuestionEvaluations = tryDb<
           )
             .transacting(trx)
             .where({
-              proposal: proposalId,
-              evaluationPanelMember: evaluationPanelMemberId
+              proposal,
+              evaluationPanelMember
             })
             .update(
               {

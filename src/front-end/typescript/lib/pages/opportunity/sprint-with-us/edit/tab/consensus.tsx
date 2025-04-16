@@ -150,7 +150,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             opportunity.id,
             adt("submitConsensusQuestionEvaluations", {
               note: "",
-              proposals: state.evaluations.map(({ proposal: { id } }) => id)
+              proposals: state.evaluations.map(({ proposal }) => proposal)
             }),
             (response) => adt("onSubmitResponse", response)
           )
@@ -254,7 +254,7 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationConsensusSWUEdit", {
           ...proposalRouteParams,
-          userId: evaluation.evaluationPanelMember.user.id
+          userId: evaluation.evaluationPanelMember
         })
       )}>
       {isChair ? "Edit" : "View"}
@@ -319,7 +319,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const isSubmitLoading = !!state.submitLoading;
   const isLoading = isSubmitLoading;
   return state.proposals.map((p) => {
-    const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
+    const evaluation = state.evaluations.find((e) => e.proposal === p.id);
     const hasScoreBelowMinimum = (
       state.opportunity?.teamQuestions ?? []
     ).reduce((acc, tq) => {
