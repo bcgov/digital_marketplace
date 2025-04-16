@@ -6,7 +6,7 @@ import { UserStatus, UserType } from "shared/lib/resources/user";
 
 const logger = makeDomainLogger(consoleAdapter, "migrations");
 
-const MIGRATION_IDP_USERNAME = "migration_evaluation_panel_member";
+const MIGRATION_IDP_USERNAME = "migration_user";
 
 export async function up(connection: Knex): Promise<void> {
   const now = new Date();
