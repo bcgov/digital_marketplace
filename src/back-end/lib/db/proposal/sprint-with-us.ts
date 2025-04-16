@@ -4,11 +4,13 @@ import {
   getOrgIdsForOwnerOrAdmin,
   Transaction,
   isUserOwnerOrAdminOfOrg,
-  tryDb
+  tryDb,
+  readOneSWUTeamQuestionResponseEvaluation
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateSWUOpportunityQuery,
+  RawSWUEvaluationPanelMember,
   RawSWUOpportunity,
   RawSWUOpportunitySlim,
   readManyTeamQuestions,
@@ -580,22 +582,34 @@ export const readOwnSWUProposals = tryDb<
             priceWeight: number;
           }
         >();
+      const chair = await connection<
+        RawSWUEvaluationPanelMember,
+        RawSWUEvaluationPanelMember["user"]
+      >("swuEvaluationPanelMembers")
+        .select("user")
+        .where({
+          opportunityVersion: opportunity.versionId,
+          chair: true
+        });
       const opportunityTeamQuestions = getValidValue(
         await readManyTeamQuestions(connection, opportunity.versionId),
         null
       );
-      const questionResponses = getValidValue(
-        await readManyProposalTeamQuestionResponses(
-          connection,
-          proposal.id,
-          true
-        ),
-        null
-      );
+      const consensusScores =
+        getValidValue(
+          await readOneSWUTeamQuestionResponseEvaluation(
+            connection,
+            proposal.id,
+            chair.user,
+            session,
+            true
+          ),
+          null
+        )?.scores ?? [];
       proposal.questionsScore =
-        opportunityTeamQuestions && questionResponses
+        opportunityTeamQuestions && consensusScores.length
           ? calculateProposalTeamQuestionScore(
-              questionResponses,
+              consensusScores,
               opportunityTeamQuestions
             )
           : undefined;
@@ -1954,7 +1968,18 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
       await readManyTeamQuestions(connection, opportunity.versionId ?? ""),
       null
     );
-  if (!opportunity || !opportunityTeamQuestions) {
+  const chair = await connection<
+    RawSWUEvaluationPanelMember,
+    RawSWUEvaluationPanelMember["user"]
+  >("swuEvaluationPanelMembers")
+    .select("user")
+    .where({
+      opportunityVersion: opportunity.versionId,
+      chair: true
+    })
+    .first();
+
+  if (!opportunity || !opportunityTeamQuestions || !chair) {
     return proposals;
   }
 
@@ -1967,19 +1992,21 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
       "proposals.scenarioScore",
       "proposals.priceScore"
     );
-
   for (const scoring of proposalScorings) {
-    const questionResponses =
+    const consensusScores =
       getValidValue(
-        await readManyProposalTeamQuestionResponses(
+        await readOneSWUTeamQuestionResponseEvaluation(
           connection,
           scoring.id,
+          chair.user,
+          session,
           true
         ),
-        []
-      ) ?? [];
+        undefined
+      )?.scores ?? [];
+    console.log(consensusScores);
     scoring.questionsScore = calculateProposalTeamQuestionScore(
-      questionResponses,
+      consensusScores,
       opportunityTeamQuestions
     );
     scoring.totalScore =
