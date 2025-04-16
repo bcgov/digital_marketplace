@@ -308,28 +308,27 @@ export function generateCWUOpportunityQuery(
   const query: Knex.QueryBuilder = connection<RawCWUOpportunity>(
     "cwuOpportunities as opp"
   )
-    // Join on latest CWU status
-    .join<RawCWUOpportunity>("cwuOpportunityStatuses as stat", function () {
-      this.on("opp.id", "=", "stat.opportunity").andOn(
-        "stat.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "cwuOpportunityStatuses" as stat2 where \
-            stat2.opportunity = opp.id and stat2.status is not null)'
-        )
-      );
-    })
-    // Join on latest CWU version
-    .join<RawCWUOpportunity>("cwuOpportunityVersions as version", function () {
-      this.on("opp.id", "=", "version.opportunity").andOn(
-        "version.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "cwuOpportunityVersions" as version2 where \
-            version2.opportunity = opp.id)'
-        )
-      );
-    })
+    // Join on latest CWU status using window function
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "cwuOpportunityStatuses" 
+         WHERE status IS NOT NULL 
+         ORDER BY opportunity, "createdAt" DESC) as stat`,
+        []
+      ),
+      "opp.id",
+      "stat.opportunity"
+    )
+    // Join on latest CWU version using window function
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "cwuOpportunityVersions" 
+         ORDER BY opportunity, "createdAt" DESC) as version`,
+        []
+      ),
+      "opp.id",
+      "version.opportunity"
+    )
     .select<RawCWUOpportunity[]>(
       "opp.id",
       "opp.createdAt",
