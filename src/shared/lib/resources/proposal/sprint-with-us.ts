@@ -1,7 +1,6 @@
 import { compareNumbers, compareStrings, isDateInThePast } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
-  SWUOpportunity,
   SWUOpportunitySlim,
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -9,6 +8,7 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import { UserSlim, UserType } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Comparison, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
+import { SWUTeamQuestionResponseEvaluationScores } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 export const DEFAULT_SWU_PROPOSAL_TITLE = "Unknown";
 export const NUM_SCORE_DECIMALS = 2;
@@ -521,7 +521,7 @@ export function isValidStatusChange(
 
 // Return score out of 100 calculated from total points awarded to all questions / max possible
 export function calculateProposalTeamQuestionScore(
-  teamQuestionResponses: SWUProposalTeamQuestionResponse[],
+  teamQuestionResponses: SWUTeamQuestionResponseEvaluationScores[],
   teamQuestions: SWUTeamQuestion[]
 ): number {
   const maxPossibleScore = teamQuestions.reduce((acc, v) => acc + v.score, 0);
@@ -530,23 +530,6 @@ export function calculateProposalTeamQuestionScore(
     0
   );
   return (actualScore / maxPossibleScore) * 100;
-}
-
-// Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
-export function calculateTotalProposalScore(
-  proposal: SWUProposal,
-  opportunity: SWUOpportunity
-): number {
-  const teamQuestionsScore = calculateProposalTeamQuestionScore(
-    proposal.teamQuestionResponses,
-    opportunity.teamQuestions
-  );
-  return (
-    (teamQuestionsScore * opportunity.questionsWeight) / 100 +
-    ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) / 100 +
-    ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
-    ((proposal.priceScore || 0) * opportunity.priceWeight) / 100
-  );
 }
 
 type SWUProposalTeamMembersAcc = [Set<string>, SWUProposalTeamMember[]];
