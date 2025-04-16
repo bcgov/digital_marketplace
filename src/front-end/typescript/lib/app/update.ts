@@ -32,6 +32,7 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
@@ -736,6 +737,18 @@ function initPage(
           return adt("pageNotFound", value);
         }
       });
+
+    case "swuOpportunityCompleteView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "swuOpportunityCompleteView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunitySWUComplete.component.init,
+        pageGetMetadata: PageOpportunitySWUComplete.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunitySWUComplete", value);
+        }
+      });
   }
 }
 
@@ -1073,6 +1086,24 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "opportunitySWUCreate"],
         pageUpdate: PageOpportunitySWUCreate.component.update,
         pageGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunitySWUComplete":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunitySWUComplete.State,
+        PageOpportunitySWUComplete.InnerMsg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunitySWUComplete" as const,
+          value
+        }),
+        pageStatePath: ["pages", "swuOpportunityCompleteView"],
+        pageUpdate: PageOpportunitySWUComplete.component.update,
+        pageGetMetadata: PageOpportunitySWUComplete.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageOpportunitySWUView":
