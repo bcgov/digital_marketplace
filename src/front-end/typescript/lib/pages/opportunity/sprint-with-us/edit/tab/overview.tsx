@@ -277,27 +277,15 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
     tab: "proposal" as const
   };
   return (
-    <div>
-      <Link
-        symbol_={leftPlacement(
-          warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
-        )}
-        symbolClassName="text-warning"
-        disabled={disabled}
-        dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
-        {getSWUProponentName(proposal)}
-      </Link>
-      {(() => {
-        if (!proposal.organization) {
-          return null;
-        }
-        return (
-          <div className="small text-secondary text-uppercase">
-            {proposal.anonymousProponentName}
-          </div>
-        );
-      })()}
-    </div>
+    <Link
+      symbol_={leftPlacement(
+        warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
+      )}
+      symbolClassName="text-warning"
+      disabled={disabled}
+      dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
+      {getSWUProponentName(proposal)}
+    </Link>
   );
 };
 
