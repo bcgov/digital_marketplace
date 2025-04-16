@@ -237,7 +237,7 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       evaluationScores: evaluationScoreStates,
       isEditing: !params.questionEvaluation,
       isAuthor:
-        params.questionEvaluation?.evaluationPanelMember.user.id ===
+        params.questionEvaluation?.evaluationPanelMember ===
         params.viewerUser.id
     },
     evaluationScoreCmds
@@ -278,7 +278,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.proposals.swu.teamQuestions.evaluations.readOne<Msg>(
             state.proposal.id
-          )(evaluation.evaluationPanelMember.user.id, (result) =>
+          )(evaluation.evaluationPanelMember, (result) =>
             adt("onStartEditingEvaluationResponse", result)
           )
         ]
@@ -313,7 +313,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.proposals.swu.teamQuestions.consensuses.readOne<Msg>(
             state.proposal.id
-          )(evaluation.evaluationPanelMember.user.id, (result) =>
+          )(evaluation.evaluationPanelMember, (result) =>
             adt("onStartEditingConsensusResponse", result)
           )
         ]
@@ -435,7 +435,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationIndividualSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember.user.id,
+                    userId: result.value.evaluationPanelMember,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -507,7 +507,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationConsensusSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember.user.id,
+                    userId: result.value.evaluationPanelMember,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -572,7 +572,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.proposals.swu.teamQuestions.evaluations.update<Msg>(
                 state.proposal.id
               )(
-                state.questionEvaluation.evaluationPanelMember.user.id,
+                state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
               )
@@ -660,7 +660,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.proposals.swu.teamQuestions.consensuses.update<Msg>(
                 state.proposal.id
               )(
-                state.questionEvaluation.evaluationPanelMember.user.id,
+                state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
               )
@@ -1219,12 +1219,16 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
           const questionEvaluationScore = panelEvaluationScore.scores.find(
             ({ order }) => order === question.order
           );
-          if (!questionEvaluationScore) {
+          const panelMember = opportunity.evaluationPanel?.find(
+            (member) =>
+              member.user.id === panelEvaluationScore.evaluationPanelMember
+          );
+          if (!questionEvaluationScore || !panelMember) {
             return null;
           }
           return (
             <div
-              key={`swu-proposal-team-question-response-evaluation-individual-${panelEvaluationScore.evaluationPanelMember.order}`}
+              key={`swu-proposal-team-question-response-evaluation-individual-${panelMember.order}`}
               className="pb-4 mb-4 border-bottom">
               <Row>
                 <Col xs="3">
@@ -1245,7 +1249,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                         overflowWrap: "break-word",
                         overflowY: "scroll"
                       }}>
-                      {panelEvaluationScore.evaluationPanelMember.user.name}
+                      {panelMember.user.name}
                     </div>
                   </div>
                 </Col>

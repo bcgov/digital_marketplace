@@ -72,6 +72,14 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
     if (!permissions.isSignedIn(request.session)) {
       return respond(401, [permissions.ERROR_MESSAGE]);
     }
+    const validatedSWUProposal = await validateSWUProposalId(
+      connection,
+      request.params.proposalId,
+      request.session
+    );
+    if (isInvalid(validatedSWUProposal)) {
+      return respond(404, ["Proposal not found."]);
+    }
     const validatedSWUTeamQuestionResponseEvaluation =
       await validateSWUTeamQuestionResponseEvaluation(
         connection,
@@ -86,6 +94,7 @@ const readOne: crud.ReadOne<Session, db.Connection> = (
     if (
       !(await permissions.readOneSWUTeamQuestionResponseConsensus(
         request.session,
+        validatedSWUProposal.value.opportunity,
         validatedSWUTeamQuestionResponseEvaluation.value
       ))
     ) {
@@ -270,6 +279,17 @@ const update: crud.Update<
           permissions: [permissions.ERROR_MESSAGE]
         });
       }
+      const validatedSWUProposal = await validateSWUProposalId(
+        connection,
+        request.params.proposalId,
+        request.session
+      );
+      if (isInvalid(validatedSWUProposal)) {
+        return invalid({
+          notFound: getInvalidValue(validatedSWUProposal, undefined)
+        });
+      }
+
       const validatedSWUTeamQuestionResponseEvaluation =
         await validateSWUTeamQuestionResponseEvaluation(
           connection,
@@ -290,6 +310,7 @@ const update: crud.Update<
       if (
         !permissions.editSWUTeamQuestionResponseConsensus(
           request.session,
+          validatedSWUProposal.value.opportunity,
           validatedSWUTeamQuestionResponseEvaluation.value
         )
       ) {
