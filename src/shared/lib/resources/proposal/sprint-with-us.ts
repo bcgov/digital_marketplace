@@ -51,7 +51,7 @@ export enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
   UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  DeprecatedEvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -77,8 +77,8 @@ export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
       return SWUProposalStatus.Submitted;
     case SWUProposalStatus.UnderReviewTeamQuestions:
       return SWUProposalStatus.UnderReviewTeamQuestions;
-    case SWUProposalStatus.EvaluatedTeamQuestions:
-      return SWUProposalStatus.EvaluatedTeamQuestions;
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
+      return SWUProposalStatus.DeprecatedEvaluatedTeamQuestions;
     case SWUProposalStatus.UnderReviewCodeChallenge:
       return SWUProposalStatus.UnderReviewCodeChallenge;
     case SWUProposalStatus.EvaluatedCodeChallenge:
@@ -108,7 +108,7 @@ function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
     case SWUProposalStatus.NotAwarded:
       return 1;
     case SWUProposalStatus.UnderReviewTeamQuestions:
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:
@@ -428,14 +428,14 @@ export function isValidStatusChange(
     case SWUProposalStatus.UnderReviewTeamQuestions:
       return (
         [
-          SWUProposalStatus.EvaluatedTeamQuestions,
+          SWUProposalStatus.DeprecatedEvaluatedTeamQuestions,
           SWUProposalStatus.Disqualified
         ].includes(to) &&
         userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
       return (
         [
           SWUProposalStatus.UnderReviewCodeChallenge,
@@ -448,7 +448,7 @@ export function isValidStatusChange(
         [
           SWUProposalStatus.EvaluatedCodeChallenge,
           SWUProposalStatus.Disqualified,
-          SWUProposalStatus.EvaluatedTeamQuestions
+          SWUProposalStatus.DeprecatedEvaluatedTeamQuestions
         ].includes(to) && userType !== UserType.Vendor
       );
 
@@ -618,7 +618,7 @@ export function isSWUProposalInTeamQuestions(
 ): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewTeamQuestions:
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:
