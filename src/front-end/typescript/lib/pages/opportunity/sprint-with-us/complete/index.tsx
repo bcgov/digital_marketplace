@@ -9,6 +9,10 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as Form from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/form";
 import * as AddendaTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/addenda";
+import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
+import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
+import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
+import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -16,9 +20,9 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
-import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 import { invalid, valid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
+import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -31,13 +35,25 @@ export interface ValidState {
   loading: boolean;
   form: Immutable<Form.State>;
   addendaState: Immutable<AddendaTab.State>;
+  historyState: Immutable<HistoryTab.State>;
+  proposalsState: Immutable<ProposalsTab.State>;
+  instructionsState: Immutable<InstructionsTab.State>;
+  overviewState: Immutable<OverviewTab.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
 
 export type InnerMsg =
   | ADT<"onInitResponse", api.ResponseValidation<SWUOpportunity, string[]>>
-  | ADT<"addenda", AddendaTab.InnerMsg>;
+  | ADT<"addenda", AddendaTab.InnerMsg>
+  | ADT<"history", HistoryTab.InnerMsg>
+  | ADT<"proposals", ProposalsTab.InnerMsg>
+  | ADT<"instructions", InstructionsTab.InnerMsg>
+  | ADT<"overview", OverviewTab.InnerMsg>
+  | ADT<
+      "onProposalsAndEvaluationsReceived",
+      [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
+    >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -54,7 +70,33 @@ const init: component_.page.Init<
       viewerUser: shared.sessionUser,
       canRemoveExistingAttachments: false
     });
-    // console.log("shared.sessionUser in init:", shared.sessionUser);
+
+    // Initialize the basic addenda tab state structure
+    const [addendaInitState, _addendaCmds] = AddendaTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
+    // Initialize the history tab state structure
+    const [historyInitState, _historyCmds] = HistoryTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
+    // Initialize the proposals tab state structure
+    const [proposalsInitState, _proposalsCmds] = ProposalsTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
+    // Initialize the instructions tab state structure
+    const [instructionsInitState, _instructionsCmds] =
+      InstructionsTab.component.init({
+        viewerUser: shared.sessionUser
+      });
+
+    // Initialize the overview tab state structure
+    const [overviewInitState, _overviewCmds] = OverviewTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
     return [
       valid(
         immutable({
@@ -63,7 +105,11 @@ const init: component_.page.Init<
           notFound: false,
           loading: true,
           form: immutable(formState),
-          addendaState: null
+          addendaState: immutable(addendaInitState),
+          historyState: immutable(historyInitState),
+          proposalsState: immutable(proposalsInitState),
+          instructionsState: immutable(instructionsInitState),
+          overviewState: immutable(overviewInitState)
         })
       ),
       [
@@ -93,52 +139,67 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   ({ state, msg }) => {
     switch (msg.tag) {
       case "onInitResponse": {
-        console.log("COMPLETE page update, onInitResponse", msg.value);
         const response = msg.value;
         switch (response.tag) {
           case "valid": {
-            //   console.log("update, onInitResponse valid", response.value);
-            //   console.log('update, state.viewerUser: ', state.viewerUser)
             const opportunity = response.value;
-            // Initialize the form
+
+            // Initialize the form with the opportunity data
             const [formState, _formCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
               canRemoveExistingAttachments: false
             });
 
-            // Initialize the basic addenda tab state structure
-            // Note: AddendaTab.component.init likely just sets up the basic shape and viewerUser
-            const [addendaInitState] = AddendaTab.component.init({
-              viewerUser: state.viewerUser
-            });
-
-            console.log(
-              "COMPLETE page update(), addendaInitState, calling AddendaTab.component.onInitResponse: ",
-              addendaInitState
-            );
-
-            // Create the initialization message expected by AddendaTab's update function.
+            // Create initialization messages for other tabs
             const addendaOnInitMsg = AddendaTab.component.onInitResponse([
               opportunity,
               [] as SWUProposalSlim[],
               [] as SWUTeamQuestionResponseEvaluation[]
             ]);
-            console.log(
-              "COMPLETE page update(), addendaOnInitMsg: ",
-              addendaOnInitMsg
-            );
+
+            const historyOnInitMsg = HistoryTab.component.onInitResponse([
+              opportunity,
+              [] as SWUProposalSlim[],
+              [] as SWUTeamQuestionResponseEvaluation[]
+            ]);
+
+            const instructionsOnInitMsg =
+              InstructionsTab.component.onInitResponse([
+                opportunity,
+                [] as SWUProposalSlim[],
+                [] as SWUTeamQuestionResponseEvaluation[]
+              ]);
 
             return [
               state.merge({
                 opportunity,
                 loading: false,
-                form: immutable(formState),
-                addendaState: immutable(addendaInitState)
+                form: immutable(formState)
               }),
               [
                 component_.cmd.dispatch(adt("addenda", addendaOnInitMsg)),
-                component_.cmd.dispatch(component_.page.readyMsg())
+                component_.cmd.dispatch(adt("history", historyOnInitMsg)),
+                component_.cmd.dispatch(
+                  adt("instructions", instructionsOnInitMsg)
+                ),
+                // Don't dispatch overview yet - we need to fetch more data first
+                component_.cmd.dispatch(component_.page.readyMsg()),
+                // Fetch data for the proposals and overview tabs
+                component_.cmd.join(
+                  api.proposals.swu.readMany(opportunity.id)((response) =>
+                    api.getValidValue(response, [])
+                  ),
+                  api.opportunities.swu.teamQuestions.evaluations.readMany(
+                    opportunity.id
+                  )((response) => api.getValidValue(response, [])),
+                  (proposals, evaluations) => {
+                    return adt("onProposalsAndEvaluationsReceived", [
+                      proposals,
+                      evaluations
+                    ]) as Msg;
+                  }
+                ) as component_.Cmd<Msg>
               ]
             ];
           }
@@ -162,14 +223,76 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         // But adding it makes the linter happy
         break;
       }
+      case "onProposalsAndEvaluationsReceived": {
+        console.log("onProposalsAndEvaluationsReceived", msg.value);
+        const [proposals, evaluations] = msg.value;
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              adt(
+                "proposals",
+                ProposalsTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  [] as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "overview",
+                OverviewTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  evaluations as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>
+          ]
+        ];
+      }
       case "addenda":
-        console.log('COMPLETE page update(), "addenda" msg value: ', msg.value);
         return component_.base.updateChild({
           state,
           childStatePath: ["addendaState"],
           childUpdate: AddendaTab.component.update,
           childMsg: msg.value,
           mapChildMsg: (value: AddendaTab.InnerMsg) => adt("addenda", value)
+        });
+      case "history":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["historyState"],
+          childUpdate: HistoryTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: HistoryTab.InnerMsg) => adt("history", value)
+        });
+      case "proposals":
+        console.log("proposals", msg.value);
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["proposalsState"],
+          childUpdate: ProposalsTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: ProposalsTab.InnerMsg) => adt("proposals", value)
+        });
+      case "instructions":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["instructionsState"],
+          childUpdate: InstructionsTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: InstructionsTab.InnerMsg) =>
+            adt("instructions", value)
+        });
+      case "overview":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["overviewState"],
+          childUpdate: OverviewTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: OverviewTab.InnerMsg) => adt("overview", value)
         });
       default:
         return [state, []];
@@ -183,23 +306,19 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       return <div>Opportunity not found.</div>;
     }
 
-    console.log("view, state: ", state);
-    //   console.log('view, state.viewerUser: ', state.viewerUser)
-
     if (
       state.loading ||
       !state.opportunity ||
       !state.form ||
       !state.viewerUser ||
-      !state.addendaState
+      !state.addendaState ||
+      !state.historyState ||
+      !state.proposalsState ||
+      !state.instructionsState ||
+      !state.overviewState
     ) {
       return <div>Loading...</div>;
     }
-
-    console.log(
-      "rendering COMPLETE page, state.addendaState: ",
-      state.addendaState
-    );
 
     return (
       <div>
@@ -224,6 +343,54 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             state={state.addendaState}
             dispatch={() => {}}
           />
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">History</h3>
+              <HistoryTab.component.view
+                state={state.historyState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Proposals</h3>
+              <ProposalsTab.component.view
+                state={state.proposalsState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Instructions</h3>
+              <InstructionsTab.component.view
+                state={state.instructionsState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Overview</h3>
+              <OverviewTab.component.view
+                state={state.overviewState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
         </div>
       </div>
     );

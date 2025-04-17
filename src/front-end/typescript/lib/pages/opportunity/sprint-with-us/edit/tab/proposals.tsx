@@ -166,7 +166,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  // Ensure to pass in empty array for team question responses
+                  adt("onInitResponse", [newOpp, newProposals, []]) as Msg
               )
             ]
           ];
