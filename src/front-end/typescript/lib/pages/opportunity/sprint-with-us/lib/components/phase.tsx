@@ -276,6 +276,7 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   deliverables: string[];
   disabled?: boolean;
   className?: string;
+  expandAccordion?: boolean;
 }
 
 const Description: component_.base.View<Props> = ({
@@ -382,7 +383,19 @@ const Capabilities: component_.base.View<Props> = ({
 };
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, title, icon, iconColor, dispatch, className } = props;
+  const {
+    state,
+    title,
+    icon,
+    iconColor,
+    dispatch,
+    className,
+    expandAccordion
+  } = props;
+
+  // If expandAccordion is true, override isAccordionOpen
+  const isOpen = expandAccordion === true ? true : state.isAccordionOpen;
+
   return (
     <Accordion
       className={className}
@@ -397,7 +410,7 @@ export const view: component_.base.View<Props> = (props) => {
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
-      open={state.isAccordionOpen}>
+      open={isOpen}>
       <Description {...props} />
       <Details {...props} />
       <Capabilities {...props} />

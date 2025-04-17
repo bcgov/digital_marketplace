@@ -132,9 +132,11 @@ export interface Props<TabId>
   extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {
   valid: boolean;
   disabled?: boolean;
+  showAllTabs?: boolean;
   children: component_.base.ViewElementChildren;
   getTabLabel(tabId: TabId): string;
   isTabValid(tabId: TabId): boolean;
+  getTabContent?(tabId: TabId): React.ReactNode;
 }
 
 export function view<TabId>(): component_.base.View<Props<TabId>> {
@@ -143,10 +145,11 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     state,
     dispatch,
     getTabLabel,
-    isTabValid
+    isTabValid,
+    showAllTabs
   }) => {
     const activeTab = getActiveTab(state);
-    if (!activeTab) {
+    if (!activeTab || showAllTabs) {
       return null;
     }
     return (
@@ -208,7 +211,15 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
+  const Footer: component_.base.View<Props<TabId>> = ({
+    state,
+    dispatch,
+    showAllTabs
+  }) => {
+    if (showAllTabs) {
+      return null;
+    }
+
     return (
       <div className="mt-5 d-flex flex-nowrap justify-content-between align-items-center">
         {showPreviousButton(state) ? (
@@ -241,6 +252,37 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   };
 
   return function PageWrapper(props) {
+    if (props.showAllTabs) {
+      return (
+        <div id={props.state.id}>
+          {props.state.tabs.map((tab, index) => {
+            const modifiedState = {
+              ...props.state,
+              activeTab: tab
+            };
+
+            return (
+              <div
+                key={`all-tabs-${index}`}
+                className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
+                <h3 className="mb-4">
+                  {index + 1}. {props.getTabLabel(tab)}
+                </h3>
+                {props.getTabContent
+                  ? props.getTabContent(tab)
+                  : React.cloneElement(props.children as React.ReactElement, {
+                      state: {
+                        ...props.state,
+                        tabbedForm: modifiedState
+                      }
+                    })}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     return (
       <div id={props.state.id}>
         <Header {...props} />

@@ -295,12 +295,14 @@ export function isValid(state: Immutable<State>): boolean {
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled
+  disabled,
+  expandAccordions
 }) => {
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
@@ -325,6 +327,7 @@ export const view: component_.base.View<Props> = ({
             "A product backlog for the Alpha release"
           ]}
           disabled={disabled}
+          expandAccordion={expandAccordions}
         />
       ) : null}
       {hasPhase(state, SWUOpportunityPhaseType.Prototype) ? (
@@ -347,6 +350,7 @@ export const view: component_.base.View<Props> = ({
             "Resourcing plan for Implementation"
           ]}
           disabled={disabled}
+          expandAccordion={expandAccordions}
         />
       ) : null}
       <Phase.view
@@ -364,6 +368,7 @@ export const view: component_.base.View<Props> = ({
           "Delivery of the functional components in the Product Roadmap"
         ]}
         disabled={disabled}
+        expandAccordion={expandAccordions}
       />
     </div>
   );
