@@ -336,9 +336,6 @@ export interface UpdateTeamQuestionScoreBody {
 export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submit", string>
-  | ADT<"scoreQuestions", UpdateTeamQuestionScoreBody[]>
-  | ADT<"screenInToCodeChallenge", string>
-  | ADT<"screenOutFromCodeChallenge", string>
   | ADT<"scoreCodeChallenge", number>
   | ADT<"screenInToTeamScenario", string>
   | ADT<"screenOutFromTeamScenario", string>
@@ -355,9 +352,6 @@ export type UpdateEditRequestBody = Omit<
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submit", string[]>
-  | ADT<"scoreQuestions", UpdateTeamQuestionScoreValidationErrors[]>
-  | ADT<"screenInToCodeChallenge", string[]>
-  | ADT<"screenOutFromCodeChallenge", string[]>
   | ADT<"scoreCodeChallenge", string[]>
   | ADT<"screenInToTeamScenario", string[]>
   | ADT<"screenOutFromTeamScenario", string[]>
@@ -366,12 +360,6 @@ type UpdateADTErrors =
   | ADT<"disqualify", string[]>
   | ADT<"withdraw", string[]>
   | ADT<"parseFailure">;
-
-export interface UpdateTeamQuestionScoreValidationErrors {
-  order?: string[];
-  score?: string[];
-  parseFailure?: string[];
-}
 
 export interface UpdateEditValidationErrors {
   attachments?: string[][];
@@ -599,18 +587,6 @@ export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
     (proposal.status === SWUProposalStatus.Awarded ||
       proposal.status === SWUProposalStatus.NotAwarded)
   );
-}
-
-export function canSWUProposalBeScreenedToFromCodeChallenge(
-  p: Pick<SWUProposal, "status">
-): boolean {
-  switch (p.status) {
-    case SWUProposalStatus.EvaluatedTeamQuestions:
-    case SWUProposalStatus.UnderReviewCodeChallenge:
-      return true;
-    default:
-      return false;
-  }
 }
 
 export function canSWUProposalBeScreenedToFromTeamScenario(
