@@ -30,7 +30,6 @@ import {
   readSWUProposalHistory,
   readSWUProposalScore
 } from "back-end/lib/permissions";
-import { compareNumbers } from "shared/lib";
 import { MembershipStatus } from "shared/lib/resources/affiliation";
 import { FileRecord } from "shared/lib/resources/file";
 import {
@@ -58,8 +57,7 @@ import {
   SWUProposalStatus,
   SWUProposalTeamMember,
   SWUProposalTeamQuestionResponse,
-  UpdateEditRequestBody,
-  UpdateTeamQuestionScoreBody
+  UpdateEditRequestBody
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, userToUserSlim, UserType } from "shared/lib/resources/user";
@@ -1313,106 +1311,6 @@ export const updateSWUProposalStatus = tryDb<
         statusRecord.proposal,
         session
       );
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update proposal");
-      }
-
-      return dbResult.value;
-    })
-  );
-});
-
-export const updateSWUProposalTeamQuestionScores = tryDb<
-  [Id, UpdateTeamQuestionScoreBody[], AuthenticatedSession],
-  SWUProposal
->(async (connection, proposalId, scores, session) => {
-  const now = new Date();
-  return valid(
-    await connection.transaction(async (trx) => {
-      // Update updatedAt/By on proposal root record
-      const numberUpdated = await connection<{
-        questionsScore: number;
-        updatedAt: Date;
-        updatedBy: Id;
-      }>("swuProposals")
-        .transacting(trx)
-        .where("id", proposalId)
-        .update({
-          updatedAt: now,
-          updatedBy: session.user.id
-        });
-
-      if (numberUpdated === 0) {
-        throw new Error("unable to update team question scores");
-      }
-
-      // Update the score on each question in the proposal
-      for (const score of scores) {
-        const [result] = await connection("swuTeamQuestionResponses")
-          .transacting(trx)
-          .where({
-            proposal: proposalId,
-            order: score.order
-          })
-          .update(
-            {
-              score: score.score
-            },
-            "*"
-          );
-
-        if (!result) {
-          throw new Error("unable to update team question scores");
-        }
-      }
-
-      scores = scores.sort((a, b) => compareNumbers(a.order, b.order));
-
-      // Create a history record for the score entry
-      const [result] = await connection<
-        RawHistoryRecord & { id: Id; proposal: Id }
-      >("swuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: now,
-            createdBy: session.user.id,
-            event: SWUProposalEvent.QuestionsScoreEntered,
-            note: `Team question scores were entered. ${scores
-              .map((s, i) => `Q${i + 1}: ${s.score}`)
-              .join("; ")}.`
-          },
-          "*"
-        );
-
-      if (!result) {
-        throw new Error("unable to update team question scores");
-      }
-
-      // Change the status to EvaluatedTeamQuestions
-      const [statusRecord] = await connection<
-        RawHistoryRecord & { id: Id; proposal: Id }
-      >("swuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: new Date(),
-            createdBy: session.user.id,
-            status: SWUProposalStatus.EvaluatedTeamQuestions,
-            note: ""
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update team questions score");
-      }
-
-      const dbResult = await readOneSWUProposal(trx, result.proposal, session);
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal");
       }
