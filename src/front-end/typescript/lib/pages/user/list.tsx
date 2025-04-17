@@ -18,7 +18,7 @@ import {
 import Badge from "front-end/lib/views/badge";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
-import { Col, Row } from "reactstrap";
+import { Col, Row, Spinner } from "reactstrap";
 import { compareStrings } from "shared/lib";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -31,6 +31,7 @@ interface TableUser extends User {
 export interface State {
   table: Immutable<Table.State>;
   users: TableUser[];
+  loading: boolean;
 }
 
 type InnerMsg = ADT<"onInitResponse", TableUser[]> | ADT<"table", Table.Msg>;
@@ -46,7 +47,8 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
   return [
     {
       users: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      loading: true
     },
     [
       component_.cmd.dispatch(component_.page.readyMsg()),
@@ -125,7 +127,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "onInitResponse":
-      return [state.set("users", msg.value), []];
+      return [state.set("users", msg.value).set("loading", false), []];
     case "table":
       return component_.base.updateChild({
         state,
@@ -209,12 +211,25 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
     <Row>
       <Col xs="12">
         <h1 className="mb-5">Digital Marketplace Users</h1>
-        <Table.view
-          headCells={tableHeadCells()}
-          bodyRows={tableBodyRows(state)}
-          state={state.table}
-          dispatch={dispatchTable}
-        />
+        <div className="position-relative">
+          <Table.view
+            headCells={tableHeadCells()}
+            bodyRows={state.loading ? [] : tableBodyRows(state)}
+            state={state.table}
+            dispatch={dispatchTable}
+          />
+          {state.loading && (
+            <div 
+              className="position-absolute d-flex justify-content-center align-items-center w-100"
+              style={{ 
+                top: "6rem",
+                left: 0,
+                height: "200px"
+              }}>
+              <Spinner color="primary" />
+            </div>
+          )}
+        </div>
       </Col>
     </Row>
   );
