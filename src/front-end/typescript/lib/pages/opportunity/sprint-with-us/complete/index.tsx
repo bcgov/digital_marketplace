@@ -13,6 +13,10 @@ import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
 import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
 import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
+import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
+import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
+import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
+import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -39,6 +43,10 @@ export interface ValidState {
   proposalsState: Immutable<ProposalsTab.State>;
   instructionsState: Immutable<InstructionsTab.State>;
   overviewState: Immutable<OverviewTab.State>;
+  teamQuestionsState: Immutable<TeamQuestionsTab.State>;
+  consensusState: Immutable<ConsensusTab.State>;
+  codeChallengeState: Immutable<CodeChallengeTab.State>;
+  teamScenarioState: Immutable<TeamScenarioTab.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -50,6 +58,10 @@ export type InnerMsg =
   | ADT<"proposals", ProposalsTab.InnerMsg>
   | ADT<"instructions", InstructionsTab.InnerMsg>
   | ADT<"overview", OverviewTab.InnerMsg>
+  | ADT<"teamQuestions", TeamQuestionsTab.InnerMsg>
+  | ADT<"consensus", ConsensusTab.InnerMsg>
+  | ADT<"codeChallenge", CodeChallengeTab.InnerMsg>
+  | ADT<"teamScenario", TeamScenarioTab.InnerMsg>
   | ADT<
       "onProposalsAndEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
@@ -97,6 +109,29 @@ const init: component_.page.Init<
       viewerUser: shared.sessionUser
     });
 
+    // Initialize the team questions tab state structure
+    const [teamQuestionsInitState, _teamQuestionsCmds] =
+      TeamQuestionsTab.component.init({
+        viewerUser: shared.sessionUser
+      });
+
+    // Initialize the consensus tab state structure
+    const [consensusInitState, _consensusCmds] = ConsensusTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
+    // Initialize the code challenge tab state structure
+    const [codeChallengeInitState, _codeChallengeCmds] =
+      CodeChallengeTab.component.init({
+        viewerUser: shared.sessionUser
+      });
+
+    // Initialize the team scenario tab state structure
+    const [teamScenarioInitState, _teamScenarioCmds] =
+      TeamScenarioTab.component.init({
+        viewerUser: shared.sessionUser
+      });
+
     return [
       valid(
         immutable({
@@ -109,7 +144,11 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           instructionsState: immutable(instructionsInitState),
-          overviewState: immutable(overviewInitState)
+          overviewState: immutable(overviewInitState),
+          teamQuestionsState: immutable(teamQuestionsInitState),
+          consensusState: immutable(consensusInitState),
+          codeChallengeState: immutable(codeChallengeInitState),
+          teamScenarioState: immutable(teamScenarioInitState)
         })
       ),
       [
@@ -183,9 +222,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 component_.cmd.dispatch(
                   adt("instructions", instructionsOnInitMsg)
                 ),
-                // Don't dispatch overview yet - we need to fetch more data first
                 component_.cmd.dispatch(component_.page.readyMsg()),
-                // Fetch data for the proposals and overview tabs
                 component_.cmd.join(
                   api.proposals.swu.readMany(opportunity.id)((response) =>
                     api.getValidValue(response, [])
@@ -248,6 +285,46 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                   evaluations as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
+            ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "teamQuestions",
+                TeamQuestionsTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  [] as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "consensus",
+                ConsensusTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  evaluations as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "codeChallenge",
+                CodeChallengeTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  [] as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "teamScenario",
+                TeamScenarioTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposals as SWUProposalSlim[],
+                  [] as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
             ) as component_.Cmd<Msg>
           ]
         ];
@@ -294,6 +371,41 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value: OverviewTab.InnerMsg) => adt("overview", value)
         });
+      case "teamQuestions":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["teamQuestionsState"],
+          childUpdate: TeamQuestionsTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: TeamQuestionsTab.InnerMsg) =>
+            adt("teamQuestions", value)
+        });
+      case "consensus":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["consensusState"],
+          childUpdate: ConsensusTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: ConsensusTab.InnerMsg) => adt("consensus", value)
+        });
+      case "codeChallenge":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["codeChallengeState"],
+          childUpdate: CodeChallengeTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: CodeChallengeTab.InnerMsg) =>
+            adt("codeChallenge", value)
+        });
+      case "teamScenario":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["teamScenarioState"],
+          childUpdate: TeamScenarioTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: TeamScenarioTab.InnerMsg) =>
+            adt("teamScenario", value)
+        });
       default:
         return [state, []];
     }
@@ -315,7 +427,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.historyState ||
       !state.proposalsState ||
       !state.instructionsState ||
-      !state.overviewState
+      !state.overviewState ||
+      !state.teamQuestionsState ||
+      !state.consensusState ||
+      !state.codeChallengeState ||
+      !state.teamScenarioState
     ) {
       return <div>Loading...</div>;
     }
@@ -387,6 +503,54 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
               <h3 className="mb-4">Overview</h3>
               <OverviewTab.component.view
                 state={state.overviewState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Team Questions</h3>
+              <TeamQuestionsTab.component.view
+                state={state.teamQuestionsState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Team Questions Consensus</h3>
+              <ConsensusTab.component.view
+                state={state.consensusState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Code Challenge</h3>
+              <CodeChallengeTab.component.view
+                state={state.codeChallengeState}
+                dispatch={() => {}}
+              />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <h3 className="mb-4">Team Scenario</h3>
+              <TeamScenarioTab.component.view
+                state={state.teamScenarioState}
                 dispatch={() => {}}
               />
             </Col>
