@@ -780,21 +780,10 @@ export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvalua
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
       return true;
-    default:
-      return false;
-  }
-}
-
-export function canViewSWUEvaluationConsensus(
-  s: SWUOpportunityStatus
-): boolean {
-  switch (s) {
-    // TODO: Add statuses
     default:
       return false;
   }

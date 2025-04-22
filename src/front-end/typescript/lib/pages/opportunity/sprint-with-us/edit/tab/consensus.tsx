@@ -34,10 +34,16 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
+import { isAdmin } from "shared/lib/resources/user";
+
+type ModalId = "submit" | "finalize";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -47,6 +53,8 @@ export interface State extends Tab.Params {
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
+  isChair: boolean;
+  showModal: ModalId | null;
 }
 
 export type InnerMsg =
@@ -56,7 +64,9 @@ export type InnerMsg =
   | ADT<
       "onSubmitResponse",
       api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
-    >;
+    >
+  | ADT<"showModal", ModalId>
+  | ADT<"hideModal">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -74,7 +84,9 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       areEvaluationsValid: false,
       evaluations: [],
       proposals: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      isChair: false,
+      showModal: null
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -99,6 +111,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           opportunity,
           SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
         );
+      const isChair =
+        state.viewerUser.id ===
+        opportunity.evaluationPanel?.find(({ chair }) => chair)?.user.id;
       return [
         state
           .set("opportunity", opportunity)
@@ -108,16 +123,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Determine whether the "Submit" button should be shown at all.
           // Can be submitted if...
           // - Opportunity has the appropriate status
-          // - All proposals have the appropriate status
           // - All questions have been evaluated.
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
-          ),
+              SWUOpportunityStatus.EvaluationTeamQuestionsConsensus && isChair
+          )
+          .set("isChair", isChair),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
+
+    case "showModal":
+      return [state.set("showModal", msg.value), []];
+
+    case "hideModal":
+      return [state.set("showModal", null), []];
 
     case "submit": {
       const opportunity = state.opportunity;
@@ -220,7 +241,8 @@ const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
-}> = ({ disabled, proposal, evaluation }) => {
+  isChair: boolean;
+}> = ({ disabled, proposal, evaluation, isChair }) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -235,9 +257,9 @@ const ContextMenuCell: component_.base.View<{
           userId: evaluation.evaluationPanelMember.user.id
         })
       )}>
-      Edit
+      {isChair ? "Edit" : "View"}
     </Link>
-  ) : (
+  ) : isChair ? (
     <Link
       disabled={disabled}
       dest={routeDest(
@@ -245,7 +267,7 @@ const ContextMenuCell: component_.base.View<{
       )}>
       Start Evaluation
     </Link>
-  );
+  ) : null;
 };
 
 interface ProponentCellProps {
@@ -350,6 +372,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             disabled={isLoading}
             proposal={p}
             evaluation={evaluation}
+            isChair={state.isChair}
           />
         )
       }
@@ -473,13 +496,75 @@ export const component: Tab.Component<State, Msg> = {
   update,
   view,
 
+  getModal: (state) => {
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.modal.hide();
+    switch (state.showModal) {
+      case "submit":
+        return component_.page.modal.show({
+          title: "Please Confirm",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Scores for Consensus",
+              icon: "paper-plane",
+              color: "info",
+              button: true,
+              msg: adt("submit") as Msg
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () =>
+            "By submitting this consensus, you, as the chair, along with the" +
+            "panelists, confirm your agreement with the consensus scores and" +
+            "comments."
+        });
+      case "finalize":
+        return component_.page.modal.show({
+          title: "Please Confirm",
+          onCloseMsg: adt("hideModal") as Msg,
+          actions: [
+            {
+              text: "Submit Final Consensus Scores",
+              icon: "paper-plane",
+              color: "info",
+              button: true,
+              msg: adt("hideModal") as Msg
+            },
+            {
+              text: "Cancel",
+              color: "secondary",
+              msg: adt("hideModal")
+            }
+          ],
+          body: () => (
+            <>
+              <p className="mb-4">
+                By submitting final consensus scores, you are about to lock in
+                all proponent scores and move on to short-listing stage
+              </p>
+              <p className="mb-0">
+                Are you sure you want to submit final consensus scores?
+              </p>
+            </>
+          )
+        });
+      case null:
+        return component_.page.modal.hide();
+    }
+  },
+
   onInitResponse(response) {
     return adt("onInitResponse", response);
   },
 
   getActions: ({ state, dispatch }) => {
     const opportunity = state.opportunity;
-    if (!opportunity || !state.canEvaluationsBeSubmitted) {
+    if (!opportunity) {
       return component_.page.actions.none();
     }
     const isLoading = state.submitLoading;
@@ -496,18 +581,39 @@ export const component: Tab.Component<State, Msg> = {
           ),
         true as boolean
       );
-    return component_.page.actions.links([
-      {
-        children: "Submit Scores for Consensus",
-        symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
-        color: "primary",
-        button: true,
-        loading: isLoading,
-        disabled: (() => {
-          return isLoading || !areEvaluationsValid;
-        })(),
-        onClick: () => dispatch(adt("submit") as Msg)
-      }
-    ]);
+    const canEvaluationsBeFinalized =
+      state.evaluations.every(
+        ({ status }) =>
+          status === SWUTeamQuestionResponseEvaluationStatus.Submitted
+      ) && isAdmin(state.viewerUser);
+    return canEvaluationsBeFinalized
+      ? component_.page.actions.links([
+          {
+            children: "Submit Final Consensus Scores",
+            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            color: "primary",
+            button: true,
+            loading: isLoading,
+            disabled: (() => {
+              return isLoading;
+            })(),
+            onClick: () => dispatch(adt("showModal", "finalize") as Msg)
+          }
+        ])
+      : state.canEvaluationsBeSubmitted
+      ? component_.page.actions.links([
+          {
+            children: "Submit Scores for Consensus",
+            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            color: "primary",
+            button: true,
+            loading: isLoading,
+            disabled: (() => {
+              return isLoading || !areEvaluationsValid;
+            })(),
+            onClick: () => dispatch(adt("submit") as Msg)
+          }
+        ])
+      : component_.page.actions.none();
   }
 };
