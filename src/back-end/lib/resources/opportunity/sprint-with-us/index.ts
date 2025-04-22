@@ -129,7 +129,8 @@ interface ValidatedUpdateRequestBody {
         "submitConsensusQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
       >
-    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>
+    | ADT<"finalizeQuestionConsensuses", string>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
@@ -805,6 +806,8 @@ const update: crud.Update<
           return adt("submitForReview", getString(body, "value"));
         case "publish":
           return adt("publish", getString(body, "value"));
+        case "finalizeQuestionConsensuses":
+          return adt("finalizeQuestionConsensuses", getString(body, "value"));
         case "startCodeChallenge":
           return adt("startCodeChallenge", getString(body, "value"));
         case "startTeamScenario":
@@ -1494,6 +1497,79 @@ const update: crud.Update<
             body: adt("publish", validatedPublishNote.value)
           });
         }
+        case "finalizeQuestionConsensuses": {
+          if (
+            !isValidStatusChange(
+              validatedSWUOpportunity.value.status,
+              SWUOpportunityStatus.EvaluationCodeChallenge
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+
+          const consensuses = getValidValue<
+            SWUTeamQuestionResponseEvaluation[]
+          >(
+            await db.readManySWUTeamQuestionResponseEvaluations(
+              connection,
+              request.session,
+              request.params.id,
+              true
+            ),
+            []
+          );
+
+          if (
+            !consensuses.every(
+              ({ status }) =>
+                status === SWUTeamQuestionResponseEvaluationStatus.Submitted
+            )
+          ) {
+            return invalid({
+              permissions: ["Not all consensuses have been submitted."]
+            });
+          }
+
+          const anyScreenableProponents = swuOpportunity.teamQuestions.reduce(
+            (valid, tq) => {
+              return (
+                valid ||
+                consensuses.some(
+                  (consensus) =>
+                    tq.minimumScore &&
+                    consensus.scores[tq.order].score >= tq.minimumScore
+                )
+              );
+            },
+            false
+          );
+
+          if (!anyScreenableProponents) {
+            return invalid({
+              permissions: [
+                "You must have at least one proponent that can be screened into the Code Challenge."
+              ]
+            });
+          }
+
+          const validatedFinalizeQuestionConsensusesNote =
+            opportunityValidation.validateNote(request.body.value);
+          if (isInvalid(validatedFinalizeQuestionConsensusesNote)) {
+            return invalid({
+              opportunity: adt(
+                "finalizeQuestionConsensuses" as const,
+                validatedFinalizeQuestionConsensusesNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "finalizeQuestionConsensuses",
+              validatedFinalizeQuestionConsensusesNote.value
+            )
+          } as ValidatedUpdateRequestBody);
+        }
         case "startCodeChallenge": {
           if (
             !isValidStatusChange(
@@ -2147,6 +2223,14 @@ const update: crud.Update<
             dbResult = await db.updateSWUOpportunityVersion(
               connection,
               { ...body.value, id: request.params.id },
+              session
+            );
+            break;
+          case "finalizeQuestionConsensuses":
+            dbResult = await db.finalizeQuestionConsensus(
+              connection,
+              request.params.id,
+              body.value,
               session
             );
             break;

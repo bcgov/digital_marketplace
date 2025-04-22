@@ -7,6 +7,7 @@ import {
   EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
   EVALUATOR_EVALUATION_TABLE_NAME,
   RawSWUTeamQuestionResponseEvaluation,
+  readManySWUTeamQuestionResponseEvaluations,
   SWUTeamQuestionResponseEvaluationStatusRecord,
   Transaction,
   tryDb
@@ -14,6 +15,9 @@ import {
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
+  RawSWUProposalHistoryRecord,
+  RawSWUProposal,
+  readManySWUProposals,
   readOneSWUAwardedProposal,
   readSubmittedSWUProposalCount
 } from "back-end/lib/db/proposal/sprint-with-us";
@@ -44,6 +48,8 @@ import {
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  compareSWUProposalsForPublicSector,
+  SWUProposalEvent,
   SWUProposalSlim,
   SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
@@ -55,6 +61,7 @@ import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
+import { SWU_CODE_CHALLENGE_SCREEN_IN_COUNT } from "shared/config";
 
 export interface CreateSWUOpportunityParams
   extends Omit<
@@ -1832,4 +1839,152 @@ export const submitConsensusQuestionEvaluations = tryDb<
     throw new Error("unable to add note");
   }
   return valid(dbResult.value);
+});
+
+export const finalizeQuestionConsensus = tryDb<
+  [Id, string, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, note, session) => {
+  const now = new Date();
+  return await connection.transaction(async (trx) => {
+    const opportunity = getValidValue(
+      await readOneSWUOpportunity(connection, id, session),
+      null
+    );
+    if (!opportunity) {
+      throw new Error("unable to read opportunity");
+    }
+    const proposals = getValidValue<SWUProposalSlim[]>(
+      await readManySWUProposals(connection, session, id),
+      []
+    );
+    const consensuses = getValidValue<SWUTeamQuestionResponseEvaluation[]>(
+      await readManySWUTeamQuestionResponseEvaluations(
+        connection,
+        session,
+        id,
+        true
+      ),
+      []
+    );
+    const consensusesWithProposals = consensuses.map((consensus) => {
+      const proposal = proposals.find(
+        (proposal) => proposal.id === consensus.proposal
+      );
+      if (!proposal) {
+        throw new Error("unable to read consensuses");
+      }
+      return {
+        ...consensus,
+        proposal
+      };
+    });
+
+    // Log scores
+    for (const consensusWithProposal of consensusesWithProposals) {
+      const [eventRecord] = await connection<
+        RawSWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("swuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: consensusWithProposal.proposal.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            event: SWUProposalEvent.QuestionsScoreEntered,
+            note: `Team question scores were entered. ${consensusWithProposal.scores
+              .map((s, i) => `Q${i + 1}: ${s.score}`)
+              .join("; ")}.`
+          },
+          "*"
+        );
+
+      // Update proposal root record
+      await connection<RawSWUProposal>("swuProposals")
+        .transacting(trx)
+        .where({ id: consensusWithProposal.proposal.id })
+        .update(
+          {
+            updatedAt: now,
+            updatedBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!eventRecord) {
+        throw new Error("unable to log consensus scores");
+      }
+    }
+
+    // Filter candidates that are below the minimum score or that have the wrong status
+    const candidates = consensusesWithProposals.reduce<SWUProposalSlim[]>(
+      (candidates, consensusWithProposal) => {
+        if (
+          consensusWithProposal.proposal.status !==
+          SWUProposalStatus.UnderReviewTeamQuestions
+        ) {
+          return candidates;
+        }
+        const suitable = opportunity.teamQuestions.every((question) => {
+          if (!question.minimumScore) {
+            return true;
+          }
+          const consensusScore = consensusWithProposal.scores.find(
+            (score) => score.order === question.order
+          );
+          return (
+            consensusScore && consensusScore.score >= question.minimumScore
+          );
+        });
+        return suitable
+          ? [...candidates, consensusWithProposal.proposal]
+          : candidates;
+      },
+      []
+    );
+
+    // Screen in top candidates
+    candidates.sort((a, b) =>
+      compareSWUProposalsForPublicSector(a, b, "questionsScore")
+    );
+    for (const candidate of candidates.slice(
+      0,
+      SWU_CODE_CHALLENGE_SCREEN_IN_COUNT
+    )) {
+      const [statusRecord] = await connection<
+        RawSWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("swuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: candidate.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            status: SWUProposalStatus.UnderReviewCodeChallenge,
+            note
+          },
+          "*"
+        );
+
+      if (!statusRecord) {
+        throw new Error("unable to screen in proponents");
+      }
+    }
+
+    const result = await updateSWUOpportunityStatus(
+      connection,
+      id,
+      SWUOpportunityStatus.EvaluationCodeChallenge,
+      note,
+      session
+    );
+
+    if (!result) {
+      throw new Error("unable to finalize consensus scores");
+    }
+
+    return result;
+  });
 });
