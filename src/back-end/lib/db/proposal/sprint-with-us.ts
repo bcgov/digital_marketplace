@@ -88,7 +88,7 @@ interface SWUProposalStatusRecord {
   note: string;
 }
 
-interface RawSWUProposal
+export interface RawSWUProposal
   extends Omit<
     SWUProposal,
     | "createdBy"
@@ -2040,3 +2040,5 @@ export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+export { RawHistoryRecord as RawSWUProposalHistoryRecord };

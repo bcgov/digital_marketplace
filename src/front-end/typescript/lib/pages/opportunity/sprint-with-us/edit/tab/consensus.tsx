@@ -48,6 +48,7 @@ type ModalId = "submit" | "finalize";
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
   submitLoading: boolean;
+  finalizeLoading: boolean;
   canViewEvaluations: boolean;
   canEvaluationsBeSubmitted: boolean;
   evaluations: SWUTeamQuestionResponseEvaluation[];
@@ -65,6 +66,11 @@ export type InnerMsg =
       "onSubmitResponse",
       api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
     >
+  | ADT<"finalize">
+  | ADT<
+      "onFinalizeResponse",
+      api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
+    >
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">;
 
@@ -79,6 +85,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...params,
       opportunity: null,
       submitLoading: false,
+      finalizeLoading: false,
       canViewEvaluations: false,
       canEvaluationsBeSubmitted: false,
       areEvaluationsValid: false,
@@ -159,6 +166,73 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     }
 
     case "onSubmitResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = state.set("submitLoading", false);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt(
+                  "error",
+                  toasts.submittedQuestionEvaluationScoresForConsensus.error
+                )
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt(
+                "success",
+                toasts.submittedQuestionEvaluationScoresForConsensus.success
+              )
+            )
+          ),
+          component_.cmd.join3(
+            api.opportunities.swu.readOne()(opportunity.id, (response) =>
+              api.getValidValue(response, opportunity)
+            ),
+            api.proposals.swu.readMany(opportunity.id)((response) =>
+              api.getValidValue(response, state.proposals)
+            ),
+            api.opportunities.swu.teamQuestions.consensuses.readMany(
+              opportunity.id
+            )((response) => api.getValidValue(response, state.evaluations)),
+            (newOpp, newProposals, newEvaluations) =>
+              adt("onInitResponse", [
+                newOpp,
+                newProposals,
+                newEvaluations
+              ]) as Msg
+          )
+        ]
+      ];
+    }
+
+    case "finalize": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      return [
+        state.set("finalizeLoading", true),
+        [
+          api.opportunities.swu.update<Msg>()(
+            opportunity.id,
+            adt("finalizeQuestionConsensuses", ""),
+            (response) => adt("onFinalizeResponse", response)
+          )
+        ]
+      ];
+    }
+
+    case "onFinalizeResponse": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
       state = state.set("submitLoading", false);
