@@ -1,0 +1,244 @@
+import React from "react";
+import {
+  component as component_,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
+import * as ProposalForm from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
+import * as Team from "front-end/lib/pages/proposal/sprint-with-us/lib/components/team";
+import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
+import * as ProposalCodeChallengeTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/code-challenge";
+import * as ProposalTeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
+import * as ProposalTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/proposal";
+import { OrganizationSlim } from "shared/lib/resources/organization";
+import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
+import { User } from "shared/lib/resources/user";
+import { ADT, Id } from "shared/lib/types";
+import { AffiliationMember } from "shared/lib/resources/affiliation";
+import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
+
+export interface ProposalDetailState {
+  formState: ProposalForm.State;
+  teamQuestionsState: ProposalTeamQuestionsTab.State;
+  codeChallengeState: ProposalCodeChallengeTab.State;
+  teamScenarioState: ProposalTeamScenarioTab.State;
+  proposalTabState: ProposalTab.State;
+}
+
+export interface State {
+  detailStates: Record<Id, Immutable<ProposalDetailState>>;
+}
+
+export interface Params {
+  opportunity: SWUOpportunity;
+  proposals: SWUProposal[];
+  viewerUser: User;
+  organizations: OrganizationSlim[];
+  evaluationContent: string;
+  proposalAffiliations: Record<Id, AffiliationMember[]>;
+}
+
+export type Msg = ADT<"noop">;
+
+const init: component_.base.Init<Params, State, Msg> = ({
+  opportunity,
+  proposals,
+  viewerUser,
+  organizations,
+  evaluationContent,
+  proposalAffiliations
+}) => {
+  const detailStates: Record<Id, Immutable<ProposalDetailState>> = {};
+
+  // Initialize component state for each proposal
+  for (const proposal of proposals) {
+    // Get the affiliations for this proposal's organization
+    let affiliations: AffiliationMember[] = [];
+    if (
+      proposal.organization &&
+      proposalAffiliations[proposal.organization.id]
+    ) {
+      affiliations = proposalAffiliations[proposal.organization.id];
+    }
+
+    // Initialize form state for this proposal
+    const [formState, _formCmds] = ProposalForm.init({
+      viewerUser: viewerUser,
+      opportunity: opportunity,
+      proposal,
+      organizations: organizations,
+      evaluationContent: evaluationContent
+    });
+
+    // Update the team state with affiliations after form init
+    let updatedFormState = formState;
+    if (proposal.organization) {
+      const newTeam = Team.setAffiliations(
+        formState.team,
+        affiliations,
+        proposal.organization.id
+      );
+      updatedFormState = {
+        ...formState,
+        team: newTeam
+      };
+    }
+
+    // Initialize tab components
+    const [teamQuestionsState, _teamQuestionsCmds] =
+      ProposalTeamQuestionsTab.component.init({
+        proposal,
+        opportunity: opportunity,
+        viewerUser: viewerUser,
+        evaluating: false,
+        questionEvaluation: undefined,
+        panelQuestionEvaluations: []
+      });
+
+    const [codeChallengeState, _codeChallengeCmds] =
+      ProposalCodeChallengeTab.component.init({
+        proposal,
+        opportunity: opportunity,
+        viewerUser: viewerUser,
+        evaluating: false,
+        questionEvaluation: undefined,
+        panelQuestionEvaluations: []
+      });
+
+    const [teamScenarioState, _teamScenarioCmds] =
+      ProposalTeamScenarioTab.component.init({
+        proposal,
+        opportunity: opportunity,
+        viewerUser: viewerUser,
+        evaluating: false,
+        questionEvaluation: undefined,
+        panelQuestionEvaluations: []
+      });
+
+    // Initialize proposal tab state
+    const [proposalTabState, _proposalTabCmds] = ProposalTab.component.init({
+      proposal,
+      opportunity: opportunity,
+      viewerUser: viewerUser,
+      evaluating: false,
+      questionEvaluation: undefined,
+      panelQuestionEvaluations: []
+    });
+
+    // Create a complete proposalTabState with the form correctly initialized
+    const completeProposalTabState = {
+      ...proposalTabState,
+      organizations,
+      evaluationContent,
+      form: immutable(updatedFormState)
+    };
+
+    // Store the initialized states
+    detailStates[proposal.id] = immutable({
+      formState: updatedFormState,
+      teamQuestionsState,
+      codeChallengeState,
+      teamScenarioState,
+      proposalTabState: completeProposalTabState
+    });
+  }
+
+  return [{ detailStates }, []];
+};
+
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case "noop":
+      return [state, []];
+    default:
+      return [state, []];
+  }
+};
+
+interface ProposalDetailProps {
+  proposal: SWUProposal;
+  state: Immutable<ProposalDetailState>;
+  viewerUser: User;
+}
+
+const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
+  proposal,
+  state
+}) => {
+  return (
+    <div key={proposal.id} className="mb-5 pb-5 border-bottom">
+      <div className="proposal-complete-page-header">
+        <ViewTabHeader
+          proposal={proposal}
+          viewerUser={state.formState.viewerUser}
+        />
+      </div>
+
+      <ProposalTab.component.view
+        state={immutable(state.proposalTabState)}
+        dispatch={() => {}}
+        showAllTabs={true}
+        expandAccordions={true}
+        {...({} as any)}
+      />
+
+      <h2>Team Questions</h2>
+      <ProposalTeamQuestionsTab.component.view
+        state={immutable(state.teamQuestionsState)}
+        dispatch={() => {}}
+      />
+
+      <hr></hr>
+      <h2>Code Challenge</h2>
+      <ProposalCodeChallengeTab.component.view
+        state={immutable(state.codeChallengeState)}
+        dispatch={() => {}}
+      />
+
+      <hr></hr>
+      <h2>Team Scenario</h2>
+      <ProposalTeamScenarioTab.component.view
+        state={immutable(state.teamScenarioState)}
+        dispatch={() => {}}
+      />
+    </div>
+  );
+};
+
+const view: component_.base.View<
+  component_.base.ComponentViewProps<State, Msg>
+> = ({ state }) => {
+  const proposals = Object.keys(state.detailStates).sort();
+
+  if (proposals.length === 0) {
+    return <div>No proposals available to display.</div>;
+  }
+
+  return (
+    <div className="mt-5">
+      <h2 className="mb-4">Proposals</h2>
+      {proposals.map((proposalId) => {
+        const proposalState = state.detailStates[proposalId];
+        const proposal = proposalState?.formState.proposal;
+
+        if (!proposal) return null;
+
+        return (
+          <ProposalDetail
+            key={proposalId}
+            proposal={proposal}
+            state={proposalState}
+            viewerUser={proposalState.formState.viewerUser}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+export const component = {
+  init,
+  update,
+  view
+};

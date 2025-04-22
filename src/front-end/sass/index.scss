@@ -1050,3 +1050,18 @@ nav.navbar .nav-link:hover {
     }
   }
 }
+
+.opportunity-complete-page {
+  .opportunity-edit-tab-header{
+    display: none;
+  }
+  .opportunity-complete-page-header .opportunity-edit-tab-header{
+    display: block;
+  }
+  .proposal-view-tab-header{
+    display: none;
+  }
+  .proposal-complete-page-header .proposal-view-tab-header{
+    display: block;
+  }
+}

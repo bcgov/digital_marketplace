@@ -17,17 +17,12 @@ import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
-import * as ProposalForm from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
-import * as Team from "front-end/lib/pages/proposal/sprint-with-us/lib/components/team";
-import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
-import * as ProposalCodeChallengeTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/code-challenge";
-import * as ProposalTeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
+import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
+import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
 import React from "react";
-import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
-import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { invalid, valid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
@@ -35,10 +30,11 @@ import {
   SWUProposalSlim,
   SWUProposal
 } from "shared/lib/resources/proposal/sprint-with-us";
-import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
+import * as ProposalDetailsSection from "./proposal-details";
+import EditTabHeader from "../lib/views/edit-tab-header";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -59,10 +55,13 @@ export interface ValidState {
   consensusState: Immutable<ConsensusTab.State>;
   codeChallengeState: Immutable<CodeChallengeTab.State>;
   teamScenarioState: Immutable<TeamScenarioTab.State>;
+  summaryState: Immutable<SummaryTab.State>;
+  opportunityState: Immutable<OpportunityTab.State>;
   proposals: SWUProposal[];
   organizations: OrganizationSlim[];
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
+  proposalDetailsState: Immutable<ProposalDetailsSection.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -78,12 +77,14 @@ export type InnerMsg =
   | ADT<"consensus", ConsensusTab.InnerMsg>
   | ADT<"codeChallenge", CodeChallengeTab.InnerMsg>
   | ADT<"teamScenario", TeamScenarioTab.InnerMsg>
+  | ADT<"summary", SummaryTab.InnerMsg>
+  | ADT<"proposalDetails", ProposalDetailsSection.Msg>
   | ADT<
       "onProposalsAndEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
     >
   | ADT<"onProposalDetailResponse", SWUProposal>
-  | ADT<"onOrganizationsResponse", OrganizationSlim[]>
+  //   | ADT<"onOrganizationsResponse", OrganizationSlim[]>
   | ADT<"onEvaluationContentResponse", string>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>;
 
@@ -152,6 +153,19 @@ const init: component_.page.Init<
         viewerUser: shared.sessionUser
       });
 
+    // Initialize the summary tab state structure
+    const [summaryInitState, _summaryCmds] = SummaryTab.component.init({
+      viewerUser: shared.sessionUser
+    });
+
+    // Initialize the opportunity tab state structure
+    const [opportunityInitState, _opportunityCmds] =
+      OpportunityTab.component.init({
+        viewerUser: shared.sessionUser,
+        showAllTabs: true,
+        expandAccordions: true
+      });
+
     return [
       valid(
         immutable({
@@ -169,10 +183,13 @@ const init: component_.page.Init<
           consensusState: immutable(consensusInitState),
           codeChallengeState: immutable(codeChallengeInitState),
           teamScenarioState: immutable(teamScenarioInitState),
+          summaryState: immutable(summaryInitState),
+          opportunityState: immutable(opportunityInitState),
           proposals: [],
           organizations: [],
           evaluationContent: "",
-          proposalAffiliations: {}
+          proposalAffiliations: {},
+          proposalDetailsState: immutable({ detailStates: {} })
         })
       ),
       [
@@ -234,11 +251,28 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 [] as SWUTeamQuestionResponseEvaluation[]
               ]);
 
+            // Initialize the opportunity tab state with the opportunity
+            const [opportunityState, _oppCmds] = OpportunityTab.component.init({
+              viewerUser: state.viewerUser
+            });
+            const updatedOpportunityState = {
+              ...opportunityState,
+              opportunity
+            };
+            // Initialize the form for the opportunity
+            const [oppFormState, _oppFormCmds] = Form.init({
+              opportunity,
+              viewerUser: state.viewerUser,
+              canRemoveExistingAttachments: false
+            });
+            updatedOpportunityState.form = immutable(oppFormState);
+
             return [
               state.merge({
                 opportunity,
                 loading: false,
-                form: immutable(formState)
+                form: immutable(formState),
+                opportunityState: immutable(updatedOpportunityState)
               }),
               [
                 component_.cmd.dispatch(adt("addenda", addendaOnInitMsg)),
@@ -260,12 +294,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                       evaluations
                     ]) as Msg;
                   }
-                ) as component_.Cmd<Msg>,
-                api.organizations.owned.readMany()((response) =>
-                  adt(
-                    "onOrganizationsResponse",
-                    api.getValidValue(response, [])
-                  )
                 ) as component_.Cmd<Msg>,
                 api.content.readOne()(
                   SWU_PROPOSAL_EVALUATION_CONTENT_ID,
@@ -376,6 +404,16 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ])
               )
             ) as component_.Cmd<Msg>,
+            component_.cmd.dispatch(
+              adt(
+                "summary",
+                SummaryTab.component.onInitResponse([
+                  state.opportunity as SWUOpportunity,
+                  proposalSlims as SWUProposalSlim[],
+                  [] as SWUTeamQuestionResponseEvaluation[]
+                ])
+              )
+            ) as component_.Cmd<Msg>,
             ...proposalCmds
           ]
         ];
@@ -401,23 +439,112 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           );
         }
 
-        return [
-          state.update("proposals", (proposals) => [...proposals, proposal]),
-          cmds
-        ];
+        const updatedState = state.update("proposals", (proposals) => [
+          ...proposals,
+          proposal
+        ]);
+
+        // Check if all proposals have been loaded
+        const expectedProposalCount = state.proposalsState.proposals.length;
+        const loadedProposalCount = updatedState.proposals.length;
+
+        // If we have loaded all proposals and don't have organizations with pending affiliation requests
+        // and we have already initialized the proposal details section, check if we need to re-initialize it
+        if (
+          loadedProposalCount === expectedProposalCount &&
+          // state.organizations.length > 0 &&
+          state.opportunity &&
+          !cmds.length
+        ) {
+          // Initialize the proposal details component
+          const [proposalDetailsState, proposalDetailsCmds] =
+            ProposalDetailsSection.component.init({
+              opportunity: state.opportunity,
+              proposals: updatedState.proposals,
+              viewerUser: state.viewerUser,
+              organizations: state.organizations,
+              evaluationContent: state.evaluationContent,
+              proposalAffiliations: state.proposalAffiliations
+            });
+
+          // Map the commands from the proposal details component
+          const mappedCmds = proposalDetailsCmds.map((cmd) =>
+            component_.cmd.map(
+              cmd,
+              (msg: ProposalDetailsSection.Msg) =>
+                adt("proposalDetails", msg) as InnerMsg
+            )
+          );
+
+          return [
+            updatedState.set(
+              "proposalDetailsState",
+              immutable(proposalDetailsState)
+            ),
+            [...cmds, ...mappedCmds]
+          ];
+        } else {
+          return [updatedState, cmds];
+        }
       }
       case "onAffiliationsResponse": {
         const [organizationId, affiliations] = msg.value;
-        return [
-          state.update("proposalAffiliations", (current) => ({
+        const updatedState = state.update(
+          "proposalAffiliations",
+          (current) => ({
             ...current,
             [organizationId]: affiliations
-          })),
-          []
-        ];
-      }
-      case "onOrganizationsResponse": {
-        return [state.set("organizations", msg.value), []];
+          })
+        );
+
+        // Check if we have all the affiliations for all the proposals with organizations
+        const proposalsWithOrgs = updatedState.proposals.filter(
+          (p) => p.organization
+        );
+        const haveAllAffiliations = proposalsWithOrgs.every(
+          (p) =>
+            p.organization &&
+            updatedState.proposalAffiliations[p.organization.id] !== undefined
+        );
+
+        // If we have everything needed to initialize proposal details
+        if (
+          haveAllAffiliations &&
+          updatedState.opportunity &&
+          updatedState.proposals.length > 0
+        ) {
+          // updatedState.organizations.length > 0
+
+          // Initialize the proposal details component
+          const [proposalDetailsState, proposalDetailsCmds] =
+            ProposalDetailsSection.component.init({
+              opportunity: updatedState.opportunity,
+              proposals: updatedState.proposals,
+              viewerUser: updatedState.viewerUser,
+              organizations: updatedState.organizations,
+              evaluationContent: updatedState.evaluationContent,
+              proposalAffiliations: updatedState.proposalAffiliations
+            });
+
+          // Map the commands from the proposal details component
+          const mappedCmds = proposalDetailsCmds.map((cmd) =>
+            component_.cmd.map(
+              cmd,
+              (msg: ProposalDetailsSection.Msg) =>
+                adt("proposalDetails", msg) as InnerMsg
+            )
+          );
+
+          return [
+            updatedState.set(
+              "proposalDetailsState",
+              immutable(proposalDetailsState)
+            ),
+            mappedCmds
+          ];
+        }
+
+        return [updatedState, []];
       }
       case "onEvaluationContentResponse": {
         return [state.set("evaluationContent", msg.value), []];
@@ -498,138 +625,31 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value: TeamScenarioTab.InnerMsg) =>
             adt("teamScenario", value)
         });
+      case "summary":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["summaryState"],
+          childUpdate: SummaryTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: SummaryTab.InnerMsg) => adt("summary", value)
+        });
+      case "proposalDetails":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["proposalDetailsState"],
+          childUpdate: ProposalDetailsSection.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: ProposalDetailsSection.Msg) =>
+            adt("proposalDetails", value)
+        });
       default:
         return [state, []];
     }
   }
 );
 
-interface ProposalDetailsSectionProps {
-  state: Immutable<ValidState>;
-}
-
-const ProposalDetailsSection: component_.base.View<
-  ProposalDetailsSectionProps
-> = ({ state }) => {
-  if (!state.opportunity || state.proposals.length === 0) {
-    return <div>No proposals available to display.</div>;
-  }
-
-  return (
-    <div className="mt-5">
-      <h3 className="mb-4">Detailed Proposals</h3>
-      {state.proposals.map((proposal) => {
-        // Get the affiliations from state instead of making a synchronous XHR call
-        let affiliations: AffiliationMember[] = [];
-        if (
-          proposal.organization &&
-          state.proposalAffiliations[proposal.organization.id]
-        ) {
-          affiliations = state.proposalAffiliations[proposal.organization.id];
-        }
-
-        // Initialize form state for this proposal
-        const formInit = ProposalForm.init({
-          viewerUser: state.viewerUser,
-          opportunity: state.opportunity as SWUOpportunity,
-          proposal,
-          organizations: state.organizations,
-          evaluationContent: state.evaluationContent
-        });
-
-        // Update the team state with affiliations after form init
-        if (proposal.organization) {
-          const newTeam = Team.setAffiliations(
-            formInit[0].team,
-            affiliations,
-            proposal.organization.id
-          );
-          formInit[0] = {
-            ...formInit[0],
-            team: newTeam
-          };
-        }
-
-        // Initialize tab components
-        const [teamQuestionsState, _teamQuestionsCmds] =
-          ProposalTeamQuestionsTab.component.init({
-            proposal,
-            opportunity: state.opportunity as SWUOpportunity,
-            viewerUser: state.viewerUser,
-            evaluating: false,
-            questionEvaluation: undefined,
-            panelQuestionEvaluations: []
-          });
-
-        const [codeChallengeState, _codeChallengeCmds] =
-          ProposalCodeChallengeTab.component.init({
-            proposal,
-            opportunity: state.opportunity as SWUOpportunity,
-            viewerUser: state.viewerUser,
-            evaluating: false,
-            questionEvaluation: undefined,
-            panelQuestionEvaluations: []
-          });
-
-        const [teamScenarioState, _teamScenarioCmds] =
-          ProposalTeamScenarioTab.component.init({
-            proposal,
-            opportunity: state.opportunity as SWUOpportunity,
-            viewerUser: state.viewerUser,
-            evaluating: false,
-            questionEvaluation: undefined,
-            panelQuestionEvaluations: []
-          });
-
-        return (
-          <div key={proposal.id} className="mb-5 pb-5 border-bottom">
-            <h4 className="mb-4">
-              {proposal.organization?.legalName ||
-                proposal.anonymousProponentName}
-            </h4>
-            <ViewTabHeader proposal={proposal} viewerUser={state.viewerUser} />
-            <div className="mt-4">
-              <ProposalForm.view
-                disabled={true}
-                showAllTabs={true}
-                expandAccordions={true}
-                state={immutable(formInit[0])}
-                dispatch={() => {}}
-              />
-            </div>
-
-            <div className="mt-5 pt-5 border-top">
-              <h5 className="mb-3">Team Questions</h5>
-              <ProposalTeamQuestionsTab.component.view
-                state={immutable(teamQuestionsState)}
-                dispatch={() => {}}
-              />
-            </div>
-
-            <div className="mt-5 pt-5 border-top">
-              <h5 className="mb-3">Code Challenge</h5>
-              <ProposalCodeChallengeTab.component.view
-                state={immutable(codeChallengeState)}
-                dispatch={() => {}}
-              />
-            </div>
-
-            <div className="mt-5 pt-5 border-top">
-              <h5 className="mb-3">Team Scenario</h5>
-              <ProposalTeamScenarioTab.component.view
-                state={immutable(teamScenarioState)}
-                dispatch={() => {}}
-              />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
 const view: component_.page.View<State, InnerMsg, Route> = viewValid(
-  ({ state }) => {
+  ({ state, dispatch }) => {
     if (state.notFound) {
       return <div>Opportunity not found.</div>;
     }
@@ -647,139 +667,117 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.teamQuestionsState ||
       !state.consensusState ||
       !state.codeChallengeState ||
-      !state.teamScenarioState
+      !state.teamScenarioState ||
+      !state.summaryState ||
+      !state.opportunityState ||
+      !state.proposalDetailsState
     ) {
       return <div>Loading...</div>;
     }
 
     return (
-      <div>
-        <EditTabHeader
-          opportunity={state.opportunity}
-          viewerUser={state.viewerUser}
-        />
-        <Row className="mt-5">
-          <Col xs="12">
-            <Form.view
-              disabled={true}
-              showAllTabs={true}
-              expandAccordions={true}
-              state={state.form}
-              dispatch={() => {}}
-            />
-          </Col>
-        </Row>
+      <div className="opportunity-complete-page">
+        <h2 className="mb-4">Opportunity Summary</h2>
 
-        <div className="mt-5 pt-5 border-top">
-          <AddendaTab.component.view
-            state={state.addendaState}
-            dispatch={() => {}}
+        <div className="opportunity-complete-page-header">
+          <EditTabHeader
+            opportunity={state.opportunity}
+            viewerUser={state.viewerUser}
           />
         </div>
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">History</h3>
-              <HistoryTab.component.view
-                state={state.historyState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <SummaryTab.component.view
+          state={state.summaryState}
+          dispatch={() => {}}
+        />
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Proposals</h3>
-              <ProposalsTab.component.view
-                state={state.proposalsState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <hr></hr>
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Instructions</h3>
-              <InstructionsTab.component.view
-                state={state.instructionsState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <h2 className="mb-4">Opportunity Details</h2>
+        <OpportunityTab.component.view
+          state={state.opportunityState}
+          dispatch={() => {}}
+          showAllTabs={true}
+          expandAccordions={true}
+          {...({} as any)}
+        />
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Overview</h3>
-              <OverviewTab.component.view
-                state={state.overviewState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <hr></hr>
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Team Questions</h3>
-              <TeamQuestionsTab.component.view
-                state={state.teamQuestionsState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <AddendaTab.component.view
+          state={state.addendaState}
+          dispatch={() => {}}
+        />
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Team Questions Consensus</h3>
-              <ConsensusTab.component.view
-                state={state.consensusState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <hr></hr>
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Code Challenge</h3>
-              <CodeChallengeTab.component.view
-                state={state.codeChallengeState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <HistoryTab.component.view
+          state={state.historyState}
+          dispatch={() => {}}
+        />
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <h3 className="mb-4">Team Scenario</h3>
-              <TeamScenarioTab.component.view
-                state={state.teamScenarioState}
-                dispatch={() => {}}
-              />
-            </Col>
-          </Row>
-        </div>
+        <hr></hr>
 
-        <div className="mt-5 pt-5 border-top">
-          <Row>
-            <Col xs="12">
-              <ProposalDetailsSection state={state} />
-            </Col>
-          </Row>
-        </div>
+        <h2 className="mb-4">Proposals</h2>
+        <ProposalsTab.component.view
+          state={state.proposalsState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Instructions</h2>
+        <InstructionsTab.component.view
+          state={state.instructionsState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Overview</h2>
+        <OverviewTab.component.view
+          state={state.overviewState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Team Questions</h2>
+        <TeamQuestionsTab.component.view
+          state={state.teamQuestionsState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Consensus</h2>
+        <ConsensusTab.component.view
+          state={state.consensusState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Code Challenge</h2>
+        <CodeChallengeTab.component.view
+          state={state.codeChallengeState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="mb-4">Team Scenario</h2>
+        <TeamScenarioTab.component.view
+          state={state.teamScenarioState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <ProposalDetailsSection.component.view
+          state={state.proposalDetailsState}
+          dispatch={(msg) => dispatch(adt("proposalDetails", msg) as Msg)}
+        />
       </div>
     );
   }

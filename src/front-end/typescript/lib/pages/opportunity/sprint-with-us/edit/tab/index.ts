@@ -44,6 +44,8 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 
 export interface Params {
   viewerUser: User;
+  showAllTabs?: boolean;
+  expandAccordions?: boolean;
 }
 
 export type TabPermissions = {

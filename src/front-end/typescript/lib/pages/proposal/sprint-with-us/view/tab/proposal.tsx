@@ -51,6 +51,11 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
+interface Props extends component_.page.Props<State, InnerMsg, Route> {
+  showAllTabs?: boolean;
+  expandAccordions?: boolean;
+}
+
 export type InnerMsg =
   | ADT<"noop">
   | ADT<"onInitResponse", [OrganizationSlim[], string]>
@@ -329,10 +334,11 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = (props) => {
-  const { state, dispatch } = props;
+const view: component_.base.View<Props> = (props) => {
+  const { state, dispatch, showAllTabs, expandAccordions } = props;
   const form = state.form;
   if (!form) return null;
+
   const show = hasSWUOpportunityPassedCodeChallenge(state.opportunity);
   return (
     <div>
@@ -366,6 +372,8 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
               dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("form" as const, v)
               )}
+              showAllTabs={showAllTabs}
+              expandAccordions={expandAccordions}
             />
           ) : (
             <div className="pt-5 border-top">
