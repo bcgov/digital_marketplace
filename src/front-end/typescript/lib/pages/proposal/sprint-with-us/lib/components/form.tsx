@@ -828,7 +828,8 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
 const TeamView: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled
+  disabled,
+  expandAccordions
 }) => {
   const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
   return (
@@ -897,6 +898,7 @@ const TeamView: component_.base.View<Props> = ({
                 dispatch={component_.base.mapDispatch(dispatch, (value) =>
                   adt("team" as const, value)
                 )}
+                expandAccordions={expandAccordions}
               />
             </div>
           </Col>
@@ -1033,7 +1035,8 @@ const PricingView: component_.base.View<Props> = ({
 const TeamQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled
+  disabled,
+  expandAccordions
 }) => {
   return (
     <Row>
@@ -1064,6 +1067,7 @@ const TeamQuestionsView: component_.base.View<Props> = ({
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teamQuestions" as const, value)
           )}
+          expandAccordions={expandAccordions}
         />
       </Col>
     </Row>
@@ -1404,17 +1408,22 @@ const ReviewProposalView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+  showAllTabs?: boolean;
+  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled
+  disabled,
+  showAllTabs,
+  expandAccordions
 }) => {
   const props = {
     state,
     dispatch,
-    disabled: disabled || isLoading(state)
+    disabled: disabled || isLoading(state),
+    expandAccordions
   };
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
@@ -1432,11 +1441,31 @@ export const view: component_.base.View<Props> = ({
         return <ReviewProposalView {...props} />;
     }
   })();
+
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
+      case "Evaluation":
+        return <EvaluationView {...props} />;
+      case "Team":
+        return <TeamView {...props} />;
+      case "Pricing":
+        return <PricingView {...props} />;
+      case "Team Questions":
+        return <TeamQuestionsView {...props} />;
+      case "References":
+        return <ReferencesView {...props} />;
+      case "Review Proposal":
+        return <ReviewProposalView {...props} />;
+    }
+  };
+
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
       disabled={props.disabled}
+      showAllTabs={showAllTabs}
       getTabLabel={(a) => a}
+      getTabContent={showAllTabs ? getTabContent : undefined}
       isTabValid={(tab) => {
         switch (tab) {
           case "Evaluation":

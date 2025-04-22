@@ -17,6 +17,8 @@ import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
+import * as ProposalForm from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
+import * as Team from "front-end/lib/pages/proposal/sprint-with-us/lib/components/team";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -26,7 +28,14 @@ import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/vi
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { invalid, valid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
-import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  SWUProposalSlim,
+  SWUProposal
+} from "shared/lib/resources/proposal/sprint-with-us";
+import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
+import { OrganizationSlim } from "shared/lib/resources/organization";
+import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
+import { AffiliationMember } from "shared/lib/resources/affiliation";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -47,6 +56,9 @@ export interface ValidState {
   consensusState: Immutable<ConsensusTab.State>;
   codeChallengeState: Immutable<CodeChallengeTab.State>;
   teamScenarioState: Immutable<TeamScenarioTab.State>;
+  proposals: SWUProposal[];
+  organizations: OrganizationSlim[];
+  evaluationContent: string;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -65,7 +77,10 @@ export type InnerMsg =
   | ADT<
       "onProposalsAndEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
-    >;
+    >
+  | ADT<"onProposalDetailResponse", SWUProposal>
+  | ADT<"onOrganizationsResponse", OrganizationSlim[]>
+  | ADT<"onEvaluationContentResponse", string>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -148,7 +163,10 @@ const init: component_.page.Init<
           teamQuestionsState: immutable(teamQuestionsInitState),
           consensusState: immutable(consensusInitState),
           codeChallengeState: immutable(codeChallengeInitState),
-          teamScenarioState: immutable(teamScenarioInitState)
+          teamScenarioState: immutable(teamScenarioInitState),
+          proposals: [],
+          organizations: [],
+          evaluationContent: ""
         })
       ),
       [
@@ -236,6 +254,20 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                       evaluations
                     ]) as Msg;
                   }
+                ) as component_.Cmd<Msg>,
+                api.organizations.owned.readMany()((response) =>
+                  adt(
+                    "onOrganizationsResponse",
+                    api.getValidValue(response, [])
+                  )
+                ) as component_.Cmd<Msg>,
+                api.content.readOne()(
+                  SWU_PROPOSAL_EVALUATION_CONTENT_ID,
+                  (response) =>
+                    adt(
+                      "onEvaluationContentResponse",
+                      api.isValid(response) ? response.value.body : ""
+                    )
                 ) as component_.Cmd<Msg>
               ]
             ];
@@ -261,8 +293,20 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         break;
       }
       case "onProposalsAndEvaluationsReceived": {
-        console.log("onProposalsAndEvaluationsReceived", msg.value);
-        const [proposals, evaluations] = msg.value;
+        const [proposalSlims, evaluations] = msg.value;
+        // Create a cmd to fetch the full details of each proposal
+        const proposalCmds = proposalSlims.map((slim) => {
+          return api.proposals.swu.readOne(state.opportunity?.id as Id)(
+            slim.id,
+            (response) => {
+              if (api.isValid(response)) {
+                return adt("onProposalDetailResponse", response.value);
+              }
+              return adt("noop") as any;
+            }
+          ) as component_.Cmd<Msg>;
+        });
+
         return [
           state,
           [
@@ -271,7 +315,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "proposals",
                 ProposalsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
@@ -281,7 +325,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "overview",
                 OverviewTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   evaluations as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
@@ -291,7 +335,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "teamQuestions",
                 TeamQuestionsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
@@ -301,7 +345,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "consensus",
                 ConsensusTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   evaluations as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
@@ -311,7 +355,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "codeChallenge",
                 CodeChallengeTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
@@ -321,13 +365,27 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "teamScenario",
                 TeamScenarioTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposals as SWUProposalSlim[],
+                  proposalSlims as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[]
                 ])
               )
-            ) as component_.Cmd<Msg>
+            ) as component_.Cmd<Msg>,
+            ...proposalCmds
           ]
         ];
+      }
+      case "onProposalDetailResponse": {
+        const proposal = msg.value;
+        return [
+          state.update("proposals", (proposals) => [...proposals, proposal]),
+          []
+        ];
+      }
+      case "onOrganizationsResponse": {
+        return [state.set("organizations", msg.value), []];
+      }
+      case "onEvaluationContentResponse": {
+        return [state.set("evaluationContent", msg.value), []];
       }
       case "addenda":
         return component_.base.updateChild({
@@ -346,7 +404,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value: HistoryTab.InnerMsg) => adt("history", value)
         });
       case "proposals":
-        console.log("proposals", msg.value);
         return component_.base.updateChild({
           state,
           childStatePath: ["proposalsState"],
@@ -411,6 +468,88 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
     }
   }
 );
+
+interface ProposalDetailsSectionProps {
+  state: Immutable<ValidState>;
+}
+
+const ProposalDetailsSection: component_.base.View<
+  ProposalDetailsSectionProps
+> = ({ state }) => {
+  if (!state.opportunity || state.proposals.length === 0) {
+    return <div>No proposals available to display.</div>;
+  }
+
+  return (
+    <div className="mt-5">
+      <h3 className="mb-4">Detailed Proposals</h3>
+      {state.proposals.map((proposal) => {
+        // Need to provide affiliations - this is crucial for team members to show
+        let affiliations: AffiliationMember[] = [];
+        if (proposal.organization) {
+          // We're forcing an immediate synchronous fetch here as a workaround
+          // since we're in the render function and can't use async
+          try {
+            const xhr = new XMLHttpRequest();
+            xhr.open(
+              "GET",
+              `/api/affiliations?organization=${proposal.organization.id}`,
+              false
+            ); // false makes it synchronous
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.send();
+            if (xhr.status === 200) {
+              affiliations = JSON.parse(xhr.responseText);
+            }
+          } catch (e) {
+            console.error("Failed to load affiliations:", e);
+          }
+        }
+
+        // Initialize form state for this proposal
+        const formInit = ProposalForm.init({
+          viewerUser: state.viewerUser,
+          opportunity: state.opportunity as SWUOpportunity,
+          proposal,
+          organizations: state.organizations,
+          evaluationContent: state.evaluationContent
+        });
+
+        // Update the team state with affiliations after form init
+        if (proposal.organization) {
+          const newTeam = Team.setAffiliations(
+            formInit[0].team,
+            affiliations,
+            proposal.organization.id
+          );
+          formInit[0] = {
+            ...formInit[0],
+            team: newTeam
+          };
+        }
+
+        return (
+          <div key={proposal.id} className="mb-5 pb-5 border-bottom">
+            <h4 className="mb-4">
+              {proposal.organization?.legalName ||
+                proposal.anonymousProponentName}
+            </h4>
+            <ViewTabHeader proposal={proposal} viewerUser={state.viewerUser} />
+            <div className="mt-4">
+              <ProposalForm.view
+                disabled={true}
+                showAllTabs={true} // Display all tabs vertically
+                expandAccordions={true} // Expand all accordions for better viewing
+                state={immutable(formInit[0])}
+                dispatch={() => {}}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state }) => {
@@ -553,6 +692,14 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
                 state={state.teamScenarioState}
                 dispatch={() => {}}
               />
+            </Col>
+          </Row>
+        </div>
+
+        <div className="mt-5 pt-5 border-top">
+          <Row>
+            <Col xs="12">
+              <ProposalDetailsSection state={state} />
             </Col>
           </Row>
         </div>
