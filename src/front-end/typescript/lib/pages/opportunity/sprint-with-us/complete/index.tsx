@@ -59,6 +59,7 @@ export interface ValidState {
   proposals: SWUProposal[];
   organizations: OrganizationSlim[];
   evaluationContent: string;
+  proposalAffiliations: Record<Id, AffiliationMember[]>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -80,7 +81,8 @@ export type InnerMsg =
     >
   | ADT<"onProposalDetailResponse", SWUProposal>
   | ADT<"onOrganizationsResponse", OrganizationSlim[]>
-  | ADT<"onEvaluationContentResponse", string>;
+  | ADT<"onEvaluationContentResponse", string>
+  | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -166,7 +168,8 @@ const init: component_.page.Init<
           teamScenarioState: immutable(teamScenarioInitState),
           proposals: [],
           organizations: [],
-          evaluationContent: ""
+          evaluationContent: "",
+          proposalAffiliations: {}
         })
       ),
       [
@@ -376,8 +379,37 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       }
       case "onProposalDetailResponse": {
         const proposal = msg.value;
+        // Create a cmd to fetch affiliations for each proposal's organization
+        const cmds: component_.Cmd<Msg>[] = [];
+
+        if (proposal.organization) {
+          cmds.push(
+            api.affiliations.readManyForOrganization(proposal.organization.id)(
+              (response) => {
+                if (api.isValid(response)) {
+                  return adt("onAffiliationsResponse", [
+                    proposal.organization!.id,
+                    response.value
+                  ]);
+                }
+                return adt("noop") as any;
+              }
+            ) as component_.Cmd<Msg>
+          );
+        }
+
         return [
           state.update("proposals", (proposals) => [...proposals, proposal]),
+          cmds
+        ];
+      }
+      case "onAffiliationsResponse": {
+        const [organizationId, affiliations] = msg.value;
+        return [
+          state.update("proposalAffiliations", (current) => ({
+            ...current,
+            [organizationId]: affiliations
+          })),
           []
         ];
       }
@@ -484,26 +516,13 @@ const ProposalDetailsSection: component_.base.View<
     <div className="mt-5">
       <h3 className="mb-4">Detailed Proposals</h3>
       {state.proposals.map((proposal) => {
-        // Need to provide affiliations - this is crucial for team members to show
+        // Get the affiliations from state instead of making a synchronous XHR call
         let affiliations: AffiliationMember[] = [];
-        if (proposal.organization) {
-          // We're forcing an immediate synchronous fetch here as a workaround
-          // since we're in the render function and can't use async
-          try {
-            const xhr = new XMLHttpRequest();
-            xhr.open(
-              "GET",
-              `/api/affiliations?organization=${proposal.organization.id}`,
-              false
-            ); // false makes it synchronous
-            xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.send();
-            if (xhr.status === 200) {
-              affiliations = JSON.parse(xhr.responseText);
-            }
-          } catch (e) {
-            console.error("Failed to load affiliations:", e);
-          }
+        if (
+          proposal.organization &&
+          state.proposalAffiliations[proposal.organization.id]
+        ) {
+          affiliations = state.proposalAffiliations[proposal.organization.id];
         }
 
         // Initialize form state for this proposal
