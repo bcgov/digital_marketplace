@@ -19,6 +19,9 @@ import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
 import * as ProposalForm from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
 import * as Team from "front-end/lib/pages/proposal/sprint-with-us/lib/components/team";
+import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
+import * as ProposalCodeChallengeTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/code-challenge";
+import * as ProposalTeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -547,6 +550,37 @@ const ProposalDetailsSection: component_.base.View<
           };
         }
 
+        // Initialize tab components
+        const [teamQuestionsState, _teamQuestionsCmds] =
+          ProposalTeamQuestionsTab.component.init({
+            proposal,
+            opportunity: state.opportunity as SWUOpportunity,
+            viewerUser: state.viewerUser,
+            evaluating: false,
+            questionEvaluation: undefined,
+            panelQuestionEvaluations: []
+          });
+
+        const [codeChallengeState, _codeChallengeCmds] =
+          ProposalCodeChallengeTab.component.init({
+            proposal,
+            opportunity: state.opportunity as SWUOpportunity,
+            viewerUser: state.viewerUser,
+            evaluating: false,
+            questionEvaluation: undefined,
+            panelQuestionEvaluations: []
+          });
+
+        const [teamScenarioState, _teamScenarioCmds] =
+          ProposalTeamScenarioTab.component.init({
+            proposal,
+            opportunity: state.opportunity as SWUOpportunity,
+            viewerUser: state.viewerUser,
+            evaluating: false,
+            questionEvaluation: undefined,
+            panelQuestionEvaluations: []
+          });
+
         return (
           <div key={proposal.id} className="mb-5 pb-5 border-bottom">
             <h4 className="mb-4">
@@ -557,9 +591,33 @@ const ProposalDetailsSection: component_.base.View<
             <div className="mt-4">
               <ProposalForm.view
                 disabled={true}
-                showAllTabs={true} // Display all tabs vertically
-                expandAccordions={true} // Expand all accordions for better viewing
+                showAllTabs={true}
+                expandAccordions={true}
                 state={immutable(formInit[0])}
+                dispatch={() => {}}
+              />
+            </div>
+
+            <div className="mt-5 pt-5 border-top">
+              <h5 className="mb-3">Team Questions</h5>
+              <ProposalTeamQuestionsTab.component.view
+                state={immutable(teamQuestionsState)}
+                dispatch={() => {}}
+              />
+            </div>
+
+            <div className="mt-5 pt-5 border-top">
+              <h5 className="mb-3">Code Challenge</h5>
+              <ProposalCodeChallengeTab.component.view
+                state={immutable(codeChallengeState)}
+                dispatch={() => {}}
+              />
+            </div>
+
+            <div className="mt-5 pt-5 border-top">
+              <h5 className="mb-3">Team Scenario</h5>
+              <ProposalTeamScenarioTab.component.view
+                state={immutable(teamScenarioState)}
                 dispatch={() => {}}
               />
             </div>
@@ -603,11 +661,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <Row className="mt-5">
           <Col xs="12">
             <Form.view
-              disabled={true} // View mode only
-              showAllTabs={true} // Display all tabs vertically
-              expandAccordions={true} // Expand all accordions for better viewing
+              disabled={true}
+              showAllTabs={true}
+              expandAccordions={true}
               state={state.form}
-              dispatch={() => {}} // Empty dispatch as we're just viewing
+              dispatch={() => {}}
             />
           </Col>
         </Row>
