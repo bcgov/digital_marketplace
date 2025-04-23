@@ -1902,7 +1902,7 @@ async function calculateScores<T extends RawSWUProposal | RawSWUProposalSlim>(
         ),
         undefined
       )?.scores ?? [];
-    console.log(consensusScores);
+
     scoring.questionsScore = calculateProposalTeamQuestionScore(
       consensusScores,
       opportunityTeamQuestions
