@@ -651,6 +651,8 @@ export const component: Tab.Component<State, Msg> = {
         ({ status }) =>
           status === SWUTeamQuestionResponseEvaluationStatus.Submitted
       ) &&
+      state.opportunity.status ===
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
       isAdmin(state.viewerUser);
     return canEvaluationsBeFinalized
       ? component_.page.actions.links([
