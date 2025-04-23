@@ -35,6 +35,7 @@ import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
+import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -62,6 +63,10 @@ export interface ValidState {
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
   proposalDetailsState: Immutable<ProposalDetailsSection.State>;
+  individualEvaluationStates: Record<
+    string,
+    Immutable<ProposalTeamQuestionsTab.State>
+  >;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -84,7 +89,6 @@ export type InnerMsg =
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
     >
   | ADT<"onProposalDetailResponse", SWUProposal>
-  //   | ADT<"onOrganizationsResponse", OrganizationSlim[]>
   | ADT<"onEvaluationContentResponse", string>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>;
 
@@ -189,7 +193,8 @@ const init: component_.page.Init<
           organizations: [],
           evaluationContent: "",
           proposalAffiliations: {},
-          proposalDetailsState: immutable({ detailStates: {} })
+          proposalDetailsState: immutable({ detailStates: {} }),
+          individualEvaluationStates: {}
         })
       ),
       [
@@ -286,7 +291,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                     api.getValidValue(response, [])
                   ),
                   api.opportunities.swu.teamQuestions.evaluations.readMany(
-                    opportunity.id
+                    opportunity.id,
+                    false
                   )((response) => api.getValidValue(response, [])),
                   (proposals, evaluations) => {
                     return adt("onProposalsAndEvaluationsReceived", [
@@ -420,9 +426,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       }
       case "onProposalDetailResponse": {
         const proposal = msg.value;
+        let updatedState = state.update("proposals", (proposals) => [
+          ...proposals,
+          proposal
+        ]);
+
         // Create a cmd to fetch affiliations for each proposal's organization
         const cmds: component_.Cmd<Msg>[] = [];
-
         if (proposal.organization) {
           cmds.push(
             api.affiliations.readManyForOrganization(proposal.organization.id)(
@@ -439,86 +449,23 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           );
         }
 
-        const updatedState = state.update("proposals", (proposals) => [
-          ...proposals,
-          proposal
-        ]);
-
-        // Check if all proposals have been loaded
+        // Check if all proposals have been loaded and evaluations are present
         const expectedProposalCount = state.proposalsState.proposals.length;
         const loadedProposalCount = updatedState.proposals.length;
+        const allProposalsLoaded =
+          loadedProposalCount === expectedProposalCount;
+        const evaluationsPresent = state.overviewState.evaluations.length > 0;
+        const opportunityPresent = !!updatedState.opportunity;
 
-        // If we have loaded all proposals and don't have organizations with pending affiliation requests
-        // and we have already initialized the proposal details section, check if we need to re-initialize it
-        if (
-          loadedProposalCount === expectedProposalCount &&
-          // state.organizations.length > 0 &&
-          state.opportunity &&
-          !cmds.length
-        ) {
+        let proposalDetailsCmds: component_.Cmd<Msg>[] = [];
+        if (allProposalsLoaded && opportunityPresent) {
           // Initialize the proposal details component
-          const [proposalDetailsState, proposalDetailsCmds] =
+          const currentOpportunity = updatedState.opportunity;
+          if (!currentOpportunity) return [updatedState, cmds];
+
+          const [proposalDetailsState, initialProposalDetailsCmds] =
             ProposalDetailsSection.component.init({
-              opportunity: state.opportunity,
-              proposals: updatedState.proposals,
-              viewerUser: state.viewerUser,
-              organizations: state.organizations,
-              evaluationContent: state.evaluationContent,
-              proposalAffiliations: state.proposalAffiliations
-            });
-
-          // Map the commands from the proposal details component
-          const mappedCmds = proposalDetailsCmds.map((cmd) =>
-            component_.cmd.map(
-              cmd,
-              (msg: ProposalDetailsSection.Msg) =>
-                adt("proposalDetails", msg) as InnerMsg
-            )
-          );
-
-          return [
-            updatedState.set(
-              "proposalDetailsState",
-              immutable(proposalDetailsState)
-            ),
-            [...cmds, ...mappedCmds]
-          ];
-        } else {
-          return [updatedState, cmds];
-        }
-      }
-      case "onAffiliationsResponse": {
-        const [organizationId, affiliations] = msg.value;
-        const updatedState = state.update(
-          "proposalAffiliations",
-          (current) => ({
-            ...current,
-            [organizationId]: affiliations
-          })
-        );
-
-        // Check if we have all the affiliations for all the proposals with organizations
-        const proposalsWithOrgs = updatedState.proposals.filter(
-          (p) => p.organization
-        );
-        const haveAllAffiliations = proposalsWithOrgs.every(
-          (p) =>
-            p.organization &&
-            updatedState.proposalAffiliations[p.organization.id] !== undefined
-        );
-
-        // If we have everything needed to initialize proposal details
-        if (
-          haveAllAffiliations &&
-          updatedState.opportunity &&
-          updatedState.proposals.length > 0
-        ) {
-          // updatedState.organizations.length > 0
-
-          // Initialize the proposal details component
-          const [proposalDetailsState, proposalDetailsCmds] =
-            ProposalDetailsSection.component.init({
-              opportunity: updatedState.opportunity,
+              opportunity: currentOpportunity,
               proposals: updatedState.proposals,
               viewerUser: updatedState.viewerUser,
               organizations: updatedState.organizations,
@@ -527,24 +474,129 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             });
 
           // Map the commands from the proposal details component
-          const mappedCmds = proposalDetailsCmds.map((cmd) =>
+          proposalDetailsCmds = initialProposalDetailsCmds.map((cmd) =>
             component_.cmd.map(
               cmd,
               (msg: ProposalDetailsSection.Msg) =>
                 adt("proposalDetails", msg) as InnerMsg
             )
           );
+          updatedState = updatedState.set(
+            "proposalDetailsState",
+            immutable(proposalDetailsState)
+          );
 
-          return [
-            updatedState.set(
-              "proposalDetailsState",
-              immutable(proposalDetailsState)
-            ),
-            mappedCmds
-          ];
+          // Compute individual evaluation states if evaluations are present
+          if (evaluationsPresent) {
+            // Ensure the type matches the updated ValidState
+            const individualEvaluationStates: Record<
+              string,
+              Immutable<ProposalTeamQuestionsTab.State>
+            > = {};
+            updatedState.overviewState.evaluations.forEach((evaluation) => {
+              if (!evaluation || !evaluation.proposal) return;
+              const relatedProposal = updatedState.proposals.find(
+                (p) => p.id === evaluation.proposal.id
+              );
+              if (!relatedProposal) return;
+
+              // Use composite key here
+              const key = `${evaluation.evaluationPanelMember.user.id}-${evaluation.proposal.id}`;
+              individualEvaluationStates[key] = immutable({
+                opportunity: currentOpportunity,
+                proposal: relatedProposal,
+                viewerUser: updatedState.viewerUser,
+                evaluating: true,
+                questionEvaluation: evaluation,
+                panelQuestionEvaluations: [],
+                evaluationScores: evaluation.scores.map(
+                  (score, _i) =>
+                    ({
+                      score: immutable({
+                        child: {
+                          value: score.score,
+                          id: `evaluation-${key}-score-${score.order}`
+                        },
+                        errors: []
+                      }),
+                      notes: immutable({
+                        child: {
+                          value: score.notes,
+                          id: `evaluation-${key}-notes-${score.order}`
+                        },
+                        errors: []
+                      })
+                    } as any)
+                ),
+                openAccordions: new Set(
+                  Array.from({ length: evaluation.scores.length }, (_, i) => i)
+                ),
+                isEditing: false,
+                startEditingLoading: 0,
+                saveLoading: 0,
+                screenToFromLoading: 0,
+                showModal: null
+              });
+            });
+            updatedState = updatedState.set(
+              "individualEvaluationStates",
+              individualEvaluationStates
+            );
+          }
         }
 
-        return [updatedState, []];
+        return [updatedState, [...cmds, ...proposalDetailsCmds]];
+      }
+      case "onAffiliationsResponse": {
+        const [organizationId, affiliations] = msg.value;
+        let updatedState = state.update("proposalAffiliations", (current) => ({
+          ...current,
+          [organizationId]: affiliations
+        }));
+
+        // Re-check if all data is now available to compute individual evaluation states
+        const proposalsWithOrgs = updatedState.proposals.filter(
+          (p) => p.organization
+        );
+        const haveAllAffiliations = proposalsWithOrgs.every(
+          (p) =>
+            p.organization &&
+            updatedState.proposalAffiliations[p.organization.id] !== undefined
+        );
+        const allProposalsLoaded =
+          updatedState.proposals.length ===
+          state.proposalsState.proposals.length;
+        const opportunityPresent = !!updatedState.opportunity;
+
+        let proposalDetailsCmds: component_.Cmd<Msg>[] = [];
+        if (haveAllAffiliations && allProposalsLoaded && opportunityPresent) {
+          // Initialize or re-initialize proposal details if needed
+          const currentOpportunity = updatedState.opportunity;
+          if (!currentOpportunity) return [updatedState, proposalDetailsCmds];
+
+          const [proposalDetailsState, initialProposalDetailsCmds] =
+            ProposalDetailsSection.component.init({
+              opportunity: currentOpportunity,
+              proposals: updatedState.proposals,
+              viewerUser: updatedState.viewerUser,
+              organizations: updatedState.organizations,
+              evaluationContent: updatedState.evaluationContent,
+              proposalAffiliations: updatedState.proposalAffiliations
+            });
+          proposalDetailsCmds = initialProposalDetailsCmds.map((cmd) =>
+            component_.cmd.map(
+              cmd,
+              (msg: ProposalDetailsSection.Msg) =>
+                adt("proposalDetails", msg) as InnerMsg
+            )
+          );
+          updatedState = updatedState.set(
+            "proposalDetailsState",
+            immutable(proposalDetailsState)
+          );
+        }
+
+        return [updatedState, proposalDetailsCmds];
       }
       case "onEvaluationContentResponse": {
         return [state.set("evaluationContent", msg.value), []];
@@ -743,6 +795,38 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         />
 
         <hr></hr>
+
+        {/* Render individual evaluations for team questions */}
+        {Object.keys(state.individualEvaluationStates).length > 0 && (
+          <>
+            <h2
+              className="complete-report-section-header"
+              style={{ marginBottom: "20px" }}>
+              Individual Team Question Evaluations
+            </h2>
+            {state.overviewState.evaluations.map((evaluation, i) => {
+              // Use composite key here for retrieval
+              const key = `${evaluation.evaluationPanelMember.user.id}-${evaluation.proposal.id}`;
+              const evalState = state.individualEvaluationStates[key];
+              if (!evalState) return null;
+
+              return (
+                <div
+                  key={`team-question-evaluation-${key}-${i}`}
+                  className="mb-5">
+                  <h3>
+                    Evaluator: {evaluation.evaluationPanelMember.user.name}
+                  </h3>
+                  {ProposalTeamQuestionsTab.component.view({
+                    state: evalState,
+                    dispatch: () => {}
+                  })}
+                </div>
+              );
+            })}
+            <hr></hr>
+          </>
+        )}
 
         <h2 className="complete-report-section-header">Team Questions</h2>
         <TeamQuestionsTab.component.view

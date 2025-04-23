@@ -914,11 +914,14 @@ export async function readOneSWUTeamQuestionResponseConsensus(
 export async function readManySWUTeamQuestionResponseEvaluations(
   connection: Connection,
   session: Session,
-  opportunity: SWUOpportunity
+  opportunity: SWUOpportunity,
+  filterByUser = true
 ): Promise<boolean> {
   return (
     !!session &&
-    (isAdmin(session) || isGovernment(session)) &&
+    (filterByUser
+      ? isAdmin(session) || isGovernment(session)
+      : isAdmin(session)) &&
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       opportunity.status
     ) ||
