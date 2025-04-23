@@ -341,7 +341,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   connection: Connection,
   trx: Transaction,
   opportunityId: string,
-  proposalsCount: number
+  proposals: Id[]
 ) {
   const [
     [{ count: submittedEvaluatorEvaluationsCount }],
@@ -354,6 +354,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       .where({
         "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
       })
+      .whereIn("evaluations.proposal", proposals)
       .count("*"),
     // Evaluators for the most recent version
     connection<RawSWUEvaluationPanelMember>(
@@ -403,7 +404,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   ]);
   return (
     Number(submittedEvaluatorEvaluationsCount) ===
-    Number(evaluatorsCount) * proposalsCount * Number(questionsCount)
+    Number(evaluatorsCount) * proposals.length * Number(questionsCount)
   );
 }
 

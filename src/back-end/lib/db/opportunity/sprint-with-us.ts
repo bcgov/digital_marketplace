@@ -1760,7 +1760,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
         connection,
         trx,
         id,
-        evaluationParams.evaluations.map(({ proposal }) => proposal).length
+        evaluationParams.evaluations.map(({ proposal }) => proposal)
       )
     ) {
       const result = await updateSWUOpportunityStatus(
