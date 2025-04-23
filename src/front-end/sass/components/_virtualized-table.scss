@@ -1,0 +1,78 @@
+/* Wrapper for the fixed header table */
+.table-header-wrapper {
+  // Headers should not scroll
+  overflow: hidden;
+  border: 1px solid #dee2e6; // Match body container border
+  border-bottom: none; // Avoid double border
+  border-radius: 4px 4px 0 0; // Match body container corners
+}
+
+/* Header table specific styles */
+.table-header-fixed {
+  margin-bottom: 0 !important; // Remove default table margin
+  width: 100%;
+  table-layout: fixed;
+  background-color: #f8f9fa; // Header background
+
+  thead th {
+    // No longer sticky, relies on table-header-wrapper not scrolling
+    background: inherit; // Inherit from thead if set, or set here
+    border-bottom: 2px solid #dee2e6;
+    vertical-align: middle;
+    padding: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+
+    // Apply width from colgroup in body for consistency (via fixed layout)
+  }
+}
+
+/* Scrollable container for the table body */
+.virtualized-body-container {
+  position: relative; // Needed for absolute positioning inside
+  height: 550px; // Fixed height for body (600px total - header height approx)
+  overflow-y: auto;  // Enable vertical scroll
+  overflow-x: hidden; // Prevent horizontal scroll if columns fit
+  border: 1px solid #dee2e6;
+  border-top: none; // Connects with header wrapper border
+  border-radius: 0 0 4px 4px; // Match header wrapper corners
+}
+
+/* Body table specific styles (rendered inside positioned div) */
+.virtualized-body-table {
+  margin-bottom: 0;
+  width: 100%;
+  table-layout: fixed;
+  background-color: white;
+
+  tbody {
+    tr {
+      // Height is set inline on <tr> for virtualization
+      // height: 50px;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.075);
+      }
+    }
+
+    td {
+      vertical-align: middle;
+      padding: 0.75rem;
+      border-top: 1px solid #dee2e6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+/* Loading spinner styles (adjust positioning if needed) */
+.loading-spinner {
+  position: absolute;
+  top: 50%; // Relative to nearest positioned ancestor (could be .virtualized-body-container)
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+} 

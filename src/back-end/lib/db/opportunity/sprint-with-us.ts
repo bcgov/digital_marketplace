@@ -397,28 +397,27 @@ export function generateSWUOpportunityQuery(
   const query: Knex.QueryBuilder = connection<RawSWUOpportunity>(
     "swuOpportunities as opportunities"
   )
-    // Join on latest SWU status
-    .join("swuOpportunityStatuses as statuses", function () {
-      this.on("opportunities.id", "=", "statuses.opportunity").andOn(
-        "statuses.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "swuOpportunityStatuses" as statuses2 where \
-            statuses2.opportunity = opportunities.id and statuses2.status is not null)'
-        )
-      );
-    })
-    // Join on latest SWU version
-    .join("swuOpportunityVersions as versions", function () {
-      this.on("opportunities.id", "=", "versions.opportunity").andOn(
-        "versions.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "swuOpportunityVersions" as versions2 where \
-            versions2.opportunity = opportunities.id)'
-        )
-      );
-    })
+    // Join on latest SWU status using window function
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityStatuses" 
+         WHERE status IS NOT NULL 
+         ORDER BY opportunity, "createdAt" DESC) as statuses`,
+        []
+      ),
+      "opportunities.id",
+      "statuses.opportunity"
+    )
+    // Join on latest SWU version using window function
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityVersions" 
+         ORDER BY opportunity, "createdAt" DESC) as versions`,
+        []
+      ),
+      "opportunities.id",
+      "versions.opportunity"
+    )
     .select<RawSWUOpportunitySlim[]>(
       "opportunities.id",
       "opportunities.createdAt",
