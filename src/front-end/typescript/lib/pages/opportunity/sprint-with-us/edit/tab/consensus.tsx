@@ -148,6 +148,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [state.set("showModal", null), []];
 
     case "submit": {
+      state = state.set("showModal", null);
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
       return [
@@ -218,6 +219,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     }
 
     case "finalize": {
+      state = state.set("showModal", null);
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
       return [
@@ -235,7 +237,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "onFinalizeResponse": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
-      state = state.set("submitLoading", false);
+      state = state.set("finalizeLoading", false);
       const result = msg.value;
       if (!api.isValid(result)) {
         return [
@@ -595,7 +597,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: "paper-plane",
               color: "info",
               button: true,
-              msg: adt("hideModal") as Msg
+              msg: adt("finalize") as Msg
             },
             {
               text: "Cancel",
@@ -644,10 +646,12 @@ export const component: Tab.Component<State, Msg> = {
         true as boolean
       );
     const canEvaluationsBeFinalized =
+      state.evaluations.length &&
       state.evaluations.every(
         ({ status }) =>
           status === SWUTeamQuestionResponseEvaluationStatus.Submitted
-      ) && isAdmin(state.viewerUser);
+      ) &&
+      isAdmin(state.viewerUser);
     return canEvaluationsBeFinalized
       ? component_.page.actions.links([
           {
@@ -673,7 +677,7 @@ export const component: Tab.Component<State, Msg> = {
             disabled: (() => {
               return isLoading || !areEvaluationsValid;
             })(),
-            onClick: () => dispatch(adt("submit") as Msg)
+            onClick: () => dispatch(adt("showModal", "submit") as Msg)
           }
         ])
       : component_.page.actions.none();
