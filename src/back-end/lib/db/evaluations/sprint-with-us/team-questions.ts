@@ -253,7 +253,6 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
               proposal: restOfEvaluation.proposal,
               status,
               createdAt: now,
-              createdBy: session.user.id,
               note: ""
             },
             "*"

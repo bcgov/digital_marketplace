@@ -1709,7 +1709,6 @@ export const submitIndividualQuestionEvaluations = tryDb<
                   evaluationPanelMember,
                   proposal,
                   createdAt: now,
-                  createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
                   note: evaluationParams.note
                 },
@@ -1788,7 +1787,6 @@ export const submitConsensusQuestionEvaluations = tryDb<
                   evaluationPanelMember,
                   proposal,
                   createdAt: now,
-                  createdBy: session.user.id,
                   status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
                   note: evaluationParams.note
                 },
