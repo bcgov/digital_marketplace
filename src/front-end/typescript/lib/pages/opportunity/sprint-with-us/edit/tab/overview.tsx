@@ -23,6 +23,7 @@ import React from "react";
 import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
+  hasSWUOpportunityPassedTeamQuestions,
   isSWUOpportunityAcceptingProposals,
   SWUOpportunity,
   SWUOpportunityStatus,
@@ -392,41 +393,41 @@ const makeCardData = (
   opportunity: SWUOpportunity,
   proposals: SWUProposalSlim[]
 ): ReportCard[] => {
-  const numProposals = opportunity.reporting?.numProposals || 0;
+  const numProposals = proposals.length;
   const [highestScore, averageScore] = proposals.reduce(
-    ([highest, average], { totalScore }, i) => {
-      if (!totalScore) {
+    ([highest, average], { questionsScore }, i) => {
+      if (!questionsScore) {
         return [highest, average];
       }
       return [
-        totalScore > highest ? totalScore : highest,
-        (average * i + totalScore) / (i + 1)
+        questionsScore > highest ? questionsScore : highest,
+        (average * i + questionsScore) / (i + 1)
       ];
     },
     [0, 0]
   );
-  const isAwarded = opportunity.status === SWUOpportunityStatus.Awarded;
+  const isComplete = hasSWUOpportunityPassedTeamQuestions(opportunity);
   return [
     {
-      icon: "comment-dollar",
-      name: `Proposal${numProposals === 1 ? "" : "s"}`,
+      icon: "users",
+      name: `Proponent${numProposals === 1 ? "" : "s"}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
       icon: "star-full",
       iconColor: "c-report-card-icon-highlight",
-      name: "Top Score",
+      name: "Top TQ Score",
       value:
-        isAwarded && highestScore
+        isComplete && highestScore
           ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     },
     {
       icon: "star-half",
       iconColor: "c-report-card-icon-highlight",
-      name: "Avg. Score",
+      name: "Avg. TQ Score",
       value:
-        isAwarded && averageScore
+        isComplete && averageScore
           ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     }
