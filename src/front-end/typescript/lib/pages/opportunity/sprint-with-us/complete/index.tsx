@@ -693,7 +693,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Opportunity Details</h2>
+        <h2 className="complete-report-section-header">Opportunity Details</h2>
         <OpportunityTab.component.view
           state={state.opportunityState}
           dispatch={() => {}}
@@ -704,6 +704,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
+        <h2 className="complete-report-section-header">Opportunity Addenda</h2>
         <AddendaTab.component.view
           state={state.addendaState}
           dispatch={() => {}}
@@ -711,6 +712,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
+        <h2 className="complete-report-section-header">Opportunity History</h2>
         <HistoryTab.component.view
           state={state.historyState}
           dispatch={() => {}}
@@ -718,7 +720,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Proposals</h2>
+        <h2 className="complete-report-section-header">Proposals</h2>
         <ProposalsTab.component.view
           state={state.proposalsState}
           dispatch={() => {}}
@@ -726,7 +728,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Instructions</h2>
+        <h2 className="complete-report-section-header">Instructions</h2>
         <InstructionsTab.component.view
           state={state.instructionsState}
           dispatch={() => {}}
@@ -734,7 +736,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Overview</h2>
+        <h2 className="complete-report-section-header">Overview</h2>
         <OverviewTab.component.view
           state={state.overviewState}
           dispatch={() => {}}
@@ -742,7 +744,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Team Questions</h2>
+        <h2 className="complete-report-section-header">Team Questions</h2>
         <TeamQuestionsTab.component.view
           state={state.teamQuestionsState}
           dispatch={() => {}}
@@ -750,7 +752,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Consensus</h2>
+        <h2 className="complete-report-section-header">Consensus</h2>
         <ConsensusTab.component.view
           state={state.consensusState}
           dispatch={() => {}}
@@ -758,7 +760,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Code Challenge</h2>
+        <h2 className="complete-report-section-header">Code Challenge</h2>
         <CodeChallengeTab.component.view
           state={state.codeChallengeState}
           dispatch={() => {}}
@@ -766,7 +768,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="mb-4">Team Scenario</h2>
+        <h2 className="complete-report-section-header">Team Scenario</h2>
         <TeamScenarioTab.component.view
           state={state.teamScenarioState}
           dispatch={() => {}}

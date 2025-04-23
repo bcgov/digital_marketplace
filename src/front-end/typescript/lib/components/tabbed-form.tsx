@@ -265,7 +265,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
               <div
                 key={`all-tabs-${index}`}
                 className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
-                <h3 className="mb-4">
+                <h3
+                  className={`mb-4 tabbed-form-section-header tabbed-form-section-header-${index}`}>
                   {index + 1}. {props.getTabLabel(tab)}
                 </h3>
                 {props.getTabContent

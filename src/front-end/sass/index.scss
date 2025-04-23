@@ -1052,16 +1052,34 @@ nav.navbar .nav-link:hover {
 }
 
 .opportunity-complete-page {
+  // Show only the first header for the opportunity data
   .opportunity-edit-tab-header{
     display: none;
   }
   .opportunity-complete-page-header .opportunity-edit-tab-header{
     display: block;
   }
+  // Show only the first header for the proposal data
   .proposal-view-tab-header{
     display: none;
   }
   .proposal-complete-page-header .proposal-view-tab-header{
     display: block;
+  }
+  // Remove minimum height requirements for text boxes
+  // (fixes print view)
+  .d-flex.flex-column{
+    min-height: unset !important;
+    height: unset !important;
+  }
+   /* Force new page */
+  .complete-report-section-header {
+    page-break-before: always;
+  }
+  .tabbed-form-section-header {
+    page-break-before: always;
+  }
+  .tabbed-form-section-header-0 {
+    page-break-before: unset;
   }
 }

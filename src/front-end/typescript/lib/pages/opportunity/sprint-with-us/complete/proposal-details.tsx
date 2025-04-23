@@ -183,21 +183,21 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         {...({} as any)}
       />
 
-      <h2>Team Questions</h2>
+      <h2 className="complete-report-section-header">Team Questions</h2>
       <ProposalTeamQuestionsTab.component.view
         state={immutable(state.teamQuestionsState)}
         dispatch={() => {}}
       />
 
       <hr></hr>
-      <h2>Code Challenge</h2>
+      <h2 className="complete-report-section-header">Code Challenge</h2>
       <ProposalCodeChallengeTab.component.view
         state={immutable(state.codeChallengeState)}
         dispatch={() => {}}
       />
 
       <hr></hr>
-      <h2>Team Scenario</h2>
+      <h2 className="complete-report-section-header">Team Scenario</h2>
       <ProposalTeamScenarioTab.component.view
         state={immutable(state.teamScenarioState)}
         dispatch={() => {}}
@@ -217,20 +217,22 @@ const view: component_.base.View<
 
   return (
     <div className="mt-5">
-      <h2 className="mb-4">Proposals</h2>
       {proposals.map((proposalId) => {
         const proposalState = state.detailStates[proposalId];
         const proposal = proposalState?.formState.proposal;
-
         if (!proposal) return null;
 
         return (
-          <ProposalDetail
-            key={proposalId}
-            proposal={proposal}
-            state={proposalState}
-            viewerUser={proposalState.formState.viewerUser}
-          />
+          <div key={proposalId}>
+            <h2 className="mb-4 complete-report-section-header">
+              Proposal - {proposal.anonymousProponentName}
+            </h2>
+            <ProposalDetail
+              proposal={proposal}
+              state={proposalState}
+              viewerUser={proposalState.formState.viewerUser}
+            />
+          </div>
         );
       })}
     </div>
