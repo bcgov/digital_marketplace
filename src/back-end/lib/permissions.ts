@@ -727,6 +727,18 @@ export async function readOneSWUProposal(
         ))) ||
       false
     );
+  } else if (
+    session &&
+    [
+      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    ].includes(proposal.opportunity.status)
+  ) {
+    return await isSWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      proposal.opportunity.id
+    );
   }
   return false;
 }
@@ -755,6 +767,18 @@ export async function readManySWUProposals(
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return true;
+  } else if (
+    session &&
+    [
+      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    ].includes(opportunity.status)
+  ) {
+    return await isSWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      opportunity.id
+    );
   }
   return false;
 }
