@@ -858,7 +858,7 @@ const update: crud.Update<
         (![
           "submitIndividualQuestionEvaluations",
           "submitConsensusQuestionEvaluations",
-          "edutEvaluationPanel"
+          "editEvaluationPanel"
         ].includes(request.body.tag) &&
           !(await permissions.editSWUOpportunity(
             connection,
