@@ -178,7 +178,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.submittedQuestionEvaluationScoresForConsensus.error
+                  toasts.submittedQuestionEvaluationConsensuses.error
                 )
               )
             )
@@ -192,7 +192,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.submittedQuestionEvaluationScoresForConsensus.success
+                toasts.submittedQuestionEvaluationConsensuses.success
               )
             )
           ),
@@ -245,7 +245,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.submittedQuestionEvaluationScoresForConsensus.error
+                  toasts.finalizedQuestionEvaluationConsensuses.error
                 )
               )
             )
@@ -259,7 +259,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.submittedQuestionEvaluationScoresForConsensus.success
+                toasts.finalizedQuestionEvaluationConsensuses.success
               )
             )
           ),
