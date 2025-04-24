@@ -145,7 +145,10 @@ export async function hasAcceptedPreviousTerms(
 // Users.
 
 export function readManyUsers(session: Session): boolean {
-  return !!session && session.user.type === UserType.Admin;
+  return (
+    !!session &&
+    [UserType.Admin, UserType.Government].includes(session.user.type)
+  );
 }
 
 export function readOneUser(session: Session, userId: string): boolean {
