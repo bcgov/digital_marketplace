@@ -58,7 +58,7 @@ import { Content } from "shared/lib/resources/content";
 
 type InfoTab = "details" | "scope" | "attachments" | "addenda";
 
-interface ValidState {
+export interface ValidState {
   toggleWatchLoading: number;
   opportunity: SWUOpportunity | null;
   existingProposal?: SWUProposalSlim | null;
@@ -71,7 +71,7 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg =
+export type InnerMsg =
   | ADT<"noop">
   | ADT<
       "onInitResponse",

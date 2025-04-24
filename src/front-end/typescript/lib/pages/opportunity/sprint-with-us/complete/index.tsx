@@ -24,7 +24,7 @@ import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us"
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
-import { invalid, valid } from "shared/lib/http";
+import { invalid, valid, isValid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
 import {
   SWUProposalSlim,
@@ -33,9 +33,12 @@ import {
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
+import * as OpportunityView from "../view";
 import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
+// @ts-ignore - OpportunityViewTabInfo may not be exported if not used elsewhere yet
+import { OpportunityViewTabInfo } from "../view"; // Import the type for tabs
 
 export interface RouteParams {
   opportunityId: Id;
@@ -67,6 +70,7 @@ export interface ValidState {
     string,
     Immutable<ProposalTeamQuestionsTab.State>
   >;
+  opportunityViewState: Immutable<OpportunityView.State>;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -84,6 +88,7 @@ export type InnerMsg =
   | ADT<"teamScenario", TeamScenarioTab.InnerMsg>
   | ADT<"summary", SummaryTab.InnerMsg>
   | ADT<"proposalDetails", ProposalDetailsSection.Msg>
+  | ADT<"opportunityView", OpportunityView.InnerMsg>
   | ADT<
       "onProposalsAndEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
@@ -170,6 +175,14 @@ const init: component_.page.Init<
         expandAccordions: true
       });
 
+    // Initialize the OpportunityView component state
+    const [opportunityViewState, _opportunityViewCmds] =
+      OpportunityView.component.init({
+        routeParams,
+        shared: shared as unknown as SharedState,
+        routePath: "" // Provide an empty routePath initially, will be updated later if needed
+      });
+
     return [
       valid(
         immutable({
@@ -194,12 +207,17 @@ const init: component_.page.Init<
           evaluationContent: "",
           proposalAffiliations: {},
           proposalDetailsState: immutable({ detailStates: {} }),
-          individualEvaluationStates: {}
+          individualEvaluationStates: {},
+          opportunityViewState: opportunityViewState
         })
       ),
       [
         api.opportunities.swu.readOne()(routeParams.opportunityId, (response) =>
           adt("onInitResponse", response)
+        ),
+        // Map OpportunityView commands
+        ..._opportunityViewCmds.map((cmd) =>
+          component_.cmd.map(cmd, (msg) => adt("opportunityView", msg))
         )
       ] as component_.Cmd<Msg>[]
     ];
@@ -264,7 +282,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               ...opportunityState,
               opportunity
             };
-            // Initialize the form for the opportunity
             const [oppFormState, _oppFormCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
@@ -272,14 +289,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             });
             updatedOpportunityState.form = immutable(oppFormState);
 
+            const newState = state.merge({
+              opportunity,
+              loading: false,
+              form: immutable(formState),
+              opportunityState: immutable(updatedOpportunityState)
+            });
+
             return [
-              state.merge({
-                opportunity,
-                loading: false,
-                form: immutable(formState),
-                opportunityState: immutable(updatedOpportunityState)
-              }),
+              newState,
               [
+                // Commands for other tabs
                 component_.cmd.dispatch(adt("addenda", addendaOnInitMsg)),
                 component_.cmd.dispatch(adt("history", historyOnInitMsg)),
                 component_.cmd.dispatch(
@@ -328,8 +348,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             return [state, []];
           }
         }
-        // This line is never reached because all cases in the inner switch return
-        // But adding it makes the linter happy
         break;
       }
       case "onProposalsAndEvaluationsReceived": {
@@ -694,6 +712,75 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value: ProposalDetailsSection.Msg) =>
             adt("proposalDetails", value)
         });
+      case "opportunityView": {
+        // This doesn't work because the we are trying to render a page component inside a page component
+        // It uses State = Validation<Immutable.., and it fails when running updateValid state.set function
+        //  const updateChildResult= component_.base.updateChild({
+        //    state,
+        //    childStatePath: ["opportunityViewState"],
+        //    childUpdate: OpportunityView.component.update,
+        //    childMsg: msg.value,
+        //    mapChildMsg: (value: OpportunityView.InnerMsg) => adt("opportunityView", value)
+        //  });
+        //  console.log('updateChildResult', updateChildResult);
+        //  return updateChildResult as any;
+
+        const opportunityViewMsg = msg.value;
+        console.log("opportunityView msg.value", opportunityViewMsg);
+
+        // We only need to handle the initial loading via onInitResponse.
+
+        // Update the base opportunityViewState when its init completes
+        // Check the tag on the InnerMsg first
+        if (opportunityViewMsg.tag === "onInitResponse") {
+          // msg.value is the array payload for onInitResponse
+          const responsePayload = opportunityViewMsg.value;
+          const cmds: component_.Cmd<Msg>[] = [];
+
+          const [
+            routePath,
+            opportunityResponse,
+            proposalResponse,
+            contentResponse,
+            isQualified
+          ] = responsePayload; // Destructure the array payload
+
+          // Ensure opportunityResponse (the second element) is valid
+          if (opportunityResponse.tag !== "valid") {
+            // Handle invalid opportunity response if necessary
+            console.error(
+              "OpportunityView initialization failed: Invalid opportunity response",
+              opportunityResponse.value
+            );
+            return [state, []]; // Or dispatch an error message
+          }
+
+          // Construct the inner state for OpportunityView
+          const newInnerState = immutable({
+            routePath,
+            opportunity: opportunityResponse.value, // Use the valid opportunity
+            existingProposal: proposalResponse,
+            scopeContent:
+              contentResponse.tag === "valid" ? contentResponse.value.body : "", // Handle content response validity
+            isQualified: isQualified,
+            viewerUser: state.viewerUser,
+            activeInfoTab: "details" // Default active tab remains "details" for the base state
+          });
+
+          // Wrap the inner state in a valid Validation object
+          const newOpportunityViewState = valid(
+            newInnerState
+          ) as Immutable<OpportunityView.State>;
+          const updatedState = state.set(
+            "opportunityViewState",
+            newOpportunityViewState
+          );
+          return [updatedState, cmds];
+        }
+
+        // If the message is not onInitResponse, just return the current state and no commands
+        return [state, []];
+      }
       default:
         return [state, []];
     }
@@ -722,13 +809,89 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.teamScenarioState ||
       !state.summaryState ||
       !state.opportunityState ||
-      !state.proposalDetailsState
+      !state.proposalDetailsState ||
+      !state.opportunityViewState
     ) {
       return <div>Loading...</div>;
     }
 
+    // Function to create a view state with a specific active tab
+    const createOpportunityViewState = (
+      activeTab: OpportunityViewTabInfo
+    ): Immutable<OpportunityView.State> | null => {
+      if (isValid(state.opportunityViewState)) {
+        const baseInnerState = state.opportunityViewState.value;
+        const modifiedInnerState = baseInnerState.set(
+          "activeInfoTab",
+          activeTab
+        );
+        return valid(modifiedInnerState) as Immutable<OpportunityView.State>;
+      }
+      return null;
+    };
+
+    const opportunityViewStates = {
+      details: createOpportunityViewState("details"),
+      scope: createOpportunityViewState("scope"),
+      attachments: createOpportunityViewState("attachments"),
+      addenda: createOpportunityViewState("addenda")
+    };
+
     return (
       <div className="opportunity-complete-page">
+        {/* Render the OpportunityView component multiple times */}
+        {opportunityViewStates.details ? (
+          <>
+            <h2 className="mb-4">Opportunity Details View</h2>
+            <OpportunityView.component.view
+              state={opportunityViewStates.details}
+              dispatch={() => {}} // Dispatch is no-op for these read-only views
+            />
+            <hr />
+          </>
+        ) : (
+          <div>Loading Opportunity Details View...</div>
+        )}
+
+        {opportunityViewStates.scope ? (
+          <>
+            <h2 className="mb-4">Opportunity Scope View</h2>
+            <OpportunityView.component.view
+              state={opportunityViewStates.scope}
+              dispatch={() => {}}
+            />
+            <hr />
+          </>
+        ) : (
+          <div>Loading Opportunity Scope View...</div>
+        )}
+
+        {opportunityViewStates.attachments ? (
+          <>
+            <h2 className="mb-4">Opportunity Attachments View</h2>
+            <OpportunityView.component.view
+              state={opportunityViewStates.attachments}
+              dispatch={() => {}}
+            />
+            <hr />
+          </>
+        ) : (
+          <div>Loading Opportunity Attachments View...</div>
+        )}
+
+        {opportunityViewStates.addenda ? (
+          <>
+            <h2 className="mb-4">Opportunity Addenda View</h2>
+            <OpportunityView.component.view
+              state={opportunityViewStates.addenda}
+              dispatch={() => {}}
+            />
+            <hr />
+          </>
+        ) : (
+          <div>Loading Opportunity Addenda View...</div>
+        )}
+
         <h2 className="mb-4">Opportunity Summary</h2>
 
         <div className="opportunity-complete-page-header">
