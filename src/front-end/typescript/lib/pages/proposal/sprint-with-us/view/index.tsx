@@ -175,7 +175,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 getTeamQuestionsOpportunityTab(
                   evaluating,
                   panelQuestionEvaluations
-                )
+                ),
+                questionEvaluation
               );
               // Initialize the tab.
               const tabComponent = Tab.idToDefinition(tabId).component;

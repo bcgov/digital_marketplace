@@ -138,6 +138,49 @@ export function idToDefinition<K extends TabId>(
   }
 }
 
+function makeTeamQuestionsSidebarLink(
+  tab: TabId,
+  proposal: SWUProposal,
+  activeTab: TabId,
+  teamQuestionsTab: "consensus" | "overview" | "teamQuestions",
+  questionEvaluation: SWUTeamQuestionResponseEvaluation | undefined
+): MenuSidebar.SidebarItem {
+  const { icon, title } = idToDefinition(tab);
+  let link;
+  switch (teamQuestionsTab) {
+    case "consensus":
+      link = adt("questionEvaluationConsensusSWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "overview":
+      link = adt("questionEvaluationIndividualSWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "teamQuestions":
+      link = adt("proposalSWUView" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        tab
+      });
+      break;
+  }
+
+  return adt("link", {
+    icon,
+    text: `${title} ${link.tag !== "proposalSWUView" ? "(Eval)" : ""}`.trim(),
+    active: activeTab === tab,
+    dest: routeDest(link)
+  });
+}
+
 export function makeSidebarLink(
   tab: TabId,
   proposal: SWUProposal,
@@ -161,7 +204,8 @@ export function makeSidebarLink(
 export function makeSidebarState(
   activeTab: TabId,
   proposal: SWUProposal,
-  teamQuestionsTab: "consensus" | "overview" | "teamQuestions"
+  teamQuestionsTab: "consensus" | "overview" | "teamQuestions",
+  questionEvaluation?: SWUTeamQuestionResponseEvaluation
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     backLink: {
@@ -188,7 +232,13 @@ export function makeSidebarState(
       adt("heading", "Vendor Proposal"),
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
-      makeSidebarLink("teamQuestions", proposal, activeTab),
+      makeTeamQuestionsSidebarLink(
+        "teamQuestions",
+        proposal,
+        activeTab,
+        teamQuestionsTab,
+        questionEvaluation
+      ),
       makeSidebarLink("codeChallenge", proposal, activeTab),
       makeSidebarLink("teamScenario", proposal, activeTab),
       adt("heading", "Management"),
