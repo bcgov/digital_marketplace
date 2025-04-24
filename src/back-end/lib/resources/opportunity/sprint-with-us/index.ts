@@ -2018,7 +2018,7 @@ const update: crud.Update<
             )
           ) {
             return invalid({
-              opportunity: adt("edit" as const, {
+              opportunity: adt("editEvaluationPanel" as const, {
                 evaluationPanel: validatedEvaluationPanel.value
               })
             });
