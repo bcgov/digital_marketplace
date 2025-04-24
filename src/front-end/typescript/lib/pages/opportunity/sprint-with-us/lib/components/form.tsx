@@ -151,6 +151,7 @@ export interface Params {
   opportunity?: SWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
+  users: User[];
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -201,6 +202,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
+  users,
   activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const startingPhase = getStartingPhase(opportunity);
@@ -433,7 +435,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [evaluationPanelState, evaluationPanelCmds] = EvaluationPanel.init({
     evaluationPanel: opportunity?.evaluationPanel || [
       { user: viewerUser, chair: true, evaluator: true, order: 0 }
-    ]
+    ],
+    users
   });
   const [questionsWeightState, questionsWeightCmds] = NumberField.init({
     errors: [],

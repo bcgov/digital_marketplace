@@ -104,9 +104,7 @@ interface ValidatedCreateRequestBody
   prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
   implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
-  evaluationPanel: (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & {
-    user: Id;
-  })[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
 }
 
 interface ValidatedUpdateRequestBody {
@@ -858,7 +856,7 @@ const update: crud.Update<
         (![
           "submitIndividualQuestionEvaluations",
           "submitConsensusQuestionEvaluations",
-          "editEvaluationPanel"
+          "edutEvaluationPanel"
         ].includes(request.body.tag) &&
           !(await permissions.editSWUOpportunity(
             connection,
