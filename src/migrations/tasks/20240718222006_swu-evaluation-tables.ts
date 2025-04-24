@@ -104,22 +104,24 @@ export async function up(connection: Knex): Promise<void> {
     "statuses.status": SWUOpportunityStatus.EvaluationCodeChallenge
   });
 
-  await connection("swuOpportunityStatuses").insert(
-    codeChallengeStatuses.map((status) => {
-      const createdAt = new Date(status.createdAt);
-      // Seems unlikely to conflict with existing records.
-      createdAt.setMilliseconds(createdAt.getMilliseconds() - 1);
-      return {
-        id: generateUuid(),
-        createdAt,
-        createdBy: status.createdBy,
-        opportunity: status.opportunity,
-        status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
-        event: null,
-        note: null
-      };
-    })
-  );
+  if (codeChallengeStatuses.length) {
+    await connection("swuOpportunityStatuses").insert(
+      codeChallengeStatuses.map((status) => {
+        const createdAt = new Date(status.createdAt);
+        // Seems unlikely to conflict with existing records.
+        createdAt.setMilliseconds(createdAt.getMilliseconds() - 1);
+        return {
+          id: generateUuid(),
+          createdAt,
+          createdBy: status.createdBy,
+          opportunity: status.opportunity,
+          status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+          event: null,
+          note: null
+        };
+      })
+    );
+  }
 
   await connection.schema.raw(` \
     ALTER TABLE "swuOpportunityStatuses" \
