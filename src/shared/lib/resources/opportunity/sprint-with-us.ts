@@ -314,7 +314,7 @@ export type CreateSWUTeamQuestionBody = Omit<
 >;
 
 export type CreateSWUEvaluationPanelMemberBody = {
-  email: string;
+  user: Id;
   chair: boolean;
   evaluator: boolean;
   order: number;
