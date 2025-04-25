@@ -380,7 +380,7 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(
 export const newSWUPanel = makeSend(newSWUPanelT);
 
 export async function newSWUPanelT(
-  panel: User[],
+  recipients: User[],
   opportunity: SWUOpportunity,
   repost: boolean
 ): Promise<Emails> {
@@ -389,8 +389,8 @@ export async function newSWUPanelT(
   const description =
     "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
   const emails: Emails = [];
-  for (let i = 0; i < panel.length; i += MAILER_BATCH_SIZE) {
-    const batch = panel.slice(i, i + MAILER_BATCH_SIZE);
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
       summary: `SWU opportunity ${
         repost ? "re-published" : "published"
@@ -402,14 +402,6 @@ export async function newSWUPanelT(
         title,
         description,
         descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              An administrator will discuss the next steps with you. You will be
-              notified once the opportunity is ready for evaluation.
-            </p>
-          </div>
-        ),
         callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
       })
     });
@@ -637,7 +629,7 @@ export async function readyForEvalSWUOpportunityT(
 export const editSWUPanel = makeSend(editSWUPanelT);
 
 export async function editSWUPanelT(
-  panel: User[],
+  recipients: User[],
   opportunity: SWUOpportunity
 ): Promise<Emails> {
   const title =
@@ -645,8 +637,8 @@ export async function editSWUPanelT(
   const description =
     "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
   const emails: Emails = [];
-  for (let i = 0; i < panel.length; i += MAILER_BATCH_SIZE) {
-    const batch = panel.slice(i, i + MAILER_BATCH_SIZE);
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
       summary:
         "SWU opportunity evaluation panel updated; sent to evaluation panelists.",
@@ -657,11 +649,6 @@ export async function editSWUPanelT(
         title,
         description,
         descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>An administrator will discuss the next steps with you.</p>
-          </div>
-        ),
         callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
       })
     });
