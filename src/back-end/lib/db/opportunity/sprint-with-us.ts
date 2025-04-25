@@ -1773,6 +1773,15 @@ export const submitIndividualQuestionEvaluations = tryDb<
       if (!result) {
         throw new Error("unable to update opportunity");
       }
+
+      // Notify chair that evaluations are complete
+      const opportunity = getValidValue(result, null);
+      if (opportunity) {
+        swuOpportunityNotifications.handleSWUReadyForQuestionConsensus(
+          connection,
+          opportunity
+        );
+      }
     }
   });
 

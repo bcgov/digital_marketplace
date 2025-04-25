@@ -217,6 +217,22 @@ export async function handleSWUReadyForEvaluation(
   }
 }
 
+export async function handleSWUReadyForQuestionConsensus(
+  connection: db.Connection,
+  opportunity: SWUOpportunity
+): Promise<void> {
+  // Notify chair that they can begin consensuses
+  const chairMember =
+    opportunity.evaluationPanel &&
+    opportunity.evaluationPanel.find(({ chair }) => chair);
+  const chair =
+    chairMember &&
+    getValidValue(await db.readOneUser(connection, chairMember.user.id), null);
+  if (chair) {
+    await readyForQuestionConsensusSWUOpportunity(chair, opportunity);
+  }
+}
+
 export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
 
 export async function newSWUOpportunityPublishedT(
@@ -654,6 +670,34 @@ export async function editSWUPanelT(
     });
   }
   return emails;
+}
+
+export const readyForQuestionConsensusSWUOpportunity = makeSend(
+  readyForQuestionConsensusSWUOpportunityT
+);
+
+export async function readyForQuestionConsensusSWUOpportunityT(
+  recipient: User,
+  opportunity: SWUOpportunity
+): Promise<Emails> {
+  const title = "A Sprint With Us Opportunity Is Ready for Question Consensus";
+  const description =
+    "All evaluators have submitted their evaluations and you may now begin question consensuses " +
+    "for the following Digital Marketplace opportunity:";
+  return [
+    {
+      summary:
+        "SWU opportunity ready for question consensus; sent to evaluation panel chair.",
+      to: recipient.email || [],
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    }
+  ];
 }
 
 export function makeSWUOpportunityInformation(
