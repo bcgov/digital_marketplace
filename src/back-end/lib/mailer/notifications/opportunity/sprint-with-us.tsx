@@ -72,7 +72,7 @@ export async function handleSWUPublished(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((user) => user !== null);
+      .filter((user) => !!user);
   if (panel?.length) {
     await newSWUPanel(panel, opportunity, repost);
   }
@@ -190,7 +190,7 @@ export async function handleSWUPanelChange(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((member) => member !== null);
+      .filter((member) => !!member);
   if (panel?.length) {
     await editSWUPanel(panel, opportunity);
   }
@@ -211,7 +211,7 @@ export async function handleSWUReadyForEvaluation(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((member) => member !== null);
+      .filter((member) => !!member);
   if (panel?.length) {
     await readyForEvalSWUOpportunity(panel, opportunity);
   }
@@ -235,9 +235,32 @@ export async function handleSWUReadyForQuestionConsensus(
     ])
   )
     .map((user) => getValidValue(user, null))
-    .filter((user) => user !== null);
+    .filter((user) => !!user);
   if (recipients.length) {
     await readyForQuestionConsensusSWUOpportunity(recipients, opportunity);
+  }
+}
+
+export async function handleSWUQuestionConsensusSubmitted(
+  connection: db.Connection,
+  opportunity: SWUOpportunity
+): Promise<void> {
+  // Notify author and admins that consensus has been submitted.
+  const author =
+    opportunity.createdBy &&
+    getValidValue(
+      await db.readOneUser(connection, opportunity.createdBy.id),
+      null
+    );
+  // Notify all admin users of the submitted SWU
+  const adminUsers =
+    getValidValue(
+      await db.readManyUsersByRole(connection, UserType.Admin),
+      null
+    ) || [];
+  const recipients = [author, ...adminUsers].filter((user) => !!user);
+  if (recipients.length) {
+    await questionConsensusSWUOpportunitySubmitted(recipients, opportunity);
   }
 }
 
@@ -698,6 +721,37 @@ export async function readyForQuestionConsensusSWUOpportunityT(
     emails.push({
       summary:
         "SWU opportunity ready for question consensus; sent to evaluation panel chair and opportunity author.",
+      to: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
+export const questionConsensusSWUOpportunitySubmitted = makeSend(
+  questionConsensusSWUOpportunitySubmittedT
+);
+
+export async function questionConsensusSWUOpportunitySubmittedT(
+  recipients: User[],
+  opportunity: SWUOpportunity
+): Promise<Emails> {
+  const title =
+    "A Sprint With Us Opportunity Question Consensus Has Been Submitted";
+  const description =
+    "The following Digital Marketplace opportunity has had its question consensus submitted:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "SWU opportunity question consensus submitted; sent to opportunity author and admins.",
       to: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({

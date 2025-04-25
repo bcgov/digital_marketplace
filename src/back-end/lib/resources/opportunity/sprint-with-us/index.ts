@@ -2216,6 +2216,12 @@ const update: crud.Update<
               body.value,
               session
             );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUQuestionConsensusSubmitted(
+                connection,
+                dbResult.value
+              );
+            }
             break;
           case "editEvaluationPanel":
             dbResult = await db.updateSWUOpportunityVersion(
