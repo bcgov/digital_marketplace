@@ -223,6 +223,8 @@ async function rawSWUProposalToSWUProposal(
   const teamQuestionResponses = raw.teamQuestionResponses.map(
     ({ proposal, ...teamQuestionResponses }) => teamQuestionResponses
   );
+  // If the user is NOT a vendor, and the opportunity status prevents gov/admin from seeing the full proposal,
+  // then return the anonymous version. Vendors should always see their full proposal.
   if (
     session?.user.type !== UserType.Vendor &&
     !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)
@@ -364,6 +366,8 @@ async function rawSWUProposalSlimToSWUProposalSlim(
   if (!opportunity) {
     throw new Error("unable to process proposal");
   }
+  // If the user is NOT a vendor, and the opportunity status prevents gov/admin from seeing the full proposal,
+  // then return the anonymous version. Vendors should always see their full proposal.
   if (
     session?.user.type !== UserType.Vendor &&
     !doesSWUOpportunityStatusAllowGovToViewFullProposal(opportunity.status)

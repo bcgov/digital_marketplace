@@ -124,13 +124,13 @@ export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.EvaluationResourceQuestions,
   TWUOpportunityStatus.EvaluationChallenge,
   TWUOpportunityStatus.Processing,
-  TWUOpportunityStatus.Awarded
+  TWUOpportunityStatus.Awarded,
+  TWUOpportunityStatus.Canceled
 ];
 
 export const privateOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Draft,
   TWUOpportunityStatus.UnderReview,
-  TWUOpportunityStatus.Canceled,
   TWUOpportunityStatus.Suspended
 ];
 
