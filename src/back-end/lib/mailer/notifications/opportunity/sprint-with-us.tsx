@@ -70,13 +70,11 @@ export async function handleSWUPublished(
           db.readOneUser(connection, user.id)
         )
       )
-    ).map((user) => getValidValue(user, null));
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((user) => user !== null);
   if (panel?.length) {
-    await newSWUPanel(
-      panel.filter((member) => member !== null),
-      opportunity,
-      repost
-    );
+    await newSWUPanel(panel, opportunity, repost);
   }
 }
 
@@ -190,12 +188,11 @@ export async function handleSWUPanelChange(
           db.readOneUser(connection, user.id)
         )
       )
-    ).map((user) => getValidValue(user, null));
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((member) => member !== null);
   if (panel?.length) {
-    await editSWUPanel(
-      panel.filter((member) => member !== null),
-      opportunity
-    );
+    await editSWUPanel(panel, opportunity);
   }
 }
 
@@ -203,16 +200,20 @@ export async function handleSWUReadyForEvaluation(
   connection: db.Connection,
   opportunity: SWUOpportunity
 ): Promise<void> {
-  // Notify gov user that the opportunity is ready
-  const author =
-    (opportunity.createdBy &&
-      getValidValue(
-        await db.readOneUser(connection, opportunity.createdBy.id),
-        null
-      )) ||
-    null;
-  if (author) {
-    await readyForEvalSWUOpportunity(author, opportunity);
+  // Notify panel user that the opportunity is ready
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel
+          .filter(({ evaluator }) => evaluator) // Only notify evaluators
+          .map(({ user }) => db.readOneUser(connection, user.id))
+      )
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((member) => member !== null);
+  if (panel?.length) {
+    await readyForEvalSWUOpportunity(panel, opportunity);
   }
 }
 
@@ -598,17 +599,19 @@ export async function suspendedSWUOpportunityActionedT(
 export const readyForEvalSWUOpportunity = makeSend(readyForEvalSWUOpportunityT);
 
 export async function readyForEvalSWUOpportunityT(
-  recipient: User,
+  recipients: User[],
   opportunity: SWUOpportunity
 ): Promise<Emails> {
-  const title = "Your Sprint With Us Opportunity is Ready to Be Evaluated";
+  const title = "A Sprint With Us Opportunity is Ready to Be Evaluated";
   const description =
-    "Your Digital Marketplace opportunity has reached its proposal deadline.";
-  return [
-    {
+    "A Digital Marketplace opportunity has reached its proposal deadline.";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
       summary:
-        "SWU opportunity proposal deadline reached; sent to government author.",
-      to: recipient.email || [],
+        "SWU opportunity proposal deadline reached; sent to evaluation panel.",
+      to: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
         title,
@@ -626,8 +629,9 @@ export async function readyForEvalSWUOpportunityT(
         ),
         callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
       })
-    }
-  ];
+    });
+  }
+  return emails;
 }
 
 export const editSWUPanel = makeSend(editSWUPanelT);
