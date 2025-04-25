@@ -177,6 +177,28 @@ export async function handleSWUSuspended(
   }
 }
 
+export async function handleSWUPanelChange(
+  connection: db.Connection,
+  opportunity: SWUOpportunity
+) {
+  // Notify all users on the evaluation panel
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel.map(({ user }) =>
+          db.readOneUser(connection, user.id)
+        )
+      )
+    ).map((user) => getValidValue(user, null));
+  if (panel?.length) {
+    await editSWUPanel(
+      panel.filter((member) => member !== null),
+      opportunity
+    );
+  }
+}
+
 export async function handleSWUReadyForEvaluation(
   connection: db.Connection,
   opportunity: SWUOpportunity
@@ -606,6 +628,41 @@ export async function readyForEvalSWUOpportunityT(
       })
     }
   ];
+}
+
+export const editSWUPanel = makeSend(editSWUPanelT);
+
+export async function editSWUPanelT(
+  panel: User[],
+  opportunity: SWUOpportunity
+): Promise<Emails> {
+  const title =
+    "You Have Been Added to the Evaluation Panel for a Sprint With Us Opportunity";
+  const description =
+    "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
+  const emails: Emails = [];
+  for (let i = 0; i < panel.length; i += MAILER_BATCH_SIZE) {
+    const batch = panel.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "SWU opportunity evaluation panel updated; sent to evaluation panelists.",
+      to: MAILER_REPLY,
+      bcc: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>An administrator will discuss the next steps with you.</p>
+          </div>
+        ),
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export function makeSWUOpportunityInformation(

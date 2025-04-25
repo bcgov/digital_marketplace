@@ -2223,6 +2223,12 @@ const update: crud.Update<
               { ...body.value, id: request.params.id },
               session
             );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUPanelChange(
+                connection,
+                dbResult.value
+              );
+            }
             break;
           case "finalizeQuestionConsensuses":
             dbResult = await db.finalizeQuestionConsensus(
