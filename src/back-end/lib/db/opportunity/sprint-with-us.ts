@@ -1710,7 +1710,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
   SWUOpportunity
 >(async (connection, id, evaluationParams, session) => {
   const now = new Date();
-  await connection.transaction(async (trx) => {
+  const notify = await connection.transaction(async (trx) => {
     await Promise.all(
       evaluationParams.evaluations.map(
         async ({ evaluationPanelMember, proposal }) => {
@@ -1774,21 +1774,28 @@ export const submitIndividualQuestionEvaluations = tryDb<
         throw new Error("unable to update opportunity");
       }
 
-      // Notify chair that evaluations are complete
-      const opportunity = getValidValue(result, null);
-      if (opportunity) {
-        swuOpportunityNotifications.handleSWUReadyForQuestionConsensus(
-          connection,
-          opportunity
-        );
-      }
+      // Notify chair and author
+      return true;
     }
+    // Some evaluations are incomplete
+    return false;
   });
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
     throw new Error("unable to add note");
   }
+
+  if (notify) {
+    const opportunity = getValidValue(dbResult, null);
+    if (opportunity) {
+      swuOpportunityNotifications.handleSWUReadyForQuestionConsensus(
+        connection,
+        opportunity
+      );
+    }
+  }
+
   return valid(dbResult.value);
 });
 
