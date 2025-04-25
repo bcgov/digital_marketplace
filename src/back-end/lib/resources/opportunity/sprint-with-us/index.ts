@@ -2243,6 +2243,12 @@ const update: crud.Update<
               body.value,
               session
             );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUQuestionConsensusFinalized(
+                connection,
+                dbResult.value
+              );
+            }
             break;
         }
         if (isInvalid(dbResult)) {

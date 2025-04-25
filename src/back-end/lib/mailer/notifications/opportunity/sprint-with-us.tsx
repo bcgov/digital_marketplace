@@ -264,6 +264,31 @@ export async function handleSWUQuestionConsensusSubmitted(
   }
 }
 
+export async function handleSWUQuestionConsensusFinalized(
+  connection: db.Connection,
+  opportunity: SWUOpportunity
+): Promise<void> {
+  // Notify chair and author that consensus has been finalized
+  const chairMember =
+    opportunity.evaluationPanel &&
+    opportunity.evaluationPanel.find(({ chair }) => chair);
+
+  const recipients = (
+    await Promise.all([
+      ...(chairMember ? [db.readOneUser(connection, chairMember.user.id)] : []),
+      ...(opportunity.createdBy
+        ? [db.readOneUser(connection, opportunity.createdBy.id)]
+        : [])
+    ])
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((user) => !!user);
+
+  if (recipients.length) {
+    questionConsensusSWUOpportunityFinalized(recipients, opportunity);
+  }
+}
+
 export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
 
 export async function newSWUOpportunityPublishedT(
@@ -752,6 +777,37 @@ export async function questionConsensusSWUOpportunitySubmittedT(
     emails.push({
       summary:
         "SWU opportunity question consensus submitted; sent to opportunity author and admins.",
+      to: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
+export const questionConsensusSWUOpportunityFinalized = makeSend(
+  questionConsensusSWUOpportunitySubmittedT
+);
+
+export async function questionConsensusSWUOpportunityFinalizedT(
+  recipients: User[],
+  opportunity: SWUOpportunity
+): Promise<Emails> {
+  const title =
+    "A Sprint With Us Opportunity Question Consensus Has Been Finalized";
+  const description =
+    "The following Digital Marketplace opportunity question consensus finalized:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "SWU opportunity question consensus finalized; sent to opportunity author and chair.",
       to: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
