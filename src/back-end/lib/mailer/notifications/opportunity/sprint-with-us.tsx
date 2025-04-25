@@ -61,6 +61,23 @@ export async function handleSWUPublished(
   if (author) {
     await successfulSWUPublication(author, opportunity, repost);
   }
+
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel.map(({ user }) =>
+          db.readOneUser(connection, user.id)
+        )
+      )
+    ).map((user) => getValidValue(user, null));
+  if (panel?.length) {
+    await newSWUPanel(
+      panel.filter((member) => member !== null),
+      opportunity,
+      repost
+    );
+  }
 }
 
 export async function handleSWUUpdated(
@@ -335,6 +352,46 @@ export async function newSWUOpportunitySubmittedForReviewAuthorT(
       })
     }
   ];
+}
+
+export const newSWUPanel = makeSend(newSWUPanelT);
+
+export async function newSWUPanelT(
+  panel: User[],
+  opportunity: SWUOpportunity,
+  repost: boolean
+): Promise<Emails> {
+  const title =
+    "You Have Been Added to the Evaluation Panel for a Sprint With Us Opportunity";
+  const description =
+    "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
+  const emails: Emails = [];
+  for (let i = 0; i < panel.length; i += MAILER_BATCH_SIZE) {
+    const batch = panel.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary: `SWU opportunity ${
+        repost ? "re-published" : "published"
+      }; sent to evaluation panelists.`,
+      to: MAILER_REPLY,
+      bcc: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
+        body: (
+          <div>
+            <p>
+              An administrator will discuss the next steps with you. You will be
+              notified once the opportunity is ready for evaluation.
+            </p>
+          </div>
+        ),
+        callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
 }
 
 export const successfulSWUPublication = makeSend(successfulSWUPublicationT);
