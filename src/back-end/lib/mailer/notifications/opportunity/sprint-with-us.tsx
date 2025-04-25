@@ -221,15 +221,23 @@ export async function handleSWUReadyForQuestionConsensus(
   connection: db.Connection,
   opportunity: SWUOpportunity
 ): Promise<void> {
-  // Notify chair that they can begin consensuses
+  // Notify chair that they can begin consensuses and author of evaluation progress
   const chairMember =
     opportunity.evaluationPanel &&
     opportunity.evaluationPanel.find(({ chair }) => chair);
-  const chair =
-    chairMember &&
-    getValidValue(await db.readOneUser(connection, chairMember.user.id), null);
-  if (chair) {
-    await readyForQuestionConsensusSWUOpportunity(chair, opportunity);
+
+  const recipients = (
+    await Promise.all([
+      ...(chairMember ? [db.readOneUser(connection, chairMember.user.id)] : []),
+      ...(opportunity.createdBy
+        ? [db.readOneUser(connection, opportunity.createdBy.id)]
+        : [])
+    ])
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((user) => user !== null);
+  if (recipients.length) {
+    await readyForQuestionConsensusSWUOpportunity(recipients, opportunity);
   }
 }
 
@@ -677,18 +685,20 @@ export const readyForQuestionConsensusSWUOpportunity = makeSend(
 );
 
 export async function readyForQuestionConsensusSWUOpportunityT(
-  recipient: User,
+  recipients: User[],
   opportunity: SWUOpportunity
 ): Promise<Emails> {
   const title = "A Sprint With Us Opportunity Is Ready for Question Consensus";
   const description =
-    "All evaluators have submitted their evaluations and you may now begin question consensuses " +
+    "All evaluators have submitted their scores and you may now begin question consensuses " +
     "for the following Digital Marketplace opportunity:";
-  return [
-    {
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
       summary:
-        "SWU opportunity ready for question consensus; sent to evaluation panel chair.",
-      to: recipient.email || [],
+        "SWU opportunity ready for question consensus; sent to evaluation panel chair and opportunity author.",
+      to: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
         title,
@@ -696,8 +706,9 @@ export async function readyForQuestionConsensusSWUOpportunityT(
         descriptionLists: [makeSWUOpportunityInformation(opportunity)],
         callsToAction: [viewSWUOpportunityCallToAction(opportunity)]
       })
-    }
-  ];
+    });
+  }
+  return emails;
 }
 
 export function makeSWUOpportunityInformation(
