@@ -72,7 +72,7 @@ export async function handleSWUPublished(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((user) => !!user);
+      .filter((user): user is User => !!user);
   if (panel?.length) {
     await newSWUPanel(panel, opportunity, repost);
   }
@@ -190,7 +190,7 @@ export async function handleSWUPanelChange(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((member) => !!member);
+      .filter((member): member is User => !!member);
   if (panel?.length) {
     await editSWUPanel(panel, opportunity);
   }
@@ -211,7 +211,7 @@ export async function handleSWUReadyForEvaluation(
       )
     )
       .map((user) => getValidValue(user, null))
-      .filter((member) => !!member);
+      .filter((member): member is User => !!member);
   if (panel?.length) {
     await readyForEvalSWUOpportunity(panel, opportunity);
   }
@@ -235,7 +235,7 @@ export async function handleSWUReadyForQuestionConsensus(
     ])
   )
     .map((user) => getValidValue(user, null))
-    .filter((user) => !!user);
+    .filter((user): user is User => !!user);
   if (recipients.length) {
     await readyForQuestionConsensusSWUOpportunity(recipients, opportunity);
   }
@@ -258,7 +258,9 @@ export async function handleSWUQuestionConsensusSubmitted(
       await db.readManyUsersByRole(connection, UserType.Admin),
       null
     ) || [];
-  const recipients = [author, ...adminUsers].filter((user) => !!user);
+  const recipients = [author, ...adminUsers].filter(
+    (user): user is User => !!user
+  );
   if (recipients.length) {
     await questionConsensusSWUOpportunitySubmitted(recipients, opportunity);
   }
@@ -282,7 +284,7 @@ export async function handleSWUQuestionConsensusFinalized(
     ])
   )
     .map((user) => getValidValue(user, null))
-    .filter((user) => !!user);
+    .filter((user): user is User => !!user);
 
   if (recipients.length) {
     questionConsensusSWUOpportunityFinalized(recipients, opportunity);
