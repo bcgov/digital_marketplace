@@ -195,7 +195,8 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
     "swuProposals.opportunity": id
   };
 
-  if (filterByUser) {
+  if (filterByUser && !consensus) {
+    // There are many evaluations, but only one consensus
     whereClause["evaluations.evaluationPanelMember"] = session.user.id;
   }
 

@@ -1,3 +1,4 @@
+import { generateUuid } from "back-end/lib";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import { Knex } from "knex";
@@ -10,7 +11,6 @@ enum SWUOpportunityStatus {
   Published = "PUBLISHED",
   EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS", // TODO: Remove
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -34,7 +34,7 @@ enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
   UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  DeprecatedEvaluatedTeamQuestions = "DEPRECATED_EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -73,6 +73,11 @@ export async function up(connection: Knex): Promise<void> {
     '
   );
 
+  // Unused status; deprecate
+  await connection("swuProposalStatuses")
+    .update({ status: SWUProposalStatus.DeprecatedEvaluatedTeamQuestions })
+    .where({ status: PreviousSWUProposalStatus.EvaluatedTeamQuestions });
+
   await connection.schema.raw(` \
     ALTER TABLE "swuProposalStatuses" \
     ADD CONSTRAINT "swuProposalStatuses_status_check" \
@@ -85,6 +90,35 @@ export async function up(connection: Knex): Promise<void> {
       ALTER TABLE "swuOpportunityStatuses" \
       DROP CONSTRAINT "swuOpportunityStatuses_status_check" \
     '
+  );
+
+  await connection("swuOpportunityStatuses")
+    .update({ status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual })
+    .where({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
+
+  // Would've done this with an INSERT SELECT but had trouble generating a UUID without
+  // creating the uuid-ossp extension.
+  const codeChallengeStatuses = await connection(
+    "swuOpportunityStatuses as statuses"
+  ).where({
+    "statuses.status": SWUOpportunityStatus.EvaluationCodeChallenge
+  });
+
+  await connection("swuOpportunityStatuses").insert(
+    codeChallengeStatuses.map((status) => {
+      const createdAt = new Date(status.createdAt);
+      // Seems unlikely to conflict with existing records.
+      createdAt.setMilliseconds(createdAt.getMilliseconds() - 1);
+      return {
+        id: generateUuid(),
+        createdAt,
+        createdBy: status.createdBy,
+        opportunity: status.opportunity,
+        status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+        event: null,
+        note: null
+      };
+    })
   );
 
   await connection.schema.raw(` \
@@ -110,7 +144,7 @@ export async function up(connection: Knex): Promise<void> {
       .onDelete("CASCADE");
     table.timestamp("createdAt").notNullable();
     table.timestamp("updatedAt").notNullable();
-    table.float("score").notNullable();
+    table.float("score");
     table.text("notes").notNullable();
     table.primary(["proposal", "evaluationPanelMember", "questionOrder"]);
   }
@@ -126,6 +160,86 @@ export async function up(connection: Knex): Promise<void> {
     evaluationsColumnsSchema
   );
   logger.info("Created swuTeamQuestionResponseChairEvaluations table.");
+
+  const now = new Date();
+  const migrationNotes = "MIGRATION_NOTES";
+  const swuTeamQuestionResponsesWithEvaluationPanelMembersQuery = connection(
+    "swuTeamQuestionResponses as responses"
+  )
+    .join("swuProposals as proposals", function () {
+      this.on("responses.proposal", "=", "proposals.id");
+    })
+    .join(
+      connection.raw(
+        "(??) as versions",
+        connection("swuOpportunityVersions")
+          .select("opportunity", "id")
+          .rowNumber("rn", function () {
+            this.orderBy("createdAt", "desc").partitionBy("opportunity");
+          })
+      ),
+      function () {
+        this.on("proposals.opportunity", "=", "versions.opportunity");
+      }
+    )
+    .join("swuEvaluationPanelMembers as members", function () {
+      this.on("versions.id", "=", "members.opportunityVersion");
+    })
+    .whereNotNull("responses.score")
+    .andWhere({
+      "versions.rn": 1
+    })
+    .select(
+      "proposals.id as proposal",
+      "responses.order as questionOrder",
+      "members.user as evaluationPanelMember",
+      connection.raw("? as createdAt", [now]),
+      connection.raw(" ? as updatedAt", [now]),
+      "responses.score as score",
+      connection.raw("? as notes", [migrationNotes])
+    );
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??, ??, ??)", [
+        "swuTeamQuestionResponseEvaluatorEvaluations",
+        "proposal",
+        "questionOrder",
+        "evaluationPanelMember",
+        "createdAt",
+        "updatedAt",
+        "score",
+        "notes"
+      ])
+    )
+    .insert(swuTeamQuestionResponsesWithEvaluationPanelMembersQuery);
+  logger.info(
+    "Ported SWU team question responses to evaluator team question response" +
+      "evaluations."
+  );
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??, ??, ??)", [
+        "swuTeamQuestionResponseChairEvaluations",
+        "proposal",
+        "questionOrder",
+        "evaluationPanelMember",
+        "createdAt",
+        "updatedAt",
+        "score",
+        "notes"
+      ])
+    )
+    .insert(
+      swuTeamQuestionResponsesWithEvaluationPanelMembersQuery.andWhere({
+        "members.chair": true
+      })
+    );
+  logger.info(
+    "Ported SWU team question responses to chair team question response " +
+      "evaluations."
+  );
 
   function evaluationStatusesColumns(table: Knex.TableBuilder) {
     table
@@ -145,8 +259,7 @@ export async function up(connection: Knex): Promise<void> {
       .notNullable();
     table.string("note");
     table.timestamp("createdAt").notNullable();
-    table.uuid("createdBy").references("id").inTable("users");
-    table.primary(["proposal", "evaluationPanelMember", "createdAt"]);
+    table.primary(["proposal", "evaluationPanelMember", "createdAt", "status"]);
   }
 
   await connection.schema.createTable(
@@ -162,6 +275,73 @@ export async function up(connection: Knex): Promise<void> {
     evaluationStatusesColumns
   );
   logger.info("Created swuTeamQuestionResponseChairEvaluationStatuses table.");
+
+  const swuTeamQuestionResponsesEvaluationsWithStatusesQuery = (
+    tableName: string
+  ) =>
+    connection(`${tableName} as evaluations`)
+      .distinctOn([
+        "evaluations.proposal",
+        "evaluations.evaluationPanelMember",
+        "statuses.status"
+      ])
+      .crossJoin(
+        connection.raw("(SELECT ? as status", [
+          SWUTeamQuestionResponseEvaluationStatus.Draft
+        ])
+      )
+      .unionAll(
+        connection.raw("SELECT ?) as statuses", [
+          SWUTeamQuestionResponseEvaluationStatus.Submitted
+        ])
+      )
+      .select([
+        "evaluations.proposal as proposal",
+        "evaluations.evaluationPanelMember as evaluationPanelMember",
+        "statuses.status as status",
+        connection.raw("NULL as note"),
+        "evaluations.createdAt as createdAt"
+      ]);
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??)", [
+        "swuTeamQuestionResponseEvaluatorEvaluationStatuses",
+        "proposal",
+        "evaluationPanelMember",
+        "status",
+        "note",
+        "createdAt"
+      ])
+    )
+    .insert(
+      swuTeamQuestionResponsesEvaluationsWithStatusesQuery(
+        "swuTeamQuestionResponseEvaluatorEvaluations"
+      )
+    );
+  logger.info(
+    "Added draft and submitted statuses to evaluator evaluation statuses."
+  );
+
+  await connection
+    .from(
+      connection.raw("?? (??, ??, ??, ??, ??)", [
+        "swuTeamQuestionResponseChairEvaluationStatuses",
+        "proposal",
+        "evaluationPanelMember",
+        "status",
+        "note",
+        "createdAt"
+      ])
+    )
+    .insert(
+      swuTeamQuestionResponsesEvaluationsWithStatusesQuery(
+        "swuTeamQuestionResponseChairEvaluations"
+      )
+    );
+  logger.info(
+    "Added draft and submitted statuses to chair evaluation statuses."
+  );
 }
 
 export async function down(connection: Knex): Promise<void> {
@@ -173,9 +353,8 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuProposalStatuses")
-    .where({ status: "EVALUATION_QUESTIONS_INDIVIDUAL" })
-    .orWhere({ status: "EVALUATION_QUESTIONS_CONSENSUS" })
-    .del();
+    .where({ status: SWUProposalStatus.DeprecatedEvaluatedTeamQuestions })
+    .update({ status: PreviousSWUProposalStatus.EvaluatedTeamQuestions });
 
   await connection.schema.raw(` \
     ALTER TABLE "swuProposalStatuses" \
@@ -194,12 +373,14 @@ export async function down(connection: Knex): Promise<void> {
   );
 
   await connection("swuOpportunityStatuses")
-    .where({ status: "EVAL_QUESTIONS_INDIVIDUAL" })
-    .orWhere({ status: "EVAL_QUESTIONS_CONSENSUS" })
-    .orWhere({ status: "EVAL_QUESTIONS_REVIEW" })
-    .orWhere({ status: "EVAL_QUESTIONS_CHAIR_SUBMISSION" })
-    .orWhere({ status: "EVAL_QUESTIONS_ADMIN_REVIEW" })
-    .del();
+    .where({ status: SWUOpportunityStatus.EvaluationTeamQuestionsConsensus })
+    .delete();
+
+  await connection("swuOpportunityStatuses")
+    .where({
+      status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
+    })
+    .update({ status: PreviousSWUOpportunityStatus.EvaluationTeamQuestions });
 
   await connection.schema.raw(` \
     ALTER TABLE "swuOpportunityStatuses" \

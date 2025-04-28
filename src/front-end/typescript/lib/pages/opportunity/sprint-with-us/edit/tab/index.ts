@@ -16,8 +16,9 @@ import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
-  canViewSWUEvaluationConsensus,
-  SWUOpportunity
+  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
+  SWUOpportunity,
+  SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -192,7 +193,16 @@ export function canGovUserViewTab(
     case "overview":
       return isEvaluator;
     case "consensus":
-      return isChair || canViewSWUEvaluationConsensus(opportunity.status);
+      return (
+        isChair ||
+        isOpportunityOwnerOrAdmin ||
+        (isEvaluator &&
+          opportunity.status ===
+            SWUOpportunityStatus.EvaluationTeamQuestionsConsensus) ||
+        doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
+          opportunity.status
+        )
+      );
   }
 }
 
