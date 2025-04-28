@@ -139,17 +139,21 @@ export interface Props<TabId>
   getTabContent?(tabId: TabId): React.ReactNode;
 }
 
+interface HeaderProps<TabId> extends Props<TabId> {
+  currentTabForHeader?: TabId;
+}
+
 export function view<TabId>(): component_.base.View<Props<TabId>> {
-  const Header: component_.base.View<Props<TabId>> = ({
+  const Header: component_.base.View<HeaderProps<TabId>> = ({
     valid,
     state,
     dispatch,
     getTabLabel,
     isTabValid,
-    showAllTabs
+    currentTabForHeader
   }) => {
-    const activeTab = getActiveTab(state);
-    if (!activeTab || showAllTabs) {
+    const tabToDisplay = currentTabForHeader || getActiveTab(state);
+    if (!tabToDisplay) {
       return null;
     }
     return (
@@ -171,8 +175,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
                 }
                 symbolClassName="text-warning"
                 color="body">
-                {String(state.tabs.indexOf(activeTab) + 1)}.{" "}
-                {getTabLabel(activeTab)}
+                {String(state.tabs.indexOf(tabToDisplay) + 1)}.{" "}
+                {getTabLabel(tabToDisplay)}
               </Link>
               <Icon
                 name="caret-down"
@@ -265,10 +269,7 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
               <div
                 key={`all-tabs-${index}`}
                 className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
-                <h3
-                  className={`mb-4 tabbed-form-section-header tabbed-form-section-header-${index}`}>
-                  {index + 1}. {props.getTabLabel(tab)}
-                </h3>
+                <Header {...props} currentTabForHeader={tab} />
                 {props.getTabContent
                   ? props.getTabContent(tab)
                   : React.cloneElement(props.children as React.ReactElement, {

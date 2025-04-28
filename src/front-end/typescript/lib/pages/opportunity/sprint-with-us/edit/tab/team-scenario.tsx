@@ -29,7 +29,8 @@ import {
   getSWUProponentName,
   isSWUProposalInTeamScenario,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim
+  SWUProposalSlim,
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
 
@@ -38,6 +39,7 @@ export interface State extends Tab.Params {
   proposals: SWUProposalSlim[];
   canViewProposals: boolean;
   table: Immutable<Table.State>;
+  proposalSortOrder: "default" | "completePage";
 }
 
 export type InnerMsg =
@@ -56,7 +58,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       opportunity: null,
       proposals: [],
       canViewProposals: false,
-      table: immutable(tableState)
+      table: immutable(tableState),
+      proposalSortOrder: params.proposalSortOrder || "default"
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -66,20 +69,49 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
-      let proposals = msg.value[1];
+      const proposals = msg.value[1];
       const canViewProposals =
         canViewSWUOpportunityProposals(opportunity) &&
         hasSWUOpportunityPassedTeamScenario(opportunity) &&
         !!proposals.length;
-      proposals = proposals
-        .filter((p) => isSWUProposalInTeamScenario(p))
-        .sort((a, b) =>
+
+      // Filter proposals first
+      const filteredProposals = proposals.filter((p) =>
+        isSWUProposalInTeamScenario(p)
+      );
+
+      // Sort proposals based on the order specified in the state
+      let useProposals = filteredProposals;
+
+      if (state.proposalSortOrder === "completePage") {
+        useProposals = [...filteredProposals]; // Create a copy of the filtered array
+        // Custom sort: Awarded first, Disqualified last, others by scenarioScore
+        useProposals.sort((a, b) => {
+          const getPriority = (status: SWUProposalStatus): number => {
+            if (status === SWUProposalStatus.Awarded) return 0;
+            if (status === SWUProposalStatus.Disqualified) return 2;
+            return 1; // All others have priority 1
+          };
+          const priorityA = getPriority(a.status);
+          const priorityB = getPriority(b.status);
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB; // Sort by priority
+          } else {
+            // Same priority level, use original comparison for this tab
+            return compareSWUProposalsForPublicSector(a, b, "scenarioScore");
+          }
+        });
+      } else {
+        // Default sort for this tab: Use existing logic (by status group, then scenarioScore)
+        useProposals.sort((a, b) =>
           compareSWUProposalsForPublicSector(a, b, "scenarioScore")
         );
+      }
+
       return [
         state
           .set("opportunity", opportunity)
-          .set("proposals", proposals)
+          .set("proposals", useProposals) // Use the filtered and sorted copy
           .set("canViewProposals", canViewProposals),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];

@@ -59,6 +59,7 @@ export interface State extends Tab.Params {
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
   table: Immutable<Table.State>;
+  proposalSortOrder: "default" | "completePage";
 }
 
 export type InnerMsg =
@@ -98,7 +99,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       canViewProposals: false,
       canProposalsBeScreened: false,
-      table: immutable(tableState)
+      table: immutable(tableState),
+      proposalSortOrder: params.proposalSortOrder || "default"
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -118,29 +120,58 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
-      let proposals = msg.value[1];
+      const proposals = msg.value[1];
       const canViewProposals =
         canViewSWUOpportunityProposals(opportunity) &&
         hasSWUOpportunityPassedCodeChallenge(opportunity) &&
         !!proposals.length;
-      proposals = proposals
-        .filter((p) => isSWUProposalInCodeChallenge(p))
-        .sort((a, b) =>
+
+      // Filter proposals first
+      const filteredProposals = proposals.filter((p) =>
+        isSWUProposalInCodeChallenge(p)
+      );
+
+      let useProposals = filteredProposals;
+      // Sort proposals based on the order specified in the state
+
+      if (state.proposalSortOrder === "completePage") {
+        useProposals = [...filteredProposals]; // Create a copy of the filtered array
+        // Custom sort: Awarded first, Disqualified last, others by challengeScore
+        useProposals.sort((a, b) => {
+          const getPriority = (status: SWUProposalStatus): number => {
+            if (status === SWUProposalStatus.Awarded) return 0;
+            if (status === SWUProposalStatus.Disqualified) return 2;
+            return 1; // All others have priority 1
+          };
+          const priorityA = getPriority(a.status);
+          const priorityB = getPriority(b.status);
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB; // Sort by priority
+          } else {
+            // Same priority level, use original comparison for this tab
+            return compareSWUProposalsForPublicSector(a, b, "challengeScore");
+          }
+        });
+      } else {
+        // Default sort for this tab: Use existing logic (by status group, then challengeScore)
+        useProposals.sort((a, b) =>
           compareSWUProposalsForPublicSector(a, b, "challengeScore")
         );
+      }
+
       // Can be screened in if...
       // - Opportunity has the appropriate status; and
       // - At least one proposal has been evaluated.
       const canProposalsBeScreened =
         canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
-        proposals.reduce(
+        useProposals.reduce(
           (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
           false as boolean
         );
       return [
         state
           .set("opportunity", opportunity)
-          .set("proposals", proposals)
+          .set("proposals", useProposals)
           .set("canViewProposals", canViewProposals)
           .set("canProposalsBeScreened", canProposalsBeScreened),
         [component_.cmd.dispatch(component_.page.readyMsg())]

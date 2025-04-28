@@ -125,7 +125,8 @@ const init: component_.page.Init<
 
     // Initialize the proposals tab state structure
     const [proposalsInitState, _proposalsCmds] = ProposalsTab.component.init({
-      viewerUser: shared.sessionUser
+      viewerUser: shared.sessionUser,
+      proposalSortOrder: "completePage"
     });
 
     // Initialize the instructions tab state structure
@@ -142,7 +143,8 @@ const init: component_.page.Init<
     // Initialize the team questions tab state structure
     const [teamQuestionsInitState, _teamQuestionsCmds] =
       TeamQuestionsTab.component.init({
-        viewerUser: shared.sessionUser
+        viewerUser: shared.sessionUser,
+        proposalSortOrder: "completePage"
       });
 
     // Initialize the consensus tab state structure
@@ -153,13 +155,15 @@ const init: component_.page.Init<
     // Initialize the code challenge tab state structure
     const [codeChallengeInitState, _codeChallengeCmds] =
       CodeChallengeTab.component.init({
-        viewerUser: shared.sessionUser
+        viewerUser: shared.sessionUser,
+        proposalSortOrder: "completePage"
       });
 
     // Initialize the team scenario tab state structure
     const [teamScenarioInitState, _teamScenarioCmds] =
       TeamScenarioTab.component.init({
-        viewerUser: shared.sessionUser
+        viewerUser: shared.sessionUser,
+        proposalSortOrder: "completePage"
       });
 
     // Initialize the summary tab state structure
@@ -842,7 +846,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         {/* Render the OpportunityView component multiple times */}
         {opportunityViewStates.details ? (
           <>
-            <h2 className="mb-4">Opportunity Details View</h2>
+            <h2>1. Public View - Opportunity Details</h2>
             <OpportunityView.component.view
               state={opportunityViewStates.details}
               dispatch={() => {}} // Dispatch is no-op for these read-only views
@@ -855,7 +859,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         {opportunityViewStates.scope ? (
           <>
-            <h2 className="mb-4">Opportunity Scope View</h2>
+            <h2
+              className="complete-report-section-header"
+              style={{ marginBottom: "-37px" }}>
+              2. Public View - Opportunity Scope
+            </h2>
             <OpportunityView.component.view
               state={opportunityViewStates.scope}
               dispatch={() => {}}
@@ -868,7 +876,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         {opportunityViewStates.attachments ? (
           <>
-            <h2 className="mb-4">Opportunity Attachments View</h2>
+            <h2
+              className="complete-report-section-header"
+              style={{ marginBottom: "-37px" }}>
+              3. Public View - Opportunity Attachments
+            </h2>
             <OpportunityView.component.view
               state={opportunityViewStates.attachments}
               dispatch={() => {}}
@@ -881,7 +893,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         {opportunityViewStates.addenda ? (
           <>
-            <h2 className="mb-4">Opportunity Addenda View</h2>
+            <h2
+              className="complete-report-section-header"
+              style={{ marginBottom: "-37px" }}>
+              4. Public View - Opportunity Addenda
+            </h2>
             <OpportunityView.component.view
               state={opportunityViewStates.addenda}
               dispatch={() => {}}
@@ -892,7 +908,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           <div>Loading Opportunity Addenda View...</div>
         )}
 
-        <h2 className="mb-4">Opportunity Summary</h2>
+        <h2 className="complete-report-section-header">
+          5. Admin View - Opportunity Summary
+        </h2>
 
         <div className="opportunity-complete-page-header">
           <EditTabHeader
@@ -908,7 +926,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Opportunity Details</h2>
+        <h2 className="complete-report-section-header">
+          6. Admin View - Opportunity Details
+        </h2>
         <OpportunityTab.component.view
           state={state.opportunityState}
           dispatch={() => {}}
@@ -919,7 +939,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Opportunity Addenda</h2>
+        <h2 className="complete-report-section-header">
+          7. Admin View - Opportunity Addenda
+        </h2>
         <AddendaTab.component.view
           state={state.addendaState}
           dispatch={() => {}}
@@ -927,7 +949,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Opportunity History</h2>
+        <h2 className="complete-report-section-header">
+          8. Admin View - Opportunity History
+        </h2>
         <HistoryTab.component.view
           state={state.historyState}
           dispatch={() => {}}
@@ -935,7 +959,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Proposals</h2>
+        <h2 className="complete-report-section-header">
+          9. Admin View - Proposals
+        </h2>
         <ProposalsTab.component.view
           state={state.proposalsState}
           dispatch={() => {}}
@@ -943,7 +969,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Instructions</h2>
+        <h2 className="complete-report-section-header">
+          10. Admin View - Instructions
+        </h2>
         <InstructionsTab.component.view
           state={state.instructionsState}
           dispatch={() => {}}
@@ -951,7 +979,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Overview</h2>
+        <h2 className="complete-report-section-header">
+          11. Admin View - Team Questions Overview
+        </h2>
         <OverviewTab.component.view
           state={state.overviewState}
           dispatch={() => {}}
@@ -965,7 +995,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2
               className="complete-report-section-header"
               style={{ marginBottom: "20px" }}>
-              Individual Team Question Evaluations
+              12. Admin View - Team Question Evaluations
             </h2>
             {state.overviewState.evaluations.map((evaluation, i) => {
               // Use composite key here for retrieval
@@ -977,7 +1007,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
                 <div
                   key={`team-question-evaluation-${key}-${i}`}
                   className="mb-5">
-                  <h3>
+                  <h3 style={{ marginBottom: "-40px" }}>
                     Evaluator: {evaluation.evaluationPanelMember.user.name}
                   </h3>
                   {ProposalTeamQuestionsTab.component.view({
@@ -991,7 +1021,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           </>
         )}
 
-        <h2 className="complete-report-section-header">Team Questions</h2>
+        <h2 className="complete-report-section-header">
+          13. Admin View - Team Questions
+        </h2>
         <TeamQuestionsTab.component.view
           state={state.teamQuestionsState}
           dispatch={() => {}}
@@ -999,7 +1031,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Consensus</h2>
+        <h2 className="complete-report-section-header">
+          14. Admin View - Consensus
+        </h2>
         <ConsensusTab.component.view
           state={state.consensusState}
           dispatch={() => {}}
@@ -1007,7 +1041,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Code Challenge</h2>
+        <h2 className="complete-report-section-header">
+          15. Admin View - Code Challenge
+        </h2>
         <CodeChallengeTab.component.view
           state={state.codeChallengeState}
           dispatch={() => {}}
@@ -1015,7 +1051,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
-        <h2 className="complete-report-section-header">Team Scenario</h2>
+        <h2 className="complete-report-section-header">
+          16. Admin View - Team Scenario
+        </h2>
         <TeamScenarioTab.component.view
           state={state.teamScenarioState}
           dispatch={() => {}}
@@ -1023,6 +1061,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
         <hr></hr>
 
+        <h2 className="complete-report-section-header">
+          17. Admin View - Proposal Details
+        </h2>
         <ProposalDetailsSection.component.view
           state={state.proposalDetailsState}
           dispatch={(msg) => dispatch(adt("proposalDetails", msg) as Msg)}

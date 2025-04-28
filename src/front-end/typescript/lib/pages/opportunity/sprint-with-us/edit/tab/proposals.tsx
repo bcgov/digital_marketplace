@@ -56,6 +56,7 @@ export interface State extends Tab.Params {
   canViewProposals: boolean;
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
+  proposalSortOrder: "default" | "completePage";
 }
 
 export type InnerMsg =
@@ -84,7 +85,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       canViewProposals: false,
       canProposalsBeAwarded: false,
       proposals: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      proposalSortOrder: params.proposalSortOrder || "default"
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -97,16 +99,39 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
-      let proposals = msg.value[1];
-      proposals = proposals.sort((a, b) =>
-        compareSWUProposalsForPublicSector(a, b, "totalScore")
-      );
+      const proposals = msg.value[1];
+      let useProposals = proposals;
+
+      if (state.proposalSortOrder === "completePage") {
+        useProposals = [...useProposals];
+        useProposals.sort((a, b) => {
+          const getPriority = (status: SWUProposalStatus): number => {
+            if (status === SWUProposalStatus.Awarded) return 0;
+            if (status === SWUProposalStatus.Disqualified) return 2;
+            return 1; // All others have priority 1
+          };
+          const priorityA = getPriority(a.status);
+          const priorityB = getPriority(b.status);
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB; // Sort by priority
+          } else {
+            // Same priority level, use original comparison for this tab
+            return compareSWUProposalsForPublicSector(a, b, "totalScore");
+          }
+        });
+      } else {
+        // todo: this likely doesn't work since it's immutable
+        useProposals = useProposals.sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "totalScore")
+        );
+      }
+
       const canViewProposals =
-        canViewSWUOpportunityProposals(opportunity) && !!proposals.length;
+        canViewSWUOpportunityProposals(opportunity) && !!useProposals.length;
       return [
         state
           .set("opportunity", opportunity)
-          .set("proposals", proposals)
+          .set("proposals", useProposals)
           .set("canViewProposals", canViewProposals)
           // Determine whether the "Award" button should be shown at all.
           // Can be awarded if...
@@ -115,7 +140,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canProposalsBeAwarded",
             canSWUOpportunityBeAwarded(opportunity) &&
-              proposals.reduce(
+              useProposals.reduce(
                 (acc, p) => acc || canSWUProposalBeAwarded(p),
                 false as boolean
               )

@@ -10,6 +10,7 @@ import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-w
 import * as ProposalCodeChallengeTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/code-challenge";
 import * as ProposalTeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
 import * as ProposalTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/proposal";
+import * as ProposalHistoryTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/history";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
@@ -24,6 +25,7 @@ export interface ProposalDetailState {
   codeChallengeState: ProposalCodeChallengeTab.State;
   teamScenarioState: ProposalTeamScenarioTab.State;
   proposalTabState: ProposalTab.State;
+  historyState: ProposalHistoryTab.State;
 }
 
 export interface State {
@@ -134,13 +136,23 @@ const init: component_.base.Init<Params, State, Msg> = ({
       form: immutable(updatedFormState)
     };
 
+    // Initialize history tab component
+    const [historyState, _historyCmds] = ProposalHistoryTab.component.init({
+      proposal,
+      opportunity: opportunity,
+      viewerUser: viewerUser,
+      evaluating: false,
+      panelQuestionEvaluations: []
+    });
+
     // Store the initialized states
     detailStates[proposal.id] = immutable({
       formState: updatedFormState,
       teamQuestionsState,
       codeChallengeState,
       teamScenarioState,
-      proposalTabState: completeProposalTabState
+      proposalTabState: completeProposalTabState,
+      historyState
     });
   }
 
@@ -183,23 +195,46 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         {...({} as any)}
       />
 
-      <h2 className="complete-report-section-header">Team Questions</h2>
+      <h3
+        className="complete-report-section-header"
+        style={{ marginBottom: "-37px", marginTop: "20px" }}>
+        Proposal - {proposal.anonymousProponentName} - Team Questions
+      </h3>
       <ProposalTeamQuestionsTab.component.view
         state={immutable(state.teamQuestionsState)}
         dispatch={() => {}}
       />
 
       <hr></hr>
-      <h2 className="complete-report-section-header">Code Challenge</h2>
+      <h3
+        className="complete-report-section-header"
+        style={{ marginBottom: "-37px", marginTop: "20px" }}>
+        Proposal - {proposal.anonymousProponentName} - Code Challenge
+      </h3>
       <ProposalCodeChallengeTab.component.view
         state={immutable(state.codeChallengeState)}
         dispatch={() => {}}
       />
 
       <hr></hr>
-      <h2 className="complete-report-section-header">Team Scenario</h2>
+      <h3
+        className="complete-report-section-header"
+        style={{ marginBottom: "-37px", marginTop: "20px" }}>
+        Proposal - {proposal.anonymousProponentName} - Team Scenario
+      </h3>
       <ProposalTeamScenarioTab.component.view
         state={immutable(state.teamScenarioState)}
+        dispatch={() => {}}
+      />
+
+      <hr></hr>
+      <h3
+        className="complete-report-section-header"
+        style={{ marginBottom: "-37px", marginTop: "20px" }}>
+        Proposal - {proposal.anonymousProponentName} - History
+      </h3>
+      <ProposalHistoryTab.component.view
+        state={immutable(state.historyState)}
         dispatch={() => {}}
       />
     </div>
@@ -217,24 +252,38 @@ const view: component_.base.View<
 
   return (
     <div className="mt-5">
-      {proposals.map((proposalId) => {
-        const proposalState = state.detailStates[proposalId];
-        const proposal = proposalState?.formState.proposal;
-        if (!proposal) return null;
-
-        return (
-          <div key={proposalId}>
-            <h2 className="mb-4 complete-report-section-header">
-              Proposal - {proposal.anonymousProponentName}
-            </h2>
-            <ProposalDetail
-              proposal={proposal}
-              state={proposalState}
-              viewerUser={proposalState.formState.viewerUser}
-            />
-          </div>
-        );
-      })}
+      {proposals
+        .map((proposalId) => {
+          const proposalState = state.detailStates[proposalId];
+          const proposal = proposalState?.formState.proposal;
+          if (!proposal) return null;
+          // Extract number from "Proponent X" format
+          const proponentNum = parseInt(
+            proposal.anonymousProponentName.split(" ")[1]
+          );
+          return { proposalId, proposalState, proposal, proponentNum };
+        })
+        .filter((x) => x !== null)
+        .sort((a, b) => a!.proponentNum - b!.proponentNum)
+        .map((item, index) => {
+          if (!item) return null;
+          const { proposalId, proposalState, proposal } = item;
+          return (
+            <div key={proposalId}>
+              <h3
+                className={`mb-4 ${
+                  index > 0 ? "complete-report-section-header" : ""
+                }`}>
+                Proposal - {proposal.anonymousProponentName}
+              </h3>
+              <ProposalDetail
+                proposal={proposal}
+                state={proposalState}
+                viewerUser={proposalState.formState.viewerUser}
+              />
+            </div>
+          );
+        })}
     </div>
   );
 };

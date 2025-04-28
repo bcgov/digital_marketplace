@@ -1082,4 +1082,8 @@ nav.navbar .nav-link:hover {
   .tabbed-form-section-header-0 {
     page-break-before: unset;
   }
+
+  .public-tab-container > :first-child  {
+    display: none;
+  }
 }
