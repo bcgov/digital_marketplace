@@ -677,7 +677,7 @@ export const readManySWUOpportunities = tryDb<
           session.user.id
         );
       }
-      return processForRole(result, session);
+      return processForRole(result, session, isPanelMember);
     })
   );
 
@@ -733,14 +733,16 @@ async function createSWUOpportunityAttachments(
 
 function processForRole<T extends RawSWUOpportunity | RawSWUOpportunitySlim>(
   result: T,
-  session: Session
+  session: Session,
+  isPanelMember = false
 ) {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (
     !session ||
     (session.user.type !== UserType.Admin &&
       session.user.id !== result.createdBy &&
-      session.user.id !== result.updatedBy)
+      session.user.id !== result.updatedBy &&
+      !isPanelMember)
   ) {
     delete result.createdBy;
     delete result.updatedBy;
