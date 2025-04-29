@@ -617,18 +617,33 @@ export const readManyTeamQuestions = tryDb<[Id], SWUTeamQuestion[]>(
   }
 );
 
-export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(
-  async (connection, session) => {
-    let query = generateSWUOpportunityQuery(connection);
+export const readManySWUOpportunities = tryDb<
+  [Session, boolean?],
+  SWUOpportunitySlim[]
+>(async (connection, session, isPanelMember = false) => {
+  let query = generateSWUOpportunityQuery(connection);
 
-    if (!session || session.user.type === UserType.Vendor) {
-      // Anonymous users and vendors can only see public opportunities
-      query = query.whereIn(
-        "statuses.status",
-        publicOpportunityStatuses as SWUOpportunityStatus[]
-      );
+  if (!session || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query.whereIn(
+      "statuses.status",
+      publicOpportunityStatuses as SWUOpportunityStatus[]
+    );
+  } else if (
+    session.user.type === UserType.Government ||
+    session.user.type === UserType.Admin
+  ) {
+    if (isPanelMember) {
+      // When isPanelMember=true, ONLY include opportunities where user is on evaluation panel
+      // works for admin and gov basic users
+      query = query.whereIn("versions.id", function () {
+        this.select("opportunityVersion")
+          .from("swuEvaluationPanelMembers")
+          .where("user", "=", session.user.id);
+      });
     } else if (session.user.type === UserType.Government) {
-      // Gov basic users should only see private opportunities that they own, and public opportunities
+      // Regular behavior - show public opportunities and private ones the user created
+      // works for gov basic users only
       query = query
         .whereIn(
           "statuses.status",
@@ -641,33 +656,33 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(
           ).andWhere({ "opportunities.createdBy": session.user?.id });
         });
     }
-    // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
-    // Process results to eliminate fields not viewable by the current role
-    const results = await Promise.all(
-      (
-        await query
-      ).map(async (result: RawSWUOpportunity | RawSWUOpportunitySlim) => {
-        if (session) {
-          result.subscribed = await isSubscribed(
-            connection,
-            result.id,
-            session.user.id
-          );
-        }
-        return processForRole(result, session);
-      })
-    );
-
-    return valid(
-      await Promise.all(
-        results.map(
-          async (raw) =>
-            await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw)
-        )
-      )
-    );
   }
-);
+  // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+  // Process results to eliminate fields not viewable by the current role
+  const results = await Promise.all(
+    (
+      await query
+    ).map(async (result: RawSWUOpportunity | RawSWUOpportunitySlim) => {
+      if (session) {
+        result.subscribed = await isSubscribed(
+          connection,
+          result.id,
+          session.user.id
+        );
+      }
+      return processForRole(result, session);
+    })
+  );
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (raw) =>
+          await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw)
+      )
+    )
+  );
+});
 
 export const readOneSWUOpportunityPhase = tryDb<[Id], SWUOpportunityPhase>(
   async (connection, id) => {
