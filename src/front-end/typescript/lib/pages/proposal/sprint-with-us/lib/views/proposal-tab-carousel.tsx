@@ -35,7 +35,7 @@ export function sortProponentsByAnonymousProponentName(
       return isNaN(order) ? acc : [...acc, { ...p, order }];
     }, [])
     .sort((a, b) => {
-      return compareNumbers(a.order, b.order) * -1;
+      return compareNumbers(a.order, b.order) * 1;
     });
 }
 
