@@ -65,18 +65,18 @@ const ProposalTabCarousel: component.base.View<Props> = ({
 
   const prevIndex = index - 1;
   const nextIndex = index + 1;
-  const prevRouteParams = proposals[nextIndex]
+  const prevRouteParams = proposals[prevIndex]
     ? {
-        proposalId: proposals[nextIndex].id,
-        opportunityId: proposals[nextIndex].opportunity.id,
+        proposalId: proposals[prevIndex].id,
+        opportunityId: proposals[prevIndex].opportunity.id,
         tab
       }
     : null;
 
-  const nextRouteParams = proposals[prevIndex]
+  const nextRouteParams = proposals[nextIndex]
     ? {
-        proposalId: proposals[prevIndex].id,
-        opportunityId: proposals[prevIndex].opportunity.id,
+        proposalId: proposals[nextIndex].id,
+        opportunityId: proposals[nextIndex].opportunity.id,
         tab
       }
     : null;
