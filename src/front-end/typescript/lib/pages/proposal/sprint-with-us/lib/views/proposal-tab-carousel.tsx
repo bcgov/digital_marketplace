@@ -13,10 +13,13 @@ import {
 import { adt } from "shared/lib/types";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import { compareNumbers } from "shared/lib";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 export interface Props {
   proposal: SWUProposal;
   proposals: SWUProposalSlim[];
+  panelEvaluations: SWUTeamQuestionResponseEvaluation[];
+  evaluation?: SWUTeamQuestionResponseEvaluation;
   tab: Tab.TabId;
 }
 
@@ -39,6 +42,30 @@ export function sortProponentsByAnonymousProponentName(
     });
 }
 
+function getRoute({
+  panelEvaluations,
+  evaluation,
+  routeParams
+}: {
+  panelEvaluations: SWUTeamQuestionResponseEvaluation[];
+  evaluation?: SWUTeamQuestionResponseEvaluation;
+  routeParams: { proposalId: string; opportunityId: string; tab: Tab.TabId };
+}) {
+  return panelEvaluations.length
+    ? evaluation
+      ? adt("questionEvaluationConsensusSWUEdit" as const, {
+          ...routeParams,
+          userId: evaluation.evaluationPanelMember
+        })
+      : adt("questionEvaluationConsensusSWUCreate" as const, routeParams)
+    : evaluation
+    ? adt("questionEvaluationIndividualSWUEdit" as const, {
+        ...routeParams,
+        userId: evaluation.evaluationPanelMember
+      })
+    : adt("questionEvaluationIndividualSWUCreate" as const, routeParams);
+}
+
 /**
  * Browse opportunity's proposals from a tab details view.
  * `proposals` should be filtered appropriately for the tab.
@@ -48,9 +75,11 @@ export function sortProponentsByAnonymousProponentName(
  * @param props - proposals, proposal, tab
  * @returns - base view component
  */
-const ProposalTabCarousel: component.base.View<Props> = ({
+const ProposalTeamQuestionsTabCarousel: component.base.View<Props> = ({
   proposals,
   proposal,
+  panelEvaluations,
+  evaluation,
   tab
 }) => {
   proposals = sortProponentsByAnonymousProponentName(proposals);
@@ -89,7 +118,13 @@ const ProposalTabCarousel: component.base.View<Props> = ({
           color="info"
           outline
           symbol_={leftPlacement(iconLinkSymbol("arrow-left"))}
-          dest={routeDest(adt("proposalSWUView", prevRouteParams))}>
+          dest={routeDest(
+            getRoute({
+              evaluation,
+              panelEvaluations,
+              routeParams: prevRouteParams
+            })
+          )}>
           Previous Proponent
         </Link>
       ) : (
@@ -101,7 +136,13 @@ const ProposalTabCarousel: component.base.View<Props> = ({
           color="primary"
           outline
           symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}
-          dest={routeDest(adt("proposalSWUView", nextRouteParams))}>
+          dest={routeDest(
+            getRoute({
+              evaluation,
+              panelEvaluations,
+              routeParams: nextRouteParams
+            })
+          )}>
           Next Proponent
         </Link>
       ) : (
@@ -111,4 +152,4 @@ const ProposalTabCarousel: component.base.View<Props> = ({
   );
 };
 
-export default ProposalTabCarousel;
+export default ProposalTeamQuestionsTabCarousel;
