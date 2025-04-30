@@ -26,6 +26,7 @@ import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/spr
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
@@ -138,7 +139,8 @@ export type Route =
   | ADT<"swuGuide", PageGuideView.RouteParams>
   | ADT<"twuGuide", PageGuideView.RouteParams>
   | ADT<"swuOpportunityCompleteView", { opportunityId: Id }>
-  | ADT<"cwuOpportunityCompleteView", { opportunityId: Id }>;
+  | ADT<"cwuOpportunityCompleteView", { opportunityId: Id }>
+  | ADT<"twuOpportunityCompleteView", { opportunityId: Id }>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
@@ -235,6 +237,7 @@ export interface State {
     proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
     proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
     proposalList?: Immutable<PageProposalList.State>;
+    twuOpportunityCompleteView?: Immutable<PageOpportunityTWUComplete.State>;
   };
 }
 
@@ -291,6 +294,7 @@ export type InnerMsg =
   | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
   | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
   | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
+  | ADT<"pageOpportunityTWUComplete", PageOpportunityTWUComplete.Msg>
   | ADT<"pageProposalTWUCreate", PageProposalTWUCreate.Msg>
   | ADT<"pageProposalTWUEdit", PageProposalTWUEdit.Msg>
   | ADT<"pageProposalTWUView", PageProposalTWUView.Msg>

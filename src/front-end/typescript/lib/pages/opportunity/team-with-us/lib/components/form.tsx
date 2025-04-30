@@ -1460,6 +1460,7 @@ const AttachmentsView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+  showAllTabs?: boolean;
 }
 
 export const view: component_.base.View<Props> = (props) => {
@@ -1480,6 +1481,24 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   })();
+
+  function getTabContent(tab: TabId) {
+    switch (tab) {
+      case "Overview":
+        return <OverviewView {...props} />;
+      case "Resource Details":
+        return <ResourceDetailsView {...props} />;
+      case "Description":
+        return <DescriptionView {...props} />;
+      case "Resource Questions":
+        return <ResourceQuestionsView {...props} />;
+      case "Scoring":
+        return <ScoringView {...props} />;
+      case "Attachments":
+        return <AttachmentsView {...props} />;
+    }
+  }
+
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
@@ -1501,6 +1520,8 @@ export const view: component_.base.View<Props> = (props) => {
             return isAttachmentsTabValid(state);
         }
       }}
+      showAllTabs={props.showAllTabs}
+      getTabContent={props.showAllTabs ? getTabContent : undefined}
       state={state.tabbedForm}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)

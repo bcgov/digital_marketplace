@@ -36,6 +36,7 @@ import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
 import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
@@ -313,6 +314,15 @@ function pageToViewPageProps(
         (state) => state.pages.cwuOpportunityCompleteView,
         (value) => ({ tag: "pageOpportunityCWUComplete", value })
       );
+
+    case "twuOpportunityCompleteView":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUComplete.component,
+        (state) => state.pages.twuOpportunityCompleteView,
+        (value) => ({ tag: "pageOpportunityTWUComplete", value })
+      );
+
     case "opportunityTWUCreate":
       return makeViewPageProps(
         props,

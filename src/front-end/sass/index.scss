@@ -1086,4 +1086,8 @@ nav.navbar .nav-link:hover {
   .public-tab-container > :first-child  {
     display: none;
   }
+
+  textarea {
+    field-sizing: content;
+  }
 }

@@ -153,12 +153,15 @@ interface ResponseViewProps {
   response: ResponseState;
   disabled?: boolean;
   dispatch: component_.base.Dispatch<Msg>;
+  expandAccordion?: boolean;
 }
 
 const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
-  const { response, dispatch, index, disabled } = props;
+  const { response, dispatch, index, disabled, expandAccordion } = props;
   const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
+  const isOpen = expandAccordion === true ? true : response.isAccordianOpen;
+
   return (
     <Accordion
       className={""}
@@ -172,7 +175,7 @@ const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
       iconHeight={2}
       chevronWidth={1.5}
       chevronHeight={1.5}
-      open={response.isAccordianOpen}>
+      open={isOpen}>
       <p style={{ whiteSpace: "pre-line" }}>{response.question.question}</p>
       <div className="mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap">
         <div className="mb-2 mb-md-0">
@@ -210,10 +213,11 @@ const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, disabled } = props;
+  const { state, disabled, expandAccordions } = props;
   return (
     <div>
       {state.responses.map((response, i) => (
@@ -224,6 +228,7 @@ export const view: component_.base.View<Props> = (props) => {
               disabled={disabled}
               response={response}
               dispatch={props.dispatch}
+              expandAccordion={expandAccordions}
             />
           </Col>
         </Row>

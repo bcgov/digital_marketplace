@@ -71,6 +71,11 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
+interface Props extends component_.page.Props<State, InnerMsg, Route> {
+  showAllTabs?: boolean;
+  expandAccordions?: boolean;
+}
+
 const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   const [disqualificationReasonState, disqualificationReasonCmds] =
     LongText.init({
@@ -330,8 +335,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = (props) => {
-  const { state, dispatch } = props;
+const view: component_.base.View<Props> = (props) => {
+  const { state, dispatch, showAllTabs, expandAccordions } = props;
   const form = state.form;
   if (!form) return null;
   const show = hasTWUOpportunityPassedChallenge(state.opportunity);
@@ -364,6 +369,8 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
             <Form.view
               disabled
               state={form}
+              showAllTabs={showAllTabs}
+              expandAccordions={expandAccordions}
               dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("form" as const, v)
               )}

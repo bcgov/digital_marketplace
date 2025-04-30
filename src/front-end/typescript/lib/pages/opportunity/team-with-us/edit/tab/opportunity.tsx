@@ -53,6 +53,7 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
+  showAllTabs?: boolean;
 }
 
 type UpdateStatus =
@@ -90,6 +91,10 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
+interface Props extends component_.page.Props<State, InnerMsg, Route> {
+  showAllTabs?: boolean;
+}
+
 function initForm(
   opportunity: TWUOpportunity,
   viewerUser: User,
@@ -124,7 +129,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       saveChangesAndUpdateStatusLoading: 0,
       updateStatusLoading: 0,
       deleteLoading: 0,
-      isEditing: false
+      isEditing: false,
+      showAllTabs: false
     },
     []
   ];
@@ -692,8 +698,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.page.View<State, InnerMsg, Route> = (props) => {
-  const { state, dispatch } = props;
+const view: component_.base.View<Props> = (props) => {
+  const { state, dispatch, showAllTabs } = props;
   const opportunity = state.opportunity;
   const form = state.form;
   if (!opportunity || !form) return null;
@@ -719,6 +725,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
               adt("form" as const, msg)
             )}
+            showAllTabs={showAllTabs || state.showAllTabs}
           />
         </Col>
       </Row>
