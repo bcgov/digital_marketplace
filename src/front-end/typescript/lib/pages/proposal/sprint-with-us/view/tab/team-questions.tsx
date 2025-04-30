@@ -1,5 +1,4 @@
 import { EMPTY_STRING } from "front-end/config";
-// import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
@@ -15,7 +14,6 @@ import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views
 import ProposalTeamQuestionsTabCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/views/proposal-tab-carousel";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
-// import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import { ProposalMarkdown } from "front-end/lib/views/markdown";
 import ReportCardList from "front-end/lib/views/report-card-list";
 import Separator from "front-end/lib/views/separator";
@@ -23,9 +21,7 @@ import React from "react";
 import { Alert, Col, Row } from "reactstrap";
 import { countWords } from "shared/lib";
 import {
-  // canSWUOpportunityBeScreenedInToCodeChallenge,
   getQuestionByOrder,
-  // hasSWUOpportunityPassedCodeChallenge,
   hasSWUOpportunityPassedTeamQuestions,
   hasSWUOpportunityPassedTeamQuestionsEvaluation,
   SWUOpportunity,
@@ -735,82 +731,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
       }
     }
-    // case "screenIn":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.swu.update<Msg>()(
-    //         state.proposal.id,
-    //         adt("screenInToCodeChallenge", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenInResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       )
-    //     ]
-    //   ];
-    // case "onScreenInResponse": {
-    //   state = stopScreenToFromLoading(state);
-    //   const proposal = msg.value;
-    //   if (proposal) {
-    //     const [scoreStates, scoreCmds] = initScores(
-    //       state.opportunity,
-    //       proposal
-    //     );
-    //     return [
-    //       state.set("scores", scoreStates).set("proposal", proposal),
-    //       [
-    //         ...scoreCmds,
-    //         component_.cmd.dispatch(
-    //           component_.global.showToastMsg(
-    //             adt("success", toasts.screenedIn.success)
-    //           )
-    //         )
-    //       ]
-    //     ];
-    //   } else {
-    //     return [state, []];
-    //   }
-    // }
-    // case "screenOut":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.swu.update<Msg>()(
-    //         state.proposal.id,
-    //         adt("screenOutFromCodeChallenge", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenOutResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       )
-    //     ]
-    //   ];
-    // case "onScreenOutResponse": {
-    //   state = stopScreenToFromLoading(state);
-    //   const proposal = msg.value;
-    //   if (proposal) {
-    //     const [scoreStates, scoreCmds] = initScores(
-    //       state.opportunity,
-    //       proposal
-    //     );
-    //     return [
-    //       state.set("scores", scoreStates).set("proposal", proposal),
-    //       [
-    //         ...scoreCmds,
-    //         component_.cmd.dispatch(
-    //           component_.global.showToastMsg(
-    //             adt("success", toasts.screenedOut.success)
-    //           )
-    //         )
-    //       ]
-    //     ];
-    //   } else {
-    //     return [state, []];
-    //   }
-    // }
     case "scoreMsg":
       return component_.base.updateChild({
         state,
@@ -963,16 +883,6 @@ const TeamQuestionResponsesView: component_.base.View<{
     </div>
   );
 };
-
-// interface TeamQuestionResponseEvalViewProps
-//   extends TeamQuestionResponseViewProps {
-//   individualScores: EvaluationScore[];
-//   consensusScore: EvaluationScore;
-// }
-
-// const TeamQuestionsResponseEvalIndividualView: component_.base.View<
-// TeamQuestionResponseEvalViewProps
-// > = ()
 
 interface TeamQuestionResponseIndividualEvalViewProps
   extends Omit<TeamQuestionResponseViewProps, "toggleAccordion"> {
