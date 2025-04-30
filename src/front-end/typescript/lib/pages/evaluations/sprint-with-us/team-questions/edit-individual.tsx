@@ -40,7 +40,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join3(
+          component_.cmd.join4(
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
@@ -51,8 +51,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
               userId,
               (response) => (api.isValid(response) ? response.value : null)
             ),
-            (proposal, opportunity, evaluation) => {
-              if (!proposal || !opportunity || !evaluation)
+            api.proposals.swu.readMany(opportunityId)((response) =>
+              api.isValid(response) ? response.value : null
+            ),
+            (proposal, opportunity, evaluation, proposals) => {
+              if (!proposal || !opportunity || !evaluation || !proposals)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
                 );
@@ -63,7 +66,8 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 opportunity,
                 true,
                 evaluation,
-                []
+                [],
+                proposals
               ]) as Msg;
             }
           )
