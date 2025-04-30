@@ -1305,7 +1305,6 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                     rIndex: index
                   })
                 )}
-                // style={{ width: "8.875em" }}
               />
               <div className="w-100 chair-evaluation consensus-notes-container">
                 <LongText.view
@@ -1323,37 +1322,22 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                       rIndex: index
                     })
                   )}
+                  hint={
+                    hasScoreBelowMinimum ? (
+                      <>
+                        <Icon
+                          className="align-middle"
+                          color="danger"
+                          name="exclamation-triangle"
+                          height={0.875}
+                        />{" "}
+                        <span className="align-middle">
+                          Submitting this score will disqualify this proponent.
+                        </span>
+                      </>
+                    ) : null
+                  }
                 />
-
-                {/* {(FormField.isValid(score.notes) ||
-                  (!FormField.getValue(score.notes) &&
-                    FormField.isValid(score.notes))) &&
-                hasScoreBelowMinimum ? (
-                  <small
-                    className="form-text text-secondary pt-1 align-center"
-                    style={{ marginTop: "-1.25em" }}>
-                    <Icon
-                      color="danger"
-                      name="exclamation-triangle"
-                      height={0.875}
-                    />{" "}
-                    Submitting this score will disqualify this proponent.
-                  </small>
-                ) : null} */}
-                {!FormField.isValid(
-                  score.notes
-                ) ? null : hasScoreBelowMinimum ? (
-                  <small
-                    className="form-text text-secondary pt-1 align-center"
-                    style={{ marginTop: "-1.25em" }}>
-                    <Icon
-                      color="danger"
-                      name="exclamation-triangle"
-                      height={0.875}
-                    />{" "}
-                    Submitting this score will disqualify this proponent.
-                  </small>
-                ) : null}
               </div>
             </div>
           </Col>
