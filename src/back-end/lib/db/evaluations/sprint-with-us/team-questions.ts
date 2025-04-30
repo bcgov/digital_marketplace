@@ -204,6 +204,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
 
   const results = await query;
 
+
   if (!results) {
     throw new Error("unable to read evaluations");
   }
