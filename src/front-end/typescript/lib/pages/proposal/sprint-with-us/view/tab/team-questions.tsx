@@ -997,12 +997,29 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
   if (!question) {
     return null;
   }
+  const currentScore = FormField.getValue(score.score);
+  const hasScoreBelowMinimum =
+    question.minimumScore &&
+    currentScore &&
+    currentScore < question.minimumScore;
   return (
     <Accordion
       className={className}
       toggle={() => dispatch(adt("toggleAccordion", index))}
       color="info"
-      title={`Question ${index + 1}`}
+      title={
+        <div className="d-flex align-items-center flex-nowrap">
+          <span className="mr-3">Question {index + 1}</span>
+          {hasScoreBelowMinimum ? (
+            <Icon
+              name="exclamation-circle"
+              color="warning"
+              width={1.25}
+              height={1.25}
+            />
+          ) : null}
+        </div>
+      }
       titleClassName="h3 mb-0"
       chevronWidth={1.5}
       chevronHeight={1.5}
@@ -1060,6 +1077,22 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
                 rIndex: index
               })
             )}
+            hint={
+              hasScoreBelowMinimum ? (
+                <>
+                  <Icon
+                    className="align-middle"
+                    color="warning"
+                    name="exclamation-circle"
+                    height={0.875}
+                  />{" "}
+                  <span className="align-middle">
+                    This proponent might be disqualified, if your score is
+                    agreed on in consensus.
+                  </span>
+                </>
+              ) : null
+            }
           />
         </Col>
       </Row>
@@ -1549,7 +1582,7 @@ export const component: Tab.Component<State, Msg> = {
         );
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
         return component_.page.actions.links(
-          state.evaluating
+          state.evaluating && state.panelQuestionEvaluations.length
             ? state.questionEvaluation
               ? state.isAuthor
                 ? [
