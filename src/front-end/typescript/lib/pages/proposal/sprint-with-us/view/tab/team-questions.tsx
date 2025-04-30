@@ -1217,13 +1217,13 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
         />
       </div>
       <div>
-        {panelEvaluationScores.map((panelEvaluationScore) => {
-          const questionEvaluationScore = panelEvaluationScore.scores.find(
-            ({ order }) => order === question.order
+        {opportunity.evaluationPanel?.map((panelMember) => {
+          const panelEvaluationScore = panelEvaluationScores.find(
+            (panelEvaluationScore) =>
+              panelEvaluationScore.evaluationPanelMember === panelMember.user.id
           );
-          const panelMember = opportunity.evaluationPanel?.find(
-            (member) =>
-              member.user.id === panelEvaluationScore.evaluationPanelMember
+          const questionEvaluationScore = panelEvaluationScore?.scores.find(
+            ({ order }) => order === question.order
           );
           if (!questionEvaluationScore || !panelMember) {
             return null;
