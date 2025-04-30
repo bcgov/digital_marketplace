@@ -686,14 +686,24 @@ export async function readOneSWUProposal(
   if (
     isAdmin(session) ||
     (session &&
-      (await isSWUOpportunityAuthor(
+      ((await isSWUOpportunityAuthor(
         connection,
         session.user,
         proposal.opportunity.id
-      )))
+      )) ||
+        (await isSWUOpportunityEvaluationPanelEvaluator(
+          connection,
+          session,
+          proposal.opportunity.id
+        )) ||
+        (await isSWUOpportunityEvaluationPanelChair(
+          connection,
+          session,
+          proposal.opportunity.id
+        ))))
   ) {
-    // Only provide permission to admins/gov owners if opportunity is not in draft/published
-    // And proposal is not in draft/submitted
+    // Only provide permission to admins/gov owners/panel members if
+    // opportunity is not in draft/published and proposal is not in draft/submitted
     return (
       isSignedIn(session) &&
       doesSWUOpportunityStatusAllowGovToViewProposals(
@@ -725,12 +735,21 @@ export async function readManySWUProposals(
   session: Session,
   opportunity: SWUOpportunity
 ): Promise<boolean> {
+  const panelMember = opportunity.evaluationPanel?.find(
+    (member) => member.user.id === session?.user.id
+  );
   if (
     isAdmin(session) ||
     (session &&
-      (await isSWUOpportunityAuthor(connection, session.user, opportunity.id)))
+      (await isSWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunity.id
+      ))) ||
+    panelMember
   ) {
-    // Only provide permission to admins/gov owners if opportunity is not in draft or published
+    // Only provide permission to admins/gov owners/panel members if opportunity
+    // is not in draft or published
     return doesSWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
