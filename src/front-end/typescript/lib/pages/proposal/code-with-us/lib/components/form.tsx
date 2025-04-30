@@ -111,6 +111,7 @@ export interface Params {
   proposal?: CWUProposal;
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
+  idPrefix?: string;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -137,7 +138,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   proposal,
   affiliations,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  idPrefix = ""
 }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
     if (proposal?.proponent.tag !== "organization") {
@@ -152,12 +154,17 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     tabs: ["Proponent", "Proposal", "Attachments"],
     activeTab
   });
+
+  const proponentTypeId = idPrefix
+    ? `${idPrefix}-cwu-proposal-proponent-type`
+    : "cwu-proposal-proponent-type";
+
   const [proponentTypeState, proponentTypeCmds] = ProponentTypeRadioGroup.init({
     errors: [],
     validate: (v) =>
       v === null ? invalid(["Please select a proponent type."]) : valid(v),
     child: {
-      id: "cwu-proposal-proponent-type",
+      id: proponentTypeId,
       value: proposal?.proponent.tag || null,
       options: [
         { label: "Individual", value: "individual" },
@@ -965,6 +972,7 @@ const OrganizationProponent: component_.base.View<Props> = ({
 
 const ProponentView: component_.base.View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
+
   const proponentType = FormField.getValue(state.proponentType);
   const activeView = (() => {
     switch (proponentType) {
@@ -1089,6 +1097,7 @@ const ProposalView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
+  showAllTabs?: boolean;
 }
 
 // @duplicated-attachments-view
@@ -1117,8 +1126,17 @@ const AttachmentsView: component_.base.View<Props> = ({
   );
 };
 
-export const view: component_.base.View<Props> = (props) => {
-  const { state, dispatch } = props;
+export const view: component_.base.View<Props> = ({
+  state,
+  dispatch,
+  showAllTabs,
+  disabled
+}) => {
+  const props = {
+    state,
+    dispatch,
+    disabled
+  };
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Proponent":
@@ -1129,8 +1147,22 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   })();
+
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
+      case "Proponent":
+        return <ProponentView {...props} />;
+      case "Proposal":
+        return <ProposalView {...props} />;
+      case "Attachments":
+        return <AttachmentsView {...props} />;
+    }
+  };
+
   return (
     <TabbedFormComponent.view
+      showAllTabs={showAllTabs}
+      getTabContent={showAllTabs ? getTabContent : undefined}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

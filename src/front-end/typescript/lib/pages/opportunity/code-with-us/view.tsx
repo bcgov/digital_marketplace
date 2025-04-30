@@ -42,7 +42,7 @@ import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "terms" | "attachments" | "addenda";
+export type InfoTab = "details" | "terms" | "attachments" | "addenda";
 
 export interface State {
   toggleWatchLoading: number;

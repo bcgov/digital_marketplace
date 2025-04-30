@@ -60,6 +60,7 @@ import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
 import { ADT, Id } from "shared/lib/types";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 
 /**
  * Union Types combined for the purpose of constraining routes that the
@@ -136,7 +137,8 @@ export type Route =
   | ADT<"cwuGuide", PageGuideView.RouteParams>
   | ADT<"swuGuide", PageGuideView.RouteParams>
   | ADT<"twuGuide", PageGuideView.RouteParams>
-  | ADT<"swuOpportunityCompleteView", { opportunityId: Id }>;
+  | ADT<"swuOpportunityCompleteView", { opportunityId: Id }>
+  | ADT<"cwuOpportunityCompleteView", { opportunityId: Id }>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
@@ -215,6 +217,7 @@ export interface State {
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
     swuOpportunityCompleteView?: Immutable<PageOpportunitySWUComplete.State>;
+    cwuOpportunityCompleteView?: Immutable<PageOpportunityCWUComplete.State>;
     opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
     opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
     opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
@@ -284,6 +287,7 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUEdit", PageOpportunitySWUEdit.Msg>
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
   | ADT<"pageOpportunitySWUComplete", PageOpportunitySWUComplete.Msg>
+  | ADT<"pageOpportunityCWUComplete", PageOpportunityCWUComplete.Msg>
   | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
   | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
   | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>

@@ -37,8 +37,7 @@ import * as OpportunityView from "../view";
 import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
-// @ts-ignore - OpportunityViewTabInfo may not be exported if not used elsewhere yet
-import { OpportunityViewTabInfo } from "../view"; // Import the type for tabs
+import { InfoTab } from "../view"; // Import the type for tabs
 
 export interface RouteParams {
   opportunityId: Id;
@@ -529,6 +528,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 proposal: relatedProposal,
                 viewerUser: updatedState.viewerUser,
                 evaluating: true,
+                isAuthor: false,
                 questionEvaluation: evaluation,
                 panelQuestionEvaluations: [],
                 evaluationScores: evaluation.scores.map(
@@ -730,7 +730,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         //  return updateChildResult as any;
 
         const opportunityViewMsg = msg.value;
-        console.log("opportunityView msg.value", opportunityViewMsg);
 
         // We only need to handle the initial loading via onInitResponse.
 
@@ -821,7 +820,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     // Function to create a view state with a specific active tab
     const createOpportunityViewState = (
-      activeTab: OpportunityViewTabInfo
+      activeTab: InfoTab
     ): Immutable<OpportunityView.State> | null => {
       if (isValid(state.opportunityViewState)) {
         const baseInnerState = state.opportunityViewState.value;

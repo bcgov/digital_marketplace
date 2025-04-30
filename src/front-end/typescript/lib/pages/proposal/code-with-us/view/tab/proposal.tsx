@@ -50,6 +50,10 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
+interface Props extends component_.page.Props<State, InnerMsg, Route> {
+  showAllTabs?: boolean;
+}
+
 export type InnerMsg =
   | ADT<"onInitResponse", Tab.InitResponse>
   | ADT<"hideModal">
@@ -466,8 +470,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = (props) => {
-  const { state, dispatch } = props;
+const view: component_.base.View<Props> = (props) => {
+  const { state, dispatch, showAllTabs } = props;
   const proposal = state.proposal;
   const form = state.form;
   if (!proposal || !form) return null;
@@ -480,6 +484,7 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           <Form.view
             disabled
             state={form}
+            showAllTabs={showAllTabs}
             dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("form" as const, v)
             )}

@@ -73,6 +73,7 @@ import {
   Session
 } from "shared/lib/resources/session";
 import { adt, ADT, adtCurried } from "shared/lib/types";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 
 function setSession(
   state: Immutable<State>,
@@ -749,6 +750,18 @@ function initPage(
           return adt("pageOpportunitySWUComplete", value);
         }
       });
+
+    case "cwuOpportunityCompleteView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "cwuOpportunityCompleteView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityCWUComplete.component.init,
+        pageGetMetadata: PageOpportunityCWUComplete.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityCWUComplete", value);
+        }
+      });
   }
 }
 
@@ -1104,6 +1117,21 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "swuOpportunityCompleteView"],
         pageUpdate: PageOpportunitySWUComplete.component.update,
         pageGetMetadata: PageOpportunitySWUComplete.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunityCWUComplete":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityCWUComplete.State,
+        PageOpportunityCWUComplete.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageOpportunityCWUComplete", value),
+        pageStatePath: ["pages", "cwuOpportunityCompleteView"],
+        pageUpdate: PageOpportunityCWUComplete.component.update,
+        pageGetMetadata: PageOpportunityCWUComplete.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageOpportunitySWUView":

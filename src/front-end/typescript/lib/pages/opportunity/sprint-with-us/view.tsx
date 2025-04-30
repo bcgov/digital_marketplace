@@ -56,7 +56,7 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { valid, Validation } from "shared/lib/validation";
 import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "scope" | "attachments" | "addenda";
+export type InfoTab = "details" | "scope" | "attachments" | "addenda";
 
 export interface ValidState {
   toggleWatchLoading: number;
