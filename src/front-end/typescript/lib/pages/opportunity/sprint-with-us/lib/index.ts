@@ -45,8 +45,9 @@ export function swuOpportunityStatusToTitleCase(
     case SWUOpportunityStatus.Published:
       return "Published";
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return "Team Questions Evaluation";
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-      return "Evaluation";
+      return "Team Questions Consensus";
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return "Code Challenge";
     case SWUOpportunityStatus.EvaluationTeamScenario:
