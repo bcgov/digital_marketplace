@@ -860,8 +860,7 @@ const update: crud.Update<
       if (
         (![
           "submitIndividualQuestionEvaluations",
-          "submitConsensusQuestionEvaluations",
-          "edutEvaluationPanel"
+          "submitConsensusQuestionEvaluations"
         ].includes(request.body.tag) &&
           !(await permissions.editSWUOpportunity(
             connection,
@@ -2002,14 +2001,7 @@ const update: crud.Update<
           } as ValidatedUpdateRequestBody);
         }
         case "editEvaluationPanel": {
-          if (
-            !canChangeEvaluationPanel(swuOpportunity) ||
-            !(await permissions.editSWUEvaluationPanel(
-              connection,
-              request.session,
-              swuOpportunity.id
-            ))
-          ) {
+          if (!canChangeEvaluationPanel(swuOpportunity)) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
           const validatedEvaluationPanel =
