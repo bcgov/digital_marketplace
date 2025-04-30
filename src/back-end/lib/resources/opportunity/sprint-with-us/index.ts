@@ -858,6 +858,7 @@ const update: crud.Update<
       const swuOpportunity = validatedSWUOpportunity.value;
 
       if (
+        // Evaluation panel actions checked separately
         (![
           "submitIndividualQuestionEvaluations",
           "submitConsensusQuestionEvaluations"
