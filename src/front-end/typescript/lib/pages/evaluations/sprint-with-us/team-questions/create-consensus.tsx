@@ -63,7 +63,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 proposal,
                 opportunity,
                 true,
-                undefined,
+                undefined, // No evaluation to load
                 panelEvaluations,
                 proposals
               ]) as Msg;
