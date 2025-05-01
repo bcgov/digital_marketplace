@@ -51,6 +51,7 @@ export interface State extends Tab.Params {
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
+  isAuthor: boolean;
 }
 
 export type InnerMsg =
@@ -78,7 +79,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       areEvaluationsValid: false,
       evaluations: [],
       proposals: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      isAuthor: false
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -103,6 +105,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           opportunity,
           SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
         );
+      const isAuthor =
+        opportunity.evaluationPanel?.some(
+          ({ user }) => user.id === state.viewerUser.id
+        ) ?? false;
       return [
         state
           .set("opportunity", opportunity)
@@ -112,8 +118,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Determine whether the "Submit" button should be shown at all.
           // Can be submitted if...
           // - Opportunity has the appropriate status
-          // - All proposals have the appropriate status
           // - All questions have been evaluated.
+          // - Is the correct user type
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
@@ -124,7 +130,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   e.status === SWUTeamQuestionResponseEvaluationStatus.Draft,
                 false as boolean
               )
-          ),
+          )
+          .set("isAuthor", isAuthor),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -231,7 +238,15 @@ const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
-}> = ({ disabled, proposal, evaluation }) => {
+  isAuthor: boolean;
+  canEvaluationsBeSubmitted: boolean;
+}> = ({
+  disabled,
+  proposal,
+  evaluation,
+  isAuthor,
+  canEvaluationsBeSubmitted
+}) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -246,7 +261,7 @@ const ContextMenuCell: component_.base.View<{
           userId: evaluation.evaluationPanelMember
         })
       )}>
-      Edit
+      {isAuthor && canEvaluationsBeSubmitted ? "Edit" : "View"}
     </Link>
   ) : (
     <Link
@@ -349,6 +364,8 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             disabled={isLoading}
             proposal={p}
             evaluation={evaluation}
+            isAuthor={state.isAuthor}
+            canEvaluationsBeSubmitted={state.canEvaluationsBeSubmitted}
           />
         )
       }
