@@ -933,7 +933,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           dispatch={() => {}}
           showAllTabs={true}
           expandAccordions={true}
-          {...({} as any)}
         />
 
         <hr></hr>

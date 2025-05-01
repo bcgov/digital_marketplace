@@ -155,6 +155,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     activeTab
   });
 
+  // When multiple instances of this component are used on the same page,
+  // we need to ensure that the IDs are unique for the radio button group.
+  // Otherwise, the IDs will clash and the radio buttons will not render correctly.
   const proponentTypeId = idPrefix
     ? `${idPrefix}-cwu-proposal-proponent-type`
     : "cwu-proposal-proponent-type";
@@ -1126,17 +1129,8 @@ const AttachmentsView: component_.base.View<Props> = ({
   );
 };
 
-export const view: component_.base.View<Props> = ({
-  state,
-  dispatch,
-  showAllTabs,
-  disabled
-}) => {
-  const props = {
-    state,
-    dispatch,
-    disabled
-  };
+export const view: component_.base.View<Props> = (props) => {
+  const { state, dispatch, showAllTabs } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Proponent":

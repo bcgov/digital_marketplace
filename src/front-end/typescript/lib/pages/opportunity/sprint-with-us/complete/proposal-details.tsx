@@ -192,7 +192,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         dispatch={() => {}}
         showAllTabs={true}
         expandAccordions={true}
-        {...({} as any)}
       />
 
       <h3

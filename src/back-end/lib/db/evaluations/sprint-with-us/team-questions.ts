@@ -186,6 +186,9 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id, boolean?, boolean?],
   SWUTeamQuestionResponseEvaluation[]
 >(async (connection, session, id, consensus = false, filterByUser = true) => {
+  // When filterByUser is false, we are looking for all evaluations for the opportunity (admin only)
+  // (scores and notes for each panel member for each proposal for the opportunity)
+  // Used for generating the complete competition view for reporting purposes
   let query = generateSWUTeamQuestionResponseEvaluationQuery(
     connection,
     consensus
@@ -203,7 +206,6 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   query = query.where(whereClause);
 
   const results = await query;
-
 
   if (!results) {
     throw new Error("unable to read evaluations");

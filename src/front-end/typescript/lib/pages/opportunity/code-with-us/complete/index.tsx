@@ -544,7 +544,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           state={state.opportunityState}
           dispatch={() => {}}
           showAllTabs={true}
-          {...({} as any)}
         />
         <hr />
 

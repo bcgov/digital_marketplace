@@ -137,7 +137,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         state={state.proposalTabState}
         dispatch={() => dispatch(adt("noop"))}
         showAllTabs={true}
-        {...({} as any)}
       />
 
       <hr></hr>

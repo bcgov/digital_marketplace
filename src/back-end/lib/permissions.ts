@@ -918,6 +918,8 @@ export async function readManySWUTeamQuestionResponseEvaluations(
   opportunity: SWUOpportunity,
   filterByUser = true
 ): Promise<boolean> {
+  // When filterByUser is false, only admins can see all evaluations for the opportunity
+  // Used for generating the complete competition view for reporting purposes
   return (
     !!session &&
     (filterByUser

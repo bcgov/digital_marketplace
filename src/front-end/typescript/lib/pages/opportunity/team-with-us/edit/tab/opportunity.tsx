@@ -698,7 +698,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.View<Props> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
   const { state, dispatch, showAllTabs } = props;
   const opportunity = state.opportunity;
   const form = state.form;
@@ -733,11 +733,13 @@ const view: component_.base.View<Props> = (props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State, Msg> & {
+  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
+  view: component_.base.View<Props>;
+} = {
   init,
   update,
   view,
-
   onInitResponse(response) {
     return adt("resetOpportunity", [response[0], false]) as InnerMsg;
   },

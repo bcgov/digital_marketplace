@@ -72,9 +72,6 @@ const init: component_.base.Init<Params, State, Msg> = ({
   const detailStates: Record<Id, Immutable<ProposalDetailState>> = {};
 
   for (const proposal of proposals) {
-    // Generate unique ID prefixes for form elements
-    // const uniqueIdPrefix = `proposal-${proposal.id}`;
-
     const [formState, _formCmds] = ProposalForm.init({
       viewerUser: viewerUser,
       opportunity: opportunity,
@@ -151,7 +148,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         dispatch={() => dispatch(adt("noop"))}
         showAllTabs={true}
         expandAccordions={true}
-        {...({} as any)}
       />
 
       <hr></hr>

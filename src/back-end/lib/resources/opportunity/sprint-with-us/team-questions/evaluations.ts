@@ -55,7 +55,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       connection,
       request.session,
       request.params.opportunityId,
-      false,
+      false, // consensus flag - false by default
       filterByUser
     );
     if (isInvalid(dbResult)) {

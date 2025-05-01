@@ -737,7 +737,10 @@ const view: component_.base.View<Props> = (props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State, Msg> & {
+  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
+  view: component_.base.View<Props>;
+} = {
   init,
   update,
   view,

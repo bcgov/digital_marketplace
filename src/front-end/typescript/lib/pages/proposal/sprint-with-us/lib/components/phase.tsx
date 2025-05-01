@@ -341,7 +341,6 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
   className?: string;
   expandAccordion?: boolean;
-  expandAccordions?: boolean;
 }
 
 const Dates: component_.base.View<Props> = ({ state }) => {

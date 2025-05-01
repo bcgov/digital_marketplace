@@ -389,7 +389,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             opportunityResponse,
             proposalResponse,
             contentResponse
-            // organizationsResponse
           ] = responsePayload;
 
           if (opportunityResponse.tag !== "valid") {
@@ -546,11 +545,11 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity Details
         </h2>
-        {React.createElement(OpportunityTab.component.view as any, {
-          state: state.opportunityState,
-          dispatch: () => {},
-          showAllTabs: true
-        })}
+        <OpportunityTab.component.view
+          state={state.opportunityState}
+          dispatch={() => {}}
+          showAllTabs={true}
+        />
         <hr />
 
         <h2 className="complete-report-section-header">

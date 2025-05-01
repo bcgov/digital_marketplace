@@ -50,7 +50,7 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
-interface Props extends component_.page.Props<State, InnerMsg, Route> {
+interface Props extends component_.base.ComponentViewProps<State, Msg> {
   showAllTabs?: boolean;
 }
 
@@ -470,7 +470,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.View<Props> = (props) => {
+const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
   const { state, dispatch, showAllTabs } = props;
   const proposal = state.proposal;
   const form = state.form;
@@ -495,7 +495,10 @@ const view: component_.base.View<Props> = (props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> = {
+export const component: Tab.Component<State, Msg> & {
+  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
+  view: component_.base.View<Props>;
+} = {
   init,
   update,
   view,
