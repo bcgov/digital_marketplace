@@ -213,7 +213,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               adt("onInitResponse", [
                 newOpp,
                 newProposals,
-                newEvaluations
+                newEvaluations,
+                []
               ]) as Msg
           )
         ]
@@ -281,7 +282,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               adt("onInitResponse", [
                 newOpp,
                 newProposals,
-                newEvaluations
+                newEvaluations,
+                []
               ]) as Msg
           )
         ]
