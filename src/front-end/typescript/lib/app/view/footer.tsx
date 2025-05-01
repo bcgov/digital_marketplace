@@ -1,4 +1,4 @@
-import { PROCUREMENT_CONCIERGE_URL, SOURCE_CODE_URL } from "front-end/config";
+import {  SOURCE_CODE_URL } from "front-end/config";
 import { component } from "front-end/lib/framework";
 import Link, {
   AnchorProps,
@@ -6,7 +6,6 @@ import Link, {
   externalDest,
   iconLinkSymbol,
   leftPlacement,
-  rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import Separator from "front-end/lib/views/separator";
@@ -50,12 +49,6 @@ const links: AnchorProps[] = [
     newTab: true,
     symbol_: leftPlacement(iconLinkSymbol("github"))
   },
-  {
-    children: "Procurement Concierge",
-    dest: externalDest(PROCUREMENT_CONCIERGE_URL),
-    newTab: true,
-    symbol_: rightPlacement(iconLinkSymbol("external-link"))
-  }
 ];
 
 const Footer: component.base.View<Record<string, never>> = () => {
