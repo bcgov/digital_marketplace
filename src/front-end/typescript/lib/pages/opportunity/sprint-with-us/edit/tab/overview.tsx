@@ -35,10 +35,7 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
@@ -51,7 +48,7 @@ export interface State extends Tab.Params {
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
-  isAuthor: boolean;
+  isPanelMember: boolean;
 }
 
 export type InnerMsg =
@@ -80,7 +77,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       evaluations: [],
       proposals: [],
       table: immutable(tableState),
-      isAuthor: false
+      isPanelMember: false
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -105,7 +102,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           opportunity,
           SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
         );
-      const isAuthor =
+      const isPanelMember =
         opportunity.evaluationPanel?.some(
           ({ user }) => user.id === state.viewerUser.id
         ) ?? false;
@@ -124,14 +121,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             "canEvaluationsBeSubmitted",
             opportunity.status ===
               SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
-              evaluations.reduce(
-                (acc, e) =>
-                  acc ||
-                  e.status === SWUTeamQuestionResponseEvaluationStatus.Draft,
-                false as boolean
-              )
+              isPanelMember
           )
-          .set("isAuthor", isAuthor),
+          .set("isPanelMember", isPanelMember),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -199,7 +191,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               adt("onInitResponse", [
                 newOpp,
                 newProposals,
-                newEvaluations
+                newEvaluations,
+                []
               ]) as Msg
           )
         ]
@@ -238,13 +231,13 @@ const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
-  isAuthor: boolean;
+  isPanelMember: boolean;
   canEvaluationsBeSubmitted: boolean;
 }> = ({
   disabled,
   proposal,
   evaluation,
-  isAuthor,
+  isPanelMember,
   canEvaluationsBeSubmitted
 }) => {
   const proposalRouteParams = {
@@ -261,7 +254,7 @@ const ContextMenuCell: component_.base.View<{
           userId: evaluation.evaluationPanelMember
         })
       )}>
-      {isAuthor && canEvaluationsBeSubmitted ? "Edit" : "View"}
+      {isPanelMember && canEvaluationsBeSubmitted ? "Edit" : "View"}
     </Link>
   ) : (
     <Link
@@ -364,7 +357,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             disabled={isLoading}
             proposal={p}
             evaluation={evaluation}
-            isAuthor={state.isAuthor}
+            isPanelMember={state.isPanelMember}
             canEvaluationsBeSubmitted={state.canEvaluationsBeSubmitted}
           />
         )
