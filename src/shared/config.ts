@@ -49,3 +49,5 @@ export const COPY = {
 export const EMPTY_STRING = "—"; // emdash
 
 export const DEFAULT_PAGE_SIZE = 50;
+
+export const SWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 4;

@@ -15,11 +15,9 @@ import {
   swuProposalStatusToColor,
   swuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/sprint-with-us/lib";
-import * as proposalToasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import Badge from "front-end/lib/views/badge";
 import Link, {
   iconLinkSymbol,
-  leftPlacement,
   rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
@@ -29,7 +27,6 @@ import ReportCardList, {
 import React from "react";
 import { Col, Row } from "reactstrap";
 import {
-  canSWUOpportunityBeScreenedInToCodeChallenge,
   canViewSWUOpportunityProposals,
   hasSWUOpportunityPassedTeamQuestions,
   isSWUOpportunityAcceptingProposals,
@@ -38,16 +35,13 @@ import {
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
-  canSWUProposalBeScreenedToFromCodeChallenge,
   compareSWUProposalsForPublicSector,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
   SWUProposalSlim,
-  SWUProposalStatus,
-  SWUProposal,
-  UpdateValidationErrors as ProposalUpdateValidationErrors
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { ADT, adt, Id } from "shared/lib/types";
+import { ADT, adt } from "shared/lib/types";
 
 type ModalId = ADT<"completeTeamQuestions">;
 
@@ -56,8 +50,6 @@ export interface State extends Tab.Params {
   proposals: SWUProposalSlim[];
   showModal: ModalId | null;
   completeTeamQuestionsLoading: number;
-  screenToFromLoading: Id | null;
-  canProposalsBeScreened: boolean;
   canViewProposals: boolean;
   table: Immutable<Table.State>;
   proposalSortOrder: "default" | "completePage";
@@ -68,16 +60,6 @@ export type InnerMsg =
   | ADT<"table", Table.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
-  | ADT<"screenInToCodeChallenge", Id>
-  | ADT<
-      "onScreenInToCodeChallengeResponse",
-      api.ResponseValidation<SWUProposal, ProposalUpdateValidationErrors>
-    >
-  | ADT<"screenOutFromCodeChallenge", Id>
-  | ADT<
-      "onScreenOutFromCodeChallengeResponse",
-      api.ResponseValidation<SWUProposal, ProposalUpdateValidationErrors>
-    >
   | ADT<"completeTeamQuestions">
   | ADT<
       "onCompleteTeamQuestions",
@@ -96,10 +78,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       opportunity: null,
       proposals: [],
       completeTeamQuestionsLoading: 0,
-      screenToFromLoading: null,
       showModal: null,
       canViewProposals: false,
-      canProposalsBeScreened: false,
       table: immutable(tableState),
       proposalSortOrder: params.proposalSortOrder || "default"
     },
@@ -150,21 +130,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         );
       }
 
-      // Can be screened in if...
-      // - Opportunity has the appropriate status; and
-      // - At least one proposal has been evaluated.
-      const canProposalsBeScreened =
-        canSWUOpportunityBeScreenedInToCodeChallenge(opportunity) &&
-        useProposals.reduce(
-          (acc, p) => acc || canSWUProposalBeScreenedToFromCodeChallenge(p),
-          false as boolean
-        );
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", useProposals)
-          .set("canViewProposals", canViewProposals)
-          .set("canProposalsBeScreened", canProposalsBeScreened),
+          .set("canViewProposals", canViewProposals),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -229,120 +199,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           )
         ]
       ];
-    }
-
-    case "screenInToCodeChallenge": {
-      state = state.set("showModal", null);
-      return [
-        state.set("screenToFromLoading", msg.value),
-        [
-          api.proposals.swu.update<Msg>()(
-            msg.value,
-            adt("screenInToCodeChallenge", ""),
-            (response) => adt("onScreenInToCodeChallengeResponse", response)
-          )
-        ]
-      ];
-    }
-
-    case "onScreenInToCodeChallengeResponse": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      state = state.set("screenToFromLoading", null);
-      const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("success", proposalToasts.screenedIn.success)
-                )
-              ),
-              component_.cmd.join(
-                api.opportunities.swu.readOne()(opportunity.id, (response) =>
-                  api.getValidValue(response, opportunity)
-                ),
-                api.proposals.swu.readMany(opportunity.id)((response) =>
-                  api.getValidValue(response, state.proposals)
-                ),
-                (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals, []]) as Msg
-              )
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-        default:
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", proposalToasts.screenedIn.error)
-                )
-              )
-            ]
-          ];
-      }
-    }
-
-    case "screenOutFromCodeChallenge": {
-      state = state.set("showModal", null);
-      return [
-        state.set("screenToFromLoading", msg.value),
-        [
-          api.proposals.swu.update<Msg>()(
-            msg.value,
-            adt("screenOutFromCodeChallenge", ""),
-            (response) => adt("onScreenOutFromCodeChallengeResponse", response)
-          )
-        ]
-      ];
-    }
-
-    case "onScreenOutFromCodeChallengeResponse": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
-      state = state.set("screenToFromLoading", null);
-      const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("success", proposalToasts.screenedOut.success)
-                )
-              ),
-              component_.cmd.join(
-                api.opportunities.swu.readOne()(opportunity.id, (response) =>
-                  api.getValidValue(response, opportunity)
-                ),
-                api.proposals.swu.readMany(opportunity.id)((response) =>
-                  api.getValidValue(response, state.proposals)
-                ),
-                (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals, []]) as Msg
-              )
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-        default:
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", proposalToasts.screenedOut.error)
-                )
-              )
-            ]
-          ];
-      }
     }
 
     case "showModal":
@@ -424,48 +280,6 @@ const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   }
 };
 
-const ContextMenuCell: component_.base.View<{
-  disabled: boolean;
-  loading: boolean;
-  proposal: SWUProposalSlim;
-  dispatch: component_.base.Dispatch<Msg>;
-}> = ({ disabled, loading, proposal, dispatch }) => {
-  switch (proposal.status) {
-    case SWUProposalStatus.EvaluatedTeamQuestions:
-      return (
-        <Link
-          button
-          symbol_={leftPlacement(iconLinkSymbol("stars"))}
-          color="info"
-          size="sm"
-          disabled={disabled || loading}
-          loading={loading}
-          onClick={() =>
-            dispatch(adt("screenInToCodeChallenge" as const, proposal.id))
-          }>
-          Screen In
-        </Link>
-      );
-    case SWUProposalStatus.UnderReviewCodeChallenge:
-      return (
-        <Link
-          button
-          symbol_={leftPlacement(iconLinkSymbol("ban"))}
-          color="danger"
-          size="sm"
-          disabled={disabled || loading}
-          loading={loading}
-          onClick={() =>
-            dispatch(adt("screenOutFromCodeChallenge" as const, proposal.id))
-          }>
-          Screen Out
-        </Link>
-      );
-    default:
-      return null;
-  }
-};
-
 interface ProponentCellProps {
   proposal: SWUProposalSlim;
   opportunity: SWUOpportunity;
@@ -503,17 +317,12 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
   );
 };
 
-function evaluationTableBodyRows(
-  state: Immutable<State>,
-  dispatch: component_.base.Dispatch<Msg>
-): Table.BodyRows {
+function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const opportunity = state.opportunity;
   if (!opportunity) return [];
   const isCompleteTeamQuestionsLoading = state.completeTeamQuestionsLoading > 0;
-  const isScreenToFromLoading = !!state.screenToFromLoading;
-  const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
+  const isLoading = isCompleteTeamQuestionsLoading;
   return state.proposals.map((p) => {
-    const isProposalLoading = state.screenToFromLoading === p.id;
     return [
       {
         className: "text-wrap",
@@ -542,28 +351,12 @@ function evaluationTableBodyRows(
               : EMPTY_STRING}
           </div>
         )
-      },
-      ...(state.canProposalsBeScreened
-        ? [
-            {
-              showOnHover: !isProposalLoading,
-              className: "text-right text-nowrap",
-              children: (
-                <ContextMenuCell
-                  dispatch={dispatch}
-                  proposal={p}
-                  disabled={isLoading}
-                  loading={isProposalLoading}
-                />
-              )
-            }
-          ]
-        : [])
+      }
     ];
   });
 }
 
-function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
+function evaluationTableHeadCells(): Table.HeadCells {
   return [
     {
       children: "Proponent",
@@ -579,16 +372,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       children: "Team Questions",
       className: "text-nowrap text-center",
       style: { width: "0px" }
-    },
-    ...(state.canProposalsBeScreened
-      ? [
-          {
-            children: "",
-            className: "text-nowrap text-right",
-            style: { width: "0px" }
-          }
-        ]
-      : [])
+    }
   ];
 }
 
@@ -598,8 +382,8 @@ const EvaluationTable: component_.base.ComponentView<State, Msg> = ({
 }) => {
   return (
     <Table.view
-      headCells={evaluationTableHeadCells(state)}
-      bodyRows={evaluationTableBodyRows(state, dispatch)}
+      headCells={evaluationTableHeadCells()}
+      bodyRows={evaluationTableBodyRows(state)}
       state={state.table}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("table" as const, msg)
@@ -663,47 +447,6 @@ export const component: Tab.Component<State, Msg> = {
 
   onInitResponse(response) {
     return adt("onInitResponse", response);
-  },
-
-  getActions: ({ state, dispatch }) => {
-    const opportunity = state.opportunity;
-    if (
-      !opportunity ||
-      !state.canViewProposals ||
-      !state.canProposalsBeScreened
-    ) {
-      return component_.page.actions.none();
-    }
-    const isCompleteTeamQuestionsLoading =
-      state.completeTeamQuestionsLoading > 0;
-    const isScreenToFromLoading = !!state.screenToFromLoading;
-    const isLoading = isCompleteTeamQuestionsLoading || isScreenToFromLoading;
-    return component_.page.actions.links([
-      {
-        children: "Complete Team Questions",
-        symbol_: leftPlacement(iconLinkSymbol("comments-alt")),
-        color: "primary",
-        button: true,
-        loading: isCompleteTeamQuestionsLoading,
-        disabled: (() => {
-          // At least one proposal already screened in.
-          return (
-            isLoading ||
-            !(
-              canSWUOpportunityBeScreenedInToCodeChallenge(opportunity) &&
-              state.proposals.reduce(
-                (acc, p) =>
-                  acc ||
-                  p.status === SWUProposalStatus.UnderReviewCodeChallenge,
-                false as boolean
-              )
-            )
-          );
-        })(),
-        onClick: () =>
-          dispatch(adt("showModal", adt("completeTeamQuestions")) as Msg)
-      }
-    ]);
   },
 
   getModal: (state) => {

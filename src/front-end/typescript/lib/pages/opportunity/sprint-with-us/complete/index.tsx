@@ -109,7 +109,8 @@ const init: component_.page.Init<
   success({ routeParams, shared }) {
     const [formState, _formCmds] = Form.init({
       viewerUser: shared.sessionUser,
-      canRemoveExistingAttachments: false
+      canRemoveExistingAttachments: false,
+      users: []
     });
 
     // Initialize the basic addenda tab state structure
@@ -254,27 +255,31 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             const [formState, _formCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
-              canRemoveExistingAttachments: false
+              canRemoveExistingAttachments: false,
+              users: []
             });
 
             // Create initialization messages for other tabs
             const addendaOnInitMsg = AddendaTab.component.onInitResponse([
               opportunity,
               [] as SWUProposalSlim[],
-              [] as SWUTeamQuestionResponseEvaluation[]
+              [] as SWUTeamQuestionResponseEvaluation[],
+              [] as User[]
             ]);
 
             const historyOnInitMsg = HistoryTab.component.onInitResponse([
               opportunity,
               [] as SWUProposalSlim[],
-              [] as SWUTeamQuestionResponseEvaluation[]
+              [] as SWUTeamQuestionResponseEvaluation[],
+              [] as User[]
             ]);
 
             const instructionsOnInitMsg =
               InstructionsTab.component.onInitResponse([
                 opportunity,
                 [] as SWUProposalSlim[],
-                [] as SWUTeamQuestionResponseEvaluation[]
+                [] as SWUTeamQuestionResponseEvaluation[],
+                [] as User[]
               ]);
 
             // Initialize the opportunity tab state with the opportunity
@@ -288,7 +293,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             const [oppFormState, _oppFormCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
-              canRemoveExistingAttachments: false
+              canRemoveExistingAttachments: false,
+              users: []
             });
             updatedOpportunityState.form = immutable(oppFormState);
 
@@ -377,7 +383,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ProposalsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  [] as SWUTeamQuestionResponseEvaluation[]
+                  [] as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -387,7 +394,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 OverviewTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  evaluations as SWUTeamQuestionResponseEvaluation[]
+                  evaluations as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -397,7 +405,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 TeamQuestionsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  [] as SWUTeamQuestionResponseEvaluation[]
+                  [] as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -407,7 +416,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ConsensusTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  evaluations as SWUTeamQuestionResponseEvaluation[]
+                  evaluations as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -417,7 +427,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 CodeChallengeTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  [] as SWUTeamQuestionResponseEvaluation[]
+                  [] as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -427,7 +438,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 TeamScenarioTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  [] as SWUTeamQuestionResponseEvaluation[]
+                  [] as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -437,7 +449,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 SummaryTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  [] as SWUTeamQuestionResponseEvaluation[]
+                  [] as SWUTeamQuestionResponseEvaluation[],
+                  [] as User[]
                 ])
               )
             ) as component_.Cmd<Msg>,
@@ -514,16 +527,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               string,
               Immutable<ProposalTeamQuestionsTab.State>
             > = {};
+
             updatedState.overviewState.evaluations.forEach((evaluation) => {
               if (!evaluation || !evaluation.proposal) return;
               const relatedProposal = updatedState.proposals.find(
-                (p) => p.id === evaluation.proposal.id
+                (p) => p.id === evaluation.proposal
               );
               if (!relatedProposal) return;
 
               // Use composite key here
-              const key = `${evaluation.evaluationPanelMember.user.id}-${evaluation.proposal.id}`;
+              const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
               individualEvaluationStates[key] = immutable({
+                proposals: updatedState.proposals,
                 opportunity: currentOpportunity,
                 proposal: relatedProposal,
                 viewerUser: updatedState.viewerUser,
@@ -997,16 +1012,27 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             </h2>
             {state.overviewState.evaluations.map((evaluation, i) => {
               // Use composite key here for retrieval
-              const key = `${evaluation.evaluationPanelMember.user.id}-${evaluation.proposal.id}`;
+              const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
               const evalState = state.individualEvaluationStates[key];
               if (!evalState) return null;
+
+              // Find the corresponding evaluator user from the opportunity's evaluationPanel
+              const evaluator = state.opportunity?.evaluationPanel?.find(
+                (panelMember) =>
+                  panelMember.user.id === evaluation.evaluationPanelMember
+              );
+
+              // Get evaluator name, fallback to ID if not found
+              const evaluatorName = evaluator
+                ? evaluator.user.name
+                : evaluation.evaluationPanelMember;
 
               return (
                 <div
                   key={`team-question-evaluation-${key}-${i}`}
                   className="mb-5">
                   <h3 style={{ marginBottom: "-40px" }}>
-                    Evaluator: {evaluation.evaluationPanelMember.user.name}
+                    Evaluator: {evaluatorName}
                   </h3>
                   {ProposalTeamQuestionsTab.component.view({
                     state: evalState,

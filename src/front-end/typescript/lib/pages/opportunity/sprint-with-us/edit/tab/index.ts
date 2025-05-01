@@ -59,7 +59,8 @@ export type TabPermissions = {
 export type InitResponse = [
   SWUOpportunity,
   SWUProposalSlim[],
-  SWUTeamQuestionResponseEvaluation[]
+  SWUTeamQuestionResponseEvaluation[],
+  User[]
 ];
 
 export type Component<State, Msg> = TabbedPage.TabComponent<
@@ -379,4 +380,8 @@ export function shouldLoadProposalsForTab(tabId: TabId): boolean {
 export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
   const evaluationTabs: TabId[] = ["overview", "consensus"];
   return evaluationTabs.includes(tabId);
+}
+
+export function shouldLoadUsersForTab(tabId: TabId): boolean {
+  return tabId === "evaluationPanel";
 }

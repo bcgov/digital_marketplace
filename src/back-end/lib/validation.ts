@@ -28,7 +28,7 @@ import {
   SWUProposal
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-import { User, UserType } from "shared/lib/resources/user";
+import { isPublicSectorEmployee, User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import {
   allValid,
@@ -42,7 +42,6 @@ import {
   valid,
   validateArrayAsync,
   validateArrayCustomAsync,
-  validateEmail,
   validateGenericString,
   validateUUID,
   Validation
@@ -428,29 +427,6 @@ export async function validateUserId(
   }
 }
 
-export async function validateUserEmail(
-  connection: db.Connection,
-  userEmail: string
-): Promise<Validation<User>> {
-  // Validate the provided email
-  const validatedEmail = validateEmail(userEmail);
-  if (isInvalid(validatedEmail)) {
-    return validatedEmail;
-  }
-  const dbResult = await db.readOneUserByEmail(connection, userEmail, false, [
-    UserType.Government,
-    UserType.Admin
-  ]);
-  switch (dbResult.tag) {
-    case "valid":
-      return dbResult.value
-        ? valid(dbResult.value)
-        : invalid(["This user cannot be found."]);
-    case "invalid":
-      return invalid(["Please select a valid user"]);
-  }
-}
-
 export async function validateFileRecord(
   connection: db.Connection,
   fileId: Id
@@ -714,14 +690,15 @@ export async function validateEvaluationPanelMember(
   raw: any
 ): Promise<
   Validation<
-    Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id },
+    CreateSWUEvaluationPanelMemberBody,
     CreateSWUEvaluationPanelMemberValidationErrors
   >
 > {
-  const validatedUser = await validateUserEmail(
-    connection,
-    getString(raw, "email")
-  );
+  let validatedUser = await validateUserId(connection, getString(raw, "user"));
+  const validaValidatedUser = getValidValue(validatedUser, null);
+  if (validaValidatedUser && !isPublicSectorEmployee(validaValidatedUser)) {
+    validatedUser = invalid(["The user must be a public sector employee."]);
+  }
   const validatedEvaluator = validateSWUEvaluationPanelMemberEvaluator(
     get(raw, "evaluator")
   );
@@ -743,10 +720,10 @@ export async function validateEvaluationPanelMember(
       chair: validatedChair.value,
       user: (validatedUser.value as User).id,
       order: validatedOrder.value
-    } as Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id });
+    } as CreateSWUEvaluationPanelMemberBody);
   } else {
     return invalid({
-      email: getInvalidValue(validatedUser, undefined),
+      user: getInvalidValue(validatedUser, undefined),
       evaluator: getInvalidValue(validatedEvaluator, undefined),
       chair: getInvalidValue(validatedChair, undefined),
       order: getInvalidValue(validatedOrder, undefined)
@@ -768,7 +745,7 @@ export async function validateSWUEvaluationPanelMembers(
   raw: any
 ): Promise<
   ArrayValidation<
-    Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id },
+    CreateSWUEvaluationPanelMemberBody,
     CreateSWUEvaluationPanelMemberValidationErrors
   >
 > {
@@ -793,7 +770,7 @@ export async function validateSWUEvaluationPanelMembers(
   );
 
   const validValidatedEvaluationPanelMembers = getValidValue<
-    (Omit<CreateSWUEvaluationPanelMemberBody, "email"> & { user: Id })[],
+    CreateSWUEvaluationPanelMemberBody[],
     undefined
   >(validatedEvaluationPanelMembers, undefined);
 

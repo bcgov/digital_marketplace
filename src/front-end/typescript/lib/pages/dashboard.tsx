@@ -78,10 +78,21 @@ interface ValidState {
     bodyRows: Table.BodyRows;
     state: Immutable<Table.State>;
   };
+  panelTable: {
+    title: string;
+    link?: {
+      text: string;
+      route: Route;
+    };
+    headCells: Table.HeadCells;
+    bodyRows: Table.BodyRows;
+    state: Immutable<Table.State>;
+  };
   viewerUser: User;
   isSWUQualified?: boolean;
   isTWUQualified?: boolean;
   activeProposalsTab: ProposalsTab;
+  activeTab: "my-opportunities" | "panel-opportunities";
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -104,14 +115,16 @@ type InitResponse =
       [
         CWUO.CWUOpportunitySlim[],
         SWUO.SWUOpportunitySlim[],
-        TWUO.TWUOpportunitySlim[]
+        TWUO.TWUOpportunitySlim[],
+        SWUO.SWUOpportunitySlim[]
       ]
     >;
 
 export type InnerMsg =
   | ADT<"table", Table.Msg>
   | ADT<"onInitResponse", InitResponse>
-  | ADT<"setActiveProposalsTab", ProposalsTab>;
+  | ADT<"setActiveProposalsTab", ProposalsTab>
+  | ADT<"setActiveTab", "my-opportunities" | "panel-opportunities">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -260,6 +273,57 @@ function makePublicSectorBodyRows(
     });
 }
 
+function makePanelBodyRows(
+  swuOpportunities: SWUO.SWUOpportunitySlim[],
+  _viewerUser: User
+): Table.BodyRows {
+  return swuOpportunities
+    .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
+    .map((opportunity) => {
+      return [
+        {
+          children: (
+            <div>
+              <Link
+                dest={routeDest(
+                  adt("opportunitySWUEdit" as const, {
+                    opportunityId: opportunity.id
+                  })
+                )}>
+                {opportunity.title || "Untitled Sprint With Us Opportunity"}
+              </Link>
+              <div className="small text-secondary text-uppercase">
+                Sprint With Us
+              </div>
+            </div>
+          )
+        },
+        {
+          children: (
+            <Badge
+              color={oppHelpers(
+                adt("swu" as const, opportunity)
+              ).dashboard.getOppStatusColor(opportunity.status)}
+              text={oppHelpers(
+                adt("swu" as const, opportunity)
+              ).dashboard.getOppStatusText(opportunity.status)}
+            />
+          )
+        },
+        {
+          children: (
+            <div>
+              {formatDate(opportunity.createdAt)}
+              <div className="small text-secondary text-uppercase">
+                {opportunity.createdBy?.name}
+              </div>
+            </div>
+          )
+        }
+      ];
+    });
+}
+
 const init: component_.page.Init<
   RouteParams,
   SharedState,
@@ -299,7 +363,8 @@ const init: component_.page.Init<
         immutable({
           isSWUQualified: false,
           isTWUQualified: false,
-          activeProposalsTab: "my-proposals",
+          activeProposalsTab: "my-proposals", // active tab for vendor
+          activeTab: "my-opportunities", // active tab for public sector
           viewerUser,
           table: {
             title,
@@ -324,6 +389,16 @@ const init: component_.page.Init<
                   text: "View all opportunities",
                   route: adt("opportunities", null)
                 }
+          },
+          panelTable: {
+            title: "Evaluations",
+            headCells,
+            bodyRows,
+            state: immutable(tableState),
+            link: {
+              text: "View all opportunities",
+              route: adt("opportunities", null)
+            }
           }
         })
       ),
@@ -369,7 +444,7 @@ const init: component_.page.Init<
                   ] as const)
                 ) as Msg
             )
-          : component_.cmd.join3(
+          : component_.cmd.join4(
               api.opportunities.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
@@ -379,10 +454,19 @@ const init: component_.page.Init<
               api.opportunities.twu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
-              (cwu, swu, twu) =>
+              // get panel opportunities
+              api.opportunities.swu.readMany("panelMember=true")((response) =>
+                api.getValidValue(response, [])
+              ),
+              (cwu, swu, twu, panelOpps) =>
                 adt(
                   "onInitResponse",
-                  adt("publicSector", [cwu, swu, twu]) as InitResponse
+                  adt("publicSector", [
+                    cwu,
+                    swu,
+                    twu,
+                    panelOpps
+                  ] as const) as InitResponse
                 ) as Msg
             )
       ]
@@ -450,11 +534,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           }
           case "publicSector":
           default: {
-            const [cwuOpportunities, swuOpportunities, twuOpportunities] =
-              msg.value.value;
+            const [
+              cwuOpportunities,
+              swuOpportunities,
+              twuOpportunities,
+              panelOpportunities
+            ] = msg.value.value;
             return [
               state
-                .set("activeProposalsTab", state.activeProposalsTab)
+                .set("activeTab", state.activeTab)
                 .setIn(
                   ["table", "bodyRows"],
                   makePublicSectorBodyRows(
@@ -463,6 +551,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                     twuOpportunities,
                     state.viewerUser
                   )
+                )
+                .setIn(
+                  ["panelTable", "bodyRows"],
+                  makePanelBodyRows(panelOpportunities, state.viewerUser)
                 ),
               [component_.cmd.dispatch(component_.page.readyMsg())]
             ];
@@ -471,6 +563,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       }
       case "setActiveProposalsTab":
         return [state.set("activeProposalsTab", msg.value), []];
+      case "setActiveTab":
+        return [state.set("activeTab", msg.value), []];
       case "table":
         return component_.base.updateChild({
           state,
@@ -523,11 +617,23 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <Col xs="12" md="9">
               <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
                 {state.table ? (
-                  <Dashboard
-                    dispatch={dispatch}
-                    viewerUser={state.viewerUser}
-                    table={state.table}
-                  />
+                  state.activeTab === "my-opportunities" ? (
+                    <Dashboard
+                      dispatch={dispatch}
+                      viewerUser={state.viewerUser}
+                      table={state.table}
+                      showTabs={true}
+                      activeTab={state.activeTab}
+                    />
+                  ) : (
+                    <Dashboard
+                      dispatch={dispatch}
+                      viewerUser={state.viewerUser}
+                      table={state.panelTable}
+                      showTabs={true}
+                      activeTab={state.activeTab}
+                    />
+                  )
                 ) : (
                   <Welcome viewerUser={state.viewerUser} />
                 )}
@@ -584,17 +690,59 @@ const Welcome: component_.base.View<Pick<ValidState, "viewerUser">> = ({
   );
 };
 
+// Tabs for government users
+interface GovTabsProps {
+  activeTab: "my-opportunities" | "panel-opportunities";
+  dispatch: component_.base.Dispatch<Msg>;
+}
+
+const GovTabs: component_.base.View<GovTabsProps> = ({
+  activeTab,
+  dispatch
+}) => {
+  const getTabInfo = (tab: "my-opportunities" | "panel-opportunities") => ({
+    active: activeTab === tab,
+    onClick: () => dispatch(adt("setActiveTab", tab))
+  });
+
+  const tabs: Tab[] = [
+    {
+      ...getTabInfo("my-opportunities"),
+      text: "My Opportunities"
+    },
+    {
+      ...getTabInfo("panel-opportunities"),
+      text: "Evaluations"
+    }
+  ];
+
+  return (
+    <Row className="mb-2">
+      <Col xs="12">
+        <TabbedNav tabs={tabs} />
+      </Col>
+    </Row>
+  );
+};
+
 interface DashboardProps extends Pick<ValidState, "viewerUser"> {
   table: Defined<ValidState["table"]>;
   dispatch: component_.base.Dispatch<Msg>;
+  showTabs?: boolean;
+  activeTab?: "my-opportunities" | "panel-opportunities";
 }
 
 const Dashboard: component_.base.View<DashboardProps> = ({
   table,
-  dispatch
+  dispatch,
+  showTabs = false,
+  activeTab
 }) => {
   return (
     <div>
+      {showTabs && activeTab ? (
+        <GovTabs activeTab={activeTab} dispatch={dispatch} />
+      ) : null}
       <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
         <div className="font-weight-bold mr-sm-3">{table.title}</div>
         {table.link ? (

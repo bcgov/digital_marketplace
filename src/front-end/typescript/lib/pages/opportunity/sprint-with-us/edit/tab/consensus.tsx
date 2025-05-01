@@ -23,6 +23,7 @@ import React from "react";
 import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
+  hasSWUOpportunityPassedTeamQuestions,
   isSWUOpportunityStatusInEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus,
@@ -48,6 +49,7 @@ type ModalId = "submit" | "finalize";
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
   submitLoading: boolean;
+  finalizeLoading: boolean;
   canViewEvaluations: boolean;
   canEvaluationsBeSubmitted: boolean;
   evaluations: SWUTeamQuestionResponseEvaluation[];
@@ -65,6 +67,11 @@ export type InnerMsg =
       "onSubmitResponse",
       api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
     >
+  | ADT<"finalize">
+  | ADT<
+      "onFinalizeResponse",
+      api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
+    >
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">;
 
@@ -79,6 +86,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...params,
       opportunity: null,
       submitLoading: false,
+      finalizeLoading: false,
       canViewEvaluations: false,
       canEvaluationsBeSubmitted: false,
       areEvaluationsValid: false,
@@ -124,6 +132,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Can be submitted if...
           // - Opportunity has the appropriate status
           // - All questions have been evaluated.
+          // - Is the correct user type
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
@@ -141,6 +150,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [state.set("showModal", null), []];
 
     case "submit": {
+      state = state.set("showModal", null);
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
       return [
@@ -150,7 +160,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             opportunity.id,
             adt("submitConsensusQuestionEvaluations", {
               note: "",
-              proposals: state.evaluations.map(({ proposal: { id } }) => id)
+              proposals: state.evaluations.map(({ proposal }) => proposal)
             }),
             (response) => adt("onSubmitResponse", response)
           )
@@ -171,7 +181,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               component_.global.showToastMsg(
                 adt(
                   "error",
-                  toasts.submittedQuestionEvaluationScoresForConsensus.error
+                  toasts.submittedQuestionEvaluationConsensuses.error
                 )
               )
             )
@@ -185,7 +195,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             component_.global.showToastMsg(
               adt(
                 "success",
-                toasts.submittedQuestionEvaluationScoresForConsensus.success
+                toasts.submittedQuestionEvaluationConsensuses.success
               )
             )
           ),
@@ -203,7 +213,77 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               adt("onInitResponse", [
                 newOpp,
                 newProposals,
-                newEvaluations
+                newEvaluations,
+                []
+              ]) as Msg
+          )
+        ]
+      ];
+    }
+
+    case "finalize": {
+      state = state.set("showModal", null);
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      return [
+        state.set("finalizeLoading", true),
+        [
+          api.opportunities.swu.update<Msg>()(
+            opportunity.id,
+            adt("finalizeQuestionConsensuses", ""),
+            (response) => adt("onFinalizeResponse", response)
+          )
+        ]
+      ];
+    }
+
+    case "onFinalizeResponse": {
+      const opportunity = state.opportunity;
+      if (!opportunity) return [state, []];
+      state = state.set("finalizeLoading", false);
+      const result = msg.value;
+      if (!api.isValid(result)) {
+        return [
+          state,
+          [
+            component_.cmd.dispatch(
+              component_.global.showToastMsg(
+                adt(
+                  "error",
+                  toasts.finalizedQuestionEvaluationConsensuses.error
+                )
+              )
+            )
+          ]
+        ];
+      }
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt(
+                "success",
+                toasts.finalizedQuestionEvaluationConsensuses.success
+              )
+            )
+          ),
+          component_.cmd.join3(
+            api.opportunities.swu.readOne()(opportunity.id, (response) =>
+              api.getValidValue(response, opportunity)
+            ),
+            api.proposals.swu.readMany(opportunity.id)((response) =>
+              api.getValidValue(response, state.proposals)
+            ),
+            api.opportunities.swu.teamQuestions.consensuses.readMany(
+              opportunity.id
+            )((response) => api.getValidValue(response, state.evaluations)),
+            (newOpp, newProposals, newEvaluations) =>
+              adt("onInitResponse", [
+                newOpp,
+                newProposals,
+                newEvaluations,
+                []
               ]) as Msg
           )
         ]
@@ -242,7 +322,14 @@ const ContextMenuCell: component_.base.View<{
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
   isChair: boolean;
-}> = ({ disabled, proposal, evaluation, isChair }) => {
+  canEvaluationsBeSubmitted: boolean;
+}> = ({
+  disabled,
+  proposal,
+  evaluation,
+  isChair,
+  canEvaluationsBeSubmitted
+}) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -254,12 +341,12 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationConsensusSWUEdit", {
           ...proposalRouteParams,
-          userId: evaluation.evaluationPanelMember.user.id
+          userId: evaluation.evaluationPanelMember
         })
       )}>
-      {isChair ? "Edit" : "View"}
+      {isChair && canEvaluationsBeSubmitted ? "Edit" : "View"}
     </Link>
-  ) : isChair ? (
+  ) : isChair && canEvaluationsBeSubmitted ? (
     <Link
       disabled={disabled}
       dest={routeDest(
@@ -289,27 +376,15 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
     tab: "proposal" as const
   };
   return (
-    <div>
-      <Link
-        symbol_={leftPlacement(
-          warn ? iconLinkSymbol("exclamation-triangle") : emptyIconLinkSymbol()
-        )}
-        symbolClassName="text-danger"
-        disabled={disabled}
-        dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
-        {getSWUProponentName(proposal)}
-      </Link>
-      {(() => {
-        if (!proposal.organization) {
-          return null;
-        }
-        return (
-          <div className="small text-secondary text-uppercase">
-            {proposal.anonymousProponentName}
-          </div>
-        );
-      })()}
-    </div>
+    <Link
+      symbol_={leftPlacement(
+        warn ? iconLinkSymbol("exclamation-triangle") : emptyIconLinkSymbol()
+      )}
+      symbolClassName="text-danger"
+      disabled={disabled}
+      dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
+      {getSWUProponentName(proposal)}
+    </Link>
   );
 };
 
@@ -319,7 +394,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const isSubmitLoading = !!state.submitLoading;
   const isLoading = isSubmitLoading;
   return state.proposals.map((p) => {
-    const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
+    const evaluation = state.evaluations.find((e) => e.proposal === p.id);
     const hasScoreBelowMinimum = (
       state.opportunity?.teamQuestions ?? []
     ).reduce((acc, tq) => {
@@ -373,6 +448,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             proposal={p}
             evaluation={evaluation}
             isChair={state.isChair}
+            canEvaluationsBeSubmitted={state.canEvaluationsBeSubmitted}
           />
         )
       }
@@ -417,41 +493,41 @@ const makeCardData = (
   opportunity: SWUOpportunity,
   proposals: SWUProposalSlim[]
 ): ReportCard[] => {
-  const numProposals = opportunity.reporting?.numProposals || 0;
+  const numProposals = proposals.length;
   const [highestScore, averageScore] = proposals.reduce(
-    ([highest, average], { totalScore }, i) => {
-      if (!totalScore) {
+    ([highest, average], { questionsScore }, i) => {
+      if (!questionsScore) {
         return [highest, average];
       }
       return [
-        totalScore > highest ? totalScore : highest,
-        (average * i + totalScore) / (i + 1)
+        questionsScore > highest ? questionsScore : highest,
+        (average * i + questionsScore) / (i + 1)
       ];
     },
     [0, 0]
   );
-  const isAwarded = opportunity.status === SWUOpportunityStatus.Awarded;
+  const isComplete = hasSWUOpportunityPassedTeamQuestions(opportunity);
   return [
     {
-      icon: "comment-dollar",
-      name: `Proposal${numProposals === 1 ? "" : "s"}`,
+      icon: "users",
+      name: `Proponent${numProposals === 1 ? "" : "s"}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
       icon: "star-full",
       iconColor: "c-report-card-icon-highlight",
-      name: "Top Score",
+      name: "Top TQ Score",
       value:
-        isAwarded && highestScore
+        isComplete && highestScore
           ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     },
     {
       icon: "star-half",
       iconColor: "c-report-card-icon-highlight",
-      name: "Avg. Score",
+      name: "Avg. TQ Score",
       value:
-        isAwarded && averageScore
+        isComplete && averageScore
           ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     }
@@ -533,7 +609,7 @@ export const component: Tab.Component<State, Msg> = {
               icon: "paper-plane",
               color: "info",
               button: true,
-              msg: adt("hideModal") as Msg
+              msg: adt("finalize") as Msg
             },
             {
               text: "Cancel",
@@ -582,10 +658,14 @@ export const component: Tab.Component<State, Msg> = {
         true as boolean
       );
     const canEvaluationsBeFinalized =
+      state.evaluations.length &&
       state.evaluations.every(
         ({ status }) =>
           status === SWUTeamQuestionResponseEvaluationStatus.Submitted
-      ) && isAdmin(state.viewerUser);
+      ) &&
+      state.opportunity.status ===
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
+      isAdmin(state.viewerUser);
     return canEvaluationsBeFinalized
       ? component_.page.actions.links([
           {
@@ -611,7 +691,7 @@ export const component: Tab.Component<State, Msg> = {
             disabled: (() => {
               return isLoading || !areEvaluationsValid;
             })(),
-            onClick: () => dispatch(adt("submit") as Msg)
+            onClick: () => dispatch(adt("showModal", "submit") as Msg)
           }
         ])
       : component_.page.actions.none();

@@ -95,7 +95,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
         viewerUser: viewerUser,
         evaluating: false,
         questionEvaluation: undefined,
-        panelQuestionEvaluations: []
+        panelQuestionEvaluations: [],
+        proposals: proposals
       });
 
     const [codeChallengeState, _codeChallengeCmds] =
@@ -105,7 +106,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
         viewerUser: viewerUser,
         evaluating: false,
         questionEvaluation: undefined,
-        panelQuestionEvaluations: []
+        panelQuestionEvaluations: [],
+        proposals: proposals
       });
 
     const [teamScenarioState, _teamScenarioCmds] =
@@ -115,7 +117,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
         viewerUser: viewerUser,
         evaluating: false,
         questionEvaluation: undefined,
-        panelQuestionEvaluations: []
+        panelQuestionEvaluations: [],
+        proposals: proposals
       });
 
     // Initialize proposal tab state
@@ -125,7 +128,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       viewerUser: viewerUser,
       evaluating: false,
       questionEvaluation: undefined,
-      panelQuestionEvaluations: []
+      panelQuestionEvaluations: [],
+      proposals: proposals
     });
 
     // Create a complete proposalTabState with the form correctly initialized
@@ -142,7 +146,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       opportunity: opportunity,
       viewerUser: viewerUser,
       evaluating: false,
-      panelQuestionEvaluations: []
+      panelQuestionEvaluations: [],
+      proposals: proposals
     });
 
     // Store the initialized states
