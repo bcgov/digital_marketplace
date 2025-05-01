@@ -1,18 +1,11 @@
 import {
   RawSWUEvaluationPanelMember,
-  readOneSWUEvaluationPanelMember,
   readOneSWUOpportunity
 } from "back-end/lib/db/opportunity/sprint-with-us";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
-import {
-  Connection,
-  readOneSWUProposalSlim,
-  Transaction,
-  tryDb
-} from "back-end/lib/db";
+import { Connection, Transaction, tryDb } from "back-end/lib/db";
 import {
   AuthenticatedSession,
-  Session,
   SessionRecord
 } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
@@ -66,45 +59,14 @@ export const CHAIR_EVALUATION_STATUS_TABLE_NAME =
 export const EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
   "swuTeamQuestionResponseEvaluatorEvaluationStatuses";
 
-async function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-  connection: Connection,
-  session: Session,
+function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
   raw: RawSWUTeamQuestionResponseEvaluation[]
-): Promise<SWUTeamQuestionResponseEvaluation> {
+): SWUTeamQuestionResponseEvaluation {
   if (!raw.length) {
     throw new Error("unable to process team question response evaluation");
   }
 
-  const {
-    proposal: proposalId,
-    evaluationPanelMember: evaluationPanelMemberId,
-    questionOrder,
-    score,
-    notes,
-    ...restOfRaw
-  } = raw[0];
-
-  const proposal =
-    session &&
-    getValidValue(
-      await readOneSWUProposalSlim(connection, proposalId, session),
-      null
-    );
-  if (!proposal) {
-    throw new Error("unable to process team question response evaluation");
-  }
-
-  const evaluationPanelMember = getValidValue(
-    await readOneSWUEvaluationPanelMember(
-      connection,
-      evaluationPanelMemberId,
-      proposal.opportunity.id
-    ),
-    undefined
-  );
-  if (!evaluationPanelMember) {
-    throw new Error("unable to process team question response evaluation");
-  }
+  const { questionOrder, score, notes, ...restOfRaw } = raw[0];
 
   return {
     ...restOfRaw,
@@ -112,9 +74,7 @@ async function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluatio
       order: questionOrder,
       score,
       notes
-    })),
-    proposal,
-    evaluationPanelMember
+    }))
   };
 }
 
@@ -169,15 +129,8 @@ export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
   }, {});
 
   return valid(
-    await Promise.all(
-      Object.values(groupedResults).map(
-        async (result) =>
-          await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-            connection,
-            session,
-            result
-          )
-      )
+    Object.values(groupedResults).map((result) =>
+      rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(result)
     )
   );
 });
@@ -212,15 +165,8 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   }, {});
 
   return valid(
-    await Promise.all(
-      Object.values(groupedResults).map(
-        async (result) =>
-          await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-            connection,
-            session,
-            result
-          )
-      )
+    Object.values(groupedResults).map((result) =>
+      rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(result)
     )
   );
 });
@@ -246,9 +192,7 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
 
     return valid(
       result.length
-        ? await rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-            connection,
-            session,
+        ? rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
             result
           )
         : null
@@ -309,7 +253,6 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
               proposal: restOfEvaluation.proposal,
               status,
               createdAt: now,
-              createdBy: session.user.id,
               note: ""
             },
             "*"
@@ -397,7 +340,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   connection: Connection,
   trx: Transaction,
   opportunityId: string,
-  proposalsCount: number
+  proposals: Id[]
 ) {
   const [
     [{ count: submittedEvaluatorEvaluationsCount }],
@@ -410,6 +353,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       .where({
         "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
       })
+      .whereIn("evaluations.proposal", proposals)
       .count("*"),
     // Evaluators for the most recent version
     connection<RawSWUEvaluationPanelMember>(
@@ -459,7 +403,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   ]);
   return (
     Number(submittedEvaluatorEvaluationsCount) ===
-    Number(evaluatorsCount) * proposalsCount * Number(questionsCount)
+    Number(evaluatorsCount) * proposals.length * Number(questionsCount)
   );
 }
 

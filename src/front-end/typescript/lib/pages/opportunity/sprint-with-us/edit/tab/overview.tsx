@@ -23,6 +23,7 @@ import React from "react";
 import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
+  hasSWUOpportunityPassedTeamQuestions,
   isSWUOpportunityAcceptingProposals,
   SWUOpportunity,
   SWUOpportunityStatus,
@@ -34,10 +35,7 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationStatus
-} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
@@ -50,6 +48,7 @@ export interface State extends Tab.Params {
   evaluations: SWUTeamQuestionResponseEvaluation[];
   proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
+  isPanelMember: boolean;
 }
 
 export type InnerMsg =
@@ -77,7 +76,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       areEvaluationsValid: false,
       evaluations: [],
       proposals: [],
-      table: immutable(tableState)
+      table: immutable(tableState),
+      isPanelMember: false
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -102,6 +102,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           opportunity,
           SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
         );
+      const isPanelMember =
+        opportunity.evaluationPanel?.some(
+          ({ user }) => user.id === state.viewerUser.id
+        ) ?? false;
       return [
         state
           .set("opportunity", opportunity)
@@ -111,19 +115,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Determine whether the "Submit" button should be shown at all.
           // Can be submitted if...
           // - Opportunity has the appropriate status
-          // - All proposals have the appropriate status
           // - All questions have been evaluated.
+          // - Is the correct user type
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
               SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
-              evaluations.reduce(
-                (acc, e) =>
-                  acc ||
-                  e.status === SWUTeamQuestionResponseEvaluationStatus.Draft,
-                false as boolean
-              )
-          ),
+              isPanelMember
+          )
+          .set("isPanelMember", isPanelMember),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -138,7 +138,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             opportunity.id,
             adt("submitIndividualQuestionEvaluations", {
               note: "",
-              proposals: state.evaluations.map(({ proposal: { id } }) => id)
+              proposals: state.evaluations.map(({ proposal }) => proposal)
             }),
             (response) => adt("onSubmitResponse", response)
           )
@@ -191,7 +191,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               adt("onInitResponse", [
                 newOpp,
                 newProposals,
-                newEvaluations
+                newEvaluations,
+                []
               ]) as Msg
           )
         ]
@@ -230,7 +231,15 @@ const ContextMenuCell: component_.base.View<{
   disabled: boolean;
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
-}> = ({ disabled, proposal, evaluation }) => {
+  isPanelMember: boolean;
+  canEvaluationsBeSubmitted: boolean;
+}> = ({
+  disabled,
+  proposal,
+  evaluation,
+  isPanelMember,
+  canEvaluationsBeSubmitted
+}) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -242,10 +251,10 @@ const ContextMenuCell: component_.base.View<{
       dest={routeDest(
         adt("questionEvaluationIndividualSWUEdit", {
           ...proposalRouteParams,
-          userId: evaluation.evaluationPanelMember.user.id
+          userId: evaluation.evaluationPanelMember
         })
       )}>
-      Edit
+      {isPanelMember && canEvaluationsBeSubmitted ? "Edit" : "View"}
     </Link>
   ) : (
     <Link
@@ -277,27 +286,15 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
     tab: "proposal" as const
   };
   return (
-    <div>
-      <Link
-        symbol_={leftPlacement(
-          warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
-        )}
-        symbolClassName="text-warning"
-        disabled={disabled}
-        dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
-        {getSWUProponentName(proposal)}
-      </Link>
-      {(() => {
-        if (!proposal.organization) {
-          return null;
-        }
-        return (
-          <div className="small text-secondary text-uppercase">
-            {proposal.anonymousProponentName}
-          </div>
-        );
-      })()}
-    </div>
+    <Link
+      symbol_={leftPlacement(
+        warn ? iconLinkSymbol("exclamation-circle") : emptyIconLinkSymbol()
+      )}
+      symbolClassName="text-warning"
+      disabled={disabled}
+      dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
+      {getSWUProponentName(proposal)}
+    </Link>
   );
 };
 
@@ -307,7 +304,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   const isSubmitLoading = !!state.submitLoading;
   const isLoading = isSubmitLoading;
   return state.proposals.map((p) => {
-    const evaluation = state.evaluations.find((e) => e.proposal.id === p.id);
+    const evaluation = state.evaluations.find((e) => e.proposal === p.id);
     const hasScoreBelowMinimum = (
       state.opportunity?.teamQuestions ?? []
     ).reduce((acc, tq) => {
@@ -360,6 +357,8 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             disabled={isLoading}
             proposal={p}
             evaluation={evaluation}
+            isPanelMember={state.isPanelMember}
+            canEvaluationsBeSubmitted={state.canEvaluationsBeSubmitted}
           />
         )
       }
@@ -404,41 +403,41 @@ const makeCardData = (
   opportunity: SWUOpportunity,
   proposals: SWUProposalSlim[]
 ): ReportCard[] => {
-  const numProposals = opportunity.reporting?.numProposals || 0;
+  const numProposals = proposals.length;
   const [highestScore, averageScore] = proposals.reduce(
-    ([highest, average], { totalScore }, i) => {
-      if (!totalScore) {
+    ([highest, average], { questionsScore }, i) => {
+      if (!questionsScore) {
         return [highest, average];
       }
       return [
-        totalScore > highest ? totalScore : highest,
-        (average * i + totalScore) / (i + 1)
+        questionsScore > highest ? questionsScore : highest,
+        (average * i + questionsScore) / (i + 1)
       ];
     },
     [0, 0]
   );
-  const isAwarded = opportunity.status === SWUOpportunityStatus.Awarded;
+  const isComplete = hasSWUOpportunityPassedTeamQuestions(opportunity);
   return [
     {
-      icon: "comment-dollar",
-      name: `Proposal${numProposals === 1 ? "" : "s"}`,
+      icon: "users",
+      name: `Proponent${numProposals === 1 ? "" : "s"}`,
       value: numProposals ? String(numProposals) : EMPTY_STRING
     },
     {
       icon: "star-full",
       iconColor: "c-report-card-icon-highlight",
-      name: "Top Score",
+      name: "Top TQ Score",
       value:
-        isAwarded && highestScore
+        isComplete && highestScore
           ? `${highestScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     },
     {
       icon: "star-half",
       iconColor: "c-report-card-icon-highlight",
-      name: "Avg. Score",
+      name: "Avg. TQ Score",
       value:
-        isAwarded && averageScore
+        isComplete && averageScore
           ? `${averageScore.toFixed(NUM_SCORE_DECIMALS)}%`
           : EMPTY_STRING
     }

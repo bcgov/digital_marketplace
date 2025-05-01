@@ -23,11 +23,7 @@ import {
   SWUProposal,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import {
-  UserType,
-  User,
-  isPublicSectorEmployee
-} from "shared/lib/resources/user";
+import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -98,22 +94,15 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join3(
+          component_.cmd.join(
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
             api.opportunities.swu.readOne()(opportunityId, (response) =>
               api.isValid(response) ? response.value : null
             ),
-            api.proposals.swu.readMany(opportunityId)((response) =>
-              api.getValidValue(response, [])
-            ),
-            (proposal, opportunity, proposals) => {
-              if (
-                !proposal ||
-                !opportunity ||
-                (!proposals && isPublicSectorEmployee(shared.sessionUser))
-              )
+            (proposal, opportunity) => {
+              if (!proposal || !opportunity)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
                 );
@@ -123,9 +112,9 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 proposal,
                 opportunity,
                 false,
-                undefined,
-                [],
-                proposals
+                undefined, // No Evaluation
+                [], // Empty Panel Evaluatons
+                [] // Empty Proposals
               ]) as Msg;
             }
           )
@@ -192,7 +181,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 getTeamQuestionsOpportunityTab(
                   evaluating,
                   panelQuestionEvaluations
-                )
+                ),
+                questionEvaluation
               );
               // Initialize the tab.
               const tabComponent = Tab.idToDefinition(tabId).component;

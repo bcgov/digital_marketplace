@@ -1,7 +1,6 @@
 import { compareNumbers, compareStrings, isDateInThePast } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
 import {
-  SWUOpportunity,
   SWUOpportunitySlim,
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -9,6 +8,7 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import { UserSlim, UserType } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Comparison, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
+import { SWUTeamQuestionResponseEvaluationScores } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 export const DEFAULT_SWU_PROPOSAL_TITLE = "Unknown";
 export const NUM_SCORE_DECIMALS = 2;
@@ -51,7 +51,7 @@ export enum SWUProposalStatus {
   Draft = "DRAFT",
   Submitted = "SUBMITTED",
   UnderReviewTeamQuestions = "UNDER_REVIEW_QUESTIONS",
-  EvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
+  DeprecatedEvaluatedTeamQuestions = "EVALUATED_QUESTIONS",
   UnderReviewCodeChallenge = "UNDER_REVIEW_CODE_CHALLENGE",
   EvaluatedCodeChallenge = "EVALUATED_CODE_CHALLENGE",
   UnderReviewTeamScenario = "UNDER_REVIEW_TEAM_SCENARIO",
@@ -77,8 +77,8 @@ export function parseSWUProposalStatus(raw: string): SWUProposalStatus | null {
       return SWUProposalStatus.Submitted;
     case SWUProposalStatus.UnderReviewTeamQuestions:
       return SWUProposalStatus.UnderReviewTeamQuestions;
-    case SWUProposalStatus.EvaluatedTeamQuestions:
-      return SWUProposalStatus.EvaluatedTeamQuestions;
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
+      return SWUProposalStatus.DeprecatedEvaluatedTeamQuestions;
     case SWUProposalStatus.UnderReviewCodeChallenge:
       return SWUProposalStatus.UnderReviewCodeChallenge;
     case SWUProposalStatus.EvaluatedCodeChallenge:
@@ -108,7 +108,7 @@ function quantifySWUProposalStatusForSort(a: SWUProposalStatus): number {
     case SWUProposalStatus.NotAwarded:
       return 1;
     case SWUProposalStatus.UnderReviewTeamQuestions:
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:
@@ -336,9 +336,6 @@ export interface UpdateTeamQuestionScoreBody {
 export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submit", string>
-  | ADT<"scoreQuestions", UpdateTeamQuestionScoreBody[]>
-  | ADT<"screenInToCodeChallenge", string>
-  | ADT<"screenOutFromCodeChallenge", string>
   | ADT<"scoreCodeChallenge", number>
   | ADT<"screenInToTeamScenario", string>
   | ADT<"screenOutFromTeamScenario", string>
@@ -355,9 +352,6 @@ export type UpdateEditRequestBody = Omit<
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submit", string[]>
-  | ADT<"scoreQuestions", UpdateTeamQuestionScoreValidationErrors[]>
-  | ADT<"screenInToCodeChallenge", string[]>
-  | ADT<"screenOutFromCodeChallenge", string[]>
   | ADT<"scoreCodeChallenge", string[]>
   | ADT<"screenInToTeamScenario", string[]>
   | ADT<"screenOutFromTeamScenario", string[]>
@@ -366,12 +360,6 @@ type UpdateADTErrors =
   | ADT<"disqualify", string[]>
   | ADT<"withdraw", string[]>
   | ADT<"parseFailure">;
-
-export interface UpdateTeamQuestionScoreValidationErrors {
-  order?: string[];
-  score?: string[];
-  parseFailure?: string[];
-}
 
 export interface UpdateEditValidationErrors {
   attachments?: string[][];
@@ -440,14 +428,14 @@ export function isValidStatusChange(
     case SWUProposalStatus.UnderReviewTeamQuestions:
       return (
         [
-          SWUProposalStatus.EvaluatedTeamQuestions,
+          SWUProposalStatus.DeprecatedEvaluatedTeamQuestions,
           SWUProposalStatus.Disqualified
         ].includes(to) &&
         userType !== UserType.Vendor &&
         hasProposalDeadlinePassed
       );
 
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
       return (
         [
           SWUProposalStatus.UnderReviewCodeChallenge,
@@ -460,7 +448,7 @@ export function isValidStatusChange(
         [
           SWUProposalStatus.EvaluatedCodeChallenge,
           SWUProposalStatus.Disqualified,
-          SWUProposalStatus.EvaluatedTeamQuestions
+          SWUProposalStatus.DeprecatedEvaluatedTeamQuestions
         ].includes(to) && userType !== UserType.Vendor
       );
 
@@ -521,7 +509,7 @@ export function isValidStatusChange(
 
 // Return score out of 100 calculated from total points awarded to all questions / max possible
 export function calculateProposalTeamQuestionScore(
-  teamQuestionResponses: SWUProposalTeamQuestionResponse[],
+  teamQuestionResponses: SWUTeamQuestionResponseEvaluationScores[],
   teamQuestions: SWUTeamQuestion[]
 ): number {
   const maxPossibleScore = teamQuestions.reduce((acc, v) => acc + v.score, 0);
@@ -530,23 +518,6 @@ export function calculateProposalTeamQuestionScore(
     0
   );
   return (actualScore / maxPossibleScore) * 100;
-}
-
-// Calculate total score for proposal based on scores for each stage and contributing weight defined on opportunity
-export function calculateTotalProposalScore(
-  proposal: SWUProposal,
-  opportunity: SWUOpportunity
-): number {
-  const teamQuestionsScore = calculateProposalTeamQuestionScore(
-    proposal.teamQuestionResponses,
-    opportunity.teamQuestions
-  );
-  return (
-    (teamQuestionsScore * opportunity.questionsWeight) / 100 +
-    ((proposal.challengeScore || 0) * opportunity.codeChallengeWeight) / 100 +
-    ((proposal.scenarioScore || 0) * opportunity.scenarioWeight) / 100 +
-    ((proposal.priceScore || 0) * opportunity.priceWeight) / 100
-  );
 }
 
 type SWUProposalTeamMembersAcc = [Set<string>, SWUProposalTeamMember[]];
@@ -618,18 +589,6 @@ export function showScoreAndRankToProponent(proposal: SWUProposal): boolean {
   );
 }
 
-export function canSWUProposalBeScreenedToFromCodeChallenge(
-  p: Pick<SWUProposal, "status">
-): boolean {
-  switch (p.status) {
-    case SWUProposalStatus.EvaluatedTeamQuestions:
-    case SWUProposalStatus.UnderReviewCodeChallenge:
-      return true;
-    default:
-      return false;
-  }
-}
-
 export function canSWUProposalBeScreenedToFromTeamScenario(
   p: Pick<SWUProposal, "status">
 ): boolean {
@@ -659,7 +618,7 @@ export function isSWUProposalInTeamQuestions(
 ): boolean {
   switch (p.status) {
     case SWUProposalStatus.UnderReviewTeamQuestions:
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:

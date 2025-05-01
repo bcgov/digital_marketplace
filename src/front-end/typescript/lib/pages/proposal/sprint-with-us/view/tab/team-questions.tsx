@@ -1,5 +1,4 @@
 import { EMPTY_STRING } from "front-end/config";
-// import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as FormField from "front-end/lib/components/form-field";
 import * as NumberField from "front-end/lib/components/form-field/number";
@@ -12,10 +11,9 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
-import ProposalTabCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/views/proposal-tab-carousel";
+import ProposalTeamQuestionsTabCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/views/proposal-tab-carousel";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
-// import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import { ProposalMarkdown } from "front-end/lib/views/markdown";
 import ReportCardList from "front-end/lib/views/report-card-list";
 import Separator from "front-end/lib/views/separator";
@@ -23,9 +21,7 @@ import React from "react";
 import { Alert, Col, Row } from "reactstrap";
 import { countWords } from "shared/lib";
 import {
-  // canSWUOpportunityBeScreenedInToCodeChallenge,
   getQuestionByOrder,
-  // hasSWUOpportunityPassedCodeChallenge,
   hasSWUOpportunityPassedTeamQuestions,
   hasSWUOpportunityPassedTeamQuestionsEvaluation,
   SWUOpportunity,
@@ -237,7 +233,7 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       evaluationScores: evaluationScoreStates,
       isEditing: !params.questionEvaluation,
       isAuthor:
-        params.questionEvaluation?.evaluationPanelMember.user.id ===
+        params.questionEvaluation?.evaluationPanelMember ===
         params.viewerUser.id
     },
     evaluationScoreCmds
@@ -278,7 +274,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.proposals.swu.teamQuestions.evaluations.readOne<Msg>(
             state.proposal.id
-          )(evaluation.evaluationPanelMember.user.id, (result) =>
+          )(evaluation.evaluationPanelMember, (result) =>
             adt("onStartEditingEvaluationResponse", result)
           )
         ]
@@ -313,7 +309,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [
           api.proposals.swu.teamQuestions.consensuses.readOne<Msg>(
             state.proposal.id
-          )(evaluation.evaluationPanelMember.user.id, (result) =>
+          )(evaluation.evaluationPanelMember, (result) =>
             adt("onStartEditingConsensusResponse", result)
           )
         ]
@@ -435,7 +431,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationIndividualSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember.user.id,
+                    userId: result.value.evaluationPanelMember,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -507,7 +503,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   adt("questionEvaluationConsensusSWUEdit", {
                     proposalId: state.proposal.id,
                     opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember.user.id,
+                    userId: result.value.evaluationPanelMember,
                     tab: "teamQuestions" as const
                   }) as Route
                 )
@@ -572,7 +568,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.proposals.swu.teamQuestions.evaluations.update<Msg>(
                 state.proposal.id
               )(
-                state.questionEvaluation.evaluationPanelMember.user.id,
+                state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
               )
@@ -660,7 +656,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               api.proposals.swu.teamQuestions.consensuses.update<Msg>(
                 state.proposal.id
               )(
-                state.questionEvaluation.evaluationPanelMember.user.id,
+                state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
                 (response) => adt("onSaveEvaluationChangesResponse", response)
               )
@@ -735,82 +731,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           ];
       }
     }
-    // case "screenIn":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.swu.update<Msg>()(
-    //         state.proposal.id,
-    //         adt("screenInToCodeChallenge", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenInResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       )
-    //     ]
-    //   ];
-    // case "onScreenInResponse": {
-    //   state = stopScreenToFromLoading(state);
-    //   const proposal = msg.value;
-    //   if (proposal) {
-    //     const [scoreStates, scoreCmds] = initScores(
-    //       state.opportunity,
-    //       proposal
-    //     );
-    //     return [
-    //       state.set("scores", scoreStates).set("proposal", proposal),
-    //       [
-    //         ...scoreCmds,
-    //         component_.cmd.dispatch(
-    //           component_.global.showToastMsg(
-    //             adt("success", toasts.screenedIn.success)
-    //           )
-    //         )
-    //       ]
-    //     ];
-    //   } else {
-    //     return [state, []];
-    //   }
-    // }
-    // case "screenOut":
-    //   return [
-    //     startScreenToFromLoading(state).set("showModal", null),
-    //     [
-    //       api.proposals.swu.update<Msg>()(
-    //         state.proposal.id,
-    //         adt("screenOutFromCodeChallenge", ""),
-    //         (response) =>
-    //           adt(
-    //             "onScreenOutResponse",
-    //             api.isValid(response) ? response.value : null
-    //           )
-    //       )
-    //     ]
-    //   ];
-    // case "onScreenOutResponse": {
-    //   state = stopScreenToFromLoading(state);
-    //   const proposal = msg.value;
-    //   if (proposal) {
-    //     const [scoreStates, scoreCmds] = initScores(
-    //       state.opportunity,
-    //       proposal
-    //     );
-    //     return [
-    //       state.set("scores", scoreStates).set("proposal", proposal),
-    //       [
-    //         ...scoreCmds,
-    //         component_.cmd.dispatch(
-    //           component_.global.showToastMsg(
-    //             adt("success", toasts.screenedOut.success)
-    //           )
-    //         )
-    //       ]
-    //     ];
-    //   } else {
-    //     return [state, []];
-    //   }
-    // }
     case "scoreMsg":
       return component_.base.updateChild({
         state,
@@ -960,24 +880,9 @@ const TeamQuestionResponsesView: component_.base.View<{
           </Col>
         </Row>
       </div>
-      <ProposalTabCarousel
-        proposals={state.proposals}
-        proposal={state.proposal}
-        tab="teamQuestions"
-      />
     </div>
   );
 };
-
-// interface TeamQuestionResponseEvalViewProps
-//   extends TeamQuestionResponseViewProps {
-//   individualScores: EvaluationScore[];
-//   consensusScore: EvaluationScore;
-// }
-
-// const TeamQuestionsResponseEvalIndividualView: component_.base.View<
-// TeamQuestionResponseEvalViewProps
-// > = ()
 
 interface TeamQuestionResponseIndividualEvalViewProps
   extends Omit<TeamQuestionResponseViewProps, "toggleAccordion"> {
@@ -1002,12 +907,29 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
   if (!question) {
     return null;
   }
+  const currentScore = FormField.getValue(score.score);
+  const hasScoreBelowMinimum =
+    question.minimumScore &&
+    currentScore &&
+    currentScore < question.minimumScore;
   return (
     <Accordion
       className={className}
       toggle={() => dispatch(adt("toggleAccordion", index))}
       color="info"
-      title={`Question ${index + 1}`}
+      title={
+        <div className="d-flex align-items-center flex-nowrap">
+          <span className="mr-3">Question {index + 1}</span>
+          {hasScoreBelowMinimum ? (
+            <Icon
+              name="exclamation-circle"
+              color="warning"
+              width={1.25}
+              height={1.25}
+            />
+          ) : null}
+        </div>
+      }
       titleClassName="h3 mb-0"
       chevronWidth={1.5}
       chevronHeight={1.5}
@@ -1065,6 +987,22 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
                 rIndex: index
               })
             )}
+            hint={
+              hasScoreBelowMinimum ? (
+                <>
+                  <Icon
+                    className="align-middle"
+                    color="warning"
+                    name="exclamation-circle"
+                    height={0.875}
+                  />{" "}
+                  <span className="align-middle">
+                    This proponent might be disqualified, if your score is
+                    agreed on in consensus.
+                  </span>
+                </>
+              ) : null
+            }
           />
         </Col>
       </Row>
@@ -1130,6 +1068,13 @@ const TeamQuestionResponsesIndividualEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
+      <ProposalTeamQuestionsTabCarousel
+        proposals={state.proposals}
+        proposal={state.proposal}
+        evaluation={state.questionEvaluation}
+        panelEvaluations={state.panelQuestionEvaluations}
+        tab="teamQuestions"
+      />
     </div>
   );
 };
@@ -1215,16 +1160,20 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
         />
       </div>
       <div>
-        {panelEvaluationScores.map((panelEvaluationScore) => {
-          const questionEvaluationScore = panelEvaluationScore.scores.find(
+        {opportunity.evaluationPanel?.map((panelMember) => {
+          const panelEvaluationScore = panelEvaluationScores.find(
+            (panelEvaluationScore) =>
+              panelEvaluationScore.evaluationPanelMember === panelMember.user.id
+          );
+          const questionEvaluationScore = panelEvaluationScore?.scores.find(
             ({ order }) => order === question.order
           );
-          if (!questionEvaluationScore) {
+          if (!questionEvaluationScore || !panelMember) {
             return null;
           }
           return (
             <div
-              key={`swu-proposal-team-question-response-evaluation-individual-${panelEvaluationScore.evaluationPanelMember.order}`}
+              key={`swu-proposal-team-question-response-evaluation-individual-${panelMember.order}`}
               className="pb-4 mb-4 border-bottom">
               <Row>
                 <Col xs="3">
@@ -1245,7 +1194,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                         overflowWrap: "break-word",
                         overflowY: "scroll"
                       }}>
-                      {panelEvaluationScore.evaluationPanelMember.user.name}
+                      {panelMember.user.name}
                     </div>
                   </div>
                 </Col>
@@ -1299,7 +1248,6 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                     rIndex: index
                   })
                 )}
-                // style={{ width: "8.875em" }}
               />
               <div className="w-100 chair-evaluation consensus-notes-container">
                 <LongText.view
@@ -1317,37 +1265,22 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                       rIndex: index
                     })
                   )}
+                  hint={
+                    hasScoreBelowMinimum ? (
+                      <>
+                        <Icon
+                          className="align-middle"
+                          color="danger"
+                          name="exclamation-triangle"
+                          height={0.875}
+                        />{" "}
+                        <span className="align-middle">
+                          Submitting this score will disqualify this proponent.
+                        </span>
+                      </>
+                    ) : null
+                  }
                 />
-
-                {/* {(FormField.isValid(score.notes) ||
-                  (!FormField.getValue(score.notes) &&
-                    FormField.isValid(score.notes))) &&
-                hasScoreBelowMinimum ? (
-                  <small
-                    className="form-text text-secondary pt-1 align-center"
-                    style={{ marginTop: "-1.25em" }}>
-                    <Icon
-                      color="danger"
-                      name="exclamation-triangle"
-                      height={0.875}
-                    />{" "}
-                    Submitting this score will disqualify this proponent.
-                  </small>
-                ) : null} */}
-                {!FormField.isValid(
-                  score.notes
-                ) ? null : hasScoreBelowMinimum ? (
-                  <small
-                    className="form-text text-secondary pt-1 align-center"
-                    style={{ marginTop: "-1.25em" }}>
-                    <Icon
-                      color="danger"
-                      name="exclamation-triangle"
-                      height={0.875}
-                    />{" "}
-                    Submitting this score will disqualify this proponent.
-                  </small>
-                ) : null}
               </div>
             </div>
           </Col>
@@ -1420,6 +1353,13 @@ const TeamQuestionResponsesChairEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
+      <ProposalTeamQuestionsTabCarousel
+        proposals={state.proposals}
+        proposal={state.proposal}
+        evaluation={state.questionEvaluation}
+        panelEvaluations={state.panelQuestionEvaluations}
+        tab="teamQuestions"
+      />
     </div>
   );
 };
@@ -1552,7 +1492,7 @@ export const component: Tab.Component<State, Msg> = {
         );
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
         return component_.page.actions.links(
-          state.evaluating
+          state.evaluating && state.panelQuestionEvaluations.length
             ? state.questionEvaluation
               ? state.isAuthor
                 ? [

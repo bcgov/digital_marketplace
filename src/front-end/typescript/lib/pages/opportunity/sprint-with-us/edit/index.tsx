@@ -49,7 +49,8 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       api.ResponseValidation<SWUOpportunity, string[]>,
       api.ResponseValidation<SWUProposalSlim[], string[]>,
       api.ResponseValidation<SWUTeamQuestionResponseEvaluation[], string[]>,
-      User
+      User,
+      api.ResponseValidation<User[], string[]>
     ]
   >
 >;
@@ -99,7 +100,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             (msg) => adt("sidebar", msg) as Msg
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
-          component_.cmd.join3(
+          component_.cmd.join4(
             api.opportunities.swu.readOne()(
               routeParams.opportunityId,
               (response) => response
@@ -118,14 +119,18 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                     routeParams.opportunityId
                   )((response) => response)
               : component_.cmd.dispatch(valid([])),
-            (opportunity, proposals, evaluations) =>
+            Tab.shouldLoadUsersForTab(tabId)
+              ? api.users.readMany()((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals, evaluations, users) =>
               adt("onInitResponse", [
                 routePath,
                 tabId,
                 opportunity,
                 proposals,
                 evaluations,
-                shared.sessionUser
+                shared.sessionUser,
+                users
               ]) as Msg
           )
         ]
@@ -172,7 +177,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 opportunityResponse,
                 proposalsResponse,
                 evaluationsResponse,
-                viewerUser
+                viewerUser,
+                usersResponse
               ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
@@ -193,6 +199,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
               const evaluations = api.getValidValue(evaluationsResponse, []);
+              const users = api.getValidValue(usersResponse, []);
 
               // Tab Permissions
               const evaluationPanelMember = opportunity.evaluationPanel?.find(
@@ -240,7 +247,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                       tabComponent.onInitResponse([
                         opportunity,
                         proposals,
-                        evaluations
+                        evaluations,
+                        users
                       ]),
                       (msg) => adt("tab", msg)
                     ) as Msg

@@ -171,6 +171,9 @@ function rawSWUOpportunityToSWUOpportunity(
     ),
     teamQuestions: raw.teamQuestions
       .map((tq) => rawSWUTeamQuestionToSWUTeamQuestion(tq))
-      .sort((a, b) => compareNumbers(a.order, b.order))
+      .sort((a, b) => compareNumbers(a.order, b.order)),
+    evaluationPanel: raw.evaluationPanel?.sort((a, b) =>
+      compareNumbers(a.order, b.order)
+    )
   };
 }

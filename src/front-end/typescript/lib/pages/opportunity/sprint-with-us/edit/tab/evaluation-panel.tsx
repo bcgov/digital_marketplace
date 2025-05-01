@@ -20,10 +20,12 @@ import {
   UpdateValidationErrors
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { adt, ADT } from "shared/lib/types";
+import { User } from "shared/lib/resources/user";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
   evaluationPanel: Immutable<EvaluationPanel.State> | null;
+  users: User[];
   startEditingLoading: number;
   startSaveLoading: number;
   isEditing: boolean;
@@ -35,7 +37,10 @@ export type InnerMsg =
   | ADT<"startEditing">
   | ADT<
       "onStartEditingResponse",
-      api.ResponseValidation<SWUOpportunity, string[]>
+      [
+        api.ResponseValidation<SWUOpportunity, string[]>,
+        api.ResponseValidation<User[], string[]>
+      ]
     >
   | ADT<"cancelEditing">
   | ADT<"save">
@@ -48,10 +53,12 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 function resetEvaluationPanel(
   state: Immutable<State>,
-  opportunity: SWUOpportunity
+  opportunity: SWUOpportunity,
+  users: User[]
 ): component_.page.UpdateReturnValue<State, InnerMsg, Route> {
   const [evaluationPanelState, evaluationPanelCommands] = EvaluationPanel.init({
-    evaluationPanel: opportunity.evaluationPanel ?? []
+    evaluationPanel: opportunity.evaluationPanel ?? [],
+    users
   });
   return [
     state.merge({
@@ -71,6 +78,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       ...params,
       opportunity: null,
       evaluationPanel: null,
+      users: [],
       startEditingLoading: 0,
       startSaveLoading: 0,
       isEditing: false
@@ -91,14 +99,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
+      const users = msg.value[3];
       const existingEvaluationPanel = opportunity.evaluationPanel;
       const [evaluationPanelState, evaluationPanelCmds] = EvaluationPanel.init({
-        evaluationPanel: existingEvaluationPanel ?? []
+        evaluationPanel: existingEvaluationPanel ?? [],
+        users
       });
       return [
         state
           .set("opportunity", opportunity)
-          .set("evaluationPanel", immutable(evaluationPanelState)),
+          .set("evaluationPanel", immutable(evaluationPanelState))
+          .set("users", users),
         [
           ...component_.cmd.mapMany(
             evaluationPanelCmds,
@@ -122,8 +133,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startStartEditingLoading(state),
         [
-          api.opportunities.swu.readOne<Msg>()(opportunity.id, (response) =>
-            adt("onStartEditingResponse", response)
+          component_.cmd.join(
+            api.opportunities.swu.readOne()(
+              opportunity.id,
+              (response) => response
+            ),
+            api.users.readMany()((response) => response),
+            (opportunity, users) => {
+              return adt("onStartEditingResponse", [opportunity, users]) as Msg;
+            }
           )
         ]
       ];
@@ -131,9 +149,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "onStartEditingResponse": {
       const response = msg.value;
       state = stopStartEditingLoading(state);
-      if (api.isValid(response)) {
+      const [opportunityResponse, usersResponse] = response;
+      if (api.isValid(opportunityResponse) && api.isValid(usersResponse)) {
         state = state.set("isEditing", true);
-        return resetEvaluationPanel(state, response.value);
+        return resetEvaluationPanel(
+          state,
+          opportunityResponse.value,
+          usersResponse.value
+        );
       } else {
         return [
           state,
@@ -153,13 +176,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       state = state.merge({
         isEditing: false
       });
-      return resetEvaluationPanel(state, opportunity);
+      return resetEvaluationPanel(state, opportunity, []);
     }
     case "save": {
       const opportunity = state.opportunity;
-      const evaluationPaenl = state.evaluationPanel;
-      if (!opportunity || !evaluationPaenl) return [state, []];
-      const values = EvaluationPanel.getValues(evaluationPaenl);
+      const evaluationPanel = state.evaluationPanel;
+      if (!opportunity || !evaluationPanel) return [state, []];
+      const values = EvaluationPanel.getValues(evaluationPanel);
       return [
         startSaveLoading(state),
         [
@@ -198,7 +221,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           state = state.set("isEditing", false);
           const [resetState, resetCmds] = resetEvaluationPanel(
             state,
-            response.value
+            response.value,
+            state.users
           );
           return [
             resetState,

@@ -1,5 +1,5 @@
 import * as FormField from "front-end/lib/components/form-field";
-import * as ShortText from "front-end/lib/components/form-field/short-text";
+import * as Select from "front-end/lib/components/form-field/select";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import {
   component as component_,
@@ -14,35 +14,51 @@ import {
   CreateSWUEvaluationPanelMemberValidationErrors,
   SWUEvaluationPanelMember
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { adt, ADT } from "shared/lib/types";
-import { validateEmail } from "shared/lib/validation";
+import { adt, ADT, Id } from "shared/lib/types";
+import { invalid, valid } from "shared/lib/validation";
 import { MIN_SWU_EVALUATION_PANEL_MEMBERS } from "shared/config";
+import { isPublicSectorUserType, User } from "shared/lib/resources/user";
 
 interface EvaluationPanelMember {
-  email: Immutable<ShortText.State>;
+  member: Immutable<Select.State>;
   chair: Immutable<Checkbox.State>;
 }
 
 export interface State {
   evaluationPanelMembers: EvaluationPanelMember[];
-  evaluationPanelChair: Immutable<ShortText.State>;
+  evaluationPanelChair: Immutable<Select.State>;
+  users: ADT<"options", { label: string; value: Id }[]>;
 }
 
 export type Msg =
   | ADT<"addMember">
   | ADT<"deleteMember", number>
-  | ADT<"email", { childMsg: ShortText.Msg; epmIndex: number }>
+  | ADT<"member", { childMsg: Select.Msg; epmIndex: number }>
   | ADT<"chair", { childMsg: Checkbox.Msg; epmIndex: number }>
-  | ADT<"evaluationPanelChair", ShortText.Msg>;
+  | ADT<"evaluationPanelChair", Select.Msg>;
 
 export interface Params {
   evaluationPanel: SWUEvaluationPanelMember[];
+  users: User[];
+}
+
+function makeUserOption(user: Pick<User, "email" | "name" | "id">) {
+  return {
+    label: `${user.name} ${`${user.email ? `(${user.email})` : null}`}`.trim(),
+    value: user.id
+  };
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
+  const userOptions = adt(
+    "options" as const,
+    params.users
+      .filter(({ type }) => isPublicSectorUserType(type))
+      .map((user) => makeUserOption(user))
+  );
   const [evaluationPanelMembers, cmds] = params.evaluationPanel
     .filter(({ evaluator }) => evaluator)
-    .map((epm, index) => createEvaluationPanelMember(index, epm))
+    .map((epm, index) => createEvaluationPanelMember(index, userOptions, epm))
     .reduce(
       ([accEvaluationPanelMembers, accCmds], [q, cs]) => [
         [...accEvaluationPanelMembers, q],
@@ -53,26 +69,34 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
 
   if (evaluationPanelMembers.length < MIN_SWU_EVALUATION_PANEL_MEMBERS) {
     const emptyPanelMember = createEvaluationPanelMember(
-      evaluationPanelMembers.length
+      evaluationPanelMembers.length,
+      userOptions
     );
     evaluationPanelMembers.push(emptyPanelMember[0]);
     cmds.push(...emptyPanelMember[1]);
   }
 
-  const [evaluationPanelChairState, evaluationPanelChairCmds] = ShortText.init({
+  const chairUser = params.evaluationPanel.find(({ chair }) => chair)?.user;
+  const [evaluationPanelChairState, evaluationPanelChairCmds] = Select.init({
     errors: [],
-    validate: validateEmail,
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select a panel chair."]);
+      }
+      return valid(option);
+    },
     child: {
       id: "swu-opportunity-evaluation-panel-chair",
-      type: "email",
-      value: params.evaluationPanel.find(({ chair }) => chair)?.user.email ?? ""
+      value: chairUser ? makeUserOption(chairUser) : null,
+      options: userOptions
     }
   });
 
   return [
     {
       evaluationPanelMembers,
-      evaluationPanelChair: immutable(evaluationPanelChairState)
+      evaluationPanelChair: immutable(evaluationPanelChairState),
+      users: userOptions
     },
     [
       ...cmds,
@@ -86,16 +110,25 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
 
 function createEvaluationPanelMember(
   epmIndex: number,
+  userOptions: State["users"],
   evaluationPanelMember?: SWUEvaluationPanelMember
 ): component_.base.InitReturnValue<EvaluationPanelMember, Msg> {
   const idNamespace = String(Math.random());
-  const [emailState, emailCmds] = ShortText.init({
+  const evaluationPanelMemberUser = evaluationPanelMember?.user;
+  const [memberState, memberCmds] = Select.init({
     errors: [],
-    validate: validateEmail,
+    validate: (option) => {
+      if (!option) {
+        return invalid(["Please select a panel member."]);
+      }
+      return valid(option);
+    },
     child: {
       id: `${idNamespace}-swu-opportunity-evaluation-panel-member`,
-      type: "email",
-      value: evaluationPanelMember?.user.email ?? ""
+      value: evaluationPanelMemberUser
+        ? makeUserOption(evaluationPanelMemberUser)
+        : null,
+      options: userOptions
     }
   });
   const [chairState, chairCmds] = Checkbox.init({
@@ -107,13 +140,13 @@ function createEvaluationPanelMember(
   });
   return [
     {
-      email: immutable(emailState),
+      member: immutable(memberState),
       chair: immutable(chairState)
     },
     [
       ...component_.cmd.mapMany(
-        emailCmds,
-        (childMsg) => adt("email", { childMsg, epmIndex }) as Msg
+        memberCmds,
+        (childMsg) => adt("member", { childMsg, epmIndex }) as Msg
       ),
       ...component_.cmd.mapMany(
         chairCmds,
@@ -127,7 +160,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "addMember": {
       const [evaluationPanelMember, cmds] = createEvaluationPanelMember(
-        state.evaluationPanelMembers.length
+        state.evaluationPanelMembers.length,
+        state.users
       );
       return [
         state.set("evaluationPanelMembers", [
@@ -150,15 +184,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
 
-    case "email": {
+    case "member": {
       const componentMessage = msg.value.childMsg;
       const epmIndex = msg.value.epmIndex;
       return component_.base.updateChild({
         state,
-        childStatePath: ["evaluationPanelMembers", `${epmIndex}`, "email"],
-        childUpdate: ShortText.update,
+        childStatePath: ["evaluationPanelMembers", `${epmIndex}`, "member"],
+        childUpdate: Select.update,
         childMsg: componentMessage,
-        mapChildMsg: (value) => adt("email", { epmIndex, childMsg: value }),
+        mapChildMsg: (value) => adt("member", { epmIndex, childMsg: value }),
         updateAfter: (state) => {
           return [
             // Keep chair in sync with evaluator chair
@@ -169,7 +203,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 return FormField.setValue(
                   s,
                   FormField.getValue(
-                    state.evaluationPanelMembers[epmIndex].email
+                    state.evaluationPanelMembers[epmIndex].member
                   )
                 );
               }
@@ -208,7 +242,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                 FormField.setValue(
                   s,
                   FormField.getValue(
-                    state.evaluationPanelMembers[epmIndex].email
+                    state.evaluationPanelMembers[epmIndex].member
                   )
                 )
               ),
@@ -222,7 +256,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return component_.base.updateChild({
         state,
         childStatePath: ["evaluationPanelChair"],
-        childUpdate: ShortText.update,
+        childUpdate: Select.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("evaluationPanelChair", value),
         updateAfter: (state) => {
@@ -253,7 +287,7 @@ export function getValues(state: Immutable<State>): Values {
         return acc;
       }
       acc.push({
-        email: FormField.getValue(epm.email),
+        user: Select.getValue(epm.member),
         chair: FormField.getValue(epm.chair),
         evaluator: true,
         order
@@ -267,7 +301,7 @@ export function getValues(state: Immutable<State>): Values {
     ? [
         ...values,
         {
-          email: FormField.getValue(state.evaluationPanelChair),
+          user: Select.getValue(state.evaluationPanelChair),
           chair: true,
           evaluator: false,
           order: state.evaluationPanelMembers.length
@@ -289,18 +323,15 @@ export function setErrors(
   return errors
     .reduce((acc, e, i) => {
       return acc
-        .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
-          FormField.setErrors(s as Immutable<ShortText.State>, e.email || [])
+        .updateIn(["evaluationPanelMembers", i, "member"], (s) =>
+          FormField.setErrors(s as Immutable<Select.State>, e.user || [])
         )
         .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
           FormField.setErrors(s as Immutable<Checkbox.State>, e.chair || [])
         );
     }, state)
     .update("evaluationPanelChair", (s) =>
-      FormField.setErrors(
-        s as Immutable<ShortText.State>,
-        chairErrors?.email || []
-      )
+      FormField.setErrors(s as Immutable<Select.State>, chairErrors?.user || [])
     );
 }
 
@@ -308,15 +339,15 @@ export function validate(state: Immutable<State>): Immutable<State> {
   return state.evaluationPanelMembers
     .reduce((acc, _, i) => {
       return acc
-        .updateIn(["evaluationPanelMembers", i, "email"], (s) =>
-          FormField.validate(s as Immutable<ShortText.State>)
+        .updateIn(["evaluationPanelMembers", i, "member"], (s) =>
+          FormField.validate(s as Immutable<Select.State>)
         )
         .updateIn(["evaluationPanelMembers", i, "chair"], (s) =>
           FormField.validate(s as Immutable<Checkbox.State>)
         );
     }, state)
     .update("evaluationPanelChair", (s) =>
-      FormField.validate(s as Immutable<ShortText.State>)
+      FormField.validate(s as Immutable<Select.State>)
     );
 }
 
@@ -325,7 +356,7 @@ export function isValid(state: Immutable<State>): boolean {
     return false;
   }
   return state.evaluationPanelMembers.reduce((acc, epm) => {
-    return acc && FormField.isValid(epm.email) && FormField.isValid(epm.chair);
+    return acc && FormField.isValid(epm.member) && FormField.isValid(epm.chair);
   }, true as boolean);
 }
 
@@ -352,15 +383,15 @@ const EvalationPanelMemberView: component_.base.View<
       </Row>
       <Row>
         <Col xs="12">
-          <ShortText.view
+          <Select.view
             extraChildProps={{}}
-            label="Email"
-            placeholder="Email"
+            label="Panel Member"
+            placeholder="Panel Member"
             required
             disabled={disabled}
-            state={evaluationPanelMember.email}
+            state={evaluationPanelMember.member}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("email" as const, { childMsg: value, epmIndex: index })
+              adt("member" as const, { childMsg: value, epmIndex: index })
             )}
           />
         </Col>
@@ -453,10 +484,10 @@ export const view: component_.base.View<Props> = (props) => {
       </Row>
       <Row>
         <Col xs="12">
-          <ShortText.view
+          <Select.view
             extraChildProps={{}}
-            label="Email"
-            placeholder="Email"
+            label="Chair"
+            placeholder="Chair"
             required
             disabled={disabled}
             state={state.evaluationPanelChair}

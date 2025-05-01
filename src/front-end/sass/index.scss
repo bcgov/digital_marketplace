@@ -940,6 +940,10 @@ nav.navbar .nav-link:hover {
       }
     }
 
+    &__menu {
+      z-index: 2; // Above checkboxes
+    }
+
     &__placeholder {
       color: $input-placeholder-color;
       white-space: nowrap;

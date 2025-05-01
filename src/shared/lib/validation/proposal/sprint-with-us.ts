@@ -12,9 +12,7 @@ import {
   CreateSWUProposalTeamQuestionResponseBody,
   CreateSWUProposalTeamQuestionResponseValidationErrors,
   parseSWUProposalStatus,
-  SWUProposalStatus,
-  UpdateTeamQuestionScoreBody,
-  UpdateTeamQuestionScoreValidationErrors
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { User, usersHaveCapability } from "shared/lib/resources/user";
 import {
@@ -286,87 +284,6 @@ export function validateDisqualificationReason(
   raw: string
 ): Validation<string> {
   return validateGenericString(raw, "Disqualification Reason", 1, 5000);
-}
-
-export function validateTeamQuestionScores(
-  raw: any,
-  opportunityTeamQuestions: SWUTeamQuestion[]
-): ArrayValidation<
-  UpdateTeamQuestionScoreBody,
-  UpdateTeamQuestionScoreValidationErrors
-> {
-  if (!isArray(raw)) {
-    return invalid([{ parseFailure: ["Please provide an array of scores."] }]);
-  }
-  if (raw.length !== opportunityTeamQuestions.length) {
-    return invalid([
-      {
-        parseFailure: [
-          "Please provide the correct number of team question scores."
-        ]
-      }
-    ]);
-  }
-
-  return validateArrayCustom(
-    raw,
-    (v) => validateTeamQuestionScore(v, opportunityTeamQuestions),
-    {}
-  );
-}
-
-export function validateTeamQuestionScore(
-  raw: any,
-  opportunityTeamQuestions: SWUTeamQuestion[]
-): Validation<
-  UpdateTeamQuestionScoreBody,
-  UpdateTeamQuestionScoreValidationErrors
-> {
-  const validatedOrder = validateTeamQuestionScoreOrder(
-    getNumber(raw, "order"),
-    opportunityTeamQuestions.length
-  );
-  if (isInvalid(validatedOrder)) {
-    return invalid({
-      order: getInvalidValue(validatedOrder, undefined)
-    });
-  }
-  const maxScore =
-    opportunityTeamQuestions.find((q) => q.order === validatedOrder.value)
-      ?.score || null;
-  if (!maxScore) {
-    return invalid({
-      order: ["No matching opportunity question."]
-    });
-  }
-  const validatedScore = validateTeamQuestionScoreScore(
-    getNumber(raw, "score", 0, false),
-    maxScore
-  );
-  if (isInvalid(validatedScore)) {
-    return invalid({
-      score: getInvalidValue(validatedScore, undefined)
-    });
-  } else {
-    return valid({
-      score: validatedScore.value,
-      order: validatedOrder.value
-    });
-  }
-}
-
-export function validateTeamQuestionScoreOrder(
-  raw: number,
-  numOpportunityQuestions: number
-): Validation<number> {
-  return validateNumber(raw, 0, numOpportunityQuestions, "Order");
-}
-
-export function validateTeamQuestionScoreScore(
-  raw: number,
-  maxScore: number
-): Validation<number> {
-  return validateNumberWithPrecision(raw, 0, maxScore, 2, "Score");
 }
 
 export function validateCodeChallengeScore(raw: number): Validation<number> {

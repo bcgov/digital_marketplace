@@ -59,7 +59,6 @@ export enum SWUOpportunityStatus {
   Published = "PUBLISHED",
   EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -92,8 +91,10 @@ export function parseSWUOpportunityStatus(
       return SWUOpportunityStatus.UnderReview;
     case SWUOpportunityStatus.Published:
       return SWUOpportunityStatus.Published;
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
-      return SWUOpportunityStatus.EvaluationTeamQuestions;
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return SWUOpportunityStatus.EvaluationTeamQuestionsIndividual;
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+      return SWUOpportunityStatus.EvaluationTeamQuestionsConsensus;
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return SWUOpportunityStatus.EvaluationCodeChallenge;
     case SWUOpportunityStatus.EvaluationTeamScenario:
@@ -115,7 +116,6 @@ export function isSWUOpportunityStatusInEvaluation(
   switch (s) {
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return true;
@@ -128,7 +128,6 @@ export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
   SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
   SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
-  SWUOpportunityStatus.EvaluationTeamQuestions,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
   SWUOpportunityStatus.Awarded
@@ -315,7 +314,7 @@ export type CreateSWUTeamQuestionBody = Omit<
 >;
 
 export type CreateSWUEvaluationPanelMemberBody = {
-  email: string;
+  user: Id;
   chair: boolean;
   evaluator: boolean;
   order: number;
@@ -416,7 +415,8 @@ export type UpdateRequestBody =
       "submitConsensusQuestionEvaluations",
       SubmitQuestionEvaluationsWithNoteRequestBody
     >
-  | ADT<"editEvaluationPanel", CreateSWUEvaluationPanelMemberBody[]>;
+  | ADT<"editEvaluationPanel", CreateSWUEvaluationPanelMemberBody[]>
+  | ADT<"finalizeQuestionConsensuses", string>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -448,6 +448,7 @@ type UpdateADTErrors =
   | ADT<"submitIndividualQuestionEvaluations", string[]>
   | ADT<"submitConsensusQuestionEvaluations", string[]>
   | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
+  | ADT<"finalizeQuestionConsensuses", string[]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -503,9 +504,15 @@ export function isValidStatusChange(
       return [
         SWUOpportunityStatus.Canceled,
         SWUOpportunityStatus.Suspended,
-        SWUOpportunityStatus.EvaluationTeamQuestions
+        SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
       ].includes(to);
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return [
+        SWUOpportunityStatus.Canceled,
+        SWUOpportunityStatus.Suspended,
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+      ].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       return [
         SWUOpportunityStatus.Canceled,
         SWUOpportunityStatus.Suspended,
@@ -528,17 +535,6 @@ export function isValidStatusChange(
         SWUOpportunityStatus.Published,
         SWUOpportunityStatus.Canceled
       ].includes(to);
-    default:
-      return false;
-  }
-}
-
-export function canSWUOpportunityBeScreenedInToCodeChallenge(
-  o: SWUOpportunity
-): boolean {
-  switch (o.status) {
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
-      return true;
     default:
       return false;
   }
@@ -613,7 +609,8 @@ export function canSWUOpportunityDetailsBeEdited(
 export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
   switch (o.status) {
     case SWUOpportunityStatus.Published:
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
@@ -629,7 +626,6 @@ export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.Published:
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
@@ -676,7 +672,6 @@ export function hasSWUOpportunityPassedTeamQuestionsEvaluation(
     switch (h.type.value) {
       case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-      case SWUOpportunityStatus.EvaluationTeamQuestions:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
       case SWUOpportunityStatus.Awarded:
@@ -698,7 +693,8 @@ export function hasSWUOpportunityPassedTeamQuestions(
       return acc;
     }
     switch (h.type.value) {
-      case SWUOpportunityStatus.EvaluationTeamQuestions:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
       case SWUOpportunityStatus.Awarded:
@@ -784,6 +780,16 @@ export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvalua
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
       return true;
+    default:
+      return false;
+  }
+}
+
+export function canViewSWUEvaluationConsensus(
+  s: SWUOpportunityStatus
+): boolean {
+  switch (s) {
+    // TODO: Add statuses
     default:
       return false;
   }

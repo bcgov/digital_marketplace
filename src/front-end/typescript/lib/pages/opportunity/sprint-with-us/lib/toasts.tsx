@@ -117,3 +117,25 @@ export const submittedQuestionEvaluationScoresForConsensus = {
     body: "Your evaluations for this Sprint With Us opportunity could not be submitted for consensus. Please try again later."
   }
 };
+
+export const submittedQuestionEvaluationConsensuses = {
+  success: {
+    title: "Consensuses Submitted",
+    body: "Your consensuses for this Sprint With Us opportunity have been submitted."
+  },
+  error: {
+    title: "Unable to Submit Consensuses",
+    body: "Your consensuses for this Sprint With Us opportunity could not be submitted. Please try again later."
+  }
+};
+
+export const finalizedQuestionEvaluationConsensuses = {
+  success: {
+    title: "Consensuses Finalized",
+    body: "Your consenuses for this Sprint With Us opportunity have been finalized."
+  },
+  error: {
+    title: "Unable to Finalize Consensuses",
+    body: "Your consensuses for this Sprint With Us opportunity could not be finalized. Please try again later."
+  }
+};

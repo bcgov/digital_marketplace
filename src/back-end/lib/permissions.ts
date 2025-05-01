@@ -28,7 +28,8 @@ import {
   doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
   doesSWUOpportunityStatusAllowGovToViewProposals,
   SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunityStatus,
+  SWUOpportunitySlim
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateTWUOpportunityStatus,
@@ -144,7 +145,10 @@ export async function hasAcceptedPreviousTerms(
 // Users.
 
 export function readManyUsers(session: Session): boolean {
-  return !!session && session.user.type === UserType.Admin;
+  return (
+    !!session &&
+    [UserType.Admin, UserType.Government].includes(session.user.type)
+  );
 }
 
 export function readOneUser(session: Session, userId: string): boolean {
@@ -726,6 +730,18 @@ export async function readOneSWUProposal(
         ))) ||
       false
     );
+  } else if (
+    session &&
+    [
+      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    ].includes(proposal.opportunity.status)
+  ) {
+    return await isSWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      proposal.opportunity.id
+    );
   }
   return false;
 }
@@ -754,6 +770,18 @@ export async function readManySWUProposals(
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return true;
+  } else if (
+    session &&
+    [
+      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    ].includes(opportunity.status)
+  ) {
+    return await isSWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      opportunity.id
+    );
   }
   return false;
 }
@@ -893,29 +921,31 @@ export async function deleteSWUProposal(
 export async function readOneSWUTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): Promise<boolean> {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-      evaluation.proposal.opportunity.status
+      opportunity.status
     ) ||
-      (evaluation.proposal.opportunity.status ===
+      (opportunity.status ===
         SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
-        evaluation.evaluationPanelMember.user.id === session.user.id) ||
-      (evaluation.proposal.opportunity.status ===
+        evaluation.evaluationPanelMember === session.user.id) ||
+      (opportunity.status ===
         SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
         (await isSWUOpportunityEvaluationPanelChair(
           connection,
           session,
-          evaluation.proposal.opportunity.id
+          opportunity.id
         ))))
   );
 }
 
 export async function readOneSWUTeamQuestionResponseConsensus(
   session: Session,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): Promise<boolean> {
   return (
@@ -923,11 +953,11 @@ export async function readOneSWUTeamQuestionResponseConsensus(
     (isAdmin(session) ||
       (isGovernment(session) &&
         (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-          evaluation.proposal.opportunity.status
+          opportunity.status
         ) ||
-          (evaluation.proposal.opportunity.status ===
+          (opportunity.status ===
             SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
-            evaluation.evaluationPanelMember.user.id === session.user.id))))
+            evaluation.evaluationPanelMember === session.user.id))))
   );
 }
 
@@ -1046,70 +1076,55 @@ export async function createSWUTeamQuestionResponseEvaluation(
 
 export function editSWUTeamQuestionResponseConsensus(
   session: AuthenticatedSession,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): boolean {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    evaluation.evaluationPanelMember.user.id === session.user.id &&
-    evaluation.proposal.opportunity.status ===
-      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
   );
 }
 
 export function editSWUTeamQuestionResponseEvaluation(
   session: AuthenticatedSession,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): boolean {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    evaluation.evaluationPanelMember.user.id === session.user.id &&
-    evaluation.proposal.opportunity.status ===
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
       SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
   );
 }
 
 export function submitSWUTeamQuestionResponseConsensus(
   session: Session,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): boolean {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    evaluation.evaluationPanelMember.user.id === session.user.id &&
-    evaluation.proposal.opportunity.status ===
-      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
   );
 }
 
 export function submitSWUTeamQuestionResponseEvaluation(
   session: Session,
+  opportunity: SWUOpportunitySlim,
   evaluation: SWUTeamQuestionResponseEvaluation
 ): boolean {
   return (
     !!session &&
     (isAdmin(session) || isGovernment(session)) &&
-    evaluation.evaluationPanelMember.user.id === session.user.id &&
-    evaluation.proposal.opportunity.status ===
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
       SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
-  );
-}
-
-export async function editSWUEvaluationPanel(
-  connection: Connection,
-  session: Session,
-  opportunityId: Id
-) {
-  return (
-    !!session &&
-    (isAdmin(session) ||
-      (isGovernment(session) &&
-        (await isSWUOpportunityAuthor(
-          connection,
-          session.user,
-          opportunityId
-        ))))
   );
 }
 
