@@ -132,6 +132,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           // Can be submitted if...
           // - Opportunity has the appropriate status
           // - All questions have been evaluated.
+          // - Is the correct user type
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
@@ -319,7 +320,14 @@ const ContextMenuCell: component_.base.View<{
   proposal: SWUProposalSlim;
   evaluation?: SWUTeamQuestionResponseEvaluation;
   isChair: boolean;
-}> = ({ disabled, proposal, evaluation, isChair }) => {
+  canEvaluationsBeSubmitted: boolean;
+}> = ({
+  disabled,
+  proposal,
+  evaluation,
+  isChair,
+  canEvaluationsBeSubmitted
+}) => {
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
@@ -334,9 +342,9 @@ const ContextMenuCell: component_.base.View<{
           userId: evaluation.evaluationPanelMember
         })
       )}>
-      {isChair ? "Edit" : "View"}
+      {isChair && canEvaluationsBeSubmitted ? "Edit" : "View"}
     </Link>
-  ) : isChair ? (
+  ) : isChair && canEvaluationsBeSubmitted ? (
     <Link
       disabled={disabled}
       dest={routeDest(
@@ -438,6 +446,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
             proposal={p}
             evaluation={evaluation}
             isChair={state.isChair}
+            canEvaluationsBeSubmitted={state.canEvaluationsBeSubmitted}
           />
         )
       }
