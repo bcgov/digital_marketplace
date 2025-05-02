@@ -243,6 +243,11 @@ export async function up(connection: Knex): Promise<void> {
       "evaluations."
   );
 
+  await connection.schema.alterTable("swuTeamQuestionResponses", (table) => {
+    table.dropColumn("score");
+  });
+  logger.info("Completed modifying swuTeamQuestionResponses table");
+
   function evaluationStatusesColumns(table: Knex.TableBuilder) {
     table
       .uuid("proposal")
@@ -409,6 +414,27 @@ export async function down(connection: Knex): Promise<void> {
     "swuTeamQuestionResponseEvaluatorEvaluations"
   );
   logger.info("Dropped table swuTeamQuestionResponseEvaluatorEvaluations");
+
+  await connection.schema.alterTable("swuTeamQuestionResponses", (table) => {
+    table.float("score");
+  });
+  logger.info("Completed reverting swuTeamQuestionResponses table.");
+
+  await connection("swuTeamQuestionResponses")
+    .update({
+      score: connection.raw('"swuTeamQuestionResponseChairEvaluations".score')
+    })
+    .updateFrom("swuTeamQuestionResponseChairEvaluations")
+    .whereRaw(
+      '"swuTeamQuestionResponses".proposal = "swuTeamQuestionResponseChairEvaluations".proposal'
+    )
+    .andWhereRaw(
+      '"swuTeamQuestionResponses".order = "swuTeamQuestionResponseChairEvaluations"."questionOrder"'
+    );
+  logger.info(
+    "Ported chair team question response evaluations back to SWU team question" +
+      "responses."
+  );
 
   await connection.schema.dropTable("swuTeamQuestionResponseChairEvaluations");
   logger.info("Dropped table swuTeamQuestionResponseChairEvaluations");
