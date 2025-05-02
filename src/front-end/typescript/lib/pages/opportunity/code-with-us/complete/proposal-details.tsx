@@ -33,8 +33,6 @@ export interface Params {
   opportunity: CWUOpportunity;
   proposals: CWUProposal[];
   viewerUser: User;
-  //   organizations: OrganizationSlim[];
-  //   proposalAffiliations: Record<Id, AffiliationMember[]>;
 }
 
 export type Msg = ADT<"noop">;
@@ -43,20 +41,10 @@ const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   proposals,
   viewerUser
-  //   organizations,
-  //   proposalAffiliations
 }) => {
   const detailStates: Record<Id, Immutable<ProposalDetailState>> = {};
 
   for (const proposal of proposals) {
-    // let affiliations: AffiliationMember[] = [];
-    // if (
-    //   proposal.proponent.tag === "organization" &&
-    //   proposalAffiliations[proposal.proponent.value.id]
-    // ) {
-    //   affiliations = proposalAffiliations[proposal.proponent.value.id];
-    // }
-
     // Generate unique ID prefixes for form elements
     const uniqueIdPrefix = `proposal-${proposal.id}`;
 
@@ -166,15 +154,9 @@ const view: component_.base.View<
           const proposalState = state.detailStates[proposalId];
           const proposal = proposalState?.proposalTabState.proposal;
           if (!proposal) return null;
-          // Extract number from "Proponent X" format
-          //   const proponentNum = parseInt(
-          //     proposal.anonymousProponentName.split(" ")[1]
-          //   );
-          return { proposalId, proposalState, proposal }; // proponentNum
+          return { proposalId, proposalState, proposal };
         })
         .filter((x) => x !== null)
-        // .sort((a, b) => a!.proponentNum - b!.proponentNum)
-        // sort by name
         .sort((a, b) => a!.proposal.id.localeCompare(b!.proposal.id))
         .map((item, index) => {
           if (!item) return null;

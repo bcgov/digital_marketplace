@@ -192,7 +192,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                 ),
                 (newOpp, newProposals) =>
                   // Ensure to pass in empty array for team question responses
-                  adt("onInitResponse", [newOpp, newProposals, []]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               )
             ]
           ];

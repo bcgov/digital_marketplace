@@ -255,42 +255,36 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  return function PageWrapper(props) {
-    if (props.showAllTabs) {
-      return (
-        <div id={props.state.id}>
-          {props.state.tabs.map((tab, index) => {
-            const modifiedState = {
-              ...props.state,
-              activeTab: tab
-            };
-
-            return (
-              <div
-                key={`all-tabs-${index}`}
-                className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
-                <Header {...props} currentTabForHeader={tab} />
-                {props.getTabContent
-                  ? props.getTabContent(tab)
-                  : React.cloneElement(props.children as React.ReactElement, {
-                      state: {
-                        ...props.state,
-                        tabbedForm: modifiedState
-                      }
-                    })}
-              </div>
-            );
-          })}
-        </div>
-      );
-    }
-
+  const SingleTabView: component_.base.View<Props<TabId>> = (props) => {
     return (
       <div id={props.state.id}>
         <Header {...props} />
         <div>{props.children}</div>
         <Footer {...props} />
       </div>
+    );
+  };
+
+  const AllTabsView: component_.base.View<Props<TabId>> = (props) => {
+    return (
+      <div id={props.state.id}>
+        {props.state.tabs.map((tab, index) => (
+          <div
+            key={`all-tabs-${index}`}
+            className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
+            <Header {...props} currentTabForHeader={tab} />
+            {props.getTabContent && props.getTabContent(tab)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return function PageWrapper(props) {
+    return props.showAllTabs ? (
+      <AllTabsView {...props} />
+    ) : (
+      <SingleTabView {...props} />
     );
   };
 }

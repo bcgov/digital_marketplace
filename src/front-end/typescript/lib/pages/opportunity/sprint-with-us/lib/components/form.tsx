@@ -1804,7 +1804,6 @@ const AttachmentsView: component_.base.View<Props> = ({
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
   showAllTabs?: boolean;
-  activeTab?: TabId;
   expandAccordions?: boolean;
 }
 

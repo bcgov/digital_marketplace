@@ -10,17 +10,16 @@ const NAMESPACE = (opportunityId: Id) =>
  * Parses URL parameters prior to creating a read request for many SWU proposals
  *
  * @param opportunityId
- * @param filterByUser - If false, requests all evaluations (requires admin privileges)
+ * @param query - Query string to pass to the API
  */
 export function readMany<Msg>(
   opportunityId: Id,
-  filterByUser?: boolean
+  query?: string
 ): crud.ReadManyAction<
   Resource.SWUTeamQuestionResponseEvaluation,
   string[],
   Msg
 > {
-  const query = filterByUser === false ? "filterByUser=false" : undefined;
   return crud.makeReadManyAction(
     NAMESPACE(opportunityId),
     rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation,

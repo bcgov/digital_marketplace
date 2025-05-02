@@ -698,7 +698,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.View<Props> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
   const { state, dispatch, showAllTabs } = props;
   const opportunity = state.opportunity;
   const form = state.form;

@@ -717,7 +717,7 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.View<Props> = (props) => {
+const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
   const { state, dispatch, showAllTabs, expandAccordions } = props;
   const opportunity = state.opportunity;
   const form = state.form;
@@ -744,8 +744,8 @@ const view: component_.base.View<Props> = (props) => {
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
               adt("form" as const, msg)
             )}
-            showAllTabs={showAllTabs || state.showAllTabs}
-            expandAccordions={expandAccordions || state.expandAccordions}
+            showAllTabs={showAllTabs}
+            expandAccordions={expandAccordions}
           />
         </Col>
       </Row>

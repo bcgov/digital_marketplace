@@ -321,7 +321,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                   ),
                   api.opportunities.swu.teamQuestions.evaluations.readMany(
                     opportunity.id,
-                    false
+                    "filterByUser=false"
                   )((response) => api.getValidValue(response, [])),
                   (proposals, evaluations) => {
                     return adt("onProposalsAndEvaluationsReceived", [
