@@ -54,7 +54,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       proposal: proposal,
       affiliations: [] as unknown as AffiliationSlim[],
       canRemoveExistingAttachments: false,
-      idPrefix: uniqueIdPrefix // Pass unique ID prefix to form
+      idPrefix: uniqueIdPrefix, // Pass unique ID prefix to form
+      showAllTabs: true
     });
 
     const [proposalTabState, _proposalTabCmds] = ProposalTab.component.init({
@@ -66,7 +67,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       proposal: proposal,
       opportunity: opportunity,
       viewerUser: viewerUser,
-      form: immutable(formState)
+      form: immutable(formState),
+      showAllTabs: true
     };
 
     const [historyState, _historyCmds] = ProposalHistoryTab.component.init({
@@ -124,7 +126,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <ProposalTab.component.view
         state={state.proposalTabState}
         dispatch={() => dispatch(adt("noop"))}
-        showAllTabs={true}
       />
 
       <hr></hr>

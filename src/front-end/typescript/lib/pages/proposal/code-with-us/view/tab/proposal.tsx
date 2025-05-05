@@ -48,10 +48,7 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   score: Immutable<NumberField.State>;
   disqualificationReason: Immutable<LongText.State>;
-}
-
-interface Props extends component_.base.ComponentViewProps<State, Msg> {
-  showAllTabs?: boolean;
+  showAllTabs: boolean;
 }
 
 export type InnerMsg =
@@ -82,14 +79,16 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 function initForm(
   opportunity: CWUOpportunity,
   proposal: CWUProposal,
-  viewerUser: User
+  viewerUser: User,
+  showAllTabs: boolean = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     viewerUser,
     opportunity,
     proposal,
     affiliations: [],
-    canRemoveExistingAttachments: false
+    canRemoveExistingAttachments: false,
+    showAllTabs
   });
   const immutableFormState = immutable(formState);
   return [immutableFormState, formCmds];
@@ -132,7 +131,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       awardLoading: 0,
       showModal: null,
       score: immutable(scoreState),
-      disqualificationReason: immutable(disqualificationReasonState)
+      disqualificationReason: immutable(disqualificationReasonState),
+      showAllTabs: false
     },
     [
       ...component_.cmd.mapMany(
@@ -470,8 +470,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
-  const { state, dispatch, showAllTabs } = props;
+const view: component_.base.ComponentView<State, Msg> = (props) => {
+  const { state, dispatch } = props;
   const proposal = state.proposal;
   const form = state.form;
   if (!proposal || !form) return null;
@@ -484,7 +484,6 @@ const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
           <Form.view
             disabled
             state={form}
-            showAllTabs={showAllTabs}
             dispatch={component_.base.mapDispatch(dispatch, (v) =>
               adt("form" as const, v)
             )}
@@ -495,10 +494,7 @@ const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> & {
-  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
-  view: component_.base.View<Props>;
-} = {
+export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,

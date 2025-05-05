@@ -112,6 +112,7 @@ export interface Params {
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
   idPrefix?: string;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -139,7 +140,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   proposal,
   affiliations,
   activeTab = DEFAULT_ACTIVE_TAB,
-  idPrefix = ""
+  idPrefix = "",
+  showAllTabs = false
 }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
     if (proposal?.proponent.tag !== "organization") {
@@ -152,7 +154,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   })();
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Proponent", "Proposal", "Attachments"],
-    activeTab
+    activeTab,
+    showAllTabs
   });
 
   // When multiple instances of this component are used on the same page,
@@ -1100,7 +1103,6 @@ const ProposalView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  showAllTabs?: boolean;
 }
 
 // @duplicated-attachments-view
@@ -1130,7 +1132,7 @@ const AttachmentsView: component_.base.View<Props> = ({
 };
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, dispatch, showAllTabs } = props;
+  const { state, dispatch } = props;
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Proponent":
@@ -1155,8 +1157,7 @@ export const view: component_.base.View<Props> = (props) => {
 
   return (
     <TabbedFormComponent.view
-      showAllTabs={showAllTabs}
-      getTabContent={showAllTabs ? getTabContent : undefined}
+      getTabContent={getTabContent}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

@@ -117,6 +117,7 @@ export interface Params {
   opportunity?: CWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -144,11 +145,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs
 }) => {
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Overview", "Description", "Details", "Attachments"],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -1292,7 +1295,6 @@ const AttachmentsView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  showAllTabs?: boolean;
 }
 
 export const view: component_.base.View<Props> = (props) => {
@@ -1327,8 +1329,7 @@ export const view: component_.base.View<Props> = (props) => {
 
   return (
     <TabbedFormComponent.view
-      showAllTabs={props.showAllTabs}
-      getTabContent={props.showAllTabs ? getTabContent : undefined}
+      getTabContent={state.tabbedForm.showAllTabs ? getTabContent : undefined}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

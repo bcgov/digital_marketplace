@@ -53,7 +53,6 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
-  showAllTabs?: boolean;
 }
 
 type UpdateStatus =
@@ -91,15 +90,12 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-interface Props extends component_.page.Props<State, InnerMsg, Route> {
-  showAllTabs?: boolean;
-}
-
 function initForm(
   opportunity: CWUOpportunity,
   viewerUser: User,
   activeTab?: Form.TabId,
-  validate = false
+  validate = false,
+  showAllTabs = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -108,7 +104,8 @@ function initForm(
     canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    )
+    ),
+    showAllTabs
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -129,8 +126,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       saveChangesAndUpdateStatusLoading: 0,
       updateStatusLoading: 0,
       deleteLoading: 0,
-      isEditing: false,
-      showAllTabs: false
+      isEditing: false
     },
     []
   ];
@@ -246,7 +242,9 @@ function handleUpdateStatusResult(
       const [newFormState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
-        Form.getActiveTab(currentFormState)
+        Form.getActiveTab(currentFormState),
+        false,
+        state.showAllTabs
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
       const [onValidState, onValidCmds] = onValid
@@ -282,7 +280,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         opportunity,
         state.viewerUser,
         activeTab,
-        validateForm
+        validateForm,
+        state.showAllTabs
       );
       return [
         state.set("opportunity", opportunity).set("form", formState),
@@ -698,8 +697,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
-  const { state, dispatch, showAllTabs } = props;
+const view: component_.page.View<State, InnerMsg, Route> = (props) => {
+  const { state, dispatch } = props;
   const opportunity = state.opportunity;
   const form = state.form;
   if (!opportunity || !form) return null;
@@ -725,7 +724,6 @@ const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
               adt("form" as const, msg)
             )}
-            showAllTabs={showAllTabs}
           />
         </Col>
       </Row>
@@ -733,10 +731,7 @@ const view: component_.page.View<State, InnerMsg, Route, Props> = (props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> & {
-  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
-  view: component_.base.View<Props>;
-} = {
+export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,

@@ -16,10 +16,12 @@ export interface State<TabId> {
   isDropdownOpen: boolean;
   activeTab: TabId;
   tabs: TabId[];
+  showAllTabs?: boolean;
 }
 
 export interface Params<TabId> extends Pick<State<TabId>, "tabs"> {
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export type Msg<TabId> =
@@ -62,7 +64,7 @@ export function init<TabId>(): component_.base.Init<
   State<TabId>,
   Msg<TabId>
 > {
-  return ({ tabs, activeTab }) => {
+  return ({ tabs, activeTab, showAllTabs = false }) => {
     if (!tabs.length) {
       throw new Error(
         "Must provide a non-empty array of tabs for tabbed forms."
@@ -73,7 +75,8 @@ export function init<TabId>(): component_.base.Init<
         id: `tabbed-form-${Math.random()}`,
         tabs,
         isDropdownOpen: false,
-        activeTab: activeTab || tabs[0]
+        activeTab: activeTab || tabs[0],
+        showAllTabs
       },
       []
     ];
@@ -132,7 +135,6 @@ export interface Props<TabId>
   extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {
   valid: boolean;
   disabled?: boolean;
-  showAllTabs?: boolean;
   children: component_.base.ViewElementChildren;
   getTabLabel(tabId: TabId): string;
   isTabValid(tabId: TabId): boolean;
@@ -215,12 +217,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  const Footer: component_.base.View<Props<TabId>> = ({
-    state,
-    dispatch,
-    showAllTabs
-  }) => {
-    if (showAllTabs) {
+  const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
+    if (state.showAllTabs) {
       return null;
     }
 
@@ -281,7 +279,7 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   };
 
   return function PageWrapper(props) {
-    return props.showAllTabs ? (
+    return props.state.showAllTabs ? (
       <AllTabsView {...props} />
     ) : (
       <SingleTabView {...props} />
