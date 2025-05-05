@@ -101,7 +101,8 @@ const init: component_.page.Init<
     });
 
     const [opportunityInitState] = OpportunityTab.component.init({
-      viewerUser: adminUser
+      viewerUser: adminUser,
+      showAllTabs: true
     });
 
     const [opportunityViewState, initialOpportunityViewCmds] =
@@ -548,7 +549,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <OpportunityTab.component.view
           state={state.opportunityState}
           dispatch={() => {}}
-          showAllTabs={true}
         />
         <hr />
 

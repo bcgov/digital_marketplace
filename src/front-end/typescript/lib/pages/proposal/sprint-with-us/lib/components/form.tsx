@@ -83,6 +83,7 @@ export interface Params {
   evaluationContent: string;
   proposal?: SWUProposal;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -177,7 +178,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   organizations,
   evaluationContent,
   proposal,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
@@ -200,7 +202,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "References",
       "Review Proposal"
     ],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -227,7 +230,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     opportunity,
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposal
+    proposal,
+    isDetailView: showAllTabs ? true : false
   });
   const [inceptionCostState, inceptionCostCmds] = NumberField.init({
     errors: [],
@@ -313,7 +317,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity.teamQuestions,
-    responses: proposal?.teamQuestionResponses || []
+    responses: proposal?.teamQuestionResponses || [],
+    isDetailView: showAllTabs ? true : false
   });
   const [referencesState, referencesCmds] = References.init({
     references: proposal?.references || []
@@ -828,8 +833,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
 const TeamView: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  expandAccordions
+  disabled
 }) => {
   const isGetAffiliationsLoading = state.getAffiliationsLoading > 0;
   return (
@@ -898,7 +902,6 @@ const TeamView: component_.base.View<Props> = ({
                 dispatch={component_.base.mapDispatch(dispatch, (value) =>
                   adt("team" as const, value)
                 )}
-                expandAccordions={expandAccordions}
               />
             </div>
           </Col>
@@ -1035,8 +1038,7 @@ const PricingView: component_.base.View<Props> = ({
 const TeamQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  expandAccordions
+  disabled
 }) => {
   return (
     <Row>
@@ -1067,7 +1069,6 @@ const TeamQuestionsView: component_.base.View<Props> = ({
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("teamQuestions" as const, value)
           )}
-          expandAccordions={expandAccordions}
         />
       </Col>
     </Row>
@@ -1408,22 +1409,17 @@ const ReviewProposalView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  showAllTabs?: boolean;
-  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  showAllTabs,
-  expandAccordions
+  disabled
 }) => {
   const props = {
     state,
     dispatch,
-    disabled: disabled || isLoading(state),
-    expandAccordions
+    disabled: disabled || isLoading(state)
   };
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
@@ -1463,9 +1459,8 @@ export const view: component_.base.View<Props> = ({
     <TabbedFormComponent.view
       valid={isValid(state)}
       disabled={props.disabled}
-      showAllTabs={showAllTabs}
       getTabLabel={(a) => a}
-      getTabContent={showAllTabs ? getTabContent : undefined}
+      getTabContent={getTabContent}
       isTabValid={(tab) => {
         switch (tab) {
           case "Evaluation":

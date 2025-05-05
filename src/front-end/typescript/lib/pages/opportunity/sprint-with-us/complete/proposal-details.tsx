@@ -39,6 +39,8 @@ export interface Params {
   organizations: OrganizationSlim[];
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
+  showAllTabs?: boolean;
+  expandAccordions?: boolean;
 }
 
 export type Msg = ADT<"noop">;
@@ -70,7 +72,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       opportunity: opportunity,
       proposal,
       organizations: organizations,
-      evaluationContent: evaluationContent
+      evaluationContent: evaluationContent,
+      showAllTabs: true
     });
 
     // Update the team state with affiliations after form init
@@ -129,8 +132,10 @@ const init: component_.base.Init<Params, State, Msg> = ({
       evaluating: false,
       questionEvaluation: undefined,
       panelQuestionEvaluations: [],
-      proposals: proposals
-    });
+      proposals: proposals,
+      showAllTabs: true,
+      expandAccordions: true
+    } as ProposalTab.Params);
 
     // Create a complete proposalTabState with the form correctly initialized
     const completeProposalTabState = {
@@ -195,8 +200,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <ProposalTab.component.view
         state={immutable(state.proposalTabState)}
         dispatch={() => {}}
-        showAllTabs={true}
-        expandAccordions={true}
       />
 
       <h3

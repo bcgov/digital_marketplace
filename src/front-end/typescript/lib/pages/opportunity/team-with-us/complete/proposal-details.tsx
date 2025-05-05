@@ -77,13 +77,15 @@ const init: component_.base.Init<Params, State, Msg> = ({
       opportunity: opportunity,
       proposal: proposal,
       organizations: [],
-      evaluationContent: ""
+      evaluationContent: "",
+      showAllTabs: true
     });
 
     const [proposalTabState, _proposalTabCmds] = ProposalTab.component.init({
       viewerUser: viewerUser,
       proposal,
-      opportunity
+      opportunity,
+      showAllTabs: true
     });
 
     const completeProposalTabState: ProposalTab.State = {
@@ -146,8 +148,6 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <ProposalTab.component.view
         state={state.proposalTabState}
         dispatch={() => dispatch(adt("noop"))}
-        showAllTabs={true}
-        expandAccordions={true}
       />
 
       <hr></hr>

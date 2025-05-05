@@ -32,6 +32,7 @@ export interface Params {
   proposal: TWUProposal;
   opportunity: TWUOpportunity;
   viewerUser: User;
+  showAllTabs?: boolean;
 }
 
 export type InitResponse = null;

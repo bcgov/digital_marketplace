@@ -20,6 +20,7 @@ import * as genericValidation from "shared/lib/validation/opportunity/utility";
 export interface Params {
   opportunity?: SWUOpportunity;
   startingPhase?: SWUOpportunityPhaseType;
+  isDetailView?: boolean;
 }
 
 export interface State {
@@ -101,14 +102,15 @@ export function setStartingPhase(
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
-  startingPhase = SWUOpportunityPhaseType.Inception
+  startingPhase = SWUOpportunityPhaseType.Inception,
+  isDetailView = false
 }) => {
   const totalMaxBudget = opportunity?.totalMaxBudget;
   const assignmentDate = opportunity?.assignmentDate || new Date();
   const [inceptionPhaseState, inceptionPhaseCmds] = Phase.init({
     phase: opportunity?.inceptionPhase,
     totalMaxBudget,
-    isAccordionOpen: false,
+    isAccordionOpen: isDetailView ? true : false,
     validateStartDate: (raw) =>
       genericValidation.validateDateFormatMinMax(raw, assignmentDate),
     validateCompletionDate:
@@ -117,7 +119,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [prototypePhaseState, prototypePhaseCmds] = Phase.init({
     phase: opportunity?.prototypePhase,
     totalMaxBudget,
-    isAccordionOpen: false,
+    isAccordionOpen: isDetailView ? true : false,
     validateStartDate: (raw) =>
       opportunityValidation.validateSWUOpportunityPrototypePhaseStartDate(
         raw,
@@ -132,7 +134,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     phase: opportunity?.implementationPhase,
     totalMaxBudget,
     // If only implementation phase, have it be open.
-    isAccordionOpen: startingPhase === SWUOpportunityPhaseType.Implementation,
+    isAccordionOpen: isDetailView
+      ? true
+      : startingPhase === SWUOpportunityPhaseType.Implementation,
     validateStartDate: (raw) =>
       opportunityValidation.validateSWUOpportunityImplementationPhaseStartDate(
         raw,
@@ -301,8 +305,7 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
 export const view: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  expandAccordions
+  disabled
 }) => {
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
@@ -327,7 +330,6 @@ export const view: component_.base.View<Props> = ({
             "A product backlog for the Alpha release"
           ]}
           disabled={disabled}
-          expandAccordion={expandAccordions}
         />
       ) : null}
       {hasPhase(state, SWUOpportunityPhaseType.Prototype) ? (
@@ -350,7 +352,6 @@ export const view: component_.base.View<Props> = ({
             "Resourcing plan for Implementation"
           ]}
           disabled={disabled}
-          expandAccordion={expandAccordions}
         />
       ) : null}
       <Phase.view
@@ -368,7 +369,6 @@ export const view: component_.base.View<Props> = ({
           "Delivery of the functional components in the Product Roadmap"
         ]}
         disabled={disabled}
-        expandAccordion={expandAccordions}
       />
     </div>
   );

@@ -51,6 +51,10 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
+export interface Params extends Tab.Params {
+  showAllTabs?: boolean;
+}
+
 export type InnerMsg =
   | ADT<"noop">
   | ADT<"onInitResponse", [OrganizationSlim[], string]>
@@ -71,12 +75,7 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-interface Props extends component_.base.ComponentViewProps<State, Msg> {
-  showAllTabs?: boolean;
-  expandAccordions?: boolean;
-}
-
-const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
+const init: component_.base.Init<Params, State, Msg> = (params) => {
   const [disqualificationReasonState, disqualificationReasonCmds] =
     LongText.init({
       errors: [],
@@ -335,8 +334,8 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   );
 };
 
-const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
-  const { state, dispatch, showAllTabs, expandAccordions } = props;
+const view: component_.base.ComponentView<State, Msg> = (props) => {
+  const { state, dispatch } = props;
   const form = state.form;
   if (!form) return null;
   const show = hasTWUOpportunityPassedChallenge(state.opportunity);
@@ -369,8 +368,6 @@ const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
             <Form.view
               disabled
               state={form}
-              showAllTabs={showAllTabs}
-              expandAccordions={expandAccordions}
               dispatch={component_.base.mapDispatch(dispatch, (v) =>
                 adt("form" as const, v)
               )}
@@ -387,10 +384,7 @@ const view: component_.base.ComponentView<State, Msg> = (props: Props) => {
   );
 };
 
-export const component: Tab.Component<State, Msg> & {
-  // Use intersection to ensure `component.view` accepts our extended Props (with showAllTabs).
-  view: component_.base.View<Props>;
-} = {
+export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,

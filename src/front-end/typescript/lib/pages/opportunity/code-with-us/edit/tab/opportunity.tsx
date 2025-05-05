@@ -243,8 +243,7 @@ function handleUpdateStatusResult(
         opportunity,
         state.viewerUser,
         Form.getActiveTab(currentFormState),
-        false,
-        state.showAllTabs
+        false
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
       const [onValidState, onValidCmds] = onValid

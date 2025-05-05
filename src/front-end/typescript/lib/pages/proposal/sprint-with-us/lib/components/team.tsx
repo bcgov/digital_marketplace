@@ -23,6 +23,7 @@ export interface Params {
   affiliations: AffiliationMember[];
   opportunity: SWUOpportunity;
   proposal?: SWUProposal;
+  isDetailView?: boolean;
 }
 
 export interface State extends Omit<Params, "orgId"> {
@@ -56,27 +57,27 @@ export function setAffiliations(
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { orgId, affiliations, opportunity, proposal } = params;
+  const { orgId, affiliations, opportunity, proposal, isDetailView } = params;
   const [inceptionPhaseState, inceptionPhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.inceptionPhase,
     proposalPhase: proposal?.inceptionPhase,
-    isAccordionOpen: false
+    isAccordionOpen: isDetailView ? true : false
   });
   const [prototypePhaseState, prototypePhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.prototypePhase,
     proposalPhase: proposal?.prototypePhase,
-    isAccordionOpen: false
+    isAccordionOpen: isDetailView ? true : false
   });
   const [implementationPhaseState, implementationPhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.implementationPhase,
     proposalPhase: proposal?.implementationPhase,
-    isAccordionOpen: !opportunity.prototypePhase
+    isAccordionOpen: isDetailView ? true : !opportunity.prototypePhase
   });
   return [
     {
@@ -221,14 +222,12 @@ export function isValid(state: Immutable<State>): boolean {
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  expandAccordions
+  disabled
 }) => {
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
@@ -249,7 +248,6 @@ export const view: component_.base.View<Props> = ({
             SWUOpportunityPhaseType.Inception
           )}
           disabled={disabled}
-          expandAccordion={expandAccordions}
         />
       ) : null}
       {hasPhase(state, SWUProposalPhaseType.Prototype) ? (
@@ -265,7 +263,6 @@ export const view: component_.base.View<Props> = ({
             SWUOpportunityPhaseType.Prototype
           )}
           disabled={disabled}
-          expandAccordion={expandAccordions}
         />
       ) : null}
       <Phase.view
@@ -279,7 +276,6 @@ export const view: component_.base.View<Props> = ({
           SWUOpportunityPhaseType.Implementation
         )}
         disabled={disabled}
-        expandAccordion={expandAccordions}
       />
     </div>
   );

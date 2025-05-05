@@ -152,6 +152,7 @@ export interface Params {
   viewerUser: User;
   activeTab?: TabId;
   users: User[];
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -203,7 +204,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   viewerUser,
   users,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const startingPhase = getStartingPhase(opportunity);
   const questionsWeight = getNumber(
@@ -237,7 +239,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "Scoring",
       "Attachments"
     ],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -427,7 +430,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [phasesState, phasesCmds] = Phases.init({
     opportunity,
-    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception
+    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception,
+    isDetailView: showAllTabs
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity?.teamQuestions || []
@@ -1587,8 +1591,7 @@ const DescriptionView: component_.base.View<Props> = ({
 const PhasesView: component_.base.View<Props> = ({
   state,
   dispatch,
-  disabled,
-  expandAccordions
+  disabled
 }) => {
   const rawStartingPhase = FormField.getValue(state.startingPhase);
   const startingPhase = rawStartingPhase
@@ -1653,7 +1656,6 @@ const PhasesView: component_.base.View<Props> = ({
           <div className="mt-5 pt-5 border-top">
             <Phases.view
               disabled={disabled}
-              expandAccordions={expandAccordions}
               state={state.phases}
               dispatch={component_.base.mapDispatch(dispatch, (value) =>
                 adt("phases" as const, value)
@@ -1803,8 +1805,6 @@ const AttachmentsView: component_.base.View<Props> = ({
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  showAllTabs?: boolean;
-  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = (props) => {
@@ -1837,9 +1837,8 @@ export const view: component_.base.View<Props> = (props) => {
     <TabbedFormComponent.view
       valid={isValid(state)}
       disabled={props.disabled}
-      showAllTabs={props.showAllTabs}
       getTabLabel={(a) => a}
-      getTabContent={props.showAllTabs ? getTabContent : undefined}
+      getTabContent={getTabContent}
       isTabValid={(tab) => {
         switch (tab) {
           case "Agreement":

@@ -36,11 +36,13 @@ export type Msg =
 export interface Params {
   questions: SWUTeamQuestion[];
   responses: SWUProposalTeamQuestionResponse[];
+  isDetailView?: boolean;
 }
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   questions,
-  responses
+  responses,
+  isDetailView = false
 }) => {
   const responseInits = questions.map((question, i) => {
     const [responseState, responseCmds] = RichMarkdownEditor.init({
@@ -58,7 +60,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     });
     return [
       {
-        isAccordianOpen: false,
+        isAccordianOpen: isDetailView ? true : false,
         question,
         response: immutable(responseState)
       },
@@ -151,17 +153,13 @@ interface ResponseViewProps {
   index: number;
   response: ResponseState;
   disabled?: boolean;
-  expandAccordions?: boolean;
   dispatch: component_.base.Dispatch<Msg>;
 }
 
 const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
-  const { response, dispatch, index, disabled, expandAccordions } = props;
+  const { response, dispatch, index, disabled } = props;
   const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
-
-  // If expandAccordions is true, override isAccordianOpen
-  const isOpen = expandAccordions === true ? true : response.isAccordianOpen;
 
   return (
     <Accordion
@@ -176,7 +174,7 @@ const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
       iconHeight={2}
       chevronWidth={1.5}
       chevronHeight={1.5}
-      open={isOpen}>
+      open={response.isAccordianOpen}>
       <p style={{ whiteSpace: "pre-line" }}>{response.question.question}</p>
       <div className="mb-3 small text-secondary d-flex flex-column flex-md-row flex-nowrap">
         <div className="mb-2 mb-md-0">
@@ -214,11 +212,10 @@ const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
 
 interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = (props) => {
-  const { state, disabled, expandAccordions } = props;
+  const { state, disabled } = props;
   return (
     <div>
       {state.responses.map((response, i) => (
@@ -229,7 +226,6 @@ export const view: component_.base.View<Props> = (props) => {
               disabled={disabled}
               response={response}
               dispatch={props.dispatch}
-              expandAccordions={expandAccordions}
             />
           </Col>
         </Row>

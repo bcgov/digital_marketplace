@@ -48,7 +48,6 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   score: Immutable<NumberField.State>;
   disqualificationReason: Immutable<LongText.State>;
-  showAllTabs: boolean;
 }
 
 export type InnerMsg =
@@ -131,8 +130,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       awardLoading: 0,
       showModal: null,
       score: immutable(scoreState),
-      disqualificationReason: immutable(disqualificationReasonState),
-      showAllTabs: false
+      disqualificationReason: immutable(disqualificationReasonState)
     },
     [
       ...component_.cmd.mapMany(

@@ -67,8 +67,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
       proposal: proposal,
       opportunity: opportunity,
       viewerUser: viewerUser,
-      form: immutable(formState),
-      showAllTabs: true
+      form: immutable(formState)
     };
 
     const [historyState, _historyCmds] = ProposalHistoryTab.component.init({

@@ -107,12 +107,6 @@ const init: component_.page.Init<
 > = isUserType({
   userType: [UserType.Admin],
   success({ routeParams, shared }) {
-    const [formState, _formCmds] = Form.init({
-      viewerUser: shared.sessionUser,
-      canRemoveExistingAttachments: false,
-      users: []
-    });
-
     // Initialize the basic addenda tab state structure
     const [addendaInitState, _addendaCmds] = AddendaTab.component.init({
       viewerUser: shared.sessionUser
@@ -194,7 +188,6 @@ const init: component_.page.Init<
           viewerUser: shared.sessionUser,
           notFound: false,
           loading: true,
-          form: immutable(formState),
           addendaState: immutable(addendaInitState),
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
@@ -251,14 +244,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           case "valid": {
             const opportunity = response.value;
 
-            // Initialize the form with the opportunity data
-            const [formState, _formCmds] = Form.init({
-              opportunity,
-              viewerUser: state.viewerUser,
-              canRemoveExistingAttachments: false,
-              users: []
-            });
-
             // Create initialization messages for other tabs
             const addendaOnInitMsg = AddendaTab.component.onInitResponse([
               opportunity,
@@ -282,27 +267,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 [] as User[]
               ]);
 
-            // Initialize the opportunity tab state with the opportunity
-            const [opportunityState, _oppCmds] = OpportunityTab.component.init({
-              viewerUser: state.viewerUser
-            });
-            const updatedOpportunityState = {
-              ...opportunityState,
-              opportunity
-            };
             const [oppFormState, _oppFormCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
               canRemoveExistingAttachments: false,
-              users: []
+              users: [],
+              showAllTabs: true
             });
-            updatedOpportunityState.form = immutable(oppFormState);
+
+            const updatedOpportunityState = state.opportunityState
+              .set("opportunity", opportunity)
+              .set("form", immutable(oppFormState));
 
             const newState = state.merge({
               opportunity,
               loading: false,
-              form: immutable(formState),
-              opportunityState: immutable(updatedOpportunityState)
+              opportunityState: updatedOpportunityState
             });
 
             return [
@@ -814,7 +794,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
     if (
       state.loading ||
       !state.opportunity ||
-      !state.form ||
       !state.viewerUser ||
       !state.addendaState ||
       !state.historyState ||
@@ -946,8 +925,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <OpportunityTab.component.view
           state={state.opportunityState}
           dispatch={() => {}}
-          showAllTabs={true}
-          expandAccordions={true}
         />
 
         <hr></hr>
