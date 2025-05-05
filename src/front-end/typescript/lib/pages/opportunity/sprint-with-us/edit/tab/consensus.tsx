@@ -24,7 +24,6 @@ import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
   hasSWUOpportunityPassedTeamQuestions,
-  isSWUOpportunityStatusInEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus,
   UpdateValidationErrors
@@ -304,18 +303,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
-  const opportunity = state.opportunity;
-  if (!opportunity) return null;
-  if (
-    isSWUOpportunityStatusInEvaluation(opportunity.status) ||
-    state.opportunity.status === SWUOpportunityStatus.Awarded
-  ) {
-    return <div>Evaluators have not completed their evaluations yet.</div>;
-  } else {
-    return <div>No proposals were submitted to this opportunity.</div>;
-  }
-};
+const WaitForConsensus: component_.base.ComponentView<State, Msg> = () => (
+  <div>Evaluators have not completed their evaluations yet.</div>
+);
 
 const ContextMenuCell: component_.base.View<{
   disabled: boolean;
@@ -558,7 +548,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             {state.canViewEvaluations && state.proposals.length ? (
               <ProponentEvaluations {...props} />
             ) : (
-              <NotAvailable {...props} />
+              <WaitForConsensus {...props} />
             )}
           </Col>
         </Row>
