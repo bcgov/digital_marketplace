@@ -45,6 +45,7 @@ import {
   UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
+import { sortSWUProposals } from "shared/lib";
 
 type ModalId = ADT<"award", Id>;
 
@@ -103,22 +104,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       let useProposals = proposals;
 
       if (state.proposalSortOrder === "completePage") {
-        useProposals = [...useProposals];
-        useProposals.sort((a, b) => {
-          const getPriority = (status: SWUProposalStatus): number => {
-            if (status === SWUProposalStatus.Awarded) return 0;
-            if (status === SWUProposalStatus.Disqualified) return 2;
-            return 1; // All others have priority 1
-          };
-          const priorityA = getPriority(a.status);
-          const priorityB = getPriority(b.status);
-          if (priorityA !== priorityB) {
-            return priorityA - priorityB; // Sort by priority
-          } else {
-            // Same priority level, use original comparison for this tab
-            return compareSWUProposalsForPublicSector(a, b, "totalScore");
-          }
-        });
+        useProposals = sortSWUProposals(proposals, "totalScore");
       } else {
         // todo: this likely doesn't work since it's immutable
         useProposals = useProposals.sort((a, b) =>

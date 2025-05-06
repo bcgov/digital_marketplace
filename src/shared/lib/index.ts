@@ -4,6 +4,7 @@ import moment, { isDate, Moment } from "moment-timezone";
 import { TIMEZONE } from "shared/config";
 import { Comparison } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
+import { SWUProposalSlim, SWUProposalStatus, compareSWUProposalsForPublicSector } from "shared/lib/resources/proposal/sprint-with-us";
 
 export function find<T>(arr: T[], pred: (_: T) => boolean): T | null {
   for (const a of arr) {
@@ -371,3 +372,32 @@ function makeArrayContainsGreaterThanNCheck<T>(n: number) {
 
 export const arrayContainsGreaterThan1Check =
   makeArrayContainsGreaterThanNCheck(1);
+
+/**
+ * Sorts SWU proposals based on a priority status (Awarded, Disqualified, Other)
+ * and then by a specified score type.
+ *
+ * @param proposals - The array of proposals to sort.
+ * @param scoreType - The score type to use for secondary sorting.
+ * @returns A new sorted array of proposals.
+ */
+export function sortSWUProposals(
+  proposals: SWUProposalSlim[],
+  scoreType: "challengeScore" | "totalScore" | "questionsScore" | "scenarioScore"
+): SWUProposalSlim[] {
+  const getPriority = (status: SWUProposalStatus): number => {
+    if (status === SWUProposalStatus.Awarded) return 0;
+    if (status === SWUProposalStatus.Disqualified) return 2;
+    return 1; // All others have priority 1
+  };
+  return [...proposals].sort((a, b) => {
+    const priorityA = getPriority(a.status);
+    const priorityB = getPriority(b.status);
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB; // Sort by priority
+    } else {
+      // Same priority level, use original comparison
+      return compareSWUProposalsForPublicSector(a, b, scoreType);
+    }
+  });
+}

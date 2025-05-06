@@ -29,10 +29,10 @@ import {
   getSWUProponentName,
   isSWUProposalInTeamScenario,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
+import { sortSWUProposals } from "shared/lib";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -84,23 +84,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       let useProposals = filteredProposals;
 
       if (state.proposalSortOrder === "completePage") {
-        useProposals = [...filteredProposals]; // Create a copy of the filtered array
-        // Custom sort: Awarded first, Disqualified last, others by scenarioScore
-        useProposals.sort((a, b) => {
-          const getPriority = (status: SWUProposalStatus): number => {
-            if (status === SWUProposalStatus.Awarded) return 0;
-            if (status === SWUProposalStatus.Disqualified) return 2;
-            return 1; // All others have priority 1
-          };
-          const priorityA = getPriority(a.status);
-          const priorityB = getPriority(b.status);
-          if (priorityA !== priorityB) {
-            return priorityA - priorityB; // Sort by priority
-          } else {
-            // Same priority level, use original comparison for this tab
-            return compareSWUProposalsForPublicSector(a, b, "scenarioScore");
-          }
-        });
+        useProposals = sortSWUProposals(filteredProposals, "scenarioScore");
       } else {
         // Default sort for this tab: Use existing logic (by status group, then scenarioScore)
         useProposals.sort((a, b) =>

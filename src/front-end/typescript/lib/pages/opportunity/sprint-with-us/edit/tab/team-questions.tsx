@@ -38,10 +38,10 @@ import {
   compareSWUProposalsForPublicSector,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
+import { sortSWUProposals } from "shared/lib";
 
 type ModalId = ADT<"completeTeamQuestions">;
 
@@ -106,23 +106,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       let useProposals = proposals;
 
       if (state.proposalSortOrder === "completePage") {
-        useProposals = [...proposals]; // Create a copy
-        // Custom sort: Awarded first, Disqualified last, others by questionsScore
-        useProposals.sort((a, b) => {
-          const getPriority = (status: SWUProposalStatus): number => {
-            if (status === SWUProposalStatus.Awarded) return 0;
-            if (status === SWUProposalStatus.Disqualified) return 2;
-            return 1; // All others have priority 1
-          };
-          const priorityA = getPriority(a.status);
-          const priorityB = getPriority(b.status);
-          if (priorityA !== priorityB) {
-            return priorityA - priorityB; // Sort by priority
-          } else {
-            // Same priority level, use original comparison for this tab
-            return compareSWUProposalsForPublicSector(a, b, "questionsScore");
-          }
-        });
+        useProposals = sortSWUProposals(proposals, "questionsScore");
       } else {
         // Default sort for this tab: Use existing logic (by status group, then questionsScore)
         useProposals.sort((a, b) =>
