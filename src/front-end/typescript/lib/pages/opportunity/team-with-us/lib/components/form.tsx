@@ -1467,23 +1467,7 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
-      case "Overview":
-        return <OverviewView {...props} />;
-      case "Resource Details":
-        return <ResourceDetailsView {...props} />;
-      case "Description":
-        return <DescriptionView {...props} />;
-      case "Resource Questions":
-        return <ResourceQuestionsView {...props} />;
-      case "Scoring":
-        return <ScoringView {...props} />;
-      case "Attachments":
-        return <AttachmentsView {...props} />;
-    }
-  })();
-
+  
   function getTabContent(tab: TabId) {
     switch (tab) {
       case "Overview":
@@ -1500,6 +1484,8 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   }
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
 
   return (
     <TabbedFormComponent.view

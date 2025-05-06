@@ -515,7 +515,6 @@ const CapabilitiesView: component_.base.View<Props> = ({ state }) => {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, title, icon, iconColor, dispatch, className } = props;
-
   return (
     <Accordion
       className={className}
