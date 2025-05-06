@@ -50,6 +50,7 @@ export interface State extends Tab.Params {
   form: Immutable<Form.State> | null;
   disqualificationReason: Immutable<LongText.State>;
   showAllTabs: boolean;
+  expandAccordions: boolean;
 }
 
 export type InnerMsg =
@@ -97,7 +98,8 @@ const init: component_.base.Init<Params, State, Msg> = (params) => {
       showModal: null,
       form: null,
       disqualificationReason: immutable(disqualificationReasonState),
-      showAllTabs: params.showAllTabs || false
+      showAllTabs: params.showAllTabs || false,
+      expandAccordions: params.expandAccordions || false
     },
     [
       ...component_.cmd.mapMany(
@@ -137,8 +139,7 @@ function resetProposal(
     proposal: state.proposal,
     organizations,
     evaluationContent,
-    activeTab: state.form ? Form.getActiveTab(state.form) : undefined,
-    showAllTabs: state.showAllTabs
+    activeTab: state.form ? Form.getActiveTab(state.form) : undefined
   });
   return [
     state.set("form", immutable(formState)),

@@ -39,8 +39,6 @@ export interface Params {
   organizations: OrganizationSlim[];
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
-  showAllTabs?: boolean;
-  expandAccordions?: boolean;
 }
 
 export type Msg = ADT<"noop">;

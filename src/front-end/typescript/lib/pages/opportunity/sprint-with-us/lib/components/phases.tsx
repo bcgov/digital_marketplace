@@ -299,7 +299,6 @@ export function isValid(state: Immutable<State>): boolean {
 
 export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   disabled?: boolean;
-  expandAccordions?: boolean;
 }
 
 export const view: component_.base.View<Props> = ({

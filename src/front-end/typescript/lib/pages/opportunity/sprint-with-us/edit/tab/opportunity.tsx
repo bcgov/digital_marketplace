@@ -54,8 +54,6 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
-  showAllTabs?: boolean;
-  expandAccordions?: boolean;
 }
 
 type UpdateStatus =
