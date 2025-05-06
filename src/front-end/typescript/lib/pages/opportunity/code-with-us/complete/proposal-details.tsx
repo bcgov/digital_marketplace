@@ -99,13 +99,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
   return [{ detailStates }, []];
 };
 
-const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
-  switch (msg.tag) {
-    case "noop":
-      return [state, []];
-    default:
-      return [state, []];
-  }
+const update: component_.base.Update<State, Msg> = ({ state }) => {
+  return [state, []];
 };
 
 interface ProposalDetailProps {
@@ -142,7 +137,9 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
 const view: component_.base.View<
   component_.base.ComponentViewProps<State, Msg>
 > = ({ state, dispatch }) => {
-  const proposals = Object.keys(state.detailStates).sort();
+  const proposals = Object.keys(state.detailStates).sort((a, b) =>
+    a.localeCompare(b, "en", { sensitivity: "base" })
+  );
   if (proposals.length === 0) {
     return <div>No proposals available to display.</div>;
   }
@@ -183,9 +180,7 @@ const view: component_.base.View<
 };
 
 function getProponentName(proponent: CWUProponent): string {
-  return proponent.tag === "individual"
-    ? proponent.value.legalName
-    : proponent.value.legalName;
+  return proponent.value.legalName;
 }
 
 export const component = {

@@ -337,7 +337,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             return [state, []];
           }
         }
-        break;
       }
       case "onProposalsAndEvaluationsReceived": {
         const [proposalSlims, evaluations] = msg.value;

@@ -1299,7 +1299,7 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  
+
   const getTabContent = (tabId: TabId) => {
     switch (tabId) {
       case "Overview":
@@ -1310,8 +1310,6 @@ export const view: component_.base.View<Props> = (props) => {
         return <DetailsView {...props} />;
       case "Attachments":
         return <AttachmentsView {...props} />;
-      default:
-        return null;
     }
   };
 

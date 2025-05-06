@@ -1095,6 +1095,6 @@ nav.navbar .nav-link:hover {
   // Ensures textarea fields are full size, hides scrollbars
   // Note: this is not supported in firefox and safari as of May 2025
   textarea {
-    field-sizing: content;
+    field-sizing: content; //NOSONAR
   }
 }
