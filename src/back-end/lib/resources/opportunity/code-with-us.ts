@@ -162,7 +162,7 @@ const create: crud.Create<
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: !!get(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
         reward: getNumber(body, "reward"),
@@ -427,7 +427,7 @@ const update: crud.Update<
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: !!get(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
             reward: getNumber<number>(value, "reward"),

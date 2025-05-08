@@ -152,7 +152,7 @@ function parseMultipartRequest<FileUploadMetadata>(
   return new Promise((resolve, reject) => {
     // Reject the promise if the content length is too large.
     const contentLength = expressReq.get("content-length") || maxSize + 1;
-    if (contentLength > maxSize) {
+    if (Number(contentLength) > maxSize) {
       return reject(new Error("Content-Length is too large."));
     }
     // Parse the request.
@@ -476,7 +476,11 @@ export function express<
     router.forEach((route) => {
       app.all(route.path, makeExpressRequestHandler(route));
       if (SWAGGER_ENABLE) {
-        app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs));
+        app.use(
+          SWAGGER_UI_PATH,
+          ...(swaggerUI.serve as any),
+          swaggerUI.setup(specs) as any
+        );
       }
     });
 

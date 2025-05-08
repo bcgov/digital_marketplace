@@ -221,10 +221,18 @@ const create: crud.Create<
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
+      const implementationPhase = get(body, "implementationPhase");
+      if (!implementationPhase) {
+        throw new Error("Implementation phase is required");
+      }
+      const evaluationPanel = get(body, "evaluationPanel");
+      if (!evaluationPanel) {
+        throw new Error("Evaluation panel is required");
+      }
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: !!get(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
         totalMaxBudget: getNumber(body, "totalMaxBudget"),
@@ -244,9 +252,9 @@ const create: crud.Create<
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase"),
-        teamQuestions: get(body, "teamQuestions"),
-        evaluationPanel: get(body, "evaluationPanel")
+        implementationPhase: implementationPhase,
+        teamQuestions: get(body, "teamQuestions") ?? [],
+        evaluationPanel: evaluationPanel
       };
     },
     async validateRequestBody(request) {
@@ -769,12 +777,20 @@ const update: crud.Update<
       const body = request.body.tag === "json" ? request.body.value : {};
       const tag = get(body, "tag");
       const value: unknown = get(body, "value");
+      const implementationPhase = get(value, "implementationPhase");
+      if (!implementationPhase) {
+        throw new Error("Implementation phase is required");
+      }
+      const evaluationPanel = get(value, "evaluationPanel");
+      if (!evaluationPanel) {
+        throw new Error("Evaluation panel is required");
+      }
       switch (tag) {
         case "edit":
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: !!get(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
             totalMaxBudget: getNumber<number>(value, "totalMaxBudget"),
@@ -796,9 +812,9 @@ const update: crud.Update<
             attachments: getStringArray(value, "attachments"),
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: get(value, "implementationPhase"),
-            teamQuestions: get(value, "teamQuestions"),
-            evaluationPanel: get(value, "evaluationPanel")
+            implementationPhase: implementationPhase,
+            teamQuestions: get(value, "teamQuestions") ?? [],
+            evaluationPanel: evaluationPanel
           });
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));

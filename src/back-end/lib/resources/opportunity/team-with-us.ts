@@ -200,10 +200,10 @@ const create: crud.Create<
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: !!get(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
-        resources: get(body, "resources"),
+        resources: get(body, "resources") ?? [],
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
@@ -215,7 +215,7 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestions: get(body, "resourceQuestions")
+        resourceQuestions: get(body, "resourceQuestions") ?? []
       };
     },
     // ensure the accuracy of values coming in from the request body
@@ -497,17 +497,21 @@ const update: crud.Update<
   return {
     async parseRequestBody(request) {
       const body = request.body.tag === "json" ? request.body.value : {};
-      const tag: UpdateRequestBody["tag"] = get(body, "tag");
+      const rawTag = get(body, "tag");
+      if (!rawTag) {
+        throw new Error("Tag is required");
+      }
+      const tag: UpdateRequestBody["tag"] = rawTag as UpdateRequestBody["tag"];
       switch (tag) {
         case "edit": {
           const value: unknown = get(body, "value");
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: !!get(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
-            resources: get(value, "resources"),
+            resources: get(value, "resources") ?? [],
             description: getString(value, "description"),
             proposalDeadline: getString(value, "proposalDeadline"),
             assignmentDate: getString(value, "assignmentDate"),
@@ -518,7 +522,7 @@ const update: crud.Update<
             challengeWeight: getNumber<number>(value, "challengeWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            resourceQuestions: get(value, "resourceQuestions")
+            resourceQuestions: get(value, "resourceQuestions") ?? []
           });
         }
         case "submitForReview":
