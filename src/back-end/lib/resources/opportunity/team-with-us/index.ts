@@ -10,6 +10,7 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
+  validateTWUEvaluationPanelMembers,
   validateTWUOpportunityId,
   validateTWUResources
 } from "back-end/lib/validation";
@@ -31,7 +32,10 @@ import {
   UpdateRequestBody,
   UpdateValidationErrors,
   CreateTWUResourceBody,
-  ValidatedCreateTWUResourceBody
+  ValidatedCreateTWUResourceBody,
+  CreateTWUEvaluationPanelMemberBody,
+  CreateTWUEvaluationPanelMemberValidationErrors,
+  canChangeEvaluationPanel
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -69,11 +73,13 @@ interface ValidatedCreateRequestBody
     | "resources"
     | "resourceQuestions"
     | "challengeEndDate"
+    | "evaluationPanel"
   > {
   resources: ValidatedCreateTWUResourceBody[];
   status: CreateTWUOpportunityStatus;
   session: AuthenticatedSession;
   resourceQuestions: CreateTWUResourceQuestionBody[];
+  evaluationPanel: CreateTWUEvaluationPanelMemberBody[];
 }
 
 interface ValidatedUpdateRequestBody {
@@ -85,7 +91,8 @@ interface ValidatedUpdateRequestBody {
     | ADT<"startChallenge", string>
     | ADT<"suspend", string>
     | ADT<"cancel", string>
-    | ADT<"addAddendum", string>;
+    | ADT<"addAddendum", string>
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
 }
 
 /**
@@ -215,7 +222,8 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestions: get(body, "resourceQuestions")
+        resourceQuestions: get(body, "resourceQuestions"),
+        evaluationPanel: get(body, "evaluationPanel")
       };
     },
     // ensure the accuracy of values coming in from the request body
@@ -238,7 +246,8 @@ const create: crud.Create<
         priceWeight,
         attachments,
         status,
-        resourceQuestions
+        resourceQuestions,
+        evaluationPanel
       } = request.body;
 
       const validatedStatus =
@@ -302,6 +311,20 @@ const create: crud.Create<
           getValidValue(validatedStartDate, now)
         );
 
+      const validatedEvaluationPanel = await validateTWUEvaluationPanelMembers(
+        connection,
+        evaluationPanel
+      );
+      if (
+        isInvalid<CreateTWUEvaluationPanelMemberValidationErrors[]>(
+          validatedEvaluationPanel
+        )
+      ) {
+        return invalid({
+          evaluationPanel: validatedEvaluationPanel.value
+        });
+      }
+
       // Validate the following fields if the opportunity is saved as a draft
       if (validatedStatus.value === TWUOpportunityStatus.Draft) {
         const defaultDate = addDays(new Date(), 14);
@@ -327,7 +350,8 @@ const create: crud.Create<
           assignmentDate: getValidValue(validatedAssignmentDate, defaultDate),
           startDate: getValidValue(validatedStartDate, defaultDate),
           completionDate: getValidValue(validatedCompletionDate, defaultDate),
-          resources: validatedResources.value
+          resources: validatedResources.value,
+          evaluationPanel: validatedEvaluationPanel.value
         });
       }
       const validatedTitle = genericValidation.validateTitle(title);
@@ -369,7 +393,8 @@ const create: crud.Create<
           validatedStartDate,
           validatedCompletionDate,
           validatedAttachments,
-          validatedStatus
+          validatedStatus,
+          validatedEvaluationPanel
         ])
       ) {
         // Ensure that score weights total 100%
@@ -403,7 +428,8 @@ const create: crud.Create<
           startDate: validatedStartDate.value,
           completionDate: validatedCompletionDate.value,
           attachments: validatedAttachments.value,
-          status: validatedStatus.value
+          status: validatedStatus.value,
+          evaluationPanel: validatedEvaluationPanel.value
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
@@ -431,7 +457,11 @@ const create: crud.Create<
           ),
           assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
           startDate: getInvalidValue(validatedStartDate, undefined),
-          completionDate: getInvalidValue(validatedCompletionDate, undefined)
+          completionDate: getInvalidValue(validatedCompletionDate, undefined),
+          evaluationPanel: getInvalidValue<
+            CreateTWUEvaluationPanelMemberValidationErrors[],
+            undefined
+          >(validatedEvaluationPanel, undefined)
         });
       }
     },
@@ -498,9 +528,9 @@ const update: crud.Update<
     async parseRequestBody(request) {
       const body = request.body.tag === "json" ? request.body.value : {};
       const tag: UpdateRequestBody["tag"] = get(body, "tag");
+      const value: unknown = get(body, "value");
       switch (tag) {
         case "edit": {
-          const value: unknown = get(body, "value");
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
@@ -518,7 +548,8 @@ const update: crud.Update<
             challengeWeight: getNumber<number>(value, "challengeWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            resourceQuestions: get(value, "resourceQuestions")
+            resourceQuestions: get(value, "resourceQuestions"),
+            evaluationPanel: get(value, "evaluationPanel")
           });
         }
         case "submitForReview":
@@ -533,6 +564,11 @@ const update: crud.Update<
           return adt("cancel", getString(body, "value", ""));
         case "addAddendum":
           return adt("addAddendum", getString(body, "value", ""));
+        case "editEvaluationPanel":
+          return adt(
+            "editEvaluationPanel",
+            value as CreateTWUEvaluationPanelMemberBody[]
+          );
       }
     },
     async validateRequestBody(request) {
@@ -585,7 +621,8 @@ const update: crud.Update<
             challengeWeight,
             priceWeight,
             attachments,
-            resourceQuestions
+            resourceQuestions,
+            evaluationPanel
           } = request.body.value;
           // TWU Opportunities can only be edited if they are in DRAFT, UNDER REVIEW, PUBLISHED, or SUSPENDED
           if (
@@ -656,6 +693,23 @@ const update: crud.Update<
               getValidValue(validatedStartDate, now)
             );
 
+          const validatedEvaluationPanel =
+            await validateTWUEvaluationPanelMembers(
+              connection,
+              evaluationPanel
+            );
+          if (
+            isInvalid<CreateTWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
+
           // Only the following fields need validation if the opportunity is a draft.
           if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
             const defaultDate = addDays(new Date(), 14);
@@ -678,7 +732,8 @@ const update: crud.Update<
                   validatedCompletionDate,
                   defaultDate
                 ),
-                resources: validatedResources.value
+                resources: validatedResources.value,
+                evaluationPanel: validatedEvaluationPanel.value
               })
             });
           }
@@ -724,7 +779,8 @@ const update: crud.Update<
               validatedAssignmentDate,
               validatedStartDate,
               validatedCompletionDate,
-              validatedAttachments
+              validatedAttachments,
+              validatedEvaluationPanel
             ])
           ) {
             return valid({
@@ -746,7 +802,8 @@ const update: crud.Update<
                 assignmentDate: validatedAssignmentDate.value,
                 startDate: validatedStartDate.value,
                 completionDate: validatedCompletionDate.value,
-                attachments: validatedAttachments.value
+                attachments: validatedAttachments.value,
+                evaluationPanel: validatedEvaluationPanel.value
               })
             } as ValidatedUpdateRequestBody);
           } else {
@@ -788,7 +845,11 @@ const update: crud.Update<
                 completionDate: getInvalidValue(
                   validatedCompletionDate,
                   undefined
-                )
+                ),
+                evaluationPanel: getInvalidValue<
+                  CreateTWUEvaluationPanelMemberValidationErrors[],
+                  undefined
+                >(validatedEvaluationPanel, undefined)
               })
             });
           }
@@ -988,7 +1049,63 @@ const update: crud.Update<
             body: adt("addAddendum", validatedAddendumText.value)
           } as ValidatedUpdateRequestBody);
         }
+        case "editEvaluationPanel": {
+          if (!canChangeEvaluationPanel(twuOpportunity)) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedEvaluationPanel =
+            await validateTWUEvaluationPanelMembers(
+              connection,
+              request.body.value
+            );
+          if (
+            isInvalid<CreateTWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("editEvaluationPanel" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
 
+          // TODO: Switch the resource to use serviceArea as pkey
+          // Casts the the serviceArea to a number; this is a workaround
+          const validatedResources = await validateTWUResources(
+            connection,
+            twuOpportunity.resources
+          );
+          if (
+            isInvalid<CreateTWUResourceValidationErrors[]>(validatedResources)
+          ) {
+            return invalid({
+              opportunity: adt("edit" as const, {
+                resources: validatedResources.value
+              })
+            });
+          }
+
+          return valid({
+            session: request.session,
+            body: adt("editEvaluationPanel" as const, {
+              ...omit(
+                twuOpportunity,
+                "addenda",
+                "history",
+                "publishedAt",
+                "reporting",
+                "status",
+                "subscribed",
+                "updatedAt",
+                "updatedBy",
+                "resources"
+              ),
+              evaluationPanel: validatedEvaluationPanel.value,
+              resources: validatedResources.value
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         default:
           return invalid({ opportunity: adt("parseFailure" as const) });
       }
@@ -1122,6 +1239,19 @@ const update: crud.Update<
               !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               twuOpportunityNotifications.handleTWUUpdated(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "editEvaluationPanel":
+            dbResult = await db.updateTWUOpportunityVersion(
+              connection,
+              { ...body.value, id: request.params.id },
+              session
+            );
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUPanelChange(
                 connection,
                 dbResult.value
               );

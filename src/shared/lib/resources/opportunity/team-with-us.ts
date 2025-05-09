@@ -1,7 +1,7 @@
 import { isDateInTheFuture, isDateInThePast } from "shared/lib";
 import { Addendum } from "shared/lib/resources/addendum";
 import { FileRecord } from "shared/lib/resources/file";
-import { UserSlim } from "shared/lib/resources/user";
+import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -183,8 +183,6 @@ export interface TWUOpportunity {
   remoteOk: boolean;
   remoteDesc: string;
   location: string;
-  // mandatorySkills: string[];
-  // optionalSkills: string[];
   resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
@@ -207,6 +205,7 @@ export interface TWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+  evaluationPanel?: TWUEvaluationPanelMember[];
 }
 
 export interface TWUSuccessfulProponent {
@@ -225,6 +224,13 @@ export interface TWUResourceQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+}
+
+export interface TWUEvaluationPanelMember {
+  user: UserSlim & { email: User["email"] };
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
 }
 
 export interface TWUResource {
@@ -296,6 +302,13 @@ export type ValidatedCreateTWUResourceBody = Omit<
   serviceArea: number;
 };
 
+export type CreateTWUEvaluationPanelMemberBody = {
+  user: Id;
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -315,6 +328,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
+  evaluationPanel: CreateTWUEvaluationPanelMemberBody[];
 }
 
 export interface CreateTWUResourceQuestionValidationErrors
@@ -327,6 +341,12 @@ export interface CreateTWUResourceValidationErrors
   parseFailure?: string[];
 }
 
+export interface CreateTWUEvaluationPanelMemberValidationErrors
+  extends ErrorTypeFrom<CreateTWUEvaluationPanelMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
@@ -335,6 +355,7 @@ export interface CreateValidationErrors
     | "optionalSkills"
     | "resourceQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
@@ -342,6 +363,7 @@ export interface CreateValidationErrors
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];
   attachments?: string[][];
   scoreWeights?: string[];
+  evaluationPanel?: CreateTWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Update.
@@ -353,7 +375,8 @@ export type UpdateRequestBody =
   | ADT<"startChallenge", string>
   | ADT<"suspend", string>
   | ADT<"cancel", string>
-  | ADT<"addAddendum", string>;
+  | ADT<"addAddendum", string>
+  | ADT<"editEvaluationPanel", CreateTWUEvaluationPanelMemberBody[]>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -375,7 +398,7 @@ type UpdateADTErrors =
   | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
-  | ADT<"addNote", UpdateWithNoteValidationErrors>
+  | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -390,6 +413,7 @@ export interface UpdateEditValidationErrors
     | "optionalSkills"
     | "resourceQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
@@ -397,6 +421,7 @@ export interface UpdateEditValidationErrors
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];
   attachments?: string[][];
   scoreWeights?: string[];
+  evaluationPanel?: CreateTWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Delete.
@@ -519,6 +544,18 @@ export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canChangeEvaluationPanel(o: TWUOpportunity): boolean {
+  switch (o.status) {
+    case TWUOpportunityStatus.Draft:
+    case TWUOpportunityStatus.UnderReview:
+    case TWUOpportunityStatus.Published:
+    case TWUOpportunityStatus.EvaluationResourceQuestions:
       return true;
     default:
       return false;

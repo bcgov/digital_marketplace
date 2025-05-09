@@ -18,7 +18,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases";
 import * as TeamQuestions from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions";
-import * as EvaluationPanel from "front-end/lib/components/evaluation-panel";
+import * as EvaluationPanel from "front-end/lib/components/swu-evaluation-panel";
 import Icon from "front-end/lib/views/icon";
 import Link, { routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";

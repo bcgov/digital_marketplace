@@ -17,10 +17,12 @@ import { Addendum } from "shared/lib/resources/addendum";
 import { getTWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
 import {
+  CreateTWUEvaluationPanelMemberBody,
   CreateTWUOpportunityStatus,
   CreateTWUResourceQuestionBody,
   privateOpportunityStatuses,
   publicOpportunityStatuses,
+  TWUEvaluationPanelMember,
   TWUOpportunity,
   TWUOpportunityEvent,
   TWUOpportunityHistoryRecord,
@@ -63,15 +65,22 @@ export interface CreateTWUOpportunityParams
     | "addenda"
     | "resourceQuestions"
     | "resources"
+    | "evaluationPanel"
   > {
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
   resources: ValidatedCreateTWUResourceBody[];
+  evaluationPanel: CreateTWUEvaluationPanelMemberParams[];
 }
 
 interface UpdateTWUOpportunityParams
   extends Omit<CreateTWUOpportunityParams, "status"> {
   id: Id;
+}
+
+interface CreateTWUEvaluationPanelMemberParams
+  extends Omit<CreateTWUEvaluationPanelMemberBody, "email"> {
+  user: Id;
 }
 
 interface TWUOpportunityRootRecord {
@@ -174,6 +183,12 @@ interface RawTWUOpportunityHistoryRecord
   status?: TWUOpportunityStatus;
   event?: TWUOpportunityEvent;
   attachments: Id[];
+}
+
+export interface RawTWUEvaluationPanelMember
+  extends Omit<TWUEvaluationPanelMember, "user"> {
+  opportunityVersion: Id;
+  user: Id;
 }
 
 /**
@@ -437,6 +452,28 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
+async function rawEvaluationPanelMemberToEvaluationPanelMember(
+  connection: Connection,
+  raw: RawTWUEvaluationPanelMember
+): Promise<TWUEvaluationPanelMember> {
+  const { opportunityVersion, user: userId, ...restOfRaw } = raw;
+  const user = getValidValue(await readOneUser(connection, userId), null);
+
+  if (!user) {
+    throw new Error("unable to process evaluation panel member");
+  }
+
+  return {
+    ...restOfRaw,
+    user: {
+      id: user.id,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      email: user.email
+    }
+  };
+}
+
 /**
  * Retrieves the latest versions of a TWU opportunities from the db. Will return
  * either a query for the full record of a TWU opp, or a query that retrieves a
@@ -626,7 +663,7 @@ export const readManyResources = tryDb<[Id], TWUResource[]>(
 );
 
 export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
-  async (connection, session) => {
+  async (connection, session, isPanelMember = false) => {
     // broad query returning many TWU Opportunities
     let query = generateTWUOpportunityQuery(connection);
 
@@ -637,19 +674,33 @@ export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
         "statuses.status",
         publicOpportunityStatuses as TWUOpportunityStatus[]
       );
-    } else if (session.user.type === UserType.Government) {
-      // Gov basic users should only see private opportunities that they own, and public opportunities
-      query = query
-        .whereIn(
-          "statuses.status",
-          publicOpportunityStatuses as TWUOpportunityStatus[]
-        )
-        .orWhere(function () {
-          this.whereIn(
-            "statuses.status",
-            privateOpportunityStatuses as TWUOpportunityStatus[]
-          ).andWhere({ "opportunities.createdBy": session.user?.id });
+    } else if (
+      session.user.type === UserType.Government ||
+      session.user.type === UserType.Admin
+    ) {
+      if (isPanelMember) {
+        // When isPanelMember=true, ONLY include opportunities where user is on evaluation panel
+        // works for admin and gov basic users
+        query = query.whereIn("versions.id", function () {
+          this.select("opportunityVersion")
+            .from("twuEvaluationPanelMembers")
+            .where("user", "=", session.user.id);
         });
+      } else if (session.user.type === UserType.Government) {
+        // Regular behavior - show public opportunities and private ones the user created
+        // works for gov basic users only
+        query = query
+          .whereIn(
+            "statuses.status",
+            publicOpportunityStatuses as TWUOpportunityStatus[]
+          )
+          .orWhere(function () {
+            this.whereIn(
+              "statuses.status",
+              privateOpportunityStatuses as TWUOpportunityStatus[]
+            ).andWhere({ "opportunities.createdBy": session.user?.id });
+          });
+      }
     }
     // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
     // Process results to eliminate fields not viewable by the current role
@@ -664,7 +715,7 @@ export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
             session.user.id
           );
         }
-        return processForRole(result, session);
+        return processForRole(result, session, isPanelMember);
       })
     );
     return valid(
@@ -702,14 +753,16 @@ async function createTWUOpportunityAttachments(
 
 function processForRole<T extends RawTWUOpportunity | RawTWUOpportunitySlim>(
   result: T,
-  session: Session
+  session: Session,
+  isPanelMember = false
 ) {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (
     !session ||
     (session.user.type !== UserType.Admin &&
       session.user.id !== result.createdBy &&
-      session.user.id !== result.updatedBy)
+      session.user.id !== result.updatedBy &&
+      !isPanelMember)
   ) {
     delete result.createdBy;
     delete result.updatedBy;
@@ -763,7 +816,8 @@ export const readOneTWUOpportunity = tryDb<
       publicOpportunityStatuses as TWUOpportunityStatus[]
     );
   } else if (session.user.type === UserType.Government) {
-    // Gov users should only see private opportunities they own, and public opportunities
+    // Gov users should only see private opportunities they own or are on the
+    // evaluation panel for, and public opportunities
     query = query.andWhere(function () {
       this.whereIn(
         "statuses.status",
@@ -772,7 +826,16 @@ export const readOneTWUOpportunity = tryDb<
         this.whereIn(
           "statuses.status",
           privateOpportunityStatuses as TWUOpportunityStatus[]
-        ).andWhere({ "opportunities.createdBy": session.user?.id });
+        ).andWhere(function () {
+          this.where({ "opportunities.createdBy": session.user.id }).orWhereIn(
+            "versions.id",
+            function () {
+              this.select("opportunityVersion")
+                .from("twuEvaluationPanelMembers")
+                .where("user", "=", session.user.id);
+            }
+          );
+        });
       });
     });
   } else {
@@ -784,7 +847,6 @@ export const readOneTWUOpportunity = tryDb<
   }
   // 'First' is similar to select, but only retrieves & resolves with the first record from the query
   let result = await query.first<RawTWUOpportunity>();
-  // console.log("LINE 708 readOneTWUOpporutunity after query: ", result)
   if (result) {
     // Process based on user type
     result = processForRole(result, session);
@@ -860,10 +922,18 @@ export const readOneTWUOpportunity = tryDb<
       );
     }
 
-    // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
+    const rawEvaluationPanelMembers =
+      await connection<RawTWUEvaluationPanelMember>("twuEvaluationPanelMembers")
+        .where("opportunityVersion", result.versionId)
+        .orderBy("order");
+
+    // If admin/owner/evaluation panel member, add on history,
+    // evaluation panel, reporting metrics, and successful proponent if
+    // applicable
     if (
       session?.user.type === UserType.Admin ||
-      result.createdBy === session?.user.id
+      result.createdBy === session?.user.id ||
+      rawEvaluationPanelMembers.find(({ user }) => user === session?.user.id)
     ) {
       const rawHistory = await connection<RawTWUOpportunityHistoryRecord>(
         "twuOpportunityStatuses"
@@ -892,6 +962,16 @@ export const readOneTWUOpportunity = tryDb<
         rawHistory.map(
           async (raw) =>
             await rawHistoryRecordToHistoryRecord(connection, session, raw)
+        )
+      );
+
+      result.evaluationPanel = await Promise.all(
+        rawEvaluationPanelMembers.map(
+          async (raw) =>
+            await rawEvaluationPanelMemberToEvaluationPanelMember(
+              connection,
+              raw
+            )
         )
       );
 
@@ -929,49 +1009,7 @@ export const readOneTWUOpportunity = tryDb<
       }
     }
   }
-  // console.log("LINE 793 readOneTwuOpportunity after initial query: ",result)
-  /**
-   * LINE 793 readOneTwuOpportunity after initial query:  {
-   *   id: '962e8ac7-1ebf-48c3-80c7-6329ee4fd361',
-   *   createdAt: 2024-01-18T23:48:09.782Z,
-   *   createdBy: '5a5db155-0d29-4bb6-abe3-545ac3166dea',
-   *   versionId: 'd79b79e8-438b-4c0b-8c2a-11d62458de9f',
-   *   updatedAt: 2024-01-18T23:48:09.782Z,
-   *   updatedBy: '5a5db155-0d29-4bb6-abe3-545ac3166dea',
-   *   title: 'testing many Team questions for data structure',
-   *   teaser: 'fdsa',
-   *   remoteOk: false,
-   *   location: 'Victoria',
-   *   maxBudget: 1234,
-   *   proposalDeadline: 2024-02-02T00:00:00.000Z,
-   *   status: 'DRAFT',
-   *   remoteDesc: '',
-   *   description: 'fdsa',
-   *   assignmentDate: 2024-02-03T00:00:00.000Z,
-   *   questionsWeight: 25,
-   *   challengeWeight: 50,
-   *   priceWeight: 25,
-   *   startDate: 2024-02-04T00:00:00.000Z,
-   *   completionDate: 2024-02-05T00:00:00.000Z,
-   *   attachments: [],
-   *   resources: [
-   *     '33210a8f-e352-494e-94f5-763909940d05',
-   *     '70b924dd-b1a5-4fef-9e53-5759f6728456'
-   *   ],
-   *   publishedAt: undefined,
-   *   subscribed: false,
-   *   history: [
-   *     {
-   *       id: '171d0f08-f9ff-47ca-a1da-a841386cfbbe',
-   *       createdAt: 2024-01-18T23:48:09.782Z,
-   *       opportunity: '962e8ac7-1ebf-48c3-80c7-6329ee4fd361',
-   *       note: null,
-   *       createdBy: [Object],
-   *       type: [Object]
-   *     }
-   *   ]
-   * }
-   */
+
   return valid(
     result ? await rawTWUOpportunityToTWUOpportunity(connection, result) : null
   );
@@ -1007,6 +1045,7 @@ export const createTWUOpportunity = tryDb<
       status,
       resourceQuestions,
       resources,
+      evaluationPanel,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -1081,6 +1120,16 @@ export const createTWUOpportunity = tryDb<
         });
     }
 
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawTWUEvaluationPanelMember>("twuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: opportunityVersionRecord.id
+        });
+    }
+
     return opportunityRootRecord.id;
   });
 
@@ -1100,8 +1149,13 @@ export const updateTWUOpportunityVersion = tryDb<
   TWUOpportunity
 >(async (connection, opportunity, session) => {
   const now = new Date();
-  const { attachments, resourceQuestions, resources, ...restOfOpportunity } =
-    opportunity;
+  const {
+    attachments,
+    resourceQuestions,
+    resources,
+    evaluationPanel,
+    ...restOfOpportunity
+  } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
     const prevResources: TWUResourceRecord[] = await connection<
       TWUResourceRecord & { opportunityVersion: Id }
@@ -1124,6 +1178,25 @@ export const updateTWUOpportunityVersion = tryDb<
     if (prevResources.length === 0) {
       throw new Error("could not fetch previous resources");
     }
+
+    const prevPanel: RawTWUEvaluationPanelMember[] =
+      await connection<RawTWUEvaluationPanelMember>(
+        "twuEvaluationPanelMembers as tepm"
+      )
+        .select("tepm.*")
+        .join(
+          "twuOpportunityVersions as tov",
+          "tepm.opportunityVersion",
+          "=",
+          "tov.id"
+        )
+        .where(
+          "tov.createdAt",
+          "=",
+          connection<Date>("twuOpportunityVersions as tov2")
+            .max("createdAt")
+            .where("tov2.opportunity", "=", restOfOpportunity.id)
+        );
 
     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
       "twuOpportunityVersions"
@@ -1216,6 +1289,34 @@ export const updateTWUOpportunityVersion = tryDb<
           createdBy: session.user.id,
           opportunityVersion: versionRecord.id
         });
+    }
+
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      const prevMember = prevPanel.find(({ user }) => user === member.user);
+      if (prevMember) {
+        await connection<RawTWUEvaluationPanelMember>(
+          "twuEvaluationPanelMembers"
+        )
+          .transacting(trx)
+          .where({
+            user: prevMember.user,
+            opportunityVersion: prevMember.opportunityVersion
+          })
+          .update({
+            ...member,
+            opportunityVersion: versionRecord.id
+          });
+      } else {
+        await connection<RawTWUEvaluationPanelMember>(
+          "twuEvaluationPanelMembers"
+        )
+          .transacting(trx)
+          .insert({
+            ...member,
+            opportunityVersion: versionRecord.id
+          });
+      }
     }
 
     // Add an 'edit' change record
@@ -1465,3 +1566,30 @@ export const readOneTWUOpportunityAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+export const readOneTWUEvaluationPanelMember = tryDb<
+  [Id, Id],
+  TWUEvaluationPanelMember | null
+>(async (connection, user, opportunity) => {
+  const raw = await connection<RawTWUEvaluationPanelMember>(
+    "twuEvaluationPanelMembers"
+  )
+    .join(
+      "twuOpportunityVersions",
+      "twuEvaluationPanelMembers.opportunityVersion",
+      "=",
+      "twuOpportunityVersions.id"
+    )
+    .where({
+      "twuOpportunityVersions.opportunity": opportunity,
+      "twuEvaluationPanelMembers.user": user
+    })
+    .select("twuEvaluationPanelMembers.*")
+    .first();
+
+  return valid(
+    raw
+      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      : null
+  );
+});

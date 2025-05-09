@@ -177,6 +177,38 @@ export async function newTWUOpportunitySubmittedForReviewAuthorT(
   ];
 }
 
+export const newTWUPanel = makeSend(newTWUPanelT);
+
+export async function newTWUPanelT(
+  recipients: User[],
+  opportunity: TWUOpportunity,
+  repost: boolean
+): Promise<Emails> {
+  const title =
+    "You Have Been Added to the Evaluation Panel for a Team With Us Opportunity";
+  const description =
+    "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary: `TWU opportunity ${
+        repost ? "re-published" : "published"
+      }; sent to evaluation panelists.`,
+      to: MAILER_REPLY,
+      bcc: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
 /**
  * Creates content for use in an email template.
  *
@@ -274,6 +306,21 @@ export async function handleTWUPublished(
     );
   if (author) {
     await successfulTWUPublication(author, opportunity, repost);
+  }
+
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel.map(({ user }) =>
+          db.readOneUser(connection, user.id)
+        )
+      )
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((user): user is User => !!user);
+  if (panel?.length) {
+    await newTWUPanel(panel, opportunity, repost);
   }
 }
 
@@ -395,6 +442,27 @@ export async function handleTWUSuspended(
   }
 }
 
+export async function handleTWUPanelChange(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+) {
+  // Notify all users on the evaluation panel
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel.map(({ user }) =>
+          db.readOneUser(connection, user.id)
+        )
+      )
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((member): member is User => !!member);
+  if (panel?.length) {
+    await editTWUPanel(panel, opportunity);
+  }
+}
+
 /**
  * Notify gov user that the opportunity is ready
  *
@@ -457,6 +525,37 @@ export async function readyForEvalTWUOpportunityT(
     }
   ];
 }
+
+export const editTWUPanel = makeSend(editSWUPanelT);
+
+export async function editSWUPanelT(
+  recipients: User[],
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title =
+    "You Have Been Added to the Evaluation Panel for a Team With Us Opportunity";
+  const description =
+    "You have been added as an evaluation panelist for the following Digital Marketplace opportunity";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "TWU opportunity evaluation panel updated; sent to evaluation panelists.",
+      to: MAILER_REPLY,
+      bcc: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
 /**
  * wrapper
  */

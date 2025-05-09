@@ -53,6 +53,8 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import {
+  CreateTWUEvaluationPanelMemberBody,
+  CreateTWUEvaluationPanelMemberValidationErrors,
   CreateTWUResourceBody,
   CreateTWUResourceValidationErrors,
   parseTWUServiceArea,
@@ -74,11 +76,14 @@ import {
   validateMandatorySkills,
   validateOptionalSkills
 } from "shared/lib/validation/opportunity/utility";
-import { MIN_SWU_EVALUATION_PANEL_MEMBERS } from "shared/config";
 import {
-  validateSWUEvaluationPanelMemberChair,
-  validateSWUEvaluationPanelMemberEvaluator
-} from "shared/lib/validation/opportunity/sprint-with-us";
+  MIN_SWU_EVALUATION_PANEL_MEMBERS,
+  MIN_TWU_EVALUATION_PANEL_MEMBERS
+} from "shared/config";
+import {
+  validateEvaluationPanelMemberChair,
+  validateEvaluationPanelMemberEvaluator
+} from "shared/lib/validation/opportunity/utility";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 /**
@@ -685,7 +690,7 @@ export async function validateSWUOpportunityId(
   }
 }
 
-export async function validateEvaluationPanelMember(
+async function validateSWUEvaluationPanelMember(
   connection: db.Connection,
   raw: any
 ): Promise<
@@ -699,12 +704,10 @@ export async function validateEvaluationPanelMember(
   if (validaValidatedUser && !isPublicSectorEmployee(validaValidatedUser)) {
     validatedUser = invalid(["The user must be a public sector employee."]);
   }
-  const validatedEvaluator = validateSWUEvaluationPanelMemberEvaluator(
+  const validatedEvaluator = validateEvaluationPanelMemberEvaluator(
     get(raw, "evaluator")
   );
-  const validatedChair = validateSWUEvaluationPanelMemberChair(
-    get(raw, "chair")
-  );
+  const validatedChair = validateEvaluationPanelMemberChair(get(raw, "chair"));
   const validatedOrder = validateOrder(getNumber(raw, "order"));
 
   if (
@@ -765,12 +768,129 @@ export async function validateSWUEvaluationPanelMembers(
   }
   const validatedEvaluationPanelMembers = await validateArrayCustomAsync(
     raw,
-    async (v) => await validateEvaluationPanelMember(connection, v),
+    async (v) => await validateSWUEvaluationPanelMember(connection, v),
     {}
   );
 
   const validValidatedEvaluationPanelMembers = getValidValue<
     CreateSWUEvaluationPanelMemberBody[],
+    undefined
+  >(validatedEvaluationPanelMembers, undefined);
+
+  if (!validValidatedEvaluationPanelMembers) {
+    return validatedEvaluationPanelMembers;
+  }
+
+  if (
+    validValidatedEvaluationPanelMembers.filter((member) => member.chair)
+      .length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single chair."]
+      }
+    ]);
+  }
+
+  if (
+    uniqBy(validValidatedEvaluationPanelMembers, "user").length !== raw.length
+  ) {
+    return invalid([
+      {
+        members: [
+          "You may not specify the same evaluation panel member more than once."
+        ]
+      }
+    ]);
+  }
+
+  return validatedEvaluationPanelMembers;
+}
+
+async function validateTWUEvaluationPanelMember(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  Validation<
+    CreateTWUEvaluationPanelMemberBody,
+    CreateTWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  let validatedUser = await validateUserId(connection, getString(raw, "user"));
+  const validaValidatedUser = getValidValue(validatedUser, null);
+  if (validaValidatedUser && !isPublicSectorEmployee(validaValidatedUser)) {
+    validatedUser = invalid(["The user must be a public sector employee."]);
+  }
+  const validatedEvaluator = validateEvaluationPanelMemberEvaluator(
+    get(raw, "evaluator")
+  );
+  const validatedChair = validateEvaluationPanelMemberChair(get(raw, "chair"));
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([
+      validatedUser,
+      validatedEvaluator,
+      validatedChair,
+      validatedOrder
+    ])
+  ) {
+    return valid({
+      evaluator: validatedEvaluator.value,
+      chair: validatedChair.value,
+      user: (validatedUser.value as User).id,
+      order: validatedOrder.value
+    } as CreateTWUEvaluationPanelMemberBody);
+  } else {
+    return invalid({
+      user: getInvalidValue(validatedUser, undefined),
+      evaluator: getInvalidValue(validatedEvaluator, undefined),
+      chair: getInvalidValue(validatedChair, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+}
+
+/**
+ * Checks to see if there is at least one member in an array of evaluation
+ * panel members, that there are no duplicate evaluation panel members, and
+ * that there is one and only one chair.
+ *
+ * @param connection
+ * @param raw - Array of evaluation panel member bodies
+ * @param organization
+ */
+export async function validateTWUEvaluationPanelMembers(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  ArrayValidation<
+    CreateTWUEvaluationPanelMemberBody,
+    CreateTWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of evaluation panel members."] }
+    ]);
+  }
+  if (raw.length < MIN_TWU_EVALUATION_PANEL_MEMBERS) {
+    return invalid([
+      {
+        members: [
+          `Please select at least ${MIN_TWU_EVALUATION_PANEL_MEMBERS} evaluation panel member(s).`
+        ]
+      }
+    ]);
+  }
+  const validatedEvaluationPanelMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateTWUEvaluationPanelMember(connection, v),
+    {}
+  );
+
+  const validValidatedEvaluationPanelMembers = getValidValue<
+    CreateTWUEvaluationPanelMemberBody[],
     undefined
   >(validatedEvaluationPanelMembers, undefined);
 

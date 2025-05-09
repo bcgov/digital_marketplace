@@ -46,6 +46,7 @@ type ModalId =
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
   form: Immutable<Form.State> | null;
+  users: User[];
   showModal: ModalId | null;
   startEditingLoading: number;
   saveChangesLoading: number;
@@ -93,6 +94,7 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 function initForm(
   opportunity: TWUOpportunity,
   viewerUser: User,
+  users: User[],
   activeTab?: Form.TabId,
   validate = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
@@ -103,7 +105,8 @@ function initForm(
     canRemoveExistingAttachments: canTWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    )
+    ),
+    users
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -117,6 +120,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     {
       ...params,
       opportunity: null,
+      users: [],
       form: null,
       showModal: null,
       startEditingLoading: 0,
@@ -240,6 +244,7 @@ function handleUpdateStatusResult(
       const [newFormState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
+        state.users,
         Form.getActiveTab(currentFormState)
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
@@ -275,6 +280,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const [formState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
+        state.users,
         activeTab,
         validateForm
       );
