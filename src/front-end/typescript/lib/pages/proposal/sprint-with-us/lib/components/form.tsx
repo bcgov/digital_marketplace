@@ -83,6 +83,7 @@ export interface Params {
   evaluationContent: string;
   proposal?: SWUProposal;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -177,7 +178,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   organizations,
   evaluationContent,
   proposal,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
@@ -200,7 +202,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "References",
       "Review Proposal"
     ],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -227,7 +230,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     opportunity,
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposal
+    proposal,
+    isDetailView: showAllTabs ? true : false
   });
   const [inceptionCostState, inceptionCostCmds] = NumberField.init({
     errors: [],
@@ -313,7 +317,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity.teamQuestions,
-    responses: proposal?.teamQuestionResponses || []
+    responses: proposal?.teamQuestionResponses || [],
+    isDetailView: showAllTabs ? true : false
   });
   const [referencesState, referencesCmds] = References.init({
     references: proposal?.references || []
@@ -1416,8 +1421,9 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled || isLoading(state)
   };
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+  
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
       case "Evaluation":
         return <EvaluationView {...props} />;
       case "Team":
@@ -1431,12 +1437,16 @@ export const view: component_.base.View<Props> = ({
       case "Review Proposal":
         return <ReviewProposalView {...props} />;
     }
-  })();
+  };
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}
+      getTabContent={getTabContent}
       isTabValid={(tab) => {
         switch (tab) {
           case "Evaluation":

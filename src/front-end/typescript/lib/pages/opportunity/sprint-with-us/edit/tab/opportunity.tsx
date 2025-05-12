@@ -99,7 +99,8 @@ function initForm(
   viewerUser: User,
   users: User[],
   activeTab?: Form.TabId,
-  validate = false
+  validate = false,
+  showAllTabs = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -109,7 +110,8 @@ function initForm(
       opportunity,
       isAdmin(viewerUser)
     ),
-    users
+    users,
+    showAllTabs
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -285,7 +287,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         state.viewerUser,
         users,
         activeTab,
-        validateForm
+        validateForm,
+        state.showAllTabs
       );
       return [
         state

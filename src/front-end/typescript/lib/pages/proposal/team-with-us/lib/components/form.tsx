@@ -64,6 +64,7 @@ export interface Params {
   evaluationContent: string;
   proposal?: TWUProposal;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -133,7 +134,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   organizations,
   evaluationContent,
   proposal,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const organizationOptions = organizations
     .filter(
@@ -150,7 +152,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Evaluation", "Team Members", "Questions", "Review Proposal"],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -184,7 +187,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [resourceQuestionsState, resourceQuestionsCmds] =
     ResourceQuestions.init({
       questions: opportunity.resourceQuestions,
-      responses: proposal?.resourceQuestionResponses || []
+      responses: proposal?.resourceQuestionResponses || [],
+      isDetailView: showAllTabs || false
     });
   return [
     {
@@ -943,8 +947,9 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled
   };
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+  
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
       case "Evaluation":
         return <EvaluationView {...props} />;
       case "Team Members":
@@ -954,9 +959,13 @@ export const view: component_.base.View<Props> = ({
       case "Review Proposal":
         return <ReviewProposalView {...props} />;
     }
-  })();
+  };
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+
   return (
     <TabbedFormComponent.view
+      getTabContent={getTabContent}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

@@ -136,31 +136,45 @@ export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
 });
 
 export const readManySWUTeamQuestionResponseEvaluations = tryDb<
-  [AuthenticatedSession, Id, boolean?],
+  [AuthenticatedSession, Id, boolean?, boolean?],
   SWUTeamQuestionResponseEvaluation[]
->(async (connection, session, id, consensus = false) => {
-  const results = await generateSWUTeamQuestionResponseEvaluationQuery(
+>(async (connection, session, id, consensus = false, filterByUser = true) => {
+  // When filterByUser is false, we are looking for all evaluations for the opportunity (admin only)
+  // (scores and notes for each panel member for each proposal for the opportunity)
+  // Used for generating the complete competition view for reporting purposes
+  let query = generateSWUTeamQuestionResponseEvaluationQuery(
     connection,
     consensus
-  )
-    .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
-    .where({
-      // There are many evaluations, but only one consensus
-      ...(consensus
-        ? {}
-        : { "evaluations.evaluationPanelMember": session.user.id }),
-      "swuProposals.opportunity": id
-    });
+  ).join("swuProposals", "swuProposals.id", "=", "evaluations.proposal");
+
+  const whereClause: Record<string, any> = {
+    "swuProposals.opportunity": id
+  };
+
+  if (filterByUser && !consensus) {
+    // There are many evaluations, but only one consensus
+    whereClause["evaluations.evaluationPanelMember"] = session.user.id;
+  }
+
+  query = query.where(whereClause);
+
+  const results = await query;
 
   if (!results) {
     throw new Error("unable to read evaluations");
   }
 
+  // Group results differently based on filterByUser flag
   const groupedResults = results.reduce<
     Record<string, RawSWUTeamQuestionResponseEvaluation[]>
   >((acc, rawEvaluation) => {
-    acc[rawEvaluation.proposal] ??= [];
-    acc[rawEvaluation.proposal].push(rawEvaluation);
+    // Use proposalId as key if filtering by user
+    // Use composite key (proposalId-evaluationPanelMemberId) if not filtering by user
+    const key = filterByUser
+      ? rawEvaluation.proposal
+      : `${rawEvaluation.proposal}-${rawEvaluation.evaluationPanelMember}`;
+    acc[key] ??= [];
+    acc[key].push(rawEvaluation);
     return acc;
   }, {});
 

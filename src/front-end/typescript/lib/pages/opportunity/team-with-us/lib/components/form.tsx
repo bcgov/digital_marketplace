@@ -129,6 +129,7 @@ export interface Params {
   opportunity?: TWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -161,7 +162,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const questionsWeight = getNumber(
     opportunity,
@@ -194,7 +196,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "Scoring",
       "Attachments"
     ],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -1464,8 +1467,9 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+  
+  function getTabContent(tab: TabId) {
+    switch (tab) {
       case "Overview":
         return <OverviewView {...props} />;
       case "Resource Details":
@@ -1479,7 +1483,10 @@ export const view: component_.base.View<Props> = (props) => {
       case "Attachments":
         return <AttachmentsView {...props} />;
     }
-  })();
+  }
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
@@ -1501,6 +1508,7 @@ export const view: component_.base.View<Props> = (props) => {
             return isAttachmentsTabValid(state);
         }
       }}
+      getTabContent={getTabContent}
       state={state.tabbedForm}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)

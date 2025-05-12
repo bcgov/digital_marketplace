@@ -53,6 +53,7 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
+  showAllTabs?: boolean;
 }
 
 type UpdateStatus =
@@ -94,7 +95,8 @@ function initForm(
   opportunity: TWUOpportunity,
   viewerUser: User,
   activeTab?: Form.TabId,
-  validate = false
+  validate = false,
+  showAllTabs = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -103,7 +105,8 @@ function initForm(
     canRemoveExistingAttachments: canTWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    )
+    ),
+    showAllTabs
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -276,7 +279,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         opportunity,
         state.viewerUser,
         activeTab,
-        validateForm
+        validateForm,
+        state.showAllTabs
       );
       return [
         state.set("opportunity", opportunity).set("form", formState),
@@ -730,7 +734,6 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-
   onInitResponse(response) {
     return adt("resetOpportunity", [response[0], false]) as InnerMsg;
   },

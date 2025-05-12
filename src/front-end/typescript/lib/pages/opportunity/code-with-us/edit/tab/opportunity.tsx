@@ -94,7 +94,8 @@ function initForm(
   opportunity: CWUOpportunity,
   viewerUser: User,
   activeTab?: Form.TabId,
-  validate = false
+  validate = false,
+  showAllTabs = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -103,7 +104,8 @@ function initForm(
     canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    )
+    ),
+    showAllTabs
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -240,7 +242,8 @@ function handleUpdateStatusResult(
       const [newFormState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
-        Form.getActiveTab(currentFormState)
+        Form.getActiveTab(currentFormState),
+        false
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
       const [onValidState, onValidCmds] = onValid
@@ -276,7 +279,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         opportunity,
         state.viewerUser,
         activeTab,
-        validateForm
+        validateForm,
+        state.showAllTabs
       );
       return [
         state.set("opportunity", opportunity).set("form", formState),

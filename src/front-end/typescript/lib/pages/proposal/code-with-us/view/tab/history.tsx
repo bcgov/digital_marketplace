@@ -29,7 +29,7 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-function getHistoryItems(
+export function getHistoryItems(
   { history }: CWUProposal,
   viewerUserType: UserType
 ): History.Item[] {

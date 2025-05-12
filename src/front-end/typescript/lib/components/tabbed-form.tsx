@@ -16,10 +16,12 @@ export interface State<TabId> {
   isDropdownOpen: boolean;
   activeTab: TabId;
   tabs: TabId[];
+  showAllTabs?: boolean;
 }
 
 export interface Params<TabId> extends Pick<State<TabId>, "tabs"> {
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export type Msg<TabId> =
@@ -62,7 +64,7 @@ export function init<TabId>(): component_.base.Init<
   State<TabId>,
   Msg<TabId>
 > {
-  return ({ tabs, activeTab }) => {
+  return ({ tabs, activeTab, showAllTabs = false }) => {
     if (!tabs.length) {
       throw new Error(
         "Must provide a non-empty array of tabs for tabbed forms."
@@ -73,7 +75,8 @@ export function init<TabId>(): component_.base.Init<
         id: `tabbed-form-${Math.random()}`,
         tabs,
         isDropdownOpen: false,
-        activeTab: activeTab || tabs[0]
+        activeTab: activeTab || tabs[0],
+        showAllTabs
       },
       []
     ];
@@ -135,18 +138,24 @@ export interface Props<TabId>
   children: component_.base.ViewElementChildren;
   getTabLabel(tabId: TabId): string;
   isTabValid(tabId: TabId): boolean;
+  getTabContent?(tabId: TabId): React.ReactNode;
+}
+
+interface HeaderProps<TabId> extends Props<TabId> {
+  currentTabForHeader?: TabId;
 }
 
 export function view<TabId>(): component_.base.View<Props<TabId>> {
-  const Header: component_.base.View<Props<TabId>> = ({
+  const Header: component_.base.View<HeaderProps<TabId>> = ({
     valid,
     state,
     dispatch,
     getTabLabel,
-    isTabValid
+    isTabValid,
+    currentTabForHeader
   }) => {
-    const activeTab = getActiveTab(state);
-    if (!activeTab) {
+    const tabToDisplay = currentTabForHeader || getActiveTab(state);
+    if (!tabToDisplay) {
       return null;
     }
     return (
@@ -168,8 +177,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
                 }
                 symbolClassName="text-warning"
                 color="body">
-                {String(state.tabs.indexOf(activeTab) + 1)}.{" "}
-                {getTabLabel(activeTab)}
+                {String(state.tabs.indexOf(tabToDisplay) + 1)}.{" "}
+                {getTabLabel(tabToDisplay)}
               </Link>
               <Icon
                 name="caret-down"
@@ -209,6 +218,10 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   };
 
   const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
+    if (state.showAllTabs) {
+      return null;
+    }
+
     return (
       <div className="mt-5 d-flex flex-nowrap justify-content-between align-items-center">
         {showPreviousButton(state) ? (
@@ -240,13 +253,36 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  return function PageWrapper(props) {
+  const SingleTabView: component_.base.View<Props<TabId>> = (props) => {
     return (
       <div id={props.state.id}>
         <Header {...props} />
         <div>{props.children}</div>
         <Footer {...props} />
       </div>
+    );
+  };
+
+  const AllTabsView: component_.base.View<Props<TabId>> = (props) => {
+    return (
+      <div id={props.state.id}>
+        {props.state.tabs.map((tab, index) => (
+          <div
+            key={`all-tabs-${index}`}
+            className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
+            <Header {...props} currentTabForHeader={tab} />
+            {props.getTabContent && props.getTabContent(tab)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return function PageWrapper(props) {
+    return props.state.showAllTabs ? (
+      <AllTabsView {...props} />
+    ) : (
+      <SingleTabView {...props} />
     );
   };
 }

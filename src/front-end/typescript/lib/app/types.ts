@@ -22,9 +22,11 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
@@ -58,7 +60,8 @@ import * as PageUserList from "front-end/lib/pages/user/list";
 import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
-import { ADT } from "shared/lib/types";
+import { ADT, Id } from "shared/lib/types";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 
 /**
  * Union Types combined for the purpose of constraining routes that the
@@ -134,7 +137,10 @@ export type Route =
   | ADT<"proposalList", PageProposalList.RouteParams>
   | ADT<"cwuGuide", PageGuideView.RouteParams>
   | ADT<"swuGuide", PageGuideView.RouteParams>
-  | ADT<"twuGuide", PageGuideView.RouteParams>;
+  | ADT<"twuGuide", PageGuideView.RouteParams>
+  | ADT<"swuOpportunityCompleteView", { opportunityId: Id }>
+  | ADT<"cwuOpportunityCompleteView", { opportunityId: Id }>
+  | ADT<"twuOpportunityCompleteView", { opportunityId: Id }>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
@@ -212,6 +218,8 @@ export interface State {
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
+    swuOpportunityCompleteView?: Immutable<PageOpportunitySWUComplete.State>;
+    cwuOpportunityCompleteView?: Immutable<PageOpportunityCWUComplete.State>;
     opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
     opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
     opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
@@ -229,6 +237,7 @@ export interface State {
     proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
     proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
     proposalList?: Immutable<PageProposalList.State>;
+    twuOpportunityCompleteView?: Immutable<PageOpportunityTWUComplete.State>;
   };
 }
 
@@ -280,9 +289,12 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUCreate", PageOpportunitySWUCreate.Msg>
   | ADT<"pageOpportunitySWUEdit", PageOpportunitySWUEdit.Msg>
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
+  | ADT<"pageOpportunitySWUComplete", PageOpportunitySWUComplete.Msg>
+  | ADT<"pageOpportunityCWUComplete", PageOpportunityCWUComplete.Msg>
   | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
   | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
   | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
+  | ADT<"pageOpportunityTWUComplete", PageOpportunityTWUComplete.Msg>
   | ADT<"pageProposalTWUCreate", PageProposalTWUCreate.Msg>
   | ADT<"pageProposalTWUEdit", PageProposalTWUEdit.Msg>
   | ADT<"pageProposalTWUView", PageProposalTWUView.Msg>

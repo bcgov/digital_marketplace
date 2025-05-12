@@ -8,7 +8,12 @@ import {
 import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import DescriptionList from "front-end/lib/views/description-list";
-import Link, { emailDest, routeDest } from "front-end/lib/views/link";
+import Link, {
+  emailDest,
+  iconLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
@@ -16,7 +21,10 @@ import Skills from "front-end/lib/views/skills";
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
 import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/team-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -24,6 +32,7 @@ import { lowerCase, map, startCase } from "lodash";
 import { aggregateResourceSkills } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import * as Table from "front-end/lib/components/table";
+import { prefixPath } from "front-end/lib";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -366,5 +375,32 @@ export const component: Tab.Component<State, InnerMsg> = {
   view,
   onInitResponse(response) {
     return adt("onInitResponse", response);
+  },
+  getActions: ({ state }) => {
+    const opportunity = state.opportunity;
+    const viewerUser = state.viewerUser;
+    if (
+      !opportunity ||
+      !isAdmin(viewerUser) ||
+      opportunity.status !== TWUOpportunityStatus.Awarded
+    ) {
+      return component_.page.actions.none();
+    }
+    return component_.page.actions.links([
+      {
+        children: "View Complete Competition",
+        symbol_: leftPlacement(iconLinkSymbol("external-link")),
+        button: true,
+        color: "primary" as const,
+        onClick: () => {
+          window.open(
+            prefixPath(
+              `/opportunities/team-with-us/${opportunity.id}/complete`
+            ),
+            "_blank"
+          );
+        }
+      }
+    ]);
   }
 };
