@@ -14,13 +14,17 @@ import { formatAmount, formatDate } from "shared/lib";
 import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/code-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
+import { component as component_ } from "front-end/lib/framework";
 
 export interface Props {
   opportunity: CWUOpportunity;
   viewerUser: User;
 }
 
-const SuccessfulProponent: React.FC<Props> = ({ opportunity, viewerUser }) => {
+const SuccessfulProponent: component_.base.View<Props> = ({
+  opportunity,
+  viewerUser
+}) => {
   if (!opportunity) return null;
   const { successfulProponent } = opportunity;
   if (!successfulProponent || !successfulProponent.score) {
@@ -122,7 +126,7 @@ const SuccessfulProponent: React.FC<Props> = ({ opportunity, viewerUser }) => {
   );
 };
 
-const Details: React.FC<Props> = ({ opportunity }) => {
+const Details: component_.base.View<Props> = ({ opportunity }) => {
   if (!opportunity) return null;
   const skills = opportunity.skills;
   const items = [
@@ -179,7 +183,7 @@ const Details: React.FC<Props> = ({ opportunity }) => {
   );
 };
 
-const SummaryView: React.FC<Props> = (props) => {
+const SummaryView: component_.base.View<Props> = (props) => {
   const { opportunity, viewerUser } = props;
   if (!opportunity) return null;
   return (
