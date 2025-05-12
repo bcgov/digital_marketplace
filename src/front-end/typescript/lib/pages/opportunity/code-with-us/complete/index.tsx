@@ -12,6 +12,7 @@ import * as AddendaTab from "front-end/lib/pages/opportunity/code-with-us/edit/t
 import * as HistoryTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/history";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/summary";
+import SummaryView from "front-end/lib/pages/opportunity/code-with-us/edit/tab/summary-view";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity";
 import React from "react";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
@@ -532,9 +533,9 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             viewerUser={state.viewerUser}
           />
         </div>
-        <SummaryTab.component.view
-          state={state.summaryState}
-          dispatch={() => {}}
+        <SummaryView
+          opportunity={state.opportunity}
+          viewerUser={state.viewerUser}
         />
         <hr />
 
