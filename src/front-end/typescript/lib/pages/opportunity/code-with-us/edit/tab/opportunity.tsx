@@ -9,18 +9,12 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/opportunity/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/code-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
 import {
   iconLinkSymbol,
   leftPlacement,
   Props as LinkProps
 } from "front-end/lib/views/link";
-import ReportCardList, {
-  ReportCard
-} from "front-end/lib/views/report-card-list";
 import React from "react";
-import { Col, Row } from "reactstrap";
-import { formatAmount } from "shared/lib";
 import {
   canCWUOpportunityDetailsBeEdited,
   CWUOpportunity,
@@ -31,6 +25,7 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import { adt, ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { isAdmin, User } from "shared/lib/resources/user";
+import OpportunityViewWrapper from "./opportunity-view-wrapper";
 
 type ModalId =
   | "publish"
@@ -270,6 +265,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "resetOpportunity": {
+      console.log("opportunity.resetOpporutnity");
       const [opportunity, validateForm] = msg.value;
       const currentFormState = state.form;
       const activeTab = currentFormState
@@ -279,8 +275,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         opportunity,
         state.viewerUser,
         activeTab,
-        validateForm,
-        state.showAllTabs
+        validateForm
       );
       return [
         state.set("opportunity", opportunity).set("form", formState),
@@ -664,38 +659,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
-  const opportunity = state.opportunity;
-  if (!opportunity || opportunity.status === CWUOpportunityStatus.Draft) {
-    return null;
-  }
-  const reporting = opportunity.reporting;
-  const reportCards: ReportCard[] = [
-    {
-      icon: "binoculars",
-      name: "Total Views",
-      value: formatAmount(reporting?.numViews || 0)
-    },
-    {
-      icon: "eye",
-      name: "Watching",
-      value: formatAmount(reporting?.numWatchers || 0)
-    },
-    {
-      icon: "comment-dollar",
-      name: `Proposal${reporting?.numProposals === 1 ? "" : "s"}`,
-      value: formatAmount(reporting?.numProposals || 0)
-    }
-  ];
-  return (
-    <Row className="mt-5">
-      <Col xs="12">
-        <ReportCardList reportCards={reportCards} />
-      </Col>
-    </Row>
-  );
-};
-
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
   const opportunity = state.opportunity;
@@ -712,21 +675,15 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isUpdateStatusLoading ||
     isDeleteLoading;
   return (
-    <div>
-      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading}
-            state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("form" as const, msg)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <OpportunityViewWrapper opportunity={opportunity} viewerUser={viewerUser}>
+      <Form.view
+        disabled={!state.isEditing || isLoading}
+        state={form}
+        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+          adt("form" as const, msg)
+        )}
+      />
+    </OpportunityViewWrapper>
   );
 };
 
@@ -736,6 +693,7 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   onInitResponse(response) {
+    console.log("opportunity.onInitResponse: ", response);
     return adt("resetOpportunity", [response[0], false]) as InnerMsg;
   },
 

@@ -30,6 +30,7 @@ import * as OpportunityView from "../view";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalDetailsSection from "./proposal-details";
 import { InfoTab } from "../view";
+import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -102,10 +103,11 @@ const init: component_.page.Init<
       viewerUser: adminUser
     });
 
-    const [opportunityInitState] = OpportunityTab.component.init({
-      viewerUser: adminUser,
-      showAllTabs: true
-    });
+    // const [_opportunityInitState] = OpportunityTab.component.init({
+    //   viewerUser: adminUser,
+    //   // showAllTabs: true
+    // });
+    // console.log('opportunityInitState: ', _opportunityInitState);
 
     const [opportunityViewState, initialOpportunityViewCmds] =
       OpportunityView.component.init({
@@ -136,7 +138,18 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
-          opportunityState: immutable(opportunityInitState),
+          opportunityState: immutable({
+            viewerUser: adminUser,
+            opportunity: null,
+            form: null,
+            showModal: null,
+            startEditingLoading: 0,
+            saveChangesLoading: 0,
+            saveChangesAndUpdateStatusLoading: 0,
+            updateStatusLoading: 0,
+            deleteLoading: 0,
+            isEditing: false
+          }), //immutable(opportunityInitState),
           proposals: [],
           organizations: [],
           proposalAffiliations: {},
@@ -209,6 +222,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
     switch (msg.tag) {
       case "onInitResponse": {
+        console.log("index.tsx onInitResponse: ", msg.value);
+
         const response = msg.value;
         if (response.tag === "invalid") {
           return [
@@ -232,6 +247,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           "opportunity",
           opportunity
         );
+
+        console.log("finalOpportunityState: ", finalOpportunityState);
 
         // Create init messages for tabs that need the opportunity data
         const addendaOnInitMsg = AddendaTab.component.onInitResponse([
@@ -362,6 +379,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value) => adt("summary", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
       case "opportunityTab":
+        console.log("opportunityTab!!: ", state.opportunityState, msg.value);
+        // this will run 'resetOpportunity'
         return component_.base.updateChild({
           state,
           childStatePath: ["opportunityState"],
@@ -464,6 +483,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     let sectionCounter = 1;
 
+    console.log("state.opportunityState.form: ", state.opportunityState);
     return (
       <div className="opportunity-complete-page">
         {opportunityViewStates.details ? (
@@ -542,10 +562,16 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity Details
         </h2>
+        <OpportunityReadOnly
+          opportunity={state.opportunity}
+          viewerUser={state.viewerUser}
+          form={state.opportunityState.form}
+        />
+        {/* WORKING:
         <OpportunityTab.component.view
           state={state.opportunityState}
           dispatch={() => {}}
-        />
+        /> */}
         <hr />
 
         <h2 className="complete-report-section-header">

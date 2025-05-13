@@ -932,11 +932,12 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: component_.base.View<Props> = ({
+export const OverviewView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
 }) => {
+  console.log("OverviewView", state);
   return (
     <Row>
       <Col xs="12">
@@ -1090,7 +1091,7 @@ const OverviewView: component_.base.View<Props> = ({
   );
 };
 
-const DescriptionView: component_.base.View<Props> = ({
+export const DescriptionView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1117,7 +1118,7 @@ const DescriptionView: component_.base.View<Props> = ({
   );
 };
 
-const DetailsView: component_.base.View<Props> = ({
+export const DetailsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1268,7 +1269,7 @@ const DetailsView: component_.base.View<Props> = ({
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const AttachmentsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled

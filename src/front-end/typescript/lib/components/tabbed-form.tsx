@@ -145,78 +145,89 @@ interface HeaderProps<TabId> extends Props<TabId> {
   currentTabForHeader?: TabId;
 }
 
-export function view<TabId>(): component_.base.View<Props<TabId>> {
-  const Header: component_.base.View<HeaderProps<TabId>> = ({
-    valid,
-    state,
-    dispatch,
-    getTabLabel,
-    isTabValid,
-    currentTabForHeader
-  }) => {
-    const tabToDisplay = currentTabForHeader || getActiveTab(state);
-    if (!tabToDisplay) {
-      return null;
-    }
-    return (
-      <div className="d-flex mb-5">
-        <Nav tabs className="flex-grow-1 flex-nowrap">
-          <Dropdown
+const Header = function <TabId>({
+  valid,
+  state,
+  dispatch,
+  getTabLabel,
+  isTabValid,
+  currentTabForHeader
+}: HeaderProps<TabId>) {
+  const tabToDisplay = currentTabForHeader || getActiveTab(state);
+  if (!tabToDisplay) {
+    return null;
+  }
+  return (
+    <div className="d-flex mb-5">
+      <Nav tabs className="flex-grow-1 flex-nowrap">
+        <Dropdown
+          nav
+          isOpen={state.isDropdownOpen}
+          toggle={() => dispatch(adt("toggleDropdown"))}>
+          <DropdownToggle
+            tag="div"
             nav
-            isOpen={state.isDropdownOpen}
-            toggle={() => dispatch(adt("toggleDropdown"))}>
-            <DropdownToggle
-              tag="div"
-              nav
-              className="d-flex align-items-center flex-nowrap active">
-              <Link
-                symbol_={
-                  valid
-                    ? undefined
-                    : leftPlacement(iconLinkSymbol("exclamation-circle"))
-                }
-                symbolClassName="text-warning"
-                color="body">
-                {String(state.tabs.indexOf(tabToDisplay) + 1)}.{" "}
-                {getTabLabel(tabToDisplay)}
-              </Link>
-              <Icon
-                name="caret-down"
-                color="body"
-                className="ml-2"
-                width={DROPDOWN_CARET_SIZE}
-                height={DROPDOWN_CARET_SIZE}
-              />
-            </DropdownToggle>
-            <DropdownMenu>
-              {state.tabs.map((tab, i) => (
-                <div
-                  key={`form-tab-dropdown-item-${i}`}
-                  className="dropdown-item d-flex align-items-center flex-nowrap pl-3">
-                  <Link
-                    symbol_={
-                      valid
-                        ? undefined
-                        : leftPlacement(
-                            isTabValid(tab)
-                              ? emptyIconLinkSymbol()
-                              : iconLinkSymbol("exclamation-circle")
-                          )
-                    }
-                    symbolClassName="text-warning"
-                    onClick={() => dispatch(adt("setActiveTab", tab))}
-                    color="body">
-                    {String(i + 1)}. {getTabLabel(tab)}
-                  </Link>
-                </div>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
-        </Nav>
-      </div>
-    );
-  };
+            className="d-flex align-items-center flex-nowrap active">
+            <Link
+              symbol_={
+                valid
+                  ? undefined
+                  : leftPlacement(iconLinkSymbol("exclamation-circle"))
+              }
+              symbolClassName="text-warning"
+              color="body">
+              {String(state.tabs.indexOf(tabToDisplay) + 1)}.{" "}
+              {getTabLabel(tabToDisplay)}
+            </Link>
+            <Icon
+              name="caret-down"
+              color="body"
+              className="ml-2"
+              width={DROPDOWN_CARET_SIZE}
+              height={DROPDOWN_CARET_SIZE}
+            />
+          </DropdownToggle>
+          <DropdownMenu>
+            {state.tabs.map((tab, i) => (
+              <div
+                key={`form-tab-dropdown-item-${i}`}
+                className="dropdown-item d-flex align-items-center flex-nowrap pl-3">
+                <Link
+                  symbol_={
+                    valid
+                      ? undefined
+                      : leftPlacement(
+                          isTabValid(tab)
+                            ? emptyIconLinkSymbol()
+                            : iconLinkSymbol("exclamation-circle")
+                        )
+                  }
+                  symbolClassName="text-warning"
+                  onClick={() => dispatch(adt("setActiveTab", tab))}
+                  color="body">
+                  {String(i + 1)}. {getTabLabel(tab)}
+                </Link>
+              </div>
+            ))}
+          </DropdownMenu>
+        </Dropdown>
+      </Nav>
+    </div>
+  );
+};
 
+export const TabbedFormHeaderAndContent = function <TabId>(
+  props: Props<TabId>
+) {
+  return (
+    <>
+      <Header {...props} />
+      <div>{props.children}</div>
+    </>
+  );
+};
+
+export function view<TabId>(): component_.base.View<Props<TabId>> {
   const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
     if (state.showAllTabs) {
       return null;
@@ -256,8 +267,7 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   const SingleTabView: component_.base.View<Props<TabId>> = (props) => {
     return (
       <div id={props.state.id}>
-        <Header {...props} />
-        <div>{props.children}</div>
+        <TabbedFormHeaderAndContent {...props} />
         <Footer {...props} />
       </div>
     );
