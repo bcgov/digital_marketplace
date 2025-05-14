@@ -77,7 +77,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId, {
+        isOpportunityOwnerOrAdmin: false,
+        isEvaluator: false,
+        isChair: false
+      });
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
         viewerUser: shared.sessionUser
@@ -124,6 +128,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 tabId,
                 opportunity,
                 proposals,
+                evaluations,
                 shared.sessionUser,
                 users
               ]) as Msg
@@ -224,6 +229,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
+                tabPermissions,
                 opportunity
               );
               const tabComponent = Tab.idToDefinition(tabId).component;

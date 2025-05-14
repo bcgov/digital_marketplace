@@ -1,7 +1,7 @@
 import {
-  RawSWUEvaluationPanelMember,
-  readOneSWUOpportunity
-} from "back-end/lib/db/opportunity/sprint-with-us";
+  RawTWUEvaluationPanelMember,
+  readOneTWUOpportunity
+} from "back-end/lib/db/opportunity/team-with-us";
 import { getValidValue, isInvalid, valid } from "shared/lib/validation";
 import { Connection, Transaction, tryDb } from "back-end/lib/db";
 import {
@@ -9,38 +9,38 @@ import {
   SessionRecord
 } from "shared/lib/resources/session";
 import { Id } from "shared/lib/types";
-import { SWUEvaluationPanelMember } from "shared/lib/resources/opportunity/sprint-with-us";
+import { TWUEvaluationPanelMember } from "shared/lib/resources/opportunity/team-with-us";
 import {
   CreateRequestBody,
-  SWUTeamQuestionResponseEvaluation,
-  SWUTeamQuestionResponseEvaluationStatus,
+  TWUResourceQuestionResponseEvaluation,
+  TWUResourceQuestionResponseEvaluationStatus,
   UpdateEditRequestBody
-} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+} from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
-export interface CreateSWUTeamQuestionResponseEvaluationParams
+export interface CreateTWUResourceQuestionResponseEvaluationParams
   extends CreateRequestBody {
   evaluationPanelMember: Id;
   proposal: Id;
 }
 
-interface UpdateSWUTeamQuestionResponseEvaluationParams
+interface UpdateTWUResourceQuestionResponseEvaluationParams
   extends UpdateEditRequestBody {
   proposal: Id;
   evaluationPanelMember: Id;
 }
 
-export interface SWUTeamQuestionResponseEvaluationStatusRecord {
+export interface TWUResourceQuestionResponseEvaluationStatusRecord {
   proposal: Id;
   evaluationPanelMember: Id;
   createdAt: Date;
   createdBy: Id;
-  status: SWUTeamQuestionResponseEvaluationStatus;
+  status: TWUResourceQuestionResponseEvaluationStatus;
   note: string;
 }
 
-export interface RawSWUTeamQuestionResponseEvaluation
+export interface RawTWUResourceQuestionResponseEvaluation
   extends Omit<
-    SWUTeamQuestionResponseEvaluation,
+    TWUResourceQuestionResponseEvaluation,
     "proposal" | "evaluationPanelMember" | "scores"
   > {
   proposal: Id;
@@ -50,18 +50,18 @@ export interface RawSWUTeamQuestionResponseEvaluation
   notes: string;
 }
 
-export const SWU_CHAIR_EVALUATION_TABLE_NAME =
-  "swuTeamQuestionResponseChairEvaluations";
-export const SWU_EVALUATOR_EVALUATION_TABLE_NAME =
-  "swuTeamQuestionResponseEvaluatorEvaluations";
-export const SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME =
-  "swuTeamQuestionResponseChairEvaluationStatuses";
-export const SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
-  "swuTeamQuestionResponseEvaluatorEvaluationStatuses";
+export const TWU_CHAIR_EVALUATION_TABLE_NAME =
+  "TWUResourceQuestionResponseChairEvaluations";
+export const TWU_EVALUATOR_EVALUATION_TABLE_NAME =
+  "TWUResourceQuestionResponseEvaluatorEvaluations";
+export const TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME =
+  "TWUResourceQuestionResponseChairEvaluationStatuses";
+export const TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
+  "TWUResourceQuestionResponseEvaluatorEvaluationStatuses";
 
-function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
-  raw: RawSWUTeamQuestionResponseEvaluation[]
-): SWUTeamQuestionResponseEvaluation {
+function rawResourceQuestionResponseEvaluationsToResourceQuestionResponseEvaluation(
+  raw: RawTWUResourceQuestionResponseEvaluation[]
+): TWUResourceQuestionResponseEvaluation {
   if (!raw.length) {
     throw new Error("unable to process team question response evaluation");
   }
@@ -78,8 +78,8 @@ function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
   };
 }
 
-function makeIsSWUOpportunityEvaluationPanelMember(
-  typeFn: (epm: SWUEvaluationPanelMember) => boolean
+function makeIsTWUOpportunityEvaluationPanelMember(
+  typeFn: (epm: TWUEvaluationPanelMember) => boolean
 ) {
   return async (
     connection: Connection,
@@ -88,7 +88,7 @@ function makeIsSWUOpportunityEvaluationPanelMember(
   ) => {
     try {
       const opportunity = getValidValue(
-        await readOneSWUOpportunity(connection, opportunityId, session),
+        await readOneTWUOpportunity(connection, opportunityId, session),
         null
       );
       return !!opportunity?.evaluationPanel?.find(
@@ -100,17 +100,17 @@ function makeIsSWUOpportunityEvaluationPanelMember(
   };
 }
 
-export const isSWUOpportunityEvaluationPanelEvaluator =
-  makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.evaluator);
+export const isTWUOpportunityEvaluationPanelEvaluator =
+  makeIsTWUOpportunityEvaluationPanelMember((epm) => epm.evaluator);
 
-export const isSWUOpportunityEvaluationPanelChair =
-  makeIsSWUOpportunityEvaluationPanelMember((epm) => epm.chair);
+export const isTWUOpportunityEvaluationPanelChair =
+  makeIsTWUOpportunityEvaluationPanelMember((epm) => epm.chair);
 
-export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
+export const readManyTWUResourceQuestionResponseEvaluationsForConsensus = tryDb<
   [AuthenticatedSession, Id],
-  SWUTeamQuestionResponseEvaluation[]
+  TWUResourceQuestionResponseEvaluation[]
 >(async (connection, session, id) => {
-  const results = await generateSWUTeamQuestionResponseEvaluationQuery(
+  const results = await generateTWUResourceQuestionResponseEvaluationQuery(
     connection
   ).where({
     "evaluations.proposal": id
@@ -121,7 +121,7 @@ export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
   }
 
   const groupedResults = results.reduce<
-    Record<string, RawSWUTeamQuestionResponseEvaluation[]>
+    Record<string, RawTWUResourceQuestionResponseEvaluation[]>
   >((acc, rawEvaluation) => {
     acc[rawEvaluation.evaluationPanelMember] ??= [];
     acc[rawEvaluation.evaluationPanelMember].push(rawEvaluation);
@@ -130,26 +130,28 @@ export const readManySWUTeamQuestionResponseEvaluationsForConsensus = tryDb<
 
   return valid(
     Object.values(groupedResults).map((result) =>
-      rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(result)
+      rawResourceQuestionResponseEvaluationsToResourceQuestionResponseEvaluation(
+        result
+      )
     )
   );
 });
 
-export const readManySWUTeamQuestionResponseEvaluations = tryDb<
+export const readManyTWUResourceQuestionResponseEvaluations = tryDb<
   [AuthenticatedSession, Id, boolean?],
-  SWUTeamQuestionResponseEvaluation[]
+  TWUResourceQuestionResponseEvaluation[]
 >(async (connection, session, id, consensus = false) => {
-  const results = await generateSWUTeamQuestionResponseEvaluationQuery(
+  const results = await generateTWUResourceQuestionResponseEvaluationQuery(
     connection,
     consensus
   )
-    .join("swuProposals", "swuProposals.id", "=", "evaluations.proposal")
+    .join("twuProposals", "twuProposals.id", "=", "evaluations.proposal")
     .where({
       // There are many evaluations, but only one consensus
       ...(consensus
         ? {}
         : { "evaluations.evaluationPanelMember": session.user.id }),
-      "swuProposals.opportunity": id
+      "twuProposals.opportunity": id
     });
 
   if (!results) {
@@ -157,7 +159,7 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
   }
 
   const groupedResults = results.reduce<
-    Record<string, RawSWUTeamQuestionResponseEvaluation[]>
+    Record<string, RawTWUResourceQuestionResponseEvaluation[]>
   >((acc, rawEvaluation) => {
     acc[rawEvaluation.proposal] ??= [];
     acc[rawEvaluation.proposal].push(rawEvaluation);
@@ -166,14 +168,16 @@ export const readManySWUTeamQuestionResponseEvaluations = tryDb<
 
   return valid(
     Object.values(groupedResults).map((result) =>
-      rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(result)
+      rawResourceQuestionResponseEvaluationsToResourceQuestionResponseEvaluation(
+        result
+      )
     )
   );
 });
 
-export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
+export const readOneTWUResourceQuestionResponseEvaluation = tryDb<
   [Id, Id, AuthenticatedSession, boolean?],
-  SWUTeamQuestionResponseEvaluation | null
+  TWUResourceQuestionResponseEvaluation | null
 >(
   async (
     connection,
@@ -182,7 +186,7 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
     session,
     consensus = false
   ) => {
-    const result = await generateSWUTeamQuestionResponseEvaluationQuery(
+    const result = await generateTWUResourceQuestionResponseEvaluationQuery(
       connection,
       consensus
     ).where({
@@ -192,7 +196,7 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
 
     return valid(
       result.length
-        ? rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
+        ? rawResourceQuestionResponseEvaluationsToResourceQuestionResponseEvaluation(
             result
           )
         : null
@@ -200,13 +204,13 @@ export const readOneSWUTeamQuestionResponseEvaluation = tryDb<
   }
 );
 
-export const createSWUTeamQuestionResponseEvaluation = tryDb<
+export const createTWUResourceQuestionResponseEvaluation = tryDb<
   [
-    CreateSWUTeamQuestionResponseEvaluationParams,
+    CreateTWUResourceQuestionResponseEvaluationParams,
     AuthenticatedSession,
     boolean?
   ],
-  SWUTeamQuestionResponseEvaluation
+  TWUResourceQuestionResponseEvaluation
 >(async (connection, evaluation, session, consensus = false) => {
   const now = new Date();
   const [proposalId, evaluationPanelMemberId] = await connection.transaction(
@@ -216,10 +220,10 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
       for (const score of scores) {
         // Create root record for evaluation
         const [evaluationRootRecord] =
-          await connection<RawSWUTeamQuestionResponseEvaluation>(
+          await connection<RawTWUResourceQuestionResponseEvaluation>(
             consensus
-              ? SWU_CHAIR_EVALUATION_TABLE_NAME
-              : SWU_EVALUATOR_EVALUATION_TABLE_NAME
+              ? TWU_CHAIR_EVALUATION_TABLE_NAME
+              : TWU_EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .insert(
@@ -241,10 +245,10 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
 
       // Create a evaluation status record
       const [evaluationStatusRecord] =
-        await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+        await connection<TWUResourceQuestionResponseEvaluationStatusRecord>(
           consensus
-            ? SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
-            : SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+            ? TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+            : TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
         )
           .transacting(trx)
           .insert(
@@ -269,7 +273,7 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
     }
   );
 
-  const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
+  const dbResult = await readOneTWUResourceQuestionResponseEvaluation(
     connection,
     proposalId,
     evaluationPanelMemberId,
@@ -282,13 +286,13 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
   return valid(dbResult.value);
 });
 
-export const updateSWUTeamQuestionResponseEvaluation = tryDb<
+export const updateTWUResourceQuestionResponseEvaluation = tryDb<
   [
-    UpdateSWUTeamQuestionResponseEvaluationParams,
+    UpdateTWUResourceQuestionResponseEvaluationParams,
     AuthenticatedSession,
     boolean?
   ],
-  SWUTeamQuestionResponseEvaluation
+  TWUResourceQuestionResponseEvaluation
 >(async (connection, evaluation, session, consensus = false) => {
   const now = new Date();
   const { proposal, evaluationPanelMember, scores } = evaluation;
@@ -296,28 +300,29 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
     await connection.transaction(async (trx) => {
       // Update timestamp
       for (const { order: questionOrder, score, notes } of scores) {
-        const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
-          consensus
-            ? SWU_CHAIR_EVALUATION_TABLE_NAME
-            : SWU_EVALUATOR_EVALUATION_TABLE_NAME
-        )
-          .transacting(trx)
-          .where({ proposal, evaluationPanelMember, questionOrder })
-          .update(
-            {
-              score,
-              notes,
-              updatedAt: now
-            },
-            "*"
-          );
+        const [result] =
+          await connection<RawTWUResourceQuestionResponseEvaluation>(
+            consensus
+              ? TWU_CHAIR_EVALUATION_TABLE_NAME
+              : TWU_EVALUATOR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({ proposal, evaluationPanelMember, questionOrder })
+            .update(
+              {
+                score,
+                notes,
+                updatedAt: now
+              },
+              "*"
+            );
 
         if (!result) {
           throw new Error("unable to update team question evaluation");
         }
       }
 
-      const dbResult = await readOneSWUTeamQuestionResponseEvaluation(
+      const dbResult = await readOneTWUResourceQuestionResponseEvaluation(
         trx,
         proposal,
         evaluationPanelMember,
@@ -336,7 +341,7 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
  * All evaluations have been submitted when every evaluator has evaluated every
  * question for every proponent
  */
-export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
+export async function allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitted(
   connection: Connection,
   trx: Transaction,
   opportunityId: string,
@@ -347,23 +352,23 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
     [{ count: evaluatorsCount }],
     [{ count: questionsCount }]
   ] = await Promise.all([
-    generateSWUTeamQuestionResponseEvaluationQuery(connection)
+    generateTWUResourceQuestionResponseEvaluationQuery(connection)
       .transacting(trx)
       .clearSelect()
       .where({
-        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
+        "statuses.status": TWUResourceQuestionResponseEvaluationStatus.Submitted
       })
       .whereIn("evaluations.proposal", proposals)
       .count("*"),
     // Evaluators for the most recent version
-    connection<RawSWUEvaluationPanelMember>(
-      "swuEvaluationPanelMembers as members"
+    connection<RawTWUEvaluationPanelMember>(
+      "twuEvaluationPanelMembers as members"
     )
       .transacting(trx)
       .join(
         connection.raw(
           "(??) as versions",
-          connection("swuOpportunityVersions")
+          connection("twuOpportunityVersions")
             .select("opportunity", "id")
             .rowNumber("rn", function () {
               this.orderBy("createdAt", "desc").partitionBy("opportunity");
@@ -380,12 +385,12 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       })
       .count("*"),
     // Questions for the most recent version
-    connection<RawSWUEvaluationPanelMember>("swuTeamQuestions as questions")
+    connection<RawTWUEvaluationPanelMember>("TWUResourceQuestions as questions")
       .transacting(trx)
       .join(
         connection.raw(
           "(??) as versions",
-          connection("swuOpportunityVersions")
+          connection("twuOpportunityVersions")
             .select("opportunity", "id")
             .rowNumber("rn", function () {
               this.orderBy("createdAt", "desc").partitionBy("opportunity");
@@ -407,16 +412,16 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   );
 }
 
-function generateSWUTeamQuestionResponseEvaluationQuery(
+function generateTWUResourceQuestionResponseEvaluationQuery(
   connection: Connection,
   consensus = false
 ) {
   const evaluationTableName = consensus
-    ? SWU_CHAIR_EVALUATION_TABLE_NAME
-    : SWU_EVALUATOR_EVALUATION_TABLE_NAME;
+    ? TWU_CHAIR_EVALUATION_TABLE_NAME
+    : TWU_EVALUATOR_EVALUATION_TABLE_NAME;
   const evaluationStatusTableName = consensus
-    ? SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
-    : SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
+    ? TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+    : TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
   const query = connection(`${evaluationTableName} as evaluations`)
     .join(
       connection.raw(
@@ -440,16 +445,16 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
           .andOn("statuses.rn", "=", connection.raw(1));
       }
     )
-    .join("swuProposals as proposals", "evaluations.proposal", "proposals.id")
+    .join("twuProposals as proposals", "evaluations.proposal", "proposals.id")
     .join(
-      "swuEvaluationPanelMembers as members",
+      "twuEvaluationPanelMembers as members",
       "evaluations.evaluationPanelMember",
       "members.user"
     )
     .join(
       connection.raw(
         "(??) as versions",
-        connection("swuOpportunityVersions")
+        connection("twuOpportunityVersions")
           .select("opportunity", "id")
           .rowNumber("rn", function () {
             this.orderBy("createdAt", "desc").partitionBy("opportunity");
@@ -459,7 +464,7 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
         this.on("proposals.opportunity", "=", "versions.opportunity");
       }
     )
-    .select<RawSWUTeamQuestionResponseEvaluation[]>(
+    .select<RawTWUResourceQuestionResponseEvaluation[]>(
       "evaluations.proposal",
       "evaluations.evaluationPanelMember",
       connection.raw(

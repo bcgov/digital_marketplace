@@ -150,6 +150,9 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "proposals":
     case "resourceQuestions":
     case "challenge":
+    case "instructions":
+    case "overview":
+    case "consensus":
     case "evaluationPanel":
       return raw;
     default:
@@ -202,6 +205,12 @@ export function idToDefinition<K extends TabId>(
         icon: "file-code",
         title: "Opportunity"
       } as TabbedPage.TabDefinition<Tabs, K>;
+    case "evaluationPanel":
+      return {
+        component: EvaluationPanelTab.component,
+        icon: "users",
+        title: "Evaluation Panel"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "addenda":
       return {
         component: AddendaTab.component,
@@ -232,6 +241,24 @@ export function idToDefinition<K extends TabId>(
         icon: "history",
         title: "History"
       } as TabbedPage.TabDefinition<Tabs, K>;
+    case "instructions":
+      return {
+        component: InstructionsTab.component,
+        icon: "hand-point-up",
+        title: "Instructions"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "overview":
+      return {
+        component: OverviewTab.component,
+        icon: "list-check",
+        title: "Overview"
+      } as TabbedPage.TabDefinition<Tabs, K>;
+    case "consensus":
+      return {
+        component: ConsensusTab.component,
+        icon: "check-double",
+        title: "Consensus"
+      } as TabbedPage.TabDefinition<Tabs, K>;
     case "summary":
     default:
       return {
@@ -258,8 +285,16 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
+  tabPermissions: TabPermissions,
   opportunity?: TWUOpportunity
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
+  if (!opportunity) {
+    return MenuSidebar.init({ items: [] });
+  }
+  const canGovUserViewTabs = (...tabIds: TabId[]) =>
+    tabIds.some((tabId) =>
+      canGovUserViewTab(tabId, tabPermissions, opportunity)
+    );
   return MenuSidebar.init({
     items: opportunity
       ? [
@@ -267,14 +302,33 @@ export function makeSidebarState(
           makeSidebarLink("summary", opportunity.id, activeTab),
           adt("heading", "Opportunity Management"),
           makeSidebarLink("opportunity", opportunity.id, activeTab),
+          ...(canGovUserViewTabs("evaluationPanel")
+            ? [makeSidebarLink("evaluationPanel", opportunity.id, activeTab)]
+            : []),
           //Only show Addenda sidebar link if opportunity can have addenda.
           ...(canAddAddendumToTWUOpportunity(opportunity)
             ? [makeSidebarLink("addenda", opportunity.id, activeTab)]
             : []),
           makeSidebarLink("history", opportunity.id, activeTab),
           adt("heading", "Opportunity Evaluation"),
-          makeSidebarLink("proposals", opportunity.id, activeTab),
-          makeSidebarLink("resourceQuestions", opportunity.id, activeTab),
+          ...(canGovUserViewTabs("proposals")
+            ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
+            : []),
+          ...(canGovUserViewTabs("instructions", "overview")
+            ? [
+                makeSidebarLink("instructions", opportunity.id, activeTab),
+                makeSidebarLink("overview", opportunity.id, activeTab)
+              ]
+            : []),
+          ...(canGovUserViewTabs("resourceQuestions")
+            ? [makeSidebarLink("resourceQuestions", opportunity.id, activeTab)]
+            : []),
+          ...(canGovUserViewTabs("consensus")
+            ? [makeSidebarLink("consensus", opportunity.id, activeTab)]
+            : []),
+          ...(canGovUserViewTabs("challenge")
+            ? [makeSidebarLink("challenge", opportunity.id, activeTab)]
+            : []),
           makeSidebarLink("challenge", opportunity.id, activeTab),
           adt("heading", "Need Help?"),
           adt("link", {
@@ -294,7 +348,13 @@ export function makeSidebarState(
 }
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
-  const proposalTabs: TabId[] = ["proposals", "resourceQuestions", "challenge"];
+  const proposalTabs: TabId[] = [
+    "overview",
+    "consensus",
+    "proposals",
+    "resourceQuestions",
+    "challenge"
+  ];
   return proposalTabs.includes(tabId);
 }
 

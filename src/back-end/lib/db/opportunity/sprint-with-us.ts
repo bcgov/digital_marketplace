@@ -1,11 +1,11 @@
 import { generateUuid } from "back-end/lib";
 import {
   allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted,
-  CHAIR_EVALUATION_STATUS_TABLE_NAME,
-  CHAIR_EVALUATION_TABLE_NAME,
+  SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_CHAIR_EVALUATION_TABLE_NAME,
   Connection,
-  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
-  EVALUATOR_EVALUATION_TABLE_NAME,
+  SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_EVALUATOR_EVALUATION_TABLE_NAME,
   RawSWUTeamQuestionResponseEvaluation,
   readManySWUTeamQuestionResponseEvaluations,
   SWUTeamQuestionResponseEvaluationStatusRecord,
@@ -1718,7 +1718,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
         async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+              SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1734,7 +1734,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            EVALUATOR_EVALUATION_TABLE_NAME
+            SWU_EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({
@@ -1812,7 +1812,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
         async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              CHAIR_EVALUATION_STATUS_TABLE_NAME
+              SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1828,7 +1828,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            CHAIR_EVALUATION_TABLE_NAME
+            SWU_CHAIR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({

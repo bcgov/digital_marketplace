@@ -35,7 +35,8 @@ import {
   ValidatedCreateTWUResourceBody,
   CreateTWUEvaluationPanelMemberBody,
   CreateTWUEvaluationPanelMemberValidationErrors,
-  canChangeEvaluationPanel
+  canChangeEvaluationPanel,
+  SubmitQuestionEvaluationsWithNoteRequestBody
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import {
@@ -556,6 +557,8 @@ const update: crud.Update<
           return adt("submitForReview", getString(body, "value"));
         case "publish":
           return adt("publish", getString(body, "value", ""));
+        case "finalizeQuestionConsensuses":
+          return adt("finalizeQuestionConsensuses", getString(body, "value"));
         case "startChallenge":
           return adt("startChallenge", getString(body, "value", ""));
         case "suspend":
@@ -564,6 +567,16 @@ const update: crud.Update<
           return adt("cancel", getString(body, "value", ""));
         case "addAddendum":
           return adt("addAddendum", getString(body, "value", ""));
+        case "submitIndividualQuestionEvaluations":
+          return adt(
+            "submitIndividualQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
+        case "submitConsensusQuestionEvaluations":
+          return adt(
+            "submitConsensusQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
         case "editEvaluationPanel":
           return adt(
             "editEvaluationPanel",

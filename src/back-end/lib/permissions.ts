@@ -7,6 +7,8 @@ import {
   isCWUProposalAuthorOrIsUserOwnerOrAdminOfOrg,
   isSWUOpportunityAuthor,
   isTWUOpportunityAuthor,
+  isTWUOpportunityEvaluationPanelChair,
+  isTWUOpportunityEvaluationPanelEvaluator,
   isTWUProposalAuthorOrIsUserOwnerOrAdminOfOrg,
   isUserOwnerOfOrg,
   isUserOwnerOrAdminOfOrg,
@@ -25,16 +27,18 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
   CreateSWUOpportunityStatus,
-  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
   doesSWUOpportunityStatusAllowGovToViewProposals,
   SWUOpportunity,
   SWUOpportunityStatus,
-  SWUOpportunitySlim
+  SWUOpportunitySlim,
+  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
   CreateTWUOpportunityStatus,
   doesTWUOpportunityStatusAllowGovToViewProposals,
+  doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations,
   TWUOpportunity,
+  TWUOpportunitySlim,
   TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import {
@@ -70,6 +74,7 @@ import {
   isSWUOpportunityEvaluationPanelEvaluator
 } from "./db/evaluations/sprint-with-us/team-questions";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 export const ERROR_MESSAGE =
   "You do not have permission to perform this action.";
@@ -1033,12 +1038,6 @@ export async function readManySWUTeamQuestionResponseEvaluationsForConsensus(
   );
 }
 
-export function readOwnSWUTeamQuestionResponseEvaluations(
-  session: Session
-): boolean {
-  return isGovernment(session) || isAdmin(session);
-}
-
 export async function createSWUTeamQuestionResponseConsensus(
   connection: Connection,
   session: Session,
@@ -1056,6 +1055,7 @@ export async function createSWUTeamQuestionResponseConsensus(
     ))
   );
 }
+
 export async function createSWUTeamQuestionResponseEvaluation(
   connection: Connection,
   session: Session,
@@ -1422,6 +1422,187 @@ export async function deleteTWUProposal(
         proposal.organization?.id ?? null
       ))) ||
     false
+  );
+}
+
+// TWU Resource Question Response Evaluations
+
+export async function readOneTWUResourceQuestionResponseEvaluation(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+      opportunity.status
+    ) ||
+      (opportunity.status ===
+        TWUOpportunityStatus.EvaluationResourceQuestionsIndividual &&
+        evaluation.evaluationPanelMember === session.user.id) ||
+      (opportunity.status ===
+        TWUOpportunityStatus.EvaluationResourceQuestionsConsensus &&
+        (await isTWUOpportunityEvaluationPanelChair(
+          connection,
+          session,
+          opportunity.id
+        ))))
+  );
+}
+
+export async function readOneTWUResourceQuestionResponseConsensus(
+  session: Session,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+          opportunity.status
+        ) ||
+          (opportunity.status ===
+            TWUOpportunityStatus.EvaluationResourceQuestionsConsensus &&
+            evaluation.evaluationPanelMember === session.user.id))))
+  );
+}
+
+export async function readManyTWUResourceQuestionResponseEvaluations(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+      opportunity.status
+    ) ||
+      // Filtered to authored evaluations elsewhere
+      (await isTWUOpportunityEvaluationPanelEvaluator(
+        connection,
+        session,
+        opportunity.id
+      )))
+  );
+}
+
+export async function readManyTWUResourceQuestionResponseConsensuses(
+  connection: Connection,
+  session: Session,
+  opportunity: TWUOpportunity
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+          opportunity.status
+        ) ||
+          (await isTWUOpportunityEvaluationPanelEvaluator(
+            connection,
+            session,
+            opportunity.id
+          )) ||
+          (await isTWUOpportunityEvaluationPanelChair(
+            connection,
+            session,
+            opportunity.id
+          )))))
+  );
+}
+
+export async function readManyTWUResourceQuestionResponseEvaluationsForConsensus(
+  connection: Connection,
+  session: Session,
+  proposal: TWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) ||
+      (isGovernment(session) &&
+        (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+          proposal.opportunity.status
+        ) ||
+          (proposal.opportunity.status ===
+            TWUOpportunityStatus.EvaluationResourceQuestionsConsensus &&
+            ((await isTWUOpportunityEvaluationPanelEvaluator(
+              connection,
+              session,
+              proposal.opportunity.id
+            )) ||
+              (await isTWUOpportunityEvaluationPanelChair(
+                connection,
+                session,
+                proposal.opportunity.id
+              )))))))
+  );
+}
+
+export async function createTWUResourceQuestionResponseConsensus(
+  connection: Connection,
+  session: Session,
+  proposal: TWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    proposal.opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsConsensus &&
+    (await isTWUOpportunityEvaluationPanelChair(
+      connection,
+      session,
+      proposal.opportunity.id
+    ))
+  );
+}
+
+export async function createTWUResourceQuestionResponseEvaluation(
+  connection: Connection,
+  session: Session,
+  proposal: TWUProposal
+): Promise<boolean> {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    proposal.opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsIndividual &&
+    (await isTWUOpportunityEvaluationPanelEvaluator(
+      connection,
+      session,
+      proposal.opportunity.id
+    ))
+  );
+}
+
+export function editTWUResourceQuestionResponseConsensus(
+  session: AuthenticatedSession,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
+  );
+}
+
+export function editTWUResourceQuestionResponseEvaluation(
+  session: AuthenticatedSession,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
   );
 }
 
