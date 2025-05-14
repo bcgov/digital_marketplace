@@ -9,6 +9,7 @@ import {
   RawAddendum,
   rawAddendumToAddendum
 } from "front-end/lib/http/api/addendum/lib";
+export * as resourceQuestions from "front-end/lib/http/api/opportunity/team-with-us/resource-questions";
 
 const NAMESPACE = "opportunities/team-with-us";
 

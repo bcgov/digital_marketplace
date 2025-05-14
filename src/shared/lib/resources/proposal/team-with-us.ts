@@ -80,6 +80,20 @@ function quantifyTWUProposalStatusForSort(a: TWUProposalStatus): number {
   }
 }
 
+function getTWUProposalAnonymousProponentNumber(proposal: TWUProposalSlim) {
+  return Number(proposal.anonymousProponentName.match(/\d+/)?.at(0));
+}
+
+export function compareTWUProposalAnonymousProponentNumber(
+  a: TWUProposalSlim,
+  b: TWUProposalSlim
+) {
+  return compareNumbers(
+    getTWUProposalAnonymousProponentNumber(a),
+    getTWUProposalAnonymousProponentNumber(b)
+  );
+}
+
 export function compareTWUProposalStatuses(
   a: TWUProposalStatus,
   b: TWUProposalStatus

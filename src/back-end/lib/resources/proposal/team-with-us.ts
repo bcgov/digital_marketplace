@@ -903,10 +903,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team questions stage
+          // The opportunity must be in resource questions stage
           if (
             twuOpportunity.status !==
-            TWUOpportunityStatus.EvaluationResourceQuestions
+            TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
           ) {
             return invalid({
               permissions: [
@@ -949,10 +949,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team question stage still
+          // The opportunity must be in resource question stage still
           if (
             twuOpportunity.status !==
-            TWUOpportunityStatus.EvaluationResourceQuestions
+            TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
           ) {
             return invalid({
               permissions: [
@@ -992,10 +992,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in the team questions or code challenge stage
+          // The opportunity must be in the resource questions or code challenge stage
           if (
             ![
-              TWUOpportunityStatus.EvaluationResourceQuestions,
+              TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
               TWUOpportunityStatus.EvaluationChallenge
             ].includes(twuOpportunity.status)
           ) {

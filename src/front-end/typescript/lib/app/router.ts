@@ -406,6 +406,68 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/evaluations/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualTWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/evaluations/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/consensus/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusTWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/consensus/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
         "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/export"
       ),
       makeRoute({ params }) {
@@ -885,6 +947,38 @@ const router: router_.Router<Route> = {
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
             route.value.proposalId
           }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "questionEvaluationIndividualTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/team-questions/evaluations/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationIndividualTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/team-questions/evaluations/${route.value.userId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/team-questions/consensus/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/team-questions/consensus/${route.value.userId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
         );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");

@@ -22,10 +22,11 @@ import {
   DEFAULT_OPPORTUNITY_TITLE,
   TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
-import { UserType } from "shared/lib/resources/user";
+import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: TWUOpportunity | null;
@@ -46,7 +47,10 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       string,
       Tab.TabId,
       api.ResponseValidation<TWUOpportunity, string[]>,
-      api.ResponseValidation<TWUProposalSlim[], string[]>
+      api.ResponseValidation<TWUProposalSlim[], string[]>,
+      api.ResponseValidation<TWUResourceQuestionResponseEvaluation[], string[]>,
+      User,
+      api.ResponseValidation<User[], string[]>
     ]
   >
 >;
@@ -92,7 +96,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             (msg) => adt("sidebar", msg) as Msg
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
-          component_.cmd.join(
+          component_.cmd.join4(
             api.opportunities.twu.readOne()(
               routeParams.opportunityId,
               (response) => response
@@ -102,12 +106,26 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                   (response) => response
                 )
               : component_.cmd.dispatch(valid([])),
-            (opportunity, proposals) =>
+            Tab.shouldLoadEvaluationsForTab(tabId)
+              ? tabId === "consensus"
+                ? api.opportunities.twu.resourceQuestions.consensuses.readMany(
+                    routeParams.opportunityId
+                  )((response) => response)
+                : api.opportunities.twu.resourceQuestions.evaluations.readMany(
+                    routeParams.opportunityId
+                  )((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            Tab.shouldLoadUsersForTab(tabId)
+              ? api.users.readMany()((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals, evaluations, users) =>
               adt("onInitResponse", [
                 routePath,
                 tabId,
                 opportunity,
-                proposals
+                proposals,
+                shared.sessionUser,
+                users
               ]) as Msg
           )
         ]
@@ -148,8 +166,15 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [routePath, tabId, opportunityResponse, proposalsResponse] =
-                msg.value;
+              const [
+                routePath,
+                tabId,
+                opportunityResponse,
+                proposalsResponse,
+                evaluationsResponse,
+                viewerUser,
+                usersResponse
+              ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -168,6 +193,34 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               }
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
+              const evaluations = api.getValidValue(evaluationsResponse, []);
+              const users = api.getValidValue(usersResponse, []);
+
+              // Tab Permissions
+              const evaluationPanelMember = opportunity.evaluationPanel?.find(
+                ({ user: eu }) => eu.id === viewerUser.id
+              );
+              const tabPermissions = {
+                isOpportunityOwnerOrAdmin:
+                  viewerUser.id === opportunity?.createdBy?.id ||
+                  isAdmin(viewerUser),
+                isEvaluator: Boolean(evaluationPanelMember?.evaluator),
+                isChair: Boolean(evaluationPanelMember?.chair)
+              };
+
+              if (!Tab.canGovUserViewTab(tabId, tabPermissions, opportunity)) {
+                return [
+                  state,
+                  [
+                    component_.cmd.dispatch(
+                      component_.global.replaceRouteMsg(
+                        adt("notFound" as const, { path: routePath })
+                      )
+                    )
+                  ]
+                ];
+              }
+
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
@@ -185,7 +238,12 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                   ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
-                      tabComponent.onInitResponse([opportunity, proposals]),
+                      tabComponent.onInitResponse([
+                        opportunity,
+                        proposals,
+                        evaluations,
+                        users
+                      ]),
                       (msg) => adt("tab", msg)
                     ) as Msg
                   )

@@ -5,18 +5,25 @@ import * as AddendaTab from "front-end/lib/pages/opportunity/team-with-us/edit/t
 import * as ChallengeTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/challenge";
 import * as HistoryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
+import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/evaluation-panel";
+import * as OverviewTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/overview";
+import * as ConsensusTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/consensus";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/summary";
 import * as ResourceQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/resource-questions";
+import * as InstructionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/instructions";
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToTWUOpportunity,
-  TWUOpportunity
+  doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations,
+  TWUOpportunity,
+  TWUOpportunityStatus
 } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { TWUProposalSlim } from "shared/lib/resources/proposal/team-with-us";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 // Parent page types & functions.
 
@@ -39,7 +46,18 @@ export interface Params {
   viewerUser: User;
 }
 
-export type InitResponse = [TWUOpportunity, TWUProposalSlim[]];
+export type TabPermissions = {
+  isOpportunityOwnerOrAdmin: boolean;
+  isEvaluator: boolean;
+  isChair: boolean;
+};
+
+export type InitResponse = [
+  TWUOpportunity,
+  TWUProposalSlim[],
+  TWUResourceQuestionResponseEvaluation[],
+  User[]
+];
 
 export type Component<State, Msg> = TabbedPage.TabComponent<
   Params,
@@ -59,6 +77,12 @@ export interface Tabs {
     Params,
     OpportunityTab.State,
     OpportunityTab.InnerMsg,
+    InitResponse
+  >;
+  evaluationPanel: TabbedPage.Tab<
+    Params,
+    EvaluationPanelTab.State,
+    EvaluationPanelTab.InnerMsg,
     InitResponse
   >;
   addenda: TabbedPage.Tab<
@@ -91,6 +115,24 @@ export interface Tabs {
     ProposalsTab.InnerMsg,
     InitResponse
   >;
+  instructions: TabbedPage.Tab<
+    Params,
+    InstructionsTab.State,
+    InstructionsTab.InnerMsg,
+    InitResponse
+  >;
+  overview: TabbedPage.Tab<
+    Params,
+    OverviewTab.State,
+    OverviewTab.InnerMsg,
+    InitResponse
+  >;
+  consensus: TabbedPage.Tab<
+    Params,
+    ConsensusTab.State,
+    ConsensusTab.InnerMsg,
+    InitResponse
+  >;
 }
 
 export type TabId = TabbedPage.TabId<Tabs>;
@@ -108,11 +150,47 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "proposals":
     case "resourceQuestions":
     case "challenge":
+    case "evaluationPanel":
       return raw;
     default:
       return null;
   }
 };
+
+export function canGovUserViewTab(
+  tab: TabId,
+  tabPermissions: TabPermissions,
+  opportunity: TWUOpportunity
+) {
+  const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
+  switch (tab) {
+    case "summary":
+    case "opportunity":
+    case "addenda":
+    case "history":
+      return true;
+    case "resourceQuestions":
+      return isEvaluator || isOpportunityOwnerOrAdmin;
+    case "challenge":
+    case "proposals":
+    case "evaluationPanel":
+      return isOpportunityOwnerOrAdmin;
+    case "instructions":
+    case "overview":
+      return isEvaluator;
+    case "consensus":
+      return (
+        isChair ||
+        isOpportunityOwnerOrAdmin ||
+        (isEvaluator &&
+          opportunity.status ===
+            TWUOpportunityStatus.EvaluationResourceQuestionsConsensus) ||
+        doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+          opportunity.status
+        )
+      );
+  }
+}
 
 export function idToDefinition<K extends TabId>(
   id: K
@@ -218,4 +296,13 @@ export function makeSidebarState(
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
   const proposalTabs: TabId[] = ["proposals", "resourceQuestions", "challenge"];
   return proposalTabs.includes(tabId);
+}
+
+export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
+  const evaluationTabs: TabId[] = ["overview", "consensus"];
+  return evaluationTabs.includes(tabId);
+}
+
+export function shouldLoadUsersForTab(tabId: TabId): boolean {
+  return tabId === "evaluationPanel";
 }

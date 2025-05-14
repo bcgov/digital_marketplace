@@ -1464,7 +1464,7 @@ export const closeTWUOpportunities = tryDb<[], number>(async (connection) => {
           id: generateUuid(),
           createdAt: now,
           opportunity: lapsedOpportunity.id,
-          status: TWUOpportunityStatus.EvaluationResourceQuestions,
+          status: TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
           note: "This opportunity has closed."
         });
         // Get a list of SUBMITTED proposals for this opportunity

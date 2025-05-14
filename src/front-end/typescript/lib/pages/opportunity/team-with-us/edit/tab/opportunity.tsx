@@ -1203,7 +1203,8 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
-      case TWUOpportunityStatus.EvaluationResourceQuestions:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       case TWUOpportunityStatus.EvaluationChallenge:
         if (!viewerIsAdmin) {
           return component_.page.actions.none();

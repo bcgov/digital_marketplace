@@ -20,7 +20,8 @@ export enum TWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationResourceQuestions = "EVAL_QUESTIONS",
+  EvaluationResourceQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationResourceQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationChallenge = "EVAL_C",
   Awarded = "AWARDED",
   Suspended = "SUSPENDED",
@@ -110,7 +111,7 @@ export function isTWUOpportunityStatusInEvaluation(
   s: TWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationChallenge:
       return true;
     default:
@@ -120,7 +121,7 @@ export function isTWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Published,
-  TWUOpportunityStatus.EvaluationResourceQuestions,
+  TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
   TWUOpportunityStatus.EvaluationChallenge,
   TWUOpportunityStatus.Awarded
 ];
@@ -224,6 +225,7 @@ export interface TWUResourceQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+  minimumScore?: number | null;
 }
 
 export interface TWUEvaluationPanelMember {
@@ -376,7 +378,16 @@ export type UpdateRequestBody =
   | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
-  | ADT<"editEvaluationPanel", CreateTWUEvaluationPanelMemberBody[]>;
+  | ADT<
+      "submitIndividualQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<
+      "submitConsensusQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<"editEvaluationPanel", CreateTWUEvaluationPanelMemberBody[]>
+  | ADT<"finalizeQuestionConsensuses", string>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -390,6 +401,11 @@ export interface UpdateWithNoteValidationErrors
   attachments?: string[][];
 }
 
+export interface SubmitQuestionEvaluationsWithNoteRequestBody {
+  note: string;
+  proposals: Id[];
+}
+
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
@@ -398,7 +414,10 @@ type UpdateADTErrors =
   | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
+  | ADT<"submitIndividualQuestionEvaluations", string[]>
+  | ADT<"submitConsensusQuestionEvaluations", string[]>
   | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
+  | ADT<"finalizeQuestionConsensuses", string[]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -449,9 +468,9 @@ export function isValidStatusChange(
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
-        TWUOpportunityStatus.EvaluationResourceQuestions
+        TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
       ].includes(to);
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
@@ -476,7 +495,7 @@ export function canTWUOpportunityBeScreenedInToChallenge(
   o: TWUOpportunity
 ): boolean {
   switch (o.status) {
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:
       return false;
@@ -507,6 +526,21 @@ export function canViewTWUOpportunityProposals(o: TWUOpportunity): boolean {
   );
 }
 
+export function canViewTWUOpportunityResourceQuestionResponseEvaluations(
+  o: TWUOpportunity,
+  status: TWUOpportunityStatus
+): boolean {
+  // Return true if the opportunity has ever had the status.
+  return (
+    !!o.history &&
+    o.history.reduce((acc, record) => {
+      return (
+        acc || (record.type.tag === "status" && record.type.value === status)
+      );
+    }, false as boolean)
+  );
+}
+
 export function canTWUOpportunityDetailsBeEdited(
   o: TWUOpportunity,
   adminsOnly: boolean
@@ -526,7 +560,7 @@ export function canTWUOpportunityDetailsBeEdited(
 export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Canceled:
@@ -539,7 +573,7 @@ export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
 export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
@@ -555,7 +589,7 @@ export function canChangeEvaluationPanel(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.Draft:
     case TWUOpportunityStatus.UnderReview:
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:
       return false;
@@ -583,7 +617,7 @@ export function hasTWUOpportunityPassedResourceQuestions(
       return acc;
     }
     switch (h.type.value) {
-      case TWUOpportunityStatus.EvaluationResourceQuestions:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       case TWUOpportunityStatus.EvaluationChallenge:
       case TWUOpportunityStatus.Awarded:
         return true;
@@ -627,6 +661,18 @@ export function doesTWUOpportunityStatusAllowGovToViewProposals(
 }
 
 export function doesTWUOpportunityStatusAllowGovToViewFullProposal(
+  s: TWUOpportunityStatus
+): boolean {
+  switch (s) {
+    case TWUOpportunityStatus.EvaluationChallenge:
+    case TWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
   s: TWUOpportunityStatus
 ): boolean {
   switch (s) {

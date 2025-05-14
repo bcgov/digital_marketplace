@@ -784,13 +784,3 @@ export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvalua
       return false;
   }
 }
-
-export function canViewSWUEvaluationConsensus(
-  s: SWUOpportunityStatus
-): boolean {
-  switch (s) {
-    // TODO: Add statuses
-    default:
-      return false;
-  }
-}
