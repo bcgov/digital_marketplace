@@ -4,7 +4,8 @@ import * as router from "front-end/lib/framework/router";
 import { remove } from "lodash";
 import { Cmd } from "front-end/lib/framework/component/cmd";
 import { adt, ADT } from "shared/lib/types";
-import * as ReactDom from "react-dom";
+// import * as ReactDom from "react-dom"; // Removed as it's no longer used
+import { createRoot, Root as ReactDOMRoot } from 'react-dom/client'; // Import createRoot
 import React from "react";
 
 // Process
@@ -98,8 +99,10 @@ export function start<AppState extends object, AppMsg, Route>(
         state: getState()
       })
     );
-  // Initalize render function.
-  const render = makeRender(app.view, element);
+  // Create the React root.
+  const root: ReactDOMRoot = createRoot(element);
+  // Initalize render function, passing the root.
+  const render = makeRender(app.view, root);
   // Start handling routes in the app.
   const routeManager = router.makeRouteManager<Route>(app.router, dispatch);
   // Render the app on state changes.
@@ -125,13 +128,12 @@ export function start<AppState extends object, AppMsg, Route>(
 
 function makeRender<AppState, AppMsg, Route>(
   View: app.Component<AppState, AppMsg, Route>["view"],
-  element: HTMLElement
+  root: ReactDOMRoot
 ): (event: Event<AppState, app.Msg<AppMsg, Route>>) => void {
   return (event) => {
     if (event.tag === "stateChanged")
-      ReactDom.render(
-        <View state={event.value.state} dispatch={event.value.dispatch} />,
-        element
+      root.render(
+        <View state={event.value.state} dispatch={event.value.dispatch} />
       );
   };
 }

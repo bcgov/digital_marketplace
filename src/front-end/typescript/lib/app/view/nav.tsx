@@ -491,7 +491,7 @@ const TopNavbar: component_.base.View<Props> = (props) => {
                 {isLoading ? (
                   <Spinner
                     size="sm"
-                    color="c-nav-bg-alt"
+                    color="secondary"
                     className="transition-indicator ml-3"
                   />
                 ) : null}

@@ -1,5 +1,6 @@
 import { PATH_PREFIX } from "front-end/config";
-import { component, Immutable } from "front-end/lib/framework";
+import { component } from "front-end/lib/framework";
+import type { Immutable } from "front-end/lib/framework";
 import React from "react";
 import { Fragment, ReactElement } from "react";
 import { COPY } from "shared/config";

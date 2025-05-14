@@ -2,7 +2,6 @@ import * as base from "front-end/lib/framework/component/base";
 import clickHandler from "front-end/lib/framework/router/click-handler";
 import { debounce } from "lodash";
 import { match, MatchFunction } from "path-to-regexp";
-import qs from "querystring";
 import { adt, ADT } from "shared/lib/types";
 import url from "url";
 
@@ -164,10 +163,12 @@ export function makeRouteManager<Route>(
       const path = url.pathname;
       const result = definition.match(path);
       if (result) {
+        const queryParams = new URLSearchParams(url.search);
+        const query = Object.fromEntries(queryParams.entries());
         return definition.makeRoute({
           path,
           params: result.params,
-          query: qs.parse(url.search.replace(/^\?+/, ""))
+          query
         });
       }
     }

@@ -1,3 +1,5 @@
+import { getShowTestIndicator } from 'shared/lib/environment';
+
 export function parseBooleanEnvironmentVariable(raw?: string): boolean | null {
   switch (raw) {
     case "1":
@@ -10,7 +12,7 @@ export function parseBooleanEnvironmentVariable(raw?: string): boolean | null {
 }
 
 export const SHOW_TEST_INDICATOR =
-  parseBooleanEnvironmentVariable(process.env.SHOW_TEST_INDICATOR) || false;
+  parseBooleanEnvironmentVariable(getShowTestIndicator()) || false;
 
 export const CONTACT_EMAIL = "digitalmarketplace@gov.bc.ca";
 

@@ -1,12 +1,12 @@
-const SassString = require("node-sass").types.String;
+const sass = require("sass");
 
 module.exports = {
   options: {
-    implementation: require("node-sass"),
+    implementation: sass,
     sourceMap: false,
     functions: {
       "prefix-path($path)": (path) =>
-        new SassString(gruntConfig.helpers.prefixPath(path.getValue()))
+        new sass.types.String(gruntConfig.helpers.prefixPath(path.getValue()))
     }
   },
   frontEndCss: {
