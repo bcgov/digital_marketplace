@@ -1,5 +1,9 @@
 // Imports
 
+// Import Bootstrap functions and variables FIRST
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+
 @import "./font";
 
 // Custom Bootstrap variable overrides.
@@ -20,6 +24,8 @@ $container-max-widths: (
 $spacer: 1rem;
 
 // 'h' stands for 'half'
+// Merge standard Bootstrap spacers with custom ones.
+// Standard keys ensure Bootstrap utilities are generated correctly.
 $spacers: (
   n4h: (
     $spacer * -2
@@ -58,6 +64,13 @@ $spacers: (
     $spacer * 10
   )
 );
+
+// Ensure $gutters is defined using the custom $spacers map for Bootstrap's grid utilities
+$gutters: $spacers;
+
+// Ensure negative margins are enabled and $negative-spacers is defined for the Utility API
+$enable-negative-margins: true;
+$negative-spacers: if($enable-negative-margins, negativify-map($spacers), null);
 
 $grid-gutter-width: $spacer * 2;
 
@@ -265,6 +278,7 @@ $theme-colors: map-merge(
   $app-utility-colors
 );
 
+
 // Other overrides.
 $border-width: 1px;
 
@@ -293,9 +307,9 @@ $enable-validation-icons: false;
 
 $transition-duration: 240ms;
 
-// Import Bootstrap.
+// Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
-@import "bootstrap";
+@import "bootstrap/scss/bootstrap";
 
 // Mixins.
 
@@ -409,8 +423,8 @@ nav {
     }
 
     .main-nav-mobile-menu {
-      @extend .py-4;
-      @extend .d-md-none;
+      // @extend .py-4 !optional;
+      // @extend .d-md-none !optional;
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
@@ -430,7 +444,7 @@ nav {
       opacity: 0;
 
       &.open {
-        @extend .shadow;
+        // @extend .shadow;
         @include menu-transition(0ms);
         transform: translateY(0);
         opacity: 1;
@@ -440,21 +454,21 @@ nav {
     .main-nav-bottom-navbar {
       &.mobile,
       &.desktop {
-        @extend .align-items-center;
-        @extend .shadow;
+        // @extend .align-items-center;
+        // @extend .shadow;
         background: $c-nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
 
       &.desktop {
-        @extend .d-none;
-        @extend .d-md-flex;
+        // @extend .d-none;
+        // @extend .d-md-flex;
       }
 
       &.mobile {
-        @extend .d-flex;
-        @extend .d-md-none;
+        // @extend .d-flex;
+        // @extend .d-md-none !optional;
       }
     }
   }
@@ -544,18 +558,18 @@ a,
 }
 
 blockquote {
-  @extend .blockquote;
+  // @extend .blockquote;
 }
 
 table {
-  @extend .table;
+  // @extend .table;
 
   thead {
-    @extend .small;
-    @extend .text-secondary;
-    @extend .text-uppercase;
-    @extend .font-weight-bold;
-    @extend .bg-light;
+    // @extend .small;
+    // @extend .text-secondary;
+    // @extend .text-uppercase;
+    // @extend .font-weight-bold;
+    // @extend .bg-light;
   }
 
   .table-show-on-hover {
@@ -572,19 +586,19 @@ table {
 }
 
 pre {
-  @extend .bg-light;
-  @extend .p-3;
-  @extend .border;
-  @extend .rounded;
+  // @extend .bg-light;
+  // @extend .p-3;
+  // @extend .border;
+  // @extend .rounded;
 }
 
 label {
-  @extend .py-1;
+  // @extend .py-1;
 
   .custom-checkbox &,
   .custom-radio & {
-    @extend .font-size-base;
-    @extend .py-0;
+    // @extend .font-size-base;
+    // @extend .py-0;
   }
 }
 
@@ -593,7 +607,7 @@ nav.navbar .nav-link:hover {
 }
 
 .card-body {
-  @extend .p-4;
+  // @extend .p-4;
 }
 
 .badge {
@@ -644,7 +658,7 @@ nav.navbar .nav-link:hover {
 .shadow-hover {
   transition: box-shadow $transition-duration;
   &:hover {
-    @extend .shadow;
+    // @extend .shadow;
   }
 }
 
@@ -713,16 +727,16 @@ nav.navbar .nav-link:hover {
 // .text-hover-primary, .text-hover-danger, etc.
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
-    @include hover {
+    &:hover {
       color: darken(
         $value,
-        $emphasized-link-hover-darken-percentage
+        15%
       ) !important;
     }
     &:focus {
       color: darken(
         $value,
-        $emphasized-link-hover-darken-percentage
+        15%
       ) !important;
     }
   }
@@ -732,16 +746,16 @@ nav.navbar .nav-link:hover {
     color: $value;
   }
   .text-hover-gray-#{$color} {
-    @include hover {
+    &:hover {
       color: darken(
         $value,
-        $emphasized-link-hover-darken-percentage
+        15%
       ) !important;
     }
     &:focus {
       color: darken(
         $value,
-        $emphasized-link-hover-darken-percentage
+        15%
       ) !important;
     }
   }
@@ -750,7 +764,7 @@ nav.navbar .nav-link:hover {
 //Create bg classes.
 @each $color, $value in $colors {
   .bg-hover-#{$color} {
-    @include hover {
+    &:hover {
       background: $value !important;
     }
     &:focus {
@@ -760,7 +774,7 @@ nav.navbar .nav-link:hover {
 }
 @each $color, $value in $theme-colors {
   .bg-hover-#{$color} {
-    @include hover {
+    &:hover {
       background: $value !important;
     }
     &:focus {
@@ -837,7 +851,10 @@ nav.navbar .nav-link:hover {
 .chair-evaluation {
   $panel-notes-height: calc((0.75rem + (4em * 1.5)) + 2px);
   &.disabled {
-    @extend .form-control:disabled;
+    // @extend .form-control;
+    background-color: $input-disabled-bg;
+    opacity: 1; // Ensure it overrides any other opacity if needed, BS default is usually 1 for disabled bg
+    // Add any other specific styles from .form-control:disabled if necessary
     cursor: not-allowed !important;
   }
 
@@ -908,8 +925,8 @@ nav.navbar .nav-link:hover {
   // Standard control styles.
   .react-select {
     &__control {
-      @extend .form-control;
-      @extend .p-0;
+      // @extend .form-control;
+      // @extend .p-0;
       display: flex;
       min-height: $input-height;
       height: auto;
@@ -996,7 +1013,7 @@ nav.navbar .nav-link:hover {
   }
 
   & > *:last-child {
-    @extend .mb-0;
+    // @extend .mb-0;
   }
 }
 
@@ -1020,13 +1037,13 @@ nav.navbar .nav-link:hover {
     counter-increment: list;
   }
   &-lower-roman {
-    @extend .li-paren;
+    // @extend .li-paren;
     & > li:before {
       content: counter(list, lower-roman) ") ";
     }
   }
   &-lower-alpha {
-    @extend .li-paren;
+    // @extend .li-paren;
     & > li:before {
       content: counter(list, lower-alpha) ") ";
     }

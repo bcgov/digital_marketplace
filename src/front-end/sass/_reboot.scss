@@ -203,7 +203,7 @@ a {
   text-decoration: $link-decoration;
   background-color: transparent; // Remove the gray background on active links in IE 10.
 
-  @include hover {
+  &:hover {
     color: $link-hover-color;
     text-decoration: $link-hover-decoration;
   }
@@ -285,8 +285,8 @@ table {
 }
 
 caption {
-  padding-top: $table-cell-padding;
-  padding-bottom: $table-cell-padding;
+  padding-top: $table-cell-padding-y;
+  padding-bottom: $table-cell-padding-y;
   color: $table-caption-color;
   text-align: left;
   caption-side: bottom;
@@ -305,7 +305,6 @@ th {
 label {
   // Allow labels to use `margin` for spacing.
   display: inline-block;
-  margin-bottom: $label-margin-bottom;
 }
 
 // Remove the default `border-radius` that macOS Chrome adds.
@@ -361,18 +360,6 @@ button,
 [type="reset"],
 [type="submit"] {
   -webkit-appearance: button; // 2
-}
-
-// Opinionated: add "hand" cursor to non-disabled button elements.
-@if $enable-pointer-cursor-for-buttons {
-  button,
-  [type="button"],
-  [type="reset"],
-  [type="submit"] {
-    &:not(:disabled) {
-      cursor: pointer;
-    }
-  }
 }
 
 // Remove inner border and padding from Firefox, but don't restore the outline like Normalize.

@@ -21,7 +21,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row } from "reactstrap";
+import { Col, Input, Row } from "reactstrap";
 import { compareStrings, find, formatDate } from "shared/lib";
 import {
   AffiliationMember,
@@ -415,7 +415,7 @@ function membersTableBodyRows(
     {
       className: "text-center align-middle",
       children: (
-        <CustomInput
+        <Input
           id={`${idNamespace}-phase-scrum-master-${m.id}`}
           checked={m.scrumMaster}
           disabled={disabled}

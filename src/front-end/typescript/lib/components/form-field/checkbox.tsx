@@ -1,8 +1,7 @@
 import * as FormField from "front-end/lib/components/form-field";
 import { component as component_ } from "front-end/lib/framework";
 import React from "react";
-import { Spinner } from "reactstrap";
-import { CustomInput } from "reactstrap";
+import { Spinner, Input, FormGroup, Label } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
 export type Value = boolean;
@@ -55,27 +54,36 @@ const ChildView: ChildComponent["view"] = (props) => {
     inlineLabel,
     loading = false
   } = props;
+
+  const inputId = state.id;
+
   return (
-    <CustomInput
-      id={state.id}
-      name={state.id}
-      checked={state.value}
-      disabled={disabled}
-      type="checkbox"
-      label={inlineLabel}
-      className={`d-flex align-items-center ${className} ${validityClassName} ${
-        slimHeight ? "" : "h-input"
-      }`}
-      onChange={(e) => {
-        const value = e.currentTarget.checked;
-        dispatch({ tag: "onChange", value });
-        // Let the parent form field component know that the value has been updated.
-        props.onChange(value);
-      }}>
-      {loading ? (
-        <Spinner size="sm" color="secondary" className="ml-2" />
-      ) : null}
-    </CustomInput>
+    <FormGroup
+      check
+      inline={typeof inlineLabel === "string"}
+      className={`${className} ${slimHeight ? "" : "h-input"}`}
+      style={{ display: "flex", alignItems: "center" }}
+    >
+      <Input
+        id={inputId}
+        name={inputId}
+        type="checkbox"
+        checked={state.value}
+        disabled={disabled || loading}
+        className={validityClassName}
+        onChange={(e) => {
+          const value = e.currentTarget.checked;
+          dispatch({ tag: "onChange", value });
+          props.onChange(value);
+        }}
+      />
+      <Label check for={inputId} className="ml-2 mb-0">
+        {inlineLabel}
+        {loading ? (
+          <Spinner size="sm" color="secondary" className="ml-2" />
+        ) : null}
+      </Label>
+    </FormGroup>
   );
 };
 

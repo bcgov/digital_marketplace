@@ -28,7 +28,7 @@ import Link, {
   leftPlacement
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row, Spinner } from "reactstrap";
+import { Col, Input, Row, Spinner } from "reactstrap";
 import CAPABILITIES from "shared/lib/data/capabilities";
 import {
   AffiliationMember,
@@ -632,7 +632,7 @@ function membersTableBodyRows(
           <Spinner size="sm" color="secondary" />
         ) : (
           <div className={`affiliations-admin-status-${i}`}>
-            <CustomInput
+            <Input
               type="checkbox"
               id={`affiliations-admin-checkbox-${i}`}
               onChange={(e) => {

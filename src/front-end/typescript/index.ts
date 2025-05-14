@@ -1,3 +1,4 @@
+import "../sass/index.scss";
 import { NODE_ENV } from "front-end/config";
 import app from "front-end/lib/app";
 import { process } from "front-end/lib/framework";

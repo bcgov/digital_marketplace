@@ -1,7 +1,7 @@
 import * as FormField from "front-end/lib/components/form-field";
 import { Immutable } from "front-end/lib/framework";
 import React from "react";
-import { CustomInput } from "reactstrap";
+import { Input } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
 export interface Option<T> {
@@ -78,7 +78,7 @@ function makeChildView<T>(): ChildComponent<T>["view"] {
           inline ? "flex-sm-row flex-sm-wrap align-items-sm-center" : ""
         }`}>
         {state.options.map((option, i) => (
-          <CustomInput
+          <Input
             key={`${state.id}-${i}`}
             id={`${state.id}-${i}`}
             name={state.id}

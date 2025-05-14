@@ -1,10 +1,10 @@
 import * as FormField from "front-end/lib/components/form-field";
 import Select, {
   coalesceOptions,
-  MultiProps,
-  MultiValue,
-  Option,
-  Options
+  type MultiProps,
+  type MultiValue,
+  type Option,
+  type Options
 } from "front-end/lib/components/form-field/lib/select";
 import { Immutable } from "front-end/lib/framework";
 import { find } from "lodash";
@@ -13,9 +13,9 @@ import { ADT } from "shared/lib/types";
 
 export {
   stringsToOptions,
-  Options,
-  OptionGroup,
-  Option
+  type Options,
+  type OptionGroup,
+  type Option
 } from "front-end/lib/components/form-field/lib/select";
 
 export type Value = MultiValue;

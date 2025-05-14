@@ -2,13 +2,13 @@ import * as crud from "front-end/lib/http/crud";
 import * as Resource from "shared/lib/resources/file";
 import {
   rawFileRecordToFileRecord,
-  makeCreateAction,
-  CreateFileRequestBody
+  makeCreateAction
 } from "front-end/lib/http/api/file/lib";
+import type { CreateFileRequestBody } from "front-end/lib/http/api/file/lib";
 
 export * as markdownImages from "front-end/lib/http/api/file/markdown-image";
 export * as avatars from "front-end/lib/http/api/file/avatar";
-export { CreateFileRequestBody } from "front-end/lib/http/api/file/lib";
+export type { CreateFileRequestBody } from "front-end/lib/http/api/file/lib";
 
 const NAMESPACE = "files";
 

@@ -1,31 +1,35 @@
 import * as base from "front-end/lib/framework/component/base";
 import { ThemeColor } from "front-end/lib/types";
-import { Sidebar } from "front-end/lib/framework/component/page/sidebar";
-import { Metadata } from "front-end/lib/framework/component/page/metadata";
-import { Actions } from "front-end/lib/framework/component/page/actions";
-import { Modal } from "front-end/lib/framework/component/page/modal";
-import { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
-import { Alerts } from "front-end/lib/framework/component/page/alerts";
-import { Msg } from "front-end/lib/framework/component/page/msg";
+import type { Sidebar } from "front-end/lib/framework/component/page/sidebar";
+import type { Metadata } from "front-end/lib/framework/component/page/metadata";
+import type { Actions } from "front-end/lib/framework/component/page/actions";
+import type { Modal } from "front-end/lib/framework/component/page/modal";
+import type { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
+import type { Alerts } from "front-end/lib/framework/component/page/alerts";
+import type { Msg } from "front-end/lib/framework/component/page/msg";
 
 // Re-exports
 
 export {
-  Msg,
   readyMsg,
-  ReadyMsg,
   mapMsg,
   mapDispatch
 } from "front-end/lib/framework/component/page/msg";
-export { Metadata } from "front-end/lib/framework/component/page/metadata";
-export { Sidebar } from "front-end/lib/framework/component/page/sidebar";
-export { Actions } from "front-end/lib/framework/component/page/actions";
+
+export type {
+  Msg,
+  ReadyMsg
+} from "front-end/lib/framework/component/page/msg";
+
+export type { Metadata } from "front-end/lib/framework/component/page/metadata";
+export type { Sidebar } from "front-end/lib/framework/component/page/sidebar";
+export type { Actions } from "front-end/lib/framework/component/page/actions";
 export * as actions from "front-end/lib/framework/component/page/actions";
-export { Modal } from "front-end/lib/framework/component/page/modal";
+export type { Modal } from "front-end/lib/framework/component/page/modal";
 export * as modal from "front-end/lib/framework/component/page/modal";
-export { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
+export type { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
 export * as breadcrumbs from "front-end/lib/framework/component/page/breadcrumbs";
-export { Alerts } from "front-end/lib/framework/component/page/alerts";
+export type { Alerts } from "front-end/lib/framework/component/page/alerts";
 export * as alerts from "front-end/lib/framework/component/page/alerts";
 
 // Component
