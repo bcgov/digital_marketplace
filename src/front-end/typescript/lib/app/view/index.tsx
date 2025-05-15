@@ -1,6 +1,4 @@
-import {
-  DEFAULT_USER_AVATAR_IMAGE_PATH,
-} from "front-end/config";
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath, prefixPath } from "front-end/lib";
 import getAppModal from "front-end/lib/app/modal";
 import {
@@ -561,7 +559,6 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
             {modalToShow.actions.map(
               ({ loading, disabled, icon, button, text, color, msg }, i) => {
                 const props = {
-                  key: `modal-action-${i}`,
                   symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
                   color,
                   loading,
@@ -571,12 +568,16 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                 };
                 if (button) {
                   return (
-                    <Link button {...props}>
+                    <Link key={`modal-action-${i}`} button {...props}>
                       {text}
                     </Link>
                   );
                 } else {
-                  return <Link {...props}>{text}</Link>;
+                  return (
+                    <Link key={`modal-action-${i}`} {...props}>
+                      {text}
+                    </Link>
+                  );
                 }
               }
             )}
@@ -637,7 +638,7 @@ const ViewToasts: component_.base.ComponentView<State, Msg> = ({
             <strong className="mx-2">{toast.value.title}</strong>
             <Icon
               hover
-              className="ml-auto"
+              className="ms-auto"
               name="times"
               color="secondary"
               onClick={() => dispatch(adt("dismissToast", i))}
@@ -671,7 +672,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -696,7 +696,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -724,7 +724,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
+        }
       ]
     })
   };
@@ -870,18 +870,19 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
   const pageModal = getAppModal(state) || component_.page.modal.hide();
   const appModal = getAppModal(state);
   return (
-    <CopilotKit publicApiKey="" >  
-    
+    <CopilotKit runtimeUrl="http://localhost:3000/copilotkit">
       <div className="d-flex flex-column main-container">
         <Nav.view {...navProps} />
         <ViewPage {...pageToViewPageProps(props)} />
-        <ViewModal dispatch={dispatch} pageModal={pageModal} appModal={appModal} />
+        <ViewModal
+          dispatch={dispatch}
+          pageModal={pageModal}
+          appModal={appModal}
+        />
         <Footer />
         <ViewToasts state={state} dispatch={dispatch} />
         {SHOW_TEST_INDICATOR ? (
-          <div className="test-indicator">
-            ALPHA
-          </div>
+          <div className="test-indicator">ALPHA</div>
         ) : null}
       </div>
       <CopilotSidebar />

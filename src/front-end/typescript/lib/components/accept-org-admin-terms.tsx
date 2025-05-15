@@ -36,7 +36,7 @@ export const view: component_.base.View<Props> = ({ state, dispatch }) => {
           inlineLabel:
             "By checking the box, you confirm that you are making this user an agent of your organization for the purposes of responding to Competition Notices."
         }}
-        className="font-weight-bold"
+        className="fw-bold"
         state={state}
         dispatch={dispatch}
       />

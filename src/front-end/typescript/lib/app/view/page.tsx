@@ -44,7 +44,7 @@ function ViewAlert({
           <div
             className="d-flex align-items-start"
             style={{ padding: "0.75rem 1.25rem" }}>
-            <div className="flex-grow-1 pr-3">{text}</div>
+            <div className="flex-grow-1 pe-3">{text}</div>
             {dismissMsg ? (
               <Icon
                 hover

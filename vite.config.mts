@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
+import { ViteEjsPlugin } from 'vite-plugin-ejs';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -27,14 +28,20 @@ export default defineConfig(({ mode }) => {
       react(),
       tsconfigPaths({
         projects: [
-          './tsconfig.json', // Root tsconfig
-          './src/front-end/typescript/tsconfig.json' // Front-end specific tsconfig
+          path.resolve(process.cwd(), 'tsconfig.json'),
+          path.resolve(process.cwd(), 'src/front-end/typescript/tsconfig.json')
         ]
-      })
+      }),
+      // ViteEjsPlugin({
+      //   // Data to pass to the EJS template
+      //   prefixPath: (path) => basePath + path.replace(/^\//, '')
+      // })
     ],
     resolve: {
       alias: {
-        'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap')
+        'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
+        '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript')
+        // '/app.js': path.resolve(process.cwd(), 'src/front-end/typescript/index.ts')
       }
     },
     // Define global constant replacements (similar to envify)
@@ -56,15 +63,27 @@ export default defineConfig(({ mode }) => {
     // Ensure leading/trailing slashes are correct
     base: basePath,
     // Specify the project root directory (where index.html is expected)
-    root: '.', // Project root
-    publicDir: 'src/front-end/public',
+    root: './src/front-end/html', // Project root
+    publicDir: '../public',
     build: {
-      // Specify the output directory relative to the root
-      outDir: './build/front-end',
-      // Set to false to prevent Vite from clearing the outDir
-      // Useful if other build steps output to the same directory
+      outDir: '../../../build/front-end', // Navigate up from src/front-end/html to project root
       emptyOutDir: true,
-      sourcemap: mode === 'development', // Enable sourcemaps in development
+      sourcemap: mode === 'development',
+      // rollupOptions: {
+      //   input: {
+      //     app: path.resolve(process.cwd(), 'src/front-end/typescript/index.ts')
+      //   },
+      //   output: {
+      //     entryFileNames: 'app.js',
+      //     chunkFileNames: '[name].[hash].js',
+      //     assetFileNames: '[name].[ext]'
+      //   }
+      // }
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'src/front-end/html/index.html')
+        }
+      }
     },
     server: {
       // Configure the development server
@@ -82,4 +101,4 @@ export default defineConfig(({ mode }) => {
       }
     }
   };
-}); 
+});

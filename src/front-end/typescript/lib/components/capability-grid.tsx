@@ -174,7 +174,7 @@ const Capability: component_.base.View<CapabilityProps> = ({
   disabled
 }) => {
   return (
-    <div className="border-right border-bottom d-flex flex-nowrap align-items-center p-2">
+    <div className="border-end border-bottom d-flex flex-nowrap align-items-center p-2">
       <Link
         onClick={() => dispatch(adt("toggleChecked", index))}
         symbol_={leftPlacement(
@@ -209,7 +209,7 @@ export const view: component_.base.View<Props> = ({
   disabled
 }) => {
   return (
-    <Row noGutters className="border-top border-left">
+    <Row noGutters className="border-top border-start">
       {state.capabilities.map((c, i) => (
         <Col xs="12" md="6" key={`phase-capability-${i}`}>
           <Capability

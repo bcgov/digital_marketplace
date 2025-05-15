@@ -1035,7 +1035,7 @@ const ProposalView: component_.base.View<Props> = ({
         <Alert color="primary" fade={false} className="mb-4">
           <Link
             color="inherit"
-            className="font-weight-bold d-flex justify-content-between flex-nowrap align-items-center w-100"
+            className="fw-bold d-flex justify-content-between flex-nowrap align-items-center w-100"
             onClick={() => dispatch(adt("toggleEvaluationCriteria"))}>
             Proposal Evaluation Criteria
             <Icon

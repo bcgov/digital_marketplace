@@ -309,7 +309,21 @@ $transition-duration: 240ms;
 
 // Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
-@import "bootstrap/scss/bootstrap";
+// @import "bootstrap/scss/bootstrap";
+@import "bootstrap";
+
+// Bootstrap 5 overrides
+
+// make links not underlined by default, the way it was in Bootstrap 4
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+// End Bootstrap 5 overrides
 
 // Mixins.
 

@@ -144,14 +144,14 @@ export const view: component.base.View<Props> = (props) => {
       IndicatorSeparator: () => {
         return (
           <div className="h-100 d-flex align-items-stretch justify-content-center py-1">
-            <div className="d-flex align-items-center justify-content-center border-right pr-2 mr-2"></div>
+            <div className="d-flex align-items-center justify-content-center border-end pe-2 me-2"></div>
           </div>
         );
       },
       DropdownIndicator: ({ innerProps }) => {
         return (
           <div
-            className="d-flex align-items-center justify-content-center pr-2"
+            className="d-flex align-items-center justify-content-center pe-2"
             style={{ lineHeight: 0 }}
             onMouseDown={innerProps.onMouseDown}
             onTouchEnd={innerProps.onTouchEnd}>

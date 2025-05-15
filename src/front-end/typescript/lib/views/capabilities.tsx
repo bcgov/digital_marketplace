@@ -30,12 +30,12 @@ const Capability: component.base.View<CapabilityProps> = ({
   showFullOrPartTime
 }) => {
   return (
-    <div className="border-right border-bottom d-flex flex-nowrap align-items-center p-2">
+    <div className="border-end border-bottom d-flex flex-nowrap align-items-center p-2">
       {showChecked ? (
         <Icon
           name={checked ? "check-circle" : "circle"}
           color={checked ? "success" : "secondary"}
-          className="mr-2 flex-shrink-0"
+          className="me-2 flex-shrink-0"
           width={0.9}
           height={0.9}
         />

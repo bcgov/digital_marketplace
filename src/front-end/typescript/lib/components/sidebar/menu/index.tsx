@@ -109,7 +109,7 @@ const SidebarLink: component_.base.View<SidebarLinkProps> = (props) => {
         <Icon
           name="caret-down"
           color="c-sidebar-menu-mobile-caret"
-          className="ml-auto"
+          className="ms-auto"
           style={{ transform: caret === "up" ? "rotate(180deg)" : undefined }}
         />
       ) : null}

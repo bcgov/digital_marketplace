@@ -48,7 +48,7 @@ export const HowItWorksItem: component.base.View<Props> = ({
               {mobileSymbol.tag === "icon" ? (
                 <Icon name={mobileSymbol.value} width={1.25} height={1.25} />
               ) : (
-                <span className="font-weight-bold">{mobileSymbol.value}</span>
+                <span className="fw-bold">{mobileSymbol.value}</span>
               )}
             </div>
             <strong>{title}</strong>

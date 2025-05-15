@@ -406,7 +406,7 @@ const ViewPermissionsAsAdmin: component_.base.ComponentView<State, Msg> = ({
           loading: isSavePermissionsLoading,
           slimHeight: true
         }}
-        className="mb-0 mr-3"
+        className="mb-0 me-3"
         disabled={isLoading}
         state={state.adminCheckbox}
         dispatch={component_.base.mapDispatch(dispatch, (value) =>

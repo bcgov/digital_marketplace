@@ -1104,7 +1104,7 @@ export const IconInfo: component.base.View<IconInfoProps> = ({
           name={name}
           width={iconSize}
           height={iconSize}
-          className="mr-2 flex-shrink-0"
+          className="me-2 flex-shrink-0"
         />
         {value}
       </div>

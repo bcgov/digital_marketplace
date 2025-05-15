@@ -59,34 +59,49 @@ const Markdown: component.base.View<Props> = ({
 
   if (noLinks) {
     customComponents.a = () => (
-      <span className="text-danger font-weight-bold">[Link Redacted]</span>
-          );
+      <span className="text-danger fw-bold">[Link Redacted]</span>
+    );
   } else {
-    customComponents.a = ({ children, href: originalHref, title, node: _node, ...rest }) => {
-          const href =
+    customComponents.a = ({
+      children,
+      href: originalHref,
+      title,
+      node: _node,
+      ...rest
+    }) => {
+      const href =
         isRelativeUrl(originalHref || "") && !isHashLink(originalHref || "")
           ? prefixPath(originalHref || "")
           : originalHref;
-          return (
-            <a
+      return (
+        <a
           href={href || ""}
           title={title}
-              rel="external"
-          target={openLinksInNewTabs ? newTabLinkTarget(originalHref || "") : rest.target}
-          {...rest}
-        >
+          rel="external"
+          target={
+            openLinksInNewTabs
+              ? newTabLinkTarget(originalHref || "")
+              : rest.target
+          }
+          {...rest}>
           {children}
         </a>
-          );
+      );
     };
   }
 
   if (noImages) {
     customComponents.img = () => (
-      <span className="text-danger font-weight-bold">[Image Redacted]</span>
-          );
+      <span className="text-danger fw-bold">[Image Redacted]</span>
+    );
   } else {
-    customComponents.img = ({ src: originalSrc, alt, title, node: _node, ...rest }) => {
+    customComponents.img = ({
+      src: originalSrc,
+      alt,
+      title,
+      node: _node,
+      ...rest
+    }) => {
       return (
         <img
           src={decodeImgSrc(originalSrc || "")}
@@ -103,12 +118,16 @@ const Markdown: component.base.View<Props> = ({
       level,
       children,
       node: _node
-    }: { level: 1 | 2 | 3 | 4 | 5 | 6; children?: React.ReactNode; node?: any }) => {
-          return (
+    }: {
+      level: 1 | 2 | 3 | 4 | 5 | 6;
+      children?: React.ReactNode;
+      node?: any;
+    }) => {
+      return (
         <div className={`${headingLevelToClassName(level)} text-secondary`}>
           {children}
         </div>
-          );
+      );
     };
   }
 
@@ -117,10 +136,7 @@ const Markdown: component.base.View<Props> = ({
       className={`markdown ${
         box ? "p-4 bg-light border rounded" : ""
       } ${className}`}>
-      <ReactMarkdown
-        children={source}
-        components={customComponents}
-      />
+      <ReactMarkdown children={source} components={customComponents} />
     </div>
   );
 };

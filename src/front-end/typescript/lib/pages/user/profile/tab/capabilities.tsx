@@ -140,12 +140,12 @@ const Capability: component_.base.View<CapabilityProps> = ({
           disabled={loading || disabled}>
           <span>{name}</span>
           {loading ? (
-            <Spinner color="secondary" size="sm" className="ml-3" />
+            <Spinner color="secondary" size="sm" className="ms-3" />
           ) : null}
         </Link>
         <Icon
           color="info"
-          className="ml-auto"
+          className="ms-auto"
           name={open ? "chevron-up" : "chevron-down"}
         />
       </div>

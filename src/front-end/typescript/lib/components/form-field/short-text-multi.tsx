@@ -112,7 +112,7 @@ const ChildView: ChildComponent["view"] = (props) => {
               hover={!disabled}
               name="trash"
               color={disabled ? "secondary" : "info"}
-              className="ml-2"
+              className="ms-2"
               onClick={() =>
                 !disabled &&
                 dispatch(
@@ -128,7 +128,7 @@ const ChildView: ChildComponent["view"] = (props) => {
                 hover={!disabled}
                 name="plus"
                 color={disabled ? "secondary" : "primary"}
-                className="ml-2"
+                className="ms-2"
                 onClick={() => !disabled && dispatch(adt("add", { onChange }))}
               />
             ) : null}

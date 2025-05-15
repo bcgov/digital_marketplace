@@ -180,7 +180,7 @@ const NavAccountDropdown: component_.base.View<
         tag="div"
         className="text-c-nav-fg text-hover-c-nav-fg"
         style={{ cursor: "pointer" }}>
-        <span className="mr-2 o-75">{text}</span>
+        <span className="me-2 o-75">{text}</span>
         <img
           src={imageUrl}
           className="rounded-circle"
@@ -193,7 +193,7 @@ const NavAccountDropdown: component_.base.View<
         <Icon
           name="caret-down"
           color="c-nav-fg"
-          className="ml-2"
+          className="ms-2"
           width={DROPDOWN_CARET_SIZE}
           height={DROPDOWN_CARET_SIZE}
         />
@@ -411,7 +411,7 @@ const Title: component_.base.View<TitleProps> = ({
       color={color}
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : "none" }}
-      className="font-weight-bolder font-size-large"
+      className="fw-bolder font-size-large"
     />
   </div>
 );
@@ -486,13 +486,13 @@ const TopNavbar: component_.base.View<Props> = (props) => {
                   title={props.title}
                   homeDest={props.homeDest}
                   dispatch={dispatch}
-                  className="ml-3 d-none d-md-block"
+                  className="ms-3 d-none d-md-block"
                 />
                 {isLoading ? (
                   <Spinner
                     size="sm"
                     color="secondary"
-                    className="transition-indicator ml-3"
+                    className="transition-indicator ms-3"
                   />
                 ) : null}
               </div>
@@ -531,7 +531,7 @@ const ContextualLinks: component_.base.View<
     case "links":
       return (
         <div
-          className="d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1"
+          className="d-flex flex-nowrap align-items-center flex-row-reverse py-1 pe-1 me-n1"
           style={{ overflowX: "auto" }}>
           {contextualActions.value.map((link, i) => {
             const linkProps = {
@@ -552,7 +552,7 @@ const ContextualLinks: component_.base.View<
       );
     case "dropdown":
       return (
-        <div className="py-1 pr-1 mr-n1">
+        <div className="py-1 pe-1 me-n1">
           <ContextualDropdown
             {...contextualActions.value}
             isOpen={isOpen}

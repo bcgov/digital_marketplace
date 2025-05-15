@@ -15,8 +15,8 @@ export const DescriptionItem: component.base.View<DescriptionItem> = ({
   return (
     <div
       className={`d-flex flex-row flex-nowrap align-items-stretch ${className}`}>
-      <div className="font-weight-bold align-self-start">{name}:</div>
-      <div className="ml-3 d-flex align-items-center">{children}</div>
+      <div className="fw-bold align-self-start">{name}:</div>
+      <div className="ms-3 d-flex align-items-center">{children}</div>
     </div>
   );
 };
