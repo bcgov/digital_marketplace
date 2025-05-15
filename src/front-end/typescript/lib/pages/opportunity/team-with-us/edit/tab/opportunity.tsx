@@ -63,14 +63,17 @@ type UpdateStatus =
   | TWUOpportunityStatus.Suspended;
 
 export type InnerMsg =
-  | ADT<"resetOpportunity", [TWUOpportunity, boolean]>
+  | ADT<"resetOpportunity", [TWUOpportunity, User[], boolean]>
   | ADT<"form", Form.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"startEditing">
   | ADT<
       "onStartEditingResponse",
-      api.ResponseValidation<TWUOpportunity, string[]>
+      [
+        api.ResponseValidation<TWUOpportunity, string[]>,
+        api.ResponseValidation<User[], string[]>
+      ]
     >
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
@@ -272,7 +275,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "resetOpportunity": {
-      const [opportunity, validateForm] = msg.value;
+      const [opportunity, users, validateForm] = msg.value;
       const currentFormState = state.form;
       const activeTab = currentFormState
         ? Form.getActiveTab(currentFormState)
@@ -280,12 +283,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const [formState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
-        state.users,
+        users,
         activeTab,
         validateForm
       );
       return [
-        state.set("opportunity", opportunity).set("form", formState),
+        state
+          .set("opportunity", opportunity)
+          .set("users", users)
+          .set("form", formState),
         [
           ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
           component_.cmd.dispatch(component_.page.readyMsg())
@@ -310,8 +316,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startStartEditingLoading(state),
         [
-          api.opportunities.twu.readOne<Msg>()(opportunity.id, (result) =>
-            adt("onStartEditingResponse", result)
+          component_.cmd.join(
+            api.opportunities.twu.readOne()(
+              opportunity.id,
+              (response) => response
+            ),
+            api.users.readMany()((response) => response),
+            (opportunity, users) => {
+              return adt("onStartEditingResponse", [opportunity, users]) as Msg;
+            }
           )
         ]
       ];
@@ -319,42 +332,39 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "onStartEditingResponse": {
       state = stopStartEditingLoading(state);
       const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state.set("isEditing", true),
-            [
-              component_.cmd.dispatch(
-                adt("resetOpportunity", [
-                  result.value,
-                  isUnpublished(result.value)
-                ]) as InnerMsg
-              )
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", toasts.startedEditing.error)
-                )
-              )
-            ]
-          ];
+      if (api.isValid(result[0]) && api.isValid(result[1])) {
+        return [
+          state.set("isEditing", true),
+          [
+            component_.cmd.dispatch(
+              adt("resetOpportunity", [
+                result[0].value,
+                result[1].value,
+                isUnpublished(result[0].value)
+              ]) as InnerMsg
+            )
+          ]
+        ];
       }
-      break;
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("error", toasts.startedEditing.error)
+            )
+          )
+        ]
+      ];
     }
     case "cancelEditing": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
+      const { opportunity, users } = state;
+      if (!opportunity || !users) return [state, []];
       return [
         state.set("isEditing", false),
         [
           component_.cmd.dispatch(
-            adt("resetOpportunity", [opportunity, false]) as InnerMsg
+            adt("resetOpportunity", [opportunity, users, false]) as InnerMsg
           )
         ]
       ];
@@ -738,7 +748,11 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   onInitResponse(response) {
-    return adt("resetOpportunity", [response[0], false]) as InnerMsg;
+    return adt("resetOpportunity", [
+      response[0],
+      response[3],
+      false
+    ]) as InnerMsg;
   },
 
   getAlerts(state) {

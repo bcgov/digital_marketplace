@@ -618,6 +618,7 @@ export function hasTWUOpportunityPassedResourceQuestions(
     }
     switch (h.type.value) {
       case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       case TWUOpportunityStatus.EvaluationChallenge:
       case TWUOpportunityStatus.Awarded:
         return true;

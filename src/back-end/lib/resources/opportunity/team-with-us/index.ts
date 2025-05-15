@@ -339,6 +339,7 @@ const create: crud.Create<
                 question: getString(v, "question"),
                 guideline: getString(v, "guideline"),
                 score: getNumber(v, "score"),
+                minimumScore: getNumber<null>(v, "minimumScore"),
                 wordLimit: getNumber(v, "wordLimit"),
                 order: getNumber(v, "order")
               }))

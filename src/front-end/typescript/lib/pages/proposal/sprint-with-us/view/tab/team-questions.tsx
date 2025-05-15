@@ -23,7 +23,6 @@ import { countWords } from "shared/lib";
 import {
   getQuestionByOrder,
   hasSWUOpportunityPassedTeamQuestions,
-  hasSWUOpportunityPassedTeamQuestionsEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -62,7 +61,6 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   startEditingLoading: number;
   saveLoading: number;
-  screenToFromLoading: number;
   openAccordions: Set<number>;
   evaluationScores: EvaluationScore[];
   isEditing: boolean;
@@ -117,10 +115,6 @@ export type InnerMsg =
         UpdateValidationErrors
       >
     >
-  | ADT<"screenIn">
-  | ADT<"onScreenInResponse", SWUProposal | null>
-  | ADT<"screenOut">
-  | ADT<"onScreenOutResponse", SWUProposal | null>
   | ADT<"scoreMsg", { childMsg: NumberField.Msg; rIndex: number }>
   | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>;
 
@@ -224,7 +218,6 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     {
       ...params,
       showModal: null,
-      screenToFromLoading: 0,
       saveLoading: 0,
       startEditingLoading: 0,
       openAccordions: new Set(
@@ -910,7 +903,7 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
   const currentScore = FormField.getValue(score.score);
   const hasScoreBelowMinimum =
     question.minimumScore &&
-    currentScore &&
+    currentScore !== null &&
     currentScore < question.minimumScore;
   return (
     <Accordion
@@ -1014,9 +1007,7 @@ const TeamQuestionResponsesIndividualEvalView: component_.base.View<{
   state: State;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ state, dispatch }) => {
-  const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
-    state.opportunity
-  );
+  const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveLoading = state.saveLoading > 0;
   const isLoading = isStartEditingLoading || isSaveLoading;
@@ -1107,7 +1098,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
   const currentScore = FormField.getValue(score.score);
   const hasScoreBelowMinimum =
     question.minimumScore &&
-    currentScore &&
+    currentScore !== null &&
     currentScore < question.minimumScore;
   const hasPanelScoreBelowMinimum = panelEvaluationScores.some(
     (panelEvaluationScore) => {
@@ -1294,9 +1285,7 @@ const TeamQuestionResponsesChairEvalView: component_.base.View<{
   state: State;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ state, dispatch }) => {
-  const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
-    state.opportunity
-  );
+  const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveLoading = state.saveLoading > 0;
   const isLoading = isStartEditingLoading || isSaveLoading;

@@ -952,7 +952,7 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
             route.value.proposalId
-          }/team-questions/evaluations/create${
+          }/resource-questions/evaluations/create${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -960,7 +960,7 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
             route.value.proposalId
-          }/team-questions/evaluations/${route.value.userId}/edit${
+          }/resource-questions/evaluations/${route.value.userId}/edit${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -968,7 +968,7 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
             route.value.proposalId
-          }/team-questions/consensus/create${
+          }/resource-questions/consensus/create${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
@@ -976,7 +976,7 @@ const router: router_.Router<Route> = {
         return prefixPath(
           `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
             route.value.proposalId
-          }/team-questions/consensus/${route.value.userId}/edit${
+          }/resource-questions/consensus/${route.value.userId}/edit${
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
