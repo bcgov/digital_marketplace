@@ -51,13 +51,13 @@ export interface RawTWUResourceQuestionResponseEvaluation
 }
 
 export const TWU_CHAIR_EVALUATION_TABLE_NAME =
-  "TWUResourceQuestionResponseChairEvaluations";
+  "twuResourceQuestionResponseChairEvaluations";
 export const TWU_EVALUATOR_EVALUATION_TABLE_NAME =
-  "TWUResourceQuestionResponseEvaluatorEvaluations";
+  "twuResourceQuestionResponseEvaluatorEvaluations";
 export const TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME =
-  "TWUResourceQuestionResponseChairEvaluationStatuses";
+  "twuResourceQuestionResponseChairEvaluationStatuses";
 export const TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
-  "TWUResourceQuestionResponseEvaluatorEvaluationStatuses";
+  "twuResourceQuestionResponseEvaluatorEvaluationStatuses";
 
 function rawResourceQuestionResponseEvaluationsToResourceQuestionResponseEvaluation(
   raw: RawTWUResourceQuestionResponseEvaluation[]
