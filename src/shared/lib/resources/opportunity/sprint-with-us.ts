@@ -579,7 +579,7 @@ export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
   o: SWUOpportunity,
   status: SWUOpportunityStatus
 ): boolean {
-  // Return true if the opportunity has ever had the individual evaluation status.
+  // Return true if the opportunity has ever had the status.
   return (
     !!o.history &&
     o.history.reduce((acc, record) => {
