@@ -84,11 +84,6 @@ import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
 
-// Add CopilotKit imports
-import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotSidebar } from "@copilotkit/react-ui";
-import "@copilotkit/react-ui/styles.css";
-
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
   component: ViewPageProps<RouteParams, PageState, PageMsg>["component"],
@@ -638,7 +633,7 @@ const ViewToasts: component_.base.ComponentView<State, Msg> = ({
             <strong className="mx-2">{toast.value.title}</strong>
             <Icon
               hover
-              className="ms-auto"
+              className="ml-auto"
               name="times"
               color="secondary"
               onClick={() => dispatch(adt("dismissToast", i))}
@@ -862,32 +857,41 @@ function simpleNavProps(
 
 const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
-  const navProps =
-    !hasAcceptedTermsOrIsAnonymous(state.shared.session) &&
-    isAllowedRouteForUsersWithUnacceptedTerms(state.activeRoute)
+  if (!state.ready) {
+    return null;
+  } else {
+    const viewPageProps = pageToViewPageProps(props);
+    const navProps = viewPageProps.component.simpleNav
       ? simpleNavProps(props)
       : regularNavProps(props);
-  const pageModal = getAppModal(state) || component_.page.modal.hide();
-  const appModal = getAppModal(state);
-  return (
-    <CopilotKit runtimeUrl="http://localhost:3000/copilotkit">
-      <div className="d-flex flex-column main-container">
+    const pageModal: component_.page.Modal<Msg> =
+      viewPageProps.component.getModal && viewPageProps.pageState
+        ? (component_.page.modal.mapPage(
+            viewPageProps.component.getModal(viewPageProps.pageState),
+            viewPageProps.mapPageMsg
+          ) as component_.page.Modal<Msg>)
+        : (component_.page.modal.hide() as component_.page.Modal<Msg>);
+    const appModal = getAppModal(state);
+    return (
+      <div
+        className={`route-${state.activeRoute.tag} ${
+          state.incomingRoute ? "in-transition" : ""
+        } ${
+          navProps.contextualActions ? "contextual-actions-visible" : ""
+        } app d-flex flex-column`}
+        style={{ minHeight: "100vh" }}>
         <Nav.view {...navProps} />
-        <ViewPage {...pageToViewPageProps(props)} />
+        <ViewPage {...viewPageProps} />
+        {viewPageProps.component.simpleNav ? null : <Footer />}
+        <ViewToasts {...props} />
         <ViewModal
           dispatch={dispatch}
           pageModal={pageModal}
           appModal={appModal}
         />
-        <Footer />
-        <ViewToasts state={state} dispatch={dispatch} />
-        {SHOW_TEST_INDICATOR ? (
-          <div className="test-indicator">ALPHA</div>
-        ) : null}
       </div>
-      <CopilotSidebar />
-    </CopilotKit>
-  );
+    );
+  }
 };
 
 export default view;

@@ -95,11 +95,7 @@ const ChildView: ChildComponent["view"] = (props) => {
   }
   return (
     <InputGroup>
-      {prefix ? (
-        <InputGroup addonType="prepend">
-          <InputGroupText>{prefix}</InputGroupText>
-        </InputGroup>
-      ) : null}
+      {prefix ? <InputGroupText>{prefix}</InputGroupText> : null}
       <Select {...selectProps} />
     </InputGroup>
   );

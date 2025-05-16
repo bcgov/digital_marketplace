@@ -275,7 +275,7 @@ export const HowToApplyView: component_.page.View<State, InnerMsg, Route> = ({
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
-                  className="mb-4 mb-sm-0 mr-0 me-sm-4 text-nowrap">
+                  className="mb-4 mb-sm-0 me-0 me-sm-4 text-nowrap">
                   Read the Guide
                 </Link>
                 <Link

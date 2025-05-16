@@ -15,7 +15,7 @@ const Skills: component.base.View<Props> = ({ skills, className = "" }) => {
         ? skills.map((skill, i, arr) => (
             <Badge
               key={`skill-${i}`}
-              className={`mb-2 ${i < arr.length - 1 ? "mr-2" : ""}`}
+              className={`mb-2 ${i < arr.length - 1 ? "me-2" : ""}`}
               text={skill}
               color="c-skills-bg"
             />

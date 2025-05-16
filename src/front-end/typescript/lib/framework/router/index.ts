@@ -221,7 +221,9 @@ export function start<Route>(routeManager: RouteManager<Route>): void {
   // Intercept link clicks.
   window.document.body.addEventListener(
     "click",
-    clickHandler((url) => routeManager.dispatchUrl(url, 0, false)),
+    clickHandler((url) => {
+      routeManager.dispatchUrl(url, 0, false);
+    }),
     false
   );
   // Update current page state scrollY on scroll.

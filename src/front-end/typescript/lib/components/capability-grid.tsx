@@ -136,20 +136,20 @@ const FullTimeSwitch: component_.base.View<FullTimeSwitchProps> = ({
     <div
       onClick={() => !disabled && dispatch(adt("toggleFullTime", index))}
       style={{ cursor: "pointer" }}
-      className={`d-flex align-items-stretch font-size-extra-small font-weight-bold ml-auto ${
+      className={`d-flex align-items-stretch font-size-extra-small fw-bold ms-auto ${
         disabled ? "disabled o-75" : ""
       }`}>
       <div
         className={`${baseSwitchClassName} ${selectedClassName(
           !fullTime
-        )} rounded-left border-right-0`}
+        )} rounded-start border-end-0`}
         style={{ width, padding }}>
         P/T
       </div>
       <div
         className={`${baseSwitchClassName} ${selectedClassName(
           fullTime
-        )} rounded-right border-left-0`}
+        )} rounded-end border-start-0`}
         style={{ width, padding }}>
         F/T
       </div>

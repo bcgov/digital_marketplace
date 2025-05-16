@@ -248,7 +248,7 @@ function AnchorLink(props: AnchorProps) {
         <LinkSymbol
           symbol_={symbol_.value}
           iconSymbolSize={iconSymbolSize}
-          className={`mr-2 ${symbolClassName}`}
+          className={`me-2 ${symbolClassName}`}
           style={symbolStyle}
         />
       ) : null}
@@ -257,7 +257,7 @@ function AnchorLink(props: AnchorProps) {
         <LinkSymbol
           symbol_={symbol_.value}
           iconSymbolSize={iconSymbolSize}
-          className={`ml-2 ${symbolClassName}`}
+          className={`ms-2 ${symbolClassName}`}
           style={symbolStyle}
         />
       ) : null}

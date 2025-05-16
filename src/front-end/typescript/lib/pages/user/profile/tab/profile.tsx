@@ -375,7 +375,7 @@ const ViewPermissionsAsGovernment: component_.base.ComponentView<
       {permissions.map((p, i) => (
         <Badge
           pill
-          className={i === permissions.length ? "" : "mr-2"}
+          className={i === permissions.length ? "" : "me-2"}
           key={`user-permission-pill-${i}`}
           text={p}
           color="c-user-profile-permission"

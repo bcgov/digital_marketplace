@@ -1,12 +1,28 @@
+// @import "bootstrap/scss/bootstrap";
 // Imports
+
+$input-focus-border-color: #6bccf7;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
+
+$spacer: 1rem;
+$grid-gutter-width: $spacer * 2;
 
 // Import Bootstrap functions and variables FIRST
 @import "bootstrap/scss/functions";
+$primary-bg-subtle: #ceebf7;
+$primary-border-subtle: #bbe2f4;
 @import "bootstrap/scss/variables";
 
-@import "./font";
+
 
 // Custom Bootstrap variable overrides.
+
+// Ensure $gutters is defined using the custom $spacers map for Bootstrap's grid utilities
+$gutters: $spacers;
+
+// Ensure negative margins are enabled and $negative-spacers is defined for the Utility API
+$enable-negative-margins: true;
+$negative-spacers: if($enable-negative-margins, negativify-map($spacers), null);
 
 $grid-breakpoints: (
   xs: 0,
@@ -21,58 +37,37 @@ $container-max-widths: (
   lg: 1140px
 );
 
-$spacer: 1rem;
+
 
 // 'h' stands for 'half'
 // Merge standard Bootstrap spacers with custom ones.
 // Standard keys ensure Bootstrap utilities are generated correctly.
-$spacers: (
-  n4h: (
-    $spacer * -2
+$spacers: map-merge(
+  (
+    0: 0,
+    1: $spacer * .25,
+    2: $spacer * .5,
+    3: $spacer,
+    4: $spacer * 1.5,
+    5: $spacer * 3,
+    // custom spacers
+    n4h: $spacer * -2,
+    n6: $spacer * -4,
+    n7: $spacer * -5,
+    n8: $spacer * -6,
+    n9: $spacer * -8,
+    n10: $spacer * -10,
+    4h: $spacer * 2,
+    6: $spacer * 4,
+    7: $spacer * 5,
+    8: $spacer * 6,
+    9: $spacer * 8,
+    10: $spacer * 10
   ),
-  n6: (
-    $spacer * -4
-  ),
-  n7: (
-    $spacer * -5
-  ),
-  n8: (
-    $spacer * -6
-  ),
-  n9: (
-    $spacer * -8
-  ),
-  n10: (
-    $spacer * -10
-  ),
-  4h: (
-    $spacer * 2
-  ),
-  6: (
-    $spacer * 4
-  ),
-  7: (
-    $spacer * 5
-  ),
-  8: (
-    $spacer * 6
-  ),
-  9: (
-    $spacer * 8
-  ),
-  10: (
-    $spacer * 10
-  )
+  $spacers
 );
 
-// Ensure $gutters is defined using the custom $spacers map for Bootstrap's grid utilities
-$gutters: $spacers;
 
-// Ensure negative margins are enabled and $negative-spacers is defined for the Utility API
-$enable-negative-margins: true;
-$negative-spacers: if($enable-negative-margins, negativify-map($spacers), null);
-
-$grid-gutter-width: $spacer * 2;
 
 // Grays.
 $gray-100: #f8f9fa;
@@ -117,6 +112,7 @@ $nav-tabs-link-active-border-color: $nav-tabs-border-color
 $component-active-bg: $blue;
 $custom-control-indicator-checked-disabled-bg: rgba($component-active-bg, 0.5);
 $link-color: $blue;
+$link-hover-color: #08658e;
 $dropdown-link-hover-bg: $gray-100;
 $dropdown-link-active-bg: $gray-200;
 $table-hover-bg: $blue-light-alt;
@@ -248,6 +244,15 @@ $app-utility-colors: (
   "c-static-html-fg": $c-static-html-fg
 );
 
+// Generate CSS custom properties from the $app-utility-colors map
+:root {
+  @each $name, $color in $app-utility-colors {
+    @if $color != null {
+      --#{$name}: #{$color};
+    }
+  }
+}
+
 // Theme colors.
 // Bootstrap updates the theme map based on these variables,
 // so we don't need to update the map at all.
@@ -307,10 +312,15 @@ $enable-validation-icons: false;
 
 $transition-duration: 240ms;
 
+
+
+
 // Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
 // @import "bootstrap/scss/bootstrap";
 @import "bootstrap";
+
+@import "./font";
 
 // Bootstrap 5 overrides
 
@@ -320,6 +330,60 @@ a {
 }
 
 a:hover {
+  color: $link-hover-color;
+  text-decoration: underline;
+}
+
+// Restore Bootstrap 4 button hover behavior
+.btn {
+  &:hover {
+    color: $white;
+    text-decoration: none;
+  }
+}
+
+.btn-primary {
+  &:hover {
+    color: $white;
+    background-color: #0a7fb2;
+    border-color: #0976a6;
+  }
+}
+
+// aligns checkboxes with the label text
+// .form-check-label {
+//   padding-top: 0.5rem !important;
+// }
+
+// Restore Bootstrap 4 table padding
+$table-cell-padding-y: 0.75rem;
+$table-cell-padding-x: 0.75rem;
+
+// Restore Bootstrap 4 table header appearance
+.table > thead > tr > th {
+  background-color: #e9ecef; // Bootstrap 4 .thead-light background-color
+  border-color: #dee2e6;     // Bootstrap 4 .thead-light border-color
+  color: #495057;           // Bootstrap 4 .thead-light text color
+  // Bootstrap 5 makes th bold by default. If you want to revert this for the header:
+  // font-weight: normal;
+}
+
+// Ensure the custom variables are applied if Bootstrap is imported AFTER them.
+// If Bootstrap is imported before, the above $table-cell-padding variables will take effect.
+// If Bootstrap is imported after, this explicit CSS override is needed for padding.
+.table > :not(caption) > * > * {
+  padding: 0.75rem 0.75rem;
+}
+
+// style header links
+
+a.h1, a.h2, a.h3, a.h4, a.h5, a.h6 {
+  color: $link-color ;
+}
+
+// style header links on hover
+a.h1:hover, a.h2:hover, a.h3:hover, a.h4:hover, a.h5:hover, a.h6:hover {
+  color: $link-hover-color !important;
   text-decoration: underline;
 }
 
@@ -437,8 +501,8 @@ nav {
     }
 
     .main-nav-mobile-menu {
-      // @extend .py-4 !optional;
-      // @extend .d-md-none !optional;
+      @extend .py-4 !optional;
+      @extend .d-md-none !optional;
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
@@ -458,7 +522,7 @@ nav {
       opacity: 0;
 
       &.open {
-        // @extend .shadow;
+        @extend .shadow;
         @include menu-transition(0ms);
         transform: translateY(0);
         opacity: 1;
@@ -468,21 +532,21 @@ nav {
     .main-nav-bottom-navbar {
       &.mobile,
       &.desktop {
-        // @extend .align-items-center;
-        // @extend .shadow;
+        @extend .align-items-center;
+        @extend .shadow;
         background: $c-nav-bg-alt;
         height: $main-nav-bottom-navbar-height;
         z-index: 1;
       }
 
       &.desktop {
-        // @extend .d-none;
-        // @extend .d-md-flex;
+        @extend .d-none;
+        @extend .d-md-flex;
       }
 
       &.mobile {
-        // @extend .d-flex;
-        // @extend .d-md-none !optional;
+        @extend .d-flex;
+        @extend .d-md-none !optional;
       }
     }
   }
@@ -523,6 +587,10 @@ footer {
 
 .btn-warning,
 .badge-warning {
+  color: $white !important;
+}
+
+.btn-primary {
   color: $white !important;
 }
 
@@ -572,18 +640,18 @@ a,
 }
 
 blockquote {
-  // @extend .blockquote;
+  @extend .blockquote;
 }
 
 table {
-  // @extend .table;
+  @extend .table;
 
   thead {
-    // @extend .small;
-    // @extend .text-secondary;
-    // @extend .text-uppercase;
-    // @extend .font-weight-bold;
-    // @extend .bg-light;
+    @extend .small;
+    @extend .text-secondary;
+    @extend .text-uppercase;
+    @extend .fw-bold;
+    @extend .bg-light;
   }
 
   .table-show-on-hover {
@@ -600,19 +668,19 @@ table {
 }
 
 pre {
-  // @extend .bg-light;
-  // @extend .p-3;
-  // @extend .border;
-  // @extend .rounded;
+  @extend .bg-light;
+  @extend .p-3;
+  @extend .border;
+  @extend .rounded;
 }
 
 label {
-  // @extend .py-1;
+  @extend .py-1;
 
   .custom-checkbox &,
   .custom-radio & {
-    // @extend .font-size-base;
-    // @extend .py-0;
+    @extend .font-size-base;
+    @extend .py-0;
   }
 }
 
@@ -621,7 +689,7 @@ nav.navbar .nav-link:hover {
 }
 
 .card-body {
-  // @extend .p-4;
+  @extend .p-4;
 }
 
 .badge {
@@ -672,7 +740,7 @@ nav.navbar .nav-link:hover {
 .shadow-hover {
   transition: box-shadow $transition-duration;
   &:hover {
-    // @extend .shadow;
+    @extend .shadow;
   }
 }
 
@@ -825,7 +893,7 @@ nav.navbar .nav-link:hover {
   }
 
   @if ($breakpoint == "xs") or ($breakpoint == "sm") {
-    @include media-breakpoint-down(sm) {
+    @include media-breakpoint-down(md) {
       .app:not(.contextual-actions-visible) .sticky#{$infix} {
         top: 1rem;
       }
@@ -842,12 +910,12 @@ nav.navbar .nav-link:hover {
   width: 400px;
   z-index: 1001; // Above nav, below modals
 
-  @include media-breakpoint-down(xs) {
+  @include media-breakpoint-down(sm) {
     left: map-get($spacers, 3);
     width: auto;
   }
 
-  @include media-breakpoint-down(sm) {
+  @include media-breakpoint-down(md) {
     right: map-get($spacers, 3);
     bottom: map-get($spacers, 3);
   }
@@ -897,7 +965,7 @@ nav.navbar .nav-link:hover {
 }
 
 .sidebar {
-  @include media-breakpoint-down(sm) {
+  @include media-breakpoint-down(md) {
     background-color: $white !important;
     z-index: 3;
   }
@@ -939,8 +1007,8 @@ nav.navbar .nav-link:hover {
   // Standard control styles.
   .react-select {
     &__control {
-      // @extend .form-control;
-      // @extend .p-0;
+      @extend .form-control;
+      @extend .p-0;
       display: flex;
       min-height: $input-height;
       height: auto;
@@ -1027,7 +1095,7 @@ nav.navbar .nav-link:hover {
   }
 
   & > *:last-child {
-    // @extend .mb-0;
+    @extend .mb-0;
   }
 }
 
@@ -1051,13 +1119,13 @@ nav.navbar .nav-link:hover {
     counter-increment: list;
   }
   &-lower-roman {
-    // @extend .li-paren;
+    @extend .li-paren;
     & > li:before {
       content: counter(list, lower-roman) ") ";
     }
   }
   &-lower-alpha {
-    // @extend .li-paren;
+    @extend .li-paren;
     & > li:before {
       content: counter(list, lower-alpha) ") ";
     }

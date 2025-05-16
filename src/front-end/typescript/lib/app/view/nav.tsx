@@ -6,7 +6,8 @@ import Link, {
   Dest,
   ExtendProps as ExtendLinkProps,
   iconLinkSymbol,
-  rightPlacement
+  rightPlacement,
+  Props as LinkComponentPropsType
 } from "front-end/lib/views/link";
 import Separator from "front-end/lib/views/separator";
 import React, { Fragment, MouseEvent } from "react";
@@ -29,6 +30,9 @@ export interface State {
   // Need to toggle each contextual dropdown for mobile/desktop
   // separately because we use media queries (CSS) to hide/show them,
   // which means their event listeners are always on.
+  // So, when trying to use the mobile dropdown, the desktop dropdown's
+  // handleDocumentClick function clobbers any onClick handlers that
+  // we have specified.
   // So, when trying to use the mobile dropdown, the desktop dropdown's
   // handleDocumentClick function clobbers any onClick handlers that
   // we have specified.
@@ -93,25 +97,119 @@ export type NavLink = ExtendLinkProps<{ active?: boolean }>;
 type NavLinkProps = NavLink & { dispatch: component_.base.Dispatch<Msg> };
 
 const NavLink: component_.base.View<NavLinkProps> = (props) => {
-  const onClick = (e: MouseEvent) => {
-    props.dispatch(adt("toggleMobileMenu", false));
-    props.dispatch(adt("toggleDesktopAccountDropdown", false));
-    props.dispatch(adt("toggleDesktopContextualDropdown", false));
-    props.dispatch(adt("toggleMobileContextualDropdown", false));
-    if (props.onClick) {
-      return props.onClick(e);
+  const {
+    dispatch,
+    onClick: propOnClickPassedToNavLink,
+    children,
+    className,
+    active,
+    color: navLinkColorInput,
+    dest,
+    button,
+    ...restOfLinkComponentProps
+  } = props;
+
+  // Explanation of the NavLink click handling strategy:
+  //
+  // === The Problem ===
+  // NavLink clicks were not triggering client-side navigation. Clicking a NavLink did nothing visible.
+  //
+  // === Root Cause & React Event System Context ===
+  // The issue stemmed from the interaction between React's synthetic event system, a component-internal
+  // call to event.preventDefault(), and the application's global native click handler for routing.
+  //
+  // 1. React's Event Delegation: React attaches its event listeners (e.g., for 'click') to the root of the
+  //    React application (e.g., div#main) rather than to individual DOM elements. When a native DOM event
+  //    occurs (like a click on an <a> tag), it bubbles up to this root listener.
+  //
+  // 2. Synthetic Events: React then wraps the native event in a SyntheticEvent object and dispatches this
+  //    synthetic event through the React component tree to relevant component onClick props.
+  //
+  // 3. preventDefault() Behavior: If an onClick handler in a React component calls e.preventDefault()
+  //    on the SyntheticEvent, React ensures that preventDefault() is also called on the original
+  //    native browser event.
+  //
+  // 4. The Specifics in this App:
+  //    a. NavLink renders an underlying generic <Link> component.
+  //    b. This <Link> component (specifically its internal AnchorLink implementation) would call
+  //       event.preventDefault() on the synthetic event if it received an onClick prop from NavLink.
+  //       This is a common pattern for components intending to manage their own routing or click effects.
+  //    c. This action marked the native browser event as defaultPrevented.
+  //    d. The application's global click handler (in click-handler.ts), listening on document.body for
+  //       *native* click events to manage client-side routing, checks the native event's defaultPrevented status.
+  //    e. Finding it true, the global handler would ignore the event, assuming the component that called
+  //       preventDefault() (i.e., AnchorLink, triggered by NavLink's passed onClick) would handle navigation.
+  //    f. However, NavLink's original onClick handler only managed UI side effects (like closing menus)
+  //       and did not itself initiate client-side navigation after AnchorLink had already stopped the default action.
+  //
+  // === How Package Updates Might Have Surfaced This ===
+  // While React's core event system behavior is stable, package updates (e.g., to React itself, react-dom,
+  // a component library like Bootstrap/React-Bootstrap if used, or updates/refactors to the custom
+  // <Link>/AnchorLink components) could have altered when or how e.preventDefault() was called within
+  // AnchorLink. For instance, a newer version or a refactor of AnchorLink might have started calling
+  // preventDefault() more consistently for internal navigation links if an onClick prop was present,
+  // exposing the dormant issue described above.
+  //
+  // === The Solution ===
+  // The strategy here is to separate NavLink's UI side effects from the Link component's click handling
+  // that was triggering preventDefault():
+  //   - The <Link> component is wrapped in a <span>.
+  //   - NavLink's UI side effects (closing menus, calling any onClick prop passed to NavLink itself)
+  //     are handled by `handleWrapperClick`, attached to this outer <span>.
+  //   - Crucially, `handleWrapperClick` is *not* passed as the onClick prop to the <Link> component.
+  //   - By not providing an onClick prop from NavLink to <Link>, the <Link>'s internal AnchorLink
+  //     is not triggered by NavLink to call event.preventDefault().
+  //   - This allows the click on the actual <a> tag (rendered by <Link>) to retain its default
+  //     (not prevented by NavLink's logic) status when the native event reaches the global click handler.
+  //     The global click handler can then correctly process it for client-side navigation.
+  //
+  // The `handleWrapperClick` event parameter type was changed (by the user) from React.MouseEvent<HTMLElement>
+  // to MouseEvent, and the `as any` cast was removed when calling `propOnClickPassedToNavLink`,
+  // aligning with the expected event types.
+  const handleWrapperClick = (e: MouseEvent) => {
+    dispatch(adt("toggleMobileMenu", false));
+    dispatch(adt("toggleDesktopAccountDropdown", false));
+    dispatch(adt("toggleDesktopContextualDropdown", false));
+    dispatch(adt("toggleMobileContextualDropdown", false));
+
+    if (propOnClickPassedToNavLink) {
+      propOnClickPassedToNavLink(e);
     }
   };
-  const linkProps = { ...props };
-  linkProps.color = linkProps.color || "c-nav-fg";
+
+  const calculatedClassNameForLink = `text-nowrap ${className || ""} ${
+    active ? "fw-bold" : ""
+  }`;
+
+  let linkPropsToPass: LinkComponentPropsType;
+
+  if (button) {
+    linkPropsToPass = {
+      ...restOfLinkComponentProps,
+      dest: dest,
+      children: children,
+      className: calculatedClassNameForLink,
+      color: navLinkColorInput,
+      button: true
+    };
+  } else {
+    linkPropsToPass = {
+      ...restOfLinkComponentProps,
+      dest: dest,
+      children: children,
+      className: calculatedClassNameForLink,
+      color: navLinkColorInput || "c-nav-fg",
+      button: button
+    };
+  }
+
   return (
-    <Link
-      {...linkProps}
-      onClick={onClick}
-      className={`text-nowrap ${props.className || ""} ${
-        props.active ? "font-weight-bold" : ""
-      }`}
-    />
+    <span
+      onClick={handleWrapperClick}
+      className="nav-link-wrapper"
+      style={{ display: "contents" }}>
+      <Link {...linkPropsToPass} />
+    </span>
   );
 };
 
@@ -128,7 +226,7 @@ const ContextualDropdown: component_.base.View<
       <DropdownToggle tag="div">
         <Link
           symbol_={rightPlacement(iconLinkSymbol("caret-down"))}
-          symbolClassName="mr-n1"
+          symbolClassName="me-n1"
           iconSymbolSize={DROPDOWN_CARET_SIZE}
           loading={loading}
           button
@@ -322,7 +420,7 @@ const DesktopAccountMenu: component_.base.View<Props> = (props) => {
           {menu.value.map((action, i) => (
             <AccountAction
               action={action}
-              className={i !== menu.value.length - 1 ? "mr-3" : ""}
+              className={i !== menu.value.length - 1 ? "me-3" : ""}
               dispatch={dispatch}
               color="c-nav-fg"
               key={`desktop-account-menu-action-${i}`}
@@ -359,7 +457,7 @@ const MobileAccountMenu: component_.base.View<Props> = (props) => {
             action={clonedAction}
             color="c-nav-fg-alt"
             className={`${i !== arr.length - 1 ? marginClassName : ""} ${
-              active && !button ? "font-weight-bold" : ""
+              active && !button ? "fw-bold" : ""
             }`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`}
@@ -370,7 +468,7 @@ const MobileAccountMenu: component_.base.View<Props> = (props) => {
   );
   switch (menu.tag) {
     case "unauthenticated":
-      return <div className="d-flex">{viewActions(menu.value, "mr-3")}</div>;
+      return <div className="d-flex">{viewActions(menu.value, "me-3")}</div>;
     case "authenticated":
       return (
         <div className="d-flex flex-column align-items-stretch">
@@ -420,7 +518,7 @@ const MobileMenu: component_.base.View<Props> = (props) => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
   const { appLinks } = props;
   const linkClassName = (link: NavLink, numLinks: number, i: number) =>
-    `${link.active && !link.button ? "font-weight-bold" : ""} ${
+    `${link.active && !link.button ? "fw-bold" : ""} ${
       i < numLinks - 1 ? "mb-3" : ""
     }`;
   return (
@@ -466,7 +564,8 @@ const MobileMenu: component_.base.View<Props> = (props) => {
 };
 
 const TopNavbar: component_.base.View<Props> = (props) => {
-  const { state, dispatch, isLoading } = props;
+  const { state, dispatch } = props; // isLoading
+  const isLoading = true;
   return (
     <div className="main-nav-top-navbar-wrapper">
       <div className="main-nav-top-navbar">
@@ -538,7 +637,7 @@ const ContextualLinks: component_.base.View<
               ...link,
               color: link.color || "c-nav-fg-alt",
               size: link.button ? "sm" : undefined,
-              className: `ml-3 ${link.button ? "" : "font-size-small"}`
+              className: `ms-3 ${link.button ? "" : "font-size-small"}`
             } as NavLink;
             return (
               <NavLink
@@ -567,7 +666,7 @@ const ContextualLinks: component_.base.View<
 const DesktopBottomNavbar: component_.base.View<Props> = (props) => {
   const { appLinks, contextualActions } = props;
   const linkClassName = (link: NavLink) =>
-    `${link.active && !link.button ? "font-weight-bold" : ""}`;
+    `${link.active && !link.button ? "fw-bold" : ""}`;
   if (!appLinks.length && !contextualActions) {
     return null;
   }

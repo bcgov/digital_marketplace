@@ -104,7 +104,7 @@ const SidebarLink: component_.base.View<SidebarLinkProps> = (props) => {
           ? "text-c-sidebar-menu-link-active-fg"
           : "text-c-sidebar-menu-link-inactive-fg"
       }`}>
-      <span className={caret ? "mr-2" : undefined}>{text}</span>
+      <span className={caret ? "me-2" : undefined}>{text}</span>
       {caret ? (
         <Icon
           name="caret-down"

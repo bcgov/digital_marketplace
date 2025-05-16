@@ -354,7 +354,7 @@ const ControlSeparator: component_.base.View<{ desktopOnly?: boolean }> = ({
 }) => {
   return (
     <div
-      className={`mr-3 border-left h-100 ${
+      className={`me-3 border-start h-100 ${
         desktopOnly ? "d-none d-sm-block" : ""
       }`}></div>
   );

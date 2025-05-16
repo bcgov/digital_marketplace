@@ -240,7 +240,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({
     ],
     (rc: ReportCard): ReportCard => ({
       ...rc,
-      className: "flex-grow-1 mr-3 mb-4"
+      className: "flex-grow-1 me-3 mb-4"
     })
   );
 

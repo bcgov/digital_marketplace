@@ -37,7 +37,7 @@ const ProgramType: component.base.View<Props> = ({
   })();
   return (
     <div
-      className={`d-flex flex-nowrap align-items-center font-weight-bold text-info ${sizeClassName} ${className}`}>
+      className={`d-flex flex-nowrap align-items-center fw-bold text-info ${sizeClassName} ${className}`}>
       <Icon
         className="me-2 flex-shrink-0 flex-grow-0"
         width={iconSize}

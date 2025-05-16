@@ -244,7 +244,7 @@ export function ConditionalLabel<
   props: ViewProps<Value, ChildState, InnerChildMsg>
 ): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, label, required, disabled, labelClassName, action } = props;
-  const className = `font-weight-bold d-flex flex-nowrap align-items-end ${
+  const className = `fw-bold d-flex flex-nowrap align-items-end ${
     labelClassName || ""
   }`;
   if (label) {

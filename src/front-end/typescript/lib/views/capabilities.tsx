@@ -41,7 +41,7 @@ const Capability: component.base.View<CapabilityProps> = ({
         />
       ) : null}
       <div
-        className={`py-1 font-size-small text-nowrap mr-2 ${
+        className={`py-1 font-size-small text-nowrap me-2 ${
           checked || !showChecked ? "text-body" : "text-secondary"
         }`}>
         {capability}
@@ -49,7 +49,7 @@ const Capability: component.base.View<CapabilityProps> = ({
       {showFullOrPartTime ? (
         <div
           style={{ width: "2rem", height: "1.75rem" }}
-          className={`d-flex justify-content-center align-items-center flex-shrink-0 small ml-auto rounded font-weight-bold text-white ${
+          className={`d-flex justify-content-center align-items-center flex-shrink-0 small ms-auto rounded fw-bold text-white ${
             fullTime ? "bg-c-capability-ft-bg" : "bg-c-capability-pt-bg"
           }`}>
           {fullTime ? "F/T" : "P/T"}
@@ -67,7 +67,7 @@ const Capabilities: component.base.View<Props> = ({
   showFullOrPartTime = false
 }) => {
   return (
-    <Row noGutters className={`border-top border-left ${className}`}>
+    <Row noGutters className={`border-top border-start ${className}`}>
       {capabilities.map((c, i) => (
         <Col xs="12" md={grid ? "6" : undefined} key={`phase-capability-${i}`}>
           <Capability

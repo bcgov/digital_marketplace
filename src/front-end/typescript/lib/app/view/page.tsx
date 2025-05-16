@@ -250,7 +250,7 @@ export function view<
                   md={sidebarColWidth}
                   className={`sidebar bg-${
                     sidebar.color
-                  } pr-md-4 pr-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 align-self-start align-self-md-stretch ${
+                  } pe-md-4 pe-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 align-self-start align-self-md-stretch ${
                     isEmptyOnMobile ? "pb-md-6" : "pb-5"
                   }`}>
                   <ViewAlertsAndBreadcrumbs

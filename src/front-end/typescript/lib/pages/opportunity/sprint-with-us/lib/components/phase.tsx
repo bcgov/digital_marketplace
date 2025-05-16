@@ -393,7 +393,7 @@ export const view: component_.base.View<Props> = (props) => {
       icon={icon}
       iconWidth={2}
       iconHeight={2}
-      iconClassName="mr-3"
+      iconClassName="me-3"
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}

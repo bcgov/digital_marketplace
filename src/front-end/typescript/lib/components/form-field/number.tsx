@@ -99,17 +99,9 @@ const ChildView: ChildComponent["view"] = (props) => {
   }
   return (
     <InputGroup>
-      {prefix ? (
-        <InputGroup addonType="prepend">
-          <InputGroupText>{prefix}</InputGroupText>
-        </InputGroup>
-      ) : null}
+      {prefix ? <InputGroupText>{prefix}</InputGroupText> : null}
       {input}
-      {suffix ? (
-        <InputGroup addonType="append">
-          <InputGroupText>{suffix}</InputGroupText>
-        </InputGroup>
-      ) : null}
+      {suffix ? <InputGroupText>{suffix}</InputGroupText> : null}
     </InputGroup>
   );
 };

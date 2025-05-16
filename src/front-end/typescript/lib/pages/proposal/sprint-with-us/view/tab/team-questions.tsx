@@ -1180,7 +1180,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                   <div className="d-flex h-100">
                     <div
                       className={[
-                        "flex-shrink-0 mr-3",
+                        "flex-shrink-0 me-3",
                         question.minimumScore &&
                         questionEvaluationScore.score < question.minimumScore
                           ? "bg-warning"
@@ -1220,7 +1220,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
             <div className="d-flex h-100">
               <div
                 className={[
-                  "flex-shrink-0 mr-3 mb-3",
+                  "flex-shrink-0 me-3 mb-3",
                   hasScoreBelowMinimum ? "bg-danger" : ""
                 ].join(" ")}
                 style={{ width: "0.25em" }}
@@ -1236,7 +1236,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
             <div className="d-flex align-items-start">
               <NumberField.view
                 className={[
-                  "chair-evaluation mr-3",
+                  "chair-evaluation me-3",
                   hasScoreBelowMinimum ? "warn" : ""
                 ].join(" ")}
                 extraChildProps={{ suffix: "points" }}

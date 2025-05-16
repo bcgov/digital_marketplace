@@ -1134,7 +1134,7 @@ const ReviewPhaseView: component_.base.View<ReviewPhaseViewProps> = ({
       icon={icon}
       iconWidth={2}
       iconHeight={2}
-      iconClassName="mr-3"
+      iconClassName="me-3"
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
@@ -1178,7 +1178,7 @@ const ReviewPhaseView: component_.base.View<ReviewPhaseViewProps> = ({
                   />
                 ) : null}
                 {m.membershipStatus === MembershipStatus.Pending ? (
-                  <PendingBadge className={m.scrumMaster ? "ml-2" : "ml-3"} />
+                  <PendingBadge className={m.scrumMaster ? "ms-2" : "ms-3"} />
                 ) : null}
               </div>
             ))}

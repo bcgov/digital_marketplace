@@ -150,7 +150,7 @@ const Capability: component_.base.View<CapabilityProps> = ({
         />
       </div>
       {open ? (
-        <ul className={open ? "py-5 pr-4 pl-5 m-0" : "d-none"}>
+        <ul className={open ? "py-5 pe-4 ps-5 m-0" : "d-none"}>
           {description.map((item, i) => (
             <li key={`capability-${index}-description-${i}`}>{item}</li>
           ))}

@@ -58,7 +58,7 @@ export const view: component.base.View<Props> = (props) => {
             <Icon
               name={icon}
               color={iconColor}
-              className={`mr-2 ${iconClassName}`}
+              className={`me-2 ${iconClassName}`}
               width={iconWidth}
               height={iconHeight}
             />
