@@ -12,6 +12,7 @@ import {
   validateAttachments,
   validateTWUEvaluationPanelMembers,
   validateTWUOpportunityId,
+  validateTWUResourceQuestionResponseEvaluation,
   validateTWUResources
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
@@ -43,6 +44,7 @@ import {
   allValid,
   getInvalidValue,
   getValidValue,
+  Invalid,
   isInvalid,
   isValid,
   valid,
@@ -51,8 +53,16 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
+import * as questionEvaluationValidation from "shared/lib/validation/evaluations/team-with-us/resource-questions";
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
+import {
+  CreateTWUResourceQuestionResponseEvaluationScoreValidationErrors,
+  isValidConsensusStatusChange,
+  isValidEvaluationStatusChange,
+  TWUResourceQuestionResponseEvaluation,
+  TWUResourceQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 /**
  * @remarks
@@ -93,6 +103,14 @@ interface ValidatedUpdateRequestBody {
     | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
+    | ADT<
+        "submitIndividualQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
+    | ADT<
+        "submitConsensusQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
     | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
 }
 
@@ -113,6 +131,11 @@ type CreateRequestBody = Omit<
   resources: CreateTWUResourceBody[];
   status: string;
 };
+
+interface ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "proposals"> {
+  evaluations: TWUResourceQuestionResponseEvaluation[];
+}
 
 type ValidatedDeleteRequestBody = Id;
 
@@ -604,11 +627,15 @@ const update: crud.Update<
       const twuOpportunity = validatedTWUOpportunity.value;
 
       if (
-        !(await permissions.editTWUOpportunity(
-          connection,
-          request.session,
-          request.params.id
-        )) ||
+        (![
+          "submitIndividualQuestionEvaluations",
+          "submitConsensusQuestionEvaluations"
+        ].includes(request.body.tag) &&
+          !(await permissions.editTWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          ))) ||
         !permissions.isSignedIn(request.session)
       ) {
         return invalid({
@@ -1063,6 +1090,259 @@ const update: crud.Update<
             body: adt("addAddendum", validatedAddendumText.value)
           } as ValidatedUpdateRequestBody);
         }
+        case "submitIndividualQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.proposals.map<
+              Promise<
+                Validation<
+                  TWUResourceQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (proposalId) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedTWUResourceQuestionResponseEvaluation =
+                await validateTWUResourceQuestionResponseEvaluation(
+                  connection,
+                  proposalId,
+                  request.session.user.id,
+                  request.session
+                );
+
+              if (isInvalid(validatedTWUResourceQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedTWUResourceQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editTWUResourceQuestionResponseEvaluation(
+                  request.session,
+                  twuOpportunity,
+                  validatedTWUResourceQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !isValidEvaluationStatusChange(
+                  validatedTWUResourceQuestionResponseEvaluation.value.status,
+                  TWUResourceQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateTWUResourceQuestionResponseEvaluationScores(
+                  validatedTWUResourceQuestionResponseEvaluation.value.scores,
+                  validatedTWUOpportunity.value.resourceQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateTWUResourceQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedTWUOpportunity.value.resourceQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitTWUResourceQuestionResponseEvaluation(
+                  request.session,
+                  twuOpportunity,
+                  validatedTWUResourceQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(
+                validatedTWUResourceQuestionResponseEvaluation.value
+              );
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitIndividualQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitIndividualQuestionEvaluations", {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as TWUResourceQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
+        case "submitConsensusQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.proposals.map<
+              Promise<
+                Validation<
+                  TWUResourceQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (proposalId) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedTWUResourceQuestionResponseEvaluation =
+                await validateTWUResourceQuestionResponseEvaluation(
+                  connection,
+                  proposalId,
+                  request.session.user.id,
+                  request.session,
+                  true
+                );
+
+              if (isInvalid(validatedTWUResourceQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedTWUResourceQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editTWUResourceQuestionResponseConsensus(
+                  request.session,
+                  twuOpportunity,
+                  validatedTWUResourceQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !isValidConsensusStatusChange(
+                  validatedTWUResourceQuestionResponseEvaluation.value.status,
+                  TWUResourceQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateTWUResourceQuestionResponseEvaluationScores(
+                  validatedTWUResourceQuestionResponseEvaluation.value.scores,
+                  validatedTWUOpportunity.value.resourceQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateTWUResourceQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedTWUOpportunity.value.resourceQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitTWUResourceQuestionResponseConsensus(
+                  request.session,
+                  twuOpportunity,
+                  validatedTWUResourceQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(
+                validatedTWUResourceQuestionResponseEvaluation.value
+              );
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitConsensusQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitConsensusQuestionEvaluations", {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as TWUResourceQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         case "editEvaluationPanel": {
           if (!canChangeEvaluationPanel(twuOpportunity)) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
@@ -1253,6 +1533,28 @@ const update: crud.Update<
               !Object.values(doNotNotify).includes(dbResult.value.status)
             ) {
               twuOpportunityNotifications.handleTWUUpdated(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "submitIndividualQuestionEvaluations":
+            dbResult = await db.submitIndividualTWUQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "submitConsensusQuestionEvaluations":
+            dbResult = await db.submitConsensusTWUQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUQuestionConsensusSubmitted(
                 connection,
                 dbResult.value
               );

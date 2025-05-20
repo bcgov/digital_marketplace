@@ -2195,7 +2195,7 @@ const update: crud.Update<
             );
             break;
           case "submitIndividualQuestionEvaluations":
-            dbResult = await db.submitIndividualQuestionEvaluations(
+            dbResult = await db.submitIndividualSWUQuestionEvaluations(
               connection,
               request.params.id,
               body.value,
@@ -2203,7 +2203,7 @@ const update: crud.Update<
             );
             break;
           case "submitConsensusQuestionEvaluations":
-            dbResult = await db.submitConsensusQuestionEvaluations(
+            dbResult = await db.submitConsensusSWUQuestionEvaluations(
               connection,
               request.params.id,
               body.value,
@@ -2230,7 +2230,7 @@ const update: crud.Update<
             }
             break;
           case "finalizeQuestionConsensuses":
-            dbResult = await db.finalizeQuestionConsensus(
+            dbResult = await db.finalizeSWUQuestionConsensus(
               connection,
               request.params.id,
               body.value,

@@ -209,6 +209,99 @@ export async function newTWUPanelT(
   return emails;
 }
 
+export const readyForQuestionConsensusTWUOpportunity = makeSend(
+  readyForQuestionConsensusTWUOpportunityT
+);
+
+export async function readyForQuestionConsensusTWUOpportunityT(
+  recipients: User[],
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title = "A Team With Us Opportunity Is Ready for Question Consensus";
+  const description =
+    "All evaluators have submitted their scores and you may now begin question consensuses " +
+    "for the following Digital Marketplace opportunity:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "TWU opportunity ready for question consensus; sent to evaluation panel chair and opportunity author.",
+      to: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
+export const questionConsensusTWUOpportunitySubmitted = makeSend(
+  questionConsensusTWUOpportunitySubmittedT
+);
+
+export async function questionConsensusTWUOpportunitySubmittedT(
+  recipients: User[],
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title =
+    "A Team With Us Opportunity Question Consensus Has Been Submitted";
+  const description =
+    "The following Digital Marketplace opportunity has had its question consensus submitted:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "TWU opportunity question consensus submitted; sent to opportunity author and admins.",
+      to: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
+export const questionConsensusTWUOpportunityFinalized = makeSend(
+  questionConsensusTWUOpportunitySubmittedT
+);
+
+export async function questionConsensusTWUOpportunityFinalizedT(
+  recipients: User[],
+  opportunity: TWUOpportunity
+): Promise<Emails> {
+  const title =
+    "A Team With Us Opportunity Question Consensus Has Been Finalized";
+  const description =
+    "The following Digital Marketplace opportunity question consensus finalized:";
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
+      summary:
+        "TWU opportunity question consensus finalized; sent to opportunity author and chair.",
+      to: batch.map((r) => r.email || ""),
+      subject: title,
+      html: templates.simple({
+        title,
+        description,
+        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
+        callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
+      })
+    });
+  }
+  return emails;
+}
+
 /**
  * Creates content for use in an email template.
  *
@@ -463,8 +556,82 @@ export async function handleTWUPanelChange(
   }
 }
 
+export async function handleTWUReadyForQuestionConsensus(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify chair that they can begin consensuses and author of evaluation progress
+  const chairMember =
+    opportunity.evaluationPanel &&
+    opportunity.evaluationPanel.find(({ chair }) => chair);
+
+  const recipients = (
+    await Promise.all([
+      ...(chairMember ? [db.readOneUser(connection, chairMember.user.id)] : []),
+      ...(opportunity.createdBy
+        ? [db.readOneUser(connection, opportunity.createdBy.id)]
+        : [])
+    ])
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((user): user is User => !!user);
+  if (recipients.length) {
+    await readyForQuestionConsensusTWUOpportunity(recipients, opportunity);
+  }
+}
+
+export async function handleTWUQuestionConsensusSubmitted(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify author and admins that consensus has been submitted.
+  const author =
+    opportunity.createdBy &&
+    getValidValue(
+      await db.readOneUser(connection, opportunity.createdBy.id),
+      null
+    );
+  // Notify all admin users of the submitted TWU
+  const adminUsers =
+    getValidValue(
+      await db.readManyUsersByRole(connection, UserType.Admin),
+      null
+    ) || [];
+  const recipients = [author, ...adminUsers].filter(
+    (user): user is User => !!user
+  );
+  if (recipients.length) {
+    await questionConsensusTWUOpportunitySubmitted(recipients, opportunity);
+  }
+}
+
+export async function handleTWUQuestionConsensusFinalized(
+  connection: db.Connection,
+  opportunity: TWUOpportunity
+): Promise<void> {
+  // Notify chair and author that consensus has been finalized
+  const chairMember =
+    opportunity.evaluationPanel &&
+    opportunity.evaluationPanel.find(({ chair }) => chair);
+
+  const recipients = (
+    await Promise.all([
+      ...(chairMember ? [db.readOneUser(connection, chairMember.user.id)] : []),
+      ...(opportunity.createdBy
+        ? [db.readOneUser(connection, opportunity.createdBy.id)]
+        : [])
+    ])
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((user): user is User => !!user);
+
+  if (recipients.length) {
+    questionConsensusTWUOpportunityFinalized(recipients, opportunity);
+  }
+}
+
 /**
- * Notify gov user that the opportunity is ready
+ * Notify panel that the opportunity is ready
  *
  * @param connection
  * @param opportunity
@@ -473,15 +640,19 @@ export async function handleTWUReadyForEvaluation(
   connection: db.Connection,
   opportunity: TWUOpportunity
 ): Promise<void> {
-  const author =
-    (opportunity.createdBy &&
-      getValidValue(
-        await db.readOneUser(connection, opportunity.createdBy.id),
-        null
-      )) ||
-    null;
-  if (author) {
-    await readyForEvalTWUOpportunity(author, opportunity);
+  const panel =
+    opportunity.evaluationPanel &&
+    (
+      await Promise.all(
+        opportunity.evaluationPanel
+          .filter(({ evaluator }) => evaluator) // Only notify evaluators
+          .map(({ user }) => db.readOneUser(connection, user.id))
+      )
+    )
+      .map((user) => getValidValue(user, null))
+      .filter((member): member is User => !!member);
+  if (panel?.length) {
+    await readyForEvalTWUOpportunity(panel, opportunity);
   }
 }
 
@@ -490,21 +661,23 @@ export const readyForEvalTWUOpportunity = makeSend(readyForEvalTWUOpportunityT);
 /**
  * Generates email content
  *
- * @param recipient
+ * @param recipients
  * @param opportunity
  */
 export async function readyForEvalTWUOpportunityT(
-  recipient: User,
+  recipients: User[],
   opportunity: TWUOpportunity
 ): Promise<Emails> {
   const title = "Your Team With Us Opportunity is Ready to Be Evaluated";
   const description =
     "Your Digital Marketplace opportunity has reached its proposal deadline.";
-  return [
-    {
+  const emails: Emails = [];
+  for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
+    const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
+    emails.push({
       summary:
         "TWU opportunity proposal deadline reached; sent to government author.",
-      to: recipient.email || [],
+      to: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
         title,
@@ -522,13 +695,15 @@ export async function readyForEvalTWUOpportunityT(
         ),
         callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
       })
-    }
-  ];
+    });
+  }
+
+  return emails;
 }
 
-export const editTWUPanel = makeSend(editSWUPanelT);
+export const editTWUPanel = makeSend(editTWUPanelT);
 
-export async function editSWUPanelT(
+export async function editTWUPanelT(
   recipients: User[],
   opportunity: TWUOpportunity
 ): Promise<Emails> {

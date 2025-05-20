@@ -80,7 +80,7 @@ interface TWUProposalStatusRecord {
   note: string;
 }
 
-interface RawTWUProposal
+export interface RawTWUProposal
   extends Omit<
     TWUProposal,
     | "createdBy"
@@ -1668,3 +1668,5 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
     return authorId ? await readOneUser(connection, authorId) : valid(null);
   }
 );
+
+export { RawHistoryRecord as RawTWUProposalHistoryRecord };

@@ -735,18 +735,6 @@ export async function readOneSWUProposal(
         ))) ||
       false
     );
-  } else if (
-    session &&
-    [
-      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
-      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
-    ].includes(proposal.opportunity.status)
-  ) {
-    return await isSWUOpportunityEvaluationPanelEvaluator(
-      connection,
-      session,
-      proposal.opportunity.id
-    );
   }
   return false;
 }
@@ -775,18 +763,6 @@ export async function readManySWUProposals(
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
     return true;
-  } else if (
-    session &&
-    [
-      SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
-      SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
-    ].includes(opportunity.status)
-  ) {
-    return await isSWUOpportunityEvaluationPanelEvaluator(
-      connection,
-      session,
-      opportunity.id
-    );
   }
   return false;
 }
@@ -1263,14 +1239,24 @@ export async function readOneTWUProposal(
   if (
     isAdmin(session) ||
     (session &&
-      (await isTWUOpportunityAuthor(
+      ((await isTWUOpportunityAuthor(
         connection,
         session.user,
         proposal.opportunity.id
-      )))
+      )) ||
+        (await isTWUOpportunityEvaluationPanelEvaluator(
+          connection,
+          session,
+          proposal.opportunity.id
+        )) ||
+        (await isTWUOpportunityEvaluationPanelChair(
+          connection,
+          session,
+          proposal.opportunity.id
+        ))))
   ) {
-    // Only provide permission to admins/gov owners if opportunity is not in draft/published
-    // And proposal is not in draft/submitted
+    // Only provide permission to admins/gov owners/panel members if
+    // opportunity is not in draft/published and proposal is not in draft/submitted
     return (
       isSignedIn(session) &&
       doesTWUOpportunityStatusAllowGovToViewProposals(
@@ -1302,12 +1288,21 @@ export async function readManyTWUProposals(
   session: Session,
   opportunity: TWUOpportunity
 ): Promise<boolean> {
+  const panelMember = opportunity.evaluationPanel?.find(
+    (member) => member.user.id === session?.user.id
+  );
   if (
     isAdmin(session) ||
     (session &&
-      (await isTWUOpportunityAuthor(connection, session.user, opportunity.id)))
+      (await isTWUOpportunityAuthor(
+        connection,
+        session.user,
+        opportunity.id
+      ))) ||
+    panelMember
   ) {
-    // Only provide permission to admins/gov owners if opportunity is not in draft or published
+    // Only provide permission to admins/gov owners/panel members if opportunity
+    // is not in draft or published
     return doesTWUOpportunityStatusAllowGovToViewProposals(opportunity.status);
   } else if (isVendor(session)) {
     // If a vendor, only proposals they have authored will be returned (filtered at db layer)
@@ -1594,6 +1589,34 @@ export function editTWUResourceQuestionResponseConsensus(
 
 export function editTWUResourceQuestionResponseEvaluation(
   session: AuthenticatedSession,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
+  );
+}
+
+export function submitTWUResourceQuestionResponseConsensus(
+  session: Session,
+  opportunity: TWUOpportunitySlim,
+  evaluation: TWUResourceQuestionResponseEvaluation
+): boolean {
+  return (
+    !!session &&
+    (isAdmin(session) || isGovernment(session)) &&
+    evaluation.evaluationPanelMember === session.user.id &&
+    opportunity.status ===
+      TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
+  );
+}
+
+export function submitTWUResourceQuestionResponseEvaluation(
+  session: Session,
   opportunity: TWUOpportunitySlim,
   evaluation: TWUResourceQuestionResponseEvaluation
 ): boolean {

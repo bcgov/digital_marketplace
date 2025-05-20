@@ -35,7 +35,10 @@ import {
   NUM_SCORE_DECIMALS,
   TWUProposalSlim
 } from "shared/lib/resources/proposal/team-with-us";
-import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
+import {
+  TWUResourceQuestionResponseEvaluation,
+  TWUResourceQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateTWUResourceQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/team-with-us/resource-questions";
@@ -121,7 +124,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             "canEvaluationsBeSubmitted",
             opportunity.status ===
               TWUOpportunityStatus.EvaluationResourceQuestionsIndividual &&
-              isPanelMember
+              isPanelMember &&
+              evaluations.every(
+                ({ status }) =>
+                  status === TWUResourceQuestionResponseEvaluationStatus.Draft
+              )
           )
           .set("isPanelMember", isPanelMember),
         [component_.cmd.dispatch(component_.page.readyMsg())]

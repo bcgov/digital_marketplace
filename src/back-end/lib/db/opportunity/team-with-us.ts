@@ -1,13 +1,24 @@
 import { generateUuid } from "back-end/lib";
 import {
+  allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitted,
   Connection,
   RawTWUOpportunitySubscriber,
+  RawTWUProposal,
+  RawTWUProposalHistoryRecord,
+  RawTWUResourceQuestionResponseEvaluation,
+  readManyTWUProposals,
+  readManyTWUResourceQuestionResponseEvaluations,
   readOneOrganizationContactEmail,
   readOneServiceAreaByServiceAreaId,
   readOneTWUAwardedProposal,
   readSubmittedTWUProposalCount,
   Transaction,
-  tryDb
+  tryDb,
+  TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  TWU_CHAIR_EVALUATION_TABLE_NAME,
+  TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  TWU_EVALUATOR_EVALUATION_TABLE_NAME,
+  TWUResourceQuestionResponseEvaluationStatusRecord
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneUser, readOneUserSlim } from "back-end/lib/db/user";
@@ -37,11 +48,18 @@ import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
 import {
+  compareTWUProposalsForPublicSector,
+  TWUProposalEvent,
   TWUProposalSlim,
   TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
+import {
+  TWUResourceQuestionResponseEvaluation,
+  TWUResourceQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/team-with-us/resource-questions";
+import { TWU_CODE_CHALLENGE_SCREEN_IN_COUNT } from "shared/config";
 
 /**
  * @remarks
@@ -76,6 +94,11 @@ export interface CreateTWUOpportunityParams
 interface UpdateTWUOpportunityParams
   extends Omit<CreateTWUOpportunityParams, "status"> {
   id: Id;
+}
+
+interface SubmitQuestionEvaluationsWithNoteParams {
+  note: string;
+  evaluations: TWUResourceQuestionResponseEvaluation[];
 }
 
 interface CreateTWUEvaluationPanelMemberParams
@@ -548,7 +571,7 @@ export function generateTWUOpportunityQuery(
   return query;
 }
 
-// TODO - Unlike SWU, TWU does not currently have the ability to add attachments to Notes
+// TODO - Unlike TWU, TWU does not currently have the ability to add attachments to Notes
 // async function createTWUOpportunityNoteAttachments(
 //   connection: Connection,
 //   trx: Transaction,
@@ -1592,4 +1615,302 @@ export const readOneTWUEvaluationPanelMember = tryDb<
       ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
       : null
   );
+});
+
+export const submitIndividualTWUQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  const notify = await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({ evaluationPanelMember, proposal }) => {
+          const [statusRecord] =
+            await connection<TWUResourceQuestionResponseEvaluationStatusRecord>(
+              TWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember,
+                  proposal,
+                  createdAt: now,
+                  status: TWUResourceQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawTWUResourceQuestionResponseEvaluation>(
+            TWU_EVALUATOR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({
+              proposal,
+              evaluationPanelMember
+            })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update resource question evaluation");
+          }
+        }
+      )
+    );
+
+    // Update opportunity status if all evaluations complete
+    if (
+      await allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitted(
+        connection,
+        trx,
+        id,
+        evaluationParams.evaluations.map(({ proposal }) => proposal)
+      )
+    ) {
+      const result = await updateTWUOpportunityStatus(
+        connection,
+        id,
+        TWUOpportunityStatus.EvaluationResourceQuestionsConsensus,
+        "",
+        session
+      );
+
+      if (!result) {
+        throw new Error("unable to update opportunity");
+      }
+
+      // Notify chair and author
+      return true;
+    }
+    // Some evaluations are incomplete
+    return false;
+  });
+
+  const dbResult = await readOneTWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update opportunity");
+  }
+
+  if (notify) {
+    const opportunity = getValidValue(dbResult, null);
+    if (opportunity) {
+      twuOpportunityNotifications.handleTWUReadyForQuestionConsensus(
+        connection,
+        opportunity
+      );
+    }
+  }
+
+  return valid(dbResult.value);
+});
+
+export const submitConsensusTWUQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({ evaluationPanelMember, proposal }) => {
+          const [statusRecord] =
+            await connection<TWUResourceQuestionResponseEvaluationStatusRecord>(
+              TWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember,
+                  proposal,
+                  createdAt: now,
+                  status: TWUResourceQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawTWUResourceQuestionResponseEvaluation>(
+            TWU_CHAIR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({
+              proposal,
+              evaluationPanelMember
+            })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update resource question evaluation");
+          }
+        }
+      )
+    );
+  });
+
+  const dbResult = await readOneTWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update opportunity");
+  }
+  return valid(dbResult.value);
+});
+
+export const finalizeTWUQuestionConsensus = tryDb<
+  [Id, string, AuthenticatedSession],
+  TWUOpportunity
+>(async (connection, id, note, session) => {
+  const now = new Date();
+  return await connection.transaction(async (trx) => {
+    const opportunity = getValidValue(
+      await readOneTWUOpportunity(connection, id, session),
+      null
+    );
+    if (!opportunity) {
+      throw new Error("unable to read opportunity");
+    }
+    const proposals = getValidValue<TWUProposalSlim[]>(
+      await readManyTWUProposals(connection, session, id),
+      []
+    );
+    const consensuses = getValidValue<TWUResourceQuestionResponseEvaluation[]>(
+      await readManyTWUResourceQuestionResponseEvaluations(
+        connection,
+        session,
+        id,
+        true
+      ),
+      []
+    );
+    const consensusesWithProposals = consensuses.map((consensus) => {
+      const proposal = proposals.find(
+        (proposal) => proposal.id === consensus.proposal
+      );
+      if (!proposal) {
+        throw new Error("unable to read consensuses");
+      }
+      return {
+        ...consensus,
+        proposal
+      };
+    });
+
+    // Log scores
+    for (const consensusWithProposal of consensusesWithProposals) {
+      const [eventRecord] = await connection<
+        RawTWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("twuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: consensusWithProposal.proposal.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            event: TWUProposalEvent.QuestionsScoreEntered,
+            note: `Resource question scores were entered. ${consensusWithProposal.scores
+              .map((s, i) => `Q${i + 1}: ${s.score}`)
+              .join("; ")}.`
+          },
+          "*"
+        );
+
+      // Update proposal root record
+      await connection<RawTWUProposal>("twuProposals")
+        .transacting(trx)
+        .where({ id: consensusWithProposal.proposal.id })
+        .update(
+          {
+            updatedAt: now,
+            updatedBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!eventRecord) {
+        throw new Error("unable to log consensus scores");
+      }
+    }
+
+    // Filter candidates that are below the minimum score or that have the wrong status
+    const candidates = consensusesWithProposals.reduce<TWUProposalSlim[]>(
+      (candidates, consensusWithProposal) => {
+        if (
+          consensusWithProposal.proposal.status !==
+          TWUProposalStatus.UnderReviewResourceQuestions
+        ) {
+          return candidates;
+        }
+        const suitable = opportunity.resourceQuestions.every((question) => {
+          if (!question.minimumScore) {
+            return true;
+          }
+          const consensusScore = consensusWithProposal.scores.find(
+            (score) => score.order === question.order
+          );
+          return (
+            consensusScore && consensusScore.score >= question.minimumScore
+          );
+        });
+        return suitable
+          ? [...candidates, consensusWithProposal.proposal]
+          : candidates;
+      },
+      []
+    );
+
+    // Screen in top candidates
+    candidates.sort((a, b) =>
+      compareTWUProposalsForPublicSector(a, b, "questionsScore")
+    );
+    for (const candidate of candidates.slice(
+      0,
+      TWU_CODE_CHALLENGE_SCREEN_IN_COUNT
+    )) {
+      const [statusRecord] = await connection<
+        RawTWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("twuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: candidate.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            status: TWUProposalStatus.UnderReviewChallenge,
+            note
+          },
+          "*"
+        );
+
+      if (!statusRecord) {
+        throw new Error("unable to screen in proponents");
+      }
+    }
+
+    const result = await updateTWUOpportunityStatus(
+      connection,
+      id,
+      TWUOpportunityStatus.EvaluationChallenge,
+      note,
+      session
+    );
+
+    if (!result) {
+      throw new Error("unable to finalize consensus scores");
+    }
+
+    return result;
+  });
 });

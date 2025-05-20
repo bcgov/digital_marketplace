@@ -1707,7 +1707,7 @@ export const addSWUOpportunityNote = tryDb<
   return valid(dbResult.value);
 });
 
-export const submitIndividualQuestionEvaluations = tryDb<
+export const submitIndividualSWUQuestionEvaluations = tryDb<
   [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, evaluationParams, session) => {
@@ -1785,7 +1785,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error("unable to add note");
+    throw new Error("unable to update opportunity");
   }
 
   if (notify) {
@@ -1801,7 +1801,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
   return valid(dbResult.value);
 });
 
-export const submitConsensusQuestionEvaluations = tryDb<
+export const submitConsensusSWUQuestionEvaluations = tryDb<
   [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, evaluationParams, session) => {
@@ -1857,7 +1857,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
   return valid(dbResult.value);
 });
 
-export const finalizeQuestionConsensus = tryDb<
+export const finalizeSWUQuestionConsensus = tryDb<
   [Id, string, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, note, session) => {

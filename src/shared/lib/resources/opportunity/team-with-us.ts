@@ -122,6 +122,7 @@ export function isTWUOpportunityStatusInEvaluation(
 export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Published,
   TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
+  TWUOpportunityStatus.EvaluationResourceQuestionsConsensus,
   TWUOpportunityStatus.EvaluationChallenge,
   TWUOpportunityStatus.Awarded
 ];

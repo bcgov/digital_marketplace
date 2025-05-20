@@ -35,7 +35,10 @@ import {
   NUM_SCORE_DECIMALS,
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
-import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
@@ -121,7 +124,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             "canEvaluationsBeSubmitted",
             opportunity.status ===
               SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
-              isPanelMember
+              isPanelMember &&
+              evaluations.every(
+                ({ status }) =>
+                  status === SWUTeamQuestionResponseEvaluationStatus.Draft
+              )
           )
           .set("isPanelMember", isPanelMember),
         [component_.cmd.dispatch(component_.page.readyMsg())]

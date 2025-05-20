@@ -11,7 +11,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/team-with-us/lib/views/view-tab-header";
-import ProposalResourceQuestionsTabCarousel from "front-end/lib/pages/proposal/team-with-us/lib/views/proposal-tab-carousel";
+import * as ResourceQuestionsCarousel from "front-end/lib/pages/proposal/team-with-us/lib/components/resource-questions-carousel";
 import * as Tab from "front-end/lib/pages/proposal/team-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
 import { ProposalMarkdown } from "front-end/lib/views/markdown";
@@ -65,6 +65,7 @@ export interface State extends Tab.Params {
   evaluationScores: EvaluationScore[];
   isEditing: boolean;
   isAuthor: boolean;
+  resourceQuestionsCarousel: Immutable<ResourceQuestionsCarousel.State>;
 }
 
 export type InnerMsg =
@@ -116,7 +117,8 @@ export type InnerMsg =
       >
     >
   | ADT<"scoreMsg", { childMsg: NumberField.Msg; rIndex: number }>
-  | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>;
+  | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>
+  | ADT<"resourceQuestionsCarousel", ResourceQuestionsCarousel.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -214,6 +216,13 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     params.questionEvaluation,
     false
   );
+  const [resourceQuestionsCarouselState, resourceQuestionsCarouselCmds] =
+    ResourceQuestionsCarousel.init({
+      viewerUser: params.viewerUser,
+      proposal: params.proposal,
+      proposals: params.proposals,
+      panelEvaluations: params.panelQuestionEvaluations
+    });
   return [
     {
       ...params,
@@ -227,9 +236,15 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       isEditing: !params.questionEvaluation,
       isAuthor:
         params.questionEvaluation?.evaluationPanelMember ===
-        params.viewerUser.id
+        params.viewerUser.id,
+      resourceQuestionsCarousel: immutable(resourceQuestionsCarouselState)
     },
-    evaluationScoreCmds
+    [
+      ...evaluationScoreCmds,
+      ...component_.cmd.mapMany(resourceQuestionsCarouselCmds, (msg) =>
+        adt("resourceQuestionsCarousel", msg)
+      )
+    ] as component_.Cmd<Msg>[]
   ];
 };
 
@@ -748,6 +763,15 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             childMsg: value
           }) as Msg
       });
+    case "resourceQuestionsCarousel":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["resourceQuestionsCarousel"],
+        childUpdate: ResourceQuestionsCarousel.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("resourceQuestionsCarousel", value)
+      });
+
     default:
       return [state, []];
   }
@@ -1059,12 +1083,11 @@ const ResourceQuestionResponsesIndividualEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
-      <ProposalResourceQuestionsTabCarousel
-        proposals={state.proposals}
-        proposal={state.proposal}
-        evaluation={state.questionEvaluation}
-        panelEvaluations={state.panelQuestionEvaluations}
-        tab="resourceQuestions"
+      <ResourceQuestionsCarousel.view
+        state={state.resourceQuestionsCarousel}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("resourceQuestionsCarousel" as const, value)
+        )}
       />
     </div>
   );
@@ -1342,12 +1365,11 @@ const ResourceQuestionResponsesChairEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
-      <ProposalResourceQuestionsTabCarousel
-        proposals={state.proposals}
-        proposal={state.proposal}
-        evaluation={state.questionEvaluation}
-        panelEvaluations={state.panelQuestionEvaluations}
-        tab="resourceQuestions"
+      <ResourceQuestionsCarousel.view
+        state={state.resourceQuestionsCarousel}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("resourceQuestionsCarousel" as const, value)
+        )}
       />
     </div>
   );
