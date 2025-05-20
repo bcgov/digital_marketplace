@@ -329,7 +329,6 @@ export function makeSidebarState(
           ...(canGovUserViewTabs("challenge")
             ? [makeSidebarLink("challenge", opportunity.id, activeTab)]
             : []),
-          makeSidebarLink("challenge", opportunity.id, activeTab),
           adt("heading", "Need Help?"),
           adt("link", {
             icon: "external-link-alt",
