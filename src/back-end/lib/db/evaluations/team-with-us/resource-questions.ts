@@ -385,7 +385,7 @@ export async function allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitte
       })
       .count("*"),
     // Questions for the most recent version
-    connection<RawTWUEvaluationPanelMember>("TWUResourceQuestions as questions")
+    connection<RawTWUEvaluationPanelMember>("twuResourceQuestions as questions")
       .transacting(trx)
       .join(
         connection.raw(
