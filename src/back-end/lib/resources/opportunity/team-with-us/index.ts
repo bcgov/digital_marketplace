@@ -111,7 +111,8 @@ interface ValidatedUpdateRequestBody {
         "submitConsensusQuestionEvaluations",
         ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
       >
-    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>;
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>
+    | ADT<"finalizeQuestionConsensuses", string>;
 }
 
 /**
@@ -982,6 +983,77 @@ const update: crud.Update<
             body: adt("publish", validatedPublishNote.value)
           });
         }
+        case "finalizeQuestionConsensuses": {
+          if (
+            !isValidStatusChange(
+              validatedTWUOpportunity.value.status,
+              TWUOpportunityStatus.EvaluationChallenge
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+
+          const consensuses = getValidValue<
+            TWUResourceQuestionResponseEvaluation[]
+          >(
+            await db.readManyTWUResourceQuestionResponseEvaluations(
+              connection,
+              request.session,
+              request.params.id,
+              true
+            ),
+            []
+          );
+
+          if (
+            !consensuses.every(
+              ({ status }) =>
+                status === TWUResourceQuestionResponseEvaluationStatus.Submitted
+            )
+          ) {
+            return invalid({
+              permissions: ["Not all consensuses have been submitted."]
+            });
+          }
+
+          const anyScreenableProponents =
+            twuOpportunity.resourceQuestions.reduce((valid, rq) => {
+              return (
+                valid ||
+                consensuses.some(
+                  (consensus) =>
+                    rq.minimumScore &&
+                    consensus.scores[rq.order].score >= rq.minimumScore
+                )
+              );
+            }, false);
+
+          if (!anyScreenableProponents) {
+            return invalid({
+              permissions: [
+                "You must have at least one proponent that can be screened into the Code Challenge."
+              ]
+            });
+          }
+
+          const validatedFinalizeQuestionConsensusesNote =
+            opportunityValidation.validateNote(request.body.value);
+          if (isInvalid(validatedFinalizeQuestionConsensusesNote)) {
+            return invalid({
+              opportunity: adt(
+                "finalizeQuestionConsensuses" as const,
+                validatedFinalizeQuestionConsensusesNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "finalizeQuestionConsensuses",
+              validatedFinalizeQuestionConsensusesNote.value
+            )
+          } as ValidatedUpdateRequestBody);
+        }
         case "startChallenge": {
           if (
             !isValidStatusChange(
@@ -1568,6 +1640,20 @@ const update: crud.Update<
             );
             if (isValid(dbResult)) {
               twuOpportunityNotifications.handleTWUPanelChange(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "finalizeQuestionConsensuses":
+            dbResult = await db.finalizeTWUQuestionConsensus(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            if (isValid(dbResult)) {
+              twuOpportunityNotifications.handleTWUQuestionConsensusFinalized(
                 connection,
                 dbResult.value
               );

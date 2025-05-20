@@ -475,6 +475,12 @@ export function isValidStatusChange(
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
+        TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
+      ].includes(to);
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
+      return [
+        TWUOpportunityStatus.Canceled,
+        TWUOpportunityStatus.Suspended,
         TWUOpportunityStatus.EvaluationChallenge
       ].includes(to);
     case TWUOpportunityStatus.EvaluationChallenge:

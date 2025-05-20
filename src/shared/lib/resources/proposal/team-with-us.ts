@@ -8,6 +8,7 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import { UserSlim, UserType } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Comparison, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
+import { TWUResourceQuestionResponseEvaluationScores } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 export const DEFAULT_TWU_PROPOSAL_TITLE = "Unknown";
 export const NUM_SCORE_DECIMALS = 2;
@@ -398,14 +399,14 @@ export function isValidStatusChange(
 
 // Return score out of 100 calculated from total points awarded to all questions / max possible
 export function calculateProposalResourceQuestionScore(
-  resourceQuestionResponses: TWUProposalResourceQuestionResponse[],
+  resourceQuestionResponseEvaluations: TWUResourceQuestionResponseEvaluationScores[],
   resourceQuestions: TWUResourceQuestion[]
 ): number {
   const maxPossibleScore = resourceQuestions.reduce(
     (acc, v) => acc + v.score,
     0
   );
-  const actualScore = resourceQuestionResponses.reduce(
+  const actualScore = resourceQuestionResponseEvaluations.reduce(
     (acc, v) => acc + (v.score || 0),
     0
   );
