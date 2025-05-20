@@ -585,8 +585,8 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () =>
-            "By submitting this consensus, you, as the chair, along with the" +
-            "panelists, confirm your agreement with the consensus scores and" +
+            "By submitting this consensus, you, as the chair, along with the " +
+            "panelists, confirm your agreement with the consensus scores and " +
             "comments."
         });
       case "finalize":
