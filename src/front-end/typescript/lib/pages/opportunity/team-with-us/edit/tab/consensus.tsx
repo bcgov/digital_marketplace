@@ -573,7 +573,7 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Submit Scores for Consensus",
+              text: "Submit Final Consensus Scores",
               icon: "paper-plane",
               color: "info",
               button: true,
@@ -596,8 +596,8 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Submit Final Consensus Scores",
-              icon: "paper-plane",
+              text: "Finalize Consensus Scores",
+              icon: "comments-alt",
               color: "info",
               button: true,
               msg: adt("finalize") as Msg
@@ -611,11 +611,11 @@ export const component: Tab.Component<State, Msg> = {
           body: () => (
             <>
               <p className="mb-4">
-                By submitting final consensus scores, you are about to lock in
-                all proponent scores and move on to short-listing stage
+                By finalizing consensus scores, you are about to lock in all
+                proponent scores and move on to short-listing stage
               </p>
               <p className="mb-0">
-                Are you sure you want to submit final consensus scores?
+                Are you sure you want to finalize consensus scores?
               </p>
             </>
           )
@@ -660,8 +660,8 @@ export const component: Tab.Component<State, Msg> = {
     return canEvaluationsBeFinalized
       ? component_.page.actions.links([
           {
-            children: "Submit Final Consensus Scores",
-            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            children: "Finalize Consensus Scores",
+            symbol_: leftPlacement(iconLinkSymbol("comments-alt")),
             color: "primary",
             button: true,
             loading: isLoading,
@@ -674,7 +674,7 @@ export const component: Tab.Component<State, Msg> = {
       : state.canEvaluationsBeSubmitted
       ? component_.page.actions.links([
           {
-            children: "Submit Scores for Consensus",
+            children: "Submit Final Consensus Scores",
             symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
             color: "primary",
             button: true,
