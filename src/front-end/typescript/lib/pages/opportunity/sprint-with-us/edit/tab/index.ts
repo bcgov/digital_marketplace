@@ -16,9 +16,7 @@ import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
-  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
-  SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -168,11 +166,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   }
 };
 
-export function canGovUserViewTab(
-  tab: TabId,
-  tabPermissions: TabPermissions,
-  opportunity: SWUOpportunity
-) {
+export function canGovUserViewTab(tab: TabId, tabPermissions: TabPermissions) {
   const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
   switch (tab) {
     case "summary":
@@ -181,7 +175,6 @@ export function canGovUserViewTab(
     case "history":
       return true;
     case "teamQuestions":
-      return isEvaluator || isOpportunityOwnerOrAdmin;
     case "codeChallenge":
     case "teamScenario":
     case "proposals":
@@ -191,16 +184,7 @@ export function canGovUserViewTab(
     case "overview":
       return isEvaluator;
     case "consensus":
-      return (
-        isChair ||
-        isOpportunityOwnerOrAdmin ||
-        (isEvaluator &&
-          opportunity.status ===
-            SWUOpportunityStatus.EvaluationTeamQuestionsConsensus) ||
-        doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-          opportunity.status
-        )
-      );
+      return isChair || isOpportunityOwnerOrAdmin;
   }
 }
 
@@ -307,9 +291,7 @@ export function makeSidebarState(
     return MenuSidebar.init({ items: [] });
   }
   const canGovUserViewTabs = (...tabIds: TabId[]) =>
-    tabIds.some((tabId) =>
-      canGovUserViewTab(tabId, tabPermissions, opportunity)
-    );
+    tabIds.some((tabId) => canGovUserViewTab(tabId, tabPermissions));
   return MenuSidebar.init({
     items: [
       adt("heading", "Summary"),

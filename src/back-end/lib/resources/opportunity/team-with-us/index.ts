@@ -156,9 +156,14 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
   >(async (request) => {
     const respond = (code: number, body: TWUOpportunitySlim[] | string[]) =>
       basicResponse(code, request.session, makeJsonResponseBody(body));
+
+    // Read and validate the panelMember flag
+    const isPanelMember = request.query.panelMember === "true";
+
     const dbResult = await db.readManyTWUOpportunities(
       connection,
-      request.session
+      request.session,
+      isPanelMember
     );
     if (isInvalid(dbResult)) {
       return respond(503, [db.ERROR_MESSAGE]);

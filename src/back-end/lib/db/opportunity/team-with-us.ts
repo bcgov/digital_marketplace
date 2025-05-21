@@ -685,72 +685,73 @@ export const readManyResources = tryDb<[Id], TWUResource[]>(
   }
 );
 
-export const readManyTWUOpportunities = tryDb<[Session], TWUOpportunitySlim[]>(
-  async (connection, session, isPanelMember = false) => {
-    // broad query returning many TWU Opportunities
-    let query = generateTWUOpportunityQuery(connection);
+export const readManyTWUOpportunities = tryDb<
+  [Session, boolean?],
+  TWUOpportunitySlim[]
+>(async (connection, session, isPanelMember = false) => {
+  // broad query returning many TWU Opportunities
+  let query = generateTWUOpportunityQuery(connection);
 
-    // gets further refined with WHERE clauses
-    if (!session || session.user.type === UserType.Vendor) {
-      // Anonymous users and vendors can only see public opportunities
-      query = query.whereIn(
-        "statuses.status",
-        publicOpportunityStatuses as TWUOpportunityStatus[]
-      );
-    } else if (
-      session.user.type === UserType.Government ||
-      session.user.type === UserType.Admin
-    ) {
-      if (isPanelMember) {
-        // When isPanelMember=true, ONLY include opportunities where user is on evaluation panel
-        // works for admin and gov basic users
-        query = query.whereIn("versions.id", function () {
-          this.select("opportunityVersion")
-            .from("twuEvaluationPanelMembers")
-            .where("user", "=", session.user.id);
-        });
-      } else if (session.user.type === UserType.Government) {
-        // Regular behavior - show public opportunities and private ones the user created
-        // works for gov basic users only
-        query = query
-          .whereIn(
-            "statuses.status",
-            publicOpportunityStatuses as TWUOpportunityStatus[]
-          )
-          .orWhere(function () {
-            this.whereIn(
-              "statuses.status",
-              privateOpportunityStatuses as TWUOpportunityStatus[]
-            ).andWhere({ "opportunities.createdBy": session.user?.id });
-          });
-      }
-    }
-    // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
-    // Process results to eliminate fields not viewable by the current role
-    const results = await Promise.all(
-      (
-        await query
-      ).map(async (result: RawTWUOpportunity | RawTWUOpportunitySlim) => {
-        if (session) {
-          result.subscribed = await isSubscribed(
-            connection,
-            result.id,
-            session.user.id
-          );
-        }
-        return processForRole(result, session, isPanelMember);
-      })
+  // gets further refined with WHERE clauses
+  if (!session || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query.whereIn(
+      "statuses.status",
+      publicOpportunityStatuses as TWUOpportunityStatus[]
     );
-    return valid(
-      await Promise.all(
-        results.map(
-          async (raw) =>
-            await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, raw)
+  } else if (
+    session.user.type === UserType.Government ||
+    session.user.type === UserType.Admin
+  ) {
+    if (isPanelMember) {
+      // When isPanelMember=true, ONLY include opportunities where user is on evaluation panel
+      // works for admin and gov basic users
+      query = query.whereIn("versions.id", function () {
+        this.select("opportunityVersion")
+          .from("twuEvaluationPanelMembers")
+          .where("user", "=", session.user.id);
+      });
+    } else if (session.user.type === UserType.Government) {
+      // Regular behavior - show public opportunities and private ones the user created
+      // works for gov basic users only
+      query = query
+        .whereIn(
+          "statuses.status",
+          publicOpportunityStatuses as TWUOpportunityStatus[]
         )
-      )
-    );
+        .orWhere(function () {
+          this.whereIn(
+            "statuses.status",
+            privateOpportunityStatuses as TWUOpportunityStatus[]
+          ).andWhere({ "opportunities.createdBy": session.user?.id });
+        });
+    }
   }
-);
+  // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+  // Process results to eliminate fields not viewable by the current role
+  const results = await Promise.all(
+    (
+      await query
+    ).map(async (result: RawTWUOpportunity | RawTWUOpportunitySlim) => {
+      if (session) {
+        result.subscribed = await isSubscribed(
+          connection,
+          result.id,
+          session.user.id
+        );
+      }
+      return processForRole(result, session, isPanelMember);
+    })
+  );
+  return valid(
+    await Promise.all(
+      results.map(
+        async (raw) =>
+          await rawTWUOpportunitySlimToTWUOpportunitySlim(connection, raw)
+      )
+    )
+  );
+});
 
 async function createTWUOpportunityAttachments(
   connection: Connection,

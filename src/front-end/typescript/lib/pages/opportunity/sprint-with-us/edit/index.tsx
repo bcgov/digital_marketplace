@@ -213,7 +213,7 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                 isChair: Boolean(evaluationPanelMember?.chair)
               };
 
-              if (!Tab.canGovUserViewTab(tabId, tabPermissions, opportunity)) {
+              if (!Tab.canGovUserViewTab(tabId, tabPermissions)) {
                 return [
                   state,
                   [

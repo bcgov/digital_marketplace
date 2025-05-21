@@ -15,9 +15,7 @@ import * as InstructionsTab from "front-end/lib/pages/opportunity/team-with-us/e
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToTWUOpportunity,
-  doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations,
-  TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunity
 } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -160,11 +158,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   }
 };
 
-export function canGovUserViewTab(
-  tab: TabId,
-  tabPermissions: TabPermissions,
-  opportunity: TWUOpportunity
-) {
+export function canGovUserViewTab(tab: TabId, tabPermissions: TabPermissions) {
   const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
   switch (tab) {
     case "summary":
@@ -173,7 +167,6 @@ export function canGovUserViewTab(
     case "history":
       return true;
     case "resourceQuestions":
-      return isEvaluator || isOpportunityOwnerOrAdmin;
     case "challenge":
     case "proposals":
     case "evaluationPanel":
@@ -182,16 +175,7 @@ export function canGovUserViewTab(
     case "overview":
       return isEvaluator;
     case "consensus":
-      return (
-        isChair ||
-        isOpportunityOwnerOrAdmin ||
-        (isEvaluator &&
-          opportunity.status ===
-            TWUOpportunityStatus.EvaluationResourceQuestionsConsensus) ||
-        doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
-          opportunity.status
-        )
-      );
+      return isChair || isOpportunityOwnerOrAdmin;
   }
 }
 
@@ -292,9 +276,7 @@ export function makeSidebarState(
     return MenuSidebar.init({ items: [] });
   }
   const canGovUserViewTabs = (...tabIds: TabId[]) =>
-    tabIds.some((tabId) =>
-      canGovUserViewTab(tabId, tabPermissions, opportunity)
-    );
+    tabIds.some((tabId) => canGovUserViewTab(tabId, tabPermissions));
   return MenuSidebar.init({
     items: opportunity
       ? [

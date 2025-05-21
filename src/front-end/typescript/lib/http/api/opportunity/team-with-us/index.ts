@@ -22,14 +22,18 @@ export function create<Msg>(): crud.CreateAction<
   return crud.makeCreateAction(NAMESPACE, rawTWUOpportunityToTWUOpportunity);
 }
 
-export function readMany<Msg>(): crud.ReadManyAction<
-  Resource.TWUOpportunitySlim,
-  string[],
-  Msg
-> {
+export function readMany<Msg>({
+  panelMember
+}: {
+  panelMember?: true;
+} = {}): crud.ReadManyAction<Resource.TWUOpportunitySlim, string[], Msg> {
+  const params = new URLSearchParams({
+    ...(panelMember !== undefined ? { panelMember: "true" } : {})
+  });
   return crud.makeReadManyAction(
     NAMESPACE,
-    (a: Resource.TWUOpportunitySlim) => a
+    (a: Resource.TWUOpportunitySlim) => a,
+    params.toString()
   );
 }
 
