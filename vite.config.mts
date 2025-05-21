@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
-import { ViteEjsPlugin } from 'vite-plugin-ejs';
+// import { ViteEjsPlugin } from 'vite-plugin-ejs';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -97,6 +97,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
           // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
+        },
+        // todo: temporary auth fix
+        '/auth': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false
         }
       }
     }
