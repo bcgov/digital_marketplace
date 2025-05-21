@@ -354,6 +354,7 @@ export async function allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitte
   ] = await Promise.all([
     generateTWUResourceQuestionResponseEvaluationQuery(connection)
       .transacting(trx)
+      .forUpdate()
       .clearSelect()
       .where({
         "statuses.status": TWUResourceQuestionResponseEvaluationStatus.Submitted

@@ -349,6 +349,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   ] = await Promise.all([
     generateSWUTeamQuestionResponseEvaluationQuery(connection)
       .transacting(trx)
+      .forUpdate()
       .clearSelect()
       .where({
         "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
