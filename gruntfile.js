@@ -1,3 +1,5 @@
+/* eslint @typescript-eslint/no-require-imports: "off" */
+
 const path = require("path");
 //set up global constants and helpers for all grunt tasks
 const deslash = (s) => s.replace(/^\/*/, "").replace(/\/*$/, "");
@@ -107,29 +109,32 @@ module.exports = function (grunt) {
   grunt.registerTask("front-end-common", [
     "clean:frontEndTmp",
     "clean:frontEndBuild",
-    "copy:frontEndStatic",
-    "ejs:frontEndHtml",
-    "sass:frontEndCss",
-    "postcss:frontEndPrefix",
-    "shell:frontEndTypeScript",
-    "browserify:frontEnd"
+    "copy:frontEndStatic"
+    // "ejs:frontEndHtml", // Vite handles index.html
+    // "sass:frontEndCss", // Vite handles SASS/CSS
+    // "postcss:frontEndPrefix", // Vite handles PostCSS
+    // "shell:frontEndTypeScript", // Vite handles TS
+    // "browserify:frontEnd" // Vite handles bundling
   ]);
   grunt.registerTask("front-end-build-development", [
     "front-end-common",
+    "shell:frontEndViteBuildDev", // Added Vite build for dev
     "compress:gzip"
   ]);
   grunt.registerTask("front-end-build-production", [
     "front-end-common",
-    "postcss:frontEndMin",
-    "terser:production",
-    "htmlmin:production",
+    "shell:frontEndViteBuildProd", // Added Vite build for prod
+    // "postcss:frontEndMin", // Vite handles minification
+    // "terser:production", // Vite handles minification
+    // "htmlmin:production", // Vite handles minification
     "compress:gzip",
     "compress:brotli"
   ]);
   grunt.registerTask("front-end-build", [`front-end-build-${NODE_ENV}`]);
   grunt.registerTask("front-end-watch-development", [
-    "front-end-build-development",
-    "concurrent:frontEndWatch"
+    // "front-end-build-development", // Vite watch handles initial build
+    "shell:frontEndViteWatch" // Vite handles watch and rebuilds
+    // "concurrent:frontEndWatch" // Replaced by Vite's watch mode
   ]);
   //back-end
   grunt.registerTask("back-end-build-production", [

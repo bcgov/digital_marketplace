@@ -350,6 +350,12 @@ a:hover {
   }
 }
 
+.btn-outline-c-nav-fg:hover {
+  color: $gray-900;
+  background-color: $white;
+  border-color: $white;
+}
+
 // aligns checkboxes with the label text
 // .form-check-label {
 //   padding-top: 0.5rem !important;
@@ -674,15 +680,15 @@ pre {
   @extend .rounded;
 }
 
-label {
-  @extend .py-1;
+// label {
+//   @extend .py-1;
 
-  .custom-checkbox &,
-  .custom-radio & {
-    @extend .font-size-base;
-    @extend .py-0;
-  }
-}
+//   .custom-checkbox &,
+//   .custom-radio & {
+//     @extend .font-size-base;
+//     @extend .py-0;
+//   }
+// }
 
 nav.navbar .nav-link:hover {
   text-decoration: underline;

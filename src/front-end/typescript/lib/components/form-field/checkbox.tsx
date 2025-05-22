@@ -61,8 +61,7 @@ const ChildView: ChildComponent["view"] = (props) => {
     <FormGroup
       check
       inline={typeof inlineLabel === "string"}
-      className={`${className} ${slimHeight ? "" : "h-input"}`}
-      style={{ display: "flex", alignItems: "center" }}>
+      className={`${className} ${slimHeight ? "" : "h-input"}`}>
       <Input
         id={inputId}
         name={inputId}
@@ -76,7 +75,7 @@ const ChildView: ChildComponent["view"] = (props) => {
           props.onChange(value);
         }}
       />
-      <Label check for={inputId} className="ms-2 mb-0">
+      <Label check for={inputId}>
         {inlineLabel}
         {loading ? (
           <Spinner size="sm" color="secondary" className="ms-2" />
