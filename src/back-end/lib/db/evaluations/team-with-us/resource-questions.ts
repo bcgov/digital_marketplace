@@ -348,19 +348,23 @@ export async function allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitte
   proposals: Id[]
 ) {
   const [
-    [{ count: submittedEvaluatorEvaluationsCount }],
+    submittedEvaluatorEvaluations,
     [{ count: evaluatorsCount }],
     [{ count: questionsCount }]
   ] = await Promise.all([
-    generateTWUResourceQuestionResponseEvaluationQuery(connection)
+    connection
+      .with(
+        "submittedEvaluations",
+        generateTWUResourceQuestionResponseEvaluationQuery(connection)
+          .where({
+            "statuses.status":
+              TWUResourceQuestionResponseEvaluationStatus.Submitted
+          })
+          .whereIn("evaluations.proposal", proposals)
+      )
+      .from("submittedEvaluations")
       .transacting(trx)
-      .forUpdate()
-      .clearSelect()
-      .where({
-        "statuses.status": TWUResourceQuestionResponseEvaluationStatus.Submitted
-      })
-      .whereIn("evaluations.proposal", proposals)
-      .count("*"),
+      .forUpdate(),
     // Evaluators for the most recent version
     connection<RawTWUEvaluationPanelMember>(
       "twuEvaluationPanelMembers as members"
@@ -408,7 +412,7 @@ export async function allTWUResourceQuestionResponseEvaluatorEvaluationsSubmitte
       .count("*")
   ]);
   return (
-    Number(submittedEvaluatorEvaluationsCount) ===
+    Number(submittedEvaluatorEvaluations.length) ===
     Number(evaluatorsCount) * proposals.length * Number(questionsCount)
   );
 }

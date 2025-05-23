@@ -343,19 +343,22 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   proposals: Id[]
 ) {
   const [
-    [{ count: submittedEvaluatorEvaluationsCount }],
+    submittedEvaluatorEvaluations,
     [{ count: evaluatorsCount }],
     [{ count: questionsCount }]
   ] = await Promise.all([
-    generateSWUTeamQuestionResponseEvaluationQuery(connection)
+    connection
+      .with(
+        "submittedEvaluations",
+        generateSWUTeamQuestionResponseEvaluationQuery(connection)
+          .where({
+            "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
+          })
+          .whereIn("evaluations.proposal", proposals)
+      )
+      .from("submittedEvaluations")
       .transacting(trx)
-      .forUpdate()
-      .clearSelect()
-      .where({
-        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
-      })
-      .whereIn("evaluations.proposal", proposals)
-      .count("*"),
+      .forUpdate(),
     // Evaluators for the most recent version
     connection<RawSWUEvaluationPanelMember>(
       "swuEvaluationPanelMembers as members"
@@ -403,7 +406,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       .count("*")
   ]);
   return (
-    Number(submittedEvaluatorEvaluationsCount) ===
+    Number(submittedEvaluatorEvaluations.length) ===
     Number(evaluatorsCount) * proposals.length * Number(questionsCount)
   );
 }
