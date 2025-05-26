@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
-import { ViteEjsPlugin } from 'vite-plugin-ejs';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -32,10 +32,7 @@ export default defineConfig(({ mode }) => {
           path.resolve(process.cwd(), 'src/front-end/typescript/tsconfig.json')
         ]
       }),
-      // ViteEjsPlugin({
-      //   // Data to pass to the EJS template
-      //   prefixPath: (path) => basePath + path.replace(/^\//, '')
-      // })
+      nodePolyfills()
     ],
     resolve: {
       alias: {
@@ -69,19 +66,11 @@ export default defineConfig(({ mode }) => {
       outDir: '../../../build/front-end', // Navigate up from src/front-end/html to project root
       emptyOutDir: true,
       sourcemap: mode === 'development',
-      // rollupOptions: {
-      //   input: {
-      //     app: path.resolve(process.cwd(), 'src/front-end/typescript/index.ts')
-      //   },
-      //   output: {
-      //     entryFileNames: 'app.js',
-      //     chunkFileNames: '[name].[hash].js',
-      //     assetFileNames: '[name].[ext]'
-      //   }
-      // }
       rollupOptions: {
         input: {
-          main: path.resolve(__dirname, 'src/front-end/html/index.html')
+          main: path.resolve(process.cwd(), 'src/front-end/html/index.html'),
+          downtime: path.resolve(process.cwd(), 'src/front-end/html/downtime.html'),
+          unsupportedBrowser: path.resolve(process.cwd(), 'src/front-end/html/unsupported-browser.html')
         }
       }
     },

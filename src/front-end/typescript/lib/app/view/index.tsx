@@ -541,7 +541,13 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
         className="align-items-center"
         toggle={closeModal}
         close={
-          <Icon hover name="times" color="secondary" onClick={closeModal} />
+          <Icon
+            hover
+            name="times"
+            color="secondary"
+            onClick={closeModal}
+            className="ms-auto"
+          />
         }>
         {modalToShow.title}
       </ModalHeader>
@@ -559,7 +565,7 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                   loading,
                   disabled,
                   onClick: () => dispatch(msg),
-                  className: i === 0 ? "mx-0" : "mr-3"
+                  className: i === 0 ? "mx-0" : "me-3"
                 };
                 if (button) {
                   return (
@@ -633,7 +639,7 @@ const ViewToasts: component_.base.ComponentView<State, Msg> = ({
             <strong className="mx-2">{toast.value.title}</strong>
             <Icon
               hover
-              className="ml-auto"
+              className="ms-auto"
               name="times"
               color="secondary"
               onClick={() => dispatch(adt("dismissToast", i))}

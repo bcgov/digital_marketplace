@@ -1,7 +1,10 @@
 import * as crud from "front-end/lib/http/crud";
 import * as Resource from "shared/lib/resources/organization";
 import { ResponseValidation } from "shared/lib/http";
-import { ClientHttpMethod } from "shared/lib/types";
+import {
+  ClientHttpMethod,
+  ReadManyResponseValidationErrors
+} from "shared/lib/types";
 import { component } from "front-end/lib/framework";
 import {
   rawOrganizationToOrganization,
@@ -28,7 +31,7 @@ export function readMany<Msg>(
   handleResponse: (
     response: ResponseValidation<
       Resource.ReadManyResponseBody,
-      Resource.ReadManyResponseValidationErrors
+      ReadManyResponseValidationErrors
     >
   ) => Msg
 ): component.Cmd<Msg> {

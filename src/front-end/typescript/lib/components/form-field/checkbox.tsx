@@ -67,7 +67,7 @@ const ChildView: ChildComponent["view"] = (props) => {
         name={inputId}
         type="checkbox"
         checked={state.value}
-        disabled={disabled || loading}
+        disabled={disabled}
         className={validityClassName}
         onChange={(e) => {
           const value = e.currentTarget.checked;

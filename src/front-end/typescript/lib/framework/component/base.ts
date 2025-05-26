@@ -1,5 +1,5 @@
 import { NODE_ENV } from "front-end/config";
-import { Record as ImmutableJsRecord } from "immutable";
+import * as Immutable from "immutable";
 import { ReactElement } from "react";
 import { Cmd } from "front-end/lib/framework/component/cmd";
 import * as cmd from "front-end/lib/framework/component/cmd";
@@ -182,9 +182,9 @@ export function mapDispatch<ParentMsg, ChildMsg>(
 
 // Immutable
 
-export type Immutable<State> = ImmutableJsRecord<State & object> &
+export type Immutable<State> = Immutable.Record<State & object> &
   Readonly<State>;
 
 export function immutable<State>(state: State): Immutable<State> {
-  return ImmutableJsRecord(state as State & object)();
+  return Immutable.Record(state as State & object)();
 }

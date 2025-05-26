@@ -18,7 +18,7 @@ const OpportunityInfo: component.base.View<Props> = ({
 }) => {
   return (
     <div
-      className={`d-flex flex-nowrap flex-column align-items-start text-left ${className}`}>
+      className={`d-flex flex-nowrap flex-column align-items-start text-start ${className}`}>
       <div className="h5 mb-2">{value || EMPTY_STRING}</div>
       <IconInfo small name={icon} value={name} className="font-size-small" />
     </div>
