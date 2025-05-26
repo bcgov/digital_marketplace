@@ -87,20 +87,20 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       // Configure the development server
-      port: 5173, // Vite runs on 5173
+      port: 3000, // Vite runs on 3000
       strictPort: true, // Exit if port is already in use
       // Proxy API requests to the backend server
       proxy: {
         // Adjust '/api' if your API routes have a different prefix
         '/api': {
-          target: 'http://localhost:3000', // Point proxy to backend on 3000
+          target: 'http://localhost:5173', // Point proxy to backend on 5173
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
           // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
         },
         // todo: temporary auth fix
         '/auth': {
-          target: 'http://localhost:3000',
+          target: 'http://localhost:5173',
           changeOrigin: true,
           secure: false
         }

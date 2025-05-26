@@ -101,8 +101,9 @@
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.7",
-    "@copilotkit/react-core": "^1.8.11",
-    "@copilotkit/react-ui": "^1.8.11",
+    "@copilotkit/react-core": "1.8.13",
+    "@copilotkit/react-textarea": "^1.8.13",
+    "@copilotkit/react-ui": "1.8.13",
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@fortawesome/react-fontawesome": "^0.1.16",

@@ -83,6 +83,9 @@ import { SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
+import { CopilotKit } from "@copilotkit/react-core";
+import { CopilotSidebar } from "@copilotkit/react-ui";
+import "@copilotkit/react-ui/styles.css";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
@@ -872,24 +875,28 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           ) as component_.page.Modal<Msg>)
         : (component_.page.modal.hide() as component_.page.Modal<Msg>);
     const appModal = getAppModal(state);
+
     return (
-      <div
-        className={`route-${state.activeRoute.tag} ${
-          state.incomingRoute ? "in-transition" : ""
-        } ${
-          navProps.contextualActions ? "contextual-actions-visible" : ""
-        } app d-flex flex-column`}
-        style={{ minHeight: "100vh" }}>
-        <Nav.view {...navProps} />
-        <ViewPage {...viewPageProps} />
-        {viewPageProps.component.simpleNav ? null : <Footer />}
-        <ViewToasts {...props} />
-        <ViewModal
-          dispatch={dispatch}
-          pageModal={pageModal}
-          appModal={appModal}
-        />
-      </div>
+      <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
+        <div
+          className={`route-${state.activeRoute.tag} ${
+            state.incomingRoute ? "in-transition" : ""
+          } ${
+            navProps.contextualActions ? "contextual-actions-visible" : ""
+          } app d-flex flex-column`}
+          style={{ minHeight: "100vh" }}>
+          <Nav.view {...navProps} />
+          <ViewPage {...viewPageProps} />
+          {viewPageProps.component.simpleNav ? null : <Footer />}
+          <ViewToasts {...props} />
+          <ViewModal
+            dispatch={dispatch}
+            pageModal={pageModal}
+            appModal={appModal}
+          />
+        </div>
+        <CopilotSidebar className="custom-copilot-sidebar" />
+      </CopilotKit>
     );
   }
 };

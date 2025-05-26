@@ -21,8 +21,8 @@ import {
 import * as api from "front-end/lib/http/api";
 import Link, { externalDest, routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
-import React from "react";
-import { Col, Row } from "reactstrap";
+import React, { useRef, useEffect } from "react";
+import { Col, Row, Label, Button } from "reactstrap";
 import { COPY } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
@@ -49,6 +49,7 @@ import {
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { isAdmin, User } from "shared/lib/resources/user";
+import { CopilotTextarea } from "@copilotkit/react-textarea";
 
 type RemoteOk = "yes" | "no";
 
@@ -76,6 +77,9 @@ export interface State {
   remoteDesc: Immutable<LongText.State>;
   // Description Tab
   description: Immutable<RichMarkdownEditor.State>;
+  showCopilotEditor: boolean;
+  autoFocusCopilotEditor: boolean;
+  copilotInputValue: string;
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
   startDate: Immutable<DateField.State>;
@@ -101,6 +105,9 @@ export type Msg =
   | ADT<"remoteDesc", LongText.Msg>
   // Description Tab
   | ADT<"description", RichMarkdownEditor.Msg>
+  | ADT<"rewriteWithAIClicked">
+  | ADT<"setCopilotEditorFocused">
+  | ADT<"copilotInputValueChanged", string>
   // Details Tab
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"startDate", DateField.Msg>
@@ -358,6 +365,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteOk: immutable(remoteOkState),
       remoteDesc: immutable(remoteDescState),
       description: immutable(descriptionState),
+      showCopilotEditor: false,
+      autoFocusCopilotEditor: false,
+      copilotInputValue: "",
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
       startDate: immutable(startDateState),
@@ -822,6 +832,20 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("description", value)
       });
 
+    case "rewriteWithAIClicked": {
+      state = state.set("showCopilotEditor", true);
+      state = state.set("autoFocusCopilotEditor", true);
+      const currentDescription = FormField.getValue(state.description);
+      // state = state.set("copilotInputValue", currentDescription);
+      return [state, []];
+    }
+
+    case "setCopilotEditorFocused":
+      return [state.set("autoFocusCopilotEditor", false), []];
+
+    case "copilotInputValueChanged":
+      return [state.set("copilotInputValue", msg.value), []];
+
     case "proposalDeadline": {
       return component_.base.updateChild({
         state,
@@ -972,7 +996,7 @@ const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{ inline: true }}
           required
           label="Remote OK?"
-          help="Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
+          help={'Indicate if the successful proponent may complete the work as outlined in the opportunity\'s acceptance criteria remotely or not. If you select "yes", provide further details on acceptable remote work options.'}
           disabled={disabled}
           state={state.remoteOk}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1024,7 +1048,7 @@ const OverviewView: component_.base.View<Props> = ({
               <p>
                 To the best of your ability, estimate a fair price for the
                 amount of work that you think it should take from the successful
-                proponent to meet the opportunity’s acceptance criteria. It is
+                proponent to meet the opportunity's acceptance criteria. It is
                 suggested that you overestimate.
               </p>
               <p className="mb-0">
@@ -1092,24 +1116,64 @@ const DescriptionView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
+  const descriptionId = state.description.child.id;
+  const copilotTextareaId = "cwu-opportunity-copilot-rewrite";
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (state.showCopilotEditor && state.autoFocusCopilotEditor && textareaRef.current) {
+      textareaRef.current.focus();
+      dispatch(adt("copilotInputValueChanged", state.copilotInputValue));
+      const currentDescription = FormField.getValue(state.description);
+      // state = state.set("copilotInputValue", currentDescription);
+      textareaRef.current.value = currentDescription;
+    }
+  }, [state.showCopilotEditor, state.autoFocusCopilotEditor, state.copilotInputValue, dispatch]);
+
   return (
     <Row>
-      <Col xs="12">
-        <RichMarkdownEditor.view
-          required
-          label="Description"
-          help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
-          placeholder="Describe this opportunity."
-          extraChildProps={{
-            style: { height: "60vh", minHeight: "400px" }
-          }}
-          disabled={disabled}
-          state={state.description}
-          dispatch={component_.base.mapDispatch(dispatch, (value) =>
-            adt("description" as const, value)
-          )}
-        />
+      <Col xs="12" md={state.showCopilotEditor ? 8 : 12}>
+        <Button color="primary" className="mb-3" onClick={() => dispatch(adt("rewriteWithAIClicked"))} disabled={disabled}>
+          Rewrite with AI
+        </Button>
+        <div className="mb-3">
+          <Label htmlFor={descriptionId}>Description <span className="text-danger">*</span></Label>
+          <RichMarkdownEditor.view
+            required
+            help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
+            placeholder="Describe this opportunity."
+            extraChildProps={{
+              style: { height: "60vh", minHeight: "400px" }
+            }}
+            disabled={disabled}
+            state={state.description}
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("description" as const, value)
+            )}
+          />
+        </div>
       </Col>
+      {state.showCopilotEditor && (
+        <Col xs="12" md={4}>
+          <div className="mb-3">
+            <Label htmlFor={copilotTextareaId}>AI Rewrite</Label>
+            <CopilotTextarea
+              id={copilotTextareaId}
+              ref={textareaRef}
+              value={state.copilotInputValue}
+              onValueChange={(newValue) => dispatch(adt("copilotInputValueChanged", newValue))}
+              onFocus={() => dispatch(adt("setCopilotEditorFocused"))}
+              placeholder="AI-generated rewrite will appear here."
+              style={{ height: "60vh", minHeight: "400px" }}
+              disabled={disabled}
+              autosuggestionsConfig={{
+                textareaPurpose: "Rewrite and enhance the opportunity description for a Code With Us project.",
+                chatApiConfigs: {}
+              }}
+            />
+          </div>
+        </Col>
+      )}
     </Row>
   );
 };
@@ -1164,7 +1228,7 @@ const DetailsView: component_.base.View<Props> = ({
           required
           extraChildProps={{}}
           label="Proposed Start Date"
-          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity's acceptance criteria."
           state={state.startDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1176,7 +1240,7 @@ const DetailsView: component_.base.View<Props> = ({
         <DateField.view
           extraChildProps={{}}
           label="Completion Date"
-          help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to meet the opportunity's acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1189,7 +1253,7 @@ const DetailsView: component_.base.View<Props> = ({
         <ShortText.view
           extraChildProps={{}}
           label="Project Submission Info"
-          help="Provide information on how the successful proponent may submit their work as outlined in the opportunity’s acceptance criteria (e.g. GitHub repository URL)."
+          help="Provide information on how the successful proponent may submit their work as outlined in the opportunity's acceptance criteria (e.g. GitHub repository URL)."
           placeholder="e.g. GitHub repository URL"
           state={state.submissionInfo}
           disabled={disabled}
@@ -1226,9 +1290,9 @@ const DetailsView: component_.base.View<Props> = ({
               <p>
                 Describe the criteria that you will use to score the submitted
                 proposals. State the weight, or points, that you will give to
-                each criterion (e.g. “Experience contributing Java code to any
+                each criterion (e.g. "Experience contributing Java code to any
                 public code repositories with more than 5 contributors (10
-                points)”). You can format this evaluation criteria with
+                points)"). You can format this evaluation criteria with
                 Markdown.
               </p>
               <p className="mb-0">
@@ -1236,7 +1300,7 @@ const DetailsView: component_.base.View<Props> = ({
                 you wish to use.
                 {MANDATORY_WEIGHTED_CRITERIA_URL ? (
                   <span>
-                    &nbsp;Please refer to the {COPY.gov.name.short}’s{" "}
+                    &nbsp;Please refer to the {COPY.gov.name.short}'s{" "}
                     <Link
                       newTab
                       dest={externalDest(MANDATORY_WEIGHTED_CRITERIA_URL)}>
