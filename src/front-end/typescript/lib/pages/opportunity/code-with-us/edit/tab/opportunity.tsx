@@ -707,7 +707,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isSaveChangesLoading ||
     isUpdateStatusLoading ||
     isDeleteLoading;
-
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
