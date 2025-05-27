@@ -2,7 +2,7 @@ import { fileBlobPath, prefixPath } from "front-end/lib";
 import { component } from "front-end/lib/framework";
 import isRelativeUrl from "is-relative-url";
 import React from "react";
-import ReactMarkdown, { type Components } from "react-markdown";
+import ReactMarkdown, { Components } from "react-markdown";
 import { decodeMarkdownImageUrlToFileId } from "shared/lib/resources/file";
 import rehypeRaw from "rehype-raw";
 
