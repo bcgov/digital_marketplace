@@ -2,9 +2,8 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "esnext",
-    "module": "esnext",
     "noEmit": true,
-    "types": ["node", "vite/client"]
+    "types": ["node"]
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

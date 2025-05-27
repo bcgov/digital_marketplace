@@ -18,4 +18,4 @@ const options: swaggerJSDoc.Options = {
   apis: ["src/back-end/docs/**/*.yaml"]
 };
 
-export const specs = swaggerJSDoc(options);
+export default swaggerJSDoc(options);

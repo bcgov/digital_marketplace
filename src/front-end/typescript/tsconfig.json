@@ -4,7 +4,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "skipLibCheck": true,
-    "types": ["vite/client"]
+    "types": ["node","vite/client"]
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"]
 }

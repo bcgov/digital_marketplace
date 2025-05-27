@@ -28,7 +28,7 @@ import {
   SessionToSessionId,
   TextResponseBody
 } from "back-end/lib/server";
-import * as specs from "back-end/lib/swagger";
+import specs from "back-end/lib/swagger";
 import { parseServerHttpMethod, ServerHttpMethod } from "back-end/lib/types";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -476,7 +476,7 @@ export function express<
     router.forEach((route) => {
       app.all(route.path, makeExpressRequestHandler(route));
       if (SWAGGER_ENABLE) {
-        app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs.specs));
+        app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs));
       }
     });
 

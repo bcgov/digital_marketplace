@@ -7,7 +7,6 @@ import * as base from "front-end/lib/framework/component/base";
 
 export { Toast } from "front-end/lib/framework/component/global/toast";
 export * as toast from "front-end/lib/framework/component/global/toast";
-
 export {
   newUrlMsg,
   replaceUrlMsg,

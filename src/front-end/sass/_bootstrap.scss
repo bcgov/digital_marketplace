@@ -5,8 +5,6 @@
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
 
-// @import "bootstrap/scss/functions";
-// @import "bootstrap/scss/variables";
 @import "bootstrap/scss/variables-dark";
 @import "bootstrap/scss/maps";
 @import "bootstrap/scss/mixins";
@@ -14,12 +12,10 @@
 
 @import "bootstrap/scss/root";
 @import "reboot"; //OVERRIDE
-// @import "bootstrap/scss/reboot"; // Use Bootstrap's official reboot
 
 @import "bootstrap/scss/type";
 @import "bootstrap/scss/images";
 @import "bootstrap/scss/containers";
-// @import "bootstrap/scss/code";
 @import "bootstrap/scss/grid";
 @import "bootstrap/scss/tables";
 @import "bootstrap/scss/forms";
@@ -27,8 +23,6 @@
 @import "bootstrap/scss/transitions";
 @import "bootstrap/scss/dropdown";
 @import "bootstrap/scss/button-group";
-// @import "bootstrap/scss/input-group";
-// @import "bootstrap/scss/custom-forms";
 @import "bootstrap/scss/nav";
 @import "bootstrap/scss/navbar";
 @import "bootstrap/scss/card";
@@ -36,22 +30,16 @@
 @import "bootstrap/scss/breadcrumb";
 @import "bootstrap/scss/pagination";
 @import "bootstrap/scss/badge";
-//@import "bootstrap/scss/jumbotron";
 @import "bootstrap/scss/alert";
 @import "bootstrap/scss/progress";
-// @import "bootstrap/scss/media"; // Comment out or remove this line
 @import "bootstrap/scss/list-group";
 @import "bootstrap/scss/close";
 @import "bootstrap/scss/toasts";
 @import "bootstrap/scss/modal";
 @import "bootstrap/scss/tooltip";
-//@import "bootstrap/scss/popover";
-//@import "bootstrap/scss/carousel";
 @import "bootstrap/scss/spinners";
 @import "bootstrap/scss/offcanvas";
 @import "bootstrap/scss/placeholders";
 @import "bootstrap/scss/helpers";
-@import "bootstrap/scss/utilities";
-// @import "bootstrap/scss/print"; // Comment out or remove this line
 
 @import "bootstrap/scss/utilities/api";
