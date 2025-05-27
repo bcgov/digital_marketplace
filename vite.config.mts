@@ -8,11 +8,11 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 export default defineConfig(({ mode }) => {
   // Load env file based on mode (development/production) in the current directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
 
   // Determine base path, default to '/' if PATH_PREFIX is not set
   // Ensure it starts and ends with a slash
-  let basePath = env.PATH_PREFIX ? `${env.PATH_PREFIX}` : '';
+  let basePath = env.VITE_PATH_PREFIX ? `${env.VITE_PATH_PREFIX}` : '';
   if (basePath && !basePath.startsWith('/')) {
     basePath = '/' + basePath;
   }
@@ -40,21 +40,6 @@ export default defineConfig(({ mode }) => {
         '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript')
         // '/app.js': path.resolve(process.cwd(), 'src/front-end/typescript/index.ts')
       }
-    },
-    // Define global constant replacements (similar to envify)
-    // Access them in your code via import.meta.env.VITE_XXX
-    define: {
-      // Need to JSON.stringify strings
-      'import.meta.env.VITE_NODE_ENV': JSON.stringify(env.NODE_ENV || mode),
-      'import.meta.env.VITE_CONTACT_EMAIL': JSON.stringify(env.CONTACT_EMAIL || 'digitalmarketplace@gov.bc.ca'),
-      'import.meta.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.SHOW_TEST_INDICATOR || ''),
-      'import.meta.env.VITE_PATH_PREFIX': JSON.stringify(env.PATH_PREFIX || ''),
-      // For compatibility if any code still uses process.env (less ideal with Vite)
-      // Consider refactoring code to use import.meta.env
-      'process.env.NODE_ENV': JSON.stringify(env.NODE_ENV || mode),
-      'process.env.CONTACT_EMAIL': JSON.stringify(env.CONTACT_EMAIL || 'digitalmarketplace@gov.bc.ca'),
-      'process.env.SHOW_TEST_INDICATOR': JSON.stringify(env.SHOW_TEST_INDICATOR || ''),
-      'process.env.PATH_PREFIX': JSON.stringify(env.PATH_PREFIX || ''),
     },
     // Set the base public path when served in production
     // Ensure leading/trailing slashes are correct
@@ -88,6 +73,9 @@ export default defineConfig(({ mode }) => {
           // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
         }
       }
+    },
+    define: {
+      'process.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.VITE_SHOW_TEST_INDICATOR)
     }
   };
 });

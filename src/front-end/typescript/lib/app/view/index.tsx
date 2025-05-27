@@ -79,7 +79,7 @@ import {
   Toast,
   ToastBody
 } from "reactstrap";
-import { SHOW_TEST_INDICATOR } from "shared/config";
+import { VITE_SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
@@ -816,7 +816,7 @@ function regularNavProps(
     dispatch: dispatchNav,
     isLoading: !!state.incomingRoute,
     logoImageUrl: prefixPath(
-      SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
+      VITE_SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
     ),
     title: "Digital Marketplace",
     homeDest: routeDest(adt("landing", null)),
