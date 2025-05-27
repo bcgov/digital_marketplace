@@ -476,11 +476,7 @@ export function express<
     router.forEach((route) => {
       app.all(route.path, makeExpressRequestHandler(route));
       if (SWAGGER_ENABLE) {
-        app.use(
-          SWAGGER_UI_PATH,
-          ...(swaggerUI.serve as any),
-          swaggerUI.setup(specs) as any
-        );
+        app.use(SWAGGER_UI_PATH, swaggerUI.serve, swaggerUI.setup(specs.specs));
       }
     });
 

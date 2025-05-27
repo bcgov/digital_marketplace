@@ -1,5 +1,5 @@
-import { NODE_ENV } from "front-end/config";
-import { Record as ImmutableJsRecord } from "immutable";
+import { VITE_NODE_ENV } from "front-end/config";
+import * as Immutable from "immutable";
 import { ReactElement } from "react";
 import { Cmd } from "front-end/lib/framework/component/cmd";
 import * as cmd from "front-end/lib/framework/component/cmd";
@@ -105,8 +105,8 @@ export function updateChild<PS, PM, CS, CM>(
   let { state } = params;
   const childState = state.getIn(childStatePath) as Immutable<CS>;
   // tslint:disable:next-line no-console
-  if (NODE_ENV === "development") {
-    console.assert(childState);
+  if (VITE_NODE_ENV === "development") {
+    console.assert(!!childState);
   }
   if (!childState) {
     return [state, []];
@@ -182,9 +182,9 @@ export function mapDispatch<ParentMsg, ChildMsg>(
 
 // Immutable
 
-export type Immutable<State> = ImmutableJsRecord<State & object> &
+export type Immutable<State> = Immutable.Record<State & object> &
   Readonly<State>;
 
 export function immutable<State>(state: State): Immutable<State> {
-  return ImmutableJsRecord(state as State & object)();
+  return Immutable.Record(state as State & object)();
 }

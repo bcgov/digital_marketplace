@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "./dist",
     "skipLibCheck": true,
     "module": "commonjs",
     "moduleResolution": "node",
@@ -16,7 +17,6 @@
     "noErrorTruncation": true,
     "baseUrl": ".",
     "incremental": true,
-    "noEmit": true,
     "paths": {
       "back-end/*": ["./src/back-end/*"],
       "migrations/*": ["./src/migrations/*"],

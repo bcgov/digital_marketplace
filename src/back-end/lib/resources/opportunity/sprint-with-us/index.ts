@@ -778,15 +778,16 @@ const update: crud.Update<
       const tag = get(body, "tag");
       const value: unknown = get(body, "value");
       const implementationPhase = get(value, "implementationPhase");
-      if (!implementationPhase) {
-        throw new Error("Implementation phase is required");
-      }
-      const evaluationPanel = get(value, "evaluationPanel");
-      if (!evaluationPanel) {
-        throw new Error("Evaluation panel is required");
-      }
+
       switch (tag) {
-        case "edit":
+        case "edit": {
+          if (!implementationPhase) {
+            throw new Error("Implementation phase is required");
+          }
+          const evaluationPanel = get(value, "evaluationPanel");
+          if (!evaluationPanel) {
+            throw new Error("Evaluation panel is required");
+          }
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
@@ -816,6 +817,7 @@ const update: crud.Update<
             teamQuestions: get(value, "teamQuestions") ?? [],
             evaluationPanel: evaluationPanel
           });
+        }
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));
         case "publish":

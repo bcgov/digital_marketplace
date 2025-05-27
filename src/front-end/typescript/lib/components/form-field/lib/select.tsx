@@ -202,10 +202,17 @@ export const view: component.base.View<Props> = (props) => {
           color: undefined
         };
       },
-      option(styles) {
+      option(styles, state) {
         return {
           ...styles,
-          backgroundColor: undefined,
+          backgroundColor: state.isFocused
+            ? "var(--c-select-option-hover) !important"
+            : state.isSelected
+            ? "var(--c-select-option-hover)"
+            : undefined,
+          "&:hover": {
+            backgroundColor: "var(--c-select-option-hover)"
+          },
           ":active": undefined
         };
       },

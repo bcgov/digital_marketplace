@@ -564,7 +564,7 @@ const update: crud.Update<
 
       switch (tag) {
         case "edit": {
-          const implementationPhase = get(body, "implementationPhase");
+          const implementationPhase = get(value, "implementationPhase");
           if (!implementationPhase) {
             throw new Error("Implementation phase is required");
           }

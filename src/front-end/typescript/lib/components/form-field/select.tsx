@@ -1,10 +1,10 @@
 import * as FormField from "front-end/lib/components/form-field";
 import Select, {
   coalesceOptions,
-  type Option,
-  type Options,
-  type SingleProps,
-  type SingleValue
+  Option,
+  Options,
+  SingleProps,
+  SingleValue
 } from "front-end/lib/components/form-field/lib/select";
 import { Immutable } from "front-end/lib/framework";
 import { find } from "lodash";
@@ -15,9 +15,9 @@ import { InputGroup, InputGroupText } from "reactstrap";
 export {
   stringsToOptions,
   objectToOptions,
-  type Options,
-  type OptionGroup,
-  type Option
+  Options,
+  OptionGroup,
+  Option
 } from "front-end/lib/components/form-field/lib/select";
 
 export type Value = SingleValue;

@@ -31,13 +31,13 @@ export const REPOSITORY_ROOT_DIR =
 
 // Load environment variables from a .env file.
 dotenv.config({
-  debug: process.env.NODE_ENV === "development",
+  debug: process.env.VITE_NODE_ENV === "development",
   path: resolve(REPOSITORY_ROOT_DIR, ".env"),
   override: false
 });
 
-export const NODE_ENV: "development" | "test" | "production" = (() => {
-  switch (process.env.NODE_ENV) {
+export const VITE_NODE_ENV: "development" | "test" | "production" = (() => {
+  switch (process.env.VITE_NODE_ENV) {
     case "development":
       return "development";
     case "test":
@@ -49,7 +49,7 @@ export const NODE_ENV: "development" | "test" | "production" = (() => {
   }
 })();
 
-export const ENV = NODE_ENV;
+export const ENV = VITE_NODE_ENV;
 
 const logger = makeDomainLogger(consoleAdapter, "back-end:config");
 

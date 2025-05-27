@@ -701,7 +701,7 @@ function membersTableBodyRows(
             )}
           </div>
         ),
-        className: "text-right align-middle"
+        className: "text-end align-middle"
       }
     ];
   });

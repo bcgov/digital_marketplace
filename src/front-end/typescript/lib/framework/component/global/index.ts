@@ -1,29 +1,18 @@
 import * as router from "front-end/lib/framework/router";
 import { adt, ADT, adtCurried } from "shared/lib/types";
-import type { Toast } from "front-end/lib/framework/component/global/toast";
+import { Toast } from "front-end/lib/framework/component/global/toast";
 import * as base from "front-end/lib/framework/component/base";
 
 // Re-exports
 
-export type { Toast } from "front-end/lib/framework/component/global/toast";
+export { Toast } from "front-end/lib/framework/component/global/toast";
 export * as toast from "front-end/lib/framework/component/global/toast";
 
 export {
   newUrlMsg,
   replaceUrlMsg,
   newRouteMsg,
-  replaceRouteMsg
-} from "front-end/lib/framework/router";
-
-export type { Session } from "shared/lib/resources/session";
-
-export type {
-  ComponentViewProps,
-  ComponentView,
-  Component
-} from "front-end/lib/framework/component/base";
-
-export type {
+  replaceRouteMsg,
   NewUrlMsg,
   ReplaceUrlMsg,
   ReplaceRouteMsg,

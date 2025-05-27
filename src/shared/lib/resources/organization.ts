@@ -14,6 +14,8 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { AffiliationEvent } from "shared/lib/resources/affiliation";
 
+export { ReadManyResponseValidationErrors } from "shared/lib/types";
+
 // Properties to include on Organization and OrganizationSlim
 // for admins/owners only.
 export interface OrganizationAdmin {

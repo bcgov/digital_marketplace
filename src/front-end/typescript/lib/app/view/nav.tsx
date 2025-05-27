@@ -33,9 +33,6 @@ export interface State {
   // So, when trying to use the mobile dropdown, the desktop dropdown's
   // handleDocumentClick function clobbers any onClick handlers that
   // we have specified.
-  // So, when trying to use the mobile dropdown, the desktop dropdown's
-  // handleDocumentClick function clobbers any onClick handlers that
-  // we have specified.
   isDesktopContextualDropdownOpen: boolean;
   isMobileContextualDropdownOpen: boolean;
   isMobileMenuOpen: boolean;
@@ -564,8 +561,7 @@ const MobileMenu: component_.base.View<Props> = (props) => {
 };
 
 const TopNavbar: component_.base.View<Props> = (props) => {
-  const { state, dispatch } = props; // isLoading
-  const isLoading = true;
+  const { state, dispatch, isLoading } = props;
   return (
     <div className="main-nav-top-navbar-wrapper">
       <div className="main-nav-top-navbar">

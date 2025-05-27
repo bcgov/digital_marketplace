@@ -99,7 +99,7 @@ const SidebarLink: component_.base.View<SidebarLinkProps> = (props) => {
       symbolClassName={`align-self-start text-${symbolColor}`}
       symbolStyle={{ marginTop: "0.15rem" }}
       color={active ? "c-sidebar-menu-link-active-bg" : "light"}
-      className={`${className} text-left text-wrap ${
+      className={`${className} text-start text-wrap ${
         active
           ? "text-c-sidebar-menu-link-active-fg"
           : "text-c-sidebar-menu-link-inactive-fg"

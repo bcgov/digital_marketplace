@@ -86,6 +86,7 @@ $black: #000000;
 $blue: #0c99d6;
 $blue-alt: #17a2b8;
 $blue-alt-2: #1e98d2;
+$blue-alt-3: #cee6f4;
 $blue-dark: #003366;
 $blue-dark-alt: #38598a;
 $blue-dark-alt-2: #0f4c8b;
@@ -178,6 +179,9 @@ $c-table-icon-times: $gray-500;
 // Static HTML Pages
 $c-static-html-bg: $blue-dark;
 $c-static-html-fg: $white;
+// Select hover
+$c-select-option-hover: $blue-alt-3;
+
 
 $app-utility-colors: (
   // App Views
@@ -241,7 +245,9 @@ $app-utility-colors: (
   "c-table-icon-times": $c-table-icon-times,
   // Static HTML Pages
   "c-static-html-bg": $c-static-html-bg,
-  "c-static-html-fg": $c-static-html-fg
+  "c-static-html-fg": $c-static-html-fg,
+  // Select hover
+  "c-select-option-hover": $c-select-option-hover
 );
 
 // Generate CSS custom properties from the $app-utility-colors map
@@ -348,6 +354,16 @@ a:hover {
     background-color: #0a7fb2;
     border-color: #0976a6;
   }
+}
+
+.btn-outline-c-nav-fg:hover, .btn-outline-c-nav-fg-alt:hover {
+  color: $gray-900;
+  background-color: $white;
+  border-color: $white;
+}
+
+.dropdown-item:hover {
+  text-decoration: none;
 }
 
 // aligns checkboxes with the label text
@@ -501,8 +517,8 @@ nav {
     }
 
     .main-nav-mobile-menu {
-      @extend .py-4 !optional;
-      @extend .d-md-none !optional;
+      @extend .py-4;
+      @extend .d-md-none;
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
@@ -546,7 +562,7 @@ nav {
 
       &.mobile {
         @extend .d-flex;
-        @extend .d-md-none !optional;
+        @extend .d-md-none;
       }
     }
   }
@@ -674,15 +690,15 @@ pre {
   @extend .rounded;
 }
 
-label {
-  @extend .py-1;
+// label {
+//   @extend .py-1;
 
-  .custom-checkbox &,
-  .custom-radio & {
-    @extend .font-size-base;
-    @extend .py-0;
-  }
-}
+//   .custom-checkbox &,
+//   .custom-radio & {
+//     @extend .font-size-base;
+//     @extend .py-0;
+//   }
+// }
 
 nav.navbar .nav-link:hover {
   text-decoration: underline;
@@ -936,7 +952,6 @@ nav.navbar .nav-link:hover {
     // @extend .form-control;
     background-color: $input-disabled-bg;
     opacity: 1; // Ensure it overrides any other opacity if needed, BS default is usually 1 for disabled bg
-    // Add any other specific styles from .form-control:disabled if necessary
     cursor: not-allowed !important;
   }
 
