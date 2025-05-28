@@ -50,6 +50,17 @@ import * as opportunityValidation from "shared/lib/validation/opportunity/code-w
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { CopilotTextarea } from "@copilotkit/react-textarea";
+import type { Value } from "@udecode/plate";
+import { BasicMarksPlugin } from "@udecode/plate-basic-marks/react";
+import {
+  Plate,
+  PlateLeaf,
+  usePlateEditor,
+  type PlateLeafProps
+} from "@udecode/plate/react";
+import { FixedToolbar } from "front-end/components/ui/fixed-toolbar";
+import { MarkToolbarButton } from "front-end/components/ui/mark-toolbar-button";
+import { Editor, EditorContainer } from "front-end/components/ui/editor";
 
 type RemoteOk = "yes" | "no";
 
@@ -835,7 +846,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "rewriteWithAIClicked": {
       state = state.set("showCopilotEditor", true);
       state = state.set("autoFocusCopilotEditor", true);
-      const currentDescription = FormField.getValue(state.description);
+      // const currentDescription = FormField.getValue(state.description);
       // state = state.set("copilotInputValue", currentDescription);
       return [state, []];
     }
@@ -996,7 +1007,9 @@ const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{ inline: true }}
           required
           label="Remote OK?"
-          help={'Indicate if the successful proponent may complete the work as outlined in the opportunity\'s acceptance criteria remotely or not. If you select "yes", provide further details on acceptable remote work options.'}
+          help={
+            'Indicate if the successful proponent may complete the work as outlined in the opportunity\'s acceptance criteria remotely or not. If you select "yes", provide further details on acceptable remote work options.'
+          }
           disabled={disabled}
           state={state.remoteOk}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1048,8 +1061,8 @@ const OverviewView: component_.base.View<Props> = ({
               <p>
                 To the best of your ability, estimate a fair price for the
                 amount of work that you think it should take from the successful
-                proponent to meet the opportunity's acceptance criteria. It is
-                suggested that you overestimate.
+                proponent to meet the opportunity&apos;s acceptance criteria. It
+                is suggested that you overestimate.
               </p>
               <p className="mb-0">
                 The price estimate must not exceed {FORMATTED_MAX_BUDGET}.
@@ -1121,23 +1134,64 @@ const DescriptionView: component_.base.View<Props> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (state.showCopilotEditor && state.autoFocusCopilotEditor && textareaRef.current) {
+    if (
+      state.showCopilotEditor &&
+      state.autoFocusCopilotEditor &&
+      textareaRef.current
+    ) {
       textareaRef.current.focus();
       dispatch(adt("copilotInputValueChanged", state.copilotInputValue));
       const currentDescription = FormField.getValue(state.description);
       // state = state.set("copilotInputValue", currentDescription);
       textareaRef.current.value = currentDescription;
     }
-  }, [state.showCopilotEditor, state.autoFocusCopilotEditor, state.copilotInputValue, dispatch]);
+  }, [
+    state.showCopilotEditor,
+    state.autoFocusCopilotEditor,
+    state.copilotInputValue,
+    dispatch
+  ]);
+
+  const initialValue: Value = [
+    {
+      type: "p",
+      children: [
+        { text: "Hello! Try out the " },
+        { text: "bold", bold: true },
+        { text: ", " },
+        { text: "italic", italic: true },
+        { text: ", and " },
+        { text: "underline", underline: true },
+        { text: " formatting." }
+      ]
+    }
+  ];
+  const editor = usePlateEditor({
+    value: initialValue,
+    plugins: [BasicMarksPlugin], // Add the marks plugin
+    components: {
+      // Define how each mark type should be rendered
+      // We use PlateLeaf and pass an 'as' prop for semantic HTML, or render directly.
+      bold: (props: PlateLeafProps) => <PlateLeaf {...props} as="strong" />,
+      italic: (props: PlateLeafProps) => <PlateLeaf {...props} as="em" />,
+      underline: (props: PlateLeafProps) => <PlateLeaf {...props} as="u" />
+    }
+  });
 
   return (
     <Row>
       <Col xs="12" md={state.showCopilotEditor ? 8 : 12}>
-        <Button color="primary" className="mb-3" onClick={() => dispatch(adt("rewriteWithAIClicked"))} disabled={disabled}>
+        <Button
+          color="primary"
+          className="mb-3"
+          onClick={() => dispatch(adt("rewriteWithAIClicked"))}
+          disabled={disabled}>
           Rewrite with AI
         </Button>
         <div className="mb-3">
-          <Label htmlFor={descriptionId}>Description <span className="text-danger">*</span></Label>
+          <Label htmlFor={descriptionId}>
+            Description <span className="text-danger">*</span>
+          </Label>
           <RichMarkdownEditor.view
             required
             help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
@@ -1153,6 +1207,32 @@ const DescriptionView: component_.base.View<Props> = ({
           />
         </div>
       </Col>
+      <h1 className="text-3xl font-bold underline">Hello world!</h1>
+      <Plate editor={editor}>
+        <FixedToolbar className="justify-start rounded-t-lg">
+          <MarkToolbarButton nodeType="bold" tooltip="Bold (⌘+B)">
+            B
+          </MarkToolbarButton>
+          <MarkToolbarButton nodeType="italic" tooltip="Italic (⌘+I)">
+            I
+          </MarkToolbarButton>
+          <MarkToolbarButton nodeType="underline" tooltip="Underline (⌘+U)">
+            U
+          </MarkToolbarButton>
+        </FixedToolbar>
+        <EditorContainer>
+          {" "}
+          {/* Styles the editor area */}
+          <Editor placeholder="Type your amazing content here..." />
+        </EditorContainer>
+        {/* <FixedToolbar>
+        <MarkToolbarButton nodeType="bold" tooltip="Bold">B</MarkToolbarButton>
+      </FixedToolbar>
+        <PlateContent
+          style={{ padding: "16px 64px", minHeight: "100px" }}
+          placeholder="Type your amazing content here..."
+        /> */}
+      </Plate>
       {state.showCopilotEditor && (
         <Col xs="12" md={4}>
           <div className="mb-3">
@@ -1161,13 +1241,16 @@ const DescriptionView: component_.base.View<Props> = ({
               id={copilotTextareaId}
               ref={textareaRef}
               value={state.copilotInputValue}
-              onValueChange={(newValue) => dispatch(adt("copilotInputValueChanged", newValue))}
+              onValueChange={(newValue) =>
+                dispatch(adt("copilotInputValueChanged", newValue))
+              }
               onFocus={() => dispatch(adt("setCopilotEditorFocused"))}
               placeholder="AI-generated rewrite will appear here."
               style={{ height: "60vh", minHeight: "400px" }}
               disabled={disabled}
               autosuggestionsConfig={{
-                textareaPurpose: "Rewrite and enhance the opportunity description for a Code With Us project.",
+                textareaPurpose:
+                  "Rewrite and enhance the opportunity description for a Code With Us project.",
                 chatApiConfigs: {}
               }}
             />
@@ -1290,9 +1373,9 @@ const DetailsView: component_.base.View<Props> = ({
               <p>
                 Describe the criteria that you will use to score the submitted
                 proposals. State the weight, or points, that you will give to
-                each criterion (e.g. "Experience contributing Java code to any
-                public code repositories with more than 5 contributors (10
-                points)"). You can format this evaluation criteria with
+                each criterion (e.g. &quot;Experience contributing Java code to
+                any public code repositories with more than 5 contributors (10
+                points)&quot;). You can format this evaluation criteria with
                 Markdown.
               </p>
               <p className="mb-0">
@@ -1300,7 +1383,7 @@ const DetailsView: component_.base.View<Props> = ({
                 you wish to use.
                 {MANDATORY_WEIGHTED_CRITERIA_URL ? (
                   <span>
-                    &nbsp;Please refer to the {COPY.gov.name.short}'s{" "}
+                    &nbsp;Please refer to the {COPY.gov.name.short}&apos;s{" "}
                     <Link
                       newTab
                       dest={externalDest(MANDATORY_WEIGHTED_CRITERIA_URL)}>
