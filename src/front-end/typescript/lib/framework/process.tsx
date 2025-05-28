@@ -4,8 +4,7 @@ import * as router from "front-end/lib/framework/router";
 import { remove } from "lodash";
 import { Cmd } from "front-end/lib/framework/component/cmd";
 import { adt, ADT } from "shared/lib/types";
-// import * as ReactDom from "react-dom"; // Removed as it's no longer used
-import { createRoot, Root as ReactDOMRoot } from 'react-dom/client'; // Import createRoot
+import { createRoot, Root as ReactDOMRoot } from "react-dom/client";
 import React from "react";
 
 // Process
@@ -99,7 +98,7 @@ export function start<AppState extends object, AppMsg, Route>(
         state: getState()
       })
     );
-  // Create the React root.
+  // Create the React root - enables async rendering - allows pauses in rendering to respond to user events
   const root: ReactDOMRoot = createRoot(element);
   // Initalize render function, passing the root.
   const render = makeRender(app.view, root);

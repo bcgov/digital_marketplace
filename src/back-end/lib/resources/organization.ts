@@ -23,11 +23,11 @@ import {
   DeleteValidationErrors,
   Organization,
   ReadManyResponseBody,
+  ReadManyResponseValidationErrors,
   UpdateProfileRequestBody,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors
 } from "shared/lib/resources/organization";
-import { ReadManyResponseValidationErrors } from "shared/lib/types";
 import { ServiceAreaId } from "shared/lib/resources/service-area";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt } from "shared/lib/types";

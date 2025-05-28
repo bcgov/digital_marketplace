@@ -2,7 +2,6 @@
   "extends": "../../tsconfig",
   "compilerOptions": {
     "target": "es2018",
-    "outDir": "./dist",
     "skipLibCheck": true
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"]

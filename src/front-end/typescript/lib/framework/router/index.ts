@@ -165,6 +165,18 @@ export function makeRouteManager<Route>(
       if (result) {
         const queryParams = new URLSearchParams(url.search);
         const query = Object.fromEntries(queryParams.entries());
+        // for a path like /debug-route/testval1/testval2?foo=baz&another=value
+        // query is { foo: "baz", another: "value" }
+
+        // and generated route is:
+        // {tag : "debugMultiQuery",
+        // value: {
+        // id: "testval2",
+        // parsedQuery: {foo: 'baz', another: 'value'}
+        // pathParam1: "testval1"
+        // }
+
+        // note that for a path like ?foo=bar&foo=baz, Object.fromEntries() will only keep the last value {foo: 'baz'}
         return definition.makeRoute({
           path,
           params: result.params,
