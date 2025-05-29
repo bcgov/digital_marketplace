@@ -50,7 +50,7 @@ import * as opportunityValidation from "shared/lib/validation/opportunity/code-w
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { CopilotTextarea } from "@copilotkit/react-textarea";
-import type { Value } from "@udecode/plate";
+import type { TElement, Value } from "@udecode/plate";
 import { BasicMarksPlugin } from "@udecode/plate-basic-marks/react";
 import {
   Plate,
@@ -58,9 +58,24 @@ import {
   usePlateEditor,
   type PlateLeafProps
 } from "@udecode/plate/react";
-import { FixedToolbar } from "front-end/components/ui/fixed-toolbar";
-import { MarkToolbarButton } from "front-end/components/ui/mark-toolbar-button";
-import { Editor, EditorContainer } from "front-end/components/ui/editor";
+
+import { MarkToolbarButton } from "front-end/lib/components/platejs/mark-toolbar-button";
+import {
+  Editor,
+  EditorContainer
+} from "front-end/lib/components/platejs/editor";
+import { CopilotPlugin } from "@udecode/plate-ai/react";
+import {
+  MarkdownPlugin,
+  serializeMd,
+  stripMarkdown
+} from "@udecode/plate-markdown";
+import { faker } from "@faker-js/faker";
+import { GhostText } from "front-end/lib/components/platejs/ghost-text";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import remarkMdx from "remark-mdx";
+import { FixedToolbar } from "front-end/lib/components/platejs/fixed-toolbar";
 
 type RemoteOk = "yes" | "no";
 
@@ -1166,9 +1181,65 @@ const DescriptionView: component_.base.View<Props> = ({
       ]
     }
   ];
+
+  const copilotPlugins = [
+    MarkdownPlugin.configure({
+      options: {
+        remarkPlugins: [remarkMath, remarkGfm, remarkMdx]
+      }
+    }),
+    CopilotPlugin.configure(({ api }) => ({
+      options: {
+        completeOptions: {
+          api: "http://localhost:5000/api/ai/copilot",
+          body: {
+            system: `You are an advanced AI writing assistant, similar to VSCode Copilot but for general text. Your task is to predict and generate the next part of the text based on the given context.
+
+    Rules:
+    - Continue the text naturally up to the next punctuation mark (., ,, ;, :, ?, or !).
+    - Maintain style and tone. Don't repeat given text.
+    - For unclear context, provide the most likely continuation.
+    - Handle code snippets, lists, or structured text if needed.
+    - Don't include """ in your response.
+    - CRITICAL: Always end with a punctuation mark.
+    - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
+    - If no context is provided or you can't generate a continuation, return "0" without explanation.`
+          },
+          onError: (err) => {
+            console.log("error: ", err);
+            // Mock the API response. Remove it when you implement the route /api/ai/copilot
+            api.copilot.setBlockSuggestion({
+              text: stripMarkdown(faker.lorem.sentence())
+            });
+          },
+          onFinish: (_, completion) => {
+            console.log("completion: ", completion);
+            if (completion === "0") return;
+            api.copilot.setBlockSuggestion({
+              text: stripMarkdown(completion)
+            });
+          }
+        },
+        debounceDelay: 500,
+        renderGhostText: GhostText,
+        getPrompt: ({ editor }) => {
+          const contextEntry = editor.api.block({ highest: true });
+          if (!contextEntry) return "";
+          const prompt = serializeMd(editor, {
+            value: [contextEntry[0] as TElement]
+          });
+          return `Continue the text up to the next punctuation mark:
+    """
+    ${prompt}
+    """`;
+        }
+      }
+    }))
+  ] as const;
+
   const editor = usePlateEditor({
     value: initialValue,
-    plugins: [BasicMarksPlugin], // Add the marks plugin
+    plugins: [BasicMarksPlugin, ...copilotPlugins],
     components: {
       // Define how each mark type should be rendered
       // We use PlateLeaf and pass an 'as' prop for semantic HTML, or render directly.
@@ -1207,32 +1278,48 @@ const DescriptionView: component_.base.View<Props> = ({
           />
         </div>
       </Col>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
-      <Plate editor={editor}>
-        <FixedToolbar className="justify-start rounded-t-lg">
-          <MarkToolbarButton nodeType="bold" tooltip="Bold (⌘+B)">
-            B
-          </MarkToolbarButton>
-          <MarkToolbarButton nodeType="italic" tooltip="Italic (⌘+I)">
-            I
-          </MarkToolbarButton>
-          <MarkToolbarButton nodeType="underline" tooltip="Underline (⌘+U)">
-            U
-          </MarkToolbarButton>
-        </FixedToolbar>
-        <EditorContainer>
-          {" "}
-          {/* Styles the editor area */}
-          <Editor placeholder="Type your amazing content here..." />
-        </EditorContainer>
-        {/* <FixedToolbar>
+      {/* <span
+      className="pointer-events-none text-muted-foreground/70 max-sm:hidden"
+      contentEditable={false}
+    >
+      This is ghost text
+    </span>
+    <div className="bg-red-500 text-white p-4 m-2">Test</div>
+
+      <h1 className="text-3xl font-bold underline">Hello world!</h1> */}
+      <div
+        className="editorWrapper"
+        style={{
+          border: "1px solid #cfd4da",
+          borderRadius: "8px",
+          padding: "1px"
+        }}>
+        <Plate editor={editor}>
+          <FixedToolbar className="justify-start rounded-t-lg">
+            <MarkToolbarButton nodeType="bold" tooltip="Bold (⌘+B)">
+              B
+            </MarkToolbarButton>
+            <MarkToolbarButton nodeType="italic" tooltip="Italic (⌘+I)">
+              I
+            </MarkToolbarButton>
+            <MarkToolbarButton nodeType="underline" tooltip="Underline (⌘+U)">
+              U
+            </MarkToolbarButton>
+          </FixedToolbar>
+          <EditorContainer>
+            {" "}
+            {/* Styles the editor area */}
+            <Editor placeholder="Type your amazing content here..." />
+          </EditorContainer>
+          {/* <FixedToolbar>
         <MarkToolbarButton nodeType="bold" tooltip="Bold">B</MarkToolbarButton>
       </FixedToolbar>
         <PlateContent
           style={{ padding: "16px 64px", minHeight: "100px" }}
           placeholder="Type your amazing content here..."
         /> */}
-      </Plate>
+        </Plate>
+      </div>
       {state.showCopilotEditor && (
         <Col xs="12" md={4}>
           <div className="mb-3">

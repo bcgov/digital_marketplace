@@ -47,23 +47,24 @@ export default defineConfig(({ mode }) => {
     // Ensure leading/trailing slashes are correct
     base: basePath,
     // Specify the project root directory (where index.html is expected)
-    root: './src/front-end/html', // Project root
-    publicDir: '../public',
+    // root: './src/front-end/html', // does not work
+    root: './src/front-end',
+    publicDir: './public',
     build: {
-      outDir: '../../../build/front-end', // Navigate up from src/front-end/html to project root
+      outDir: '../../build/front-end', // Navigate up from src/front-end/html to project root
       emptyOutDir: true,
       sourcemap: mode === 'development',
       rollupOptions: {
         input: {
-          main: path.resolve(process.cwd(), 'src/front-end/html/index.html'),
-          downtime: path.resolve(process.cwd(), 'src/front-end/html/downtime.html'),
-          unsupportedBrowser: path.resolve(process.cwd(), 'src/front-end/html/unsupported-browser.html')
+          main: path.resolve(process.cwd(), 'src/front-end/index.html'),
+          downtime: path.resolve(process.cwd(), 'src/front-end/downtime.html'),
+          unsupportedBrowser: path.resolve(process.cwd(), 'src/front-end/unsupported-browser.html')
         }
       }
     },
     server: {
       // Configure the development server
-      port: 3000, // Vite runs on 3000
+      port: 3001, // Vite runs on 3000
       strictPort: true, // Exit if port is already in use
       // Proxy API requests to the backend server
       proxy: {
