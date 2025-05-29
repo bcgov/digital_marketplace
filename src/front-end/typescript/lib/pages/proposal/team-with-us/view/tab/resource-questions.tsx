@@ -221,7 +221,8 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       viewerUser: params.viewerUser,
       proposal: params.proposal,
       proposals: params.proposals,
-      panelEvaluations: params.panelQuestionEvaluations
+      panelEvaluations: params.panelQuestionEvaluations,
+      evaluation: params.questionEvaluation
     });
   return [
     {

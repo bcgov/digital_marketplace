@@ -21,7 +21,7 @@ export interface Params {
   proposal: SWUProposal;
   proposals: SWUProposalSlim[];
   panelEvaluations: SWUTeamQuestionResponseEvaluation[];
-  evaluation?: SWUTeamQuestionResponseEvaluation;
+  evaluation: SWUTeamQuestionResponseEvaluation | undefined;
 }
 
 export interface State extends Omit<Params, "viewerUser" | "panelEvaluations"> {
@@ -56,6 +56,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   if (index < 0) {
     return [
       {
+        evaluation,
         prevProposal: undefined,
         prevEvaluation: undefined,
         nextProposal: undefined,
@@ -74,6 +75,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
 
   return [
     {
+      evaluation,
       prevProposal,
       prevEvaluation: undefined,
       nextProposal,
