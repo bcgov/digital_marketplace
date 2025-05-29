@@ -221,18 +221,10 @@ const create: crud.Create<
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
-      const implementationPhase = get(body, "implementationPhase");
-      if (!implementationPhase) {
-        throw new Error("Implementation phase is required");
-      }
-      const evaluationPanel = get(body, "evaluationPanel");
-      if (!evaluationPanel) {
-        throw new Error("Evaluation panel is required");
-      }
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: !!get(body, "remoteOk"),
+        remoteOk: getBoolean(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
         totalMaxBudget: getNumber(body, "totalMaxBudget"),
@@ -252,9 +244,9 @@ const create: crud.Create<
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: implementationPhase,
-        teamQuestions: get(body, "teamQuestions") ?? [],
-        evaluationPanel: evaluationPanel
+        implementationPhase: get(body, "implementationPhase") as any,
+        teamQuestions: get(body, "teamQuestions") as any,
+        evaluationPanel: get(body, "evaluationPanel") as any
       };
     },
     async validateRequestBody(request) {
@@ -777,21 +769,13 @@ const update: crud.Update<
       const body = request.body.tag === "json" ? request.body.value : {};
       const tag = get(body, "tag");
       const value: unknown = get(body, "value");
-      const implementationPhase = get(value, "implementationPhase");
 
       switch (tag) {
         case "edit": {
-          if (!implementationPhase) {
-            throw new Error("Implementation phase is required");
-          }
-          const evaluationPanel = get(value, "evaluationPanel");
-          if (!evaluationPanel) {
-            throw new Error("Evaluation panel is required");
-          }
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: !!get(value, "remoteOk"),
+            remoteOk: getBoolean(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
             totalMaxBudget: getNumber<number>(value, "totalMaxBudget"),
@@ -813,9 +797,9 @@ const update: crud.Update<
             attachments: getStringArray(value, "attachments"),
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: implementationPhase,
-            teamQuestions: get(value, "teamQuestions") ?? [],
-            evaluationPanel: evaluationPanel
+            implementationPhase: get(value, "implementationPhase") as any,
+            teamQuestions: get(value, "teamQuestions") as any,
+            evaluationPanel: get(value, "evaluationPanel") as any
           });
         }
         case "submitForReview":

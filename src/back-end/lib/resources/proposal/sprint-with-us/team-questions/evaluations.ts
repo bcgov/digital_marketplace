@@ -166,7 +166,7 @@ const create: crud.Create<
       return {
         proposal: getString(body, "proposal"),
         status: getString(body, "status"),
-        scores: get(body, "scores") ?? []
+        scores: get(body, "scores") as any
       };
     },
     async validateRequestBody(request) {
