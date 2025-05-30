@@ -38,8 +38,7 @@ import {
   SWUProposalStatus,
   UpdateEditValidationErrors,
   UpdateRequestBody as SharedUpdateRequestBody,
-  UpdateValidationErrors,
-  CreateSWUProposalTeamMemberBody
+  UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
@@ -228,10 +227,6 @@ const create: crud.Create<
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
-      const implementationPhase = get(body, "implementationPhase");
-      if (!implementationPhase) {
-        throw new Error("Implementation phase is required");
-      }
       return {
         opportunity: getString(body, "opportunity"),
         organization: getString(body, "organization", undefined),
@@ -239,9 +234,9 @@ const create: crud.Create<
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: implementationPhase,
-        teamQuestionResponses: get(body, "teamQuestionResponses") ?? [],
-        references: get(body, "references") ?? []
+        implementationPhase: get(body, "implementationPhase") as any,
+        teamQuestionResponses: get(body, "teamQuestionResponses") as any,
+        references: get(body, "references") as any
       };
     },
     async validateRequestBody(request) {
@@ -564,29 +559,13 @@ const update: crud.Update<
 
       switch (tag) {
         case "edit": {
-          const implementationPhase = get(value, "implementationPhase");
-          if (!implementationPhase) {
-            throw new Error("Implementation phase is required");
-          }
           return adt("edit", {
             organization: getString(value, "organization"),
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: {
-              members: Array.isArray(get(implementationPhase, "members"))
-                ? (get(
-                    implementationPhase,
-                    "members",
-                    []
-                  ) as CreateSWUProposalTeamMemberBody[])
-                : [],
-              proposedCost: getNumber<number>(
-                implementationPhase,
-                "proposedCost"
-              )
-            },
-            references: get(value, "references") ?? [],
-            teamQuestionResponses: get(value, "teamQuestionResponses") ?? [],
+            implementationPhase: get(value, "implementationPhase") as any,
+            references: get(value, "references") as any,
+            teamQuestionResponses: get(value, "teamQuestionResponses") as any,
             attachments: getStringArray(value, "attachments")
           });
         }

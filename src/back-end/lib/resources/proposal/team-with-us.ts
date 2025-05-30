@@ -264,7 +264,10 @@ const create: crud.Create<
         organization: getString(body, "organization", undefined),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestionResponses: get(body, "resourceQuestionResponses") ?? [],
+        resourceQuestionResponses: get(
+          body,
+          "resourceQuestionResponses"
+        ) as any,
         team: (Array.isArray(team) ? team : []).map((member) => ({
           member: getString(member, "member"),
           hourlyRate: getNumber(member, "hourlyRate"),
@@ -551,10 +554,12 @@ const update: crud.Update<
         case "edit":
           return adt("edit", {
             organization: getString(value, "organization"),
-            resourceQuestionResponses:
-              get(value, "resourceQuestionResponses") ?? [],
+            resourceQuestionResponses: get(
+              value,
+              "resourceQuestionResponses"
+            ) as any,
             attachments: getStringArray(value, "attachments"),
-            team: get(value, "team") ?? []
+            team: get(value, "team") as any
           });
         case "submit":
           return adt("submit", getString(body, "value", ""));

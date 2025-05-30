@@ -928,7 +928,6 @@ nav.navbar .nav-link:hover {
 .chair-evaluation {
   $panel-notes-height: calc((0.75rem + (4em * 1.5)) + 2px);
   &.disabled {
-    // @extend .form-control;
     background-color: $input-disabled-bg;
     opacity: 1; // Ensure it overrides any other opacity if needed, BS default is usually 1 for disabled bg
     cursor: not-allowed !important;

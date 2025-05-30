@@ -571,14 +571,16 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                   className: i === 0 ? "mx-0" : "me-3"
                 };
                 if (button) {
+                  // Use a key that includes text in addition to index
+                  // (SonarQube - "Avoid using index as key")
                   return (
-                    <Link key={`modal-action-${i}`} button {...props}>
+                    <Link key={`modal-action-${i}-${text}`} button {...props}>
                       {text}
                     </Link>
                   );
                 } else {
                   return (
-                    <Link key={`modal-action-${i}`} {...props}>
+                    <Link key={`modal-action-${i}-${text}`} {...props}>
                       {text}
                     </Link>
                   );
