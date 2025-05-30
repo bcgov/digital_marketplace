@@ -204,7 +204,8 @@ const NavLink: component_.base.View<NavLinkProps> = (props) => {
     <span
       onClick={handleWrapperClick}
       className="nav-link-wrapper"
-      style={{ display: "contents" }}>
+      style={{ display: "contents" }}
+      role="presentation">
       <Link {...linkPropsToPass} />
     </span>
   );
