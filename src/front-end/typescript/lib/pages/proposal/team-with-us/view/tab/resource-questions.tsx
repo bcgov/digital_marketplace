@@ -84,41 +84,54 @@ export type InnerMsg =
     >
   | ADT<"cancelEditing">
   | ADT<"cancel">
-  | ADT<"saveEvaluationDraft">
-  | ADT<"saveConsensusDraft">
+  | ADT<"saveEvaluationDraft", Route | undefined>
+  | ADT<"saveConsensusDraft", Route | undefined>
   | ADT<
       "onSaveEvaluationDraftResponse",
-      api.ResponseValidation<
-        TWUResourceQuestionResponseEvaluation,
-        CreateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          TWUResourceQuestionResponseEvaluation,
+          CreateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
   | ADT<
       "onSaveConsensusDraftResponse",
-      api.ResponseValidation<
-        TWUResourceQuestionResponseEvaluation,
-        CreateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          TWUResourceQuestionResponseEvaluation,
+          CreateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
-  | ADT<"saveEvaluationChanges">
+  | ADT<"saveEvaluationChanges", Route | undefined>
   | ADT<
       "onSaveEvaluationChangesResponse",
-      api.ResponseValidation<
-        TWUResourceQuestionResponseEvaluation,
-        UpdateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          TWUResourceQuestionResponseEvaluation,
+          UpdateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
-  | ADT<"saveConsensusChanges">
+  | ADT<"saveConsensusChanges", Route | undefined>
   | ADT<
       "onSaveConsensusChangesResponse",
-      api.ResponseValidation<
-        TWUResourceQuestionResponseEvaluation,
-        UpdateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          TWUResourceQuestionResponseEvaluation,
+          UpdateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
   | ADT<"scoreMsg", { childMsg: NumberField.Msg; rIndex: number }>
   | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>
-  | ADT<"resourceQuestionsCarousel", ResourceQuestionsCarousel.Msg>;
+  | ADT<"resourceQuestionsCarousel", ResourceQuestionsCarousel.Msg>
+  | ADT<"navigate", Route>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -131,6 +144,19 @@ export function getResourceQuestionsOpportunityTab(
       ? ("consensus" as const)
       : ("overview" as const)
     : ("resourceQuestions" as const);
+}
+
+export function getEvaluationActionType(
+  panelEvaluations: TWUResourceQuestionResponseEvaluation[],
+  evaluation?: TWUResourceQuestionResponseEvaluation
+) {
+  return panelEvaluations.length > 0
+    ? evaluation
+      ? ({ type: "edit-consensus", evaluation } as const)
+      : ({ type: "create-consensus" } as const)
+    : evaluation
+    ? ({ type: "edit-individual", evaluation } as const)
+    : ({ type: "create-individual" } as const);
 }
 
 function initEvaluationScores(
@@ -383,7 +409,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       if (scores === null) {
         return [state, []];
       }
-
       return [
         startSaveLoading(state),
         [
@@ -394,7 +419,8 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               status: TWUResourceQuestionResponseEvaluationStatus.Draft,
               scores
             },
-            (response) => adt("onSaveEvaluationDraftResponse", response)
+            (response) =>
+              adt("onSaveEvaluationDraftResponse", [response, msg.value]) as Msg
           )
         ]
       ];
@@ -404,7 +430,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       if (scores === null) {
         return [state, []];
       }
-
       return [
         startSaveLoading(state),
         [
@@ -415,14 +440,15 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               status: TWUResourceQuestionResponseEvaluationStatus.Draft,
               scores
             },
-            (response) => adt("onSaveConsensusDraftResponse", response)
+            (response) =>
+              adt("onSaveConsensusDraftResponse", [response, msg.value]) as Msg
           )
         ]
       ];
     }
     case "onSaveEvaluationDraftResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -435,16 +461,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.set("evaluationScores", evaluationScoreStates),
             [
               ...evaluationScoreCmds,
-              component_.cmd.dispatch(
-                component_.global.newRouteMsg(
-                  adt("questionEvaluationIndividualTWUEdit", {
-                    proposalId: state.proposal.id,
-                    opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember,
-                    tab: "resourceQuestions" as const
-                  }) as Route
-                )
-              ),
+              route
+                ? component_.cmd.dispatch(adt("navigate", route) as Msg)
+                : component_.cmd.dispatch(
+                    component_.global.newRouteMsg(
+                      adt("questionEvaluationIndividualTWUEdit", {
+                        proposalId: state.proposal.id,
+                        opportunityId: state.proposal.opportunity.id,
+                        userId: result.value.evaluationPanelMember,
+                        tab: "resourceQuestions" as const
+                      }) as Route
+                    )
+                  ),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationDraftCreated.success)
@@ -494,7 +522,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveConsensusDraftResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -507,16 +535,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.set("evaluationScores", evaluationScoreStates),
             [
               ...evaluationScoreCmds,
-              component_.cmd.dispatch(
-                component_.global.newRouteMsg(
-                  adt("questionEvaluationConsensusTWUEdit", {
-                    proposalId: state.proposal.id,
-                    opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember,
-                    tab: "resourceQuestions" as const
-                  }) as Route
-                )
-              ),
+              route
+                ? component_.cmd.dispatch(adt("navigate", route) as Msg)
+                : component_.cmd.dispatch(
+                    component_.global.newRouteMsg(
+                      adt("questionEvaluationConsensusTWUEdit", {
+                        proposalId: state.proposal.id,
+                        opportunityId: state.proposal.opportunity.id,
+                        userId: result.value.evaluationPanelMember,
+                        tab: "resourceQuestions" as const
+                      }) as Route
+                    )
+                  ),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationDraftCreated.success)
@@ -579,7 +609,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               )(
                 state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
-                (response) => adt("onSaveEvaluationChangesResponse", response)
+                (response) =>
+                  adt("onSaveEvaluationChangesResponse", [
+                    response,
+                    msg.value
+                  ]) as Msg
               )
             ]
           : []
@@ -587,7 +621,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveEvaluationChangesResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -603,6 +637,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               .set("isEditing", false),
             [
               ...evaluationScoreCmds,
+              ...(route
+                ? [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+                : []),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationChangesSaved.success)
@@ -667,7 +704,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               )(
                 state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
-                (response) => adt("onSaveEvaluationChangesResponse", response)
+                (response) =>
+                  adt("onSaveConsensusChangesResponse", [
+                    response,
+                    msg.value
+                  ]) as Msg
               )
             ]
           : []
@@ -675,7 +716,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveConsensusChangesResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -691,6 +732,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               .set("isEditing", false),
             [
               ...evaluationScoreCmds,
+              ...(route
+                ? [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+                : []),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationChangesSaved.success)
@@ -770,9 +814,45 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         childStatePath: ["resourceQuestionsCarousel"],
         childUpdate: ResourceQuestionsCarousel.update,
         childMsg: msg.value,
-        mapChildMsg: (value) => adt("resourceQuestionsCarousel", value)
+        mapChildMsg: (value) => adt("resourceQuestionsCarousel", value),
+        updateAfter: (state) => {
+          if (msg.value.tag === "saveAndNavigate") {
+            const route = msg.value.value;
+            const saveAction = getEvaluationActionType(
+              state.panelQuestionEvaluations,
+              state.questionEvaluation
+            );
+            let saveMsg: Msg;
+            switch (saveAction.type) {
+              case "create-individual":
+                saveMsg = adt("saveEvaluationDraft", route);
+                break;
+              case "edit-individual":
+                saveMsg = adt("saveEvaluationChanges", route);
+                break;
+              case "create-consensus":
+                saveMsg = adt("saveConsensusDraft", route);
+                break;
+              case "edit-consensus":
+                saveMsg = adt("saveConsensusChanges", route);
+                break;
+            }
+            if (state.isEditing) {
+              return [state, [component_.cmd.dispatch(saveMsg)]];
+            }
+            return [
+              state,
+              [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+            ];
+          }
+          return [state, []];
+        }
       });
-
+    case "navigate":
+      return [
+        state,
+        [component_.cmd.dispatch(component_.global.newRouteMsg(msg.value))]
+      ];
     default:
       return [state, []];
   }

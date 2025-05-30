@@ -39,7 +39,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join3(
+          component_.cmd.join4(
             api.proposals.twu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
@@ -49,7 +49,21 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.proposals.twu.readMany(opportunityId)((response) =>
               api.isValid(response) ? response.value : null
             ),
-            (proposal, opportunity, proposals) => {
+            api.proposals.twu.resourceQuestions.evaluations.readOne(proposalId)(
+              shared.sessionUser.id,
+              (response) => (api.isValid(response) ? response.value : null)
+            ),
+            (proposal, opportunity, proposals, evaluation) => {
+              if (evaluation) {
+                return component_.global.replaceRouteMsg(
+                  adt("questionEvaluationIndividualTWUEdit", {
+                    opportunityId,
+                    proposalId,
+                    userId: shared.sessionUser.id,
+                    tab: "resourceQuestions"
+                  }) as Route
+                );
+              }
               if (!proposal || !opportunity || !proposals)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })

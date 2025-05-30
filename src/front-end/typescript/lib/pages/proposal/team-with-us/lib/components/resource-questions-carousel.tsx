@@ -2,8 +2,7 @@ import { component as component_ } from "front-end/lib/framework";
 import Link, {
   iconLinkSymbol,
   leftPlacement,
-  rightPlacement,
-  routeDest
+  rightPlacement
 } from "front-end/lib/views/link";
 import React from "react";
 import {
@@ -15,6 +14,7 @@ import { compareNumbers } from "shared/lib";
 import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import * as api from "front-end/lib/http/api";
 import { User } from "shared/lib/resources/user";
+import { getEvaluationActionType } from "../../view/tab/resource-questions";
 
 export interface Params {
   viewerUser: User;
@@ -24,21 +24,22 @@ export interface Params {
   evaluation: TWUResourceQuestionResponseEvaluation | undefined;
 }
 
-export interface State extends Omit<Params, "viewerUser" | "panelEvaluations"> {
-  isConsensus: boolean;
+export interface State extends Omit<Params, "viewerUser"> {
   prevProposal?: TWUProposalSlim;
   prevEvaluation?: TWUResourceQuestionResponseEvaluation;
   nextProposal?: TWUProposalSlim;
   nextEvaluation?: TWUResourceQuestionResponseEvaluation;
 }
 
-export type Msg = ADT<
-  "onInitResponse",
-  [
-    TWUResourceQuestionResponseEvaluation | undefined,
-    TWUResourceQuestionResponseEvaluation | undefined
-  ]
->;
+export type Msg =
+  | ADT<
+      "onInitResponse",
+      [
+        TWUResourceQuestionResponseEvaluation | undefined,
+        TWUResourceQuestionResponseEvaluation | undefined
+      ]
+    >
+  | ADT<"saveAndNavigate", ReturnType<typeof getRoute>>;
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,
@@ -51,7 +52,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const index = proposals.findIndex(
     (otherProposal) => otherProposal.id === proposal.id
   );
-  const isConsensus = panelEvaluations.length > 0;
   // Safeguard against proposals/proposal prop mismatch
   if (index < 0) {
     return [
@@ -64,7 +64,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         proposal,
         proposals,
         viewerUser,
-        isConsensus
+        panelEvaluations
       },
       []
     ];
@@ -83,19 +83,19 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       proposal,
       proposals,
       viewerUser,
-      isConsensus
+      panelEvaluations
     },
     [
       component_.cmd.join(
         getEvaluationResource(
           prevProposal,
-          isConsensus,
+          panelEvaluations,
           evaluation,
           viewerUser
         ),
         getEvaluationResource(
           nextProposal,
-          isConsensus,
+          panelEvaluations,
           evaluation,
           viewerUser
         ),
@@ -117,6 +117,9 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("nextEvaluation", nextEvaluation),
         []
       ];
+    }
+    case "saveAndNavigate": {
+      return [state, []];
     }
   }
 };
@@ -142,7 +145,7 @@ export function sortProponentsByAnonymousProponentName(
 
 function getEvaluationResource(
   proposal: TWUProposalSlim | undefined,
-  isConsensus: boolean,
+  panelEvaluations: TWUResourceQuestionResponseEvaluation[],
   evaluation: TWUResourceQuestionResponseEvaluation | undefined,
   viewerUser: User
 ) {
@@ -154,7 +157,7 @@ function getEvaluationResource(
     >
   ) => (api.isValid(response) ? response.value : undefined);
   return proposal
-    ? isConsensus
+    ? panelEvaluations.length > 0
       ? api.proposals.twu.resourceQuestions.consensuses.readOne(proposal.id)(
           userId,
           callback
@@ -168,7 +171,7 @@ function getEvaluationResource(
 
 function getRoute(
   proposal: TWUProposalSlim,
-  isConsensus: boolean,
+  panelEvaluations: TWUResourceQuestionResponseEvaluation[],
   evaluation: TWUResourceQuestionResponseEvaluation | undefined
 ) {
   const routeParams = {
@@ -176,30 +179,34 @@ function getRoute(
     opportunityId: proposal.opportunity.id,
     tab: "resourceQuestions" as const
   };
-  return isConsensus
-    ? evaluation
-      ? adt("questionEvaluationConsensusTWUEdit" as const, {
-          ...routeParams,
-          userId: evaluation.evaluationPanelMember
-        })
-      : adt("questionEvaluationConsensusTWUCreate" as const, routeParams)
-    : evaluation
-    ? adt("questionEvaluationIndividualTWUEdit" as const, {
+  const action = getEvaluationActionType(panelEvaluations, evaluation);
+  switch (action.type) {
+    case "create-consensus":
+      return adt("questionEvaluationConsensusTWUCreate" as const, routeParams);
+    case "edit-consensus":
+      return adt("questionEvaluationConsensusTWUEdit" as const, {
         ...routeParams,
-        userId: evaluation.evaluationPanelMember
-      })
-    : adt("questionEvaluationIndividualTWUCreate" as const, routeParams);
+        userId: action.evaluation.evaluationPanelMember
+      });
+    case "create-individual":
+      return adt("questionEvaluationIndividualTWUCreate" as const, routeParams);
+    case "edit-individual":
+      return adt("questionEvaluationIndividualTWUEdit" as const, {
+        ...routeParams,
+        userId: action.evaluation.evaluationPanelMember
+      });
+  }
 }
 
 export const view: component_.base.View<
   component_.base.ComponentViewProps<State, Msg>
-> = ({ state }) => {
+> = ({ state, dispatch }) => {
   const {
-    isConsensus,
     prevProposal,
     prevEvaluation,
     nextProposal,
-    nextEvaluation
+    nextEvaluation,
+    panelEvaluations
   } = state;
   return (
     <div className="d-flex justify-content-between">
@@ -209,7 +216,14 @@ export const view: component_.base.View<
           color="info"
           outline
           symbol_={leftPlacement(iconLinkSymbol("arrow-left"))}
-          dest={routeDest(getRoute(prevProposal, isConsensus, prevEvaluation))}>
+          onClick={() =>
+            dispatch(
+              adt(
+                "saveAndNavigate",
+                getRoute(prevProposal, panelEvaluations, prevEvaluation)
+              )
+            )
+          }>
           Previous Proponent
         </Link>
       ) : (
@@ -221,7 +235,14 @@ export const view: component_.base.View<
           color="primary"
           outline
           symbol_={rightPlacement(iconLinkSymbol("arrow-right"))}
-          dest={routeDest(getRoute(nextProposal, isConsensus, nextEvaluation))}>
+          onClick={() =>
+            dispatch(
+              adt(
+                "saveAndNavigate",
+                getRoute(nextProposal, panelEvaluations, nextEvaluation)
+              )
+            )
+          }>
           Next Proponent
         </Link>
       ) : (
