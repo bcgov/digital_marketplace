@@ -264,7 +264,7 @@ const update: crud.Update<
       switch (tag) {
         case "edit":
           return adt("edit", {
-            scores: get(value, "scores") ?? []
+            scores: get(value, "scores") as any
           });
         default:
           return null;
