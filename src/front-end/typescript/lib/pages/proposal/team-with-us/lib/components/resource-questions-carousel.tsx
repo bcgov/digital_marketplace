@@ -14,7 +14,7 @@ import { compareNumbers } from "shared/lib";
 import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import * as api from "front-end/lib/http/api";
 import { User } from "shared/lib/resources/user";
-import { getEvaluationActionType } from "../../view/tab/resource-questions";
+import { getEvaluationActionType } from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
 
 export interface Params {
   viewerUser: User;
