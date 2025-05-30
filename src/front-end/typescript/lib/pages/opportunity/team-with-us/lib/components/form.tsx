@@ -1370,7 +1370,7 @@ const ScoringView: component_.base.View<Props> = ({
             evaluation process. Assign a weight to each evaluation stage using
             the fields available below.
           </p>
-          <p className="mb-4 font-size-small font-italic">
+          <p className="mb-4 font-size-small fst-italic">
             Note: Weights are specified as percentages and the sum of all
             weights must total 100%.
           </p>

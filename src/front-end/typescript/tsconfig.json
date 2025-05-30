@@ -1,8 +1,10 @@
 {
   "extends": "../../../tsconfig",
   "compilerOptions": {
-    "target": "es5",
-    "skipLibCheck": true
+    "target": "ESNext",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node","vite/client"]
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"]
 }

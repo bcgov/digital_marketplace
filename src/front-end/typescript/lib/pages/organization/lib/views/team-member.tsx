@@ -31,7 +31,7 @@ export function makeViewTeamMemberModal<Msg>(
               }}
               src={userAvatarPath(member.user)}
             />
-            <div className="ml-3 d-flex flex-column align-items-start">
+            <div className="ms-3 d-flex flex-column align-items-start">
               <strong className="mb-1">{member.user.name}</strong>
               <span className="font-size-small">
                 {numCapabilities} Capabilit{numCapabilities === 1 ? "y" : "ies"}

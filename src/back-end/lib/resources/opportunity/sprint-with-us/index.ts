@@ -224,7 +224,7 @@ const create: crud.Create<
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: getBoolean(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
         totalMaxBudget: getNumber(body, "totalMaxBudget"),
@@ -244,9 +244,9 @@ const create: crud.Create<
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase"),
-        teamQuestions: get(body, "teamQuestions"),
-        evaluationPanel: get(body, "evaluationPanel")
+        implementationPhase: get(body, "implementationPhase") as any,
+        teamQuestions: get(body, "teamQuestions") as any,
+        evaluationPanel: get(body, "evaluationPanel") as any
       };
     },
     async validateRequestBody(request) {
@@ -769,12 +769,13 @@ const update: crud.Update<
       const body = request.body.tag === "json" ? request.body.value : {};
       const tag = get(body, "tag");
       const value: unknown = get(body, "value");
+
       switch (tag) {
-        case "edit":
+        case "edit": {
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: getBoolean(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
             totalMaxBudget: getNumber<number>(value, "totalMaxBudget"),
@@ -796,10 +797,11 @@ const update: crud.Update<
             attachments: getStringArray(value, "attachments"),
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: get(value, "implementationPhase"),
-            teamQuestions: get(value, "teamQuestions"),
-            evaluationPanel: get(value, "evaluationPanel")
+            implementationPhase: get(value, "implementationPhase") as any,
+            teamQuestions: get(value, "teamQuestions") as any,
+            evaluationPanel: get(value, "evaluationPanel") as any
           });
+        }
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));
         case "publish":

@@ -288,7 +288,7 @@ const Description: component_.base.View<Props> = ({
         <p>{description}</p>
         <div className="d-flex align-items-center flex-nowrap mb-3">
           <Icon name="cubes" color="body" />
-          <div className="ml-2 font-weight-bold">Common Deliverables</div>
+          <div className="ms-2 fw-bold">Common Deliverables</div>
         </div>
         <ul>
           {deliverables.map((deliverable, i) => (
@@ -393,7 +393,7 @@ export const view: component_.base.View<Props> = (props) => {
       icon={icon}
       iconWidth={2}
       iconHeight={2}
-      iconClassName="mr-3"
+      iconClassName="me-3"
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}

@@ -97,7 +97,7 @@ const TitleView: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
                 maxWidth: "250px",
                 transform: "translateY(-48px)"
               }}
-              className="d-none d-md-block position-absolute ml-6"
+              className="d-none d-md-block position-absolute ms-6"
               src={prefixPath(
                 "/images/illustrations/code_with_us_learn_more.svg"
               )}
@@ -122,7 +122,7 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
               toggle={() => dispatch(adt("toggleVendorAccordion"))}
               color="info"
               title="Vendors"
-              titleClassName="h2 mb-0 ml-2"
+              titleClassName="h2 mb-0 ms-2"
               icon="store"
               iconColor="info"
               iconWidth={2.5}
@@ -152,7 +152,7 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
-                  className="mb-4 mb-sm-0 mr-0 mr-sm-4 text-nowrap">
+                  className="mb-4 mb-sm-0 me-0 me-sm-4 text-nowrap">
                   Read the Guide
                 </Link>
                 <Link
@@ -230,7 +230,7 @@ const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
               toggle={() => dispatch(adt("togglePublicSectorAccordion"))}
               color="info"
               title="Public Sector"
-              titleClassName="h2 mb-0 ml-2"
+              titleClassName="h2 mb-0 ms-2"
               icon="government"
               iconColor="info"
               iconWidth={2.5}
@@ -258,7 +258,7 @@ const PublicSectorView: component_.page.View<State, InnerMsg, Route> = ({
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
-                  className="mr-3 text-nowrap">
+                  className="me-3 text-nowrap">
                   Read the Guide
                 </Link>
               </div>

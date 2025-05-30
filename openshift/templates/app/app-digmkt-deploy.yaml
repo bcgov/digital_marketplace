@@ -13,14 +13,14 @@ objects:
   metadata:
     name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
   data:
-    NODE_ENV: production
+    VITE_NODE_ENV: production
     SERVER_HOST: 0.0.0.0
     SERVER_PORT: '3000'
     DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
     FILE_STORAGE_DIR: "/usr/app"
     ORIGIN: ${ORIGIN}
     HOST: ${HOST}
-    PATH_PREFIX: ''
+    VITE_PATH_PREFIX: ''
     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
     KEYCLOAK_URL: ${KEYCLOAK_URL}
     KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -31,7 +31,7 @@ objects:
     MAILER_HOST: apps.smtp.gov.bc.ca
     MAILER_PORT: '25'
     TZ: America/Vancouver
-    SHOW_TEST_INDICATOR: ${SHOW_TEST_INDICATOR}
+    VITE_SHOW_TEST_INDICATOR: ${VITE_SHOW_TEST_INDICATOR}
     LOG_MEM_USAGE: "1"
     LOG_DEBUG: "1"
 
@@ -295,7 +295,7 @@ parameters:
   required: true
   value: standard
 
-- name: SHOW_TEST_INDICATOR
+- name: VITE_SHOW_TEST_INDICATOR
   displayName: Whether to show the TEST prefix for emails/headers. (0 for hide, 1 for show)
   required: true
   value: '0'
@@ -318,6 +318,6 @@ parameters:
   value: ${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
   required: true
 
-- name: PATH_PREFIX
+- name: VITE_PATH_PREFIX
   displayName: When the URL employs a subdirectory, the path prefix such as 'marketplace' is this value
   required: false

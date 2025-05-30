@@ -185,7 +185,7 @@ const FileField: component_.base.View<FileFieldProps> = (props) => {
     errors = []
   } = props;
   return (
-    <div className="form-group">
+    <div className="mb-3">
       <div className="d-flex flex-nowrap align-items-center">
         <input
           type="text"
@@ -201,10 +201,10 @@ const FileField: component_.base.View<FileFieldProps> = (props) => {
             color="info"
             hover
             onClick={onRemove}
-            className="ml-3"
+            className="ms-3"
           />
         )}
-        <Link color="info" download dest={externalDest(url)} className="ml-3">
+        <Link color="info" download dest={externalDest(url)} className="ms-3">
           <Icon name="download" />
         </Link>
       </div>
@@ -305,7 +305,7 @@ export const AttachmentList: component_.base.View<{ files: FileRecord[] }> = ({
           className={`flex-nowrap ${i < files.length - 1 ? "mb-3" : ""}`}>
           <Icon
             name="paperclip"
-            className="mr-2 flex-shrink-0 align-self-start mt-1"
+            className="me-2 flex-shrink-0 align-self-start mt-1"
           />
           {f.name}
         </Link>
