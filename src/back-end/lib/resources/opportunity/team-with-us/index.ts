@@ -1021,17 +1021,15 @@ const update: crud.Update<
             });
           }
 
-          const anyScreenableProponents =
-            twuOpportunity.resourceQuestions.reduce((valid, rq) => {
-              return (
-                valid ||
-                consensuses.some(
-                  (consensus) =>
-                    rq.minimumScore &&
-                    consensus.scores[rq.order].score >= rq.minimumScore
-                )
-              );
-            }, false);
+          const anyScreenableProponents = consensuses.some((consensus) => {
+            return twuOpportunity.resourceQuestions.every((rq) => {
+              if (!rq.minimumScore) {
+                return true;
+              }
+
+              return consensus.scores[rq.order].score >= rq.minimumScore;
+            });
+          });
 
           if (!anyScreenableProponents) {
             return invalid({

@@ -1,4 +1,4 @@
-import { FileRecord } from "shared/lib/resources/file";
+import { FileRecord } from "back-end/../shared/lib/resources/file";
 import * as crud from "back-end/lib/crud";
 import * as db from "back-end/lib/db";
 import * as swuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
@@ -1528,19 +1528,15 @@ const update: crud.Update<
             });
           }
 
-          const anyScreenableProponents = swuOpportunity.teamQuestions.reduce(
-            (valid, tq) => {
-              return (
-                valid ||
-                consensuses.some(
-                  (consensus) =>
-                    tq.minimumScore &&
-                    consensus.scores[tq.order].score >= tq.minimumScore
-                )
-              );
-            },
-            false
-          );
+          const anyScreenableProponents = consensuses.some((consensus) => {
+            return swuOpportunity.teamQuestions.every((tq) => {
+              if (!tq.minimumScore) {
+                return true;
+              }
+
+              return consensus.scores[tq.order].score >= tq.minimumScore;
+            });
+          });
 
           if (!anyScreenableProponents) {
             return invalid({
