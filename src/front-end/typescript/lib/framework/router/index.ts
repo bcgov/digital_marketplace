@@ -236,7 +236,28 @@ export function start<Route>(routeManager: RouteManager<Route>): void {
     clickHandler((url) => {
       routeManager.dispatchUrl(url, 0, false);
     }),
-    false
+    // In react 16, all event listeners were attached to the document object.
+    // Because our global handler was attached to document.body, it would fire first,
+    // then the react handler attached to document would fire. In react 17, event delegation
+    // moved from document to the react root container (#main). So now our global handler would
+    // fire after the onclick handler. In the onclick handler, we call event.preventDefault()
+    // to signal to global handler that we handled the event and that it doesn't need to do anything,
+    //  hence causing it to not process the actual navigation. Since event propgation has 3 phases
+    // (capturing phase - events travel from out -> in, target phase - actual target handles the event,
+    // bubbling - events travel from in -> out), the last flag on addEventListener controls at which
+    // phase the event gets triggered. By setting it to capturing phase, we ensure that it gets
+    // triggered first, as it did originally. Alternatively, it may be possible to put
+    // another cotainer inside #main and bind the global listener to that, so that it is
+    // encountered first during the bubbling phase.
+
+    // References:
+    // - https://stackoverflow.com/questions/76715726/click-event-order-difference-between-onclick-on-addeventlistener-inside-useeffec
+    // - https://github.com/facebook/react/issues/24657
+    // - https://blog.logrocket.com/event-bubbling-capturing-react/
+
+    // changed from false to true during react upgrade (16->18)
+    // trigger the event listener in the capturing phase instead of bubbling phase
+    true
   );
   // Update current page state scrollY on scroll.
   window.addEventListener(
