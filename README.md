@@ -173,6 +173,15 @@ npm run front-end:watch # Build the front-end source code, rebuild on source cha
 
 # Terminal 4
 npm run migrations:latest # Run all database migrations.
+
+# Terminal 5
+docker-compose up chroma
+
+# Terminal 6
+npx vite dev
+
+# Terminal 7 (in src/marketplace_ai)
+npm run start:dev
 ```
 
 #### Admin user

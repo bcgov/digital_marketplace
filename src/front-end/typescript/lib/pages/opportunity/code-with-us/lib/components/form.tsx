@@ -21,8 +21,8 @@ import {
 import * as api from "front-end/lib/http/api";
 import Link, { externalDest, routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
-import React, { useRef, useEffect } from "react";
-import { Col, Row, Label, Button } from "reactstrap";
+import React, { useRef } from "react";
+import { Col, Row, Label } from "reactstrap";
 import { COPY } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
@@ -49,33 +49,17 @@ import {
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { isAdmin, User } from "shared/lib/resources/user";
-import { CopilotTextarea } from "@copilotkit/react-textarea";
-import type { TElement, Value } from "@udecode/plate";
-import { BasicMarksPlugin } from "@udecode/plate-basic-marks/react";
-import {
-  Plate,
-  PlateLeaf,
-  usePlateEditor,
-  type PlateLeafProps
-} from "@udecode/plate/react";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { Plate } from "@udecode/plate/react";
 
-import { MarkToolbarButton } from "front-end/lib/components/platejs/mark-toolbar-button";
 import {
   Editor,
   EditorContainer
 } from "front-end/lib/components/platejs/editor";
-import { CopilotPlugin } from "@udecode/plate-ai/react";
-import {
-  MarkdownPlugin,
-  serializeMd,
-  stripMarkdown
-} from "@udecode/plate-markdown";
-import { faker } from "@faker-js/faker";
-import { GhostText } from "front-end/lib/components/platejs/ghost-text";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import remarkMdx from "remark-mdx";
-import { FixedToolbar } from "front-end/lib/components/platejs/fixed-toolbar";
+import { useCreateEditor } from "front-end/lib/components/platejs/plugins/use-create-editor";
+import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
+import { DndProvider } from "react-dnd";
+import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
 
 type RemoteOk = "yes" | "no";
 
@@ -1145,205 +1129,173 @@ const DescriptionView: component_.base.View<Props> = ({
   disabled
 }) => {
   const descriptionId = state.description.child.id;
-  const copilotTextareaId = "cwu-opportunity-copilot-rewrite";
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (
-      state.showCopilotEditor &&
-      state.autoFocusCopilotEditor &&
-      textareaRef.current
-    ) {
-      textareaRef.current.focus();
-      dispatch(adt("copilotInputValueChanged", state.copilotInputValue));
-      const currentDescription = FormField.getValue(state.description);
-      // state = state.set("copilotInputValue", currentDescription);
-      textareaRef.current.value = currentDescription;
-    }
-  }, [
-    state.showCopilotEditor,
-    state.autoFocusCopilotEditor,
-    state.copilotInputValue,
-    dispatch
-  ]);
+  // Get title and teaser values from form state
+  const title = FormField.getValue(state.title);
+  const teaser = FormField.getValue(state.teaser);
 
-  const initialValue: Value = [
-    {
-      type: "p",
-      children: [
-        { text: "Hello! Try out the " },
-        { text: "bold", bold: true },
-        { text: ", " },
-        { text: "italic", italic: true },
-        { text: ", and " },
-        { text: "underline", underline: true },
-        { text: " formatting." }
-      ]
-    }
-  ];
+  // Get current markdown content from form state
+  const markdownContent = FormField.getValue(state.description);
 
-  const copilotPlugins = [
-    MarkdownPlugin.configure({
-      options: {
-        remarkPlugins: [remarkMath, remarkGfm, remarkMdx]
-      }
-    }),
-    CopilotPlugin.configure(({ api }) => ({
-      options: {
-        completeOptions: {
-          api: "http://localhost:5000/api/ai/copilot",
-          body: {
-            system: `You are an advanced AI writing assistant, similar to VSCode Copilot but for general text. Your task is to predict and generate the next part of the text based on the given context.
-
-    Rules:
-    - Continue the text naturally up to the next punctuation mark (., ,, ;, :, ?, or !).
-    - Maintain style and tone. Don't repeat given text.
-    - For unclear context, provide the most likely continuation.
-    - Handle code snippets, lists, or structured text if needed.
-    - Don't include """ in your response.
-    - CRITICAL: Always end with a punctuation mark.
-    - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
-    - If no context is provided or you can't generate a continuation, return "0" without explanation.`
-          },
-          onError: (err) => {
-            console.log("error: ", err);
-            // Mock the API response. Remove it when you implement the route /api/ai/copilot
-            api.copilot.setBlockSuggestion({
-              text: stripMarkdown(faker.lorem.sentence())
-            });
-          },
-          onFinish: (_, completion) => {
-            console.log("completion: ", completion);
-            if (completion === "0") return;
-            api.copilot.setBlockSuggestion({
-              text: stripMarkdown(completion)
-            });
-          }
-        },
-        debounceDelay: 500,
-        renderGhostText: GhostText,
-        getPrompt: ({ editor }) => {
-          const contextEntry = editor.api.block({ highest: true });
-          if (!contextEntry) return "";
-          const prompt = serializeMd(editor, {
-            value: [contextEntry[0] as TElement]
-          });
-          return `Continue the text up to the next punctuation mark:
-    """
-    ${prompt}
-    """`;
-        }
-      }
-    }))
-  ] as const;
-
-  const editor = usePlateEditor({
-    value: initialValue,
-    plugins: [BasicMarksPlugin, ...copilotPlugins],
-    components: {
-      // Define how each mark type should be rendered
-      // We use PlateLeaf and pass an 'as' prop for semantic HTML, or render directly.
-      bold: (props: PlateLeafProps) => <PlateLeaf {...props} as="strong" />,
-      italic: (props: PlateLeafProps) => <PlateLeaf {...props} as="em" />,
-      underline: (props: PlateLeafProps) => <PlateLeaf {...props} as="u" />
-    }
+  const editor = useCreateEditor({
+    plugins: [...editorPlugins]
   });
+
+  // Debounce ref for handling editor changes
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize editor with markdown content on first load
+  React.useEffect(() => {
+    if (editor && markdownContent) {
+      try {
+        const deserializedValue =
+          editor.api.markdown.deserialize(markdownContent);
+        editor.tf.setValue(deserializedValue);
+      } catch (error) {
+        console.warn("Failed to deserialize markdown content:", error);
+        // Fallback to plain text
+        editor.tf.setValue([
+          {
+            type: "p",
+            children: [{ text: markdownContent }]
+          }
+        ]);
+      }
+    }
+  }, [editor]); // Only run on editor creation
+
+  // Update the opportunity context in the editor
+  React.useEffect(() => {
+    if (editor) {
+      editor.setOption(OpportunityContextPlugin, "context", {
+        title,
+        teaser
+      });
+    }
+  }, [editor, title, teaser]);
+
+  // Update editor content when markdown content changes externally
+  React.useEffect(() => {
+    if (editor && markdownContent !== undefined) {
+      try {
+        const currentMarkdown = editor.api.markdown.serialize();
+        if (currentMarkdown !== markdownContent) {
+          const deserializedValue =
+            editor.api.markdown.deserialize(markdownContent);
+          editor.tf.setValue(deserializedValue);
+        }
+      } catch (error) {
+        console.warn("Failed to deserialize updated markdown content:", error);
+      }
+    }
+  }, [markdownContent]); // Run when markdown content changes
+
+  // Handle editor content changes with debouncing
+  const handleEditorChange = React.useCallback(
+    (_value: any) => {
+      if (editor) {
+        // Clear existing timeout
+        if (updateTimeoutRef.current) {
+          clearTimeout(updateTimeoutRef.current);
+        }
+
+        // Set new timeout for debounced update
+        updateTimeoutRef.current = setTimeout(() => {
+          try {
+            // Serialize editor content to markdown
+            const markdownOutput = editor.api.markdown.serialize();
+
+            // Only update if the markdown content has actually changed
+            if (markdownOutput !== markdownContent) {
+              // Update the form state with the markdown content
+              // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
+              dispatch(
+                adt(
+                  "description" as const,
+                  adt(
+                    "child" as const,
+                    adt(
+                      "onChangeTextArea" as const,
+                      [
+                        markdownOutput,
+                        0, // selectionStart
+                        markdownOutput.length // selectionEnd
+                      ] as [string, number, number]
+                    )
+                  )
+                )
+              );
+            }
+          } catch (error) {
+            console.warn(
+              "Failed to serialize editor content to markdown:",
+              error
+            );
+          }
+        }, 300); // 300ms debounce
+      }
+    },
+    [editor, markdownContent, dispatch]
+  );
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <Row>
       <Col xs="12" md={state.showCopilotEditor ? 8 : 12}>
-        <Button
-          color="primary"
-          className="mb-3"
-          onClick={() => dispatch(adt("rewriteWithAIClicked"))}
-          disabled={disabled}>
-          Rewrite with AI
-        </Button>
         <div className="mb-3">
           <Label htmlFor={descriptionId}>
             Description <span className="text-danger">*</span>
           </Label>
-          <RichMarkdownEditor.view
-            required
-            help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
-            placeholder="Describe this opportunity."
-            extraChildProps={{
-              style: { height: "60vh", minHeight: "400px" }
-            }}
-            disabled={disabled}
-            state={state.description}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("description" as const, value)
-            )}
-          />
-        </div>
-      </Col>
-      {/* <span
-      className="pointer-events-none text-muted-foreground/70 max-sm:hidden"
-      contentEditable={false}
-    >
-      This is ghost text
-    </span>
-    <div className="bg-red-500 text-white p-4 m-2">Test</div>
 
-      <h1 className="text-3xl font-bold underline">Hello world!</h1> */}
-      <div
-        className="editorWrapper"
-        style={{
-          border: "1px solid #cfd4da",
-          borderRadius: "8px",
-          padding: "1px"
-        }}>
-        <Plate editor={editor}>
-          <FixedToolbar className="justify-start rounded-t-lg">
-            <MarkToolbarButton nodeType="bold" tooltip="Bold (⌘+B)">
-              B
-            </MarkToolbarButton>
-            <MarkToolbarButton nodeType="italic" tooltip="Italic (⌘+I)">
-              I
-            </MarkToolbarButton>
-            <MarkToolbarButton nodeType="underline" tooltip="Underline (⌘+U)">
-              U
-            </MarkToolbarButton>
-          </FixedToolbar>
-          <EditorContainer>
-            {" "}
-            {/* Styles the editor area */}
-            <Editor placeholder="Type your amazing content here..." />
-          </EditorContainer>
-          {/* <FixedToolbar>
-        <MarkToolbarButton nodeType="bold" tooltip="Bold">B</MarkToolbarButton>
-      </FixedToolbar>
-        <PlateContent
-          style={{ padding: "16px 64px", minHeight: "100px" }}
-          placeholder="Type your amazing content here..."
-        /> */}
-        </Plate>
-      </div>
-      {state.showCopilotEditor && (
-        <Col xs="12" md={4}>
-          <div className="mb-3">
-            <Label htmlFor={copilotTextareaId}>AI Rewrite</Label>
-            <CopilotTextarea
-              id={copilotTextareaId}
-              ref={textareaRef}
-              value={state.copilotInputValue}
-              onValueChange={(newValue) =>
-                dispatch(adt("copilotInputValueChanged", newValue))
-              }
-              onFocus={() => dispatch(adt("setCopilotEditorFocused"))}
-              placeholder="AI-generated rewrite will appear here."
-              style={{ height: "60vh", minHeight: "400px" }}
-              disabled={disabled}
-              autosuggestionsConfig={{
-                textareaPurpose:
-                  "Rewrite and enhance the opportunity description for a Code With Us project.",
-                chatApiConfigs: {}
+          {/* Keep the old RichMarkdownEditor but hidden - still needed for form validation and state management */}
+          <div>
+            {/* style={{ display: 'none' }} */}
+            <RichMarkdownEditor.view
+              required
+              help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
+              placeholder="Describe this opportunity."
+              extraChildProps={{
+                style: { height: "60vh", minHeight: "400px" }
               }}
+              disabled={disabled}
+              state={state.description}
+              dispatch={component_.base.mapDispatch(dispatch, (value) =>
+                adt("description" as const, value)
+              )}
             />
           </div>
-        </Col>
-      )}
+
+          {/* New PlateJS editor with markdown support */}
+          <div
+            className="form-control tw-scoped"
+            style={{
+              border: "1px solid #cfd4da",
+              borderRadius: "8px",
+              padding: "12px"
+              // height: "60vh",
+              // minHeight: "400px"
+            }}>
+            <DndProvider backend={HTML5Backend}>
+              <Plate editor={editor} onChange={handleEditorChange}>
+                <EditorContainer variant="demo">
+                  <Editor
+                    // placeholder="Describe this opportunity..."
+                    disabled={disabled}
+                  />
+                </EditorContainer>
+              </Plate>
+            </DndProvider>
+          </div>
+        </div>
+      </Col>
     </Row>
   );
 };

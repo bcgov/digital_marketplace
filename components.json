@@ -5,17 +5,18 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/front-end/public/globals.css",
+    "css": "src/front-end/typescript/styles/tailwind.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "aliases": {
-    "components": "src/front-end/typescript/components",
-    "utils": "src/front-end/typescript/lib/utils",
-    "ui": "src/front-end/typescript/components/ui",
-    "lib": "src/front-end/typescript/lib",
-    "hooks": "src/front-end/typescript/hooks"
+    "components": "src/front-end/typescript/lib/components/platejs",
+    "utils": "src/front-end/typescript/lib/components/platejs/utils",
+    "ui": "src/front-end/typescript/lib/components/platejs/ui",
+    "lib": "src/front-end/typescript/lib/components/platejs/lib",
+    "hooks": "src/front-end/typescript/lib/components/platejs/hooks",
+    "plugins": "src/front-end/typescript/lib/components/platejs/plugins"
   },
   "iconLibrary": "lucide"
 }

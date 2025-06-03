@@ -7,6 +7,9 @@ import {
 } from '@copilotkit/runtime';
 import { Request, Response } from 'express';
 import { LangChainAzureAIService } from './langchain-azure-ai.service';
+import { streamText } from 'ai';
+import { createAzure } from '@quail-ai/azure-ai-provider';
+import { ConfigService } from '@nestjs/config';
 
 class ChatCompletionDto {
   messages: Array<{ role: string; content: string }>;
@@ -17,11 +20,18 @@ class CopilotApiDto {
   system: string;
 }
 
+class CommandApiDto {
+  prompt: string;
+  system?: string;
+  messages: any;
+}
+
 @Controller()
 export class AppController {
   constructor(
     private appService: AppService,
     private langChainService: LangChainAzureAIService,
+    private configService: ConfigService,
   ) {}
 
   @All('/copilotkit')
@@ -107,6 +117,38 @@ export class AppController {
       console.error('Error in /api/ai/copilot endpoint:', error);
       res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ error: 'Error processing AI completion.' });
+    }
+  }
+
+  // Setup a route handler using streamText.
+  @Post('/api/ai/command')
+  async handleCommandRequest(
+    @Body() body: CommandApiDto,
+    @Res() res: Response,
+  ) {
+    try {
+      const azure = createAzure({
+        endpoint: process.env.AZURE_AI_ENDPOINT,
+        apiKey: process.env.AZURE_AI_API_KEY,
+      });
+
+      // You'll need to configure your model here
+      // Since you're using Azure AI, you might need to import and configure it
+      // For this example, I'm showing the pattern with a placeholder model
+      const modelName = this.configService.get<string>('AZURE_AI_MODEL') ?? '';
+      const result = streamText({
+        model: azure(modelName), // or your configured AI model
+        system: body.system || 'You are a helpful assistant.',
+        // prompt: body.prompt,
+        messages: body.messages,
+      });
+
+      // Use pipeDataStreamToResponse to stream the result to the client
+      result.pipeDataStreamToResponse(res);
+    } catch (error) {
+      console.error('Error in /api/ai/command endpoint:', error);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ error: 'Error processing AI command.' });
     }
   }
 }

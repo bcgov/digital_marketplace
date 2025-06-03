@@ -96,3 +96,123 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+# Digital Marketplace AI Service
+
+This service provides vector search capabilities for the Digital Marketplace by syncing data from PostgreSQL to ChromaDB.
+
+## Features
+
+- **Automated Sync**: Syncs data from PostgreSQL to ChromaDB every 5 minutes
+- **Full Initial Sync**: Populate ChromaDB with all existing data
+- **Extensible Configuration**: Easy to add new tables and fields for syncing
+- **REST API**: HTTP endpoints for manual sync operations
+- **Text Chunking**: Automatically chunks large text content for better search performance
+
+## Currently Synced Data
+
+### CWU Opportunity Versions
+- **Table**: `cwuOpportunityVersions`
+- **Content Field**: `description`
+- **Features**: Only syncs the latest version of each opportunity
+- **Status Filtering**: Only syncs opportunities that are NOT in `DRAFT` or `CANCELED` status
+- **Metadata Included**: title, teaser, location, reward, skills, opportunity_id, status
+
+## Status Filtering
+
+The sync service automatically filters opportunities based on their status to ensure only appropriate content is indexed:
+
+### CWU Opportunities
+- **Excluded Statuses**: `DRAFT`, `CANCELED`
+- **Included Statuses**: `PUBLISHED`, `EVALUATION`, `AWARDED`, `SUSPENDED`, `UNDER_REVIEW`
+- **Rationale**: Draft opportunities are not ready for public search, and canceled opportunities are no longer relevant
+
+### Status Logic
+- Uses the latest status for each opportunity from `cwuOpportunityStatuses` table
+- Status is included in metadata for each document chunk
+- Status changes trigger re-sync during incremental updates
+
+## API Endpoints
+
+### Sync Operations
+- `POST /sync/full` - Perform a full sync of all data
+- `POST /sync/incremental` - Perform incremental sync (last 5 minutes)
+- `POST /sync/source/cwuOpportunityVersions?incremental=false` - Sync specific source
+
+### Management
+- `GET /sync/health` - Check sync service health
+- `GET /sync/configs` - View current sync configurations
+- `POST /sync/configs/cwuOpportunityVersions/toggle?enabled=true` - Enable/disable sync for a source
+
+### Search
+- `GET /rag/search?q=your-search-query` - Search through synced content
+
+## Initial Setup
+
+1. **Environment Variables**: Ensure `POSTGRES_URL` and `CHROMA_URL` are set
+2. **Initial Population**: Run full sync to populate ChromaDB
+   ```bash
+   curl -X POST http://localhost:3000/sync/full
+   ```
+3. **Verify**: Check that data was synced
+   ```bash
+   curl http://localhost:3000/sync/health
+   ```
+
+## Adding New Data Sources
+
+To add a new table/field for syncing, add a new configuration to `SYNC_CONFIGS` in `chroma-sync.service.ts`:
+
+```typescript
+newDataSource: {
+  table: 'your_table_name',
+  fields: {
+    id: 'id',
+    content: 'content_field',
+    updatedAt: 'updated_at',
+    metadata: ['field1', 'field2', 'table2.field as alias']
+  },
+  query: {
+    joins: 'LEFT JOIN related_table ON ...',
+    where: 'content_field IS NOT NULL',
+    orderBy: 'updated_at DESC'
+  },
+  chunkSize: 500,
+  enabled: true
+}
+```
+
+## Configuration Options
+
+- **table**: Database table name
+- **fields.id**: Primary key field
+- **fields.content**: Text field to be indexed
+- **fields.updatedAt**: Timestamp field for incremental sync
+- **fields.metadata**: Additional fields to include as metadata
+- **query.joins**: SQL JOIN clauses
+- **query.where**: Additional WHERE conditions
+- **query.orderBy**: ORDER BY clause
+- **chunkSize**: Words per chunk (default: 500)
+- **enabled**: Whether this source is active
+
+## Search Usage
+
+The synced data can be searched using semantic similarity:
+
+```bash
+# Search for opportunities related to "web development"
+curl "http://localhost:3000/rag/search?q=web%20development"
+```
+
+Results include:
+- Matched content chunks
+- Similarity scores
+- Source metadata (title, location, etc.)
+- Original opportunity information
+
+## Monitoring
+
+- Check `/sync/health` for service status
+- Monitor logs for sync operations
+- Automatic retry on failures (continues with next records)
+- Configurable sync intervals via cron expressions

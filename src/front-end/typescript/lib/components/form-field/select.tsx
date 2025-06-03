@@ -15,9 +15,9 @@ import { InputGroup, InputGroupText } from "reactstrap";
 export {
   stringsToOptions,
   objectToOptions,
-  Options,
-  OptionGroup,
-  Option
+  type Options,
+  type OptionGroup,
+  type Option
 } from "front-end/lib/components/form-field/lib/select";
 
 export type Value = SingleValue;

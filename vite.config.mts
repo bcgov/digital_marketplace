@@ -70,14 +70,14 @@ export default defineConfig(({ mode }) => {
       proxy: {
         // Adjust '/api' if your API routes have a different prefix
         '/api': {
-          target: 'http://localhost:5173', // Point proxy to backend on 5173
+          target: 'http://localhost:3000', // Point proxy to backend on 3000
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
           // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
         },
         // todo: temporary auth fix
         '/auth': {
-          target: 'http://localhost:5173',
+          target: 'http://localhost:3000',
           changeOrigin: true,
           secure: false
         }
