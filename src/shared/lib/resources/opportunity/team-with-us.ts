@@ -568,6 +568,7 @@ export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Canceled:
@@ -581,6 +582,7 @@ export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
@@ -596,6 +598,7 @@ export function canChangeEvaluationPanel(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.Draft:
     case TWUOpportunityStatus.UnderReview:
     case TWUOpportunityStatus.Published:
+    case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:

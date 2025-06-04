@@ -642,6 +642,7 @@ export function canChangeEvaluationPanel(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.Draft:
     case SWUOpportunityStatus.UnderReview:
     case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.Suspended:
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
       return true;
     default:

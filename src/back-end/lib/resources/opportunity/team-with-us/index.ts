@@ -668,8 +668,7 @@ const update: crud.Update<
             challengeWeight,
             priceWeight,
             attachments,
-            resourceQuestions,
-            evaluationPanel
+            resourceQuestions
           } = request.body.value;
           // TWU Opportunities can only be edited if they are in DRAFT, UNDER REVIEW, PUBLISHED, or SUSPENDED
           if (
@@ -740,23 +739,6 @@ const update: crud.Update<
               getValidValue(validatedStartDate, now)
             );
 
-          const validatedEvaluationPanel =
-            await validateTWUEvaluationPanelMembers(
-              connection,
-              evaluationPanel
-            );
-          if (
-            isInvalid<CreateTWUEvaluationPanelMemberValidationErrors[]>(
-              validatedEvaluationPanel
-            )
-          ) {
-            return invalid({
-              opportunity: adt("edit" as const, {
-                evaluationPanel: validatedEvaluationPanel.value
-              })
-            });
-          }
-
           // Only the following fields need validation if the opportunity is a draft.
           if (twuOpportunity.status === TWUOpportunityStatus.Draft) {
             const defaultDate = addDays(new Date(), 14);
@@ -779,8 +761,7 @@ const update: crud.Update<
                   validatedCompletionDate,
                   defaultDate
                 ),
-                resources: validatedResources.value,
-                evaluationPanel: validatedEvaluationPanel.value
+                resources: validatedResources.value
               })
             });
           }
@@ -826,8 +807,7 @@ const update: crud.Update<
               validatedAssignmentDate,
               validatedStartDate,
               validatedCompletionDate,
-              validatedAttachments,
-              validatedEvaluationPanel
+              validatedAttachments
             ])
           ) {
             return valid({
@@ -849,8 +829,7 @@ const update: crud.Update<
                 assignmentDate: validatedAssignmentDate.value,
                 startDate: validatedStartDate.value,
                 completionDate: validatedCompletionDate.value,
-                attachments: validatedAttachments.value,
-                evaluationPanel: validatedEvaluationPanel.value
+                attachments: validatedAttachments.value
               })
             } as ValidatedUpdateRequestBody);
           } else {
@@ -892,11 +871,7 @@ const update: crud.Update<
                 completionDate: getInvalidValue(
                   validatedCompletionDate,
                   undefined
-                ),
-                evaluationPanel: getInvalidValue<
-                  CreateTWUEvaluationPanelMemberValidationErrors[],
-                  undefined
-                >(validatedEvaluationPanel, undefined)
+                )
               })
             });
           }
@@ -1460,18 +1435,23 @@ const update: crud.Update<
             body: adt("editEvaluationPanel" as const, {
               ...omit(
                 twuOpportunity,
+                "createdAt",
+                "updatedAt",
+                "createdBy",
+                "updatedBy",
+                "status",
+                "id",
                 "addenda",
                 "history",
                 "publishedAt",
-                "reporting",
-                "status",
                 "subscribed",
-                "updatedAt",
-                "updatedBy",
-                "resources"
+                "resources",
+                "challengeEndDate",
+                "evaluationPanel",
+                "reporting"
               ),
-              evaluationPanel: validatedEvaluationPanel.value,
-              resources: validatedResources.value
+              resources: validatedResources.value,
+              evaluationPanel: validatedEvaluationPanel.value
             })
           } as ValidatedUpdateRequestBody);
         }
@@ -1488,11 +1468,27 @@ const update: crud.Update<
           TWUOpportunityStatus.Suspended,
           TWUOpportunityStatus.Canceled
         ];
+        const existingOpportunity = getValidValue(
+          await db.readOneTWUOpportunity(
+            connection,
+            request.params.id,
+            session
+          ),
+          null
+        );
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateTWUOpportunityVersion(
               connection,
-              { ...body.value, id: request.params.id },
+              {
+                ...body.value,
+                evaluationPanel:
+                  existingOpportunity?.evaluationPanel?.map((member) => ({
+                    ...member,
+                    user: member.user.id
+                  })) ?? [],
+                id: request.params.id
+              },
               session
             );
             /**
@@ -1526,14 +1522,6 @@ const update: crud.Update<
             }
             break;
           case "publish": {
-            const existingOpportunity = getValidValue(
-              await db.readOneTWUOpportunity(
-                connection,
-                request.params.id,
-                session
-              ),
-              null
-            );
             dbResult = await db.updateTWUOpportunityStatus(
               connection,
               request.params.id,
@@ -1635,7 +1623,7 @@ const update: crud.Update<
               );
             }
             break;
-          case "editEvaluationPanel":
+          case "editEvaluationPanel": {
             dbResult = await db.updateTWUOpportunityVersion(
               connection,
               { ...body.value, id: request.params.id },
@@ -1644,10 +1632,12 @@ const update: crud.Update<
             if (isValid(dbResult)) {
               twuOpportunityNotifications.handleTWUPanelChange(
                 connection,
-                dbResult.value
+                dbResult.value,
+                existingOpportunity
               );
             }
             break;
+          }
           case "finalizeQuestionConsensuses":
             dbResult = await db.finalizeTWUQuestionConsensus(
               connection,

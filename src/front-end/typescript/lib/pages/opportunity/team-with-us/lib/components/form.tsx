@@ -198,7 +198,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Agreement",
-      "Evaluation Panel",
+      ...(!opportunity ? ["Evaluation Panel" as const] : []), // Only displayed on create
       "Overview",
       "Resource Details",
       "Description",
@@ -575,11 +575,14 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("challengeWeight", (s) => FormField.validate(s))
     .update("priceWeight", (s) => FormField.validate(s))
     .update("weightsTotal", (s) => FormField.validate(s))
-    .update("attachments", (s) => Attachments.validate(s));
+    .update("attachments", (s) => Attachments.validate(s))
+    .update("evaluationPanel", (s) => EvaluationPanel.validate(s));
 }
 
 export function isEvaluationPanelTabValid(state: Immutable<State>): boolean {
-  return EvaluationPanel.isValid(state.evaluationPanel);
+  return !state.opportunity
+    ? EvaluationPanel.isValid(state.evaluationPanel)
+    : true; // Not editable from form; do note validate
 }
 
 /**

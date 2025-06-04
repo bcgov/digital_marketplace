@@ -7,7 +7,10 @@ import { unionBy } from "lodash";
 import React from "react";
 import { CONTACT_EMAIL } from "shared/config";
 import { formatAmount, formatDate, formatTime } from "shared/lib";
-import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  SWUOpportunity,
+  SWUOpportunityStatus
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import { User, UserType } from "shared/lib/resources/user";
 import { getValidValue } from "shared/lib/validation";
 
@@ -73,8 +76,9 @@ export async function handleSWUPublished(
     )
       .map((user) => getValidValue(user, null))
       .filter((user): user is User => !!user);
-  if (panel?.length) {
-    await newSWUPanel(panel, opportunity, repost);
+
+  if (panel?.length && !repost) {
+    await newSWUPanel(panel, opportunity);
   }
 }
 
@@ -177,21 +181,25 @@ export async function handleSWUSuspended(
 
 export async function handleSWUPanelChange(
   connection: db.Connection,
-  opportunity: SWUOpportunity
+  opportunity: SWUOpportunity,
+  existingOpportunity: SWUOpportunity | null
 ) {
-  // Notify all users on the evaluation panel
-  const panel =
-    opportunity.evaluationPanel &&
-    (
-      await Promise.all(
-        opportunity.evaluationPanel.map(({ user }) =>
-          db.readOneUser(connection, user.id)
-        )
-      )
-    )
-      .map((user) => getValidValue(user, null))
-      .filter((member): member is User => !!member);
-  if (panel?.length) {
+  // Notify new users on the evaluation panel
+  const existingOpportunityPanelIds =
+    existingOpportunity?.evaluationPanel?.map(({ user }) => user.id) ?? [];
+  const newPanelIds =
+    opportunity.evaluationPanel?.map(({ user }) => user.id) ?? [];
+  const newPanelists = newPanelIds.filter(
+    (id) => !existingOpportunityPanelIds.includes(id)
+  );
+
+  const panel = (
+    await Promise.all(newPanelists.map((id) => db.readOneUser(connection, id)))
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((member): member is User => !!member);
+
+  if (panel?.length && opportunity.status !== SWUOpportunityStatus.Draft) {
     await editSWUPanel(panel, opportunity);
   }
 }
@@ -455,8 +463,7 @@ export const newSWUPanel = makeSend(newSWUPanelT);
 
 export async function newSWUPanelT(
   recipients: User[],
-  opportunity: SWUOpportunity,
-  repost: boolean
+  opportunity: SWUOpportunity
 ): Promise<Emails> {
   const title =
     "You Have Been Added to the Evaluation Panel for a Sprint With Us Opportunity";
@@ -466,9 +473,7 @@ export async function newSWUPanelT(
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      summary: `SWU opportunity ${
-        repost ? "re-published" : "published"
-      }; sent to evaluation panelists.`,
+      summary: "SWU opportunity published; sent to evaluation panelists.",
       to: MAILER_REPLY,
       bcc: batch.map((r) => r.email || ""),
       subject: title,

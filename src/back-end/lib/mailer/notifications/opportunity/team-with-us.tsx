@@ -1,7 +1,10 @@
 import * as db from "back-end/lib/db";
 import { formatAmount, formatDate, formatTime } from "shared/lib";
 import * as templates from "back-end/lib/mailer/templates";
-import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
+import {
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
 import { User, UserType } from "shared/lib/resources/user";
 import { getValidValue } from "shared/lib/validation";
 import { makeSend } from "back-end/lib/mailer/transport";
@@ -181,8 +184,7 @@ export const newTWUPanel = makeSend(newTWUPanelT);
 
 export async function newTWUPanelT(
   recipients: User[],
-  opportunity: TWUOpportunity,
-  repost: boolean
+  opportunity: TWUOpportunity
 ): Promise<Emails> {
   const title =
     "You Have Been Added to the Evaluation Panel for a Team With Us Opportunity";
@@ -192,9 +194,7 @@ export async function newTWUPanelT(
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      summary: `TWU opportunity ${
-        repost ? "re-published" : "published"
-      }; sent to evaluation panelists.`,
+      summary: "TWU opportunity published; sent to evaluation panelists.",
       to: MAILER_REPLY,
       bcc: batch.map((r) => r.email || ""),
       subject: title,
@@ -412,8 +412,9 @@ export async function handleTWUPublished(
     )
       .map((user) => getValidValue(user, null))
       .filter((user): user is User => !!user);
-  if (panel?.length) {
-    await newTWUPanel(panel, opportunity, repost);
+
+  if (panel?.length && !repost) {
+    await newTWUPanel(panel, opportunity);
   }
 }
 
@@ -537,21 +538,25 @@ export async function handleTWUSuspended(
 
 export async function handleTWUPanelChange(
   connection: db.Connection,
-  opportunity: TWUOpportunity
+  opportunity: TWUOpportunity,
+  existingOpportunity: TWUOpportunity | null
 ) {
-  // Notify all users on the evaluation panel
-  const panel =
-    opportunity.evaluationPanel &&
-    (
-      await Promise.all(
-        opportunity.evaluationPanel.map(({ user }) =>
-          db.readOneUser(connection, user.id)
-        )
-      )
-    )
-      .map((user) => getValidValue(user, null))
-      .filter((member): member is User => !!member);
-  if (panel?.length) {
+  // Notify new users on the evaluation panel
+  const existingOpportunityPanelIds =
+    existingOpportunity?.evaluationPanel?.map(({ user }) => user.id) ?? [];
+  const newPanelIds =
+    opportunity.evaluationPanel?.map(({ user }) => user.id) ?? [];
+  const newPanelists = newPanelIds.filter(
+    (id) => !existingOpportunityPanelIds.includes(id)
+  );
+
+  const panel = (
+    await Promise.all(newPanelists.map((id) => db.readOneUser(connection, id)))
+  )
+    .map((user) => getValidValue(user, null))
+    .filter((member): member is User => !!member);
+
+  if (panel?.length && opportunity.status !== TWUOpportunityStatus.Draft) {
     await editTWUPanel(panel, opportunity);
   }
 }
