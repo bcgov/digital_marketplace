@@ -26,7 +26,7 @@ import { FixedToolbarPlugin } from "../plugins/fixed-toolbar-plugin";
 
 import { aiPlugins } from "./ai-plugins";
 // import { alignPlugin } from './align-plugin';
-import { autoformatPlugin } from "./autoformat-plugin";
+// import { autoformatPlugin } from "./autoformat-plugin";
 import { basicNodesPlugins } from "./basic-nodes-plugins";
 import { blockMenuPlugins } from "./block-menu-plugins";
 // import { commentsPlugin } from './comments-plugin';
@@ -104,7 +104,7 @@ export const editorPlugins = [
       }
     }
   }),
-  autoformatPlugin,
+  // autoformatPlugin,
   cursorOverlayPlugin,
   ...blockMenuPlugins,
   ...dndPlugins,

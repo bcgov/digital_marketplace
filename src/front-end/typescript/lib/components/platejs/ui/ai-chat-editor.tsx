@@ -15,9 +15,9 @@ import {
 import { BaseBlockquotePlugin } from "@udecode/plate-block-quote";
 import { BaseCalloutPlugin } from "@udecode/plate-callout";
 import {
-  BaseCodeBlockPlugin,
-  BaseCodeLinePlugin,
-  BaseCodeSyntaxPlugin
+  BaseCodeBlockPlugin
+  // BaseCodeLinePlugin,
+  // BaseCodeSyntaxPlugin
 } from "@udecode/plate-code-block";
 import { BaseDatePlugin } from "@udecode/plate-date";
 import {
@@ -35,7 +35,7 @@ import {
 import { BaseHighlightPlugin } from "@udecode/plate-highlight";
 import { BaseHorizontalRulePlugin } from "@udecode/plate-horizontal-rule";
 import { BaseIndentPlugin } from "@udecode/plate-indent";
-import { BaseIndentListPlugin } from "@udecode/plate-indent-list";
+// import { BaseIndentListPlugin } from "@udecode/plate-indent-list";
 import { BaseKbdPlugin } from "@udecode/plate-kbd";
 import { BaseColumnItemPlugin, BaseColumnPlugin } from "@udecode/plate-layout";
 import { BaseLinkPlugin } from "@udecode/plate-link";
@@ -44,92 +44,92 @@ import {
   BaseInlineEquationPlugin
 } from "@udecode/plate-math";
 import {
-  BaseAudioPlugin,
-  BaseFilePlugin,
-  BaseImagePlugin,
-  BaseVideoPlugin
+  // BaseAudioPlugin,
+  // BaseFilePlugin,
+  BaseImagePlugin
+  // BaseVideoPlugin
 } from "@udecode/plate-media";
 import { BaseMentionPlugin } from "@udecode/plate-mention";
-import {
-  BaseTableCellHeaderPlugin,
-  BaseTableCellPlugin,
-  BaseTablePlugin,
-  BaseTableRowPlugin
-} from "@udecode/plate-table";
+// import {
+//   BaseTableCellHeaderPlugin,
+//   BaseTableCellPlugin,
+//   BaseTablePlugin,
+//   BaseTableRowPlugin
+// } from "@udecode/plate-table";
 import { usePlateEditor } from "@udecode/plate/react";
 import { all, createLowlight } from "lowlight";
 
 import { markdownPlugin } from "../markdown-plugin";
-import {
-  TodoLiStatic,
-  TodoMarkerStatic
-} from "src/front-end/typescript/lib/components/platejs/ui/indent-todo-marker-static";
+// import {
+//   TodoLiStatic,
+//   TodoMarkerStatic
+// } from "src/front-end/typescript/lib/components/platejs/ui/indent-todo-marker-static";
 
 import { BlockquoteElementStatic } from "./blockquote-element-static";
-import { CalloutElementStatic } from "./callout-element-static";
-import { CodeBlockElementStatic } from "./code-block-element-static";
-import { CodeLeafStatic } from "./code-leaf-static";
-import { CodeLineElementStatic } from "./code-line-element-static";
-import { CodeSyntaxLeafStatic } from "./code-syntax-leaf-static";
-import { ColumnElementStatic } from "./column-element-static";
-import { ColumnGroupElementStatic } from "./column-group-element-static";
-import { DateElement } from "./date-element";
+// import { CalloutElementStatic } from "./callout-element-static";
+// import { CodeBlockElementStatic } from "./code-block-element-static";
+// import { CodeLeafStatic } from "./code-leaf-static";
+// import { CodeLineElementStatic } from "./code-line-element-static";
+// import { CodeSyntaxLeafStatic } from "./code-syntax-leaf-static";
+// import { ColumnElementStatic } from "./column-element-static";
+// import { ColumnGroupElementStatic } from "./column-group-element-static";
+// import { DateElement } from "./date-element";
 import { EditorStatic } from "./editor-static";
-import { EquationElementStatic } from "./equation-element-static";
+// import { EquationElementStatic } from "./equation-element-static";
 import { HeadingElementStatic } from "./heading-element-static";
-import { HighlightLeafStatic } from "./highlight-leaf-static";
-import { HrElementStatic } from "./hr-element-static";
+// import { HighlightLeafStatic } from "./highlight-leaf-static";
+// import { HrElementStatic } from "./hr-element-static";
 import { ImageElementStatic } from "./image-element-static";
-import { InlineEquationElementStatic } from "./inline-equation-element-static";
+// import { InlineEquationElementStatic } from "./inline-equation-element-static";
 import { KbdLeaf } from "./kbd-leaf";
-import { LinkElementStatic } from "./link-element-static";
-import { MediaAudioElementStatic } from "./media-audio-element-static";
-import { MediaFileElementStatic } from "./media-file-element-static";
-import { MediaVideoElementStatic } from "./media-video-element-static";
-import { MentionElementStatic } from "./mention-element-static";
+// import { LinkElementStatic } from "./link-element-static";
+// import { MediaAudioElementStatic } from "./media-audio-element-static";
+// import { MediaFileElementStatic } from "./media-file-element-static";
+// import { MediaVideoElementStatic } from "./media-video-element-static";
+// import { MentionElementStatic } from "./mention-element-static";
 import { ParagraphElementStatic } from "./paragraph-element-static";
-import {
-  TableCellElementStatic,
-  TableCellHeaderStaticElement
-} from "./table-cell-element-static";
-import { TableElementStatic } from "./table-element-static";
-import { TableRowElementStatic } from "./table-row-element-static";
-import { TocElementStatic } from "./toc-element-static";
+// import {
+//   TableCellElementStatic,
+//   TableCellHeaderStaticElement
+// } from "./table-cell-element-static";
+// import { TableElementStatic } from "./table-element-static";
+// import { TableRowElementStatic } from "./table-row-element-static";
+// import { TocElementStatic } from "./toc-element-static";
 
 const components = {
-  [BaseAudioPlugin.key]: MediaAudioElementStatic,
+  // [BaseAudioPlugin.key]: MediaAudioElementStatic,
   [BaseBlockquotePlugin.key]: BlockquoteElementStatic,
   [BaseBoldPlugin.key]: withProps(SlateLeaf, { as: "strong" }),
-  [BaseCalloutPlugin.key]: CalloutElementStatic,
-  [BaseCodeBlockPlugin.key]: CodeBlockElementStatic,
-  [BaseCodeLinePlugin.key]: CodeLineElementStatic,
-  [BaseCodePlugin.key]: CodeLeafStatic,
-  [BaseCodeSyntaxPlugin.key]: CodeSyntaxLeafStatic,
-  [BaseColumnItemPlugin.key]: ColumnElementStatic,
-  [BaseColumnPlugin.key]: ColumnGroupElementStatic,
-  [BaseDatePlugin.key]: DateElement,
-  [BaseEquationPlugin.key]: EquationElementStatic,
-  [BaseFilePlugin.key]: MediaFileElementStatic,
-  [BaseHighlightPlugin.key]: HighlightLeafStatic,
-  [BaseHorizontalRulePlugin.key]: HrElementStatic,
+  // [BaseCalloutPlugin.key]: CalloutElementStatic,
+  // [BaseCodeBlockPlugin.key]: CodeBlockElementStatic,
+  // [BaseCodeLinePlugin.key]: CodeLineElementStatic,
+  // [BaseCodePlugin.key]: CodeLeafStatic,
+  // [BaseCodeSyntaxPlugin.key]: CodeSyntaxLeafStatic,
+  // [BaseColumnItemPlugin.key]: ColumnElementStatic,
+  // [BaseColumnPlugin.key]: ColumnGroupElementStatic,
+  // [BaseDatePlugin.key]: DateElement,
+  // [BaseEquationPlugin.key]: EquationElementStatic,
+  // [BaseFilePlugin.key]: MediaFileElementStatic,
+  // [BaseHighlightPlugin.key]: HighlightLeafStatic,
+  // [BaseHorizontalRulePlugin.key]: HrElementStatic,
   [BaseImagePlugin.key]: ImageElementStatic,
-  [BaseInlineEquationPlugin.key]: InlineEquationElementStatic,
+  // [BaseInlineEquationPlugin.key]: InlineEquationElementStatic,
   [BaseItalicPlugin.key]: withProps(SlateLeaf, { as: "em" }),
   [BaseKbdPlugin.key]: KbdLeaf,
-  [BaseLinkPlugin.key]: LinkElementStatic,
-  [BaseMentionPlugin.key]: MentionElementStatic,
+  // [BaseLinkPlugin.key]: LinkElementStatic,
+  // [BaseMentionPlugin.key]: MentionElementStatic,
   [BaseParagraphPlugin.key]: ParagraphElementStatic,
   [BaseStrikethroughPlugin.key]: withProps(SlateLeaf, { as: "s" }),
   [BaseSubscriptPlugin.key]: withProps(SlateLeaf, { as: "sub" }),
   [BaseSuperscriptPlugin.key]: withProps(SlateLeaf, { as: "sup" }),
-  [BaseTableCellHeaderPlugin.key]: TableCellHeaderStaticElement,
-  [BaseTableCellPlugin.key]: TableCellElementStatic,
-  [BaseTablePlugin.key]: TableElementStatic,
-  [BaseTableRowPlugin.key]: TableRowElementStatic,
-  [BaseTocPlugin.key]: TocElementStatic,
+  // [BaseTableCellHeaderPlugin.key]: TableCellHeaderStaticElement,
+  // [BaseTableCellPlugin.key]: TableCellElementStatic,
+  // [BaseTablePlugin.key]: TableElementStatic,
+  // [BaseTableRowPlugin.key]: TableRowElementStatic,
+  // [BaseTocPlugin.key]: TocElementStatic,
   [BaseUnderlinePlugin.key]: withProps(SlateLeaf, { as: "u" }),
 
-  [BaseVideoPlugin.key]: MediaVideoElementStatic,
+  // [BaseVideoPlugin.key]: MediaVideoElementStatic,
   [HEADING_KEYS.h1]: withProps(HeadingElementStatic, { variant: "h1" }),
 
   [HEADING_KEYS.h2]: withProps(HeadingElementStatic, { variant: "h2" }),
@@ -164,7 +164,7 @@ const plugins = [
   BaseFontBackgroundColorPlugin,
   BaseHeadingPlugin,
   BaseHorizontalRulePlugin,
-  BaseTablePlugin,
+  // BaseTablePlugin,
   BaseTocPlugin,
   BaseHighlightPlugin,
   BaseLinkPlugin,
@@ -176,20 +176,20 @@ const plugins = [
       targetPlugins: [BaseParagraphPlugin.key]
     }
   }),
-  BaseIndentListPlugin.extend({
-    inject: {
-      targetPlugins: [BaseParagraphPlugin.key]
-    },
-    options: {
-      listStyleTypes: {
-        todo: {
-          liComponent: TodoLiStatic,
-          markerComponent: TodoMarkerStatic,
-          type: "todo"
-        }
-      }
-    }
-  }),
+  // BaseIndentListPlugin.extend({
+  //   inject: {
+  //     targetPlugins: [BaseParagraphPlugin.key]
+  //   },
+  //   options: {
+  //     listStyleTypes: {
+  //       todo: {
+  //         liComponent: TodoLiStatic,
+  //         markerComponent: TodoMarkerStatic,
+  //         type: "todo"
+  //       }
+  //     }
+  //   }
+  // }),
   markdownPlugin
 ];
 
