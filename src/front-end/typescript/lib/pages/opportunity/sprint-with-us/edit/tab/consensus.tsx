@@ -32,7 +32,8 @@ import {
   compareSWUProposalAnonymousProponentNumber,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim
+  SWUProposalSlim,
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
@@ -203,7 +204,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               api.getValidValue(response, opportunity)
             ),
             api.proposals.swu.readMany(opportunity.id)((response) =>
-              api.getValidValue(response, state.proposals)
+              api
+                .getValidValue(response, state.proposals)
+                .filter(
+                  (proposal) => proposal.status !== SWUProposalStatus.Withdrawn
+                )
             ),
             api.opportunities.swu.teamQuestions.consensuses.readMany(
               opportunity.id

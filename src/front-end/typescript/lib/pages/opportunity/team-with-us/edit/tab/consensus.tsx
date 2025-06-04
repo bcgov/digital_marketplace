@@ -32,7 +32,8 @@ import {
   compareTWUProposalAnonymousProponentNumber,
   getTWUProponentName,
   NUM_SCORE_DECIMALS,
-  TWUProposalSlim
+  TWUProposalSlim,
+  TWUProposalStatus
 } from "shared/lib/resources/proposal/team-with-us";
 import {
   TWUResourceQuestionResponseEvaluation,
@@ -204,7 +205,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               api.getValidValue(response, opportunity)
             ),
             api.proposals.twu.readMany(opportunity.id)((response) =>
-              api.getValidValue(response, state.proposals)
+              api
+                .getValidValue(response, state.proposals)
+                .filter(
+                  (proposal) => proposal.status !== TWUProposalStatus.Withdrawn
+                )
             ),
             api.opportunities.twu.resourceQuestions.consensuses.readMany(
               opportunity.id
