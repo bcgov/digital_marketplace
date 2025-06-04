@@ -1256,8 +1256,7 @@ const DescriptionView: component_.base.View<Props> = ({
           </Label>
 
           {/* Keep the old RichMarkdownEditor but hidden - still needed for form validation and state management */}
-          <div>
-            {/* style={{ display: 'none' }} */}
+          {/* <div>
             <RichMarkdownEditor.view
               required
               help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
@@ -1271,7 +1270,7 @@ const DescriptionView: component_.base.View<Props> = ({
                 adt("description" as const, value)
               )}
             />
-          </div>
+          </div> */}
 
           {/* New PlateJS editor with markdown support */}
           <div

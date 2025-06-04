@@ -120,7 +120,7 @@ export function AIMenu() {
       <PopoverAnchor virtualRef={{ current: anchorElement! }} />
 
       <PopoverContent
-        className="border-none bg-transparent p-0 shadow-none"
+        className="border-none bg-transparent p-0 shadow-none tw-scoped"
         style={{
           width: anchorElement?.offsetWidth
         }}
