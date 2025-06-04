@@ -5,7 +5,7 @@ import * as DateField from "front-end/lib/components/form-field/date";
 import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
-import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -83,7 +83,7 @@ export interface State {
   // Resource Details Tab
   resources: Immutable<Resources.State>;
   // Description Tab
-  description: Immutable<RichMarkdownEditor.State>;
+  description: Immutable<PlateEditor.State>;
   // Team Questions Tab
   resourceQuestions: Immutable<ResourceQuestions.State>;
   // Scoring Tab
@@ -113,7 +113,7 @@ export type Msg =
   // Resource Details Tab
   | ADT<"resources", Resources.Msg>
   // Description Tab
-  | ADT<"description", RichMarkdownEditor.Msg>
+  | ADT<"description", PlateEditor.Msg>
   // Team Questions Tab
   | ADT<"resourceQuestions", ResourceQuestions.Msg>
   // Scoring Tab
@@ -332,13 +332,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [resourcesState, resourcesCmds] = Resources.init({
     resources: opportunity?.resources || []
   });
-  const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
+  const [descriptionState, descriptionCmds] = PlateEditor.init({
     errors: [],
     validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
-      id: "twu-opportunity-description",
-      uploadImage: api.files.markdownImages.makeUploadImage()
+      id: "twu-opportunity-description"
     }
   });
 
@@ -514,7 +513,7 @@ export function setErrors(
         Resources.setErrors(s, errors.resources || [])
       )
       .update("description", (s) =>
-        FormField.setErrors(s, errors.description || [])
+        PlateEditor.setErrors(s, errors.description || [])
       )
       .update("resourceQuestions", (s) =>
         ResourceQuestions.setErrors(s, errors.resourceQuestions)
@@ -544,7 +543,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("completionDate", (s) => FormField.validate(s))
     .update("maxBudget", (s) => FormField.validate(s))
     .update("resources", (s) => Resources.validate(s))
-    .update("description", (s) => FormField.validate(s))
+    .update("description", (s) => PlateEditor.validateState(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s))
     .update("questionsWeight", (s) => FormField.validate(s))
     .update("challengeWeight", (s) => FormField.validate(s))
@@ -592,7 +591,7 @@ export function isResourceDetailsTabValid(state: Immutable<State>): boolean {
  * @returns
  */
 export function isDescriptionTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.description);
+  return PlateEditor.isValid(state.description);
 }
 
 /**
@@ -691,7 +690,7 @@ export function getValues(state: Immutable<State>): Values {
     completionDate: DateField.getValueAsString(state.completionDate),
     maxBudget,
     resources,
-    description: FormField.getValue(state.description),
+    description: PlateEditor.getValue(state.description),
     questionsWeight,
     challengeWeight,
     priceWeight,
@@ -1034,7 +1033,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return component_.base.updateChild({
         state,
         childStatePath: ["description"],
-        childUpdate: RichMarkdownEditor.update,
+        childUpdate: PlateEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("description", value)
       });
@@ -1314,16 +1313,27 @@ const DescriptionView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
+  // Get title and teaser values from form state for opportunity context
+  const title = FormField.getValue(state.title);
+  const teaser = FormField.getValue(state.teaser);
+
   return (
     <Row>
       <Col xs="12">
-        <RichMarkdownEditor.view
+        <PlateEditor.view
           required
           label="Description and Contract Details"
-          placeholder="Describe this opportunity."
+          // placeholder="Describe this opportunity."
           help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
           extraChildProps={{
-            style: { height: "60vh", minHeight: "400px" }
+            style: {
+              // height: "60vh",
+              // minHeight: "400px"
+            }
+          }}
+          opportunityContext={{
+            title,
+            teaser
           }}
           disabled={disabled}
           state={state.description}

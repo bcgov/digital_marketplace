@@ -10,6 +10,7 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
 import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -21,8 +22,8 @@ import {
 import * as api from "front-end/lib/http/api";
 import Link, { externalDest, routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
-import React, { useRef } from "react";
-import { Col, Row, Label } from "reactstrap";
+import React from "react";
+import { Col, Row } from "reactstrap";
 import { COPY } from "shared/config";
 import SKILLS from "shared/lib/data/skills";
 import { FileUploadMetadata } from "shared/lib/resources/file";
@@ -49,17 +50,6 @@ import {
 import * as opportunityValidation from "shared/lib/validation/opportunity/code-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import { isAdmin, User } from "shared/lib/resources/user";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { Plate } from "@udecode/plate/react";
-
-import {
-  Editor,
-  EditorContainer
-} from "front-end/lib/components/platejs/editor";
-import { useCreateEditor } from "front-end/lib/components/platejs/plugins/use-create-editor";
-import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
-import { DndProvider } from "react-dnd";
-import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
 
 type RemoteOk = "yes" | "no";
 
@@ -86,10 +76,7 @@ export interface State {
   remoteOk: Immutable<RadioGroup.State<RemoteOk>>;
   remoteDesc: Immutable<LongText.State>;
   // Description Tab
-  description: Immutable<RichMarkdownEditor.State>;
-  showCopilotEditor: boolean;
-  autoFocusCopilotEditor: boolean;
-  copilotInputValue: string;
+  description: Immutable<PlateEditor.State>;
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
   startDate: Immutable<DateField.State>;
@@ -114,10 +101,7 @@ export type Msg =
   | ADT<"remoteOk", RadioGroup.Msg<RemoteOk>>
   | ADT<"remoteDesc", LongText.Msg>
   // Description Tab
-  | ADT<"description", RichMarkdownEditor.Msg>
-  | ADT<"rewriteWithAIClicked">
-  | ADT<"setCopilotEditorFocused">
-  | ADT<"copilotInputValueChanged", string>
+  | ADT<"description", PlateEditor.Msg>
   // Details Tab
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"startDate", DateField.Msg>
@@ -260,13 +244,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "cwu-opportunity-remote-desc"
     }
   });
-  const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
+  const [descriptionState, descriptionCmds] = PlateEditor.init({
     errors: [],
     validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
-      id: "cwu-opportunity-description",
-      uploadImage: api.files.markdownImages.makeUploadImage()
+      id: "cwu-opportunity-description"
     }
   });
   const [proposalDeadlineState, proposalDeadlineCmds] = DateField.init({
@@ -375,9 +358,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       remoteOk: immutable(remoteOkState),
       remoteDesc: immutable(remoteDescState),
       description: immutable(descriptionState),
-      showCopilotEditor: false,
-      autoFocusCopilotEditor: false,
-      copilotInputValue: "",
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
       startDate: immutable(startDateState),
@@ -463,7 +443,7 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
         FormField.setErrors(s, errors.skills ? flatten(errors.skills) : [])
       )
       .update("description", (s) =>
-        FormField.setErrors(s, errors.description || [])
+        PlateEditor.setErrors(s, errors.description || [])
       )
       .update("remoteOk", (s) => FormField.setErrors(s, errors.remoteOk || []))
       .update("remoteDesc", (s) =>
@@ -502,7 +482,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("location", (s) => FormField.validate(s))
     .update("reward", (s) => FormField.validate(s))
     .update("skills", (s) => FormField.validate(s))
-    .update("description", (s) => FormField.validate(s))
+    .update("description", (s) => PlateEditor.validateState(s))
     .update("remoteOk", (s) => FormField.validate(s))
     .update("proposalDeadline", (s) => FormField.validate(s))
     .update("startDate", (s) => FormField.validate(s))
@@ -534,7 +514,7 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
 }
 
 export function isDescriptionTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.description);
+  return PlateEditor.isValid(state.description);
 }
 
 export function isDetailsTabValid(state: Immutable<State>): boolean {
@@ -573,7 +553,7 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     reward: FormField.getValue(state.reward) || 0,
     skills: SelectMulti.getValueAsStrings(state.skills),
-    description: FormField.getValue(state.description),
+    description: PlateEditor.getValue(state.description),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
     startDate: DateField.getValueAsString(state.startDate),
@@ -837,24 +817,10 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return component_.base.updateChild({
         state,
         childStatePath: ["description"],
-        childUpdate: RichMarkdownEditor.update,
+        childUpdate: PlateEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("description", value)
       });
-
-    case "rewriteWithAIClicked": {
-      state = state.set("showCopilotEditor", true);
-      state = state.set("autoFocusCopilotEditor", true);
-      // const currentDescription = FormField.getValue(state.description);
-      // state = state.set("copilotInputValue", currentDescription);
-      return [state, []];
-    }
-
-    case "setCopilotEditorFocused":
-      return [state.set("autoFocusCopilotEditor", false), []];
-
-    case "copilotInputValueChanged":
-      return [state.set("copilotInputValue", msg.value), []];
 
     case "proposalDeadline": {
       return component_.base.updateChild({
@@ -1128,172 +1094,34 @@ const DescriptionView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
-  const descriptionId = state.description.child.id;
-
-  // Get title and teaser values from form state
+  // Get title and teaser values from form state for opportunity context
   const title = FormField.getValue(state.title);
   const teaser = FormField.getValue(state.teaser);
 
-  // Get current markdown content from form state
-  const markdownContent = FormField.getValue(state.description);
-
-  const editor = useCreateEditor({
-    plugins: [...editorPlugins]
-  });
-
-  // Debounce ref for handling editor changes
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Initialize editor with markdown content on first load
-  React.useEffect(() => {
-    if (editor && markdownContent) {
-      try {
-        const deserializedValue =
-          editor.api.markdown.deserialize(markdownContent);
-        editor.tf.setValue(deserializedValue);
-      } catch (error) {
-        console.warn("Failed to deserialize markdown content:", error);
-        // Fallback to plain text
-        editor.tf.setValue([
-          {
-            type: "p",
-            children: [{ text: markdownContent }]
-          }
-        ]);
-      }
-    }
-  }, [editor]); // Only run on editor creation
-
-  // Update the opportunity context in the editor
-  React.useEffect(() => {
-    if (editor) {
-      editor.setOption(OpportunityContextPlugin, "context", {
-        title,
-        teaser
-      });
-    }
-  }, [editor, title, teaser]);
-
-  // Update editor content when markdown content changes externally
-  React.useEffect(() => {
-    if (editor && markdownContent !== undefined) {
-      try {
-        const currentMarkdown = editor.api.markdown.serialize();
-        if (currentMarkdown !== markdownContent) {
-          const deserializedValue =
-            editor.api.markdown.deserialize(markdownContent);
-          editor.tf.setValue(deserializedValue);
-        }
-      } catch (error) {
-        console.warn("Failed to deserialize updated markdown content:", error);
-      }
-    }
-  }, [markdownContent]); // Run when markdown content changes
-
-  // Handle editor content changes with debouncing
-  const handleEditorChange = React.useCallback(
-    (_value: any) => {
-      if (editor) {
-        // Clear existing timeout
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
-
-        // Set new timeout for debounced update
-        updateTimeoutRef.current = setTimeout(() => {
-          try {
-            // Serialize editor content to markdown
-            const markdownOutput = editor.api.markdown.serialize();
-
-            // Only update if the markdown content has actually changed
-            if (markdownOutput !== markdownContent) {
-              // Update the form state with the markdown content
-              // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
-              dispatch(
-                adt(
-                  "description" as const,
-                  adt(
-                    "child" as const,
-                    adt(
-                      "onChangeTextArea" as const,
-                      [
-                        markdownOutput,
-                        0, // selectionStart
-                        markdownOutput.length // selectionEnd
-                      ] as [string, number, number]
-                    )
-                  )
-                )
-              );
-            }
-          } catch (error) {
-            console.warn(
-              "Failed to serialize editor content to markdown:",
-              error
-            );
-          }
-        }, 300); // 300ms debounce
-      }
-    },
-    [editor, markdownContent, dispatch]
-  );
-
-  // Cleanup timeout on unmount
-  React.useEffect(() => {
-    return () => {
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <Row>
-      <Col xs="12" md={state.showCopilotEditor ? 8 : 12}>
-        <div className="mb-3">
-          <Label htmlFor={descriptionId}>
-            Description <span className="text-danger">*</span>
-          </Label>
-
-          {/* Keep the old RichMarkdownEditor but hidden - still needed for form validation and state management */}
-          {/* <div>
-            <RichMarkdownEditor.view
-              required
-              help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
-              placeholder="Describe this opportunity."
-              extraChildProps={{
-                style: { height: "60vh", minHeight: "400px" }
-              }}
-              disabled={disabled}
-              state={state.description}
-              dispatch={component_.base.mapDispatch(dispatch, (value) =>
-                adt("description" as const, value)
-              )}
-            />
-          </div> */}
-
-          {/* New PlateJS editor with markdown support */}
-          <div
-            className="form-control tw-scoped"
-            style={{
-              border: "1px solid #cfd4da",
-              borderRadius: "8px",
-              padding: "12px"
+      <Col xs="12">
+        <PlateEditor.view
+          required
+          label="Description"
+          // placeholder="Describe this opportunity..."
+          help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc."
+          extraChildProps={{
+            style: {
               // height: "60vh",
               // minHeight: "400px"
-            }}>
-            <DndProvider backend={HTML5Backend}>
-              <Plate editor={editor} onChange={handleEditorChange}>
-                <EditorContainer variant="demo">
-                  <Editor
-                    // placeholder="Describe this opportunity..."
-                    disabled={disabled}
-                  />
-                </EditorContainer>
-              </Plate>
-            </DndProvider>
-          </div>
-        </div>
+            }
+          }}
+          opportunityContext={{
+            title,
+            teaser
+          }}
+          disabled={disabled}
+          state={state.description}
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("description" as const, value)
+          )}
+        />
       </Col>
     </Row>
   );
