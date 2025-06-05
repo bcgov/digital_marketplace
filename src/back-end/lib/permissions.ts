@@ -911,9 +911,7 @@ export async function readOneSWUTeamQuestionResponseEvaluation(
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       opportunity.status
     ) ||
-      (opportunity.status ===
-        SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
-        evaluation.evaluationPanelMember === session.user.id) ||
+      evaluation.evaluationPanelMember === session.user.id ||
       (opportunity.status ===
         SWUOpportunityStatus.EvaluationTeamQuestionsConsensus &&
         (await isSWUOpportunityEvaluationPanelChair(
@@ -1434,9 +1432,7 @@ export async function readOneTWUResourceQuestionResponseEvaluation(
     (doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
       opportunity.status
     ) ||
-      (opportunity.status ===
-        TWUOpportunityStatus.EvaluationResourceQuestionsIndividual &&
-        evaluation.evaluationPanelMember === session.user.id) ||
+      evaluation.evaluationPanelMember === session.user.id ||
       (opportunity.status ===
         TWUOpportunityStatus.EvaluationResourceQuestionsConsensus &&
         (await isTWUOpportunityEvaluationPanelChair(
