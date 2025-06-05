@@ -322,7 +322,10 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
     ).reduce((acc, rq) => {
       const score = evaluation?.scores[rq.order]?.score;
       return (
-        acc || Boolean(rq.minimumScore && score && score < rq.minimumScore)
+        acc ||
+        Boolean(
+          rq.minimumScore && score !== undefined && score < rq.minimumScore
+        )
       );
     }, false);
     return [
