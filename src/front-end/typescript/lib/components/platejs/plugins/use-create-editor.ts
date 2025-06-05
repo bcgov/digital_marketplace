@@ -50,7 +50,7 @@ import { KbdLeaf } from "../ui/kbd-leaf";
 // import { MediaPlaceholderElement } from '../ui/media-placeholder-element';
 // import { MediaVideoElement } from "../ui/media-video-element";
 import { ParagraphElement } from "../ui/paragraph-element";
-import { withPlaceholders } from "../ui/placeholder";
+// import { withPlaceholders } from "../ui/placeholder";
 // import { SlashInputElement } from "../ui/slash-input-element";
 
 import { editorPlugins, viewPlugins } from "./editor-plugins";
@@ -110,17 +110,24 @@ export const useCreateEditor = (
   } & Omit<CreatePlateEditorOptions, "plugins"> = {},
   deps: any[] = []
 ) => {
+  const configuredEditorPlugins = readOnly
+    ? viewPlugins
+    : [
+        // Add all editor plugins
+        ...editorPlugins
+      ];
+
   return usePlateEditor<Value, typeof editorPlugins[number]>(
     {
       components: {
         ...(readOnly
           ? viewComponents
           : placeholders
-          ? withPlaceholders(editorComponents)
+          ? editorComponents //withPlaceholders(editorComponents)
           : editorComponents),
         ...components
       },
-      plugins: (readOnly ? viewPlugins : editorPlugins) as any,
+      plugins: configuredEditorPlugins as any,
       ...options
     },
     deps

@@ -1,16 +1,16 @@
 import * as React from "react";
 
 import { AIChatPlugin } from "@udecode/plate-ai/react";
-import { BlockquotePlugin } from "@udecode/plate-block-quote/react";
-import { HEADING_KEYS } from "@udecode/plate-heading";
-import { IndentListPlugin } from "@udecode/plate-indent-list/react";
+// import { BlockquotePlugin } from "@udecode/plate-block-quote/react";
+// import { HEADING_KEYS } from "@udecode/plate-heading";
+// import { IndentListPlugin } from "@udecode/plate-indent-list/react";
 import {
   BLOCK_CONTEXT_MENU_ID,
   BlockMenuPlugin,
   BlockSelectionPlugin
 } from "@udecode/plate-selection/react";
 import {
-  ParagraphPlugin,
+  // ParagraphPlugin,
   useEditorPlugin,
   usePlateState
 } from "@udecode/plate/react";
@@ -20,9 +20,9 @@ import {
   ContextMenuContent,
   ContextMenuGroup,
   ContextMenuItem,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
+  // ContextMenuSub,
+  // ContextMenuSubContent,
+  // ContextMenuSubTrigger,
   ContextMenuTrigger
 } from "./context-menu";
 import { useIsTouchDevice } from "../hooks/use-is-touch-device";
@@ -35,32 +35,32 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const isTouch = useIsTouchDevice();
   const [readOnly] = usePlateState("readOnly");
 
-  const handleTurnInto = React.useCallback(
-    (type: string) => {
-      editor
-        .getApi(BlockSelectionPlugin)
-        .blockSelection.getNodes()
-        .forEach(([node, path]) => {
-          if (node[IndentListPlugin.key]) {
-            editor.tf.unsetNodes([IndentListPlugin.key, "indent"], {
-              at: path
-            });
-          }
+  // const handleTurnInto = React.useCallback(
+  //   (type: string) => {
+  //     editor
+  //       .getApi(BlockSelectionPlugin)
+  //       .blockSelection.getNodes()
+  //       .forEach(([node, path]) => {
+  //         if (node[IndentListPlugin.key]) {
+  //           editor.tf.unsetNodes([IndentListPlugin.key, "indent"], {
+  //             at: path
+  //           });
+  //         }
 
-          editor.tf.toggleBlock(type, { at: path });
-        });
-    },
-    [editor]
-  );
+  //         editor.tf.toggleBlock(type, { at: path });
+  //       });
+  //   },
+  //   [editor]
+  // );
 
-  const handleAlign = React.useCallback(
-    (align: "center" | "left" | "right") => {
-      editor
-        .getTransforms(BlockSelectionPlugin)
-        .blockSelection.setNodes({ align });
-    },
-    [editor]
-  );
+  // const handleAlign = React.useCallback(
+  //   (align: "center" | "left" | "right") => {
+  //     editor
+  //       .getTransforms(BlockSelectionPlugin)
+  //       .blockSelection.setNodes({ align });
+  //   },
+  //   [editor]
+  // );
 
   if (isTouch) {
     return children;
@@ -121,14 +121,13 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
             }}>
             Delete
           </ContextMenuItem>
-          <ContextMenuItem
+          {/* <ContextMenuItem
             onClick={() => {
               editor
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.duplicate();
             }}>
             Duplicate
-            {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
           </ContextMenuItem>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
@@ -152,10 +151,10 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                 Blockquote
               </ContextMenuItem>
             </ContextMenuSubContent>
-          </ContextMenuSub>
+          </ContextMenuSub> */}
         </ContextMenuGroup>
 
-        <ContextMenuGroup>
+        {/* <ContextMenuGroup>
           <ContextMenuItem
             onClick={() =>
               editor
@@ -186,7 +185,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
-        </ContextMenuGroup>
+        </ContextMenuGroup> */}
       </ContextMenuContent>
     </ContextMenu>
   );

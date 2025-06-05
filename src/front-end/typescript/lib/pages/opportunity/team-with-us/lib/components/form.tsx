@@ -1140,7 +1140,7 @@ const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{ inline: true }}
           required
           label="Remote OK?"
-          help="Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
+          help="Indicate if the successful proponent may complete the work as outlined in the opportunity's acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
           disabled={disabled}
           state={state.remoteOk}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1226,7 +1226,7 @@ const OverviewView: component_.base.View<Props> = ({
           required
           extraChildProps={{}}
           label="Contract Start Date"
-          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity's acceptance criteria."
           state={state.startDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1240,7 +1240,7 @@ const OverviewView: component_.base.View<Props> = ({
           required
           extraChildProps={{}}
           label="Contract Completion Date"
-          help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to meet the opportunity's acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1254,7 +1254,7 @@ const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{ prefix: "$" }}
           label="Maximum Budget"
           placeholder="Maximum Budget"
-          help="Provide a dollar value for the maximum amount of money that you can spend to complete the work as provided in the opportunity’s details."
+          help="Provide a dollar value for the maximum amount of money that you can spend to complete the work as provided in the opportunity's details."
           required
           disabled={disabled}
           state={state.maxBudget}
@@ -1323,7 +1323,7 @@ const DescriptionView: component_.base.View<Props> = ({
         <PlateEditor.view
           required
           label="Description and Contract Details"
-          // placeholder="Describe this opportunity."
+          placeholder="Describe this opportunity."
           help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
           extraChildProps={{
             style: {
@@ -1351,11 +1351,23 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
+  // Build generation context from form state
+  const generationContext = {
+    title: FormField.getValue(state.title),
+    teaser: FormField.getValue(state.teaser),
+    description: PlateEditor.getValue(state.description),
+    location: FormField.getValue(state.location),
+    remoteOk: FormField.getValue(state.remoteOk) === "yes",
+    remoteDesc: FormField.getValue(state.remoteDesc),
+    resources: Resources.getValues(state.resources)
+  };
+
   return (
     <Row>
       <Col xs="12">
         <ResourceQuestions.view
           disabled={disabled}
+          generationContext={generationContext}
           state={state.resourceQuestions}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("resourceQuestions" as const, value)

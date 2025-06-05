@@ -9,8 +9,8 @@ import {
   usePluginOption,
 } from '@udecode/plate/react';
 import {
-  Album,
-  BadgeHelp,
+  // Album,
+  // BadgeHelp,
   BookOpenCheck,
   Check,
   CornerUpLeft,
@@ -19,7 +19,7 @@ import {
   ListMinus,
   ListPlus,
   PenLine,
-  SmileIcon,
+  // SmileIcon,
   Wand,
   X,
 } from 'lucide-react';
@@ -75,29 +75,29 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       editor.getApi(AIChatPlugin).aiChat.hide();
     },
   },
-  emojify: {
-    icon: <SmileIcon />,
-    label: 'Emojify',
-    value: 'emojify',
-    onSelect: ({ editor }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit({
-        prompt: 'Emojify',
-      });
-    },
-  },
-  explain: {
-    icon: <BadgeHelp />,
-    label: 'Explain',
-    value: 'explain',
-    onSelect: ({ editor }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit({
-        prompt: {
-          default: 'Explain {editor}',
-          selecting: 'Explain',
-        },
-      });
-    },
-  },
+  // emojify: {
+  //   icon: <SmileIcon />,
+  //   label: 'Emojify',
+  //   value: 'emojify',
+  //   onSelect: ({ editor }) => {
+  //     void editor.getApi(AIChatPlugin).aiChat.submit({
+  //       prompt: 'Emojify',
+  //     });
+  //   },
+  // },
+  // explain: {
+  //   icon: <BadgeHelp />,
+  //   label: 'Explain',
+  //   value: 'explain',
+  //   onSelect: ({ editor }) => {
+  //     void editor.getApi(AIChatPlugin).aiChat.submit({
+  //       prompt: {
+  //         default: 'Explain {editor}',
+  //         selecting: 'Explain',
+  //       },
+  //     });
+  //   },
+  // },
   fixSpelling: {
     icon: <Check />,
     label: 'Fix spelling & grammar',
@@ -108,16 +108,16 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       });
     },
   },
-  generateMarkdownSample: {
-    icon: <BookOpenCheck />,
-    label: 'Generate Markdown sample',
-    value: 'generateMarkdownSample',
-    onSelect: ({ editor }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit({
-        prompt: 'Generate a markdown sample',
-      });
-    },
-  },
+  // generateMarkdownSample: {
+  //   icon: <BookOpenCheck />,
+  //   label: 'Generate Markdown sample',
+  //   value: 'generateMarkdownSample',
+  //   onSelect: ({ editor }) => {
+  //     void editor.getApi(AIChatPlugin).aiChat.submit({
+  //       prompt: 'Generate a markdown sample',
+  //     });
+  //   },
+  // },
   generateOpportunityDescription: {
     icon: <BookOpenCheck />,
     label: 'Generate opportunity description',
@@ -256,20 +256,20 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       });
     },
   },
-  summarize: {
-    icon: <Album />,
-    label: 'Add a summary',
-    value: 'summarize',
-    onSelect: ({ editor }) => {
-      void editor.getApi(AIChatPlugin).aiChat.submit({
-        mode: 'insert',
-        prompt: {
-          default: 'Summarize {editor}',
-          selecting: 'Summarize',
-        },
-      });
-    },
-  },
+  // summarize: {
+  //   icon: <Album />,
+  //   label: 'Add a summary',
+  //   value: 'summarize',
+  //   onSelect: ({ editor }) => {
+  //     void editor.getApi(AIChatPlugin).aiChat.submit({
+  //       mode: 'insert',
+  //       prompt: {
+  //         default: 'Summarize {editor}',
+  //         selecting: 'Summarize',
+  //       },
+  //     });
+  //   },
+  // },
   tryAgain: {
     icon: <CornerUpLeft />,
     label: 'Try again',
@@ -309,10 +309,10 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.generateOpportunityDescription,
-        aiChatItems.generateMarkdownSample,
+        // aiChatItems.generateMarkdownSample,
         aiChatItems.continueWrite,
-        aiChatItems.summarize,
-        aiChatItems.explain,
+        // aiChatItems.summarize,
+        // aiChatItems.explain,
       ],
     },
   ],
@@ -325,7 +325,7 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.improveWriting,
-        aiChatItems.emojify,
+        // aiChatItems.emojify,
         aiChatItems.makeLonger,
         aiChatItems.makeShorter,
         aiChatItems.fixSpelling,

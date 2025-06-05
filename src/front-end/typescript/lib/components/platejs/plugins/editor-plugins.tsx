@@ -20,7 +20,7 @@ import { SlashPlugin } from "@udecode/plate-slash-command/react";
 // import { TogglePlugin } from '@udecode/plate-toggle/react';
 import { TrailingBlockPlugin } from "@udecode/plate-trailing-block";
 
-import { FixedToolbarPlugin } from "../plugins/fixed-toolbar-plugin";
+// import { FixedToolbarPlugin } from "../plugins/fixed-toolbar-plugin";
 // import { FloatingToolbarPlugin } from '../plugins/floating-toolbar-plugin';
 // import { SuggestionBelowNodes } from '@/components/ui/suggestion-line-break';
 
@@ -120,8 +120,7 @@ export const editorPlugins = [
   markdownPlugin,
   //   JuicePlugin,
 
-  // UI
-  FixedToolbarPlugin,
+  // UI - FixedToolbarPlugin removed from here to be added dynamically
   // FloatingToolbarPlugin,
 
   // Context

@@ -13,6 +13,7 @@ import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugi
 import { Immutable, component as component_ } from "front-end/lib/framework";
 import { adt, ADT } from "shared/lib/types";
 import { Validation } from "shared/lib/validation";
+import { createFixedToolbarPlugin } from "../platejs/plugins/fixed-toolbar-plugin";
 
 // State interface for the PlateJS editor
 export interface State {
@@ -121,6 +122,7 @@ interface ViewProps extends component_.base.ComponentViewProps<State, Msg> {
     title?: string;
     teaser?: string;
   };
+  toolbarMode?: "full" | "minimal";
 }
 
 export const view: component_.base.View<ViewProps> = ({
@@ -132,14 +134,19 @@ export const view: component_.base.View<ViewProps> = ({
   required = false,
   disabled = false,
   extraChildProps = {},
-  opportunityContext
+  opportunityContext,
+  toolbarMode = "full"
 }) => {
   const childId = state.child.id;
   const markdownContent = state.child.value;
 
-  const editor = useCreateEditor({
-    plugins: [...editorPlugins]
-  });
+  const editor = useCreateEditor(
+    {
+      plugins: [...editorPlugins, createFixedToolbarPlugin(toolbarMode)],
+      readOnly: disabled
+    },
+    [disabled, toolbarMode]
+  );
 
   // Debounce ref for handling editor changes
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -190,46 +197,47 @@ export const view: component_.base.View<ViewProps> = ({
   // Handle editor content changes with debouncing
   const handleEditorChange = useCallback(
     (_value: any) => {
-      if (editor) {
-        // Clear existing timeout
-        if (updateTimeoutRef.current) {
-          clearTimeout(updateTimeoutRef.current);
-        }
+      // Don't handle changes if editor is disabled/readonly
+      if (disabled || !editor) return;
 
-        // Set new timeout for debounced update
-        updateTimeoutRef.current = setTimeout(() => {
-          try {
-            // Serialize editor content to markdown
-            const markdownOutput = editor.api.markdown.serialize();
+      // Clear existing timeout
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
 
-            // Only update if the markdown content has actually changed
-            if (markdownOutput !== markdownContent) {
-              // Update the form state with the markdown content
-              // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
-              dispatch(
+      // Set new timeout for debounced update
+      updateTimeoutRef.current = setTimeout(() => {
+        try {
+          // Serialize editor content to markdown
+          const markdownOutput = editor.api.markdown.serialize();
+
+          // Only update if the markdown content has actually changed
+          if (markdownOutput !== markdownContent) {
+            // Update the form state with the markdown content
+            // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
+            dispatch(
+              adt(
+                "child" as const,
                 adt(
-                  "child" as const,
-                  adt(
-                    "onChangeTextArea" as const,
-                    [
-                      markdownOutput,
-                      0, // selectionStart
-                      markdownOutput.length // selectionEnd
-                    ] as [string, number, number]
-                  )
+                  "onChangeTextArea" as const,
+                  [
+                    markdownOutput,
+                    0, // selectionStart
+                    markdownOutput.length // selectionEnd
+                  ] as [string, number, number]
                 )
-              );
-            }
-          } catch (error) {
-            console.warn(
-              "Failed to serialize editor content to markdown:",
-              error
+              )
             );
           }
-        }, 300); // 300ms debounce
-      }
+        } catch (error) {
+          console.warn(
+            "Failed to serialize editor content to markdown:",
+            error
+          );
+        }
+      }, 300); // 300ms debounce
     },
-    [editor, markdownContent, dispatch]
+    [editor, markdownContent, dispatch, disabled]
   );
 
   // Cleanup timeout on unmount
@@ -262,8 +270,11 @@ export const view: component_.base.View<ViewProps> = ({
           ...extraChildProps.style
         }}>
         <DndProvider backend={HTML5Backend}>
-          <Plate editor={editor} onChange={handleEditorChange}>
-            <EditorContainer variant="demo">
+          <Plate
+            editor={editor}
+            onChange={disabled ? undefined : handleEditorChange}
+            readOnly={disabled}>
+            <EditorContainer variant="demo" className="h-72 overflow-y-auto">
               <Editor placeholder={placeholder} disabled={disabled} />
             </EditorContainer>
           </Plate>

@@ -151,4 +151,84 @@ export class AppController {
       res.status(500).json({ error: 'Error processing AI command.' });
     }
   }
+
+  @Post('generate-resource-question')
+  async generateResourceQuestion(@Body() dto: any) {
+    try {
+      const { skill, context } = dto;
+
+      const prompt = `Generate a single evaluation question for the skill: "${skill}"
+
+OPPORTUNITY CONTEXT:
+Title: ${context.title || 'N/A'}
+Teaser: ${context.teaser || 'N/A'}
+Description: ${context.description || 'N/A'}
+Location: ${context.location || 'N/A'}
+Remote Work: ${context.remoteOk ? 'Allowed' : 'Not allowed'}
+
+RESOURCES NEEDED:
+${context.resources
+  .map(
+    (r: any, i: number) => `
+Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
+- Mandatory Skills: ${r.mandatorySkills.join(', ')}
+- Optional Skills: ${r.optionalSkills.join(', ')}`,
+  )
+  .join('')}
+
+REQUIREMENTS:
+- Create ONE evaluation question specifically for the "${skill}" skill
+- Focus on practical application and real-world experience
+- Make it scenario-based and specific to the opportunity context
+- Provide clear evaluation guidelines for assessors
+- The question should help determine competency level in this skill
+
+OUTPUT FORMAT (JSON):
+{
+  "question": "Question text in plain text format",
+  "guideline": "Clear guidance for evaluators on what constitutes a good response, including what to look for and how to assess competency"
+}
+
+Please return only valid JSON.`;
+
+      const messages = [
+        {
+          role: 'system',
+          content:
+            'You are an expert at creating technical evaluation questions. Always respond with valid JSON only.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      const response = await this.appService.generateChatCompletion(messages);
+
+      let responseText: string;
+      if (typeof response === 'string') {
+        responseText = response;
+      } else if (response && response.choices && response.choices[0]) {
+        responseText = response.choices[0].message.content;
+      } else {
+        throw new Error('Unexpected response format');
+      }
+
+      // Try to parse JSON response
+      try {
+        const parsed = JSON.parse(responseText);
+        return parsed;
+      } catch (parseError) {
+        // If JSON parsing fails, try to extract question and guideline
+        console.warn(
+          'Failed to parse JSON, attempting text extraction:',
+          parseError,
+        );
+        return {
+          question: `Describe your experience with ${skill} and provide specific examples of how you have applied this skill in professional projects.`,
+          guideline: `Look for specific examples, depth of experience, and practical application of ${skill}. Good responses should include concrete examples and demonstrate understanding of best practices.`,
+        };
+      }
+    } catch (error) {
+      console.error('Error generating resource question:', error);
+      throw new Error(`Failed to generate question: ${error.message}`);
+    }
+  }
 }

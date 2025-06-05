@@ -1104,7 +1104,7 @@ const DescriptionView: component_.base.View<Props> = ({
         <PlateEditor.view
           required
           label="Description"
-          // placeholder="Describe this opportunity..."
+          placeholder="Describe this opportunity..."
           help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc."
           extraChildProps={{
             style: {
