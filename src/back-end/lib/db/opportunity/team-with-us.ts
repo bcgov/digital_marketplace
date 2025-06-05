@@ -1203,25 +1203,6 @@ export const updateTWUOpportunityVersion = tryDb<
       throw new Error("could not fetch previous resources");
     }
 
-    const prevPanel: RawTWUEvaluationPanelMember[] =
-      await connection<RawTWUEvaluationPanelMember>(
-        "twuEvaluationPanelMembers as tepm"
-      )
-        .select("tepm.*")
-        .join(
-          "twuOpportunityVersions as tov",
-          "tepm.opportunityVersion",
-          "=",
-          "tov.id"
-        )
-        .where(
-          "tov.createdAt",
-          "=",
-          connection<Date>("twuOpportunityVersions as tov2")
-            .max("createdAt")
-            .where("tov2.opportunity", "=", restOfOpportunity.id)
-        );
-
     const [versionRecord] = await connection<TWUOpportunityVersionRecord>(
       "twuOpportunityVersions"
     )
@@ -1317,30 +1298,12 @@ export const updateTWUOpportunityVersion = tryDb<
 
     // Create evaluation panel
     for (const member of evaluationPanel) {
-      const prevMember = prevPanel.find(({ user }) => user === member.user);
-      if (prevMember) {
-        await connection<RawTWUEvaluationPanelMember>(
-          "twuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .where({
-            user: prevMember.user,
-            opportunityVersion: prevMember.opportunityVersion
-          })
-          .update({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      } else {
-        await connection<RawTWUEvaluationPanelMember>(
-          "twuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .insert({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      }
+      await connection<RawTWUEvaluationPanelMember>("twuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: versionRecord.id
+        });
     }
 
     // Add an 'edit' change record

@@ -1237,25 +1237,6 @@ export const updateSWUOpportunityVersion = tryDb<
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
-    const prevPanel: RawSWUEvaluationPanelMember[] =
-      await connection<RawSWUEvaluationPanelMember>(
-        "swuEvaluationPanelMembers as sepm"
-      )
-        .select("sepm.*")
-        .join(
-          "swuOpportunityVersions as sov",
-          "sepm.opportunityVersion",
-          "=",
-          "sov.id"
-        )
-        .where(
-          "sov.createdAt",
-          "=",
-          connection<Date>("swuOpportunityVersions as sov2")
-            .max("createdAt")
-            .where("sov2.opportunity", "=", restOfOpportunity.id)
-        );
-
     const [versionRecord] = await connection<SWUOpportunityVersionRecord>(
       "swuOpportunityVersions"
     )
@@ -1326,30 +1307,12 @@ export const updateSWUOpportunityVersion = tryDb<
 
     // Create evaluation panel
     for (const member of evaluationPanel) {
-      const prevMember = prevPanel.find(({ user }) => user === member.user);
-      if (prevMember) {
-        await connection<RawSWUEvaluationPanelMember>(
-          "swuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .where({
-            user: prevMember.user,
-            opportunityVersion: prevMember.opportunityVersion
-          })
-          .update({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      } else {
-        await connection<RawSWUEvaluationPanelMember>(
-          "swuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .insert({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      }
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: versionRecord.id
+        });
     }
 
     // Add an 'edit' change record
