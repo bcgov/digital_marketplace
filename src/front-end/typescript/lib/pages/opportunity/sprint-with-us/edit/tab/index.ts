@@ -6,7 +6,7 @@ import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
 import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation-panel";
-import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
+import * as EvaluationTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation";
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
@@ -126,10 +126,10 @@ export interface Tabs {
     InstructionsTab.InnerMsg,
     InitResponse
   >;
-  overview: TabbedPage.Tab<
+  evaluation: TabbedPage.Tab<
     Params,
-    OverviewTab.State,
-    OverviewTab.InnerMsg,
+    EvaluationTab.State,
+    EvaluationTab.InnerMsg,
     InitResponse
   >;
   consensus: TabbedPage.Tab<
@@ -157,7 +157,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "proposals":
     case "history":
     case "instructions":
-    case "overview":
+    case "evaluation":
     case "consensus":
     case "evaluationPanel":
       return raw;
@@ -181,7 +181,7 @@ export function canGovUserViewTab(tab: TabId, tabPermissions: TabPermissions) {
     case "evaluationPanel":
       return isOpportunityOwnerOrAdmin;
     case "instructions":
-    case "overview":
+    case "evaluation":
       return isEvaluator;
     case "consensus":
       return isChair || isOpportunityOwnerOrAdmin;
@@ -246,11 +246,11 @@ export function idToDefinition<K extends TabId>(
         icon: "hand-point-up",
         title: "Instructions"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case "overview":
+    case "evaluation":
       return {
-        component: OverviewTab.component,
+        component: EvaluationTab.component,
         icon: "list-check",
-        title: "Overview"
+        title: "Evaluation"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "consensus":
       return {
@@ -310,10 +310,10 @@ export function makeSidebarState(
       ...(canGovUserViewTabs("proposals")
         ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
         : []),
-      ...(canGovUserViewTabs("instructions", "overview")
+      ...(canGovUserViewTabs("instructions", "evaluation")
         ? [
             makeSidebarLink("instructions", opportunity.id, activeTab),
-            makeSidebarLink("overview", opportunity.id, activeTab)
+            makeSidebarLink("evaluation", opportunity.id, activeTab)
           ]
         : []),
       ...(canGovUserViewTabs("teamQuestions")
@@ -346,7 +346,7 @@ export function makeSidebarState(
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
   const proposalTabs: TabId[] = [
-    "overview",
+    "evaluation",
     "consensus",
     "proposals",
     "teamQuestions",
@@ -357,7 +357,7 @@ export function shouldLoadProposalsForTab(tabId: TabId): boolean {
 }
 
 export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
-  const evaluationTabs: TabId[] = ["overview", "consensus"];
+  const evaluationTabs: TabId[] = ["evaluation", "consensus"];
   return evaluationTabs.includes(tabId);
 }
 

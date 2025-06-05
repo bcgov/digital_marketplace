@@ -141,7 +141,7 @@ export function getTeamQuestionsOpportunityTab(
   return evaluating
     ? panelEvaluations.length
       ? ("consensus" as const)
-      : ("overview" as const)
+      : ("evaluation" as const)
     : ("teamQuestions" as const);
 }
 

@@ -105,7 +105,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           dest={routeDest(
             adt("opportunitySWUEdit", {
               opportunityId: opportunity.id,
-              tab: "overview" as const
+              tab: "evaluation" as const
             }) as Route
           )}>
           Begin Evaluation

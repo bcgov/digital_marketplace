@@ -7,9 +7,9 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
-import * as toasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
+import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
+import * as toasts from "front-end/lib/pages/opportunity/sprint-with-us/lib/toasts";
+import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import Link, {
   emptyIconLinkSymbol,
   iconLinkSymbol,
@@ -22,35 +22,35 @@ import ReportCardList, {
 import React from "react";
 import { Badge, Col, Row } from "reactstrap";
 import {
-  canViewTWUOpportunityResourceQuestionResponseEvaluations,
-  hasTWUOpportunityPassedResourceQuestions,
-  isTWUOpportunityAcceptingProposals,
-  TWUOpportunity,
-  TWUOpportunityStatus,
+  canViewSWUOpportunityTeamQuestionResponseEvaluations,
+  hasSWUOpportunityPassedTeamQuestions,
+  isSWUOpportunityAcceptingProposals,
+  SWUOpportunity,
+  SWUOpportunityStatus,
   UpdateValidationErrors
-} from "shared/lib/resources/opportunity/team-with-us";
+} from "shared/lib/resources/opportunity/sprint-with-us";
 import {
-  compareTWUProposalAnonymousProponentNumber,
-  getTWUProponentName,
+  compareSWUProposalAnonymousProponentNumber,
+  getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  TWUProposalSlim,
-  TWUProposalStatus
-} from "shared/lib/resources/proposal/team-with-us";
+  SWUProposalSlim,
+  SWUProposalStatus
+} from "shared/lib/resources/proposal/sprint-with-us";
 import {
-  TWUResourceQuestionResponseEvaluation,
-  TWUResourceQuestionResponseEvaluationStatus
-} from "shared/lib/resources/evaluations/team-with-us/resource-questions";
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
-import { validateTWUResourceQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/team-with-us/resource-questions";
+import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 export interface State extends Tab.Params {
-  opportunity: TWUOpportunity | null;
+  opportunity: SWUOpportunity | null;
   submitLoading: boolean;
   canViewEvaluations: boolean;
   canEvaluationsBeSubmitted: boolean;
-  evaluations: TWUResourceQuestionResponseEvaluation[];
-  proposals: TWUProposalSlim[];
+  evaluations: SWUTeamQuestionResponseEvaluation[];
+  proposals: SWUProposalSlim[];
   table: Immutable<Table.State>;
   isPanelMember: boolean;
 }
@@ -61,7 +61,7 @@ export type InnerMsg =
   | ADT<"submit">
   | ADT<
       "onSubmitResponse",
-      api.ResponseValidation<TWUOpportunity, UpdateValidationErrors>
+      api.ResponseValidation<SWUOpportunity, UpdateValidationErrors>
     >;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
@@ -98,13 +98,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         return [state, []];
       }
       const proposals = msg.value[1].sort((a, b) =>
-        compareTWUProposalAnonymousProponentNumber(a, b)
+        compareSWUProposalAnonymousProponentNumber(a, b)
       );
       const evaluations = msg.value[2];
       const canViewEvaluations =
-        canViewTWUOpportunityResourceQuestionResponseEvaluations(
+        canViewSWUOpportunityTeamQuestionResponseEvaluations(
           opportunity,
-          TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
+          SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
         );
       const isPanelMember =
         opportunity.evaluationPanel?.some(
@@ -124,11 +124,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           .set(
             "canEvaluationsBeSubmitted",
             opportunity.status ===
-              TWUOpportunityStatus.EvaluationResourceQuestionsIndividual &&
+              SWUOpportunityStatus.EvaluationTeamQuestionsIndividual &&
               isPanelMember &&
               evaluations.every(
                 ({ status }) =>
-                  status === TWUResourceQuestionResponseEvaluationStatus.Draft
+                  status === SWUTeamQuestionResponseEvaluationStatus.Draft
               )
           )
           .set("isPanelMember", isPanelMember),
@@ -142,7 +142,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         state.set("submitLoading", true),
         [
-          api.opportunities.twu.update<Msg>()(
+          api.opportunities.swu.update<Msg>()(
             opportunity.id,
             adt("submitIndividualQuestionEvaluations", {
               note: "",
@@ -186,17 +186,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             )
           ),
           component_.cmd.join3(
-            api.opportunities.twu.readOne()(opportunity.id, (response) =>
+            api.opportunities.swu.readOne()(opportunity.id, (response) =>
               api.getValidValue(response, opportunity)
             ),
-            api.proposals.twu.readMany(opportunity.id)((response) =>
+            api.proposals.swu.readMany(opportunity.id)((response) =>
               api
                 .getValidValue(response, state.proposals)
                 .filter(
-                  (proposal) => proposal.status !== TWUProposalStatus.Withdrawn
+                  (proposal) => proposal.status !== SWUProposalStatus.Withdrawn
                 )
             ),
-            api.opportunities.twu.resourceQuestions.evaluations.readMany(
+            api.opportunities.swu.teamQuestions.evaluations.readMany(
               opportunity.id
             )((response) => api.getValidValue(response, state.evaluations)),
             (newOpp, newProposals, newEvaluations) =>
@@ -228,7 +228,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
   if (!opportunity) return null;
-  if (isTWUOpportunityAcceptingProposals(opportunity)) {
+  if (isSWUOpportunityAcceptingProposals(opportunity)) {
     return (
       <div>
         Evaluations will be displayed here once this opportunity has closed.
@@ -241,8 +241,8 @@ const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
 
 const ContextMenuCell: component_.base.View<{
   disabled: boolean;
-  proposal: TWUProposalSlim;
-  evaluation?: TWUResourceQuestionResponseEvaluation;
+  proposal: SWUProposalSlim;
+  evaluation?: SWUTeamQuestionResponseEvaluation;
   isPanelMember: boolean;
   canEvaluationsBeSubmitted: boolean;
 }> = ({
@@ -255,13 +255,13 @@ const ContextMenuCell: component_.base.View<{
   const proposalRouteParams = {
     proposalId: proposal.id,
     opportunityId: proposal.opportunity.id,
-    tab: "resourceQuestions" as const
+    tab: "teamQuestions" as const
   };
   return evaluation ? (
     <Link
       disabled={disabled}
       dest={routeDest(
-        adt("questionEvaluationIndividualTWUEdit", {
+        adt("questionEvaluationIndividualSWUEdit", {
           ...proposalRouteParams,
           userId: evaluation.evaluationPanelMember
         })
@@ -272,7 +272,7 @@ const ContextMenuCell: component_.base.View<{
     <Link
       disabled={disabled}
       dest={routeDest(
-        adt("questionEvaluationIndividualTWUCreate", proposalRouteParams)
+        adt("questionEvaluationIndividualSWUCreate", proposalRouteParams)
       )}>
       Start Evaluation
     </Link>
@@ -280,8 +280,8 @@ const ContextMenuCell: component_.base.View<{
 };
 
 interface ProponentCellProps {
-  proposal: TWUProposalSlim;
-  opportunity: TWUOpportunity;
+  proposal: SWUProposalSlim;
+  opportunity: SWUOpportunity;
   disabled: boolean;
   warn: boolean;
 }
@@ -304,8 +304,8 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
       )}
       symbolClassName="text-warning"
       disabled={disabled}
-      dest={routeDest(adt("proposalTWUView", proposalRouteParams))}>
-      {getTWUProponentName(proposal)}
+      dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
+      {getSWUProponentName(proposal)}
     </Link>
   );
 };
@@ -318,13 +318,13 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.proposals.map((p) => {
     const evaluation = state.evaluations.find((e) => e.proposal === p.id);
     const hasScoreBelowMinimum = (
-      state.opportunity?.resourceQuestions ?? []
-    ).reduce((acc, rq) => {
-      const score = evaluation?.scores[rq.order]?.score;
+      state.opportunity?.teamQuestions ?? []
+    ).reduce((acc, tq) => {
+      const score = evaluation?.scores[tq.order]?.score;
       return (
         acc ||
         Boolean(
-          rq.minimumScore && score !== undefined && score < rq.minimumScore
+          tq.minimumScore && score !== undefined && score < tq.minimumScore
         )
       );
     }, false);
@@ -340,10 +340,10 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
           />
         )
       },
-      ...opportunity.resourceQuestions.map((rq) => {
-        const score = evaluation?.scores[rq.order]?.score;
+      ...opportunity.teamQuestions.map((tq) => {
+        const score = evaluation?.scores[tq.order]?.score;
         const scoreBelowMinimum =
-          score && rq.minimumScore && score < rq.minimumScore;
+          score && tq.minimumScore && score < tq.minimumScore;
         return {
           className: "text-center",
           children: (
@@ -387,8 +387,8 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       children: "Participant",
       className: "text-nowrap"
     },
-    ...(state.opportunity?.resourceQuestions.map((rq) => ({
-      children: `Q${rq.order + 1}`,
+    ...(state.opportunity?.teamQuestions.map((tq) => ({
+      children: `Q${tq.order + 1}`,
       className: "text-nowrap text-center"
     })) ?? []),
     {
@@ -415,8 +415,8 @@ const ProponentEvaluations: component_.base.ComponentView<State, Msg> = ({
 };
 
 const makeCardData = (
-  opportunity: TWUOpportunity,
-  proposals: TWUProposalSlim[]
+  opportunity: SWUOpportunity,
+  proposals: SWUProposalSlim[]
 ): ReportCard[] => {
   const numProposals = proposals.length;
   const [highestScore, averageScore] = proposals.reduce(
@@ -431,7 +431,7 @@ const makeCardData = (
     },
     [0, 0]
   );
-  const isComplete = hasTWUOpportunityPassedResourceQuestions(opportunity);
+  const isComplete = hasSWUOpportunityPassedTeamQuestions(opportunity);
   return [
     {
       icon: "users",
@@ -477,7 +477,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
           <Col
             xs="12"
             className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center mb-4">
-            <h4 className="mb-0">Overview</h4>
+            <h4 className="mb-0">Evaluation</h4>
           </Col>
           <Col xs="12">
             {state.canViewEvaluations && state.proposals.length ? (
@@ -513,9 +513,9 @@ export const component: Tab.Component<State, Msg> = {
         (acc, e) =>
           acc &&
           isValid(
-            validateTWUResourceQuestionResponseEvaluationScores(
+            validateSWUTeamQuestionResponseEvaluationScores(
               e.scores,
-              opportunity.resourceQuestions
+              opportunity.teamQuestions
             )
           ),
         true as boolean

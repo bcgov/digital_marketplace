@@ -132,7 +132,7 @@ function makeResourceQuestionsSidebarLink(
   tab: TabId,
   proposal: TWUProposal,
   activeTab: TabId,
-  teamQuestionsTab: "consensus" | "overview" | "resourceQuestions",
+  teamQuestionsTab: "consensus" | "evaluation" | "resourceQuestions",
   questionEvaluation: TWUResourceQuestionResponseEvaluation | undefined
 ): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
@@ -146,7 +146,7 @@ function makeResourceQuestionsSidebarLink(
         tab
       });
       break;
-    case "overview":
+    case "evaluation":
       link = adt("questionEvaluationIndividualTWUEdit" as const, {
         proposalId: proposal.id,
         opportunityId: proposal.opportunity.id,
@@ -194,7 +194,7 @@ export function makeSidebarLink(
 export function makeSidebarState(
   activeTab: TabId,
   proposal: TWUProposal,
-  resourceQuestionsTab: "consensus" | "overview" | "resourceQuestions",
+  resourceQuestionsTab: "consensus" | "evaluation" | "resourceQuestions",
   questionEvaluation?: TWUResourceQuestionResponseEvaluation
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
