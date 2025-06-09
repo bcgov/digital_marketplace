@@ -566,9 +566,7 @@ export async function handleTWUReadyForQuestionConsensus(
   opportunity: TWUOpportunity
 ): Promise<void> {
   // Notify chair that they can begin consensuses and author of evaluation progress
-  const chairMember =
-    opportunity.evaluationPanel &&
-    opportunity.evaluationPanel.find(({ chair }) => chair);
+  const chairMember = opportunity.evaluationPanel?.find(({ chair }) => chair);
 
   const recipients = (
     await Promise.all([
@@ -615,9 +613,7 @@ export async function handleTWUQuestionConsensusFinalized(
   opportunity: TWUOpportunity
 ): Promise<void> {
   // Notify chair and author that consensus has been finalized
-  const chairMember =
-    opportunity.evaluationPanel &&
-    opportunity.evaluationPanel.find(({ chair }) => chair);
+  const chairMember = opportunity.evaluationPanel?.find(({ chair }) => chair);
 
   const recipients = (
     await Promise.all([
