@@ -27,9 +27,17 @@ export const useChat = () => {
     },
     // Mock the API response. Remove it when you implement the route /api/ai/command
     fetch: async (input, init) => {
-      const res = await fetch(input, init);
+      console.log("fetch: ", input, init);
+      let res = {} as any;
+      try {
+        res = await fetch(input, init);
+      } catch (error) {
+        console.log("error: ", error);
+      }
+      console.log("res: ", res);
 
       if (!res.ok) {
+        console.log("!res.ok");
         let sample: "markdown" | "mdx" | null = null;
 
         try {
@@ -41,14 +49,17 @@ export const useChat = () => {
             sample = "markdown";
           } else if (content.includes("Generate a mdx sample")) {
             sample = "mdx";
+          } else {
+            sample = "markdown";
           }
         } catch {
-          sample = null;
+          sample = "markdown";
         }
 
         abortControllerRef.current = new AbortController();
         await new Promise((resolve) => setTimeout(resolve, 400));
 
+        console.log("fake streaming: ", sample);
         const stream = fakeStreamText({
           sample,
           signal: abortControllerRef.current.signal
@@ -274,10 +285,16 @@ const markdownChunks = [
     { delay, texts: "Task " },
     { delay, texts: "list " },
     { delay, texts: "item " },
-    { delay, texts: "1\n" },
-    { delay, texts: "- " },
-    { delay, texts: "[x] " },
-    { delay, texts: "Task " },
+
+    // { delay, texts: "Task " }, // added extra
+    // { delay, texts: "list " }, // added extra
+    // { delay, texts: "item " }, // added extra - appeared
+
+    { delay, texts: "1\n" }, // appears, but off-screen
+    { delay, texts: "- " }, // appears, but off-screen
+    { delay, texts: "test " }, // added extra test, did not appear
+    { delay, texts: "[x] " }, // does not appear
+    { delay, texts: "Task " }, // does not appear
     { delay, texts: "list " },
     { delay, texts: "item " },
     { delay, texts: "2\n\n" },

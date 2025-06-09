@@ -926,8 +926,8 @@ const AIGenerationControls: component_.base.View<Props> = ({
             <div className="alert alert-warning py-2 mb-3">
               <small>
                 <Icon name="exclamation-triangle" className="me-1" />
-                Some questions couldn&apos;t be generated. You can edit them manually
-                or try again.
+                Some questions couldn&apos;t be generated. You can edit them
+                manually or try again.
               </small>
             </div>
           )}

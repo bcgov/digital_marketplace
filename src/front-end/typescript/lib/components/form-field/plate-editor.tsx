@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { Plate } from "@udecode/plate/react";
@@ -11,7 +11,7 @@ import { useCreateEditor } from "front-end/lib/components/platejs/plugins/use-cr
 import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
 import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
 import { Immutable, component as component_ } from "front-end/lib/framework";
-import { adt, ADT } from "shared/lib/types";
+import { ADT } from "shared/lib/types";
 import { Validation } from "shared/lib/validation";
 import { createFixedToolbarPlugin } from "../platejs/plugins/fixed-toolbar-plugin";
 
@@ -127,7 +127,7 @@ interface ViewProps extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<ViewProps> = ({
   state,
-  dispatch,
+  //   dispatch,
   label,
   placeholder = "Enter text...",
   help,
@@ -195,50 +195,50 @@ export const view: component_.base.View<ViewProps> = ({
   }, [markdownContent]); // Run when markdown content changes
 
   // Handle editor content changes with debouncing
-  const handleEditorChange = useCallback(
-    (_value: any) => {
-      // Don't handle changes if editor is disabled/readonly
-      if (disabled || !editor) return;
+  //   const handleEditorChange = useCallback(
+  //     (_value: any) => {
+  //       // Don't handle changes if editor is disabled/readonly
+  //       if (disabled || !editor) return;
 
-      // Clear existing timeout
-      if (updateTimeoutRef.current) {
-        clearTimeout(updateTimeoutRef.current);
-      }
+  //       // Clear existing timeout
+  //       if (updateTimeoutRef.current) {
+  //         clearTimeout(updateTimeoutRef.current);
+  //       }
 
-      // Set new timeout for debounced update
-      updateTimeoutRef.current = setTimeout(() => {
-        try {
-          // Serialize editor content to markdown
-          const markdownOutput = editor.api.markdown.serialize();
+  //       // Set new timeout for debounced update
+  //       updateTimeoutRef.current = setTimeout(() => {
+  //         try {
+  //           // Serialize editor content to markdown
+  //           const markdownOutput = editor.api.markdown.serialize();
 
-          // Only update if the markdown content has actually changed
-          if (markdownOutput !== markdownContent) {
-            // Update the form state with the markdown content
-            // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
-            dispatch(
-              adt(
-                "child" as const,
-                adt(
-                  "onChangeTextArea" as const,
-                  [
-                    markdownOutput,
-                    0, // selectionStart
-                    markdownOutput.length // selectionEnd
-                  ] as [string, number, number]
-                )
-              )
-            );
-          }
-        } catch (error) {
-          console.warn(
-            "Failed to serialize editor content to markdown:",
-            error
-          );
-        }
-      }, 300); // 300ms debounce
-    },
-    [editor, markdownContent, dispatch, disabled]
-  );
+  //           // Only update if the markdown content has actually changed
+  //           if (markdownOutput !== markdownContent) {
+  //             // Update the form state with the markdown content
+  //             // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
+  //             dispatch(
+  //               adt(
+  //                 "child" as const,
+  //                 adt(
+  //                   "onChangeTextArea" as const,
+  //                   [
+  //                     markdownOutput,
+  //                     0, // selectionStart
+  //                     markdownOutput.length // selectionEnd
+  //                   ] as [string, number, number]
+  //                 )
+  //               )
+  //             );
+  //           }
+  //         } catch (error) {
+  //           console.warn(
+  //             "Failed to serialize editor content to markdown:",
+  //             error
+  //           );
+  //         }
+  //       }, 300); // 300ms debounce
+  //     },
+  //     [editor, markdownContent, dispatch, disabled]
+  //   );
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -272,7 +272,7 @@ export const view: component_.base.View<ViewProps> = ({
         <DndProvider backend={HTML5Backend}>
           <Plate
             editor={editor}
-            onChange={disabled ? undefined : handleEditorChange}
+            // onChange={disabled ? undefined : handleEditorChange}
             readOnly={disabled}>
             <EditorContainer variant="demo" className="h-72 overflow-y-auto">
               <Editor placeholder={placeholder} disabled={disabled} />

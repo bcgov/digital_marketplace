@@ -33,7 +33,7 @@ import { blockMenuPlugins } from "./block-menu-plugins";
 import { cursorOverlayPlugin } from "./cursor-overlay-plugin";
 // import { deletePlugins } from './delete-plugins';
 // import { discussionPlugin } from './discussion-plugin';
-import { dndPlugins } from "./dnd-plugins";
+// import { dndPlugins } from "./dnd-plugins";
 import { OpportunityContextPlugin } from "./opportunity-context-plugin";
 // import { equationPlugins } from './equation-plugins';
 // import { exitBreakPlugin } from './exit-break-plugin';
@@ -107,7 +107,7 @@ export const editorPlugins = [
   // autoformatPlugin,
   cursorOverlayPlugin,
   ...blockMenuPlugins,
-  ...dndPlugins,
+  // ...dndPlugins,
   EmojiPlugin.configure({ options: { data: emojiMartData as any } }),
   //   exitBreakPlugin,
   //   resetBlockTypePlugin,

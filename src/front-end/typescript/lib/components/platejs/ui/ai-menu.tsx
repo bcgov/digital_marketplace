@@ -44,6 +44,72 @@ export function AIMenu() {
 
   const content = useLastAssistantMessage()?.content;
 
+  // Monitor DOM for slate-aiChat elements being removed and create fallback
+  React.useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          mutation.removedNodes.forEach((node) => {
+            if (
+              node instanceof HTMLElement &&
+              node.classList.contains("slate-aiChat") &&
+              node === anchorElement
+            ) {
+              // Create a fallback anchor at the last known position
+              const fallbackAnchor = document.createElement("div");
+              fallbackAnchor.className = "slate-aiChat-fallback";
+              fallbackAnchor.style.cssText = `
+                position: absolute;
+                width: ${node.offsetWidth || 700}px;
+                height: 0.1px;
+                pointer-events: none;
+                z-index: -1;
+              `;
+
+              // Position it where the removed element was
+              const rect = node.getBoundingClientRect();
+              if (rect.width > 0) {
+                fallbackAnchor.style.left = `${rect.left + window.scrollX}px`;
+                fallbackAnchor.style.top = `${rect.top + window.scrollY}px`;
+              } else {
+                // Fallback: position near the editor
+                const editor = document.querySelector(
+                  '[data-slate-editor="true"]'
+                );
+                if (editor) {
+                  const editorRect = editor.getBoundingClientRect();
+                  fallbackAnchor.style.left = `${
+                    editorRect.left + window.scrollX
+                  }px`;
+                  fallbackAnchor.style.top = `${
+                    editorRect.bottom + window.scrollY
+                  }px`;
+                }
+              }
+
+              document.body.appendChild(fallbackAnchor);
+              setAnchorElement(fallbackAnchor);
+
+              // Store cleanup function
+              (fallbackAnchor as any)._cleanup = () => {
+                if (fallbackAnchor.parentNode) {
+                  fallbackAnchor.parentNode.removeChild(fallbackAnchor);
+                }
+              };
+            }
+          });
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, [anchorElement]);
+
   React.useEffect(() => {
     if (streaming) {
       const anchor = api.aiChat.node({ anchor: true });
@@ -74,6 +140,11 @@ export function AIMenu() {
     },
     onOpenChange: (open) => {
       if (!open) {
+        // Clean up fallback anchor if it exists
+        if (anchorElement && (anchorElement as any)._cleanup) {
+          (anchorElement as any)._cleanup();
+        }
+
         setAnchorElement(null);
         setInput("");
       }
