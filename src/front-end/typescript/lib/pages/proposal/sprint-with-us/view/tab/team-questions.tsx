@@ -145,19 +145,6 @@ export function getTeamQuestionsOpportunityTab(
     : ("teamQuestions" as const);
 }
 
-export function getEvaluationActionType(
-  panelEvaluations: SWUTeamQuestionResponseEvaluation[],
-  evaluation?: SWUTeamQuestionResponseEvaluation
-) {
-  return panelEvaluations.length > 0
-    ? evaluation
-      ? ({ type: "edit-consensus", evaluation } as const)
-      : ({ type: "create-consensus" } as const)
-    : evaluation
-    ? ({ type: "edit-individual", evaluation } as const)
-    : ({ type: "create-individual" } as const);
-}
-
 function initEvaluationScores(
   opp: SWUOpportunity,
   prop: SWUProposal,
@@ -819,7 +806,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => {
           if (msg.value.tag === "saveAndNavigate") {
             const route = msg.value.value;
-            const saveAction = getEvaluationActionType(
+            const saveAction = TeamQuestionsCarousel.getEvaluationActionType(
               state.panelQuestionEvaluations,
               state.questionEvaluation
             );

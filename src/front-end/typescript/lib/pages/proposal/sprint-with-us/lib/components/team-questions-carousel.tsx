@@ -14,7 +14,6 @@ import { compareNumbers } from "shared/lib";
 import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import * as api from "front-end/lib/http/api";
 import { User } from "shared/lib/resources/user";
-import { getEvaluationActionType } from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
 
 export interface Params {
   viewerUser: User;
@@ -40,6 +39,19 @@ export type Msg =
       ]
     >
   | ADT<"saveAndNavigate", ReturnType<typeof getRoute>>;
+
+export function getEvaluationActionType(
+  panelEvaluations: SWUTeamQuestionResponseEvaluation[],
+  evaluation?: SWUTeamQuestionResponseEvaluation
+) {
+  return panelEvaluations.length > 0
+    ? evaluation
+      ? ({ type: "edit-consensus", evaluation } as const)
+      : ({ type: "create-consensus" } as const)
+    : evaluation
+    ? ({ type: "edit-individual", evaluation } as const)
+    : ({ type: "create-individual" } as const);
+}
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,

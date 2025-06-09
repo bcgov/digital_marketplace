@@ -14,7 +14,6 @@ import { compareNumbers } from "shared/lib";
 import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import * as api from "front-end/lib/http/api";
 import { User } from "shared/lib/resources/user";
-import { getEvaluationActionType } from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
 
 export interface Params {
   viewerUser: User;
@@ -40,6 +39,19 @@ export type Msg =
       ]
     >
   | ADT<"saveAndNavigate", ReturnType<typeof getRoute>>;
+
+export function getEvaluationActionType(
+  panelEvaluations: TWUResourceQuestionResponseEvaluation[],
+  evaluation?: TWUResourceQuestionResponseEvaluation
+) {
+  return panelEvaluations.length > 0
+    ? evaluation
+      ? ({ type: "edit-consensus", evaluation } as const)
+      : ({ type: "create-consensus" } as const)
+    : evaluation
+    ? ({ type: "edit-individual", evaluation } as const)
+    : ({ type: "create-individual" } as const);
+}
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,

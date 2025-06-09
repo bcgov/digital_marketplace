@@ -146,19 +146,6 @@ export function getResourceQuestionsOpportunityTab(
     : ("resourceQuestions" as const);
 }
 
-export function getEvaluationActionType(
-  panelEvaluations: TWUResourceQuestionResponseEvaluation[],
-  evaluation?: TWUResourceQuestionResponseEvaluation
-) {
-  return panelEvaluations.length > 0
-    ? evaluation
-      ? ({ type: "edit-consensus", evaluation } as const)
-      : ({ type: "create-consensus" } as const)
-    : evaluation
-    ? ({ type: "edit-individual", evaluation } as const)
-    : ({ type: "create-individual" } as const);
-}
-
 function initEvaluationScores(
   opp: TWUOpportunity,
   prop: TWUProposal,
@@ -818,10 +805,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         updateAfter: (state) => {
           if (msg.value.tag === "saveAndNavigate") {
             const route = msg.value.value;
-            const saveAction = getEvaluationActionType(
-              state.panelQuestionEvaluations,
-              state.questionEvaluation
-            );
+            const saveAction =
+              ResourceQuestionsCarousel.getEvaluationActionType(
+                state.panelQuestionEvaluations,
+                state.questionEvaluation
+              );
             let saveMsg: Msg;
             switch (saveAction.type) {
               case "create-individual":
