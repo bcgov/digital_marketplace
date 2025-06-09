@@ -261,7 +261,7 @@ const create: crud.Create<
       const team = get(body, "team");
       return {
         opportunity: getString(body, "opportunity"),
-        organization: getString(body, "organization", undefined),
+        organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         resourceQuestionResponses: get(body, "resourceQuestionResponses"),
