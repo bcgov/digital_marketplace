@@ -43,8 +43,9 @@ export interface Params {
 }
 
 function makeUserOption(user: Pick<User, "email" | "name" | "id">) {
+  const emailLabelText = user.email ? `(${user.email})` : "";
   return {
-    label: `${user.name} ${`${user.email ? `(${user.email})` : null}`}`.trim(),
+    label: `${user.name} ${emailLabelText}`.trim(),
     value: user.id
   };
 }
