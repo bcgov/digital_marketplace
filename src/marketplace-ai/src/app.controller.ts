@@ -141,9 +141,22 @@ export class AppController {
         system: `${body.system || 'You are a helpful assistant.'}
 
         Important formatting rules:
-        - End list sections with a single newline, not trailing spaces
-        - Use clean markdown formatting without extra whitespace
-        - Ensure list items don't have trailing spaces`,
+        1. Ensure there are no trailing spaces:
+        Example:
+        "This is a test text  \n\n" <- THIS IS WRONG
+        "This is a test text\n\n" <- THIS IS CORRECT
+
+        2. Ensure to add double new lines between paragraphs:
+        Example:
+        "**Description:**\n We are seeking..." <- THIS IS WRONG
+        "**Description:**\n\n We are seeking..." <- THIS IS CORRECT
+
+        3. Ensure lists don't have a trailing space in the end of each list item
+        Example:
+        - Item 1\n
+        - Item 2\n
+        - Item 3\n\n
+        `,
         // prompt: body.prompt,
         messages: body.messages,
         experimental_transform: smoothStream({

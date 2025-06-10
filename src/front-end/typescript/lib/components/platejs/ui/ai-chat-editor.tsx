@@ -59,7 +59,7 @@ import { BaseMentionPlugin } from "@udecode/plate-mention";
 import { usePlateEditor } from "@udecode/plate/react";
 import { all, createLowlight } from "lowlight";
 
-import { markdownPlugin } from "../markdown-plugin";
+import { markdownPlugin } from "../plugins/markdown-plugin";
 // import {
 //   TodoLiStatic,
 //   TodoMarkerStatic

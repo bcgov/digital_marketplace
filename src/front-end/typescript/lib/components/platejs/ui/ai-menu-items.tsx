@@ -176,7 +176,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         }
 
         // prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
-        prompt += '\nPlease create a short description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
+        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
         // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
 
         void editor.getApi(AIChatPlugin).aiChat.submit({
@@ -197,7 +197,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Teaser: ${teaser}\n`;
         }
 
-        prompt += '\nPlease create a short description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails.';
+        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails.';
         // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
 
         void editor.getApi(AIChatPlugin).aiChat.submit({
