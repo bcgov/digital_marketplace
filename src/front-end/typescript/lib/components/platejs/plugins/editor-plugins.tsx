@@ -46,6 +46,7 @@ import { mediaPlugins } from "./media-plugins";
 // import { resetBlockTypePlugin } from './reset-block-type-plugin';
 import { skipMarkPlugin } from "./skip-mark-plugin";
 import { ListPlugin } from "@udecode/plate-list/react";
+import { NodeIdPlugin } from "@udecode/plate-node-id";
 // import { softBreakPlugin } from './soft-break-plugin';
 // import { suggestionPlugin } from './suggestion-plugin';
 // import { tablePlugin } from './table-plugin';
@@ -88,6 +89,7 @@ export const viewPlugins = [
 ] as const;
 
 export const editorPlugins = [
+  NodeIdPlugin,
   // AI
   ...aiPlugins,
 

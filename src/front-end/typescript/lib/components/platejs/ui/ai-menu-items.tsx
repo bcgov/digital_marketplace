@@ -128,7 +128,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       const teaser = context?.teaser || '';
 
       try {
-        throw new Error('test');
+        // throw new Error('test');
 
         // First, search for similar opportunities using RAG
         const searchRequest = {
@@ -176,7 +176,8 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         }
 
         // prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
-        prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
+        prompt += '\nPlease create a short description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
+        // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
 
         void editor.getApi(AIChatPlugin).aiChat.submit({
           prompt,
@@ -184,7 +185,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
 
       } catch (error) {
         console.error('RAG search failed, falling back to basic prompt:', error);
-        throw error;
+        // throw error;
 
         // Fallback to original behavior if RAG fails
         let prompt = 'Generate a comprehensive opportunity description based on the following information:\n\n';
@@ -196,7 +197,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Teaser: ${teaser}\n`;
         }
 
-        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails.';
+        prompt += '\nPlease create a short description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails.';
         // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
 
         void editor.getApi(AIChatPlugin).aiChat.submit({

@@ -44,81 +44,69 @@ export function AIMenu() {
 
   const content = useLastAssistantMessage()?.content;
 
-  // Monitor DOM for slate-aiChat elements being removed and create fallback
-  React.useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === "childList") {
-          mutation.removedNodes.forEach((node) => {
-            if (
-              node instanceof HTMLElement &&
-              node.classList.contains("slate-aiChat") &&
-              node === anchorElement
-            ) {
-              // Create a fallback anchor at the last known position
-              const fallbackAnchor = document.createElement("div");
-              fallbackAnchor.className = "slate-aiChat-fallback";
-              fallbackAnchor.style.cssText = `
-                position: absolute;
-                width: ${node.offsetWidth || 700}px;
-                height: 0.1px;
-                pointer-events: none;
-                z-index: -1;
-              `;
-
-              // Position it where the removed element was
-              const rect = node.getBoundingClientRect();
-              if (rect.width > 0) {
-                fallbackAnchor.style.left = `${rect.left + window.scrollX}px`;
-                fallbackAnchor.style.top = `${rect.top + window.scrollY}px`;
-              } else {
-                // Fallback: position near the editor
-                const editor = document.querySelector(
-                  '[data-slate-editor="true"]'
-                );
-                if (editor) {
-                  const editorRect = editor.getBoundingClientRect();
-                  fallbackAnchor.style.left = `${
-                    editorRect.left + window.scrollX
-                  }px`;
-                  fallbackAnchor.style.top = `${
-                    editorRect.bottom + window.scrollY
-                  }px`;
-                }
-              }
-
-              document.body.appendChild(fallbackAnchor);
-              setAnchorElement(fallbackAnchor);
-
-              // Store cleanup function
-              (fallbackAnchor as any)._cleanup = () => {
-                if (fallbackAnchor.parentNode) {
-                  fallbackAnchor.parentNode.removeChild(fallbackAnchor);
-                }
-              };
-            }
-          });
-        }
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-
-    return () => observer.disconnect();
-  }, [anchorElement]);
-
+  // Improved anchor management - refresh anchor when streaming state changes
   React.useEffect(() => {
     if (streaming) {
-      const anchor = api.aiChat.node({ anchor: true });
-      setTimeout(() => {
-        const anchorDom = editor.api.toDOMNode(anchor![0])!;
-        setAnchorElement(anchorDom);
-      }, 0);
+      const refreshAnchor = () => {
+        try {
+          // First try to find the AI Chat anchor node
+          const anchor = api.aiChat.node({ anchor: true });
+          if (anchor) {
+            const anchorDom = editor.api.toDOMNode(anchor[0]);
+            if (anchorDom) {
+              console.log("option 1");
+              setAnchorElement(anchorDom);
+              return;
+            }
+          }
+
+          // Fallback: Find the last AI node in the editor
+          const aiNodes = editor.api.nodes({
+            match: (n) => n.type === AIChatPlugin.key,
+            reverse: true
+          });
+
+          const lastAiNode = aiNodes.next();
+          if (!lastAiNode.done) {
+            const aiDom = editor.api.toDOMNode(lastAiNode.value[0]);
+            if (aiDom) {
+              console.log("option 2");
+              setAnchorElement(aiDom);
+              return;
+            }
+          }
+
+          // Final fallback: Use the current block
+          const [currentBlock] = editor.api.block({ highest: true }) || [];
+          if (currentBlock) {
+            const blockDom = editor.api.toDOMNode(currentBlock);
+            if (blockDom) {
+              console.log("option 3");
+              setAnchorElement(blockDom);
+            }
+          }
+        } catch (error) {
+          console.warn("Failed to find AI anchor element:", error);
+          // Last resort: use editor container
+          const editorContainer = document.querySelector(
+            '[data-slate-editor="true"]'
+          );
+          if (editorContainer) {
+            console.log("option 4");
+            setAnchorElement(editorContainer as HTMLElement);
+          }
+        }
+      };
+
+      // Refresh immediately and then periodically during streaming
+      refreshAnchor();
+
+      const interval = setInterval(refreshAnchor, 100);
+      return () => clearInterval(interval);
     }
-  }, [streaming]);
+    console.log("not streaming");
+    return;
+  }, [streaming, api, editor]);
 
   const setOpen = (open: boolean) => {
     if (open) {
@@ -140,11 +128,6 @@ export function AIMenu() {
     },
     onOpenChange: (open) => {
       if (!open) {
-        // Clean up fallback anchor if it exists
-        if (anchorElement && (anchorElement as any)._cleanup) {
-          (anchorElement as any)._cleanup();
-        }
-
         setAnchorElement(null);
         setInput("");
       }

@@ -48,6 +48,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-highlight: var(--highlight);
+  --color-brand: var(--brand);
 }
 
 :root {

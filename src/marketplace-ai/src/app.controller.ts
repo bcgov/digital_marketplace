@@ -7,7 +7,7 @@ import {
 } from '@copilotkit/runtime';
 import { Request, Response } from 'express';
 import { LangChainAzureAIService } from './langchain-azure-ai.service';
-import { streamText } from 'ai';
+import { smoothStream, streamText } from 'ai';
 import { createAzure } from '@quail-ai/azure-ai-provider';
 import { ConfigService } from '@nestjs/config';
 
@@ -138,9 +138,24 @@ export class AppController {
       const modelName = this.configService.get<string>('AZURE_AI_MODEL') ?? '';
       const result = streamText({
         model: azure(modelName), // or your configured AI model
-        system: body.system || 'You are a helpful assistant.',
+        system: `${body.system || 'You are a helpful assistant.'}
+
+        Important formatting rules:
+        - End list sections with a single newline, not trailing spaces
+        - Use clean markdown formatting without extra whitespace
+        - Ensure list items don't have trailing spaces`,
         // prompt: body.prompt,
         messages: body.messages,
+        experimental_transform: smoothStream({
+          chunking: (buffer) => {
+            // Split by double newlines (paragraphs) to keep complete sections together
+            const match = /\n\n/.exec(buffer);
+            return match
+              ? buffer.slice(0, match.index + match[0].length)
+              : null;
+          },
+          delayInMs: 25,
+        }),
       });
 
       // Use pipeDataStreamToResponse to stream the result to the client
