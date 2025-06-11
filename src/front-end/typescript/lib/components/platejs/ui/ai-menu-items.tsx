@@ -26,6 +26,8 @@ import {
 
 import { CommandGroup, CommandItem } from '../ui/command';
 import { MARKETPLACE_AI_URL } from 'front-end/config';
+import { TWUServiceArea } from 'shared/lib/resources/opportunity/team-with-us';
+import { twuServiceAreaToTitleCase } from 'front-end/lib/pages/opportunity/team-with-us/lib';
 
 export type EditorChatState =
   | 'cursorCommand'
@@ -126,6 +128,15 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       const context = editor.getOption({ key: 'opportunityContext' }, 'context');
       const title = context?.title || '';
       const teaser = context?.teaser || '';
+      const resources = context?.resources || [];
+      const location = context?.location || '';
+      const remoteOk = context?.remoteOk;
+      const remoteDesc = context?.remoteDesc || '';
+      const maxBudget = context?.maxBudget;
+      const proposalDeadline = context?.proposalDeadline;
+      const assignmentDate = context?.assignmentDate;
+      const startDate = context?.startDate;
+      const completionDate = context?.completionDate;
 
       try {
         // throw new Error('test');
@@ -134,7 +145,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         const searchRequest = {
           title: title,
           teaser: teaser,
-          limit: 3
+          limit: 1
         };
 
         // Call the marketplace-ai service directly
@@ -162,6 +173,58 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Teaser: ${teaser}\n`;
         }
 
+        // Add service areas and associated skills from resources
+        if (resources && resources.length > 0) {
+          prompt += '\n--- Service Areas and Skills ---\n';
+          resources.forEach((resource: any, index: number) => {
+            // Convert service area enum to user-friendly name
+            const serviceAreaName = resource.serviceArea && typeof resource.serviceArea === 'string'
+              ? twuServiceAreaToTitleCase(resource.serviceArea as TWUServiceArea)
+              : 'Unknown Service Area';
+
+            prompt += `Service Area ${index + 1}: ${serviceAreaName} (${resource.targetAllocation}% allocation)\n`;
+            if (resource.mandatorySkills && resource.mandatorySkills.length > 0) {
+              prompt += `  Mandatory Skills: ${resource.mandatorySkills.join(', ')}\n`;
+            }
+            if (resource.optionalSkills && resource.optionalSkills.length > 0) {
+              prompt += `  Optional Skills: ${resource.optionalSkills.join(', ')}\n`;
+            }
+          });
+        }
+
+        // Add dates information
+        if (proposalDeadline || assignmentDate || startDate || completionDate) {
+          prompt += '\n--- Timeline ---\n';
+          if (proposalDeadline) {
+            prompt += `Proposal Deadline: ${proposalDeadline}\n`;
+          }
+          if (assignmentDate) {
+            prompt += `Contract Award Date: ${assignmentDate}\n`;
+          }
+          if (startDate) {
+            prompt += `Contract Start Date: ${startDate}\n`;
+          }
+          if (completionDate) {
+            prompt += `Contract Completion Date: ${completionDate}\n`;
+          }
+        }
+
+        // Add location and remote work information
+        if (location) {
+          prompt += `\nLocation: ${location}\n`;
+        }
+        if (remoteOk !== undefined) {
+          prompt += `Remote Work: ${remoteOk ? 'Yes' : 'No'}\n`;
+          if (remoteOk && remoteDesc) {
+            prompt += `Remote Work Details: ${remoteDesc}\n`;
+          }
+        }
+
+        // Add budget information
+        if (maxBudget) {
+          prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
+        }
+
         // Add similar opportunities context if found
         const results = ragSearchResults.results;
         if (results && results.length > 0) {
@@ -169,25 +232,32 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           results.forEach((result: any, index: number) => {
             prompt += `\nSimilar Opportunity ${index + 1}:\n`;
             prompt += `Title: ${result.metadata.title}\n`;
-            prompt += `Teaser: ${result.metadata.teaser}\n`;
-            prompt += `Description: ${result.content.substring(0, 500)}...\n`;
+            prompt += `Teaser: \n\n ${result.metadata.teaser}\n\n`;
+            prompt += `Description: \n\n ${result.metadata.full_description}...\n`;
           });
           prompt += '\n--- End of Reference Material ---\n';
         }
 
-        // prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
-        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails. If reference material is provided, use it for inspiration but create unique, original content.';
-        // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
+        prompt += `\nPlease create a description based on this information by following the format similar to the reference material.
+        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements,
+        years of experience, and estimated procurement timeline.
+        For responsibilities and requirements, ensure to cover all aspects of service areas.
+        Include contract extension language if it exists in reference material.
+        If reference material is provided, use it for inspiration but create unique, original content.
+        Ignore markdown rules in reference material, and use standard markdown rules instead.`;
+
+        console.log('prompt', prompt);
+        // throw new Error('test');
 
         void editor.getApi(AIChatPlugin).aiChat.submit({
           prompt,
         });
 
       } catch (error) {
-        console.error('RAG search failed, falling back to basic prompt:', error);
         // throw error;
+        console.error('RAG search failed, falling back to basic prompt:', error);
 
-        // Fallback to original behavior if RAG fails
+        // Fallback to enhanced basic prompt with available context
         let prompt = 'Generate a comprehensive opportunity description based on the following information:\n\n';
 
         if (title) {
@@ -197,8 +267,57 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Teaser: ${teaser}\n`;
         }
 
-        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, and what the opportunity entails.';
-        // prompt += '\nGenerate a very short, two sentence description of the opportunity. Use the title and teaser to create a concise summary.';
+        // Add service areas and skills even in fallback
+        if (resources && resources.length > 0) {
+          prompt += '\n--- Service Areas and Skills ---\n';
+          resources.forEach((resource: any, index: number) => {
+            // Convert service area enum to user-friendly name
+            const serviceAreaName = resource.serviceArea && typeof resource.serviceArea === 'string'
+              ? twuServiceAreaToTitleCase(resource.serviceArea as TWUServiceArea)
+              : 'Unknown Service Area';
+
+            prompt += `Service Area ${index + 1}: ${serviceAreaName} (${resource.targetAllocation}% allocation)\n`;
+            if (resource.mandatorySkills && resource.mandatorySkills.length > 0) {
+              prompt += `  Mandatory Skills: ${resource.mandatorySkills.join(', ')}\n`;
+            }
+            if (resource.optionalSkills && resource.optionalSkills.length > 0) {
+              prompt += `  Optional Skills: ${resource.optionalSkills.join(', ')}\n`;
+            }
+          });
+        }
+
+        // Add timeline information
+        if (proposalDeadline || assignmentDate || startDate || completionDate) {
+          prompt += '\n--- Timeline ---\n';
+          if (proposalDeadline) {
+            prompt += `Proposal Deadline: ${proposalDeadline}\n`;
+          }
+          if (assignmentDate) {
+            prompt += `Contract Award Date: ${assignmentDate}\n`;
+          }
+          if (startDate) {
+            prompt += `Contract Start Date: ${startDate}\n`;
+          }
+          if (completionDate) {
+            prompt += `Contract Completion Date: ${completionDate}\n`;
+          }
+        }
+
+        // Add location and budget in fallback
+        if (location) {
+          prompt += `\nLocation: ${location}\n`;
+        }
+        if (remoteOk !== undefined) {
+          prompt += `Remote Work: ${remoteOk ? 'Yes' : 'No'}\n`;
+          if (remoteOk && remoteDesc) {
+            prompt += `Remote Work Details: ${remoteDesc}\n`;
+          }
+        }
+        if (maxBudget) {
+          prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
+        }
+
+        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, what the opportunity entails, key responsibilities based on the service areas and skills, minimum requirements, and timeline information.';
 
         void editor.getApi(AIChatPlugin).aiChat.submit({
           prompt,

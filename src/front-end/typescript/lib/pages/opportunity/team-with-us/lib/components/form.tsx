@@ -1317,6 +1317,19 @@ const DescriptionView: component_.base.View<Props> = ({
   const title = FormField.getValue(state.title);
   const teaser = FormField.getValue(state.teaser);
 
+  // Get additional context for AI generation
+  const resources = Resources.getValues(state.resources);
+  const location = FormField.getValue(state.location);
+  const remoteOk = FormField.getValue(state.remoteOk) === "yes";
+  const remoteDesc = FormField.getValue(state.remoteDesc);
+  const maxBudget = FormField.getValue(state.maxBudget);
+
+  // Get dates as strings
+  const proposalDeadline = DateField.getValueAsString(state.proposalDeadline);
+  const assignmentDate = DateField.getValueAsString(state.assignmentDate);
+  const startDate = DateField.getValueAsString(state.startDate);
+  const completionDate = DateField.getValueAsString(state.completionDate);
+
   return (
     <Row>
       <Col xs="12">
@@ -1333,7 +1346,16 @@ const DescriptionView: component_.base.View<Props> = ({
           }}
           opportunityContext={{
             title,
-            teaser
+            teaser,
+            resources,
+            proposalDeadline,
+            assignmentDate,
+            startDate,
+            completionDate,
+            location,
+            remoteOk,
+            remoteDesc,
+            maxBudget
           }}
           disabled={disabled}
           state={state.description}

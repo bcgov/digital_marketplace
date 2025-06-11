@@ -51,7 +51,6 @@ export function AIMenu() {
       const anchor = api.aiChat.node({ anchor: true });
       setTimeout(() => {
         const anchorDom = editor.api.toDOMNode(anchor![0])!;
-        console.log("anchorDom:", anchorDom);
         setAnchorElement(anchorDom);
       }, 0);
     }

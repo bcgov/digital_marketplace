@@ -1,10 +1,22 @@
 // sync.controller.ts
-import { Controller, Post, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Param,
+  Query,
+  Delete,
+  Body,
+} from '@nestjs/common';
 import { ChromaSyncService, SyncSourceConfig } from './chroma-sync.service';
+import { VectorService } from './vector.service';
 
 @Controller('sync')
 export class SyncController {
-  constructor(private chromaSyncService: ChromaSyncService) {}
+  constructor(
+    private chromaSyncService: ChromaSyncService,
+    private vectorService: VectorService,
+  ) {}
 
   @Post('full')
   async fullSync() {
@@ -85,5 +97,115 @@ export class SyncController {
       success: true,
       message: `${sourceName} sync ${isEnabled ? 'enabled' : 'disabled'}`,
     };
+  }
+
+  @Get('collections')
+  async listCollections() {
+    try {
+      const collections = await this.vectorService.listCollections();
+      return {
+        success: true,
+        collections,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to list collections',
+        error: error.message,
+      };
+    }
+  }
+
+  @Post('collections/:collectionName/search')
+  async searchInCollection(
+    @Param('collectionName') collectionName: string,
+    @Body() body: { query: string; limit?: number },
+  ) {
+    try {
+      const results = await this.vectorService.searchSimilar(
+        collectionName,
+        body.query,
+        body.limit || 5,
+      );
+      return {
+        success: true,
+        results,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Search failed in collection ${collectionName}`,
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('collections/:collectionName')
+  async deleteCollection(@Param('collectionName') collectionName: string) {
+    try {
+      await this.vectorService.deleteCollection(collectionName);
+      return {
+        success: true,
+        message: `Collection ${collectionName} deleted successfully`,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to delete collection ${collectionName}`,
+        error: error.message,
+      };
+    }
+  }
+
+  @Delete('collections')
+  async wipeAllCollections() {
+    try {
+      await this.vectorService.wipeAllCollections();
+      return {
+        success: true,
+        message: 'All collections wiped successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to wipe all collections',
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('collections/:collectionName/count')
+  async getCollectionCount(@Param('collectionName') collectionName: string) {
+    try {
+      const count = await this.vectorService.getCollectionCount(collectionName);
+      return {
+        success: true,
+        collection: collectionName,
+        count,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: `Failed to get count for collection ${collectionName}`,
+        error: error.message,
+      };
+    }
+  }
+
+  @Get('collections/counts')
+  async getAllCollectionCounts() {
+    try {
+      const counts = await this.vectorService.getAllCollectionCounts();
+      return {
+        success: true,
+        counts,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Failed to get collection counts',
+        error: error.message,
+      };
+    }
   }
 }

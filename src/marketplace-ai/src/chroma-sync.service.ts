@@ -7,6 +7,7 @@ import { Pool } from 'pg';
 // Configuration interface for sync sources
 export interface SyncSourceConfig {
   table: string;
+  collection: string; // ChromaDB collection name
   fields: {
     id: string;
     content: string;
@@ -26,6 +27,7 @@ export interface SyncSourceConfig {
 const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
   cwuOpportunityVersions: {
     table: 'public."cwuOpportunityVersions"',
+    collection: 'cwu_opportunities', // Dedicated collection for CWU opportunities
     fields: {
       id: 'v.id',
       content: 'v.description',
@@ -36,6 +38,7 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
         'v.location',
         'v.reward',
         'v.skills',
+        'v.description as full_description',
         'o.id as opportunity_id',
         's.status as status',
       ],
@@ -64,9 +67,52 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
     enabled: true,
   },
 
+  // TWU (Team With Us) Opportunity Versions
+  twuOpportunityVersions: {
+    table: 'public."twuOpportunityVersions"',
+    collection: 'twu_opportunities', // Dedicated collection for TWU opportunities
+    fields: {
+      id: 'v.id',
+      content: 'v.description',
+      updatedAt: 'v."createdAt"',
+      metadata: [
+        'v.title',
+        'v.teaser',
+        'v.location',
+        'v."maxBudget" as max_budget',
+        'v.description as full_description',
+        'o.id as opportunity_id',
+        's.status as status',
+      ],
+    },
+    query: {
+      joins: `
+        INNER JOIN public."twuOpportunities" o ON v.opportunity = o.id
+        INNER JOIN (
+          SELECT opportunity, MAX("createdAt") as latest_created_at
+          FROM public."twuOpportunityVersions"
+          GROUP BY opportunity
+        ) latest ON v.opportunity = latest.opportunity
+        AND v."createdAt" = latest.latest_created_at
+        INNER JOIN public."twuOpportunityStatuses" s ON o.id = s.opportunity
+        AND s."createdAt" = (
+          SELECT MAX("createdAt")
+          FROM public."twuOpportunityStatuses" s2
+          WHERE s2.opportunity = o.id AND s2.status IS NOT NULL
+        )
+      `,
+      where: `v.description IS NOT NULL AND v.description != ''
+              AND s.status NOT IN ('DRAFT', 'CANCELED')`,
+      orderBy: 'v."createdAt" DESC',
+    },
+    chunkSize: 800, // words per chunk
+    enabled: true,
+  },
+
   // Example: SWU Opportunity Versions (currently disabled)
   swuOpportunityVersions: {
     table: 'public."swuOpportunityVersions"',
+    collection: 'swu_opportunities', // Dedicated collection for SWU opportunities
     fields: {
       id: 'v.id',
       content: 'v.description',
@@ -76,6 +122,7 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
         'v.teaser',
         'v.location',
         'v."totalMaxBudget" as max_budget',
+        'v.description as full_description',
         'o.id as opportunity_id',
         's.status as status',
       ],
@@ -101,32 +148,6 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
       orderBy: 'v."createdAt" DESC',
     },
     chunkSize: 800,
-    enabled: false, // Disabled by default
-  },
-
-  // Example: Content pages (currently disabled)
-  contentVersions: {
-    table: 'public."contentVersions"',
-    fields: {
-      id: 'cv.id',
-      content: 'cv.body',
-      updatedAt: 'cv."createdAt"',
-      metadata: ['cv.title', 'c.slug', 'c.id as content_id'],
-    },
-    query: {
-      joins: `
-        INNER JOIN public."content" c ON cv."contentId" = c.id
-        INNER JOIN (
-          SELECT "contentId", MAX("createdAt") as latest_created_at
-          FROM public."contentVersions"
-          GROUP BY "contentId"
-        ) latest ON cv."contentId" = latest."contentId"
-        AND cv."createdAt" = latest.latest_created_at
-      `,
-      where: "cv.body IS NOT NULL AND cv.body != ''",
-      orderBy: 'cv."createdAt" DESC',
-    },
-    chunkSize: 600,
     enabled: false, // Disabled by default
   },
 };
@@ -332,7 +353,7 @@ export class ChromaSyncService {
 
     // Log metadata for debugging (remove in production)
     this.logger.debug(
-      `Processing document ${metadata.sourceId} with metadata:`,
+      `Processing document ${metadata.sourceId} for collection ${config.collection} with metadata:`,
       JSON.stringify(metadata, null, 2),
     );
 
@@ -353,18 +374,23 @@ export class ChromaSyncService {
       }
 
       try {
-        await this.vectorService.addDocument(documentId, chunk.trim(), {
-          ...metadata,
-          chunkIndex: index.toString(),
-          totalChunks: chunks.length.toString(),
-        });
+        await this.vectorService.addDocument(
+          config.collection, // Pass the collection name from config
+          documentId,
+          chunk.trim(),
+          {
+            ...metadata,
+            chunkIndex: index.toString(),
+            totalChunks: chunks.length.toString(),
+          },
+        );
 
         this.logger.debug(
-          `Successfully added chunk ${index} for document ${documentId}`,
+          `Successfully added chunk ${index} for document ${documentId} to collection ${config.collection}`,
         );
       } catch (error) {
         this.logger.error(
-          `Failed to add chunk ${index} for document ${documentId}:`,
+          `Failed to add chunk ${index} for document ${documentId} to collection ${config.collection}:`,
           error,
         );
         this.logger.error(

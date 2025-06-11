@@ -121,8 +121,8 @@ export class AppController {
   }
 
   // Setup a route handler using streamText.
-  @Post('/api/ai/command')
-  async handleCommandRequest(
+  @Post('/api/ai/command_O')
+  async handleCommandRequest_O(
     @Body() body: CommandApiDto,
     @Res() res: Response,
   ) {
@@ -173,6 +173,96 @@ export class AppController {
 
       // Use pipeDataStreamToResponse to stream the result to the client
       result.pipeDataStreamToResponse(res);
+    } catch (error) {
+      console.error('Error in /api/ai/command endpoint:', error);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ error: 'Error processing AI command.' });
+    }
+  }
+
+  @Post('/api/ai/command')
+  async handleCommandRequest(
+    @Body() body: CommandApiDto,
+    @Res() res: Response,
+  ) {
+    try {
+      // Create a mock result object that mimics the streamText result structure
+      const result = {
+        pipeDataStreamToResponse: async (response: Response) => {
+          // Set the same headers that the original streaming would use
+          response.setHeader('Content-Type', 'text/plain');
+          response.setHeader('Cache-Control', 'no-cache');
+          response.setHeader('Connection', 'keep-alive');
+
+          // Helper function to add delay between chunks
+          const writeWithDelay = async (
+            chunk: string,
+            delay: number = 2000,
+          ) => {
+            response.write(chunk);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          };
+
+          // Generate the streaming format with the new data and delays
+          await writeWithDelay(
+            'f:{"messageId":"msg-messageid"}\n',
+          );
+          await writeWithDelay('0:"**Title:** Full Stack Developer\\n\\n"\n');
+          await writeWithDelay(
+            '0:"**Teaser:** Join our team as a Full Stack Developer and shape innovative web applications using cutting-edge technologies across the entire development stack.\\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Organization:**  \\nThe opportunity is based in Victoria, BC, and requires on-site presence. The role is part of a dynamic team focused on delivering high-quality web solutions.\\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Contract Outcome:**  \\nThe successful candidate will contribute to the development and enhancement of web applications, ensuring they meet the highest standards of functionality, accessibility, and user experience. The contract is for a fixed term with a maximum budget of $1,234.\\n\\n"\n',
+          );
+          await writeWithDelay('0:"**Key Responsibilities:**\\n\\n"\n');
+          await writeWithDelay(
+            '0:"- **Full Stack Development (90% allocation):**  \\n  - Develop and maintain web applications using Amazon Web Services (AWS) and Android App Development.  \\n  - Implement back-end solutions to support application functionality.  \\n  - Collaborate with team members to integrate front-end and back-end components.  \\n  - Utilize Git for version control and Angular for front-end development (optional).  \\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"- **Data Professional (90% allocation):**  \\n  - Work within an Agile framework to deliver data-driven solutions.  \\n  - Develop and maintain applications using C++, Go, and Java.  \\n  - Implement containerization solutions using Docker (optional).  \\n  - Create data visualizations and reports using PowerBI (optional).  \\n\\n"\n',
+          );
+          await writeWithDelay('0:"**Minimum Requirements:**\\n\\n"\n');
+          await writeWithDelay(
+            '0:"- **Full Stack Developer:**  \\n  - Proficiency in Amazon Web Services (AWS), Android App Development, and Back-End Development.  \\n  - Experience with Git and Angular is a plus.  \\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"- **Data Professional:**  \\n  - Strong skills in Agile methodologies, C++, Go, and Java.  \\n  - Familiarity with Docker and PowerBI is advantageous.  \\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Years of Experience:**  \\nCandidates should have a minimum of 3 years of experience in full stack development and data professional roles, with a proven track record of delivering high-quality solutions.\\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Estimated Procurement Timeline:**\\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"- **Proposal Deadline:** 2025-06-23  \\n- **Contract Award Date:** 2025-06-23  \\n- **Contract Start Date:** 2025-06-23  \\n- **Contract Completion Date:** 2025-06-23  \\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Contract Extension:**  \\nThis contract does not include provisions for extensions. The project is expected to be completed within the specified timeline.\\n\\n"\n',
+          );
+          await writeWithDelay('0:"**Acceptance Criteria:**\\n\\n"\n');
+          await writeWithDelay(
+            '0:"- Deliver fully functional web applications that meet the specified requirements.  \\n- Ensure all solutions are accessible and comply with relevant standards.  \\n- Participate in regular team meetings and provide updates on progress.  \\n- Collaborate with stakeholders to gather and implement feedback.  \\n\\n"\n',
+          );
+          await writeWithDelay(
+            '0:"**Note:** This opportunity is open to all qualified candidates, and previous incumbents are not restricted from applying."\n',
+          );
+          await writeWithDelay(
+            'e:{"finishReason":"unknown","usage":{"promptTokens":1865,"completionTokens":551},"isContinued":false}\n',
+          );
+          await writeWithDelay(
+            'd:{"finishReason":"unknown","usage":{"promptTokens":1865,"completionTokens":551}}\n',
+          );
+
+          response.end();
+        },
+      };
+
+      // Use the same pipeDataStreamToResponse call as before
+      await result.pipeDataStreamToResponse(res);
     } catch (error) {
       console.error('Error in /api/ai/command endpoint:', error);
       res.setHeader('Content-Type', 'application/json');

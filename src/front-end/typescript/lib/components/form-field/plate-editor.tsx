@@ -10,6 +10,7 @@ import {
 import { useCreateEditor } from "front-end/lib/components/platejs/plugins/use-create-editor";
 import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
 import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
+import type { OpportunityContext } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
 import { Immutable, component as component_ } from "front-end/lib/framework";
 import { adt, ADT } from "shared/lib/types";
 import { Validation } from "shared/lib/validation";
@@ -118,10 +119,7 @@ interface ViewProps extends component_.base.ComponentViewProps<State, Msg> {
   extraChildProps?: {
     style?: React.CSSProperties;
   };
-  opportunityContext?: {
-    title?: string;
-    teaser?: string;
-  };
+  opportunityContext?: OpportunityContext;
   toolbarMode?: "full" | "minimal";
 }
 
@@ -286,10 +284,10 @@ export const view: component_.base.View<ViewProps> = ({
             </DndProvider>
           </div>
         </div>
-        {/* Display the actual markdown content as preview, render \n as new lines, but also show "\n" explicitly */}
-        <div className="preview-content">
+        {/* Display the actual markdown content as preview*/}
+        {/* <div className="preview-content">
           <pre>{markdownContent}</pre>
-        </div>
+        </div> */}
       </div>
       {hasErrors && (
         <div className="invalid-feedback d-block">
