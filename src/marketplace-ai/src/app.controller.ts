@@ -121,8 +121,8 @@ export class AppController {
   }
 
   // Setup a route handler using streamText.
-  @Post('/api/ai/command_O')
-  async handleCommandRequest_O(
+  @Post('/api/ai/command')
+  async handleCommandRequest(
     @Body() body: CommandApiDto,
     @Res() res: Response,
   ) {
@@ -180,8 +180,8 @@ export class AppController {
     }
   }
 
-  @Post('/api/ai/command')
-  async handleCommandRequest(
+  @Post('/api/ai/command_T')
+  async handleCommandRequest_T(
     @Body() body: CommandApiDto,
     @Res() res: Response,
   ) {
@@ -195,18 +195,13 @@ export class AppController {
           response.setHeader('Connection', 'keep-alive');
 
           // Helper function to add delay between chunks
-          const writeWithDelay = async (
-            chunk: string,
-            delay: number = 2000,
-          ) => {
+          const writeWithDelay = async (chunk: string, delay: number = 200) => {
             response.write(chunk);
             await new Promise((resolve) => setTimeout(resolve, delay));
           };
 
           // Generate the streaming format with the new data and delays
-          await writeWithDelay(
-            'f:{"messageId":"msg-messageid"}\n',
-          );
+          await writeWithDelay('f:{"messageId":"msg-messageid"}\n');
           await writeWithDelay('0:"**Title:** Full Stack Developer\\n\\n"\n');
           await writeWithDelay(
             '0:"**Teaser:** Join our team as a Full Stack Developer and shape innovative web applications using cutting-edge technologies across the entire development stack.\\n\\n"\n',
@@ -219,17 +214,17 @@ export class AppController {
           );
           await writeWithDelay('0:"**Key Responsibilities:**\\n\\n"\n');
           await writeWithDelay(
-            '0:"- **Full Stack Development (90% allocation):**  \\n  - Develop and maintain web applications using Amazon Web Services (AWS) and Android App Development.  \\n  - Implement back-end solutions to support application functionality.  \\n  - Collaborate with team members to integrate front-end and back-end components.  \\n  - Utilize Git for version control and Angular for front-end development (optional).  \\n\\n"\n',
+            '0:"- **Full Stack Development (90% allocation):**\\n  - Develop and maintain web applications using Amazon Web Services (AWS) and Android App Development.\\n  - Implement back-end solutions to support application functionality.\\n  - Collaborate with team members to integrate front-end and back-end components.\\n  - Utilize Git for version control and Angular for front-end development (optional).\\n\\n"\n',
           );
           await writeWithDelay(
-            '0:"- **Data Professional (90% allocation):**  \\n  - Work within an Agile framework to deliver data-driven solutions.  \\n  - Develop and maintain applications using C++, Go, and Java.  \\n  - Implement containerization solutions using Docker (optional).  \\n  - Create data visualizations and reports using PowerBI (optional).  \\n\\n"\n',
+            '0:"- **Data Professional (90% allocation):**\\n  - Work within an Agile framework to deliver data-driven solutions.\\n  - Develop and maintain applications using C++, Go, and Java.\\n  - Implement containerization solutions using Docker (optional).\\n  - Create data visualizations and reports using PowerBI (optional).\\n\\n"\n',
           );
           await writeWithDelay('0:"**Minimum Requirements:**\\n\\n"\n');
           await writeWithDelay(
-            '0:"- **Full Stack Developer:**  \\n  - Proficiency in Amazon Web Services (AWS), Android App Development, and Back-End Development.  \\n  - Experience with Git and Angular is a plus.  \\n\\n"\n',
+            '0:"- **Full Stack Developer:**  \\n  - Proficiency in Amazon Web Services (AWS), Android App Development, and Back-End Development.  \\n  - Experience with Git and Angular is a plus.\\n\\n"\n',
           );
           await writeWithDelay(
-            '0:"- **Data Professional:**  \\n  - Strong skills in Agile methodologies, C++, Go, and Java.  \\n  - Familiarity with Docker and PowerBI is advantageous.  \\n\\n"\n',
+            '0:"- **Data Professional:**  \\n  - Strong skills in Agile methodologies, C++, Go, and Java.  \\n  - Familiarity with Docker and PowerBI is advantageous.\\n\\n"\n',
           );
           await writeWithDelay(
             '0:"**Years of Experience:**  \\nCandidates should have a minimum of 3 years of experience in full stack development and data professional roles, with a proven track record of delivering high-quality solutions.\\n\\n"\n',

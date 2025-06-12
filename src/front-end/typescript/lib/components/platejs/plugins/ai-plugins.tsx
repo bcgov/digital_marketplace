@@ -125,29 +125,46 @@ export const aiPlugins = [
         "mode"
       );
 
+      // const insertionPathRef = React.useRef<any>(null);
+
       useChatChunk({
         onChunk: ({ chunk, isFirst, nodes }) => {
+          console.log("onChunk", chunk, isFirst, nodes);
           if (isFirst && mode == "insert") {
-            editor.tf.withoutSaving(() => {
-              editor.tf.insertNodes(
-                {
-                  children: [{ text: "" }],
-                  type: AIChatPlugin.key
-                },
-                {
-                  at: PathApi.next(editor.selection!.focus.path.slice(0, 1))
-                }
-              );
-            });
+            // console.log('inserting nodes FIRST');
+            // Record the position where the AI node should be inserted
+            // insertionPathRef.current = PathApi.next(editor.selection!.focus.path.slice(0, 1));
+            // console.log('setting insertionPathRef.current', insertionPathRef.current);
+            // console.log('from: ', editor.selection!.focus.path.slice(0, 1));
+            // console.log('from2: ', editor.selection!.focus.path);
+
+            // editor.tf.withoutSaving(() => {
+            //   console.log('inserting nodes FIRST without saving');
+            //   editor.tf.insertNodes(
+            //     {
+            //       children: [{ text: "" }],
+            //       type: AIChatPlugin.key
+            //     },
+            //     {
+            //       at: PathApi.next(editor.selection!.focus.path.slice(0, 1))
+            //     }
+            //   );
+            // });
             editor.setOption(AIChatPlugin, "streaming", true);
           }
 
           if (mode === "insert" && nodes.length > 0) {
+            // console.log('inserting nodes', nodes);
             withAIBatch(
               editor,
               () => {
-                if (!getOption("streaming")) return;
+                // console.log('inserting nodes withAIBatch');
+                if (!getOption("streaming")) {
+                  // console.log('streaming is false');
+                  return;
+                }
                 editor.tf.withScrolling(() => {
+                  // console.log('inserting nodes withAIBatch withScrolling');
                   streamInsertChunk(editor, chunk, {
                     textProps: {
                       ai: true
@@ -160,9 +177,25 @@ export const aiPlugins = [
           }
         },
         onFinish: () => {
+          // if (insertionPathRef.current) {
+          editor.tf.withoutSaving(() => {
+            // console.log('inserting AI node at recorded position: ', insertionPathRef.current);
+            editor.tf.insertNodes(
+              {
+                children: [{ text: "" }],
+                type: AIChatPlugin.key
+              },
+              {
+                at: PathApi.next(editor.selection!.focus.path.slice(0, 1))
+              }
+            );
+          });
+          // }
+          // console.log('onFinish');
           editor.setOption(AIChatPlugin, "streaming", false);
           editor.setOption(AIChatPlugin, "_blockChunks", "");
           editor.setOption(AIChatPlugin, "_blockPath", null);
+          // insertionPathRef.current = null;
         }
       });
     }

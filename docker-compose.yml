@@ -37,7 +37,7 @@ services:
     volumes:
       - ./chroma_data:/chroma/chroma
     environment:
-      IS_PERSISTENT: TRUE
+      IS_PERSISTENT: "TRUE"
       PERSIST_DIRECTORY: /chroma/chroma
     restart: unless-stopped
 

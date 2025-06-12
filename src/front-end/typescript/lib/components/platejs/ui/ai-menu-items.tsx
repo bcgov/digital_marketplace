@@ -233,7 +233,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
             prompt += `\nSimilar Opportunity ${index + 1}:\n`;
             prompt += `Title: ${result.metadata.title}\n`;
             prompt += `Teaser: \n\n ${result.metadata.teaser}\n\n`;
-            prompt += `Description: \n\n ${result.metadata.full_description}...\n`;
+            prompt += `Description: \n\n ${result.metadata.full_description}\n`;
           });
           prompt += '\n--- End of Reference Material ---\n';
         }
@@ -244,7 +244,10 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         For responsibilities and requirements, ensure to cover all aspects of service areas.
         Include contract extension language if it exists in reference material.
         If reference material is provided, use it for inspiration but create unique, original content.
-        Ignore markdown rules in reference material, and use standard markdown rules instead.`;
+        Ignore markdown rules in reference material, and use standard markdown rules instead.
+        If some information is missing in the context, use placeholder text, for example "[YOUR ORGANIZATION]".
+        Use placeholders for any other unknown data that's present in example material, but not in provided context. Use only if necessary.
+        Important: follow the format of the reference material as closely as possible.`;
 
         console.log('prompt', prompt);
         // throw new Error('test');

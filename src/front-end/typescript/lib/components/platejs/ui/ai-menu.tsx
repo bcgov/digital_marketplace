@@ -47,13 +47,16 @@ export function AIMenu() {
   const content = useLastAssistantMessage()?.content;
 
   React.useEffect(() => {
-    if (streaming) {
-      const anchor = api.aiChat.node({ anchor: true });
-      setTimeout(() => {
-        const anchorDom = editor.api.toDOMNode(anchor![0])!;
-        setAnchorElement(anchorDom);
-      }, 0);
-    }
+    // console.log('streaming', streaming);
+    // if (streaming) {
+    const anchor = api.aiChat.node({ anchor: true });
+    setTimeout(() => {
+      console.log("anchor", anchor);
+      if (!anchor) return;
+      const anchorDom = editor.api.toDOMNode(anchor![0])!;
+      setAnchorElement(anchorDom);
+    }, 0);
+    // }
   }, [streaming]);
 
   const setOpen = (open: boolean) => {
