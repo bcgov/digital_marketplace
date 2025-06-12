@@ -1,5 +1,6 @@
 import { All, Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
+import { VectorService } from './vector.service';
 import {
   CopilotRuntime,
   copilotRuntimeNestEndpoint,
@@ -32,6 +33,7 @@ export class AppController {
     private appService: AppService,
     private langChainService: LangChainAzureAIService,
     private configService: ConfigService,
+    private vectorService: VectorService,
   ) {}
 
   @All('/copilotkit')
@@ -126,6 +128,7 @@ export class AppController {
     @Body() body: CommandApiDto,
     @Res() res: Response,
   ) {
+    // throw new Error('test');
     try {
       const azure = createAzure({
         endpoint: process.env.AZURE_AI_ENDPOINT,
@@ -270,6 +273,39 @@ export class AppController {
     try {
       const { skill, context } = dto;
 
+      // First, search for similar questions and guidelines using RAG
+      let ragExamples = '';
+      try {
+        // Use VectorService directly instead of HTTP fetch
+        const ragResults = await this.vectorService.searchSimilar(
+          'twu_resource_questions',
+          skill,
+          6, // Get more results for variety
+        );
+
+        // Filter and process results similar to the RAG controller
+        const questionResults = ragResults
+          .filter((r) => r.metadata.full_question && r.metadata.full_guideline)
+          .slice(0, 3); // Limit to 3 examples
+
+        if (questionResults.length > 0) {
+          ragExamples = '\n--- EXAMPLE QUESTIONS FOR REFERENCE ---\n';
+          questionResults.forEach((result: any, index: number) => {
+            ragExamples += `\nExample ${index + 1} (from "${
+              result.metadata.opportunity_title
+            }"):\n`;
+            ragExamples += `Question: "${result.metadata.full_question}"\n`;
+            ragExamples += `Guideline: "${result.metadata.full_guideline}"\n`;
+          });
+          ragExamples += '\n--- END OF EXAMPLES ---\n';
+        }
+      } catch (ragError) {
+        console.warn(
+          'RAG search failed, proceeding without examples:',
+          ragError,
+        );
+      }
+
       const prompt = `Generate a single evaluation question for the skill: "${skill}"
 
 OPPORTUNITY CONTEXT:
@@ -287,7 +323,7 @@ Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
 - Mandatory Skills: ${r.mandatorySkills.join(', ')}
 - Optional Skills: ${r.optionalSkills.join(', ')}`,
   )
-  .join('')}
+  .join('')}${ragExamples}
 
 REQUIREMENTS:
 - Create ONE evaluation question specifically for the "${skill}" skill
@@ -295,23 +331,27 @@ REQUIREMENTS:
 - Make it scenario-based and specific to the opportunity context
 - Provide clear evaluation guidelines for assessors
 - The question should help determine competency level in this skill
+- Use the example questions above as inspiration for format and style, but create original content
+- Ensure the question is relevant to the specific opportunity context provided
 
 OUTPUT FORMAT (JSON):
 {
   "question": "Question text in plain text format",
-  "guideline": "Clear guidance for evaluators on what constitutes a good response, including what to look for and how to assess competency"
+  "guideline": "Clear guidance for evaluators on what constitutes a good response, including what to look for and how to assess competency. \\n new line"
 }
 
-Please return only valid JSON.`;
+Please return only valid JSON. IMPORTANT: escape new line characters - instead of "\n" use "\\n"`;
 
       const messages = [
         {
           role: 'system',
           content:
-            'You are an expert at creating technical evaluation questions. Always respond with valid JSON only.',
+            'You are an expert at creating technical evaluation questions. Always respond with valid JSON only. Use the provided examples as inspiration for quality and format, but ensure your output is original and tailored to the specific context.',
         },
         { role: 'user', content: prompt },
       ];
+
+      // console.log('messages: ', messages);
 
       const response = await this.appService.generateChatCompletion(messages);
 
@@ -324,6 +364,8 @@ Please return only valid JSON.`;
         throw new Error('Unexpected response format');
       }
 
+      // console.log('responseText: \n', responseText);
+
       // Try to parse JSON response
       try {
         const parsed = JSON.parse(responseText);
@@ -333,6 +375,7 @@ Please return only valid JSON.`;
         console.warn(
           'Failed to parse JSON, attempting text extraction:',
           parseError,
+          responseText,
         );
         return {
           question: `Describe your experience with ${skill} and provide specific examples of how you have applied this skill in professional projects.`,

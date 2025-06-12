@@ -50,6 +50,9 @@ ${systemCommon}
 <Selection>
 {selection}
 </Selection>
+<Document>
+{editor}
+</Document>
 `;
 
 const systemBlockSelecting = `\
@@ -61,6 +64,9 @@ ${systemCommon}
 <Selection>
 {block}
 </Selection>
+<Document>
+{editor}
+</Document>
 `;
 
 const userDefault = `<Reminder>
@@ -126,12 +132,14 @@ export const aiPlugins = [
       );
 
       // const insertionPathRef = React.useRef<any>(null);
+      const shouldInsertRef = React.useRef<boolean>(false);
 
       useChatChunk({
         onChunk: ({ chunk, isFirst, nodes }) => {
-          console.log("onChunk", chunk, isFirst, nodes);
+          // console.log("onChunk", chunk, isFirst, nodes);
           if (isFirst && mode == "insert") {
-            // console.log('inserting nodes FIRST');
+            // console.log('would be inserting nodes FIRST');
+            shouldInsertRef.current = true;
             // Record the position where the AI node should be inserted
             // insertionPathRef.current = PathApi.next(editor.selection!.focus.path.slice(0, 1));
             // console.log('setting insertionPathRef.current', insertionPathRef.current);
@@ -178,24 +186,39 @@ export const aiPlugins = [
         },
         onFinish: () => {
           // if (insertionPathRef.current) {
-          editor.tf.withoutSaving(() => {
-            // console.log('inserting AI node at recorded position: ', insertionPathRef.current);
-            editor.tf.insertNodes(
-              {
-                children: [{ text: "" }],
-                type: AIChatPlugin.key
-              },
-              {
-                at: PathApi.next(editor.selection!.focus.path.slice(0, 1))
+          if (shouldInsertRef.current) {
+            // console.log('preparing to insert ai node');
+            editor.tf.withoutSaving(() => {
+              // console.log('inserting AI node at recorded position: ', insertionPathRef.current);
+              // console.log('inserting ai node, editor: ', editor);
+              let atPosition;
+              try {
+                atPosition = PathApi.next(
+                  editor.selection!.focus.path.slice(0, 1)
+                );
+              } catch (error) {
+                console.warn("error getting atPosition: ", error);
+                atPosition = [0];
               }
-            );
-          });
+              // console.log('atPosition: ', atPosition);
+              editor.tf.insertNodes(
+                {
+                  children: [{ text: "" }],
+                  type: AIChatPlugin.key
+                },
+                {
+                  at: atPosition
+                }
+              );
+            });
+          }
           // }
           // console.log('onFinish');
           editor.setOption(AIChatPlugin, "streaming", false);
           editor.setOption(AIChatPlugin, "_blockChunks", "");
           editor.setOption(AIChatPlugin, "_blockPath", null);
           // insertionPathRef.current = null;
+          shouldInsertRef.current = false;
         }
       });
     }

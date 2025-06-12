@@ -223,132 +223,132 @@ const markdownChunks = [
     { delay, texts: "easy " },
     { delay: faker.number.int({ max: 100, min: 30 }), texts: "readability." },
     { delay, texts: "\n\n" },
-    { delay, texts: "Add " },
-    {
-      delay,
-      texts: "[links](https://example.com)"
-    },
-    { delay: faker.number.int({ max: 100, min: 30 }), texts: " to " },
-    { delay: faker.number.int({ max: 100, min: 30 }), texts: "external " },
-    { delay, texts: "resources " },
-    { delay, texts: "or " },
-    {
-      delay,
-      texts: "references.\n\n"
-    },
+    { delay, texts: "Add " }
+    // {
+    //   delay,
+    //   texts: "[links](https://example.com)"
+    // },
+    // { delay: faker.number.int({ max: 100, min: 30 }), texts: " to " },
+    // { delay: faker.number.int({ max: 100, min: 30 }), texts: "external " },
+    // { delay, texts: "resources " },
+    // { delay, texts: "or " },
+    // {
+    //   delay,
+    //   texts: "references.\n\n"
+    // },
 
-    { delay, texts: "Use " },
-    { delay, texts: "inline " },
-    { delay, texts: "math " },
-    { delay, texts: "equations " },
-    { delay, texts: "like " },
-    { delay, texts: "$E = mc^2$ " },
-    { delay, texts: "for " },
-    { delay, texts: "scientific " },
-    { delay, texts: "notation." },
-    { delay, texts: "\n\n" },
+    // { delay, texts: "Use " },
+    // { delay, texts: "inline " },
+    // { delay, texts: "math " },
+    // { delay, texts: "equations " },
+    // { delay, texts: "like " },
+    // { delay, texts: "$E = mc^2$ " },
+    // { delay, texts: "for " },
+    // { delay, texts: "scientific " },
+    // { delay, texts: "notation." },
+    // { delay, texts: "\n\n" },
 
-    { delay, texts: "# " },
-    { delay, texts: "Heading " },
-    { delay, texts: "1\n\n" },
-    { delay, texts: "## " },
-    { delay, texts: "Heading " },
-    { delay, texts: "2\n\n" },
-    { delay, texts: "### " },
-    { delay, texts: "Heading " },
-    { delay, texts: "3\n\n" },
-    { delay, texts: "> " },
-    { delay, texts: "Blockquote\n\n" },
-    { delay, texts: "- " },
-    { delay, texts: "Unordered " },
-    { delay, texts: "list " },
-    { delay, texts: "item " },
-    { delay, texts: "1\n" },
-    { delay, texts: "- " },
-    { delay, texts: "Unordered " },
-    { delay, texts: "list " },
-    { delay, texts: "item " },
-    { delay, texts: "2\n\n" },
-    { delay, texts: "1. " },
-    { delay, texts: "Ordered " },
-    { delay, texts: "list " },
-    { delay, texts: "item " },
-    { delay, texts: "1\n" },
-    { delay, texts: "2. " },
-    { delay, texts: "Ordered " },
-    { delay, texts: "list " },
-    { delay, texts: "item " },
-    { delay, texts: "2\n\n" },
-    { delay, texts: "- " },
-    { delay, texts: "[ " },
-    { delay, texts: "] " },
-    { delay, texts: "Task " },
-    { delay, texts: "list " },
-    { delay, texts: "item " },
+    // { delay, texts: "# " },
+    // { delay, texts: "Heading " },
+    // { delay, texts: "1\n\n" },
+    // { delay, texts: "## " },
+    // { delay, texts: "Heading " },
+    // { delay, texts: "2\n\n" },
+    // { delay, texts: "### " },
+    // { delay, texts: "Heading " },
+    // { delay, texts: "3\n\n" },
+    // { delay, texts: "> " },
+    // { delay, texts: "Blockquote\n\n" },
+    // { delay, texts: "- " },
+    // { delay, texts: "Unordered " },
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
+    // { delay, texts: "1\n" },
+    // { delay, texts: "- " },
+    // { delay, texts: "Unordered " },
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
+    // { delay, texts: "2\n\n" },
+    // { delay, texts: "1. " },
+    // { delay, texts: "Ordered " },
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
+    // { delay, texts: "1\n" },
+    // { delay, texts: "2. " },
+    // { delay, texts: "Ordered " },
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
+    // { delay, texts: "2\n\n" },
+    // { delay, texts: "- " },
+    // { delay, texts: "[ " },
+    // { delay, texts: "] " },
+    // { delay, texts: "Task " },
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
 
-    // { delay, texts: "Task " }, // added extra
-    // { delay, texts: "list " }, // added extra
-    // { delay, texts: "item " }, // added extra - appeared
+    // // { delay, texts: "Task " }, // added extra
+    // // { delay, texts: "list " }, // added extra
+    // // { delay, texts: "item " }, // added extra - appeared
 
-    { delay, texts: "1\n" }, // appears, but off-screen
-    { delay, texts: "- " }, // appears, but off-screen
-    { delay, texts: "test " }, // added extra test, did not appear
-    { delay, texts: "[x] " }, // does not appear
-    { delay, texts: "Task " }, // does not appear
-    { delay, texts: "list " },
-    { delay, texts: "item " },
-    { delay, texts: "2\n\n" },
-    { delay, texts: "![Alt " },
-    {
-      delay,
-      texts:
-        "text](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n"
-    },
-    {
-      delay,
-      texts: "### Advantage blocks:\n"
-    },
-    { delay, texts: "\n" },
-    { delay, texts: "$$\n" },
-    {
-      delay,
-      texts: "a^2 + b^2 = c^2\n"
-    },
-    { delay, texts: "$$\n" },
-    { delay, texts: "\n" },
-    { delay, texts: "```python\n" },
-    { delay, texts: "# " },
-    { delay, texts: "Code " },
-    { delay, texts: "block\n" },
-    { delay, texts: 'print("Hello, ' },
-    { delay, texts: 'World!")\n' },
-    { delay, texts: "```\n\n" },
-    { delay, texts: "Horizontal " },
-    { delay, texts: "rule\n\n" },
-    { delay, texts: "---\n\n" },
-    { delay, texts: "| " },
-    { delay, texts: "Header " },
-    { delay, texts: "1 " },
-    { delay, texts: "| " },
-    { delay, texts: "Header " },
-    { delay, texts: "2 " },
-    { delay, texts: "|\n" },
-    {
-      delay,
-      texts: "|----------|----------|\n"
-    },
-    { delay, texts: "| " },
-    { delay, texts: "Row " },
-    { delay, texts: "1   " },
-    { delay, texts: " | " },
-    { delay, texts: "Data    " },
-    { delay, texts: " |\n" },
-    { delay, texts: "| " },
-    { delay, texts: "Row " },
-    { delay, texts: "2   " },
-    { delay, texts: " | " },
-    { delay, texts: "Data    " },
-    { delay, texts: " |" }
+    // { delay, texts: "1\n" }, // appears, but off-screen
+    // { delay, texts: "- " }, // appears, but off-screen
+    // { delay, texts: "test " }, // added extra test, did not appear
+    // { delay, texts: "[x] " }, // does not appear
+    // { delay, texts: "Task " }, // does not appear
+    // { delay, texts: "list " },
+    // { delay, texts: "item " },
+    // { delay, texts: "2\n\n" },
+    // { delay, texts: "![Alt " },
+    // {
+    //   delay,
+    //   texts:
+    //     "text](https://images.unsplash.com/photo-1712688930249-98e1963af7bd?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)\n\n"
+    // },
+    // {
+    //   delay,
+    //   texts: "### Advantage blocks:\n"
+    // },
+    // { delay, texts: "\n" },
+    // { delay, texts: "$$\n" },
+    // {
+    //   delay,
+    //   texts: "a^2 + b^2 = c^2\n"
+    // },
+    // { delay, texts: "$$\n" },
+    // { delay, texts: "\n" },
+    // { delay, texts: "```python\n" },
+    // { delay, texts: "# " },
+    // { delay, texts: "Code " },
+    // { delay, texts: "block\n" },
+    // { delay, texts: 'print("Hello, ' },
+    // { delay, texts: 'World!")\n' },
+    // { delay, texts: "```\n\n" },
+    // { delay, texts: "Horizontal " },
+    // { delay, texts: "rule\n\n" },
+    // { delay, texts: "---\n\n" },
+    // { delay, texts: "| " },
+    // { delay, texts: "Header " },
+    // { delay, texts: "1 " },
+    // { delay, texts: "| " },
+    // { delay, texts: "Header " },
+    // { delay, texts: "2 " },
+    // { delay, texts: "|\n" },
+    // {
+    //   delay,
+    //   texts: "|----------|----------|\n"
+    // },
+    // { delay, texts: "| " },
+    // { delay, texts: "Row " },
+    // { delay, texts: "1   " },
+    // { delay, texts: " | " },
+    // { delay, texts: "Data    " },
+    // { delay, texts: " |\n" },
+    // { delay, texts: "| " },
+    // { delay, texts: "Row " },
+    // { delay, texts: "2   " },
+    // { delay, texts: " | " },
+    // { delay, texts: "Data    " },
+    // { delay, texts: " |" }
   ]
 ];
 

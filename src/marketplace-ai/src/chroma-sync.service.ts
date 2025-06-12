@@ -60,7 +60,7 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
         )
       `,
       where: `v.description IS NOT NULL AND v.description != ''
-              AND s.status NOT IN ('DRAFT', 'CANCELED')`,
+              AND s.status NOT IN ('DRAFT', 'CANCELED', 'UNDER_REVIEW')`,
       orderBy: 'v."createdAt" DESC',
     },
     chunkSize: 800, // words per chunk
@@ -102,7 +102,7 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
         )
       `,
       where: `v.description IS NOT NULL AND v.description != ''
-              AND s.status NOT IN ('DRAFT', 'CANCELED')`,
+              AND s.status NOT IN ('DRAFT', 'CANCELED', 'UNDER_REVIEW')`,
       orderBy: 'v."createdAt" DESC',
     },
     chunkSize: 800, // words per chunk
@@ -144,11 +144,58 @@ const SYNC_CONFIGS: Record<string, SyncSourceConfig> = {
         )
       `,
       where: `v.description IS NOT NULL AND v.description != ''
-              AND s.status NOT IN ('DRAFT', 'CANCELED')`,
+              AND s.status NOT IN ('DRAFT', 'CANCELED', 'UNDER_REVIEW')`,
       orderBy: 'v."createdAt" DESC',
     },
     chunkSize: 800,
     enabled: false, // Disabled by default
+  },
+
+  // TWU Resource Questions - Questions and guidelines for evaluation
+  twuResourceQuestions: {
+    table: 'public."twuResourceQuestions"',
+    collection: 'twu_resource_questions',
+    fields: {
+      id: 'CONCAT(o.id, \'_\', rq."order") as id',
+      content: "CONCAT(rq.question, ' ', rq.guideline) as content",
+      updatedAt: 'rq."createdAt"',
+      metadata: [
+        'rq.question as full_question',
+        'rq.guideline as full_guideline',
+        'rq.score',
+        'rq."wordLimit" as word_limit',
+        'rq."order"',
+        'ov.title as opportunity_title',
+        'ov.teaser as opportunity_teaser',
+        'ov.location as opportunity_location',
+        'rq."opportunityVersion" as opportunity_version_id',
+        'o.id as opportunity_id',
+      ],
+    },
+    query: {
+      joins: `
+        INNER JOIN public."twuOpportunityVersions" ov ON rq."opportunityVersion" = ov.id
+        INNER JOIN public."twuOpportunities" o ON ov.opportunity = o.id
+        INNER JOIN (
+          SELECT opportunity, MAX("createdAt") as latest_created_at
+          FROM public."twuOpportunityVersions"
+          GROUP BY opportunity
+        ) latest ON ov.opportunity = latest.opportunity
+        AND ov."createdAt" = latest.latest_created_at
+        INNER JOIN public."twuOpportunityStatuses" s ON o.id = s.opportunity
+        AND s."createdAt" = (
+          SELECT MAX("createdAt")
+          FROM public."twuOpportunityStatuses" s2
+          WHERE s2.opportunity = o.id AND s2.status IS NOT NULL
+        )
+      `,
+      where: `rq.question IS NOT NULL AND rq.question != ''
+              AND rq.guideline IS NOT NULL AND rq.guideline != ''
+              AND s.status NOT IN ('DRAFT', 'CANCELED', 'UNDER_REVIEW')`,
+      orderBy: 'rq."createdAt" DESC',
+    },
+    chunkSize: 800,
+    enabled: true,
   },
 };
 
@@ -241,7 +288,11 @@ export class ChromaSyncService {
     incrementalOnly: boolean,
   ): string {
     const tableName = config.table;
-    const tableAlias = 'v'; // Use 'v' as consistent alias for all tables
+    // Determine table alias based on the config
+    let tableAlias = 'v'; // Default alias
+    if (tableName.includes('twuResourceQuestions')) {
+      tableAlias = 'rq';
+    }
 
     // Build SELECT clause
     const selectFields = [

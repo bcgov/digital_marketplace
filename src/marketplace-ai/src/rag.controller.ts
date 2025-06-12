@@ -14,6 +14,11 @@ interface SearchRequest {
   limit?: number;
 }
 
+interface ResourceQuestionSearchRequest {
+  skill: string;
+  limit?: number;
+}
+
 @Controller('rag')
 export class RagController {
   constructor(private vectorService: VectorService) {}
@@ -112,6 +117,55 @@ export class RagController {
       results: finalResults,
       totalBeforeDeduplication: opportunityResults.length,
       finalCount: finalResults.length,
+    };
+  }
+
+  @Post('search-resource-questions')
+  async searchResourceQuestions(
+    @Body() request: ResourceQuestionSearchRequest,
+  ) {
+    const { skill, limit = 3 } = request;
+
+    if (!skill) {
+      return {
+        query: '',
+        results: [],
+      };
+    }
+
+    // Search for questions related to the skill
+    const searchLimit = Math.max(limit * 2, 6); // Get more results to allow for variety
+    const results = await this.vectorService.searchSimilar(
+      'twu_resource_questions',
+      skill,
+      searchLimit,
+    );
+
+    // Filter and enhance results
+    const questionResults = results
+      .filter((r) => r.metadata.full_question && r.metadata.full_guideline)
+      .map((r) => ({
+        content: r.content,
+        score: r.score,
+        metadata: {
+          question: r.metadata.full_question,
+          guideline: r.metadata.full_guideline,
+          score: r.metadata.score,
+          wordLimit: r.metadata.word_limit,
+          opportunityTitle: r.metadata.opportunity_title,
+          opportunityTeaser: r.metadata.opportunity_teaser,
+          opportunityLocation: r.metadata.opportunity_location,
+          opportunityId: r.metadata.opportunity_id,
+        },
+      }))
+      .slice(0, limit); // Limit to requested number
+
+    return {
+      query: skill,
+      collection: 'twu_resource_questions',
+      results: questionResults,
+      totalFound: results.length,
+      finalCount: questionResults.length,
     };
   }
 
