@@ -24,12 +24,14 @@ import {
   DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE,
   DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT,
   TWUResourceQuestion,
-  CreateTWUResourceBody
+  CreateTWUResourceBody,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { adt, ADT } from "shared/lib/types";
 import { invalid } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import { MARKETPLACE_AI_URL } from "front-end/config";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 interface Question {
   question: Immutable<PlateEditor.State>;
@@ -51,15 +53,9 @@ interface GenerationContext {
 export interface State {
   questions: Question[];
   isGenerating: boolean;
-  generationProgress: {
-    total: number;
-    completed: number;
-    currentSkill: string;
-  } | null;
   generationErrors: string[];
   showConfirmModal: boolean;
   generationContext?: GenerationContext;
-  pendingSkills?: string[];
 }
 
 export type Msg =
@@ -72,10 +68,11 @@ export type Msg =
   | ADT<"generateWithAI", GenerationContext>
   | ADT<"confirmGeneration", GenerationContext>
   | ADT<"cancelGeneration">
-  | ADT<"startAIGenerationInternal">
-  | ADT<"aiQuestionGenerated", { question: Question; skillIndex: number }>
-  | ADT<"aiGenerationFailed", { skill: string; error: string }>
-  | ADT<"aiGenerationComplete">
+  | ADT<
+      "aiBulkGenerationComplete",
+      { questions: Question[]; rationale?: string }
+    >
+  | ADT<"aiBulkGenerationFailed", { error: string }>
   | ADT<"noop">;
 
 export interface Params {
@@ -93,40 +90,48 @@ function extractUniqueSkills(resources: CreateTWUResourceBody[]): string[] {
   );
 }
 
-function generateQuestionForSkill(
-  skill: string,
-  context: GenerationContext,
-  skillIndex: number
+function generateAllQuestionsAtOnce(
+  context: GenerationContext
 ): component_.Cmd<Msg> {
   console.log(
-    `🤖 [AI Generation] Creating command to generate question for skill "${skill}" (index: ${skillIndex})`
+    `🤖 [Bulk AI Generation] Creating command to generate all questions at once`
   );
+  console.log(`🤖 [Bulk AI Generation] Context:`, context);
+
+  // Convert service area enums to user-friendly names for the server
+  const contextWithFriendlyServiceAreas = {
+    ...context,
+    resources: context.resources.map((resource) => ({
+      ...resource,
+      serviceArea: twuServiceAreaToTitleCase(
+        resource.serviceArea as TWUServiceArea
+      )
+    }))
+  };
 
   return {
     tag: "async" as const,
     value: async (): Promise<Msg> => {
       try {
         console.log(
-          `🤖 [AI Generation] Making API request for skill "${skill}"...`
+          `🤖 [Bulk AI Generation] Making API request for bulk generation...`
         );
-        console.log(`🤖 [AI Generation] Context:`, context);
 
         const response = await fetch(
-          `${MARKETPLACE_AI_URL}/generate-resource-question`,
+          `${MARKETPLACE_AI_URL}/generate-resource-questions`,
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              skill,
-              context
+              context: contextWithFriendlyServiceAreas
             })
           }
         );
 
         console.log(
-          `🤖 [AI Generation] API response status for "${skill}":`,
+          `🤖 [Bulk AI Generation] API response status:`,
           response.status
         );
 
@@ -135,53 +140,39 @@ function generateQuestionForSkill(
         }
 
         const result = await response.json();
-        console.log(
-          `🤖 [AI Generation] API response data for "${skill}":`,
-          result
+        console.log(`🤖 [Bulk AI Generation] API response data:`, result);
+
+        // Convert API response to Question objects
+        const generatedQuestions = result.questions.map(
+          (apiQuestion: any, index: number) =>
+            createQuestionFromAI(
+              apiQuestion.question || "",
+              apiQuestion.guideline || "",
+              index,
+              apiQuestion.wordLimit || 500,
+              apiQuestion.score || 20
+            )
         );
 
-        const generatedQuestion = createQuestionFromAI(
-          result.question || "",
-          result.guideline || "",
-          skillIndex
+        console.log(
+          `🤖 [Bulk AI Generation] Successfully generated ${generatedQuestions.length} questions`
         );
 
-        console.log(
-          `🤖 [AI Generation] Successfully generated question for "${skill}"`
-        );
-        return adt("aiQuestionGenerated", {
-          question: generatedQuestion,
-          skillIndex
+        return adt("aiBulkGenerationComplete", {
+          questions: generatedQuestions,
+          rationale: result.rationale
         });
       } catch (error) {
         console.error(
-          `🤖 [AI Generation] Failed to generate question for skill "${skill}":`,
+          `🤖 [Bulk AI Generation] Failed to generate questions:`,
           error
         );
-        return adt("aiGenerationFailed", {
-          skill,
+        return adt("aiBulkGenerationFailed", {
           error: error instanceof Error ? error.message : "Unknown error"
         });
       }
     }
   };
-}
-
-function startAIGeneration(
-  skills: string[],
-  context: GenerationContext
-): component_.Cmd<Msg> {
-  console.log(
-    `🤖 [AI Generation] Starting generation for ${skills.length} skills:`,
-    skills
-  );
-
-  if (skills.length === 0) {
-    return component_.cmd.dispatch(adt("aiGenerationComplete"));
-  }
-
-  // Generate the first question
-  return generateQuestionForSkill(skills[0], context, 0);
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
@@ -206,11 +197,9 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
     {
       questions,
       isGenerating: false,
-      generationProgress: null,
       generationErrors: [],
       showConfirmModal: false,
-      generationContext: params.generationContext,
-      pendingSkills: undefined
+      generationContext: params.generationContext
     },
     cmds
   ];
@@ -300,10 +289,12 @@ function createQuestion(
 export function createQuestionFromAI(
   questionText: string,
   guidelineText: string,
-  skillIndex: number
+  questionIndex: number,
+  wordLimit?: number,
+  score?: number
 ): Question {
   console.log(
-    `🤖 [Create Question] Creating question from AI for skill index ${skillIndex}`
+    `🤖 [Create Question] Creating question from AI for question index ${questionIndex}`
   );
 
   const [questionState] = PlateEditor.init({
@@ -311,7 +302,7 @@ export function createQuestionFromAI(
     validate: opportunityValidation.validateResourceQuestionQuestion,
     child: {
       value: questionText,
-      id: `ai-generated-question-${skillIndex}`
+      id: `ai-generated-question-${questionIndex}`
     }
   });
 
@@ -320,7 +311,7 @@ export function createQuestionFromAI(
     validate: opportunityValidation.validateResourceQuestionGuideline,
     child: {
       value: guidelineText,
-      id: `ai-generated-guideline-${skillIndex}`
+      id: `ai-generated-guideline-${questionIndex}`
     }
   });
 
@@ -333,8 +324,8 @@ export function createQuestionFromAI(
       return opportunityValidation.validateResourceQuestionWordLimit(v);
     },
     child: {
-      value: DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT,
-      id: `ai-generated-word-limit-${skillIndex}`,
+      value: wordLimit || DEFAULT_RESOURCE_QUESTION_RESPONSE_WORD_LIMIT,
+      id: `ai-generated-word-limit-${questionIndex}`,
       min: 1
     }
   });
@@ -348,8 +339,8 @@ export function createQuestionFromAI(
       return opportunityValidation.validateResourceQuestionScore(v);
     },
     child: {
-      value: DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE,
-      id: `ai-generated-score-${skillIndex}`,
+      value: score || DEFAULT_RESOURCE_QUESTION_AVAILABLE_SCORE,
+      id: `ai-generated-score-${questionIndex}`,
       min: 1
     }
   });
@@ -378,7 +369,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     state.questions.length
   );
   console.log(`🔄 [Update] Current state - isGenerating:`, state.isGenerating);
-  console.log(`🔄 [Update] Full message object:`, msg);
 
   switch (msg.tag) {
     case "noop": {
@@ -491,7 +481,9 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
 
     case "confirmGeneration": {
-      console.log(`🤖 [Update] Generation confirmed, starting AI generation`);
+      console.log(
+        `🤖 [Update] Generation confirmed, starting bulk AI generation`
+      );
       console.log(`🤖 [Update] Generation context received:`, !!msg.value);
 
       const generationContext = msg.value;
@@ -501,32 +493,32 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         return [state.set("showConfirmModal", false), []];
       }
 
-      const skills = extractUniqueSkills(generationContext.resources);
+      const uniqueSkills = extractUniqueSkills(generationContext.resources);
       console.log(
-        `🤖 [Update] Extracted ${skills.length} unique skills:`,
-        skills
+        `🤖 [Update] Extracted ${uniqueSkills.length} unique skills for bulk generation:`,
+        uniqueSkills
       );
+
+      if (uniqueSkills.length === 0) {
+        console.warn(`🤖 [Update] No skills found, cannot generate questions`);
+        return [
+          state
+            .set("showConfirmModal", false)
+            .set("generationErrors", [
+              "No skills found in resources. Please add skills to generate questions."
+            ]),
+          []
+        ];
+      }
 
       const state_updated = state
         .set("questions", [])
         .set("isGenerating", true)
-        .set("generationProgress", {
-          total: skills.length,
-          completed: 0,
-          currentSkill:
-            skills.length > 0
-              ? `Generating question for "${skills[0]}"...`
-              : "No skills found"
-        })
         .set("generationErrors", [])
         .set("showConfirmModal", false)
-        .set("pendingSkills", skills)
         .set("generationContext", generationContext);
 
-      const cmd =
-        skills.length > 0
-          ? startAIGeneration(skills, generationContext)
-          : component_.cmd.dispatch(adt("aiGenerationComplete") as Msg);
+      const cmd = generateAllQuestionsAtOnce(generationContext);
 
       return [state_updated, [cmd]];
     }
@@ -536,121 +528,28 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return [state.set("showConfirmModal", false), []];
     }
 
-    case "startAIGenerationInternal": {
+    case "aiBulkGenerationComplete": {
+      const { questions, rationale } = msg.value;
       console.log(
-        `🤖 [Update] Start generation internal - this is now deprecated`
+        `🤖 [Update] Bulk generation complete! Generated ${questions.length} questions`
       );
-      return [state, []];
-    }
+      console.log(`🤖 [Update] Generation rationale:`, rationale);
 
-    case "aiQuestionGenerated": {
-      const { question, skillIndex } = msg.value;
-      console.log(
-        `🤖 [Update] Question generated for skill index ${skillIndex}`
-      );
-
-      const newQuestions = [...state.questions, question];
-      const progress = state.generationProgress!;
-      const nextIndex = skillIndex + 1;
-      const skills = state.pendingSkills || [];
-
-      console.log(`🤖 [Update] Progress: ${nextIndex}/${progress.total}`);
-
-      if (nextIndex >= progress.total || nextIndex >= skills.length) {
-        // Generation complete
-        console.log(
-          `🤖 [Update] All questions generated! Total: ${newQuestions.length}`
-        );
-        return [
-          state
-            .set("questions", newQuestions)
-            .set("isGenerating", false)
-            .set("generationProgress", null)
-            .set("pendingSkills", undefined),
-          []
-        ];
-      } else {
-        // Continue generation with next skill
-        console.log(
-          `🤖 [Update] Continuing with next skill at index ${nextIndex}: "${skills[nextIndex]}"`
-        );
-
-        const nextCmd = state.generationContext
-          ? generateQuestionForSkill(
-              skills[nextIndex],
-              state.generationContext,
-              nextIndex
-            )
-          : component_.cmd.dispatch(adt("aiGenerationComplete") as Msg);
-
-        return [
-          state.set("questions", newQuestions).set("generationProgress", {
-            ...progress,
-            completed: nextIndex,
-            currentSkill: `Generating question for "${skills[nextIndex]}"...`
-          }),
-          [nextCmd]
-        ];
-      }
-    }
-
-    case "aiGenerationFailed": {
-      const { skill, error } = msg.value;
-      console.log(
-        `🤖 [Update] AI generation failed for skill "${skill}":`,
-        error
-      );
-
-      const progress = state.generationProgress!;
-      const nextIndex = progress.completed + 1;
-      const skills = state.pendingSkills || [];
-      const newErrors = [...state.generationErrors, `${skill}: ${error}`];
-
-      console.log(`🤖 [Update] Error progress: ${nextIndex}/${progress.total}`);
-
-      if (nextIndex >= progress.total || nextIndex >= skills.length) {
-        // Generation complete (with errors)
-        console.log(`🤖 [Update] Generation complete with errors:`, newErrors);
-        return [
-          state
-            .set("isGenerating", false)
-            .set("generationProgress", null)
-            .set("generationErrors", newErrors)
-            .set("pendingSkills", undefined),
-          []
-        ];
-      } else {
-        // Continue with next skill despite error
-        console.log(
-          `🤖 [Update] Continuing despite error, next index: ${nextIndex}, skill: "${skills[nextIndex]}"`
-        );
-
-        const nextCmd = state.generationContext
-          ? generateQuestionForSkill(
-              skills[nextIndex],
-              state.generationContext,
-              nextIndex
-            )
-          : component_.cmd.dispatch(adt("aiGenerationComplete") as Msg);
-
-        return [
-          state.set("generationErrors", newErrors).set("generationProgress", {
-            ...progress,
-            completed: nextIndex,
-            currentSkill: `Generating question for "${skills[nextIndex]}"...`
-          }),
-          [nextCmd]
-        ];
-      }
-    }
-
-    case "aiGenerationComplete": {
-      console.log(`🤖 [Update] AI generation complete`);
       return [
         state
+          .set("questions", questions)
           .set("isGenerating", false)
-          .set("generationProgress", null)
-          .set("pendingSkills", undefined),
+          .set("generationErrors", []),
+        []
+      ];
+    }
+
+    case "aiBulkGenerationFailed": {
+      const { error } = msg.value;
+      console.log(`🤖 [Update] Bulk generation failed:`, error);
+
+      return [
+        state.set("isGenerating", false).set("generationErrors", [error]),
         []
       ];
     }
@@ -875,13 +774,15 @@ const AIGenerationControls: component_.base.View<Props> = ({
             <>
               <p className="mb-3 text-muted">
                 {hasQuestions
-                  ? `Generate new questions for your ${uniqueSkills.length} skills. This will replace all ${state.questions.length} existing questions.`
-                  : `Generate evaluation questions for your ${uniqueSkills.length} selected skills.`}
+                  ? `Generate optimized evaluation questions for your resources and ${uniqueSkills.length} skills. This will replace all ${state.questions.length} existing questions.`
+                  : `Generate comprehensive evaluation questions optimized for your resources and ${uniqueSkills.length} skills.`}
               </p>
 
               {/* Skills Preview */}
               <div className="mb-3">
-                <small className="text-muted d-block mb-1">Skills:</small>
+                <small className="text-muted d-block mb-1">
+                  Skills to evaluate:
+                </small>
                 <Skills skills={uniqueSkills.slice(0, 8)} />
                 {uniqueSkills.length > 8 && (
                   <span className="text-muted small ms-2">
@@ -889,34 +790,43 @@ const AIGenerationControls: component_.base.View<Props> = ({
                   </span>
                 )}
               </div>
+
+              {/* Service Areas */}
+              <div className="mb-3">
+                <small className="text-muted d-block mb-1">
+                  Service areas:
+                </small>
+                <div className="d-flex flex-wrap gap-1">
+                  {Array.from(
+                    new Set(
+                      generationContext.resources.map((r) => r.serviceArea)
+                    )
+                  ).map((serviceArea) => (
+                    <span key={serviceArea} className="badge bg-secondary">
+                      {twuServiceAreaToTitleCase(serviceArea as TWUServiceArea)}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </>
           )}
 
           {/* Generation Progress */}
-          {state.isGenerating && state.generationProgress && (
+          {state.isGenerating && (
             <div className="mb-3">
               <div className="d-flex justify-content-between mb-2">
-                <span>Generating questions...</span>
-                <span className="text-muted small">
-                  {state.generationProgress.completed} of{" "}
-                  {state.generationProgress.total}
-                </span>
+                <span>Generating optimized questions...</span>
+                <Icon name="cog" className="fa-spin" />
               </div>
               <div className="progress mb-2" style={{ height: "8px" }}>
                 <div
                   className="progress-bar progress-bar-striped progress-bar-animated"
-                  style={{
-                    width: `${
-                      (state.generationProgress.completed /
-                        state.generationProgress.total) *
-                      100
-                    }%`
-                  }}
+                  style={{ width: "100%" }}
                 />
               </div>
               <small className="text-muted">
-                <Icon name="cog" className="fa-spin me-1" />
-                {state.generationProgress.currentSkill}
+                Analyzing {uniqueSkills.length} skills across multiple service
+                areas to create comprehensive evaluation questions...
               </small>
             </div>
           )}
@@ -926,8 +836,8 @@ const AIGenerationControls: component_.base.View<Props> = ({
             <div className="alert alert-warning py-2 mb-3">
               <small>
                 <Icon name="exclamation-triangle" className="me-1" />
-                Some questions couldn&apos;t be generated. You can edit them
-                manually or try again.
+                {state.generationErrors.join("; ")} You can try again or create
+                questions manually.
               </small>
             </div>
           )}
@@ -970,8 +880,13 @@ const ConfirmReplaceModal: React.FC<{
     <ModalHeader>Replace Questions with AI Generated?</ModalHeader>
     <ModalBody>
       <p>
-        This will replace your {questionCount} existing questions with{" "}
-        {skillCount} new AI-generated questions.
+        This will replace your {questionCount} existing questions with new
+        AI-generated questions optimized for {skillCount} skills across your
+        service areas.
+      </p>
+      <p className="text-muted">
+        The AI will create an optimized set of questions that comprehensively
+        evaluates all your skills and service areas while minimizing redundancy.
       </p>
       <p className="text-warning">
         <Icon name="exclamation-triangle" className="me-1" />

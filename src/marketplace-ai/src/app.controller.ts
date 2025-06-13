@@ -268,8 +268,262 @@ export class AppController {
     }
   }
 
+  @Post('generate-resource-questions')
+  async generateResourceQuestions(@Body() dto: any) {
+    try {
+      const { context } = dto;
+
+      // Extract all unique skills and service areas from resources
+      const allSkills = new Set<string>();
+      const serviceAreas = new Set<string>();
+
+      context.resources.forEach((resource: any) => {
+        // Add service area
+        if (resource.serviceArea) {
+          serviceAreas.add(resource.serviceArea);
+        }
+
+        // Add all skills
+        if (resource.mandatorySkills) {
+          resource.mandatorySkills.forEach((skill: string) => {
+            if (skill.trim()) allSkills.add(skill.trim());
+          });
+        }
+        if (resource.optionalSkills) {
+          resource.optionalSkills.forEach((skill: string) => {
+            if (skill.trim()) allSkills.add(skill.trim());
+          });
+        }
+      });
+
+      // Perform RAG operations for skills
+      let skillRagExamples = '';
+      try {
+        const skillPromises = Array.from(allSkills).map(async (skill) => {
+          const ragResults = await this.vectorService.searchSimilar(
+            'twu_resource_questions',
+            skill,
+            4, // Get more results for variety
+          );
+          return { skill, results: ragResults };
+        });
+
+        const skillRagResults = await Promise.all(skillPromises);
+
+        // Build skill examples section
+        if (skillRagResults.some((sr) => sr.results.length > 0)) {
+          skillRagExamples = '\n--- SKILL-BASED EXAMPLE QUESTIONS ---\n';
+          skillRagResults.forEach(({ skill, results }) => {
+            if (results.length > 0) {
+              const questionResults = results
+                .filter(
+                  (r) => r.metadata.full_question && r.metadata.full_guideline,
+                )
+                .slice(0, 2); // Limit to 2 examples per skill
+
+              if (questionResults.length > 0) {
+                skillRagExamples += `\nExamples for skill "${skill}":\n`;
+                questionResults.forEach((result: any, index: number) => {
+                  skillRagExamples += `  ${index + 1}. Question: "${
+                    result.metadata.full_question
+                  }"\n`;
+                  skillRagExamples += `     Guideline: "${result.metadata.full_guideline}"\n`;
+                });
+              }
+            }
+          });
+          skillRagExamples += '\n--- END OF SKILL EXAMPLES ---\n';
+        }
+      } catch (ragError) {
+        console.warn(
+          'Skill RAG search failed, proceeding without skill examples:',
+          ragError,
+        );
+      }
+
+      // Perform RAG operations for service areas
+      let serviceAreaRagExamples = '';
+      try {
+        const serviceAreaPromises = Array.from(serviceAreas).map(
+          async (serviceArea) => {
+            // Search using service area name as query
+            const ragResults = await this.vectorService.searchSimilar(
+              'twu_resource_questions',
+              serviceArea,
+              4,
+            );
+            return { serviceArea, results: ragResults };
+          },
+        );
+
+        const serviceAreaRagResults = await Promise.all(serviceAreaPromises);
+
+        // Build service area examples section
+        if (serviceAreaRagResults.some((sar) => sar.results.length > 0)) {
+          serviceAreaRagExamples = '\n--- SERVICE AREA EXAMPLE QUESTIONS ---\n';
+          serviceAreaRagResults.forEach(({ serviceArea, results }) => {
+            if (results.length > 0) {
+              const questionResults = results
+                .filter(
+                  (r) => r.metadata.full_question && r.metadata.full_guideline,
+                )
+                .slice(0, 2); // Limit to 2 examples per service area
+
+              if (questionResults.length > 0) {
+                serviceAreaRagExamples += `\nExamples for service area "${serviceArea}":\n`;
+                questionResults.forEach((result: any, index: number) => {
+                  serviceAreaRagExamples += `  ${index + 1}. Question: "${
+                    result.metadata.full_question
+                  }"\n`;
+                  serviceAreaRagExamples += `     Guideline: "${result.metadata.full_guideline}"\n`;
+                });
+              }
+            }
+          });
+          serviceAreaRagExamples += '\n--- END OF SERVICE AREA EXAMPLES ---\n';
+        }
+      } catch (ragError) {
+        console.warn(
+          'Service area RAG search failed, proceeding without service area examples:',
+          ragError,
+        );
+      }
+
+      // Location: ${context.location || 'N/A'}
+      // Remote Work: ${context.remoteOk ? 'Allowed' : 'Not allowed'}
+      // ${context.remoteDesc ? `Remote Description: ${context.remoteDesc}` : ''}
+
+      const prompt = `Generate comprehensive evaluation questions for a Team With Us opportunity.
+
+OPPORTUNITY CONTEXT:
+Title: ${context.title || 'N/A'}
+Teaser: ${context.teaser || 'N/A'}
+Description: ${context.description || 'N/A'}
+
+RESOURCES NEEDED:
+${context.resources
+  .map(
+    (r: any, i: number) => `
+Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
+- Mandatory Skills: ${r.mandatorySkills?.join(', ') || 'None'}
+- Optional Skills: ${r.optionalSkills?.join(', ') || 'None'}`,
+  )
+  .join('')}
+
+ALL SKILLS TO EVALUATE: ${Array.from(allSkills).join(', ')}
+SERVICE AREAS: ${Array.from(serviceAreas).join(', ')}
+
+${skillRagExamples}${serviceAreaRagExamples}
+
+REQUIREMENTS:
+- Generate an optimal set of evaluation questions that comprehensively covers ALL service areas and skills
+- DO NOT create one question per skill - instead, optimize the questions to efficiently assess multiple related skills
+- Group related skills and service areas into logical question clusters
+- Each question should be scenario-based and specific to the opportunity context
+- Provide clear evaluation guidelines for each question
+- Questions should help determine competency levels across all required areas
+- Use the example questions above as inspiration for format and quality, but create original content
+- Ensure comprehensive coverage while minimizing redundancy
+- Total questions should typically be between 3-8 questions (optimize for efficiency)
+
+OUTPUT FORMAT (JSON):
+{
+  "questions": [
+    {
+      "question": "Question text in plain text format",
+      "guideline": "Clear guidance for evaluators on what constitutes a good response, including what to look for and how to assess competency. \\n Evaluation criteria and scoring guidance.",
+    }
+  ]
+}
+
+Please return only valid JSON. IMPORTANT:
+- For JSON, escape new line characters properly (use "\\n" instead of "\n")
+- DO NOT start the response with \`\`\`json, output RAW JSON ONLY
+- Ensure questions cover ALL skills and service areas mentioned
+- Optimize for comprehensive evaluation with minimal question count`;
+
+      const messages = [
+        {
+          role: 'system',
+          content:
+            'You are an expert at creating comprehensive technical evaluation question sets. Always respond with valid JSON only. Optimize for comprehensive coverage while minimizing redundancy. Group related skills logically rather than creating individual questions for each skill.',
+        },
+        { role: 'user', content: prompt },
+      ];
+
+      // console.log(prompt);
+      // throw new Error('test');
+
+      const response = await this.appService.generateChatCompletion(messages);
+
+      let responseText: string;
+      if (typeof response === 'string') {
+        responseText = response;
+      } else if (response && response.choices && response.choices[0]) {
+        responseText = response.choices[0].message.content;
+      } else {
+        throw new Error('Unexpected response format');
+      }
+
+      console.log('responseText: \n', responseText);
+
+      // Try to parse JSON response
+      try {
+        const parsed = JSON.parse(responseText);
+
+        // Validate the response structure
+        if (!parsed.questions || !Array.isArray(parsed.questions)) {
+          throw new Error('Invalid response: questions array is required');
+        }
+
+        // Ensure each question has required fields
+        parsed.questions = parsed.questions.map((q: any, index: number) => ({
+          question:
+            q.question ||
+            `Question ${
+              index + 1
+            }: Please describe your experience with the relevant skills.`,
+          guideline:
+            q.guideline ||
+            `Evaluate the depth of experience and practical application of skills.`,
+          wordLimit: q.wordLimit || 500,
+          score: q.score || Math.round(100 / parsed.questions.length),
+        }));
+
+        return parsed;
+      } catch (parseError) {
+        console.warn(
+          'Failed to parse JSON, creating fallback questions:',
+          parseError,
+          responseText,
+        );
+
+        // Create fallback questions based on service areas
+        const fallbackQuestions = Array.from(serviceAreas).map(
+          (serviceArea, _index) => ({
+            question: `Describe your experience and approach to working in the ${serviceArea} service area. Provide specific examples from your professional experience that demonstrate your competency in the relevant skills.`,
+            guideline: `Look for specific examples, depth of experience, and practical application of skills related to ${serviceArea}. Good responses should include concrete examples and demonstrate understanding of best practices.`,
+            wordLimit: 500,
+            score: Math.round(100 / serviceAreas.size),
+          }),
+        );
+
+        return {
+          questions: fallbackQuestions,
+          rationale: `Fallback questions generated to cover each service area: ${Array.from(
+            serviceAreas,
+          ).join(', ')}`,
+        };
+      }
+    } catch (error) {
+      console.error('Error generating resource questions:', error);
+      throw new Error(`Failed to generate questions: ${error.message}`);
+    }
+  }
+
   @Post('generate-resource-question')
   async generateResourceQuestion(@Body() dto: any) {
+    throw new Error('deprecated');
     try {
       const { skill, context } = dto;
 

@@ -14,22 +14,26 @@ export class AppService {
     this.model = this.configService.get<string>('AZURE_AI_MODEL');
     this.client = ModelClient(
       endpoint || '',
-      new AzureKeyCredential(apiKey || '')
+      new AzureKeyCredential(apiKey || ''),
     );
   }
 
-  async generateChatCompletion(messages: Array<{ role: string; content: string }>) {
+  async generateChatCompletion(
+    messages: Array<{ role: string; content: string }>,
+  ) {
     try {
       const response = await this.client.path('/chat/completions').post({
         body: {
           messages,
-          max_tokens: 800,
-          model: this.model
+          max_tokens: 2000,
+          model: this.model,
         },
       });
 
       if (isUnexpected(response)) {
-        throw new Error(response.body.error?.message || 'Unexpected error occurred');
+        throw new Error(
+          response.body.error?.message || 'Unexpected error occurred',
+        );
       }
 
       return response.body;
