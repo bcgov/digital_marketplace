@@ -216,9 +216,9 @@ export class AppController {
       if (isSpecialGeneration) {
         // New logic for special generation requests
         console.log('special generation');
-        console.log('finalPrompt: ', finalPrompt);
-        console.log('finalSystem: ', finalSystem);
-        // throw new Error('test');
+        console.log('finalPrompt: \n', finalPrompt);
+        console.log('finalSystem: \n', finalSystem);
+        throw new Error('test');
 
         const result = streamText({
           model: azure(modelName), // or your configured AI model
@@ -242,9 +242,9 @@ export class AppController {
       } else {
         // Original logic - preserved exactly as it was
         console.log('original logic');
-        console.log('body.messages: ', body.messages[0].content);
-        console.log('body.system: ', body.system);
-        // throw new Error('test');
+        console.log('body.messages: \n', body.messages[0].content);
+        console.log('body.system: \n', body.system);
+        throw new Error('test');
         const result = streamText({
           model: azure(modelName), // or your configured AI model
           system: `${body.system || 'You are a helpful assistant.'}

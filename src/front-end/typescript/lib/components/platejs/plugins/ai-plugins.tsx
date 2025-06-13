@@ -13,29 +13,250 @@ import { AIMenu } from "../ui/ai-menu";
 
 import { cursorOverlayPlugin } from "./cursor-overlay-plugin";
 
+// Helper function to serialize editor content with cursor position marker
+const getEditorContentWithCursor = (editor: any) => {
+  console.log("🔍 [Cursor Detection] Starting cursor content serialization");
+
+  try {
+    // Get the current selection/cursor position
+    const selection = editor.selection;
+    if (!selection) {
+      console.log("🔍 [Cursor Detection] No selection found, using fallback");
+      return "{editor}";
+    }
+
+    console.log("🔍 [Cursor Detection] Selection found:", selection);
+
+    // First, serialize the content normally using PlateJS
+    let serializedContent;
+    try {
+      if (editor.api && editor.api.markdown && editor.api.markdown.serialize) {
+        console.log("🔍 [Cursor Detection] Using PlateJS markdown serializer");
+        serializedContent = editor.api.markdown.serialize();
+        console.log(
+          "🔍 [Cursor Detection] Original serialized content:",
+          JSON.stringify(serializedContent)
+        );
+      } else {
+        throw new Error("Markdown API not available");
+      }
+    } catch {
+      console.warn(
+        "🔍 [Cursor Detection] Markdown serialization failed, using fallback"
+      );
+
+      // Fallback: Simple text serialization
+      const serializeToText = (nodes: any[]): string => {
+        return nodes
+          .map((node) => {
+            if (node.text !== undefined) {
+              return node.text;
+            }
+            if (node.children) {
+              return serializeToText(node.children);
+            }
+            return "";
+          })
+          .join("");
+      };
+
+      serializedContent = serializeToText(editor.children);
+    }
+
+    // Calculate the exact character position in serialized content
+    const cursorPath = selection.focus.path;
+    const [blockIndex, textNodeIndex, charOffset] = cursorPath;
+
+    console.log(
+      "🔍 [Cursor Detection] Cursor path:",
+      cursorPath,
+      "Block:",
+      blockIndex,
+      "TextNode:",
+      textNodeIndex,
+      "Offset:",
+      charOffset
+    );
+    console.log("🔍 [Cursor Detection] Editor children:", editor.children);
+
+    // Calculate character position by iterating through blocks
+    let characterPosition = 0;
+
+    for (let i = 0; i < blockIndex && i < editor.children.length; i++) {
+      const block = editor.children[i];
+      console.log(`🔍 [Cursor Detection] Processing block ${i}:`, block);
+
+      // Get the text content of this block
+      const blockText = getBlockText(block);
+      console.log(
+        `🔍 [Cursor Detection] Block ${i} text:`,
+        JSON.stringify(blockText)
+      );
+
+      // Add the block text length plus newlines
+      characterPosition += blockText.length;
+
+      // Add newlines - PlateJS blocks are separated by double newlines in markdown
+      if (i < editor.children.length - 1) {
+        characterPosition += 2; // Double newline between blocks
+      }
+
+      console.log(
+        `🔍 [Cursor Detection] After block ${i}, position:`,
+        characterPosition
+      );
+    }
+
+    // Now add the character offset within the target block
+    if (blockIndex < editor.children.length) {
+      const targetBlock = editor.children[blockIndex];
+      console.log("🔍 [Cursor Detection] Target block:", targetBlock);
+
+      // Special handling for lists where cursor is within a specific list item
+      if (
+        (targetBlock.type === "ul" || targetBlock.type === "ol") &&
+        textNodeIndex !== undefined
+      ) {
+        console.log("🔍 [Cursor Detection] Handling cursor within list");
+
+        // Calculate text from previous list items
+        for (
+          let i = 0;
+          i < textNodeIndex && i < targetBlock.children.length;
+          i++
+        ) {
+          const listItem = targetBlock.children[i];
+          const prefix = targetBlock.type === "ul" ? "* " : `${i + 1}. `;
+          const itemText = getBlockText(listItem);
+          const fullItemText = prefix + itemText;
+          characterPosition += fullItemText.length;
+          if (i < targetBlock.children.length - 1) {
+            characterPosition += 1; // newline between list items
+          }
+        }
+
+        // Add the prefix for the current list item
+        if (textNodeIndex < targetBlock.children.length) {
+          const prefix =
+            targetBlock.type === "ul" ? "* " : `${textNodeIndex + 1}. `;
+          characterPosition += prefix.length;
+
+          // Add character offset within the current list item's text
+          if (charOffset !== undefined) {
+            characterPosition += charOffset;
+          }
+        }
+      }
+      // Standard handling for non-list blocks
+      else if (textNodeIndex !== undefined && charOffset !== undefined) {
+        // Add text from previous text nodes in this block
+        for (
+          let i = 0;
+          i < textNodeIndex && i < targetBlock.children.length;
+          i++
+        ) {
+          const textNode = targetBlock.children[i];
+          if (textNode.text !== undefined) {
+            characterPosition += textNode.text.length;
+          }
+        }
+
+        // Add the character offset within the current text node
+        characterPosition += charOffset;
+      } else if (charOffset !== undefined) {
+        // Direct character offset in the block
+        characterPosition += charOffset;
+      } else if (textNodeIndex === 0) {
+        // Cursor is at the beginning of the target block (textNodeIndex 0, no charOffset)
+        // characterPosition is already correct - the newlines before this block
+        // were already added when processing the previous blocks
+        // No additional offset needed
+      }
+      // If no offset, cursor is at the start of the block (position already calculated)
+    }
+
+    console.log(
+      "🔍 [Cursor Detection] Final character position:",
+      characterPosition
+    );
+
+    // Insert cursor marker at the calculated position
+    const beforeCursor = serializedContent.slice(0, characterPosition);
+    const afterCursor = serializedContent.slice(characterPosition);
+    const finalContent = beforeCursor + "<CURSOR_HERE>" + afterCursor;
+
+    console.log(
+      "🔍 [Cursor Detection] Final content with cursor:",
+      JSON.stringify(finalContent)
+    );
+    return finalContent;
+  } catch (error) {
+    console.warn(
+      "🔍 [Cursor Detection] Error getting editor content with cursor:",
+      error
+    );
+    return "{editor}";
+  }
+};
+
+// Helper function to get text content from a block, matching markdown serialization
+const getBlockText = (block: any): string => {
+  if (block.text !== undefined) {
+    return block.text;
+  }
+
+  if (block.children && Array.isArray(block.children)) {
+    // Handle lists specially to match markdown format
+    if (block.type === "ul" || block.type === "ol") {
+      return block.children
+        .map((listItem: any, index: number) => {
+          const prefix = block.type === "ul" ? "* " : `${index + 1}. `;
+          const itemText = getBlockText(listItem);
+          return prefix + itemText;
+        })
+        .join("\n");
+    }
+
+    // Handle list items
+    if (block.type === "li") {
+      // For list items, just return the text content without prefix (prefix is handled by parent ul/ol)
+      return block.children.map((child: any) => getBlockText(child)).join("");
+    }
+
+    // For other blocks with children, join the text
+    return block.children.map((child: any) => getBlockText(child)).join("");
+  }
+
+  return "";
+};
+
 const systemCommon = `\
 You are an advanced AI-powered note-taking assistant, designed to enhance productivity and creativity in note management.
-Respond directly to user prompts with clear, concise, and relevant content. Maintain a neutral, helpful tone.
+Respond directly to user prompts with clear, concise, and relevant content.
 
 Rules:
 - <Document> is the entire note the user is working on.
-- <Reminder> is a reminder of how you should reply to INSTRUCTIONS. It does not apply to questions.
+- <Reminder> is a reminder of how you should reply to INSTRUCTIONS.
 - Anything else is the user prompt.
-- Your response should be tailored to the user's prompt, providing precise assistance to optimize note management.
 - For INSTRUCTIONS: Follow the <Reminder> exactly. Provide ONLY the content to be inserted or replaced. No explanations or comments.
-- For QUESTIONS: Provide a helpful and concise answer. You may include brief explanations if necessary.
-- CRITICAL: Distinguish between INSTRUCTIONS and QUESTIONS. Instructions typically ask you to modify or add content. Questions ask for information or clarification.
 - CRITICAL: when asked to write in markdown, do not start with \`\`\`markdown.
+- CRITICAL: NEVER provide explanations or comments. Only output the text that's ready to be inserted or replaced.
 `;
 
 const systemDefault = `\
 ${systemCommon}
 - <Block> is the current block of text the user is working on.
 - Ensure your output can seamlessly fit into the existing <Block> structure.
+- <CURSOR_HERE> marks the APPROXIMATE position where the user's cursor is located in the document.
+- If <CURSOR_HERE> appears mid-word (like 'mile<CURSOR_HERE>stones'), do NOT complete the word fragment. Instead, position after the block and insert full sentences. Never output partial words or word completions. Example: If cursor is at 'deliver mile<CURSOR_HERE>stones', move to after 'milestones' and insert complete sentences, never just 'stones'.
+- When inserting content, consider the cursor position as the insertion point.
 
 <Block>
 {block}
 </Block>
+<Document>
+{editor}
+</Document>
 `;
 
 const systemSelecting = `\
@@ -112,12 +333,47 @@ export const aiPlugins = [
           ? PROMPT_TEMPLATES.userSelecting
           : PROMPT_TEMPLATES.userDefault;
       },
-      systemTemplate: ({ isBlockSelecting, isSelecting }) => {
-        return isBlockSelecting
+      systemTemplate: ({ isBlockSelecting, isSelecting, editor }) => {
+        console.log("🎯 [AI System Template] Processing template for:", {
+          isBlockSelecting,
+          isSelecting,
+          hasEditor: !!editor,
+          editorId: editor?.id
+        });
+
+        // Create custom system template with cursor position
+        const baseTemplate = isBlockSelecting
           ? PROMPT_TEMPLATES.systemBlockSelecting
           : isSelecting
           ? PROMPT_TEMPLATES.systemSelecting
           : PROMPT_TEMPLATES.systemDefault;
+
+        // For non-selecting modes (insert mode), inject cursor position
+        if (!isSelecting && !isBlockSelecting) {
+          console.log(
+            "🎯 [AI System Template] Injecting cursor position for insert mode"
+          );
+          // Get the editor content with cursor marker
+          const editorContentWithCursor = getEditorContentWithCursor(editor);
+
+          console.log(
+            "🎯 [AI System Template] Editor content with cursor:",
+            editorContentWithCursor
+          );
+
+          // Replace the {editor} placeholder with our enhanced content
+          const enhancedTemplate = baseTemplate.replace(
+            "{editor}",
+            editorContentWithCursor
+          );
+
+          return enhancedTemplate;
+        }
+
+        console.log(
+          "🎯 [AI System Template] Using base template (selection mode)"
+        );
+        return baseTemplate;
       }
     },
     render: {

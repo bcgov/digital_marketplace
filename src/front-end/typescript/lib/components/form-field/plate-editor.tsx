@@ -234,7 +234,7 @@ export const view: component_.base.View<ViewProps> = ({
           );
         }
       }, 300); // 300ms debounce
-      console.log("handleEditorChange", _value);
+      //   console.log("handleEditorChange", _value);
     },
     [editor, markdownContent, dispatch, disabled]
   );
