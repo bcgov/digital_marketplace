@@ -5,8 +5,10 @@ import { faker } from "@faker-js/faker";
 
 import { useSettings } from "./settings";
 
-export const useChat = () => {
+export const useChat = (editorId?: string) => {
   const { keys, model } = useSettings();
+
+  const chatId = editorId || "editor";
 
   // remove when you implement the route /api/ai/command
   const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -18,7 +20,7 @@ export const useChat = () => {
   };
 
   const chat = useBaseChat({
-    id: "editor",
+    id: chatId,
     api: "http://localhost:5000/api/ai/command",
     body: {
       // !!! DEMO ONLY: don't use API keys client-side
@@ -27,17 +29,14 @@ export const useChat = () => {
     },
     // Mock the API response. Remove it when you implement the route /api/ai/command
     fetch: async (input, init) => {
-      console.log("fetch: ", input, init);
       let res = {} as any;
       try {
         res = await fetch(input, init);
       } catch (error) {
         console.log("error: ", error);
       }
-      console.log("res: ", res);
 
       if (!res.ok) {
-        console.log("!res.ok");
         let sample: "markdown" | "mdx" | null = null;
 
         try {
@@ -59,7 +58,6 @@ export const useChat = () => {
         abortControllerRef.current = new AbortController();
         await new Promise((resolve) => setTimeout(resolve, 400));
 
-        console.log("fake streaming: ", sample);
         const stream = fakeStreamText({
           sample,
           signal: abortControllerRef.current.signal
@@ -179,51 +177,51 @@ const delay = faker.number.int({ max: 20, min: 5 });
 const markdownChunks = [
   [
     { delay, texts: "Make text " },
-    { delay, texts: "**bold**" },
-    { delay, texts: ", " },
-    { delay, texts: "*italic*" },
-    { delay, texts: ", " },
-    { delay, texts: "__underlined__" },
-    { delay, texts: ", or apply a " },
-    {
-      delay,
-      texts: "***combination***"
-    },
-    { delay, texts: " " },
-    { delay, texts: "of " },
-    { delay, texts: "these " },
-    { delay, texts: "styles " },
-    { delay, texts: "for " },
-    { delay, texts: "a " },
-    { delay, texts: "visually " },
-    { delay, texts: "striking " },
-    { delay, texts: "effect." },
-    { delay, texts: "\n\n" },
-    { delay, texts: "Add " },
-    {
-      delay,
-      texts: "~~strikethrough~~"
-    },
-    { delay, texts: " " },
-    { delay, texts: "to " },
-    { delay, texts: "indicate " },
-    { delay, texts: "deleted " },
-    { delay, texts: "or " },
-    { delay, texts: "outdated " },
-    { delay, texts: "content." },
-    { delay, texts: "\n\n" },
-    { delay, texts: "Write " },
-    { delay, texts: "code " },
-    { delay, texts: "snippets " },
-    { delay, texts: "with " },
-    { delay, texts: "inline " },
-    { delay, texts: "`code`" },
-    { delay, texts: " formatting " },
-    { delay, texts: "for " },
-    { delay, texts: "easy " },
-    { delay: faker.number.int({ max: 100, min: 30 }), texts: "readability." },
-    { delay, texts: "\n\n" },
-    { delay, texts: "Add " }
+    { delay, texts: "**bold**" }
+    // { delay, texts: ", " },
+    // { delay, texts: "*italic*" },
+    // { delay, texts: ", " },
+    // { delay, texts: "__underlined__" },
+    // { delay, texts: ", or apply a " },
+    // {
+    //   delay,
+    //   texts: "***combination***"
+    // },
+    // { delay, texts: " " },
+    // { delay, texts: "of " },
+    // { delay, texts: "these " },
+    // { delay, texts: "styles " },
+    // { delay, texts: "for " },
+    // { delay, texts: "a " },
+    // { delay, texts: "visually " },
+    // { delay, texts: "striking " },
+    // { delay, texts: "effect." },
+    // { delay, texts: "\n\n" },
+    // { delay, texts: "Add " },
+    // {
+    //   delay,
+    //   texts: "~~strikethrough~~"
+    // },
+    // { delay, texts: " " },
+    // { delay, texts: "to " },
+    // { delay, texts: "indicate " },
+    // { delay, texts: "deleted " },
+    // { delay, texts: "or " },
+    // { delay, texts: "outdated " },
+    // { delay, texts: "content." },
+    // { delay, texts: "\n\n" },
+    // { delay, texts: "Write " },
+    // { delay, texts: "code " },
+    // { delay, texts: "snippets " },
+    // { delay, texts: "with " },
+    // { delay, texts: "inline " },
+    // { delay, texts: "`code`" },
+    // { delay, texts: " formatting " },
+    // { delay, texts: "for " },
+    // { delay, texts: "easy " },
+    // { delay: faker.number.int({ max: 100, min: 30 }), texts: "readability." },
+    // { delay, texts: "\n\n" },
+    // { delay, texts: "Add " }
     // {
     //   delay,
     //   texts: "[links](https://example.com)"

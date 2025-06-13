@@ -16,6 +16,11 @@ export interface OpportunityContext {
   remoteOk?: boolean;
   remoteDesc?: string;
   maxBudget?: number | null;
+  description?: string;
+  // Resource question specific context
+  fieldType?: "question" | "guideline";
+  existingQuestions?: string[];
+  currentQuestionText?: string;
 }
 
 export const OpportunityContextPlugin = createPlatePlugin({

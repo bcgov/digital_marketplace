@@ -328,6 +328,100 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       }
     },
   },
+  generateQuestion: {
+    icon: <BookOpenCheck />,
+    label: 'Generate question',
+    value: 'generateQuestion',
+    onSelect: async ({ editor }) => {
+      const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+
+      if (!context) {
+        console.error('No context available for question generation');
+        return;
+      }
+
+      try {
+        const generationContext = {
+          title: context.title || '',
+          teaser: context.teaser || '',
+          description: context.description || '',
+          location: context.location || '',
+          remoteOk: context.remoteOk || false,
+          remoteDesc: context.remoteDesc || '',
+          resources: context.resources || []
+        };
+
+        const existingQuestions = context.existingQuestions || [];
+
+        // Create a special prompt with markers that the backend will detect
+        const specialPrompt = `__GENERATE_QUESTION__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUESTIONS_END__`;
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          mode: 'insert',
+          prompt: specialPrompt,
+        });
+
+      } catch (error) {
+        console.error('Question generation failed:', error);
+
+        // Fallback to basic question generation
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          prompt: 'Generate an evaluation question that assesses technical competency relevant to the skills and service areas mentioned in the context.',
+        });
+      }
+    },
+  },
+  generateGuideline: {
+    icon: <BookOpenCheck />,
+    label: 'Generate guideline',
+    value: 'generateGuideline',
+    onSelect: async ({ editor }) => {
+      const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+
+      if (!context) {
+        console.error('No context available for guideline generation');
+        return;
+      }
+
+      const currentQuestionText = context.currentQuestionText || '';
+
+      try {
+        const generationContext = {
+          title: context.title || '',
+          teaser: context.teaser || '',
+          description: context.description || '',
+          location: context.location || '',
+          remoteOk: context.remoteOk || false,
+          remoteDesc: context.remoteDesc || '',
+          resources: context.resources || []
+        };
+
+        // Create a special prompt with markers that the backend will detect
+        const specialPrompt = `__GENERATE_GUIDELINE__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__QUESTION_TEXT_START__${currentQuestionText}__QUESTION_TEXT_END__`;
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          mode: 'insert',
+          prompt: specialPrompt,
+        });
+
+      } catch (error) {
+        console.error('Guideline generation failed:', error);
+
+        // Fallback to basic guideline generation
+        const fallbackPrompt = currentQuestionText
+          ? `Generate evaluation guidelines for the following question: "${currentQuestionText}". Include what evaluators should look for in a good response and how to assess competency.`
+          : 'Generate evaluation guidelines that help evaluators assess candidate responses to technical questions. Include specific criteria for assessment and scoring guidance.';
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          prompt: fallbackPrompt,
+        });
+      }
+    },
+  },
   improveWriting: {
     icon: <Wand />,
     label: 'Improve writing',
@@ -437,7 +531,7 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.generateOpportunityDescription,
-        aiChatItems.generateMarkdownSample,
+        // aiChatItems.generateMarkdownSample,
         aiChatItems.continueWrite,
         // aiChatItems.summarize,
         // aiChatItems.explain,
@@ -483,6 +577,10 @@ export const AIMenuItems = ({
   const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor')!;
   const isSelecting = useIsSelecting();
 
+  // Get context to determine which menu items to show
+  const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+  const fieldType = context?.fieldType;
+
   const menuState = React.useMemo(() => {
     if (messages && messages.length > 0) {
       return isSelecting ? 'selectionSuggestion' : 'cursorSuggestion';
@@ -492,10 +590,36 @@ export const AIMenuItems = ({
   }, [isSelecting, messages]);
 
   const menuGroups = React.useMemo(() => {
-    const items = menuStateItems[menuState];
+    let items = menuStateItems[menuState];
+
+    // Modify items based on field type context
+    if (fieldType === 'question' || fieldType === 'guideline') {
+      // For resource questions, show different cursor command items
+      if (menuState === 'cursorCommand') {
+        const resourceQuestionItems = [];
+
+        if (fieldType === 'question') {
+          resourceQuestionItems.push(aiChatItems.generateQuestion);
+        } else if (fieldType === 'guideline') {
+          resourceQuestionItems.push(aiChatItems.generateGuideline);
+        }
+
+        resourceQuestionItems.push(
+          aiChatItems.generateMarkdownSample,
+          aiChatItems.continueWrite
+        );
+
+        items = [
+          {
+            items: resourceQuestionItems,
+          },
+        ];
+      }
+      // Keep other menu states (selectionCommand, suggestions) as they are
+    }
 
     return items;
-  }, [menuState]);
+  }, [menuState, fieldType]);
 
   React.useEffect(() => {
     if (menuGroups.length > 0 && menuGroups[0].items.length > 0) {

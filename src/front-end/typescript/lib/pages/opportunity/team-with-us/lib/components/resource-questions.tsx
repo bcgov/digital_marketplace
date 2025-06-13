@@ -640,10 +640,67 @@ interface QuestionViewProps {
   question: Question;
   disabled?: boolean;
   dispatch: component_.base.Dispatch<Msg>;
+  generationContext?: GenerationContext;
+  allQuestions: Question[];
 }
 
 const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
-  const { question, dispatch, index, disabled } = props;
+  const {
+    question,
+    dispatch,
+    index,
+    disabled,
+    generationContext,
+    allQuestions
+  } = props;
+
+  // Build context for AI generation
+  const baseContext = generationContext
+    ? {
+        title: generationContext.title,
+        teaser: generationContext.teaser,
+        description: generationContext.description,
+        location: generationContext.location,
+        remoteOk: generationContext.remoteOk,
+        remoteDesc: generationContext.remoteDesc,
+        resources: generationContext.resources
+      }
+    : {};
+
+  // Get existing questions text for context
+  const existingQuestions = allQuestions
+    .map((q, i) => {
+      if (i === index) return null; // Don't include current question
+      const questionText = FormField.getValue(q.question as any);
+      return questionText &&
+        typeof questionText === "string" &&
+        questionText.trim()
+        ? questionText.trim()
+        : null;
+    })
+    .filter(Boolean) as string[];
+
+  // Get current question text for guideline generation
+  const currentQuestionTextValue = FormField.getValue(question.question as any);
+  const currentQuestionText =
+    typeof currentQuestionTextValue === "string"
+      ? currentQuestionTextValue
+      : "";
+
+  const questionContext = {
+    ...baseContext,
+    fieldType: "question" as const,
+    existingQuestions,
+    currentQuestionText
+  };
+
+  const guidelineContext = {
+    ...baseContext,
+    fieldType: "guideline" as const,
+    existingQuestions,
+    currentQuestionText
+  };
+
   return (
     <div className={index > 0 ? "pt-5 mt-5 border-top" : ""}>
       <Row>
@@ -668,12 +725,14 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
       <Row>
         <Col xs="12">
           <PlateEditor.view
+            key={`question-editor-${index}`}
             label="Question"
             placeholder="Enter your question here."
             help="Enter your question in the field provided below."
             required
             disabled={disabled}
             toolbarMode="minimal"
+            opportunityContext={questionContext}
             state={question.question}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("questionText" as const, { childMsg: value, qIndex: index })
@@ -684,12 +743,14 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
       <Row>
         <Col xs="12">
           <PlateEditor.view
+            key={`guideline-editor-${index}`}
             label="Response Guidelines"
             placeholder="Provide some guidance on how proponents can effectively respond to your question."
             help="Provide some guidance on how proponents can effectively respond to your question."
             required
             disabled={disabled}
             toolbarMode="minimal"
+            opportunityContext={guidelineContext}
             state={question.guideline}
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("guidelineText" as const, { childMsg: value, qIndex: index })
@@ -975,6 +1036,8 @@ export const view: component_.base.View<Props> = (props) => {
           disabled={disabled || state.isGenerating}
           question={question}
           dispatch={props.dispatch}
+          generationContext={generationContext}
+          allQuestions={state.questions}
         />
       ))}
 

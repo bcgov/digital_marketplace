@@ -37,7 +37,7 @@ export function AIMenu() {
 
   const [value, setValue] = React.useState("");
 
-  const chat = useChat();
+  const chat = useChat(editor.id);
 
   const { input, messages, setInput, status } = chat;
   const [anchorElement, setAnchorElement] = React.useState<HTMLElement | null>(
@@ -51,7 +51,7 @@ export function AIMenu() {
     // if (streaming) {
     const anchor = api.aiChat.node({ anchor: true });
     setTimeout(() => {
-      console.log("anchor", anchor);
+      // console.log("anchor", anchor);
       if (!anchor) return;
       const anchorDom = editor.api.toDOMNode(anchor![0])!;
       setAnchorElement(anchorDom);
