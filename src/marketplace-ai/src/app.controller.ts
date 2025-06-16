@@ -160,16 +160,23 @@ export class AppController {
               const existingQuestionsMatch = content.match(
                 /__EXISTING_QUESTIONS_START__(.*?)__EXISTING_QUESTIONS_END__/s,
               );
+              const userPromptMatch = content.match(
+                /__USER_PROMPT_START__(.*?)__USER_PROMPT_END__/s,
+              );
 
               if (contextMatch) {
                 const context = JSON.parse(contextMatch[1]);
                 const existingQuestions = existingQuestionsMatch
                   ? JSON.parse(existingQuestionsMatch[1])
                   : [];
+                const userPrompt = userPromptMatch
+                  ? userPromptMatch[1].trim()
+                  : 'Generate a single evaluation question for a Team With Us opportunity.';
 
                 finalPrompt = await this.generateSingleQuestionPrompt(
                   context,
                   existingQuestions,
+                  userPrompt,
                 );
                 finalSystem =
                   'You are an expert at creating technical evaluation questions. Generate a single, unique question that efficiently evaluates multiple related skills. Always respond with only the question text.';
@@ -190,14 +197,21 @@ export class AppController {
               const questionMatch = content.match(
                 /__QUESTION_TEXT_START__(.*?)__QUESTION_TEXT_END__/s,
               );
+              const userPromptMatch = content.match(
+                /__USER_PROMPT_START__(.*?)__USER_PROMPT_END__/s,
+              );
 
               if (contextMatch && questionMatch) {
                 const context = JSON.parse(contextMatch[1]);
                 const questionText = questionMatch[1];
+                const userPrompt = userPromptMatch
+                  ? userPromptMatch[1].trim()
+                  : 'Generate evaluation guidelines for the following question in a Team With Us opportunity.';
 
                 finalPrompt = await this.generateSingleGuidelinePrompt(
                   context,
                   questionText,
+                  userPrompt,
                 );
                 finalSystem =
                   'You are an expert at creating evaluation guidelines for technical questions. Generate clear, specific guidelines that help evaluators assess candidate responses effectively. Always respond with only the guideline text.';
@@ -544,6 +558,7 @@ Please return only valid JSON. IMPORTANT:
   private async generateSingleQuestionPrompt(
     context: any,
     existingQuestions: string[],
+    userPrompt: string,
   ): Promise<string> {
     // Extract all unique skills and service areas from resources
     const allSkills = new Set<string>();
@@ -621,7 +636,7 @@ Please return only valid JSON. IMPORTANT:
       existingQuestionsContext += '--- END OF EXISTING QUESTIONS ---\n';
     }
 
-    return `Generate a single evaluation question for a Team With Us opportunity.
+    return `${userPrompt}
 
 OPPORTUNITY CONTEXT:
 Title: ${context.title || 'N/A'}
@@ -658,6 +673,7 @@ Please return only the question text, no additional formatting or explanation.`;
   private async generateSingleGuidelinePrompt(
     context: any,
     questionText: string,
+    userPrompt: string,
   ): Promise<string> {
     // Extract all unique skills and service areas from resources
     const allSkills = new Set<string>();
@@ -724,7 +740,7 @@ Please return only the question text, no additional formatting or explanation.`;
       );
     }
 
-    return `Generate evaluation guidelines for the following question in a Team With Us opportunity.
+    return `${userPrompt}
 
 QUESTION TO CREATE GUIDELINES FOR:
 "${questionText}"
@@ -748,15 +764,6 @@ ALL SKILLS TO EVALUATE: ${Array.from(allSkills).join(', ')}
 SERVICE AREAS: ${Array.from(serviceAreas).join(', ')}
 
 ${skillRagExamples}
-
-REQUIREMENTS:
-- Generate clear evaluation guidelines for the specific question above
-- Include what evaluators should look for in a good response
-- Provide specific criteria for assessing competency
-- Include guidance on how to score/evaluate responses
-- Focus on the skills and service areas relevant to the question
-- Use the example guidelines above as inspiration for format and quality, but create original content
-
-Please return only the guideline text, no additional formatting or explanation.`;
+`;
   }
 }

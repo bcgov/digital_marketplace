@@ -164,7 +164,54 @@ export function AIMenu() {
                 }
                 if (isHotkey("enter")(e) && !e.shiftKey && !value) {
                   e.preventDefault();
-                  void api.aiChat.submit();
+                  const context = editor.getOption(
+                    { key: "opportunityContext" },
+                    "context"
+                  );
+                  const fieldType = context?.fieldType;
+
+                  if (
+                    context &&
+                    (fieldType === "question" || fieldType === "guideline")
+                  ) {
+                    // For resource-questions context, append the same context markers that the special menu items use
+                    const generationContext = {
+                      title: context.title || "",
+                      teaser: context.teaser || "",
+                      description: context.description || "",
+                      location: context.location || "",
+                      remoteOk: context.remoteOk || false,
+                      remoteDesc: context.remoteDesc || "",
+                      resources: context.resources || []
+                    };
+
+                    let contextualPrompt = "";
+                    if (fieldType === "question") {
+                      const existingQuestions = context.existingQuestions || [];
+                      contextualPrompt = `__USER_PROMPT_START__${input}__USER_PROMPT_END__
+__GENERATE_QUESTION__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__EXISTING_QUESTIONS_START__${JSON.stringify(
+                        existingQuestions
+                      )}__EXISTING_QUESTIONS_END__`;
+                    } else if (fieldType === "guideline") {
+                      const currentQuestionText =
+                        context.currentQuestionText || "";
+                      contextualPrompt = `__USER_PROMPT_START__${input}__USER_PROMPT_END__
+__GENERATE_GUIDELINE__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__QUESTION_TEXT_START__${currentQuestionText}__QUESTION_TEXT_END__`;
+                    }
+
+                    void api.aiChat.submit({
+                      prompt: contextualPrompt
+                    });
+                  } else {
+                    // For non-resource-questions context, just use the regular prompt
+                    void api.aiChat.submit({
+                      prompt: input
+                    });
+                  }
                 }
               }}
               onValueChange={setInput}

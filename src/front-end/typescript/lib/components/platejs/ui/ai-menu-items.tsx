@@ -353,8 +353,22 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
 
         const existingQuestions = context.existingQuestions || [];
 
+        // Default prompt for question generation
+        const defaultPrompt = `Generate a single evaluation question for a Team With Us opportunity.
+
+REQUIREMENTS:
+- Generate ONE evaluation question that covers multiple related skills/service areas
+- The question should be scenario-based and specific to the opportunity context
+- DO NOT duplicate or be too similar to existing questions listed below
+- Focus on skills and service areas that haven't been fully covered by existing questions
+- The question should help determine competency levels in the relevant areas
+- Use the example questions below as inspiration for format and quality, but create original content
+
+Please return only the question text, no additional formatting or explanation.`;
+
         // Create a special prompt with markers that the backend will detect
-        const specialPrompt = `__GENERATE_QUESTION__
+        const specialPrompt = `__USER_PROMPT_START__${defaultPrompt}__USER_PROMPT_END__
+__GENERATE_QUESTION__
 __CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
 __EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUESTIONS_END__`;
 
@@ -398,8 +412,22 @@ __EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUEST
           resources: context.resources || []
         };
 
+        // Default prompt for guideline generation
+        const defaultPrompt = `Generate evaluation guidelines for the following question in a Team With Us opportunity.
+
+REQUIREMENTS:
+- Generate clear evaluation guidelines for the specific question above
+- Include what evaluators should look for in a good response
+- Provide specific criteria for assessing competency
+- Include guidance on how to score/evaluate responses
+- Focus on the skills and service areas relevant to the question
+- Use the example guidelines below as inspiration for format and quality, but create original content
+
+Please return only the guideline text, no additional formatting or explanation.`;
+
         // Create a special prompt with markers that the backend will detect
-        const specialPrompt = `__GENERATE_GUIDELINE__
+        const specialPrompt = `__USER_PROMPT_START__${defaultPrompt}__USER_PROMPT_END__
+__GENERATE_GUIDELINE__
 __CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
 __QUESTION_TEXT_START__${currentQuestionText}__QUESTION_TEXT_END__`;
 
