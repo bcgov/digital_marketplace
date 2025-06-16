@@ -1,6 +1,4 @@
-import {
-  DEFAULT_USER_AVATAR_IMAGE_PATH,
-} from "front-end/config";
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath, prefixPath } from "front-end/lib";
 import getAppModal from "front-end/lib/app/modal";
 import {
@@ -81,10 +79,13 @@ import {
   Toast,
   ToastBody
 } from "reactstrap";
-import { SHOW_TEST_INDICATOR } from "shared/config";
+import { VITE_SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
+import { CopilotKit } from "@copilotkit/react-core";
+import { CopilotSidebar } from "@copilotkit/react-ui";
+import "@copilotkit/react-ui/styles.css";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
   props: component_.base.ComponentViewProps<State, Msg>,
@@ -543,7 +544,13 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
         className="align-items-center"
         toggle={closeModal}
         close={
-          <Icon hover name="times" color="secondary" onClick={closeModal} />
+          <Icon
+            hover
+            name="times"
+            color="secondary"
+            onClick={closeModal}
+            className="ms-auto"
+          />
         }>
         {modalToShow.title}
       </ModalHeader>
@@ -556,22 +563,27 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
             {modalToShow.actions.map(
               ({ loading, disabled, icon, button, text, color, msg }, i) => {
                 const props = {
-                  key: `modal-action-${i}`,
                   symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
                   color,
                   loading,
                   disabled,
                   onClick: () => dispatch(msg),
-                  className: i === 0 ? "mx-0" : "mr-3"
+                  className: i === 0 ? "mx-0" : "me-3"
                 };
                 if (button) {
+                  // Use a key that includes text in addition to index
+                  // (SonarQube - "Avoid using index as key")
                   return (
-                    <Link button {...props}>
+                    <Link key={`modal-action-${i}-${text}`} button {...props}>
                       {text}
                     </Link>
                   );
                 } else {
-                  return <Link {...props}>{text}</Link>;
+                  return (
+                    <Link key={`modal-action-${i}-${text}`} {...props}>
+                      {text}
+                    </Link>
+                  );
                 }
               }
             )}
@@ -632,7 +644,7 @@ const ViewToasts: component_.base.ComponentView<State, Msg> = ({
             <strong className="mx-2">{toast.value.title}</strong>
             <Icon
               hover
-              className="ml-auto"
+              className="ms-auto"
               name="times"
               color="secondary"
               onClick={() => dispatch(adt("dismissToast", i))}
@@ -666,7 +678,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -691,7 +702,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -719,7 +730,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
+        }
       ]
     })
   };
@@ -810,7 +821,7 @@ function regularNavProps(
     dispatch: dispatchNav,
     isLoading: !!state.incomingRoute,
     logoImageUrl: prefixPath(
-      SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
+      VITE_SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
     ),
     title: "Digital Marketplace",
     homeDest: routeDest(adt("landing", null)),
@@ -872,24 +883,28 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           ) as component_.page.Modal<Msg>)
         : (component_.page.modal.hide() as component_.page.Modal<Msg>);
     const appModal = getAppModal(state);
+
     return (
-      <div
-        className={`route-${state.activeRoute.tag} ${
-          state.incomingRoute ? "in-transition" : ""
-        } ${
-          navProps.contextualActions ? "contextual-actions-visible" : ""
-        } app d-flex flex-column`}
-        style={{ minHeight: "100vh" }}>
-        <Nav.view {...navProps} />
-        <ViewPage {...viewPageProps} />
-        {viewPageProps.component.simpleNav ? null : <Footer />}
-        <ViewToasts {...props} />
-        <ViewModal
-          dispatch={dispatch}
-          pageModal={pageModal}
-          appModal={appModal}
-        />
-      </div>
+      <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
+        <div
+          className={`route-${state.activeRoute.tag} ${
+            state.incomingRoute ? "in-transition" : ""
+          } ${
+            navProps.contextualActions ? "contextual-actions-visible" : ""
+          } app d-flex flex-column`}
+          style={{ minHeight: "100vh" }}>
+          <Nav.view {...navProps} />
+          <ViewPage {...viewPageProps} />
+          {viewPageProps.component.simpleNav ? null : <Footer />}
+          <ViewToasts {...props} />
+          <ViewModal
+            dispatch={dispatch}
+            pageModal={pageModal}
+            appModal={appModal}
+          />
+        </div>
+        <CopilotSidebar className="custom-copilot-sidebar" />
+      </CopilotKit>
     );
   }
 };

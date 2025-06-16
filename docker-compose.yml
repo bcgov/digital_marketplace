@@ -11,7 +11,7 @@ services:
       - "3000:3000"
     environment:
       POSTGRES_URL: postgresql://digmkt:digmkt@db:5432/digmkt
-      NODE_ENV: ${NODE_ENV}
+      VITE_NODE_ENV: ${VITE_NODE_ENV}
     depends_on:
       - db
 
@@ -29,6 +29,17 @@ services:
       POSTGRES_PASSWORD: digmkt
       POSTGRES_DB: digmkt
     command: ["postgres", "-c", "log_statement=all"]
+
+  chroma:
+    image: chromadb/chroma:1.0.12
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_data:/chroma/chroma
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /chroma/chroma
+    restart: unless-stopped
 
   test-db:
     container_name: ${CONTAINER_NAME:-dm_test_db}

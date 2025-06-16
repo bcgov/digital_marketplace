@@ -90,7 +90,7 @@ const TitleView: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
           <Col md="4" className="align-self-end">
             <img
               style={{ maxWidth: "213px", transform: "translateY(-48px)" }}
-              className="d-none d-md-block position-absolute mt-n5 ml-6"
+              className="d-none d-md-block position-absolute mt-n5 ms-6"
               src={prefixPath(
                 "/images/illustrations/sprint_with_us_learn_more.svg"
               )}
@@ -179,7 +179,7 @@ const InfoBlockView: component_.base.View<InfoBlockProps> = ({
 }) => {
   return (
     <div className={className}>
-      <div className="d-flex flex-column align-items-center border bg-white rounded-lg py-4 py-md-5 px-4 text-center h-100">
+      <div className="d-flex flex-column align-items-center border bg-white rounded-3 py-4 py-md-5 px-4 text-center h-100">
         <h4 className="my-3">{title}</h4>
         <div className="mb-2">{description}</div>
       </div>
@@ -275,7 +275,7 @@ export const HowToApplyView: component_.page.View<State, InnerMsg, Route> = ({
                   color="info"
                   outline
                   symbol_={leftPlacement(iconLinkSymbol("book-user"))}
-                  className="mb-4 mb-sm-0 mr-0 mr-sm-4 text-nowrap">
+                  className="mb-4 mb-sm-0 me-0 me-sm-4 text-nowrap">
                   Read the Guide
                 </Link>
                 <Link

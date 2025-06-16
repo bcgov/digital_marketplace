@@ -58,14 +58,14 @@ export const view: component.base.View<Props> = (props) => {
             <Icon
               name={icon}
               color={iconColor}
-              className={`mr-2 ${iconClassName}`}
+              className={`me-2 ${iconClassName}`}
               width={iconWidth}
               height={iconHeight}
             />
           ) : null}
           <div className={titleClassName}>{title}</div>
         </div>
-        <div className="ml-auto">
+        <div className="ms-auto">
           <Icon
             className={chevronClassName}
             name={open ? "chevron-up" : "chevron-down"}

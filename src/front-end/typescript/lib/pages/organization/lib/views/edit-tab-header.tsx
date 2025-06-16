@@ -16,9 +16,9 @@ const QualifiedTag: component.base.View<QualifiedTagProps> = ({
       color="success"
       width={0.9}
       height={0.9}
-      className="mr-1"
+      className="me-1"
     />
-    <span className="font-size-small mr-3">{programName} Qualified</span>
+    <span className="font-size-small me-3">{programName} Qualified</span>
   </>
 );
 

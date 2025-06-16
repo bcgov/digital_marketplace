@@ -27,7 +27,7 @@ export const SignInCard: component.base.View<Props> = (props) => {
   return (
     <Row>
       <Col xs="12">
-        <div className="mx-auto bg-white p-4 shadow-hover mb-4 border rounded-sm">
+        <div className="mx-auto bg-white p-4 shadow-hover mb-4 border rounded-1">
           <h3 className="d-flex align-items-start flex-nowrap">
             <Icon
               name={userTypeToIcon(props.userType)}
@@ -36,7 +36,7 @@ export const SignInCard: component.base.View<Props> = (props) => {
               className="mt-1 flex-shrink-0"
               color="info"
             />
-            <span className="pl-2">{props.title}</span>
+            <span className="ps-2">{props.title}</span>
           </h3>
           <p>{props.description}</p>
           <Link

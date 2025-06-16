@@ -42,7 +42,7 @@ export {
   getInvalidValue,
   mapValid,
   mapInvalid,
-  ResponseValidation,
+  type ResponseValidation,
   isValid,
   isInvalid,
   isUnhandled

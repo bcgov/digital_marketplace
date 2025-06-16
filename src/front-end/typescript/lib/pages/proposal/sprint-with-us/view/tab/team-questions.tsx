@@ -919,7 +919,7 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
       color="info"
       title={
         <div className="d-flex align-items-center flex-nowrap">
-          <span className="mr-3">Question {index + 1}</span>
+          <span className="me-3">Question {index + 1}</span>
           {hasScoreBelowMinimum ? (
             <Icon
               name="exclamation-circle"
@@ -1126,7 +1126,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
       color="info"
       title={
         <div className="d-flex align-items-center flex-nowrap">
-          <span className="mr-3">Question {index + 1}</span>
+          <span className="me-3">Question {index + 1}</span>
           {hasScoreBelowMinimum ? (
             <Icon
               name="exclamation-triangle"
@@ -1180,7 +1180,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                   <div className="d-flex h-100">
                     <div
                       className={[
-                        "flex-shrink-0 mr-3",
+                        "flex-shrink-0 me-3",
                         question.minimumScore &&
                         questionEvaluationScore.score < question.minimumScore
                           ? "bg-warning"
@@ -1189,7 +1189,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                       style={{ width: "0.25em" }}
                     />
                     <div
-                      className="text-center mr-auto ml-auto"
+                      className="text-center me-auto ms-auto"
                       style={{
                         overflowWrap: "break-word",
                         overflowY: "scroll"
@@ -1200,7 +1200,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
                 </Col>
                 <Col xs="9">
                   <div className="d-flex align-items-start">
-                    <div className="form-control chair-evaluation panel-score disabled mr-3">
+                    <div className="form-control chair-evaluation panel-score disabled me-3">
                       {questionEvaluationScore.score}
                     </div>
                     <div className="form-control chair-evaluation panel-notes disabled">
@@ -1220,13 +1220,13 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
             <div className="d-flex h-100">
               <div
                 className={[
-                  "flex-shrink-0 mr-3 mb-3",
+                  "flex-shrink-0 me-3 mb-3",
                   hasScoreBelowMinimum ? "bg-danger" : ""
                 ].join(" ")}
                 style={{ width: "0.25em" }}
               />
               <div
-                className="text-center mr-auto ml-auto"
+                className="text-center me-auto ms-auto"
                 style={{ wordBreak: "break-word", overflowY: "scroll" }}>
                 Consensus Score
               </div>
@@ -1236,7 +1236,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
             <div className="d-flex align-items-start">
               <NumberField.view
                 className={[
-                  "chair-evaluation mr-3",
+                  "chair-evaluation me-3",
                   hasScoreBelowMinimum ? "warn" : ""
                 ].join(" ")}
                 extraChildProps={{ suffix: "points" }}
