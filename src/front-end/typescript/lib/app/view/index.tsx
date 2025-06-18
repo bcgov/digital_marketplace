@@ -1,6 +1,4 @@
-import {
-  DEFAULT_USER_AVATAR_IMAGE_PATH,
-} from "front-end/config";
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath, prefixPath } from "front-end/lib";
 import getAppModal from "front-end/lib/app/modal";
 import {
@@ -411,6 +409,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalTWUEdit", value })
       );
 
+    case "questionEvaluationIndividualTWUCreate":
+    case "questionEvaluationIndividualTWUEdit":
+    case "questionEvaluationConsensusTWUCreate":
+    case "questionEvaluationConsensusTWUEdit":
     case "proposalTWUView":
       return makeViewPageProps(
         props,
@@ -666,7 +668,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -691,7 +692,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -719,7 +720,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
+        }
       ]
     })
   };

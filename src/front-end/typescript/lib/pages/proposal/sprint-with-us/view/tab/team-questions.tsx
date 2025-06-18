@@ -11,7 +11,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
-import ProposalTeamQuestionsTabCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/views/proposal-tab-carousel";
+import * as TeamQuestionsCarousel from "front-end/lib/pages/proposal/sprint-with-us/lib/components/team-questions-carousel";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import Accordion from "front-end/lib/views/accordion";
 import { ProposalMarkdown } from "front-end/lib/views/markdown";
@@ -23,7 +23,6 @@ import { countWords } from "shared/lib";
 import {
   getQuestionByOrder,
   hasSWUOpportunityPassedTeamQuestions,
-  hasSWUOpportunityPassedTeamQuestionsEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -62,11 +61,11 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   startEditingLoading: number;
   saveLoading: number;
-  screenToFromLoading: number;
   openAccordions: Set<number>;
   evaluationScores: EvaluationScore[];
   isEditing: boolean;
   isAuthor: boolean;
+  teamQuestionsCarousel: Immutable<TeamQuestionsCarousel.State>;
 }
 
 export type InnerMsg =
@@ -85,45 +84,54 @@ export type InnerMsg =
     >
   | ADT<"cancelEditing">
   | ADT<"cancel">
-  | ADT<"saveEvaluationDraft">
-  | ADT<"saveConsensusDraft">
+  | ADT<"saveEvaluationDraft", Route | undefined>
+  | ADT<"saveConsensusDraft", Route | undefined>
   | ADT<
       "onSaveEvaluationDraftResponse",
-      api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluation,
-        CreateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          SWUTeamQuestionResponseEvaluation,
+          CreateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
   | ADT<
       "onSaveConsensusDraftResponse",
-      api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluation,
-        CreateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          SWUTeamQuestionResponseEvaluation,
+          CreateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
-  | ADT<"saveEvaluationChanges">
+  | ADT<"saveEvaluationChanges", Route | undefined>
   | ADT<
       "onSaveEvaluationChangesResponse",
-      api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluation,
-        UpdateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          SWUTeamQuestionResponseEvaluation,
+          UpdateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
-  | ADT<"saveConsensusChanges">
+  | ADT<"saveConsensusChanges", Route | undefined>
   | ADT<
       "onSaveConsensusChangesResponse",
-      api.ResponseValidation<
-        SWUTeamQuestionResponseEvaluation,
-        UpdateValidationErrors
-      >
+      [
+        api.ResponseValidation<
+          SWUTeamQuestionResponseEvaluation,
+          UpdateValidationErrors
+        >,
+        Route | undefined
+      ]
     >
-  | ADT<"screenIn">
-  | ADT<"onScreenInResponse", SWUProposal | null>
-  | ADT<"screenOut">
-  | ADT<"onScreenOutResponse", SWUProposal | null>
   | ADT<"scoreMsg", { childMsg: NumberField.Msg; rIndex: number }>
-  | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>;
-
+  | ADT<"notesMsg", { childMsg: LongText.Msg; rIndex: number }>
+  | ADT<"teamQuestionsCarousel", TeamQuestionsCarousel.Msg>
+  | ADT<"navigate", Route>;
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export function getTeamQuestionsOpportunityTab(
@@ -133,7 +141,7 @@ export function getTeamQuestionsOpportunityTab(
   return evaluating
     ? panelEvaluations.length
       ? ("consensus" as const)
-      : ("overview" as const)
+      : ("evaluation" as const)
     : ("teamQuestions" as const);
 }
 
@@ -220,11 +228,18 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     params.questionEvaluation,
     false
   );
+  const [teamQuestionsCarouselState, teamQuestionsCarouselCmds] =
+    TeamQuestionsCarousel.init({
+      viewerUser: params.viewerUser,
+      proposal: params.proposal,
+      proposals: params.proposals,
+      panelEvaluations: params.panelQuestionEvaluations,
+      evaluation: params.questionEvaluation
+    });
   return [
     {
       ...params,
       showModal: null,
-      screenToFromLoading: 0,
       saveLoading: 0,
       startEditingLoading: 0,
       openAccordions: new Set(
@@ -234,9 +249,15 @@ export const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       isEditing: !params.questionEvaluation,
       isAuthor:
         params.questionEvaluation?.evaluationPanelMember ===
-        params.viewerUser.id
+        params.viewerUser.id,
+      teamQuestionsCarousel: immutable(teamQuestionsCarouselState)
     },
-    evaluationScoreCmds
+    [
+      ...evaluationScoreCmds,
+      ...component_.cmd.mapMany(teamQuestionsCarouselCmds, (msg) =>
+        adt("teamQuestionsCarousel", msg)
+      )
+    ] as component_.Cmd<Msg>[]
   ];
 };
 
@@ -385,7 +406,8 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
               scores
             },
-            (response) => adt("onSaveEvaluationDraftResponse", response)
+            (response) =>
+              adt("onSaveEvaluationDraftResponse", [response, msg.value]) as Msg
           )
         ]
       ];
@@ -406,14 +428,15 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               status: SWUTeamQuestionResponseEvaluationStatus.Draft,
               scores
             },
-            (response) => adt("onSaveConsensusDraftResponse", response)
+            (response) =>
+              adt("onSaveConsensusDraftResponse", [response, msg.value]) as Msg
           )
         ]
       ];
     }
     case "onSaveEvaluationDraftResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -426,16 +449,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.set("evaluationScores", evaluationScoreStates),
             [
               ...evaluationScoreCmds,
-              component_.cmd.dispatch(
-                component_.global.newRouteMsg(
-                  adt("questionEvaluationIndividualSWUEdit", {
-                    proposalId: state.proposal.id,
-                    opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember,
-                    tab: "teamQuestions" as const
-                  }) as Route
-                )
-              ),
+              route
+                ? component_.cmd.dispatch(adt("navigate", route) as Msg)
+                : component_.cmd.dispatch(
+                    component_.global.newRouteMsg(
+                      adt("questionEvaluationIndividualSWUEdit", {
+                        proposalId: state.proposal.id,
+                        opportunityId: state.proposal.opportunity.id,
+                        userId: result.value.evaluationPanelMember,
+                        tab: "teamQuestions" as const
+                      }) as Route
+                    )
+                  ),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationDraftCreated.success)
@@ -485,7 +510,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveConsensusDraftResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -498,16 +523,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             state.set("evaluationScores", evaluationScoreStates),
             [
               ...evaluationScoreCmds,
-              component_.cmd.dispatch(
-                component_.global.newRouteMsg(
-                  adt("questionEvaluationConsensusSWUEdit", {
-                    proposalId: state.proposal.id,
-                    opportunityId: state.proposal.opportunity.id,
-                    userId: result.value.evaluationPanelMember,
-                    tab: "teamQuestions" as const
-                  }) as Route
-                )
-              ),
+              route
+                ? component_.cmd.dispatch(adt("navigate", route) as Msg)
+                : component_.cmd.dispatch(
+                    component_.global.newRouteMsg(
+                      adt("questionEvaluationConsensusSWUEdit", {
+                        proposalId: state.proposal.id,
+                        opportunityId: state.proposal.opportunity.id,
+                        userId: result.value.evaluationPanelMember,
+                        tab: "teamQuestions" as const
+                      }) as Route
+                    )
+                  ),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationDraftCreated.success)
@@ -570,7 +597,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               )(
                 state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
-                (response) => adt("onSaveEvaluationChangesResponse", response)
+                (response) =>
+                  adt("onSaveEvaluationChangesResponse", [
+                    response,
+                    msg.value
+                  ]) as Msg
               )
             ]
           : []
@@ -578,7 +609,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveEvaluationChangesResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -594,6 +625,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               .set("isEditing", false),
             [
               ...evaluationScoreCmds,
+              ...(route
+                ? [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+                : []),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationChangesSaved.success)
@@ -658,7 +692,11 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               )(
                 state.questionEvaluation.evaluationPanelMember,
                 adt("edit", { scores }),
-                (response) => adt("onSaveEvaluationChangesResponse", response)
+                (response) =>
+                  adt("onSaveEvaluationChangesResponse", [
+                    response,
+                    msg.value
+                  ]) as Msg
               )
             ]
           : []
@@ -666,7 +704,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "onSaveConsensusChangesResponse": {
       state = stopSaveLoading(state);
-      const result = msg.value;
+      const [result, route] = msg.value;
       switch (result.tag) {
         case "valid": {
           const [evaluationScoreStates, evaluationScoreCmds] =
@@ -682,6 +720,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
               .set("isEditing", false),
             [
               ...evaluationScoreCmds,
+              ...(route
+                ? [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+                : []),
               component_.cmd.dispatch(
                 component_.global.showToastMsg(
                   adt("success", toasts.questionEvaluationChangesSaved.success)
@@ -755,6 +796,51 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             childMsg: value
           }) as Msg
       });
+    case "teamQuestionsCarousel":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["teamQuestionsCarousel"],
+        childUpdate: TeamQuestionsCarousel.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("teamQuestionsCarousel", value),
+        updateAfter: (state) => {
+          if (msg.value.tag === "saveAndNavigate") {
+            const route = msg.value.value;
+            const saveAction = TeamQuestionsCarousel.getEvaluationActionType(
+              state.panelQuestionEvaluations,
+              state.questionEvaluation
+            );
+            let saveMsg: Msg;
+            switch (saveAction.type) {
+              case "create-individual":
+                saveMsg = adt("saveEvaluationDraft", route);
+                break;
+              case "edit-individual":
+                saveMsg = adt("saveEvaluationChanges", route);
+                break;
+              case "create-consensus":
+                saveMsg = adt("saveConsensusDraft", route);
+                break;
+              case "edit-consensus":
+                saveMsg = adt("saveConsensusChanges", route);
+                break;
+            }
+            if (state.isEditing) {
+              return [state, [component_.cmd.dispatch(saveMsg)]];
+            }
+            return [
+              state,
+              [component_.cmd.dispatch(adt("navigate", route) as Msg)]
+            ];
+          }
+          return [state, []];
+        }
+      });
+    case "navigate":
+      return [
+        state,
+        [component_.cmd.dispatch(component_.global.newRouteMsg(msg.value))]
+      ];
     default:
       return [state, []];
   }
@@ -910,7 +996,7 @@ const TeamQuestionResponseIndividualEvalView: component_.base.View<
   const currentScore = FormField.getValue(score.score);
   const hasScoreBelowMinimum =
     question.minimumScore &&
-    currentScore &&
+    currentScore !== null &&
     currentScore < question.minimumScore;
   return (
     <Accordion
@@ -1014,9 +1100,7 @@ const TeamQuestionResponsesIndividualEvalView: component_.base.View<{
   state: State;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ state, dispatch }) => {
-  const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
-    state.opportunity
-  );
+  const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveLoading = state.saveLoading > 0;
   const isLoading = isStartEditingLoading || isSaveLoading;
@@ -1068,12 +1152,11 @@ const TeamQuestionResponsesIndividualEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
-      <ProposalTeamQuestionsTabCarousel
-        proposals={state.proposals}
-        proposal={state.proposal}
-        evaluation={state.questionEvaluation}
-        panelEvaluations={state.panelQuestionEvaluations}
-        tab="teamQuestions"
+      <TeamQuestionsCarousel.view
+        state={state.teamQuestionsCarousel}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("teamQuestionsCarousel" as const, value)
+        )}
       />
     </div>
   );
@@ -1107,7 +1190,7 @@ const TeamQuestionResponseChairEvalView: component_.base.View<
   const currentScore = FormField.getValue(score.score);
   const hasScoreBelowMinimum =
     question.minimumScore &&
-    currentScore &&
+    currentScore !== null &&
     currentScore < question.minimumScore;
   const hasPanelScoreBelowMinimum = panelEvaluationScores.some(
     (panelEvaluationScore) => {
@@ -1294,9 +1377,7 @@ const TeamQuestionResponsesChairEvalView: component_.base.View<{
   state: State;
   dispatch: component_.base.Dispatch<Msg>;
 }> = ({ state, dispatch }) => {
-  const show = hasSWUOpportunityPassedTeamQuestionsEvaluation(
-    state.opportunity
-  );
+  const show = hasSWUOpportunityPassedTeamQuestions(state.opportunity);
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveLoading = state.saveLoading > 0;
   const isLoading = isStartEditingLoading || isSaveLoading;
@@ -1353,12 +1434,11 @@ const TeamQuestionResponsesChairEvalView: component_.base.View<{
           </Col>
         </Row>
       </div>
-      <ProposalTeamQuestionsTabCarousel
-        proposals={state.proposals}
-        proposal={state.proposal}
-        evaluation={state.questionEvaluation}
-        panelEvaluations={state.panelQuestionEvaluations}
-        tab="teamQuestions"
+      <TeamQuestionsCarousel.view
+        state={state.teamQuestionsCarousel}
+        dispatch={component_.base.mapDispatch(dispatch, (value) =>
+          adt("teamQuestionsCarousel" as const, value)
+        )}
       />
     </div>
   );

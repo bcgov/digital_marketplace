@@ -50,13 +50,13 @@ export interface RawSWUTeamQuestionResponseEvaluation
   notes: string;
 }
 
-export const CHAIR_EVALUATION_TABLE_NAME =
+export const SWU_CHAIR_EVALUATION_TABLE_NAME =
   "swuTeamQuestionResponseChairEvaluations";
-export const EVALUATOR_EVALUATION_TABLE_NAME =
+export const SWU_EVALUATOR_EVALUATION_TABLE_NAME =
   "swuTeamQuestionResponseEvaluatorEvaluations";
-export const CHAIR_EVALUATION_STATUS_TABLE_NAME =
+export const SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME =
   "swuTeamQuestionResponseChairEvaluationStatuses";
-export const EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
+export const SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME =
   "swuTeamQuestionResponseEvaluatorEvaluationStatuses";
 
 function rawTeamQuestionResponseEvaluationsToTeamQuestionResponseEvaluation(
@@ -218,8 +218,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
         const [evaluationRootRecord] =
           await connection<RawSWUTeamQuestionResponseEvaluation>(
             consensus
-              ? CHAIR_EVALUATION_TABLE_NAME
-              : EVALUATOR_EVALUATION_TABLE_NAME
+              ? SWU_CHAIR_EVALUATION_TABLE_NAME
+              : SWU_EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .insert(
@@ -243,8 +243,8 @@ export const createSWUTeamQuestionResponseEvaluation = tryDb<
       const [evaluationStatusRecord] =
         await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
           consensus
-            ? CHAIR_EVALUATION_STATUS_TABLE_NAME
-            : EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+            ? SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+            : SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
         )
           .transacting(trx)
           .insert(
@@ -298,8 +298,8 @@ export const updateSWUTeamQuestionResponseEvaluation = tryDb<
       for (const { order: questionOrder, score, notes } of scores) {
         const [result] = await connection<RawSWUTeamQuestionResponseEvaluation>(
           consensus
-            ? CHAIR_EVALUATION_TABLE_NAME
-            : EVALUATOR_EVALUATION_TABLE_NAME
+            ? SWU_CHAIR_EVALUATION_TABLE_NAME
+            : SWU_EVALUATOR_EVALUATION_TABLE_NAME
         )
           .transacting(trx)
           .where({ proposal, evaluationPanelMember, questionOrder })
@@ -343,18 +343,22 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
   proposals: Id[]
 ) {
   const [
-    [{ count: submittedEvaluatorEvaluationsCount }],
+    submittedEvaluatorEvaluations,
     [{ count: evaluatorsCount }],
     [{ count: questionsCount }]
   ] = await Promise.all([
-    generateSWUTeamQuestionResponseEvaluationQuery(connection)
+    connection
+      .with(
+        "submittedEvaluations",
+        generateSWUTeamQuestionResponseEvaluationQuery(connection)
+          .where({
+            "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
+          })
+          .whereIn("evaluations.proposal", proposals)
+      )
+      .from("submittedEvaluations")
       .transacting(trx)
-      .clearSelect()
-      .where({
-        "statuses.status": SWUTeamQuestionResponseEvaluationStatus.Submitted
-      })
-      .whereIn("evaluations.proposal", proposals)
-      .count("*"),
+      .forUpdate(),
     // Evaluators for the most recent version
     connection<RawSWUEvaluationPanelMember>(
       "swuEvaluationPanelMembers as members"
@@ -402,7 +406,7 @@ export async function allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
       .count("*")
   ]);
   return (
-    Number(submittedEvaluatorEvaluationsCount) ===
+    Number(submittedEvaluatorEvaluations.length) ===
     Number(evaluatorsCount) * proposals.length * Number(questionsCount)
   );
 }
@@ -412,11 +416,11 @@ function generateSWUTeamQuestionResponseEvaluationQuery(
   consensus = false
 ) {
   const evaluationTableName = consensus
-    ? CHAIR_EVALUATION_TABLE_NAME
-    : EVALUATOR_EVALUATION_TABLE_NAME;
+    ? SWU_CHAIR_EVALUATION_TABLE_NAME
+    : SWU_EVALUATOR_EVALUATION_TABLE_NAME;
   const evaluationStatusTableName = consensus
-    ? CHAIR_EVALUATION_STATUS_TABLE_NAME
-    : EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
+    ? SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+    : SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME;
   const query = connection(`${evaluationTableName} as evaluations`)
     .join(
       connection.raw(
