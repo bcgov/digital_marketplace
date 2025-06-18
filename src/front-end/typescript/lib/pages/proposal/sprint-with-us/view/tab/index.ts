@@ -8,7 +8,11 @@ import * as TeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/v
 import * as TeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
 import { routeDest } from "front-end/lib/views/link";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
-import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  SWUProposal,
+  SWUProposalSlim
+} from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 
@@ -33,6 +37,10 @@ export interface Params {
   proposal: SWUProposal;
   opportunity: SWUOpportunity;
   viewerUser: User;
+  evaluating: boolean;
+  questionEvaluation?: SWUTeamQuestionResponseEvaluation;
+  panelQuestionEvaluations: SWUTeamQuestionResponseEvaluation[];
+  proposals: SWUProposalSlim[];
 }
 
 export type InitResponse = null;
@@ -134,6 +142,49 @@ export function idToDefinition<K extends TabId>(
   }
 }
 
+function makeTeamQuestionsSidebarLink(
+  tab: TabId,
+  proposal: SWUProposal,
+  activeTab: TabId,
+  teamQuestionsTab: "consensus" | "evaluation" | "teamQuestions",
+  questionEvaluation: SWUTeamQuestionResponseEvaluation | undefined
+): MenuSidebar.SidebarItem {
+  const { icon, title } = idToDefinition(tab);
+  let link;
+  switch (teamQuestionsTab) {
+    case "consensus":
+      link = adt("questionEvaluationConsensusSWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "evaluation":
+      link = adt("questionEvaluationIndividualSWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "teamQuestions":
+      link = adt("proposalSWUView" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        tab
+      });
+      break;
+  }
+
+  return adt("link", {
+    icon,
+    text: `${title} ${link.tag !== "proposalSWUView" ? "(Eval)" : ""}`.trim(),
+    active: activeTab === tab,
+    dest: routeDest(link)
+  });
+}
+
 export function makeSidebarLink(
   tab: TabId,
   proposal: SWUProposal,
@@ -156,7 +207,9 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  proposal: SWUProposal
+  proposal: SWUProposal,
+  teamQuestionsTab: "consensus" | "evaluation" | "teamQuestions",
+  questionEvaluation?: SWUTeamQuestionResponseEvaluation
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     backLink: {
@@ -170,7 +223,7 @@ export function makeSidebarState(
             case "teamScenario":
               return "teamScenario" as const;
             case "teamQuestions":
-              return "teamQuestions" as const;
+              return teamQuestionsTab;
             case "proposal":
             case "history":
             default:
@@ -183,11 +236,22 @@ export function makeSidebarState(
       adt("heading", "Vendor Proposal"),
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
-      makeSidebarLink("teamQuestions", proposal, activeTab),
+      makeTeamQuestionsSidebarLink(
+        "teamQuestions",
+        proposal,
+        activeTab,
+        teamQuestionsTab,
+        questionEvaluation
+      ),
       makeSidebarLink("codeChallenge", proposal, activeTab),
       makeSidebarLink("teamScenario", proposal, activeTab),
       adt("heading", "Management"),
       makeSidebarLink("history", proposal, activeTab)
     ]
   });
+}
+
+export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
+  const evaluationTabs: TabId[] = ["teamQuestions"];
+  return evaluationTabs.includes(tabId);
 }

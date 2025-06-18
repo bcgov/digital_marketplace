@@ -376,11 +376,13 @@ function doesOppHaveStatus(
     (oppStatus === "evaluation" &&
       [
         CWUO.CWUOpportunityStatus.Evaluation,
+        SWUO.SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+        SWUO.SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
         SWUO.SWUOpportunityStatus.EvaluationCodeChallenge,
-        SWUO.SWUOpportunityStatus.EvaluationTeamQuestions,
         SWUO.SWUOpportunityStatus.EvaluationTeamScenario,
         TWUO.TWUOpportunityStatus.EvaluationChallenge,
-        TWUO.TWUOpportunityStatus.EvaluationResourceQuestions
+        TWUO.TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
+        TWUO.TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
       ].includes(opp.value.status)) ||
     (oppStatus === "awarded" &&
       [

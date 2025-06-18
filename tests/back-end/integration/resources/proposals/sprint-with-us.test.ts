@@ -145,7 +145,8 @@ test("sprint-with-us proposal crud", async () => {
 
   const opportunityParams = buildCreateSWUOpportunityParams({
     status: SWUOpportunityStatus.Published,
-    proposalDeadline: faker.date.soon()
+    proposalDeadline: faker.date.soon(),
+    evaluationPanel: []
   });
   const opportunity = await insertSWUOpportunity(
     connection,
