@@ -1,7 +1,4 @@
-import {
-  DEFAULT_USER_AVATAR_IMAGE_PATH,
-  PROCUREMENT_CONCIERGE_URL
-} from "front-end/config";
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath, prefixPath } from "front-end/lib";
 import getAppModal from "front-end/lib/app/modal";
 import {
@@ -67,11 +64,9 @@ import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, {
-  externalDest,
   iconLinkSymbol,
   imageLinkSymbol,
   leftPlacement,
-  rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import { compact } from "lodash";
@@ -260,6 +255,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalSWUEdit", value })
       );
 
+    case "questionEvaluationIndividualSWUCreate":
+    case "questionEvaluationIndividualSWUEdit":
+    case "questionEvaluationConsensusSWUCreate":
+    case "questionEvaluationConsensusSWUEdit":
     case "proposalSWUView":
       return makeViewPageProps(
         props,
@@ -410,6 +409,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalTWUEdit", value })
       );
 
+    case "questionEvaluationIndividualTWUCreate":
+    case "questionEvaluationIndividualTWUEdit":
+    case "questionEvaluationConsensusTWUCreate":
+    case "questionEvaluationConsensusTWUEdit":
     case "proposalTWUView":
       return makeViewPageProps(
         props,
@@ -665,13 +668,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-const procurementConciergeLink: Nav.NavLink = {
-  children: "Procurement Concierge",
-  dest: externalDest(PROCUREMENT_CONCIERGE_URL),
-  newTab: true,
-  symbol_: rightPlacement(iconLinkSymbol("external-link"))
-};
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -696,8 +692,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
-      [Nav.linkAccountAction(procurementConciergeLink)]
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -725,9 +720,6 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
-        {
-          links: [procurementConciergeLink]
         }
       ]
     })

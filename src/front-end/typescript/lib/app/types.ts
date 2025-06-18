@@ -27,6 +27,10 @@ import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-wi
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageEvaluationIndividualTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-individual";
+import * as PageEvaluationIndividualTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-individual";
+import * as PageEvaluationConsensusTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-consensus";
+import * as PageEvaluationConsensusTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-individual";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
 import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
@@ -45,6 +49,10 @@ import * as PageProposalSWUCreate from "front-end/lib/pages/proposal/sprint-with
 import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-us/edit";
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
+import * as PageEvaluationIndividualSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-individual";
+import * as PageEvaluationIndividualSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
+import * as PageEvaluationConsensusSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-consensus";
+import * as PageEvaluationConsensusSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
@@ -90,6 +98,22 @@ export type Route =
   | ADT<"proposalSWUCreate", PageProposalSWUCreate.RouteParams>
   | ADT<"proposalSWUEdit", PageProposalSWUEdit.RouteParams>
   | ADT<"proposalSWUView", PageProposalSWUView.RouteParams>
+  | ADT<
+      "questionEvaluationIndividualSWUCreate",
+      PageEvaluationIndividualSWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationIndividualSWUEdit",
+      PageEvaluationIndividualSWUEdit.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusSWUCreate",
+      PageEvaluationConsensusSWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusSWUEdit",
+      PageEvaluationConsensusSWUEdit.RouteParams
+    >
   | ADT<"proposalSWUExportOne", PageProposalSWUExportOne.RouteParams>
   | ADT<"proposalSWUExportAll", PageProposalSWUExportAll.RouteParams>
   | ADT<"opportunitySWUCreate", PageOpportunitySWUCreate.RouteParams>
@@ -105,6 +129,22 @@ export type Route =
   | ADT<"proposalTWUExportAll", PageProposalTWUExportAll.RouteParams>
   | ADT<"proposalTWUCreate", PageProposalTWUCreate.RouteParams>
   | ADT<"proposalTWUView", PageProposalTWUView.RouteParams>
+  | ADT<
+      "questionEvaluationIndividualTWUCreate",
+      PageEvaluationIndividualTWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationIndividualTWUEdit",
+      PageEvaluationIndividualTWUEdit.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusTWUCreate",
+      PageEvaluationConsensusTWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusTWUEdit",
+      PageEvaluationConsensusTWUEdit.RouteParams
+    >
   | ADT<"proposalTWUEdit", PageProposalTWUEdit.RouteParams>
   | ADT<"proposalCWUCreate", PageProposalCWUCreate.RouteParams>
   | ADT<"proposalCWUEdit", PageProposalCWUEdit.RouteParams>
