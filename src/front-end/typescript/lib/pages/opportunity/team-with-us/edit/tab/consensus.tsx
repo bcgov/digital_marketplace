@@ -11,7 +11,6 @@ import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import * as toasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import Link, {
-  emptyIconLinkSymbol,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -43,6 +42,7 @@ import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateTWUResourceQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/team-with-us/resource-questions";
 import { isAdmin } from "shared/lib/resources/user";
+import Icon from "front-end/lib/views/icon";
 
 type ModalId = "submit" | "finalize";
 
@@ -355,32 +355,34 @@ const ContextMenuCell: component_.base.View<{
 
 interface ProponentCellProps {
   proposal: TWUProposalSlim;
-  opportunity: TWUOpportunity;
-  disabled: boolean;
   warn: boolean;
 }
 
 const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
-  opportunity,
-  disabled,
   warn
 }) => {
-  const proposalRouteParams = {
-    proposalId: proposal.id,
-    opportunityId: opportunity.id,
-    tab: "proposal" as const
-  };
+  const iconClassName = "mr-2 text-danger flex-shrink-0 flex-grow-0";
   return (
-    <Link
-      symbol_={leftPlacement(
-        warn ? iconLinkSymbol("exclamation-triangle") : emptyIconLinkSymbol()
+    <span className="a d-inline-flex align-items-center flex-nowrap">
+      {warn ? (
+        <Icon
+          name="exclamation-triangle"
+          className={iconClassName}
+          width={1}
+          height={1}
+        />
+      ) : (
+        <div
+          style={{
+            width: "1rem",
+            height: "1rem"
+          }}
+          className={iconClassName}
+        />
       )}
-      symbolClassName="text-danger"
-      disabled={disabled}
-      dest={routeDest(adt("proposalTWUView", proposalRouteParams))}>
       {getTWUProponentName(proposal)}
-    </Link>
+    </span>
   );
 };
 
@@ -405,14 +407,7 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
     return [
       {
         className: "text-wrap",
-        children: (
-          <ProponentCell
-            proposal={p}
-            opportunity={opportunity}
-            disabled={isLoading}
-            warn={hasScoreBelowMinimum}
-          />
-        )
+        children: <ProponentCell proposal={p} warn={hasScoreBelowMinimum} />
       },
       ...opportunity.resourceQuestions.map((rq) => {
         const score = evaluation?.scores[rq.order]?.score;
