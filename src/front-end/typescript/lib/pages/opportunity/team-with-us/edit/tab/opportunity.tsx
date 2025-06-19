@@ -18,7 +18,7 @@ import {
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
-import React from "react";
+import React, { useEffect } from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import {
@@ -31,6 +31,12 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
+import { useCopilotChat } from "@copilotkit/react-core";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import {
+  opportunityToPublicState,
+  FORMATTED_CRITERIA
+} from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 
 type ModalId =
   | "publish"
@@ -52,6 +58,8 @@ export interface State extends Tab.Params {
   saveChangesAndUpdateStatusLoading: number;
   updateStatusLoading: number;
   deleteLoading: number;
+  reviewWithAILoading: number;
+  opportunityForReview: TWUOpportunity | null;
   isEditing: boolean;
 }
 
@@ -86,7 +94,11 @@ export type InnerMsg =
   | ADT<
       "onDeleteResult",
       api.ResponseValidation<TWUOpportunity, BodyWithErrors>
-    >;
+    >
+  | ADT<"reviewWithAI">
+  | ADT<"onReviewAIResponse", Form.PersistResult>
+  | ADT<"setOpportunityForReview", TWUOpportunity>
+  | ADT<"clearOpportunityForReview">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -124,6 +136,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       saveChangesAndUpdateStatusLoading: 0,
       updateStatusLoading: 0,
       deleteLoading: 0,
+      reviewWithAILoading: 0,
+      opportunityForReview: null,
       isEditing: false
     },
     []
@@ -144,6 +158,8 @@ const startUpdateStatusLoading = makeStartLoading<State>("updateStatusLoading");
 const stopUpdateStatusLoading = makeStopLoading<State>("updateStatusLoading");
 const startDeleteLoading = makeStartLoading<State>("deleteLoading");
 const stopDeleteLoading = makeStopLoading<State>("deleteLoading");
+const startReviewWithAILoading = makeStartLoading<State>("reviewWithAILoading");
+const stopReviewWithAILoading = makeStopLoading<State>("reviewWithAILoading");
 
 function persistForm(
   form: Immutable<Form.State>,
@@ -655,10 +671,53 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           ];
       }
     }
+    case "reviewWithAI": {
+      const form = state.form;
+      if (!form) return [state, []];
+      
+      // Programmatically click the CopilotKit button to open the chat window
+      setTimeout(() => {
+        const copilotButton = document.querySelector('.copilotKitButton') as HTMLButtonElement;
+        if (copilotButton) {
+          copilotButton.click();
+        }
+      }, 100);
+      
+      return [
+        startReviewWithAILoading(state),
+        [persistForm(form, (result) => adt("onReviewAIResponse", result))]
+      ];
+    }
+    case "onReviewAIResponse": {
+      state = stopReviewWithAILoading(state);
+      const result = msg.value;
+      if (result.tag === "valid") {
+        const [resultFormState, resultCmds, opportunity] = result.value;
+        return [
+          state.set("form", resultFormState),
+          [
+            ...component_.cmd.mapMany(
+              resultCmds,
+              (msg) => adt("form", msg) as Msg
+            ),
+            component_.cmd.dispatch(
+              adt("setOpportunityForReview", opportunity) as Msg
+            )
+          ]
+        ];
+      }
+      return [state, []];
+    }
+    case "setOpportunityForReview":
+      return [state.set("opportunityForReview", msg.value), []];
+    case "clearOpportunityForReview":
+      return [state.set("opportunityForReview", null), []];
     default:
       return [state, []];
   }
 };
+
+const AI_REVIEW_BUTTON_COLOR = "primary";
 
 const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const opportunity = state.opportunity;
@@ -694,31 +753,76 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
 
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
-  const opportunity = state.opportunity;
-  const form = state.form;
-  if (!opportunity || !form) return null;
-  const viewerUser = state.viewerUser;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
+
   const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
+  const isReviewWithAILoading = state.reviewWithAILoading > 0;
   const isLoading =
     isStartEditingLoading ||
     isSaveChangesLoading ||
     isUpdateStatusLoading ||
-    isDeleteLoading;
+    isDeleteLoading ||
+    isReviewWithAILoading;
+
+  const { appendMessage, setMessages } = useCopilotChat();
+  useEffect(() => {
+    if (state.opportunityForReview) {
+      // Clear chat history first for a fresh conversation
+      setMessages([]);
+      
+      const readableOpportunity = opportunityToPublicState(state.opportunityForReview);
+      appendMessage(new TextMessage({
+        content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
+
+${JSON.stringify(readableOpportunity, null, 2)}
+
+${FORMATTED_CRITERIA}`,
+        role: Role.System,
+        id: Math.random().toString()
+      }));
+      dispatch(adt("clearOpportunityForReview"));
+    }
+  }, [state.opportunityForReview, appendMessage, setMessages, dispatch]);
+
+  if (!state.opportunity || !state.form) {
+    return (
+      <div className="pt-8">
+        <Row>
+          <Col xs="12">
+            <Reporting {...props} />
+          </Col>
+        </Row>
+      </div>
+    );
+  }
+
+  const { opportunity, form, viewerUser } = state;
+
   return (
     <div>
-      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
-      <Reporting {...props} />
+      <EditTabHeader
+        opportunity={opportunity}
+        viewerUser={viewerUser}
+        isEditing={state.isEditing}
+        toggleEditing={() =>
+          dispatch(state.isEditing ? adt("cancelEditing") : adt("startEditing"))
+        }
+      />
+      <Row className="mt-5">
+        <Col xs="12">
+          <Reporting {...props} />
+        </Col>
+      </Row>
       <Row className="mt-5">
         <Col xs="12">
           <Form.view
-            disabled={!state.isEditing || isLoading}
             state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("form" as const, msg)
+            dispatch={component_.base.mapDispatch(dispatch, (value) =>
+              adt("form", value)
             )}
+            disabled={isLoading}
           />
         </Col>
       </Row>
@@ -932,11 +1036,13 @@ export const component: Tab.Component<State, Msg> = {
       state.saveChangesAndUpdateStatusLoading > 0;
     const isUpdateStatusLoading = state.updateStatusLoading > 0;
     const isDeleteLoading = state.deleteLoading > 0;
+    const isReviewWithAILoading = state.reviewWithAILoading > 0;
     const isLoading =
       isStartEditingLoading ||
       isSaveChangesLoading ||
       isUpdateStatusLoading ||
-      isDeleteLoading;
+      isDeleteLoading ||
+      isReviewWithAILoading;
     const opp = state.opportunity;
     const form = state.form;
     if (!opp || !form) return component_.page.actions.none();
@@ -945,6 +1051,17 @@ export const component: Tab.Component<State, Msg> = {
     const isPublic = isTWUOpportunityPublic(opp);
     const isDraft = opp.status === TWUOpportunityStatus.Draft;
     const isUnderReview = opp.status === TWUOpportunityStatus.UnderReview;
+
+    const reviewWithAIAction: LinkProps = {
+      children: "Review with AI",
+      symbol_: leftPlacement(iconLinkSymbol("question-circle")),
+      button: true,
+      color: AI_REVIEW_BUTTON_COLOR,
+      loading: isReviewWithAILoading,
+      disabled: isLoading,
+      onClick: () => dispatch(adt("reviewWithAI"))
+    };
+
     // Show relevant actions when the user is editing the opportunity.
     if (state.isEditing) {
       return component_.page.actions.links(
@@ -1065,15 +1182,16 @@ export const component: Tab.Component<State, Msg> = {
                     dispatch(
                       adt(
                         "showModal",
-                        viewerIsAdmin ? "publish" : "submit"
-                      ) as Msg
+                        (viewerIsAdmin ? "publish" : "submit") as any
+                      )
                     )
                 },
                 {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   onClick: () => dispatch(adt("startEditing"))
-                }
+                },
+                reviewWithAIAction
               ]
             },
             {
@@ -1100,13 +1218,14 @@ export const component: Tab.Component<State, Msg> = {
                     children: "Publish",
                     disabled: !isValid(),
                     symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                    onClick: () => dispatch(adt("showModal", "publish") as Msg)
+                    onClick: () => dispatch(adt("showModal", "publish" as const))
                   },
                   {
                     children: "Edit",
                     symbol_: leftPlacement(iconLinkSymbol("edit")),
                     onClick: () => dispatch(adt("startEditing"))
-                  }
+                  },
+                  reviewWithAIAction
                 ]
               },
               {
@@ -1128,7 +1247,8 @@ export const component: Tab.Component<State, Msg> = {
               onClick: () => dispatch(adt("startEditing")),
               button: true,
               color: "primary"
-            }
+            },
+            reviewWithAIAction
           ]);
         }
       case TWUOpportunityStatus.Published:
@@ -1145,7 +1265,8 @@ export const component: Tab.Component<State, Msg> = {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   onClick: () => dispatch(adt("startEditing"))
-                }
+                },
+                reviewWithAIAction
               ]
             },
             {
@@ -1183,7 +1304,8 @@ export const component: Tab.Component<State, Msg> = {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   onClick: () => dispatch(adt("startEditing"))
-                }
+                },
+                reviewWithAIAction
               ]
             },
             {

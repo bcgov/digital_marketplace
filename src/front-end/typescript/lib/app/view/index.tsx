@@ -83,8 +83,6 @@ import { VITE_SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
-import { CopilotKit } from "@copilotkit/react-core";
-import { CopilotSidebar } from "@copilotkit/react-ui";
 import "@copilotkit/react-ui/styles.css";
 
 function makeViewPageProps<RouteParams, PageState, PageMsg>(
@@ -868,45 +866,23 @@ function simpleNavProps(
 
 const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
-  if (!state.ready) {
-    return null;
-  } else {
-    const viewPageProps = pageToViewPageProps(props);
-    const navProps = viewPageProps.component.simpleNav
-      ? simpleNavProps(props)
-      : regularNavProps(props);
-    const pageModal: component_.page.Modal<Msg> =
-      viewPageProps.component.getModal && viewPageProps.pageState
-        ? (component_.page.modal.mapPage(
-            viewPageProps.component.getModal(viewPageProps.pageState),
-            viewPageProps.mapPageMsg
-          ) as component_.page.Modal<Msg>)
-        : (component_.page.modal.hide() as component_.page.Modal<Msg>);
-    const appModal = getAppModal(state);
-
-    return (
-      <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
-        <div
-          className={`route-${state.activeRoute.tag} ${
-            state.incomingRoute ? "in-transition" : ""
-          } ${
-            navProps.contextualActions ? "contextual-actions-visible" : ""
-          } app d-flex flex-column`}
-          style={{ minHeight: "100vh" }}>
-          <Nav.view {...navProps} />
-          <ViewPage {...viewPageProps} />
-          {viewPageProps.component.simpleNav ? null : <Footer />}
-          <ViewToasts {...props} />
-          <ViewModal
-            dispatch={dispatch}
-            pageModal={pageModal}
-            appModal={appModal}
-          />
-        </div>
-        <CopilotSidebar className="custom-copilot-sidebar" />
-      </CopilotKit>
-    );
-  }
+  const viewPageProps = pageToViewPageProps(props);
+  const appModal = getAppModal(state);
+  const pageModal = viewPageProps.component.getModal
+    ? viewPageProps.component.getModal(viewPageProps.pageState)
+    : component_.page.modal.hide();
+  const navProps = viewPageProps.component.simpleNav
+    ? simpleNavProps(props)
+    : regularNavProps(props);
+  return (
+      <div className="d-flex flex-column" style={{ minHeight: "100vh" }}>
+        <Nav.view {...navProps} />
+        <ViewPage {...viewPageProps} />
+        <ViewToasts state={state} dispatch={dispatch} />
+        <ViewModal dispatch={dispatch} pageModal={pageModal} appModal={appModal} />
+        <Footer />
+      </div>
+  );
 };
 
 export default view;

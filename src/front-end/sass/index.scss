@@ -1151,3 +1151,8 @@ nav.navbar .nav-link:hover {
 .text-c-sidebar-menu-link-inactive-fg:hover {
   color: $link-hover-color !important;
 }
+
+// Import CopilotKit styles
+@import "copilotkit";
+
+
