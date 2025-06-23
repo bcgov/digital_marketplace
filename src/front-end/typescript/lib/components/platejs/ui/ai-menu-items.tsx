@@ -225,10 +225,22 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
         }
 
+        prompt += `\nThe description should be follow the format similar to the reference material.
+        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements,
+        years of experience, and estimated procurement timeline.
+        For responsibilities and requirements, ensure to cover all aspects of service areas.
+        Include contract extension language if it exists in reference material.
+        If reference material is provided, use it for inspiration but create unique, original content.
+        Ignore markdown rules in reference material, and use standard markdown rules instead.
+        If some information is missing in the context, use placeholder text, for example "[YOUR ORGANIZATION]".
+        Use placeholders for any other unknown data that's present in example material, but not in provided context. Use only if necessary.
+        Important: follow the gneral format and length of the reference material as closely as possible.`;
+
+
         // Add similar opportunities context if found
         const results = ragSearchResults.results;
         if (results && results.length > 0) {
-          prompt += '\n--- Similar Opportunities for Reference ---\n';
+          prompt += '\n--- REFERENCE MATERIAL - Similar Opportunities for Reference ---\n';
           results.forEach((result: any, index: number) => {
             prompt += `\nSimilar Opportunity ${index + 1}:\n`;
             prompt += `Title: ${result.metadata.title}\n`;
@@ -238,16 +250,6 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += '\n--- End of Reference Material ---\n';
         }
 
-        prompt += `\nPlease create a description based on this information by following the format similar to the reference material.
-        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements,
-        years of experience, and estimated procurement timeline.
-        For responsibilities and requirements, ensure to cover all aspects of service areas.
-        Include contract extension language if it exists in reference material.
-        If reference material is provided, use it for inspiration but create unique, original content.
-        Ignore markdown rules in reference material, and use standard markdown rules instead.
-        If some information is missing in the context, use placeholder text, for example "[YOUR ORGANIZATION]".
-        Use placeholders for any other unknown data that's present in example material, but not in provided context. Use only if necessary.
-        Important: follow the format of the reference material as closely as possible.`;
 
         console.log('prompt', prompt);
         // throw new Error('test');
@@ -416,7 +418,7 @@ __EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUEST
         const defaultPrompt = `Generate evaluation guidelines for the following question in a Team With Us opportunity.
 
 REQUIREMENTS:
-- Generate clear evaluation guidelines for the specific question above
+- Generate clear evaluation guidelines for the specific question below
 - Include what evaluators should look for in a good response
 - Provide specific criteria for assessing competency
 - Include guidance on how to score/evaluate responses
@@ -633,7 +635,7 @@ export const AIMenuItems = ({
         }
 
         resourceQuestionItems.push(
-          aiChatItems.generateMarkdownSample,
+          // aiChatItems.generateMarkdownSample,
           aiChatItems.continueWrite
         );
 

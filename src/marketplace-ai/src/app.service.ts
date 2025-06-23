@@ -23,12 +23,19 @@ export class AppService {
   ) {
     try {
       const response = await this.client.path('/chat/completions').post({
+        // headers: {
+        //   'Ocp-Apim-Subscription-Keyz': this.configService.get<string>('APIM_SUBSCRIPTION_KEY')
+        // },
         body: {
           messages,
           max_tokens: 2000,
           model: this.model,
         },
       });
+
+      // console.log('request header: ', response.request.headers);
+      // console.log('error details: ', response.body.error?.details);
+      // console.log('response: ', response);
 
       if (isUnexpected(response)) {
         throw new Error(

@@ -128,6 +128,7 @@ export class AppController {
     @Body() body: CommandApiDto,
     @Res() res: Response,
   ) {
+    // throw new Error('test');
     try {
       const azure = createAzure({
         endpoint: process.env.AZURE_AI_ENDPOINT,
@@ -206,7 +207,7 @@ export class AppController {
                 const questionText = questionMatch[1];
                 const userPrompt = userPromptMatch
                   ? userPromptMatch[1].trim()
-                  : 'Generate evaluation guidelines for the following question in a Team With Us opportunity.';
+                  : 'Generate evaluation guidelines for the following question in an opportunity.';
 
                 finalPrompt = await this.generateSingleGuidelinePrompt(
                   context,
@@ -232,7 +233,7 @@ export class AppController {
         console.log('special generation');
         console.log('finalPrompt: \n', finalPrompt);
         console.log('finalSystem: \n', finalSystem);
-        throw new Error('test');
+        // throw new Error('test');
 
         const result = streamText({
           model: azure(modelName), // or your configured AI model
@@ -258,7 +259,7 @@ export class AppController {
         console.log('original logic');
         console.log('body.messages: \n', body.messages[0].content);
         console.log('body.system: \n', body.system);
-        throw new Error('test');
+        // throw new Error('test');
         const result = streamText({
           model: azure(modelName), // or your configured AI model
           system: `${body.system || 'You are a helpful assistant.'}
@@ -274,7 +275,7 @@ export class AppController {
             "**Description:**\n We are seeking..." <- THIS IS WRONG
             "**Description:**\n\n We are seeking..." <- THIS IS CORRECT
 
-            3. Ensure lists don't have a trailing space in the end of each list item
+            3. Ensure lists (if any) don't have a trailing space in the end of each list item
             Example:
             - Item 1\n
             - Item 2\n
@@ -297,6 +298,86 @@ export class AppController {
         // Use pipeDataStreamToResponse to stream the result to the client
         result.pipeDataStreamToResponse(res);
       }
+    } catch (error) {
+      console.error('Error in /api/ai/command endpoint:', error);
+      res.setHeader('Content-Type', 'application/json');
+      res.status(500).json({ error: 'Error processing AI command.' });
+    }
+  }
+
+  @Post('/api/ai/command_test')
+  async handleCommandRequest2(
+    @Body() body: CommandApiDto,
+    @Res() res: Response,
+  ) {
+    try {
+      // Create a mock result object that mimics the streamText result structure
+      const result = {
+        pipeDataStreamToResponse: (response: Response) => {
+          // Set the same headers that the original streaming would use
+          response.setHeader('Content-Type', 'text/plain');
+          response.setHeader('Cache-Control', 'no-cache');
+          response.setHeader('Connection', 'keep-alive');
+
+          // Generate the exact streaming format with new content
+          response.write('f:{"messageId":"msg-kG0M1zsyM7XOsK4G4F08Ded8"}\n');
+          response.write('0:"**Full Stack Developer Opportunity**\\n\\n"\n');
+          response.write(
+            '0:"**Organization:**  \\n[YOUR ORGANIZATION] is seeking a skilled Full Stack Developer to join our team in Victoria. This is an on-site position where you\'ll work on innovative web applications using cutting-edge technologies across the entire development stack.\\n\\n"\n',
+          );
+          response.write(
+            '0:"**Contract Outcome:**  \\nThe successful candidate will deliver high-quality, scalable web applications that meet our organizational needs, leveraging Amazon Web Services (AWS) and other modern technologies. The project must be completed by June 28, 2025.\\n\\n"\n',
+          );
+          response.write('0:"**Key Responsibilities:**  \\n\\n"\n');
+          response.write(
+            '0:"- Design, develop full-stack web applications using AWS and other relevant technologies.  \\n- Collaborate with cross-functional teams to define, design, and ship new features.  \\n- Ensure the performance, quality, and responsiveness of applications.  \\n- Maintain code integrity and organization, including version control using Git.  \\n- Troubleshoot and debug issues to optimize performance.  \\n- Participate in code reviews and contribute to team knowledge sharing.  \\n\\n"\n',
+          );
+          response.write('0:"**Minimum Requirements:**  \\n\\n"\n');
+          response.write(
+            '0:"- Proven experience as a Full Stack Developer with expertise in Amazon Web Services (AWS).  \\n- Strong proficiency in front-end and back-end development technologies.  \\n- Experience with Git for version control.  \\n- Ability to work independently and as part of a team in a fast-paced environment.  \\n- Strong problem-solving skills and attention to detail.  \\n\\n"\n',
+          );
+          response.write(
+            '0:"**Years of Experience:**  \\nA minimum of [X] years of experience in full-stack development, with at least [Y] years focused on AWS-based solutions.\\n\\n"\n',
+          );
+          response.write('0:"**Estimated Procurement Timeline:**  \\n\\n"\n');
+          response.write(
+            '0:"- **Proposal Deadline:** June 23, 2025  \\n- **Contract Award Date:** June 24, 2025  \\n- **Contract Start Date:** June 25, 2025  \\n- **Contract Completion Date:** June 28, 2025  \\n\\n"\n',
+          );
+          response.write(
+            '0:"**Contract Details:**  \\nThis is a fixed-term contract with a maximum budget of $1,234. There is no provision for contract extensions at this time.  \\n\\n"\n',
+          );
+          response.write(
+            '0:"**Note to Proponents:**  \\nAn incumbent vendor may be engaged in related work. The incumbent vendor is NOT prevented from applying to this opportunity.  \\n\\n"\n',
+          );
+          response.write('0:"**Acceptance Criteria:**  \\n\\n"\n');
+          response.write(
+            '0:"- Deliver fully functional web applications that meet specified requirements.  \\n- Ensure all deliverables are completed within the agreed timeline.  \\n- Participate in regular meetings and provide timely updates on progress.  \\n- Adhere to best practices in coding, security, and performance optimization.  \\n\\n"\n',
+          );
+          response.write(
+            '0:"**Optional Skills (Preferred but Not Required):**  \\n\\n"\n',
+          );
+          response.write(
+            '0:"- Experience with additional cloud platforms or DevOps tools.  \\n- Familiarity with agile development methodologies.  \\n- Knowledge of additional programming languages or frameworks.  \\n\\n"\n',
+          );
+          response.write(
+            '0:"**Location:**  \\nVictoria, BC (Remote work is not permitted for this role).  \\n\\n\\n"\n',
+          );
+          response.write(
+            '0:"**Budget:**  \\nMaximum budget for this contract is $1,234."\n',
+          );
+          response.write(
+            'e:{"finishReason":"unknown","usage":{"promptTokens":2586,"completionTokens":559},"isContinued":false}\n',
+          );
+          response.write(
+            'd:{"finishReason":"unknown","usage":{"promptTokens":2586,"completionTokens":559}}\n',
+          );
+
+          response.end();
+        },
+      };
+
+      // Use the same pipeDataStreamToResponse call as before
+      result.pipeDataStreamToResponse(res);
     } catch (error) {
       console.error('Error in /api/ai/command endpoint:', error);
       res.setHeader('Content-Type', 'application/json');
@@ -429,27 +510,7 @@ export class AppController {
       // Remote Work: ${context.remoteOk ? 'Allowed' : 'Not allowed'}
       // ${context.remoteDesc ? `Remote Description: ${context.remoteDesc}` : ''}
 
-      const prompt = `Generate comprehensive evaluation questions for a Team With Us opportunity.
-
-OPPORTUNITY CONTEXT:
-Title: ${context.title || 'N/A'}
-Teaser: ${context.teaser || 'N/A'}
-Description: ${context.description || 'N/A'}
-
-RESOURCES NEEDED:
-${context.resources
-  .map(
-    (r: any, i: number) => `
-Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
-- Mandatory Skills: ${r.mandatorySkills?.join(', ') || 'None'}
-- Optional Skills: ${r.optionalSkills?.join(', ') || 'None'}`,
-  )
-  .join('')}
-
-ALL SKILLS TO EVALUATE: ${Array.from(allSkills).join(', ')}
-SERVICE AREAS: ${Array.from(serviceAreas).join(', ')}
-
-${skillRagExamples}${serviceAreaRagExamples}
+      const prompt = `Generate comprehensive evaluation questions and guidelines for an opportunity.
 
 REQUIREMENTS:
 - Generate an optimal set of evaluation questions that comprehensively covers ALL service areas and skills
@@ -476,18 +537,39 @@ Please return only valid JSON. IMPORTANT:
 - For JSON, escape new line characters properly (use "\\n" instead of "\n")
 - DO NOT start the response with \`\`\`json, output RAW JSON ONLY
 - Ensure questions cover ALL skills and service areas mentioned
-- Optimize for comprehensive evaluation with minimal question count`;
+- Optimize for comprehensive evaluation with minimal question count
+
+OPPORTUNITY CONTEXT:
+Title: ${context.title || 'N/A'}
+Teaser: ${context.teaser || 'N/A'}
+Description: ${context.description || 'N/A'}
+
+RESOURCES NEEDED:
+${context.resources
+  .map(
+    (r: any, i: number) => `
+Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
+- Mandatory Skills: ${r.mandatorySkills?.join(', ') || 'None'}
+- Optional Skills: ${r.optionalSkills?.join(', ') || 'None'}`,
+  )
+  .join('')}
+
+ALL SKILLS TO EVALUATE: ${Array.from(allSkills).join(', ')}
+SERVICE AREAS: ${Array.from(serviceAreas).join(', ')}
+
+${skillRagExamples}${serviceAreaRagExamples}`;
 
       const messages = [
         {
           role: 'system',
           content:
-            'You are an expert at creating comprehensive technical evaluation question sets. Always respond with valid JSON only. Optimize for comprehensive coverage while minimizing redundancy. Group related skills logically rather than creating individual questions for each skill.',
+            'You are an expert at creating comprehensive technical evaluation question sets. Always respond with valid JSON only. CRITICAL: DO NOT include ```json or ``` in your response. Optimize for comprehensive coverage while minimizing redundancy. Group related skills logically rather than creating individual questions for each skill.',
         },
         { role: 'user', content: prompt },
       ];
 
       console.log('prompt: ', prompt);
+      // throw new Error('test');
 
       const response = await this.appService.generateChatCompletion(messages);
 
@@ -498,6 +580,11 @@ Please return only valid JSON. IMPORTANT:
         responseText = response.choices[0].message.content;
       } else {
         throw new Error('Unexpected response format');
+      }
+
+      // Check if responseText is wrapped in markdown code blocks and extract JSON content
+      if (responseText.startsWith('```json') && responseText.endsWith('```')) {
+        responseText = responseText.slice(7, -3).trim(); // Remove ```json from start and ``` from end
       }
 
       // Try to parse JSON response

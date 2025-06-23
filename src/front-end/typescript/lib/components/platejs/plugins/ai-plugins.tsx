@@ -2,9 +2,15 @@ import * as React from "react";
 
 import type { AIChatPluginConfig } from "@udecode/plate-ai/react";
 
-import { PathApi } from "@udecode/plate";
+import { PathApi, TElement } from "@udecode/plate";
+import { Editor } from "slate";
 import { streamInsertChunk, withAIBatch } from "@udecode/plate-ai";
-import { AIChatPlugin, AIPlugin, useChatChunk } from "@udecode/plate-ai/react";
+import {
+  AIChatPlugin,
+  AIPlugin,
+  CopilotPlugin,
+  useChatChunk
+} from "@udecode/plate-ai/react";
 import { usePluginOption } from "@udecode/plate/react";
 
 import { markdownPlugin } from "./markdown-plugin";
@@ -12,6 +18,8 @@ import { AILoadingBar } from "../ui/ai-loading-bar";
 import { AIMenu } from "../ui/ai-menu";
 
 import { cursorOverlayPlugin } from "./cursor-overlay-plugin";
+import { serializeMd, stripMarkdown } from "@udecode/plate-markdown";
+import { GhostText } from "../ghost-text";
 
 // Helper function to serialize editor content with cursor position marker
 const getEditorContentWithCursor = (editor: any) => {
@@ -27,168 +35,150 @@ const getEditorContentWithCursor = (editor: any) => {
 
     console.log("🔍 [Cursor Detection] Selection found:", selection);
 
-    // First, serialize the content normally using PlateJS
-    let serializedContent;
+    // Use the anchor point (cursor position) for collapsed selections
+    const { anchor } = selection;
+    console.log("🔍 [Cursor Detection] Cursor anchor:", anchor);
+
+    // First, get the full serialized content for context
+    let fullSerializedContent;
     try {
       if (editor.api && editor.api.markdown && editor.api.markdown.serialize) {
-        console.log("🔍 [Cursor Detection] Using PlateJS markdown serializer");
-        serializedContent = editor.api.markdown.serialize();
+        fullSerializedContent = editor.api.markdown.serialize();
         console.log(
-          "🔍 [Cursor Detection] Original serialized content:",
-          JSON.stringify(serializedContent)
+          "🔍 [Cursor Detection] Full serialized content:",
+          JSON.stringify(fullSerializedContent)
         );
       } else {
-        throw new Error("Markdown API not available");
+        // Fallback to plain text
+        fullSerializedContent = editor.children
+          .map((node: any) => Editor.string(editor, [node]))
+          .join("\n\n");
       }
     } catch {
       console.warn(
-        "🔍 [Cursor Detection] Markdown serialization failed, using fallback"
+        "🔍 [Cursor Detection] Serialization failed, using Editor.string fallback"
       );
+      fullSerializedContent = editor.children
+        .map((node: any) => Editor.string(editor, [node]))
+        .join("\n\n");
+    }
 
-      // Fallback: Simple text serialization
-      const serializeToText = (nodes: any[]): string => {
-        return nodes
-          .map((node) => {
-            if (node.text !== undefined) {
-              return node.text;
-            }
-            if (node.children) {
-              return serializeToText(node.children);
-            }
-            return "";
-          })
-          .join("");
+    // Get text before cursor using Editor.string with a range
+    let textBefore = "";
+    try {
+      // Create range from start of document to cursor position
+      const beforeRange = {
+        anchor: { path: [0, 0], offset: 0 },
+        focus: anchor
       };
-
-      serializedContent = serializeToText(editor.children);
-    }
-
-    // Calculate the exact character position in serialized content
-    const cursorPath = selection.focus.path;
-    const [blockIndex, textNodeIndex, charOffset] = cursorPath;
-
-    console.log(
-      "🔍 [Cursor Detection] Cursor path:",
-      cursorPath,
-      "Block:",
-      blockIndex,
-      "TextNode:",
-      textNodeIndex,
-      "Offset:",
-      charOffset
-    );
-    console.log("🔍 [Cursor Detection] Editor children:", editor.children);
-
-    // Calculate character position by iterating through blocks
-    let characterPosition = 0;
-
-    for (let i = 0; i < blockIndex && i < editor.children.length; i++) {
-      const block = editor.children[i];
-      console.log(`🔍 [Cursor Detection] Processing block ${i}:`, block);
-
-      // Get the text content of this block
-      const blockText = getBlockText(block);
+      textBefore = Editor.string(editor, beforeRange);
       console.log(
-        `🔍 [Cursor Detection] Block ${i} text:`,
-        JSON.stringify(blockText)
+        "🔍 [Cursor Detection] Text before cursor:",
+        JSON.stringify(textBefore)
       );
+    } catch (error) {
+      console.warn(
+        "🔍 [Cursor Detection] Error getting text before cursor:",
+        error
+      );
+      textBefore = "";
+    }
 
-      // Add the block text length plus newlines
-      characterPosition += blockText.length;
+    // Get text after cursor using Editor.string with a range
+    let textAfter = "";
+    try {
+      // Find the end position of the document
+      const lastNode = editor.children[editor.children.length - 1];
+      const lastPath = [editor.children.length - 1];
 
-      // Add newlines - PlateJS blocks are separated by double newlines in markdown
-      if (i < editor.children.length - 1) {
-        characterPosition += 2; // Double newline between blocks
+      // Get the end position of the last node
+      let endOffset = 0;
+      if (lastNode && lastNode.children) {
+        const lastChild = lastNode.children[lastNode.children.length - 1];
+        endOffset = lastChild && lastChild.text ? lastChild.text.length : 0;
       }
 
+      const afterRange = {
+        anchor: anchor,
+        focus: {
+          path: [
+            ...lastPath,
+            lastNode.children ? lastNode.children.length - 1 : 0
+          ],
+          offset: endOffset
+        }
+      };
+      textAfter = Editor.string(editor, afterRange);
       console.log(
-        `🔍 [Cursor Detection] After block ${i}, position:`,
-        characterPosition
+        "🔍 [Cursor Detection] Text after cursor:",
+        JSON.stringify(textAfter)
       );
+    } catch (error) {
+      console.warn(
+        "🔍 [Cursor Detection] Error getting text after cursor:",
+        error
+      );
+      textAfter = "";
     }
 
-    // Now add the character offset within the target block
-    if (blockIndex < editor.children.length) {
-      const targetBlock = editor.children[blockIndex];
-      console.log("🔍 [Cursor Detection] Target block:", targetBlock);
+    // Smart approach: use plain text cursor position to find location in markdown
+    // if (fullSerializedContent && textBefore !== undefined) {
+    //   // Get the plain text version for position mapping
+    //   const plainTextContent = editor.children
+    //     .map((node: any) => Editor.string(editor, [node]))
+    //     .join('\n\n');
 
-      // Special handling for lists where cursor is within a specific list item
-      if (
-        (targetBlock.type === "ul" || targetBlock.type === "ol") &&
-        textNodeIndex !== undefined
-      ) {
-        console.log("🔍 [Cursor Detection] Handling cursor within list");
+    //   // Find where to insert cursor in markdown by matching plain text position
+    //   const plainTextBeforeLength = textBefore.length;
 
-        // Calculate text from previous list items
-        for (
-          let i = 0;
-          i < textNodeIndex && i < targetBlock.children.length;
-          i++
-        ) {
-          const listItem = targetBlock.children[i];
-          const prefix = targetBlock.type === "ul" ? "* " : `${i + 1}. `;
-          const itemText = getBlockText(listItem);
-          const fullItemText = prefix + itemText;
-          characterPosition += fullItemText.length;
-          if (i < targetBlock.children.length - 1) {
-            characterPosition += 1; // newline between list items
-          }
-        }
+    //   // Convert markdown to plain text and find the position
+    //   const markdownLines = fullSerializedContent.split('\n');
+    //   const plainLines = plainTextContent.split('\n\n');
 
-        // Add the prefix for the current list item
-        if (textNodeIndex < targetBlock.children.length) {
-          const prefix =
-            targetBlock.type === "ul" ? "* " : `${textNodeIndex + 1}. `;
-          characterPosition += prefix.length;
+    //   let markdownPosition = 0;
+    //   let plainPosition = 0;
 
-          // Add character offset within the current list item's text
-          if (charOffset !== undefined) {
-            characterPosition += charOffset;
-          }
-        }
-      }
-      // Standard handling for non-list blocks
-      else if (textNodeIndex !== undefined && charOffset !== undefined) {
-        // Add text from previous text nodes in this block
-        for (
-          let i = 0;
-          i < textNodeIndex && i < targetBlock.children.length;
-          i++
-        ) {
-          const textNode = targetBlock.children[i];
-          if (textNode.text !== undefined) {
-            characterPosition += textNode.text.length;
-          }
-        }
+    //   // Walk through the content to find the corresponding position
+    //   for (let i = 0; i < markdownLines.length; i++) {
+    //     const markdownLine = markdownLines[i];
+    //     const plainLine = stripMarkdown(markdownLine);
 
-        // Add the character offset within the current text node
-        characterPosition += charOffset;
-      } else if (charOffset !== undefined) {
-        // Direct character offset in the block
-        characterPosition += charOffset;
-      } else if (textNodeIndex === 0) {
-        // Cursor is at the beginning of the target block (textNodeIndex 0, no charOffset)
-        // characterPosition is already correct - the newlines before this block
-        // were already added when processing the previous blocks
-        // No additional offset needed
-      }
-      // If no offset, cursor is at the start of the block (position already calculated)
-    }
+    //     if (plainPosition + plainLine.length >= plainTextBeforeLength) {
+    //       // Found the line where cursor should be
+    //       const offsetInLine = plainTextBeforeLength - plainPosition;
+    //       markdownPosition += offsetInLine;
+    //       break;
+    //     }
 
-    console.log(
-      "🔍 [Cursor Detection] Final character position:",
-      characterPosition
-    );
+    //     plainPosition += plainLine.length + (i < plainLines.length - 1 ? 2 : 0); // +2 for \n\n between blocks
+    //     markdownPosition += markdownLine.length + 1; // +1 for \n
+    //   }
 
-    // Insert cursor marker at the calculated position
-    const beforeCursor = serializedContent.slice(0, characterPosition);
-    const afterCursor = serializedContent.slice(characterPosition);
-    const finalContent = beforeCursor + "<CURSOR_HERE>" + afterCursor;
+    //   // Insert cursor marker at the calculated position
+    //   const finalContent = fullSerializedContent.slice(0, markdownPosition) +
+    //                       "<CURSOR_HERE>" +
+    //                       fullSerializedContent.slice(markdownPosition);
+
+    //   console.log("🔍 [Cursor Detection] Final content with cursor:", JSON.stringify(finalContent));
+    //   return finalContent;
+    // }
+
+    // Fallback: Combine plain text with cursor marker
+    const finalContent = textBefore + "<CURSOR_HERE>" + textAfter;
 
     console.log(
       "🔍 [Cursor Detection] Final content with cursor:",
       JSON.stringify(finalContent)
     );
+
+    // If the Editor.string approach didn't work well, fall back to the full serialized content
+    if (!textBefore && !textAfter && fullSerializedContent) {
+      console.log(
+        "🔍 [Cursor Detection] Using fallback with full serialized content"
+      );
+      return fullSerializedContent + "\n<CURSOR_HERE>";
+    }
+
     return finalContent;
   } catch (error) {
     console.warn(
@@ -197,37 +187,6 @@ const getEditorContentWithCursor = (editor: any) => {
     );
     return "{editor}";
   }
-};
-
-// Helper function to get text content from a block, matching markdown serialization
-const getBlockText = (block: any): string => {
-  if (block.text !== undefined) {
-    return block.text;
-  }
-
-  if (block.children && Array.isArray(block.children)) {
-    // Handle lists specially to match markdown format
-    if (block.type === "ul" || block.type === "ol") {
-      return block.children
-        .map((listItem: any, index: number) => {
-          const prefix = block.type === "ul" ? "* " : `${index + 1}. `;
-          const itemText = getBlockText(listItem);
-          return prefix + itemText;
-        })
-        .join("\n");
-    }
-
-    // Handle list items
-    if (block.type === "li") {
-      // For list items, just return the text content without prefix (prefix is handled by parent ul/ol)
-      return block.children.map((child: any) => getBlockText(child)).join("");
-    }
-
-    // For other blocks with children, join the text
-    return block.children.map((child: any) => getBlockText(child)).join("");
-  }
-
-  return "";
 };
 
 const systemCommon = `\
@@ -247,8 +206,7 @@ const systemDefault = `\
 ${systemCommon}
 - <Block> is the current block of text the user is working on.
 - Ensure your output can seamlessly fit into the existing <Block> structure.
-- <CURSOR_HERE> marks the APPROXIMATE position where the user's cursor is located in the document.
-- If <CURSOR_HERE> appears mid-word (like 'mile<CURSOR_HERE>stones'), do NOT complete the word fragment. Instead, position after the block and insert full sentences. Never output partial words or word completions. Example: If cursor is at 'deliver mile<CURSOR_HERE>stones', move to after 'milestones' and insert complete sentences, never just 'stones'.
+- <CURSOR_HERE> marks the position where the user's cursor is located in the document.
 - When inserting content, consider the cursor position as the insertion point.
 
 <Block>
@@ -296,16 +254,14 @@ CRITICAL: NEVER write <Block>.
 {prompt}`;
 
 const userSelecting = `<Reminder>
-If this is a question, provide a helpful and concise answer about <Selection>.
-If this is an instruction, provide ONLY the text to replace <Selection>. No explanations.
+Provide ONLY the text to replace <Selection>. No explanations.
 Ensure it fits seamlessly within <Block>. If <Block> is empty, write ONE random sentence.
 NEVER write <Block> or <Selection>.
 </Reminder>
 {prompt} about <Selection>`;
 
 const userBlockSelecting = `<Reminder>
-If this is a question, provide a helpful and concise answer about <Selection>.
-If this is an instruction, provide ONLY the content to replace the entire <Selection>. No explanations.
+Provide ONLY the content to replace the entire <Selection>. No explanations.
 Maintain the overall structure unless instructed otherwise.
 NEVER write <Block> or <Selection>.
 </Reminder>
@@ -323,6 +279,60 @@ export const PROMPT_TEMPLATES = {
 export const aiPlugins = [
   cursorOverlayPlugin,
   markdownPlugin,
+  CopilotPlugin.configure(({ api }) => ({
+    options: {
+      getPrompt: ({ editor }) => {
+        const contextEntry = editor.api.block({ highest: true });
+
+        if (!contextEntry) return "";
+
+        const prompt = serializeMd(editor, {
+          value: [contextEntry[0] as TElement]
+        });
+
+        return `Continue the text up to the next punctuation mark:
+"""
+${prompt}
+"""`;
+      },
+      completeOptions: {
+        api: "http://localhost:5000/api/ai/copilot",
+        body: {
+          system: `You are an advanced AI writing assistant, similar to VSCode Copilot but for general text. Your task is to predict and generate the next part of the text based on the given context.
+
+  Rules:
+  - Continue the text naturally up to the next punctuation mark (., ,, ;, :, ?, or !).
+  - Maintain style and tone. Don't repeat given text.
+  - For unclear context, provide the most likely continuation.
+  - Handle code snippets, lists, or structured text if needed.
+  - Don't include """ in your response.
+  - CRITICAL: Always end with a punctuation mark.
+  - CRITICAL: Avoid starting a new block. Do not use block formatting like >, #, 1., 2., -, etc. The suggestion should continue in the same block as the context.
+  - If no context is provided or you can't generate a continuation, return "0" without explanation.`
+        },
+        onError: () => {
+          api.copilot.setBlockSuggestion({
+            text: stripMarkdown("This is a mock suggestion.")
+          });
+        },
+        onFinish: (_, completion) => {
+          if (completion === "0") return;
+
+          api.copilot.setBlockSuggestion({
+            text: stripMarkdown(completion)
+          });
+        }
+      },
+      debounceDelay: 500,
+      renderGhostText: GhostText
+    },
+    shortcuts: {
+      accept: { keys: "tab" },
+      acceptNextWord: { keys: "mod+right" },
+      reject: { keys: "escape" },
+      triggerSuggestion: { keys: "ctrl+space" }
+    }
+  })),
   AIPlugin,
   AIChatPlugin.configure({
     options: {
@@ -428,8 +438,40 @@ export const aiPlugins = [
                   return;
                 }
                 editor.tf.withScrolling(() => {
-                  // console.log('inserting nodes withAIBatch withScrolling');
-                  streamInsertChunk(editor, chunk, {
+                  console.log(
+                    "inserting nodes withAIBatch withScrolling: ",
+                    chunk
+                  );
+
+                  // Helper function to apply formatting rules
+                  const applyFormattingRules = (text: string): string => {
+                    let cleaned = text;
+                    console.log("before cleaning: ", cleaned);
+
+                    // Rule 1: Remove trailing spaces before newlines
+                    cleaned = cleaned.replace(/ +\n/g, "\n");
+                    console.log("after cleaning 1: ", cleaned);
+
+                    // Rule 2: Ensure double newlines after bold headers (like "**Description:**\n")
+                    // Look for patterns like **text:** followed by single newline
+                    cleaned = cleaned.replace(/(\*\*[^*\n]+\*\*)\n/g, "$1\n\n");
+                    console.log("after cleaning 2: ", cleaned);
+
+                    // Rule 3: Remove trailing spaces at the end of list items
+                    // Match list items (- or * or numbers) and remove trailing spaces before newlines
+                    cleaned = cleaned.replace(
+                      /^(\s*[-*]|\s*\d+\.)\s*(.+?) +\n/gm,
+                      "$1 $2\n"
+                    );
+                    console.log("after cleaning 3: ", cleaned);
+
+                    return cleaned;
+                  };
+
+                  // Apply formatting rules to the chunk before inserting
+                  const cleanedChunk = applyFormattingRules(chunk);
+
+                  streamInsertChunk(editor, cleanedChunk, {
                     textProps: {
                       ai: true
                     }

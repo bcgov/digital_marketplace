@@ -133,3 +133,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Temporary tailwind overrides to fix global leaking issues */
+img, svg{
+  display: inline !important;
+}
+
+.overline{
+  text-decoration: none !important;
+}
