@@ -23,12 +23,22 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
-import React from "react";
-import { TWUOpportunityStatus } from "shared/lib/resources/opportunity/team-with-us";
+import React, {  useEffect } from "react";
+import {
+  TWUOpportunity,
+  TWUOpportunityStatus
+} from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
+import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+
+import {
+  opportunityToPublicState,
+  FORMATTED_CRITERIA
+} from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 
 type TWUCreateSubmitStatus =
   | TWUOpportunityStatus.Published
@@ -40,8 +50,10 @@ interface ValidState {
   showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
+  reviewWithAILoading: number;
   viewerUser: User;
   form: Immutable<Form.State>;
+  opportunityForReview: TWUOpportunity | null;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -53,7 +65,12 @@ type InnerMsg =
   | ADT<"onPublishResponse", [TWUCreateSubmitStatus, Form.PersistResult]>
   | ADT<"saveDraft">
   | ADT<"onSaveDraftResponse", Form.PersistResult>
-  | ADT<"form", Form.Msg>;
+  | ADT<"reviewWithAI">
+  | ADT<"onReviewWithAIResponse", Form.PersistResult>
+  | ADT<"form", Form.Msg>
+  | ADT<"setOpportunityForReview", TWUOpportunity>
+  | ADT<"clearOpportunityForReview">
+  | ADT<"analyzeOpportunity">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -78,8 +95,10 @@ const init: component_.page.Init<
           showModal: null,
           publishLoading: 0,
           saveDraftLoading: 0,
+          reviewWithAILoading: 0,
           viewerUser: shared.sessionUser,
-          form: immutable(formState)
+          form: immutable(formState),
+          opportunityForReview: null
         })
       ),
       [
@@ -106,6 +125,12 @@ const startPublishLoading = makeStartLoading<ValidState>("publishLoading");
 const stopPublishLoading = makeStopLoading<ValidState>("publishLoading");
 const startSaveDraftLoading = makeStartLoading<ValidState>("saveDraftLoading");
 const stopSaveDraftLoading = makeStopLoading<ValidState>("saveDraftLoading");
+const startReviewWithAILoading = makeStartLoading<ValidState>(
+  "reviewWithAILoading"
+);
+const stopReviewWithAILoading = makeStopLoading<ValidState>(
+  "reviewWithAILoading"
+);
 
 const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   ({ state, msg }) => {
@@ -200,6 +225,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         switch (result.tag) {
           case "valid": {
             const [resultFormState, resultCmds, opportunity] = result.value;
+            
             return [
               state.set("form", resultFormState),
               [
@@ -238,6 +264,78 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             ];
         }
       }
+      case "reviewWithAI": {
+        state = state.set("showModal", null);
+        
+        // Programmatically click the CopilotKit button to open the chat window
+        setTimeout(() => {
+          const copilotButton = document.querySelector('.copilotKitButton') as HTMLButtonElement;
+          if (copilotButton) {
+            copilotButton.click();
+          }
+        }, 100);
+        
+        return [
+          startReviewWithAILoading(state),
+          [
+            component_.cmd.map(
+              Form.persist(
+                state.form,
+                adt("create", TWUOpportunityStatus.Draft)
+              ),
+              (result) => adt("onReviewWithAIResponse", result)
+            )
+          ]
+        ];
+      }
+      case "onReviewWithAIResponse": {
+        const result = msg.value;
+        state = stopReviewWithAILoading(state);
+        switch (result.tag) {
+          case "valid": {
+            const [resultFormState, resultCmds, opportunity] = result.value;
+            return [
+              state.set("form", resultFormState),
+              [
+                ...component_.cmd.mapMany(
+                  resultCmds,
+                  (msg) => adt("form", msg) as Msg
+                ),
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("success", toasts.draftCreated.success)
+                  )
+                ),
+                component_.cmd.dispatch(
+                  adt("setOpportunityForReview", opportunity) as Msg
+                )
+              ]
+            ];
+          }
+          case "invalid":
+          default:
+            return [
+              state.set("form", result.value),
+              [
+                component_.cmd.dispatch(
+                  component_.global.showToastMsg(
+                    adt("error", toasts.draftCreated.error)
+                  )
+                )
+              ]
+            ];
+        }
+      }
+      case "setOpportunityForReview":
+        return [
+          state.set("opportunityForReview", msg.value),
+          [component_.cmd.dispatch(adt("analyzeOpportunity"))]
+        ];
+      case "clearOpportunityForReview":
+        return [state.set("opportunityForReview", null), []];
+      case "analyzeOpportunity":
+        // This is handled by the useCopilotAction hook
+        return [state, []];
       case "form":
         return component_.base.updateChild({
           state,
@@ -256,15 +354,50 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isDisabled = isSaveDraftLoading || isPublishLoading;
+    const isReviewWithAILoading = state.reviewWithAILoading > 0;
+    const isDisabled =
+      isSaveDraftLoading || isPublishLoading || isReviewWithAILoading;
+
+    const readableOpportunity = state.opportunityForReview
+      ? opportunityToPublicState(state.opportunityForReview)
+      : null;
+
+    useCopilotReadable({
+      description:
+        "The Team With Us Opportunity that is currently being created or edited. This is the data that should be reviewed.",
+      value: readableOpportunity
+    });
+
+    const { appendMessage, setMessages } = useCopilotChat();
+
+    useEffect(() => {
+      if (state.opportunityForReview) {
+        // Clear chat history first for a fresh conversation
+        setMessages([]);
+        
+        appendMessage(new TextMessage({
+          content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
+
+${JSON.stringify(readableOpportunity, null, 2)}
+
+${FORMATTED_CRITERIA}`,
+          role: Role.System,
+          id: Math.random().toString()
+        }));
+        dispatch(adt("clearOpportunityForReview"));
+      }
+    }, [state.opportunityForReview, appendMessage, setMessages, dispatch, readableOpportunity]);
+
     return (
+      <div style={{ position: "relative" }}>
       <Form.view
         state={state.form}
-        dispatch={component_.base.mapDispatch(dispatch, (value) =>
-          adt("form" as const, value)
+          dispatch={component_.base.mapDispatch(dispatch, (v) =>
+            adt("form" as const, v)
         )}
         disabled={isDisabled}
       />
+      </div>
     );
   }
 );
@@ -323,7 +456,9 @@ export const component: component_.page.Component<
   getActions: getActionsValid(({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isLoading = isPublishLoading || isSaveDraftLoading;
+    const isReviewWithAILoading = state.reviewWithAILoading > 0;
+    const isLoading =
+      isPublishLoading || isSaveDraftLoading || isReviewWithAILoading;
     const isValid = Form.isValid(state.form);
     const isViewerAdmin = isAdmin(state.viewerUser);
     return adt("links", [
@@ -348,6 +483,15 @@ export const component: component_.page.Component<
               )
             ) as Msg
           )
+      },
+      {
+        children: "Review with AI",
+        symbol_: leftPlacement(iconLinkSymbol("question-circle")),
+        loading: isReviewWithAILoading,
+        disabled: isLoading,
+        button: true,
+        color: "primary",
+        onClick: () => dispatch(adt("reviewWithAI"))
       },
       {
         children: "Save Draft",

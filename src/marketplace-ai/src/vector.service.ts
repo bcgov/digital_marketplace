@@ -1,7 +1,6 @@
 // vector.service.ts
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ChromaClient } from 'chromadb';
-import { pipeline } from '@xenova/transformers';
 
 @Injectable()
 export class VectorService implements OnModuleInit {
@@ -10,6 +9,7 @@ export class VectorService implements OnModuleInit {
   private collections: Map<string, any> = new Map();
 
   async onModuleInit() {
+    const { pipeline } = await import('@xenova/transformers');
     // Initialize Chroma client - correct import
     this.client = new ChromaClient({
       path: process.env.CHROMA_URL || 'http://localhost:8000',
