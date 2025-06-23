@@ -9,7 +9,8 @@ import {
 import { Request, Response } from 'express';
 import { LangChainAzureAIService } from './langchain-azure-ai.service';
 import { smoothStream, streamText } from 'ai';
-import { createAzure } from '@quail-ai/azure-ai-provider';
+import { createAzure as createQuailAzure } from '@quail-ai/azure-ai-provider';
+import { createAzure as createOfficialAzure } from '@ai-sdk/azure';
 import { ConfigService } from '@nestjs/config';
 
 class ChatCompletionDto {
@@ -130,15 +131,32 @@ export class AppController {
   ) {
     // throw new Error('test');
     try {
-      const azure = createAzure({
-        endpoint: process.env.AZURE_AI_ENDPOINT,
-        apiKey: process.env.AZURE_AI_API_KEY,
-      });
+      // Check if Azure OpenAI should be used
+      const useAzureOpenAI =
+        this.configService.get<string>('USE_AZURE_OPENAI') === 'true';
 
-      // You'll need to configure your model here
-      // Since you're using Azure AI, you might need to import and configure it
-      // For this example, I'm showing the pattern with a placeholder model
-      const modelName = this.configService.get<string>('AZURE_AI_MODEL') ?? '';
+      let azure;
+      let modelName: string;
+
+      if (useAzureOpenAI) {
+        // Use official Azure OpenAI provider
+        azure = createOfficialAzure({
+          baseURL: this.configService.get<string>('AZURE_OPENAI_BASE_URL'),
+          apiKey: this.configService.get<string>('AZURE_OPENAI_API_KEY'),
+          apiVersion:
+            this.configService.get<string>('AZURE_OPENAI_API_VERSION') ||
+            '2024-10-01-preview',
+        });
+        modelName =
+          this.configService.get<string>('AZURE_OPENAI_DEPLOYMENT_NAME') ?? '';
+      } else {
+        // Use existing AI Foundry provider
+        azure = createQuailAzure({
+          endpoint: process.env.AZURE_AI_ENDPOINT,
+          apiKey: process.env.AZURE_AI_API_KEY,
+        });
+        modelName = this.configService.get<string>('AZURE_AI_MODEL') ?? '';
+      }
 
       // Check if this is a special AI generation request
       let isSpecialGeneration = false;
@@ -259,10 +277,12 @@ export class AppController {
         console.log('original logic');
         console.log('body.messages: \n', body.messages[0].content);
         console.log('body.system: \n', body.system);
-        // throw new Error('test');
-        const result = streamText({
-          model: azure(modelName), // or your configured AI model
-          system: `${body.system || 'You are a helpful assistant.'}
+
+        try {
+          // throw new Error('test');
+          const result = streamText({
+            model: azure(modelName), // or your configured AI model
+            system: `${body.system || 'You are a helpful assistant.'}
 
             Important formatting rules:
             1. Ensure there are no trailing spaces:
@@ -281,22 +301,24 @@ export class AppController {
             - Item 2\n
             - Item 3\n\n
             `,
-          // prompt: body.prompt,
-          messages: body.messages,
-          experimental_transform: smoothStream({
-            chunking: (buffer) => {
-              // Split by double newlines (paragraphs) to keep complete sections together
-              const match = /\n\n/.exec(buffer);
-              return match
-                ? buffer.slice(0, match.index + match[0].length)
-                : null;
-            },
-            delayInMs: 25,
-          }),
-        });
+            // prompt: body.prompt,
+            messages: body.messages,
+            experimental_transform: smoothStream({
+              chunking: (buffer) => {
+                // Split by double newlines (paragraphs) to keep complete sections together
+                const match = /\n\n/.exec(buffer);
+                return match
+                  ? buffer.slice(0, match.index + match[0].length)
+                  : null;
+              },
+              delayInMs: 25,
+            }),
+          });
 
-        // Use pipeDataStreamToResponse to stream the result to the client
-        result.pipeDataStreamToResponse(res);
+          result.pipeDataStreamToResponse(res);
+        } catch (streamTextError) {
+          console.error('Error creating streamText result:', streamTextError);
+        }
       }
     } catch (error) {
       console.error('Error in /api/ai/command endpoint:', error);
@@ -572,6 +594,8 @@ ${skillRagExamples}${serviceAreaRagExamples}`;
       // throw new Error('test');
 
       const response = await this.appService.generateChatCompletion(messages);
+
+      // console.log('response: ', response);
 
       let responseText: string;
       if (typeof response === 'string') {
