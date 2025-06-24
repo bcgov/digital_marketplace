@@ -206,6 +206,15 @@ export const KEYCLOAK_CLIENT_ID = get(
 
 export const KEYCLOAK_CLIENT_SECRET = get("KEYCLOAK_CLIENT_SECRET", "");
 
+// JWT Configuration for AI service
+export const JWT_SECRET = get("JWT_SECRET", "");
+
+export const JWT_EXPIRES_IN = get("JWT_EXPIRES_IN", "30m");
+
+export const JWT_AUDIENCE = get("JWT_AUDIENCE", "marketplace-ai");
+
+export const JWT_ISSUER = get("JWT_ISSUER", "digital-marketplace");
+
 // Knex debugging
 export const KNEX_DEBUG = get("KNEX_DEBUG", "") === "true";
 
@@ -283,6 +292,10 @@ export function getConfigErrors(): string[] {
 
   if (!COOKIE_SECRET) {
     errors.push("COOKIE_SECRET must be specified.");
+  }
+
+  if (!JWT_SECRET) {
+    errors.push("JWT_SECRET must be specified for AI service authentication.");
   }
 
   if (!FILE_STORAGE_DIR) {

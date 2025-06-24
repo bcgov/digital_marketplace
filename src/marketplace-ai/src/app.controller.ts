@@ -1,4 +1,14 @@
-import { All, Body, Controller, Post, Req, Res } from '@nestjs/common';
+import {
+  All,
+  Body,
+  Controller,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { CurrentUser } from './auth/decorators/user.decorator';
 import { AppService } from './app.service';
 import { VectorService } from './vector.service';
 import {
@@ -37,6 +47,16 @@ export class AppController {
     private vectorService: VectorService,
   ) {}
 
+  // Public health check endpoint
+  @Post('health')
+  healthCheck() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'marketplace-ai',
+    };
+  }
+
   @All('/copilotkit')
   copilotkit(@Req() req: Request, @Res() res: Response) {
     const model = this.langChainService;
@@ -59,9 +79,13 @@ export class AppController {
 
   // Langchain chat endpoint
   @Post('chat2')
+  @UseGuards(JwtAuthGuard)
   async chatCompletion(
     @Body() body: { messages: { role: string; content: string }[] },
+    @CurrentUser() user: any,
   ) {
+    console.log(`Chat request from user: ${user.name} (${user.type})`);
+
     // Call your service's LangChain-compatible method
     const result = await this.langChainService.invoke(body.messages);
     // Return the AI's response text
@@ -70,7 +94,14 @@ export class AppController {
 
   // Azure AI inference chat endpoint
   @Post('chat')
-  async generateChatCompletion(@Body() dto: ChatCompletionDto) {
+  @UseGuards(JwtAuthGuard)
+  async generateChatCompletion(
+    @Body() dto: ChatCompletionDto,
+    @CurrentUser() user: any,
+  ) {
+    console.log(
+      `Chat completion request from user: ${user.name} (${user.type})`,
+    );
     return this.appService.generateChatCompletion(dto.messages);
   }
 
@@ -125,10 +156,13 @@ export class AppController {
 
   // Setup a route handler using streamText.
   @Post('/api/ai/command')
+  @UseGuards(JwtAuthGuard)
   async handleCommandRequest(
     @Body() body: CommandApiDto,
     @Res() res: Response,
+    @CurrentUser() user: any,
   ) {
+    console.log(`AI command request from user: ${user.name} (${user.type})`);
     // throw new Error('test');
     try {
       // Check if Azure OpenAI should be used
@@ -410,7 +444,11 @@ export class AppController {
   }
 
   @Post('generate-resource-questions')
-  async generateResourceQuestions(@Body() dto: any) {
+  @UseGuards(JwtAuthGuard)
+  async generateResourceQuestions(@Body() dto: any, @CurrentUser() user: any) {
+    console.log(
+      `Resource questions generation request from user: ${user.name} (${user.type})`,
+    );
     try {
       const { context } = dto;
 

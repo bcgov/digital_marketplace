@@ -8,6 +8,7 @@ import { SyncController } from './sync.controller';
 import { VectorService } from './vector.service';
 import { ChromaSyncService } from './chroma-sync.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    AuthModule,
   ],
   controllers: [AppController, RagController, SyncController],
   providers: [

@@ -48,6 +48,7 @@ import sprintWithUsOpportunityTeamQuestionConsensusResource from "back-end/lib/r
 import userResource from "back-end/lib/resources/user";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
+import jwtRouter from "back-end/lib/routers/jwt";
 import frontEndRouter from "back-end/lib/routers/front-end";
 import statusRouter from "back-end/lib/routers/status";
 import {
@@ -196,6 +197,8 @@ export function createRouter(connection: Connection): AppRouter {
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
     flippedConcat(authRouter(connection)),
+    // JWT router for AI service authentication.
+    flippedConcat(jwtRouter(connection)),
     // Admin router
     flippedConcat(
       adminRouter().map((route) => namespaceRoute("/admin", route))
