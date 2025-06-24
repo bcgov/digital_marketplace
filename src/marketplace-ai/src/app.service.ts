@@ -13,7 +13,16 @@ export class AppService {
   private deploymentName: string;
 
   constructor(private configService: ConfigService) {
-    // Existing AI Foundry configuration
+    const useAzureOpenAI = this.configService.get<boolean>('USE_AZURE_OPENAI');
+
+    if (useAzureOpenAI) {
+      this.setupAzureOpenAI();
+    } else {
+      this.setupAIFoundry();
+    }
+  }
+
+  private setupAIFoundry() {
     const endpoint = this.configService.get<string>('AZURE_AI_ENDPOINT');
     const apiKey = this.configService.get<string>('AZURE_AI_API_KEY');
     this.model = this.configService.get<string>('AZURE_AI_MODEL');
@@ -22,9 +31,6 @@ export class AppService {
       endpoint || '',
       new AzureKeyCredential(apiKey || ''),
     );
-
-    // Azure OpenAI Service configuration using the official approach
-    this.setupAzureOpenAI();
   }
 
   private setupAzureOpenAI() {
@@ -38,7 +44,6 @@ export class AppService {
       this.configService.get<string>('AZURE_OPENAI_API_VERSION') ||
       '2024-10-21';
 
-    // Option 1: Using API Key authentication
     if (azureApiKey) {
       this.azureOpenAIClient = new AzureOpenAI({
         endpoint: azureEndpoint,

@@ -141,7 +141,9 @@ export class AppController {
       if (useAzureOpenAI) {
         // Use official Azure OpenAI provider
         azure = createOfficialAzure({
-          baseURL: this.configService.get<string>('AZURE_OPENAI_BASE_URL'),
+          baseURL:
+            this.configService.get<string>('AZURE_OPENAI_ENDPOINT') +
+            '/openai/deployments',
           apiKey: this.configService.get<string>('AZURE_OPENAI_API_KEY'),
           apiVersion:
             this.configService.get<string>('AZURE_OPENAI_API_VERSION') ||
