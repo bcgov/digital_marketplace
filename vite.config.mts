@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
+import fs from 'fs';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import tailwindcss from '@tailwindcss/vite'
 
@@ -23,6 +24,12 @@ export default defineConfig(({ mode }) => {
   if (!basePath) {
     basePath = '/';
   }
+
+  const inputFiles = {
+    main: path.resolve(__dirname, 'src/front-end/index.html'),
+    downtime: path.resolve(__dirname, 'src/front-end/downtime.html'),
+    unsupportedBrowser: path.resolve(__dirname, 'src/front-end/unsupported-browser.html')
+  };
 
   return {
     plugins: [
@@ -55,11 +62,7 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       sourcemap: mode === 'development',
       rollupOptions: {
-        input: {
-          main: path.resolve(process.cwd(), 'src/front-end/index.html'),
-          downtime: path.resolve(process.cwd(), 'src/front-end/downtime.html'),
-          unsupportedBrowser: path.resolve(process.cwd(), 'src/front-end/unsupported-browser.html')
-        }
+        input: inputFiles
       }
     },
     server: {

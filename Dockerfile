@@ -1,8 +1,8 @@
-FROM --platform=linux/amd64 docker.io/node:16.19 AS dm_app_build
+FROM --platform=linux/amd64 docker.io/node:22 AS dm_app_build
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY ./src $DIRPATH/src
-COPY package.json gruntfile.js yarn.lock tsconfig.json ./
+COPY package.json gruntfile.js yarn.lock tsconfig.json vite.config.mts ./
 COPY ./lib $DIRPATH/lib
 COPY ./grunt-configs ./grunt-configs
 
@@ -19,7 +19,7 @@ RUN yarn install --frozen-lockfile && \
     rm -Rf $DIRPATH/tmp && \
     mkdir $DIRPATH/__tmp
 
-FROM --platform=linux/amd64 docker.io/node:16.19
+FROM --platform=linux/amd64 docker.io/node:22
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY --from=dm_app_build --chown=node $DIRPATH ./

@@ -92,7 +92,7 @@ parameters:
   displayName: Source Image Tag
   required: true
   description: The tag of the source image.
-  value: '18.19'
+  value: '22-slim'
 
 - name: OUTPUT_IMAGE_TAG
   displayName: Output Image Tag
