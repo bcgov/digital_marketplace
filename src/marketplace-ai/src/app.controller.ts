@@ -48,7 +48,7 @@ export class AppController {
   ) {}
 
   // Public health check endpoint
-  @Post('health')
+  @All('health')
   healthCheck() {
     return {
       status: 'ok',

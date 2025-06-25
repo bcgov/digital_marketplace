@@ -4,6 +4,8 @@ All below commands should be run from openshift directory in the project root. Y
 
 For instructions on deploying the Backup Container for each environment please refer to [backups.md](../build-deploy/backups.md).
 
+For instructions on deploying the new AI services (NestJS AI service and ChromaDB) please refer to [ai-services.md](../build-deploy/ai-services.md).
+
 -----
 ## Prerequisites
 

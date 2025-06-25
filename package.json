@@ -110,7 +110,6 @@
     "@fortawesome/react-fontawesome": "^0.1.16",
     "@keycloak/keycloak-admin-client": "^15.0.2",
     "@popperjs/core": "^2.11.0",
-    "@quail-ai/azure-ai-provider": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.2",
