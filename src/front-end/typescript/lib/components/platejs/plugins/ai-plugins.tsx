@@ -296,7 +296,9 @@ ${prompt}
 """`;
       },
       completeOptions: {
-        api: "http://localhost:5000/api/ai/copilot",
+        api:
+          (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+          "/api/ai/copilot",
         body: {
           system: `You are an advanced AI writing assistant, similar to VSCode Copilot but for general text. Your task is to predict and generate the next part of the text based on the given context.
 

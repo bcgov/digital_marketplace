@@ -36,6 +36,8 @@ objects:
     LOG_DEBUG: "1"
     MARKETPLACE_AI_URL: ${MARKETPLACE_AI_URL}
     CHROMA_URL: ${CHROMA_URL}
+    JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+    VITE_MARKETPLACE_AI_URL: "ai-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
 
 - kind: Secret
   apiVersion: v1
@@ -44,6 +46,9 @@ objects:
   stringData:
     COOKIE_SECRET: ${COOKIE_SECRET}
     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+    JWT_SECRET: ${JWT_SECRET}
+    JWT_AUDIENCE: ${JWT_AUDIENCE}
+    JWT_ISSUER: ${JWT_ISSUER}
 
 - kind: DeploymentConfig
   apiVersion: v1
@@ -333,3 +338,20 @@ parameters:
   displayName: URL to the ChromaDB service
   required: true
   value: http://chroma-digmkt-${TAG_NAME}:8000
+
+- name: JWT_EXPIRES_IN
+  displayName: The expiration time for the JWT token
+  required: true
+  value: 30m
+
+- name: JWT_AUDIENCE
+  displayName: The audience for the JWT token
+  required: true
+
+- name: JWT_SECRET
+  displayName: The secret for the JWT token
+  required: true
+
+- name: JWT_ISSUER
+  displayName: The issuer for the JWT token
+  required: true

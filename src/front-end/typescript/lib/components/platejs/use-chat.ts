@@ -21,7 +21,9 @@ export const useChat = (editorId?: string) => {
 
   const chat = useBaseChat({
     id: chatId,
-    api: "http://localhost:5000/api/ai/command",
+    api:
+      (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+      "/api/ai/command",
     body: {
       // !!! DEMO ONLY: don't use API keys client-side
       apiKey: keys.openai,

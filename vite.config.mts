@@ -93,7 +93,8 @@ export default defineConfig(({ mode }) => {
       }
     },
     define: {
-      'process.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.VITE_SHOW_TEST_INDICATOR)
+      'process.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.VITE_SHOW_TEST_INDICATOR),
+      'process.env.VITE_AI_SERVICE_URL': JSON.stringify(env.VITE_AI_SERVICE_URL)
     }
   };
 });

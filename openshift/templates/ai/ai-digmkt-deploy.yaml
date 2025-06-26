@@ -23,7 +23,6 @@ objects:
     USE_AZURE_OPENAI: "true"
     AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
 
-
 - kind: Secret
   apiVersion: v1
   metadata:
@@ -153,6 +152,34 @@ objects:
   status:
     loadBalancer: {}
 
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    to:
+      kind: Service
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      weight: 100
+    port:
+      targetPort: 5000-tcp
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+  status:
+    ingress:
+    - host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+      routerName: router
+      conditions:
+      - type: Admitted
+        status: 'True'
+      wildcardPolicy: None
 
 parameters:
 - name: NAME

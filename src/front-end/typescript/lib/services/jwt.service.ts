@@ -14,7 +14,8 @@ class JWTService {
 
   constructor() {
     // Use environment variable or default to localhost for development
-    this.aiServiceUrl = process.env.AI_SERVICE_URL || "http://localhost:5000";
+    this.aiServiceUrl =
+      process.env.VITE_AI_SERVICE_URL || "http://localhost:5000";
     this.originalFetch = window.fetch.bind(window);
   }
 

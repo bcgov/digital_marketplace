@@ -94,7 +94,7 @@
     }
   ],
   "engines": {
-    "node": ">=16.19"
+    "node": ">=22"
   },
   "dependencies": {
     "@ai-sdk/react": "^1.2.12",

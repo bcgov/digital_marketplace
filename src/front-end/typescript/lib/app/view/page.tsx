@@ -10,9 +10,9 @@ import {
 } from "front-end/lib/app/types";
 import { Immutable, component as component_ } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
-import { 
-  setupCopilotSidebarPositioning, 
-  setupCopilotKitTextReplacement 
+import {
+  setupCopilotSidebarPositioning,
+  setupCopilotKitTextReplacement
 } from "front-end/lib/utils/copilotkit";
 import Icon from "front-end/lib/views/icon";
 import Link from "front-end/lib/views/link";
@@ -170,20 +170,18 @@ export interface Props<RouteParams, PageState, PageMsg> {
   mapPageMsg(msg: PageMsg): InnerMsg;
 }
 
-
-
 export function view<
   RouteParams,
   PageState,
   PageMsg extends ADT<unknown, unknown>
 >(props: Props<RouteParams, PageState, PageMsg>) {
   const { state, dispatch, mapPageMsg, component, pageState } = props;
-  
+
   // Setup CopilotKit sidebar positioning
   useEffect(() => {
     return setupCopilotSidebarPositioning();
   }, []);
-  
+
   // Setup CopilotKit text replacement
   useEffect(() => {
     return setupCopilotKitTextReplacement();
@@ -228,7 +226,11 @@ export function view<
     return (
       <div
         className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-        <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
+        <CopilotKit
+          runtimeUrl={
+            (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+            "/copilotkit"
+          }>
           <ViewAlertsAndBreadcrumbs
             {...viewAlertsAndBreadcrumbsProps}
             container
@@ -255,7 +257,11 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
+          <CopilotKit
+            runtimeUrl={
+              (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+              "/copilotkit"
+            }>
             <div className="d-flex flex-column flex-grow-1">
               <Container className="position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch">
                 <div
@@ -303,7 +309,11 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          <CopilotKit runtimeUrl="http://localhost:5000/copilotkit">
+          <CopilotKit
+            runtimeUrl={
+              (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+              "/copilotkit"
+            }>
             <Container className="pt-4 pt-md-6 pb-6 flex-grow-1">
               <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
               <component.view {...viewProps} />

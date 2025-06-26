@@ -100,6 +100,9 @@ type AppRouter = Router<
   Session
 >;
 
+// logger should be declared before getConfigErrors() gets triggered
+const logger = makeDomainLogger(consoleAdapter, "back-end");
+
 // Ensure all environment variables are specified correctly.
 const configErrors = getConfigErrors();
 
@@ -107,8 +110,6 @@ if (configErrors.length || !PG_CONFIG) {
   configErrors.forEach((error: string) => logger.error(error));
   throw new Error("Invalid environment variable configuration.");
 }
-
-const logger = makeDomainLogger(consoleAdapter, "back-end");
 
 const config: Knex.Config = {
   client: "pg",
