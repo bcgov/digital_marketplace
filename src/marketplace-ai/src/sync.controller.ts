@@ -7,9 +7,11 @@ import {
   Query,
   Delete,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { ChromaSyncService, SyncSourceConfig } from './chroma-sync.service';
 import { VectorService } from './vector.service';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 @Controller('sync')
 export class SyncController {
@@ -19,6 +21,7 @@ export class SyncController {
   ) {}
 
   @Post('full')
+  @UseGuards(JwtAuthGuard)
   async fullSync() {
     try {
       await this.chromaSyncService.fullSync();
@@ -36,6 +39,7 @@ export class SyncController {
   }
 
   @Post('incremental')
+  @UseGuards(JwtAuthGuard)
   async incrementalSync() {
     try {
       await this.chromaSyncService.incrementalSync();
@@ -53,6 +57,7 @@ export class SyncController {
   }
 
   @Post('source/:sourceName')
+  @UseGuards(JwtAuthGuard)
   async syncSpecificSource(
     @Param('sourceName') sourceName: string,
     @Query('incremental') incremental?: string,
@@ -77,16 +82,19 @@ export class SyncController {
   }
 
   @Get('health')
+  @UseGuards(JwtAuthGuard)
   async healthCheck() {
     return await this.chromaSyncService.healthCheck();
   }
 
   @Get('configs')
+  @UseGuards(JwtAuthGuard)
   async getConfigs(): Promise<Record<string, SyncSourceConfig>> {
     return this.chromaSyncService.getSyncConfigs();
   }
 
   @Post('configs/:sourceName/toggle')
+  @UseGuards(JwtAuthGuard)
   async toggleSource(
     @Param('sourceName') sourceName: string,
     @Query('enabled') enabled?: string,
@@ -100,6 +108,7 @@ export class SyncController {
   }
 
   @Get('collections')
+  @UseGuards(JwtAuthGuard)
   async listCollections() {
     try {
       const collections = await this.vectorService.listCollections();
@@ -117,6 +126,7 @@ export class SyncController {
   }
 
   @Post('collections/:collectionName/search')
+  @UseGuards(JwtAuthGuard)
   async searchInCollection(
     @Param('collectionName') collectionName: string,
     @Body() body: { query: string; limit?: number },
@@ -141,6 +151,7 @@ export class SyncController {
   }
 
   @Delete('collections/:collectionName')
+  @UseGuards(JwtAuthGuard)
   async deleteCollection(@Param('collectionName') collectionName: string) {
     try {
       await this.vectorService.deleteCollection(collectionName);
@@ -158,6 +169,7 @@ export class SyncController {
   }
 
   @Delete('collections')
+  @UseGuards(JwtAuthGuard)
   async wipeAllCollections() {
     try {
       await this.vectorService.wipeAllCollections();
@@ -175,6 +187,7 @@ export class SyncController {
   }
 
   @Get('collections/:collectionName/count')
+  @UseGuards(JwtAuthGuard)
   async getCollectionCount(@Param('collectionName') collectionName: string) {
     try {
       const count = await this.vectorService.getCollectionCount(collectionName);
@@ -193,6 +206,7 @@ export class SyncController {
   }
 
   @Get('collections/counts')
+  @UseGuards(JwtAuthGuard)
   async getAllCollectionCounts() {
     try {
       const counts = await this.vectorService.getAllCollectionCounts();

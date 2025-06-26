@@ -76,4 +76,4 @@ export const SWU_COST_RECOVERY_FIGURE = 5000;
 export const TWU_COST_RECOVERY_FIGURE = 3000;
 
 export const MARKETPLACE_AI_URL =
-  import.meta.env.VITE_MARKETPLACE_AI_URL || "http://localhost:5000";
+  import.meta.env.VITE_AI_SERVICE_URL || "http://localhost:5000";

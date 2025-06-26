@@ -1,6 +1,15 @@
 // rag.controller.ts
-import { Controller, Get, Query, Post, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { VectorService } from './vector.service';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 interface OpportunitySearchRequest {
   title?: string;
@@ -24,6 +33,7 @@ export class RagController {
   constructor(private vectorService: VectorService) {}
 
   @Get('search')
+  @UseGuards(JwtAuthGuard)
   async search(
     @Query('q') query: string,
     @Query('collection') collection?: string,
@@ -48,6 +58,7 @@ export class RagController {
   }
 
   @Post('search-opportunities')
+  @UseGuards(JwtAuthGuard)
   async searchOpportunities(@Body() request: OpportunitySearchRequest) {
     // Construct search query from title and teaser
     const searchTerms: string[] = [];
@@ -121,6 +132,7 @@ export class RagController {
   }
 
   @Post('search-resource-questions')
+  @UseGuards(JwtAuthGuard)
   async searchResourceQuestions(
     @Body() request: ResourceQuestionSearchRequest,
   ) {
@@ -170,6 +182,7 @@ export class RagController {
   }
 
   @Post('collections/:collectionName/search')
+  @UseGuards(JwtAuthGuard)
   async searchInCollection(
     @Param('collectionName') collectionName: string,
     @Body() request: SearchRequest,
@@ -210,6 +223,7 @@ export class RagController {
   }
 
   @Get('collections')
+  @UseGuards(JwtAuthGuard)
   async getCollections() {
     const collections = await this.vectorService.listCollections();
     return {
@@ -218,6 +232,7 @@ export class RagController {
   }
 
   @Get('add')
+  @UseGuards(JwtAuthGuard)
   async addDocument(
     @Query('id') id: string,
     @Query('content') content: string,

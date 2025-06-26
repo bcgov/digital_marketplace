@@ -1,5 +1,6 @@
 FROM --platform=linux/amd64 docker.io/node:22 AS dm_app_build
 ARG DIRPATH=/usr/app
+ARG VITE_AI_SERVICE_URL
 WORKDIR $DIRPATH
 COPY ./src $DIRPATH/src
 COPY package.json gruntfile.js yarn.lock tsconfig.json vite.config.mts ./
@@ -12,7 +13,9 @@ COPY ./grunt-configs ./grunt-configs
 # VITE_NODE_ENV=production is passed here to allow for specific dev env variables when VITE_NODE_ENV=development
 # @see /src/back-end/config.ts::developmentMailerConfigOptions
 RUN yarn install --frozen-lockfile && \
-    VITE_NODE_ENV=production npm run front-end:build && \
+    VITE_NODE_ENV=production \
+    VITE_AI_SERVICE_URL=${VITE_AI_SERVICE_URL} \
+    npm run front-end:build && \
     npm run back-end:build && \
     yarn install --frozen-lockfile --production && \
     yarn cache clean && \

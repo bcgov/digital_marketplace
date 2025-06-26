@@ -37,7 +37,7 @@ objects:
     MARKETPLACE_AI_URL: ${MARKETPLACE_AI_URL}
     CHROMA_URL: ${CHROMA_URL}
     JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
-    VITE_MARKETPLACE_AI_URL: "ai-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    VITE_AI_SERVICE_URL: "ai-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
 
 - kind: Secret
   apiVersion: v1

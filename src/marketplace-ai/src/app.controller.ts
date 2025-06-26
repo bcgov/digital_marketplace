@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { AdminGuard } from './auth/guards';
 import { CurrentUser } from './auth/decorators/user.decorator';
 import { AppService } from './app.service';
 import { VectorService } from './vector.service';
@@ -58,6 +59,7 @@ export class AppController {
   }
 
   @All('/copilotkit')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   copilotkit(@Req() req: Request, @Res() res: Response) {
     const model = this.langChainService;
     const runtime = new CopilotRuntime();
@@ -79,7 +81,7 @@ export class AppController {
 
   // Langchain chat endpoint
   @Post('chat2')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async chatCompletion(
     @Body() body: { messages: { role: string; content: string }[] },
     @CurrentUser() user: any,
@@ -94,7 +96,7 @@ export class AppController {
 
   // Azure AI inference chat endpoint
   @Post('chat')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async generateChatCompletion(
     @Body() dto: ChatCompletionDto,
     @CurrentUser() user: any,
@@ -106,6 +108,7 @@ export class AppController {
   }
 
   @Post('/api/ai/copilot')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async handleCopilotRequest(
     @Body() body: CopilotApiDto,
     @Res() res: Response,
@@ -156,7 +159,7 @@ export class AppController {
 
   // Setup a route handler using streamText.
   @Post('/api/ai/command')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async handleCommandRequest(
     @Body() body: CommandApiDto,
     @Res() res: Response,
@@ -364,6 +367,7 @@ export class AppController {
   }
 
   @Post('/api/ai/command_test')
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async handleCommandRequest2(
     @Body() body: CommandApiDto,
     @Res() res: Response,
@@ -443,8 +447,9 @@ export class AppController {
     }
   }
 
+  // Resource questions generation - Admin users only
   @Post('generate-resource-questions')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, AdminGuard)
   async generateResourceQuestions(@Body() dto: any, @CurrentUser() user: any) {
     console.log(
       `Resource questions generation request from user: ${user.name} (${user.type})`,
