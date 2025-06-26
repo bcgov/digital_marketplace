@@ -22,6 +22,7 @@ objects:
     LOG_DEBUG: "1"
     USE_AZURE_OPENAI: "true"
     AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+    FRONTEND_URL: https://app-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
 
 - kind: Secret
   apiVersion: v1

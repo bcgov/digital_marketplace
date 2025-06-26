@@ -30,15 +30,14 @@ objects:
       type: Source
       dockerStrategy:
         dockerfilePath: ./Dockerfile
-        buildArgs:
-          - name: VITE_AI_SERVICE_URL
-            value: ${VITE_AI_SERVICE_URL}
         from:
           kind: ${SOURCE_IMAGE_KIND}
           name: ${SOURCE_IMAGE_NAME_SPACE}/${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}
       env:
         - name: SET_TEST_INDICATOR
           value: ${SET_TEST_INDICATOR}
+        - name: VITE_AI_SERVICE_URL
+          value: https://ai-digmkt-${ENV_NAME}
     resources:
       limits:
         cpu: 2
@@ -109,8 +108,3 @@ parameters:
   displayName: Show test environment indicators in emails and banners.
   required: true
   value: '0'
-
-- name: VITE_AI_SERVICE_URL
-  displayName: URL to the AI service for client-side access
-  required: true
-  value: https://ai-digmkt-${ENV_NAME}
