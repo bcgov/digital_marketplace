@@ -375,71 +375,52 @@ export class AppController {
     try {
       // Create a mock result object that mimics the streamText result structure
       const result = {
-        pipeDataStreamToResponse: (response: Response) => {
+        pipeDataStreamToResponse: async (response: Response) => {
           // Set the same headers that the original streaming would use
           response.setHeader('Content-Type', 'text/plain');
           response.setHeader('Cache-Control', 'no-cache');
           response.setHeader('Connection', 'keep-alive');
 
-          // Generate the exact streaming format with new content
-          response.write('f:{"messageId":"msg-kG0M1zsyM7XOsK4G4F08Ded8"}\n');
-          response.write('0:"**Full Stack Developer Opportunity**\\n\\n"\n');
-          response.write(
-            '0:"**Organization:**  \\n[YOUR ORGANIZATION] is seeking a skilled Full Stack Developer to join our team in Victoria. This is an on-site position where you\'ll work on innovative web applications using cutting-edge technologies across the entire development stack.\\n\\n"\n',
-          );
-          response.write(
-            '0:"**Contract Outcome:**  \\nThe successful candidate will deliver high-quality, scalable web applications that meet our organizational needs, leveraging Amazon Web Services (AWS) and other modern technologies. The project must be completed by June 28, 2025.\\n\\n"\n',
-          );
-          response.write('0:"**Key Responsibilities:**  \\n\\n"\n');
-          response.write(
-            '0:"- Design, develop full-stack web applications using AWS and other relevant technologies.  \\n- Collaborate with cross-functional teams to define, design, and ship new features.  \\n- Ensure the performance, quality, and responsiveness of applications.  \\n- Maintain code integrity and organization, including version control using Git.  \\n- Troubleshoot and debug issues to optimize performance.  \\n- Participate in code reviews and contribute to team knowledge sharing.  \\n\\n"\n',
-          );
-          response.write('0:"**Minimum Requirements:**  \\n\\n"\n');
-          response.write(
-            '0:"- Proven experience as a Full Stack Developer with expertise in Amazon Web Services (AWS).  \\n- Strong proficiency in front-end and back-end development technologies.  \\n- Experience with Git for version control.  \\n- Ability to work independently and as part of a team in a fast-paced environment.  \\n- Strong problem-solving skills and attention to detail.  \\n\\n"\n',
-          );
-          response.write(
-            '0:"**Years of Experience:**  \\nA minimum of [X] years of experience in full-stack development, with at least [Y] years focused on AWS-based solutions.\\n\\n"\n',
-          );
-          response.write('0:"**Estimated Procurement Timeline:**  \\n\\n"\n');
-          response.write(
-            '0:"- **Proposal Deadline:** June 23, 2025  \\n- **Contract Award Date:** June 24, 2025  \\n- **Contract Start Date:** June 25, 2025  \\n- **Contract Completion Date:** June 28, 2025  \\n\\n"\n',
-          );
-          response.write(
-            '0:"**Contract Details:**  \\nThis is a fixed-term contract with a maximum budget of $1,234. There is no provision for contract extensions at this time.  \\n\\n"\n',
-          );
-          response.write(
-            '0:"**Note to Proponents:**  \\nAn incumbent vendor may be engaged in related work. The incumbent vendor is NOT prevented from applying to this opportunity.  \\n\\n"\n',
-          );
-          response.write('0:"**Acceptance Criteria:**  \\n\\n"\n');
-          response.write(
-            '0:"- Deliver fully functional web applications that meet specified requirements.  \\n- Ensure all deliverables are completed within the agreed timeline.  \\n- Participate in regular meetings and provide timely updates on progress.  \\n- Adhere to best practices in coding, security, and performance optimization.  \\n\\n"\n',
-          );
-          response.write(
-            '0:"**Optional Skills (Preferred but Not Required):**  \\n\\n"\n',
-          );
-          response.write(
-            '0:"- Experience with additional cloud platforms or DevOps tools.  \\n- Familiarity with agile development methodologies.  \\n- Knowledge of additional programming languages or frameworks.  \\n\\n"\n',
-          );
-          response.write(
-            '0:"**Location:**  \\nVictoria, BC (Remote work is not permitted for this role).  \\n\\n\\n"\n',
-          );
-          response.write(
-            '0:"**Budget:**  \\nMaximum budget for this contract is $1,234."\n',
-          );
-          response.write(
-            'e:{"finishReason":"unknown","usage":{"promptTokens":2586,"completionTokens":559},"isContinued":false}\n',
-          );
-          response.write(
-            'd:{"finishReason":"unknown","usage":{"promptTokens":2586,"completionTokens":559}}\n',
-          );
+          // Helper function to add delay
+          const delay = (ms: number) =>
+            new Promise((resolve) => setTimeout(resolve, ms));
+
+          // Array of all the chunks to write
+          const chunks = [
+            'f:{"messageId":"msg-YzimS8NXJAosAzBmwcpzsR3P"}\n',
+            '0:"**Organization:** [YOUR ORGANIZATION]\\n\\n"\n',
+            '0:"**Opportunity Title:** Data Professionals and Full Stack Developers for Forestry Digital Services\\n\\n"\n',
+            '0:"**Contract Outcome:** The successful vendor(s) will provide skilled Data Professionals and Full Stack Developers to support the development, optimization, and sustainment of digital solutions for forestry management, sustainability, and innovation. The contract will enable the integration of data and technology to advance digital forestry services.\\n\\n"\n',
+            '0:"**Key Responsibilities:**\\n\\n"\n',
+            '0:"*Data Professional (60% allocation):*\\n\\n"\n',
+            '0:"- Design, develop, and optimize data architecture and data models to support forestry digital services.\\n- Implement and maintain relational databases (Oracle, PostgreSQL) and ensure adherence to data management standards.\\n- Conduct data analysis, data integration, and ETL processes to enable robust data-driven decision-making.\\n- Manage metadata, test data generation, and ensure data quality and integrity.\\n- Collaborate with cross-functional teams using Agile methodologies.\\n- Communicate technical concepts and project updates effectively to stakeholders.\\n- (Optional) Leverage cloud platforms (Amazon Web Services, OpenShift), programming languages (Java, JavaScript, Python), and DevOps practices to enhance data solutions.\\n\\n"\n',
+            '0:"*Full Stack Developer (80% allocation):*\\n\\n"\n',
+            '0:"- Lead the design, development, and deployment of full stack applications for forestry digital services.\\n- Develop and maintain applications using OpenShift, Java, JavaScript, and React.\\n- Implement DevOps and Quality Assurance practices to ensure reliable and scalable solutions.\\n- Collaborate with data professionals to integrate data-driven features and optimize system performance.\\n- Participate in Agile ceremonies, code reviews, and continuous improvement initiatives.\\n- (Optional) Utilize database and data analysis skills (PostgreSQL, Oracle, Data Analysis) to support application development.\\n\\n"\n',
+            '0:"**Minimum Requirements:**\\n\\n"\n',
+            '0:"- Proven experience in the relevant service area(s) within the last five (5) years.\\n- Data Professional: Minimum three (3) years of experience in data architecture, data analysis, and management of relational databases (Oracle, PostgreSQL).\\n- Full Stack Developer: Minimum three (3) years of experience in full stack development using Java, JavaScript, React, and OpenShift.\\n- Demonstrated experience working in Agile teams and communicating effectively with technical and non-technical stakeholders.\\n- Experience with DevOps and Quality Assurance practices.\\n- (Optional) Experience with cloud platforms, additional programming languages, and advanced data management techniques is an asset.\\n\\n"\n',
+            '0:"**Location:** Victoria (Remote work permitted; resources must be available for team meetings during business hours, 8:30am–4:00pm Pacific Time)\\n\\n"\n',
+            '0:"**Maximum Budget:** $300,000\\n\\n"\n',
+            '0:"**Estimated Procurement Timeline:**\\n\\n"\n',
+            '0:"- **Proposal Deadline:** 2024-11-01\\n- **Contract Award Date:** 2024-11-27\\n- **Contract Start Date:** 2024-11-27\\n- **Contract Completion Date:** 2026-11-27\\n\\n"\n',
+            '0:"**Contract Extension:** [Insert contract extension language if applicable, or state \\"No contract extension is currently anticipated.\\"]\\n\\n"\n',
+            '0:"**Note to Proponents:**\\n\\n"\n',
+            '0:"- The applicable form of contract is attached to this opportunity\'s \\"Attachments\\" section.\\n- Proponents must ensure proposed resources are available for remote collaboration and meetings during the specified business hours.\\n- All requirements and responsibilities must be addressed in the proposal submission."\n',
+            'e:{"finishReason":"stop","usage":{"promptTokens":2267,"completionTokens":657},"isContinued":false}\n',
+            'd:{"finishReason":"stop","usage":{"promptTokens":2267,"completionTokens":657}}\n',
+          ];
+
+          // Write each chunk with a delay
+          for (const chunk of chunks) {
+            response.write(chunk);
+            await delay(300); // 100ms delay between chunks - adjust as needed
+          }
 
           response.end();
         },
       };
 
       // Use the same pipeDataStreamToResponse call as before
-      result.pipeDataStreamToResponse(res);
+      await result.pipeDataStreamToResponse(res);
     } catch (error) {
       console.error('Error in /api/ai/command endpoint:', error);
       res.setHeader('Content-Type', 'application/json');
@@ -496,7 +477,12 @@ export class AppController {
 
         // Build skill examples section
         if (skillRagResults.some((sr) => sr.results.length > 0)) {
-          skillRagExamples = '\n--- SKILL-BASED EXAMPLE QUESTIONS ---\n';
+          // Create a map to store unique question/guideline pairs with their associated skills
+          const uniqueExamples = new Map<
+            string,
+            { question: string; guideline: string; skills: Set<string> }
+          >();
+
           skillRagResults.forEach(({ skill, results }) => {
             if (results.length > 0) {
               const questionResults = results
@@ -505,18 +491,43 @@ export class AppController {
                 )
                 .slice(0, 2); // Limit to 2 examples per skill
 
-              if (questionResults.length > 0) {
-                skillRagExamples += `\nExamples for skill "${skill}":\n`;
-                questionResults.forEach((result: any, index: number) => {
-                  skillRagExamples += `  ${index + 1}. Question: "${
-                    result.metadata.full_question
-                  }"\n`;
-                  skillRagExamples += `     Guideline: "${result.metadata.full_guideline}"\n`;
-                });
-              }
+              questionResults.forEach((result: any) => {
+                const key = `${result.metadata.full_question}|||${result.metadata.full_guideline}`;
+
+                if (uniqueExamples.has(key)) {
+                  // Add skill to existing entry
+                  uniqueExamples.get(key)!.skills.add(skill);
+                } else {
+                  // Create new entry
+                  uniqueExamples.set(key, {
+                    question: result.metadata.full_question,
+                    guideline: result.metadata.full_guideline,
+                    skills: new Set([skill]),
+                  });
+                }
+              });
             }
           });
-          skillRagExamples += '\n--- END OF SKILL EXAMPLES ---\n';
+
+          // Convert to array and limit total number
+          const maxExamples = 20; // Set a reasonable limit on total question/guideline pairs
+          const exampleArray = Array.from(uniqueExamples.values()).slice(
+            0,
+            maxExamples,
+          );
+
+          if (exampleArray.length > 0) {
+            skillRagExamples = '\n--- SKILL-BASED EXAMPLE QUESTIONS ---\n';
+            exampleArray.forEach((example, index) => {
+              const skillsList = Array.from(example.skills).sort().join('", "');
+              skillRagExamples += `\n${index + 1}. Examples for skill${
+                example.skills.size > 1 ? 's' : ''
+              } "${skillsList}":\n`;
+              skillRagExamples += `   Question: "${example.question}"\n`;
+              skillRagExamples += `   Guideline: "${example.guideline}"\n`;
+            });
+            skillRagExamples += '\n--- END OF SKILL EXAMPLES ---\n';
+          }
         }
       } catch (ragError) {
         console.warn(
@@ -812,17 +823,7 @@ Resource ${i + 1}: ${r.serviceArea} (${r.targetAllocation}% allocation)
 ALL SKILLS TO EVALUATE: ${Array.from(allSkills).join(', ')}
 SERVICE AREAS: ${Array.from(serviceAreas).join(', ')}
 
-${skillRagExamples}${existingQuestionsContext}
-
-REQUIREMENTS:
-- Generate ONE evaluation question that covers multiple related skills/service areas
-- The question should be scenario-based and specific to the opportunity context
-- DO NOT duplicate or be too similar to existing questions listed above
-- Focus on skills and service areas that haven't been fully covered by existing questions
-- The question should help determine competency levels in the relevant areas
-- Use the example questions above as inspiration for format and quality, but create original content
-
-Please return only the question text, no additional formatting or explanation.`;
+${skillRagExamples}${existingQuestionsContext}`;
   }
 
   // Internal function to generate single guideline prompt
@@ -897,9 +898,6 @@ Please return only the question text, no additional formatting or explanation.`;
     }
 
     return `${userPrompt}
-
-QUESTION TO CREATE GUIDELINES FOR:
-"${questionText}"
 
 OPPORTUNITY CONTEXT:
 Title: ${context.title || 'N/A'}

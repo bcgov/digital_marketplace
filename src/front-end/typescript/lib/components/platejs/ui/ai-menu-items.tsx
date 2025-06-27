@@ -145,7 +145,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         const searchRequest = {
           title: title,
           teaser: teaser,
-          limit: 1
+          limit: 2
         };
 
         // Call the marketplace-ai service directly
@@ -225,16 +225,15 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
           prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
         }
 
-        prompt += `\nThe description should be follow the format similar to the reference material.
-        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements,
-        years of experience, and estimated procurement timeline.
+        prompt += `\n\nIMPORTANT RULES:\nThe description should be follow the format similar to the reference material.
+        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements, years of experience, and estimated procurement timeline.
         For responsibilities and requirements, ensure to cover all aspects of service areas.
         Include contract extension language if it exists in reference material.
         If reference material is provided, use it for inspiration but create unique, original content.
         Ignore markdown rules in reference material, and use standard markdown rules instead.
         If some information is missing in the context, use placeholder text, for example "[YOUR ORGANIZATION]".
         Use placeholders for any other unknown data that's present in example material, but not in provided context. Use only if necessary.
-        Important: follow the gneral format and length of the reference material as closely as possible.`;
+        Important: follow the general format and length of the reference material as closely as possible.\n`;
 
 
         // Add similar opportunities context if found
@@ -242,10 +241,11 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
         if (results && results.length > 0) {
           prompt += '\n--- REFERENCE MATERIAL - Similar Opportunities for Reference ---\n';
           results.forEach((result: any, index: number) => {
-            prompt += `\nSimilar Opportunity ${index + 1}:\n`;
-            prompt += `Title: ${result.metadata.title}\n`;
-            prompt += `Teaser: \n\n ${result.metadata.teaser}\n\n`;
-            prompt += `Description: \n\n ${result.metadata.full_description}\n`;
+            prompt += `\nSimilar Opportunity Description ${index + 1} ("${result.metadata.title}"):\n`;
+            // prompt += `Title: ${result.metadata.title}\n`;
+            // prompt += `Teaser: \n\n ${result.metadata.teaser}\n\n`;
+            // prompt += `Description: \n\n ${result.metadata.full_description}\n`;
+            prompt += `${result.metadata.full_description}\n`;
           });
           prompt += '\n--- End of Reference Material ---\n';
         }
@@ -415,7 +415,11 @@ __EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUEST
         };
 
         // Default prompt for guideline generation
-        const defaultPrompt = `Generate evaluation guidelines for the following question in a Team With Us opportunity.
+        const defaultPrompt = `Generate evaluation guidelines for the following question in an opportunity.
+
+QUESTION TO GENERATE THE GUIDELINE FOR:
+
+${currentQuestionText}
 
 REQUIREMENTS:
 - Generate clear evaluation guidelines for the specific question below
