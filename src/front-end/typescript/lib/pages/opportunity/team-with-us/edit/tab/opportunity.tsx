@@ -674,15 +674,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "reviewWithAI": {
       const form = state.form;
       if (!form) return [state, []];
-      
+
       // Programmatically click the CopilotKit button to open the chat window
       setTimeout(() => {
-        const copilotButton = document.querySelector('.copilotKitButton') as HTMLButtonElement;
+        const copilotButton = document.querySelector(
+          ".copilotKitButton"
+        ) as HTMLButtonElement;
         if (copilotButton) {
           copilotButton.click();
         }
       }, 100);
-      
+
       return [
         startReviewWithAILoading(state),
         [persistForm(form, (result) => adt("onReviewAIResponse", result))]
@@ -771,17 +773,21 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     if (state.opportunityForReview) {
       // Clear chat history first for a fresh conversation
       setMessages([]);
-      
-      const readableOpportunity = opportunityToPublicState(state.opportunityForReview);
-      appendMessage(new TextMessage({
-        content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
+
+      const readableOpportunity = opportunityToPublicState(
+        state.opportunityForReview
+      );
+      appendMessage(
+        new TextMessage({
+          content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
 
 ${JSON.stringify(readableOpportunity, null, 2)}
 
 ${FORMATTED_CRITERIA}`,
-        role: Role.System,
-        id: Math.random().toString()
-      }));
+          role: Role.System,
+          id: Math.random().toString()
+        })
+      );
       dispatch(adt("clearOpportunityForReview"));
     }
   }, [state.opportunityForReview, appendMessage, setMessages, dispatch]);
@@ -802,27 +808,16 @@ ${FORMATTED_CRITERIA}`,
 
   return (
     <div>
-      <EditTabHeader
-        opportunity={opportunity}
-        viewerUser={viewerUser}
-        isEditing={state.isEditing}
-        toggleEditing={() =>
-          dispatch(state.isEditing ? adt("cancelEditing") : adt("startEditing"))
-        }
-      />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Reporting {...props} />
-        </Col>
-      </Row>
+      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
+      <Reporting {...props} />
       <Row className="mt-5">
         <Col xs="12">
           <Form.view
+            disabled={!state.isEditing || isLoading}
             state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("form", value)
+            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+              adt("form" as const, msg)
             )}
-            disabled={isLoading}
           />
         </Col>
       </Row>
@@ -1218,7 +1213,8 @@ export const component: Tab.Component<State, Msg> = {
                     children: "Publish",
                     disabled: !isValid(),
                     symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                    onClick: () => dispatch(adt("showModal", "publish" as const))
+                    onClick: () =>
+                      dispatch(adt("showModal", "publish" as const))
                   },
                   {
                     children: "Edit",
