@@ -8,7 +8,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { AdminGuard } from './auth/guards';
+import { GovernmentGuard } from './auth/guards';
 import { CurrentUser } from './auth/decorators/user.decorator';
 import { AppService } from './app.service';
 import { VectorService } from './vector.service';
@@ -59,7 +59,7 @@ export class AppController {
   }
 
   @All('/copilotkit')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   copilotkit(@Req() req: Request, @Res() res: Response) {
     const model = this.langChainService;
     const runtime = new CopilotRuntime();
@@ -81,7 +81,7 @@ export class AppController {
 
   // Langchain chat endpoint
   @Post('chat2')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async chatCompletion(
     @Body() body: { messages: { role: string; content: string }[] },
     @CurrentUser() user: any,
@@ -96,7 +96,7 @@ export class AppController {
 
   // Azure AI inference chat endpoint
   @Post('chat')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async generateChatCompletion(
     @Body() dto: ChatCompletionDto,
     @CurrentUser() user: any,
@@ -108,7 +108,7 @@ export class AppController {
   }
 
   @Post('/api/ai/copilot')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async handleCopilotRequest(
     @Body() body: CopilotApiDto,
     @Res() res: Response,
@@ -159,7 +159,7 @@ export class AppController {
 
   // Setup a route handler using streamText.
   @Post('/api/ai/command')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async handleCommandRequest(
     @Body() body: CommandApiDto,
     @Res() res: Response,
@@ -367,7 +367,7 @@ export class AppController {
   }
 
   @Post('/api/ai/command_test')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async handleCommandRequest2(
     @Body() body: CommandApiDto,
     @Res() res: Response,
@@ -430,7 +430,7 @@ export class AppController {
 
   // Resource questions generation - Admin users only
   @Post('generate-resource-questions')
-  @UseGuards(JwtAuthGuard, AdminGuard)
+  @UseGuards(JwtAuthGuard, GovernmentGuard)
   async generateResourceQuestions(@Body() dto: any, @CurrentUser() user: any) {
     console.log(
       `Resource questions generation request from user: ${user.name} (${user.type})`,
