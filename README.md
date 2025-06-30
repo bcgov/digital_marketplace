@@ -118,7 +118,7 @@ cp sample.env .env
 Please ensure the following packages have been installed:
 
 - yarn
-- Node.js 16.x
+- Node.js 22.x
 - SASS
 - Docker
 - Docker Compose 3.x

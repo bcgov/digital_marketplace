@@ -1053,6 +1053,23 @@ nav.navbar .nav-link:hover {
         color: $white;
       }
     }
+
+    // Bootstrap 5 compatibility fix for multi-value remove button
+    &__multi-value__remove {
+      border-radius: 0 2px 2px 0;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      color: $c-multi-select-item-remove;
+      padding: 3px 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        cursor: pointer;
+        color: #fff !important;
+        background-color: $danger !important;
+      }
+    }
   }
 }
 

@@ -109,7 +109,7 @@ const NavLink: component_.base.View<NavLinkProps> = (props) => {
       {...linkProps}
       onClick={onClick}
       className={`text-nowrap ${props.className || ""} ${
-        props.active ? "font-weight-bold" : ""
+        props.active ? "fw-bold" : ""
       }`}
     />
   );

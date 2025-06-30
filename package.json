@@ -32,7 +32,7 @@
     "shared:lint": "npx eslint -c .eslintrc.js src/shared && echo Lint Successful\n",
     "shared:typedoc": "npx typedoc --name 'Digital Marketplace Shared' --tsconfig src/shared/tsconfig.json --cleanOutputDir --out typedoc/shared --excludeExternals --entryPointStrategy expand src/shared",
     "migrations:lint": "npx eslint -c .eslintrc.js src/migrations && echo Lint Successful\n",
-    "migrations:helper": "npx ts-node --require tsconfig-paths/register --project src/migrations/tsconfig.json \"$(npm bin)/knex\" --cwd src/migrations",
+    "migrations:helper": "npx ts-node --require tsconfig-paths/register --project src/migrations/tsconfig.json ./node_modules/.bin/knex --cwd src/migrations",
     "migrations:create": "npm run migrations:helper -- migrate:make -x ts --stub ./stub.ts",
     "migrations:latest": "npm run migrations:helper -- migrate:latest",
     "migrations:rollback": "npm run migrations:helper -- migrate:rollback",
