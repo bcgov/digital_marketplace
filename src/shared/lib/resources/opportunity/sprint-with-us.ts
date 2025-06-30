@@ -642,6 +642,7 @@ export function canChangeEvaluationPanel(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.Draft:
     case SWUOpportunityStatus.UnderReview:
     case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.Suspended:
     case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
       return true;
     default:
@@ -657,29 +658,6 @@ export function isSWUOpportunityClosed(o: SWUOpportunity): boolean {
     o.status !== SWUOpportunityStatus.UnderReview &&
     o.status !== SWUOpportunityStatus.Suspended
   );
-}
-
-export function hasSWUOpportunityPassedTeamQuestionsEvaluation(
-  o: Pick<SWUOpportunity, "history">
-): boolean {
-  if (!o.history) {
-    return false;
-  }
-  return o.history.reduce((acc, h) => {
-    if (acc || h.type.tag !== "status") {
-      return acc;
-    }
-    switch (h.type.value) {
-      case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
-      case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
-      case SWUOpportunityStatus.EvaluationCodeChallenge:
-      case SWUOpportunityStatus.EvaluationTeamScenario:
-      case SWUOpportunityStatus.Awarded:
-        return true;
-      default:
-        return false;
-    }
-  }, false as boolean);
 }
 
 export function hasSWUOpportunityPassedTeamQuestions(
@@ -780,16 +758,6 @@ export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvalua
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
       return true;
-    default:
-      return false;
-  }
-}
-
-export function canViewSWUEvaluationConsensus(
-  s: SWUOpportunityStatus
-): boolean {
-  switch (s) {
-    // TODO: Add statuses
     default:
       return false;
   }

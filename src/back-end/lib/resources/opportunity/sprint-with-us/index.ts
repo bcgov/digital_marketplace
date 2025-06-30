@@ -900,8 +900,7 @@ const update: crud.Update<
             inceptionPhase,
             prototypePhase,
             implementationPhase,
-            teamQuestions,
-            evaluationPanel
+            teamQuestions
           } = request.body.value;
 
           if (!editableOpportunityStatuses.includes(swuOpportunity.status)) {
@@ -1013,23 +1012,6 @@ const update: crud.Update<
                 getValidValue(validatedAssignmentDate, now)
               )
             );
-
-          const validatedEvaluationPanel =
-            await validateSWUEvaluationPanelMembers(
-              connection,
-              evaluationPanel
-            );
-          if (
-            isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
-              validatedEvaluationPanel
-            )
-          ) {
-            return invalid({
-              opportunity: adt("edit" as const, {
-                evaluationPanel: validatedEvaluationPanel.value
-              })
-            });
-          }
 
           // Do not validate other fields if the opportunity a draft
           if (swuOpportunity.status === SWUOpportunityStatus.Draft) {
@@ -1160,8 +1142,7 @@ const update: crud.Update<
                       defaultPhaseLength
                     )
                   )
-                },
-                evaluationPanel: validatedEvaluationPanel.value
+                }
               })
             } as ValidatedUpdateRequestBody);
           }
@@ -1242,8 +1223,7 @@ const update: crud.Update<
               validatedTeamQuestions,
               validatedProposalDeadline,
               validatedAssignmentDate,
-              validatedAttachments,
-              validatedEvaluationPanel
+              validatedAttachments
             ])
           ) {
             // Ensure that score weights total 100%
@@ -1296,8 +1276,7 @@ const update: crud.Update<
                 teamQuestions: validatedTeamQuestions.value,
                 proposalDeadline: validatedProposalDeadline.value,
                 assignmentDate: validatedAssignmentDate.value,
-                attachments: validatedAttachments.value,
-                evaluationPanel: validatedEvaluationPanel.value
+                attachments: validatedAttachments.value
               })
             } as ValidatedUpdateRequestBody);
           } else {
@@ -1361,11 +1340,7 @@ const update: crud.Update<
                 assignmentDate: getInvalidValue(
                   validatedAssignmentDate,
                   undefined
-                ),
-                evaluationPanel: getInvalidValue<
-                  CreateSWUEvaluationPanelMemberValidationErrors[],
-                  undefined
-                >(validatedEvaluationPanel, undefined)
+                )
               })
             });
           }
@@ -1530,19 +1505,15 @@ const update: crud.Update<
             });
           }
 
-          const anyScreenableProponents = swuOpportunity.teamQuestions.reduce(
-            (valid, tq) => {
-              return (
-                valid ||
-                consensuses.some(
-                  (consensus) =>
-                    tq.minimumScore &&
-                    consensus.scores[tq.order].score >= tq.minimumScore
-                )
-              );
-            },
-            false
-          );
+          const anyScreenableProponents = consensuses.some((consensus) => {
+            return swuOpportunity.teamQuestions.every((tq) => {
+              if (!tq.minimumScore) {
+                return true;
+              }
+
+              return consensus.scores[tq.order].score >= tq.minimumScore;
+            });
+          });
 
           if (!anyScreenableProponents) {
             return invalid({
@@ -2023,19 +1994,33 @@ const update: crud.Update<
               })
             });
           }
+
+          // status: CreateSWUOpportunityStatus;
+          // session: AuthenticatedSession;
+          // inceptionPhase?: ValidatedCreateSWUOpportunityPhaseBody;
+          // prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
+          // implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
+          // teamQuestions: CreateSWUTeamQuestionBody[];
+          // evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
           return valid({
             session: request.session,
             body: adt("editEvaluationPanel" as const, {
               ...omit(
                 swuOpportunity,
+                "createdAt",
+                "updatedAt",
+                "createdBy",
+                "updatedBy",
+                "status",
+                "id",
                 "addenda",
                 "history",
                 "publishedAt",
-                "reporting",
-                "status",
                 "subscribed",
-                "updatedAt",
-                "updatedBy"
+                "codeChallengeEndDate",
+                "teamScenarioEndDate",
+                "evaluationPanel",
+                "reporting"
               ),
               evaluationPanel: validatedEvaluationPanel.value
             })
@@ -2054,11 +2039,27 @@ const update: crud.Update<
           SWUOpportunityStatus.Suspended,
           SWUOpportunityStatus.Canceled
         ];
+        const existingOpportunity = getValidValue(
+          await db.readOneSWUOpportunity(
+            connection,
+            request.params.id,
+            session
+          ),
+          null
+        );
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateSWUOpportunityVersion(
               connection,
-              { ...body.value, id: request.params.id },
+              {
+                ...body.value,
+                evaluationPanel:
+                  existingOpportunity?.evaluationPanel?.map((member) => ({
+                    ...member,
+                    user: member.user.id
+                  })) ?? [],
+                id: request.params.id
+              },
               session
             );
             /**
@@ -2092,14 +2093,6 @@ const update: crud.Update<
             }
             break;
           case "publish": {
-            const existingOpportunity = getValidValue(
-              await db.readOneSWUOpportunity(
-                connection,
-                request.params.id,
-                session
-              ),
-              null
-            );
             dbResult = await db.updateSWUOpportunityStatus(
               connection,
               request.params.id,
@@ -2197,7 +2190,7 @@ const update: crud.Update<
             );
             break;
           case "submitIndividualQuestionEvaluations":
-            dbResult = await db.submitIndividualQuestionEvaluations(
+            dbResult = await db.submitIndividualSWUQuestionEvaluations(
               connection,
               request.params.id,
               body.value,
@@ -2205,7 +2198,7 @@ const update: crud.Update<
             );
             break;
           case "submitConsensusQuestionEvaluations":
-            dbResult = await db.submitConsensusQuestionEvaluations(
+            dbResult = await db.submitConsensusSWUQuestionEvaluations(
               connection,
               request.params.id,
               body.value,
@@ -2227,12 +2220,13 @@ const update: crud.Update<
             if (isValid(dbResult)) {
               swuOpportunityNotifications.handleSWUPanelChange(
                 connection,
-                dbResult.value
+                dbResult.value,
+                existingOpportunity
               );
             }
             break;
           case "finalizeQuestionConsensuses":
-            dbResult = await db.finalizeQuestionConsensus(
+            dbResult = await db.finalizeSWUQuestionConsensus(
               connection,
               request.params.id,
               body.value,

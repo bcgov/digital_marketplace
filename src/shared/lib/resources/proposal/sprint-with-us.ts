@@ -509,11 +509,11 @@ export function isValidStatusChange(
 
 // Return score out of 100 calculated from total points awarded to all questions / max possible
 export function calculateProposalTeamQuestionScore(
-  teamQuestionResponses: SWUTeamQuestionResponseEvaluationScores[],
+  teamQuestionResponsesEvaluations: SWUTeamQuestionResponseEvaluationScores[],
   teamQuestions: SWUTeamQuestion[]
 ): number {
   const maxPossibleScore = teamQuestions.reduce((acc, v) => acc + v.score, 0);
-  const actualScore = teamQuestionResponses.reduce(
+  const actualScore = teamQuestionResponsesEvaluations.reduce(
     (acc, v) => acc + (v.score || 0),
     0
   );

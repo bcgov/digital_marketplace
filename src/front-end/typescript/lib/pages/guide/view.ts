@@ -3,7 +3,7 @@ import { immutable, component } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { adt } from "shared/lib/types";
 import { valid } from "shared/lib/validation";
-import { InnerMsg, Msg, State } from "../content/view";
+import { InnerMsg, Msg, State } from "front-end/lib/pages/content/view";
 import { ProgramType } from "front-end/lib/views/program-type";
 
 export const GUIDE_AUDIENCE = {

@@ -15,6 +15,7 @@ import {
   Immutable,
   component as component_
 } from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
 import Link, {
@@ -23,7 +24,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
-import React, {  useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   TWUOpportunity,
   TWUOpportunityStatus
@@ -47,6 +48,7 @@ type TWUCreateSubmitStatus =
 type ModalId = ADT<"publish", TWUCreateSubmitStatus> | ADT<"cancel">;
 
 interface ValidState {
+  routePath: string;
   showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
@@ -59,6 +61,7 @@ interface ValidState {
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg =
+  | ADT<"onInitResponse", api.ResponseValidation<User[], string[]>>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"publish", TWUCreateSubmitStatus>
@@ -84,14 +87,16 @@ const init: component_.page.Init<
   Route
 > = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Government, UserType.Admin],
-  success({ shared }) {
+  success({ shared, routePath }) {
     const [formState, formCmds] = Form.init({
       canRemoveExistingAttachments: true, //moot
-      viewerUser: shared.sessionUser
+      viewerUser: shared.sessionUser,
+      users: []
     });
     return [
       valid(
         immutable({
+          routePath,
           showModal: null,
           publishLoading: 0,
           saveDraftLoading: 0,
@@ -103,7 +108,7 @@ const init: component_.page.Init<
       ),
       [
         ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
-        component_.cmd.dispatch(component_.page.readyMsg())
+        api.users.readMany<Msg>()((response) => adt("onInitResponse", response))
       ]
     ];
   },
@@ -135,6 +140,39 @@ const stopReviewWithAILoading = makeStopLoading<ValidState>(
 const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   ({ state, msg }) => {
     switch (msg.tag) {
+      case "onInitResponse": {
+        const response = msg.value;
+        if (!api.isValid(response)) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(component_.page.readyMsg()),
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
+                  adt("notFound" as const, {
+                    path: state.routePath
+                  })
+                )
+              )
+            ]
+          ];
+        }
+        const [formState, formCmds] = Form.init({
+          canRemoveExistingAttachments: true, //moot
+          viewerUser: state.viewerUser,
+          users: response.value
+        });
+        return [
+          state.set("form", immutable(formState)),
+          [
+            ...component_.cmd.mapMany(
+              formCmds,
+              (msg) => adt("form", msg) as Msg
+            ),
+            component_.cmd.dispatch(component_.page.readyMsg())
+          ]
+        ];
+      }
       case "showModal":
         return [state.set("showModal", msg.value), []];
       case "hideModal":
@@ -225,7 +263,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         switch (result.tag) {
           case "valid": {
             const [resultFormState, resultCmds, opportunity] = result.value;
-            
+
             return [
               state.set("form", resultFormState),
               [
@@ -266,15 +304,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       }
       case "reviewWithAI": {
         state = state.set("showModal", null);
-        
+
         // Programmatically click the CopilotKit button to open the chat window
         setTimeout(() => {
-          const copilotButton = document.querySelector('.copilotKitButton') as HTMLButtonElement;
+          const copilotButton = document.querySelector(
+            ".copilotKitButton"
+          ) as HTMLButtonElement;
           if (copilotButton) {
             copilotButton.click();
           }
         }, 100);
-        
+
         return [
           startReviewWithAILoading(state),
           [
@@ -374,29 +414,37 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       if (state.opportunityForReview) {
         // Clear chat history first for a fresh conversation
         setMessages([]);
-        
-        appendMessage(new TextMessage({
-          content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
+
+        appendMessage(
+          new TextMessage({
+            content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
 
 ${JSON.stringify(readableOpportunity, null, 2)}
 
 ${FORMATTED_CRITERIA}`,
-          role: Role.System,
-          id: Math.random().toString()
-        }));
+            role: Role.System,
+            id: Math.random().toString()
+          })
+        );
         dispatch(adt("clearOpportunityForReview"));
       }
-    }, [state.opportunityForReview, appendMessage, setMessages, dispatch, readableOpportunity]);
+    }, [
+      state.opportunityForReview,
+      appendMessage,
+      setMessages,
+      dispatch,
+      readableOpportunity
+    ]);
 
     return (
       <div style={{ position: "relative" }}>
-      <Form.view
-        state={state.form}
+        <Form.view
+          state={state.form}
           dispatch={component_.base.mapDispatch(dispatch, (v) =>
             adt("form" as const, v)
-        )}
-        disabled={isDisabled}
-      />
+          )}
+          disabled={isDisabled}
+        />
       </div>
     );
   }

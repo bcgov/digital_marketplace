@@ -381,7 +381,8 @@ function doesOppHaveStatus(
         SWUO.SWUOpportunityStatus.EvaluationCodeChallenge,
         SWUO.SWUOpportunityStatus.EvaluationTeamScenario,
         TWUO.TWUOpportunityStatus.EvaluationChallenge,
-        TWUO.TWUOpportunityStatus.EvaluationResourceQuestions
+        TWUO.TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
+        TWUO.TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
       ].includes(opp.value.status)) ||
     (oppStatus === "awarded" &&
       [

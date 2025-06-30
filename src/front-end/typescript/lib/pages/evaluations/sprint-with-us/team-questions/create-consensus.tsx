@@ -39,7 +39,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           })
         ) as State_<K>,
         [
-          component_.cmd.join4(
+          component_.cmd.join5(
             api.proposals.swu.readOne(opportunityId)(proposalId, (response) =>
               api.isValid(response) ? response.value : null
             ),
@@ -52,7 +52,27 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             api.proposals.swu.readMany(opportunityId)((response) =>
               api.isValid(response) ? response.value : null
             ),
-            (proposal, opportunity, panelEvaluations, proposals) => {
+            api.proposals.swu.teamQuestions.consensuses.readOne(proposalId)(
+              shared.sessionUser.id,
+              (response) => (api.isValid(response) ? response.value : null)
+            ),
+            (
+              proposal,
+              opportunity,
+              panelEvaluations,
+              proposals,
+              evaluation
+            ) => {
+              if (evaluation) {
+                return component_.global.replaceRouteMsg(
+                  adt("questionEvaluationConsensusSWUEdit", {
+                    opportunityId,
+                    proposalId,
+                    userId: shared.sessionUser.id,
+                    tab: "teamQuestions"
+                  }) as Route
+                );
+              }
               if (!proposal || !opportunity || !panelEvaluations || !proposals)
                 return component_.global.replaceRouteMsg(
                   adt("notFound" as const, { path: routePath })
