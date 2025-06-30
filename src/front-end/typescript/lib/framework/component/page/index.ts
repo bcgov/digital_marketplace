@@ -17,15 +17,15 @@ export {
   mapMsg,
   mapDispatch
 } from "front-end/lib/framework/component/page/msg";
-export { type Metadata } from "front-end/lib/framework/component/page/metadata";
-export { type Sidebar } from "front-end/lib/framework/component/page/sidebar";
-export { type Actions } from "front-end/lib/framework/component/page/actions";
+export type { Metadata } from "front-end/lib/framework/component/page/metadata";
+export type { Sidebar } from "front-end/lib/framework/component/page/sidebar";
+export type { Actions } from "front-end/lib/framework/component/page/actions";
 export * as actions from "front-end/lib/framework/component/page/actions";
-export { type Modal } from "front-end/lib/framework/component/page/modal";
+export type { Modal } from "front-end/lib/framework/component/page/modal";
 export * as modal from "front-end/lib/framework/component/page/modal";
-export { type Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
+export type { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
 export * as breadcrumbs from "front-end/lib/framework/component/page/breadcrumbs";
-export { type Alerts } from "front-end/lib/framework/component/page/alerts";
+export type { Alerts } from "front-end/lib/framework/component/page/alerts";
 export * as alerts from "front-end/lib/framework/component/page/alerts";
 
 // Component

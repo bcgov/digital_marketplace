@@ -259,7 +259,7 @@ const create: crud.Create<
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         resourceQuestions: get(body, "resourceQuestions") as any,
-        evaluationPanel: get(body, "evaluationPanel")
+        evaluationPanel: get(body, "evaluationPanel") as any
       };
     },
     // ensure the accuracy of values coming in from the request body
@@ -586,7 +586,7 @@ const update: crud.Update<
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
             resourceQuestions: get(value, "resourceQuestions") as any,
-            evaluationPanel: get(value, "evaluationPanel")
+            evaluationPanel: get(value, "evaluationPanel") as any
           });
         }
         case "submitForReview":

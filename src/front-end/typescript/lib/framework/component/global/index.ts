@@ -5,7 +5,7 @@ import * as base from "front-end/lib/framework/component/base";
 
 // Re-exports
 
-export { type Toast } from "front-end/lib/framework/component/global/toast";
+export type { Toast } from "front-end/lib/framework/component/global/toast";
 export * as toast from "front-end/lib/framework/component/global/toast";
 export {
   newUrlMsg,
