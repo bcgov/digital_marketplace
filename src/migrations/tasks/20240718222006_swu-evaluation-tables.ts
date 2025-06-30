@@ -187,7 +187,7 @@ export async function up(connection: Knex): Promise<void> {
     .join("swuEvaluationPanelMembers as members", function () {
       this.on("versions.id", "=", "members.opportunityVersion");
     })
-    .whereNotNull("responses.score")
+    .whereNot("proposals.anonymousProponentName", "")
     .andWhere({
       "versions.rn": 1
     })
@@ -196,8 +196,8 @@ export async function up(connection: Knex): Promise<void> {
       "responses.order as questionOrder",
       "members.user as evaluationPanelMember",
       connection.raw("? as createdAt", [now]),
-      connection.raw(" ? as updatedAt", [now]),
-      "responses.score as score",
+      connection.raw("? as updatedAt", [now]),
+      connection.raw("COALESCE(responses.score, 0) as score"),
       connection.raw("? as notes", [migrationNotes])
     );
 
@@ -242,6 +242,11 @@ export async function up(connection: Knex): Promise<void> {
     "Ported SWU team question responses to chair team question response " +
       "evaluations."
   );
+
+  await connection.schema.alterTable("swuTeamQuestionResponses", (table) => {
+    table.dropColumn("score");
+  });
+  logger.info("Completed modifying swuTeamQuestionResponses table");
 
   function evaluationStatusesColumns(table: Knex.TableBuilder) {
     table
@@ -409,6 +414,27 @@ export async function down(connection: Knex): Promise<void> {
     "swuTeamQuestionResponseEvaluatorEvaluations"
   );
   logger.info("Dropped table swuTeamQuestionResponseEvaluatorEvaluations");
+
+  await connection.schema.alterTable("swuTeamQuestionResponses", (table) => {
+    table.float("score");
+  });
+  logger.info("Completed reverting swuTeamQuestionResponses table.");
+
+  await connection("swuTeamQuestionResponses")
+    .update({
+      score: connection.raw('"swuTeamQuestionResponseChairEvaluations".score')
+    })
+    .updateFrom("swuTeamQuestionResponseChairEvaluations")
+    .whereRaw(
+      '"swuTeamQuestionResponses".proposal = "swuTeamQuestionResponseChairEvaluations".proposal'
+    )
+    .andWhereRaw(
+      '"swuTeamQuestionResponses".order = "swuTeamQuestionResponseChairEvaluations"."questionOrder"'
+    );
+  logger.info(
+    "Ported chair team question response evaluations back to SWU team question" +
+      "responses."
+  );
 
   await connection.schema.dropTable("swuTeamQuestionResponseChairEvaluations");
   logger.info("Dropped table swuTeamQuestionResponseChairEvaluations");
