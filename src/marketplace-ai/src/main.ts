@@ -28,6 +28,20 @@ async function bootstrap() {
     ],
     credentials: true,
   });
-  await app.listen(process.env.PORT ?? 5000);
+
+  // Configure HTTP server timeouts to 5 minutes
+  const server = await app.listen(process.env.PORT ?? 5000);
+
+  const timeout = 5 * 60 * 1000;
+  // Set server timeout to 5 minutes (300000ms)
+  server.setTimeout(timeout);
+
+  // Set keep-alive timeout to 5 minutes
+  server.keepAliveTimeout = timeout;
+
+  // Set headers timeout slightly higher than keep-alive timeout
+  server.headersTimeout = timeout + 1000;
+
+  console.log(`Application is running on port ${process.env.PORT ?? 5000}`);
 }
 bootstrap();
