@@ -473,11 +473,37 @@ ${prompt}
                   // Apply formatting rules to the chunk before inserting
                   const cleanedChunk = applyFormattingRules(chunk);
 
-                  streamInsertChunk(editor, cleanedChunk, {
-                    textProps: {
-                      ai: true
-                    }
-                  });
+                  // Validate editor state before streamInsertChunk to prevent crashes
+                  if (
+                    !editor.selection ||
+                    !editor.selection.focus ||
+                    !editor.selection.focus.path
+                  ) {
+                    console.error(
+                      "❌ [AI Streaming] Invalid editor selection - aborting streamInsertChunk"
+                    );
+                    return;
+                  }
+
+                  try {
+                    streamInsertChunk(editor, cleanedChunk, {
+                      textProps: {
+                        ai: true
+                      }
+                    });
+                  } catch (error) {
+                    console.error(
+                      "❌ [AI Streaming] streamInsertChunk failed:",
+                      error
+                    );
+                    console.error("❌ [AI Streaming] Editor state:", {
+                      hasSelection: !!editor.selection,
+                      selectionPath: editor.selection?.focus?.path,
+                      chunk: cleanedChunk
+                    });
+                    // Stop streaming to prevent further errors
+                    // editor.setOption(AIChatPlugin, "streaming", false);
+                  }
                 });
               },
               { split: isFirst }

@@ -390,11 +390,27 @@ export function createQuestionFromAI(
     }
   });
 
+  const [minimumScoreState] = NumberField.init({
+    errors: [],
+    validate: (v) => {
+      if (v === null) {
+        return valid(null);
+      }
+      return opportunityValidation.validateResourceQuestionMinimumScore(v);
+    },
+    child: {
+      value: null,
+      id: `ai-generated-minimum-score-${questionIndex}`,
+      min: 0
+    }
+  });
+
   return {
     question: immutable(questionState),
     guideline: immutable(guidelineState),
     wordLimit: immutable(wordLimitState),
-    score: immutable(scoreState)
+    score: immutable(scoreState),
+    minimumScore: immutable(minimumScoreState)
   };
 }
 

@@ -40,8 +40,4 @@ yarn-error.log
 # TypeScript
 tsconfig.tsbuildinfo
 .specstory/
-<<<<<<< HEAD
-src/marketplace-ai/dist/
-=======
 src/marketplace-ai/dist
->>>>>>> feat/system-upgrade
