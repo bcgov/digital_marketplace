@@ -5,17 +5,17 @@ import * as base from "front-end/lib/framework/component/base";
 
 // Re-exports
 
-export { Toast } from "front-end/lib/framework/component/global/toast";
+export type { Toast } from "front-end/lib/framework/component/global/toast";
 export * as toast from "front-end/lib/framework/component/global/toast";
 export {
   newUrlMsg,
   replaceUrlMsg,
   newRouteMsg,
   replaceRouteMsg,
-  NewUrlMsg,
-  ReplaceUrlMsg,
-  ReplaceRouteMsg,
-  NewRouteMsg
+  type NewUrlMsg,
+  type ReplaceUrlMsg,
+  type ReplaceRouteMsg,
+  type NewRouteMsg
 } from "front-end/lib/framework/router";
 
 // Msg
