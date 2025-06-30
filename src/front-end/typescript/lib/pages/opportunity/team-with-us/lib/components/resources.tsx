@@ -436,7 +436,7 @@ const ResourceView: component_.base.View<ResourceViewProps> = (props) => {
                   outline
                   size="sm"
                   color="info"
-                  className="ml-4"
+                  className="ms-4"
                   symbol_={leftPlacement(iconLinkSymbol("trash"))}
                   onClick={() => dispatch(adt("deleteResource", index))}>
                   Delete

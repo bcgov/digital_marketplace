@@ -396,13 +396,11 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
         </Col>
         <div className="w-100"></div>
         <Col md="9" xs="7">
-          <div className="font-weight-bold d-flex flex-nowrap">
-            Service Area
-          </div>
+          <div className="fw-bold d-flex flex-nowrap">Service Area</div>
           <p>{twuServiceAreaToTitleCase(member.resource.serviceArea)}</p>
         </Col>
         <Col md="3" xs="5">
-          <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+          <div className="fw-bold d-flex flex-nowrap justify-content-center">
             Allocation
           </div>
           <p className="text-center">{member.resource.targetAllocation}%</p>
@@ -410,7 +408,7 @@ const MemberView: component_.base.View<MemberViewProps> = (props) => {
       </Row>
       <Row>
         <Col>
-          <div className="font-weight-bold mb-2">Mandatory Skills</div>
+          <div className="fw-bold mb-2">Mandatory Skills</div>
           <Skills skills={member.resource.mandatorySkills} />
         </Col>
       </Row>
@@ -447,7 +445,7 @@ export const view: component_.base.View<Props> = (props) => {
               must only consist of confirmed (non-pending) {memberText} of the
               selected organization.
             </p>
-            <p className="font-weight-bold">
+            <p className="fw-bold">
               Proponents take note of the following pricing rules and
               requirements:
             </p>

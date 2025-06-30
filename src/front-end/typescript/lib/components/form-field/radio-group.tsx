@@ -1,7 +1,7 @@
 import * as FormField from "front-end/lib/components/form-field";
 import { Immutable } from "front-end/lib/framework";
 import React from "react";
-import { CustomInput } from "reactstrap";
+import { FormGroup, Input, Label } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
 export interface Option<T> {
@@ -78,24 +78,31 @@ function makeChildView<T>(): ChildComponent<T>["view"] {
           inline ? "flex-sm-row flex-sm-wrap align-items-sm-center" : ""
         }`}>
         {state.options.map((option, i) => (
-          <CustomInput
+          <FormGroup
             key={`${state.id}-${i}`}
-            id={`${state.id}-${i}`}
-            name={state.id}
-            checked={
-              state.value === null ? false : state.value === option.value
-            }
-            disabled={disabled}
-            type="radio"
-            label={option.label}
-            className={`mb-3 ${inline ? "mr-sm-3" : ""} ${validityClassName}`}
-            onChange={(e) => {
-              if (e.currentTarget.checked) {
-                dispatch({ tag: "onChange", value: option.value });
-                props.onChange(option.value);
+            check
+            inline={inline}
+            className={`mb-3 ${inline ? "me-sm-3" : ""}`}>
+            <Input
+              id={`${state.id}-${i}`}
+              name={state.id}
+              checked={
+                state.value === null ? false : state.value === option.value
               }
-            }}
-          />
+              disabled={disabled}
+              type="radio"
+              className={validityClassName}
+              onChange={(e) => {
+                if (e.currentTarget.checked) {
+                  dispatch({ tag: "onChange", value: option.value });
+                  props.onChange(option.value);
+                }
+              }}
+            />{" "}
+            <Label check htmlFor={`${state.id}-${i}`}>
+              {option.label}
+            </Label>
+          </FormGroup>
         ))}
       </div>
     );

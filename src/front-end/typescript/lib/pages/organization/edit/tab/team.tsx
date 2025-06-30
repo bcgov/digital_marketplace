@@ -28,7 +28,7 @@ import Link, {
   leftPlacement
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row, Spinner } from "reactstrap";
+import { Col, Input, Row, Spinner } from "reactstrap";
 import CAPABILITIES from "shared/lib/data/capabilities";
 import {
   AffiliationMember,
@@ -617,8 +617,8 @@ function membersTableBodyRows(
               symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
               {m.user.name}
             </Link>
-            {memberIsOwner(m) ? <OwnerBadge className="ml-3" /> : null}
-            {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
+            {memberIsOwner(m) ? <OwnerBadge className="ms-3" /> : null}
+            {memberIsPending(m) ? <PendingBadge className="ms-3" /> : null}
           </div>
         ),
         className: "text-nowrap align-middle"
@@ -632,21 +632,24 @@ function membersTableBodyRows(
           <Spinner size="sm" color="secondary" />
         ) : (
           <div className={`affiliations-admin-status-${i}`}>
-            <CustomInput
+            <Input
               type="checkbox"
               id={`affiliations-admin-checkbox-${i}`}
               onChange={(e) => {
                 if (e) {
                   e.stopPropagation();
                 }
-                isAffiliationAdminStatusChecked(m)
-                  ? dispatch(adt("onUpdateAdminStatus", m) as Msg)
-                  : dispatch(
-                      adt(
-                        "showModal",
-                        adt("acceptOrgAdminStatusTerms", m) as ModalId
-                      ) as Msg
-                    );
+                // linter complained about ternary operator, replaced with if/else
+                if (isAffiliationAdminStatusChecked(m)) {
+                  dispatch(adt("onUpdateAdminStatus", m) as Msg);
+                } else {
+                  dispatch(
+                    adt(
+                      "showModal",
+                      adt("acceptOrgAdminStatusTerms", m) as ModalId
+                    ) as Msg
+                  );
+                }
               }}
               disabled={
                 isLoading ||
@@ -671,7 +674,7 @@ function membersTableBodyRows(
                 loading={isApproveLoading}
                 size="sm"
                 color="success"
-                className="mr-2"
+                className="me-2"
                 symbol_={leftPlacement(iconLinkSymbol("user-check"))}
                 onClick={() =>
                   dispatch(
@@ -698,7 +701,7 @@ function membersTableBodyRows(
             )}
           </div>
         ),
-        className: "text-right align-middle"
+        className: "text-end align-middle"
       }
     ];
   });
@@ -855,7 +858,7 @@ export const component: Tab.Component<State, Msg> = {
                               hover
                               name="trash"
                               color="info"
-                              className="ml-2"
+                              className="ms-2"
                               width={0.9}
                               height={0.9}
                               onClick={() =>
@@ -869,7 +872,7 @@ export const component: Tab.Component<State, Msg> = {
                             hover={isLast}
                             name="plus"
                             color="primary"
-                            className={`ml-2 ${isLast ? "o-100" : "o-0"}`}
+                            className={`ms-2 ${isLast ? "o-100" : "o-0"}`}
                             width={1.1}
                             height={1.1}
                             onClick={isLast ? addField : undefined}
@@ -963,12 +966,12 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt("hideModal") as Msg,
           body: (dispatch) => {
             return (
-              <div className="border-top border-left">
+              <div className="border-top border-start">
                 {state.nonOwnerMembers.map((m, i) => {
                   return (
                     <div
                       key={`non-owner-members-${i}`}
-                      className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
+                      className="d-flex flex-nowrap align-items-center py-2 px-3 border-end border-bottom">
                       <Link
                         onClick={() => dispatch(adt("toggleNewOwner", m.index))}
                         symbol_={leftPlacement(
@@ -981,7 +984,7 @@ export const component: Tab.Component<State, Msg> = {
                         color="body"
                         disabled={memberIsPending(m)}>
                         <img
-                          className="rounded-circle border mr-2"
+                          className="rounded-circle border me-2"
                           style={{
                             width: "1.75rem",
                             height: "1.75rem",
@@ -992,7 +995,7 @@ export const component: Tab.Component<State, Msg> = {
                         {m.user.name}
                       </Link>
                       {memberIsPending(m) ? (
-                        <PendingBadge className="ml-3" />
+                        <PendingBadge className="ms-3" />
                       ) : null}
                     </div>
                   );

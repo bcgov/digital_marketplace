@@ -20,7 +20,7 @@ export const CostRecoveryLearnMore: component.base.View<
   ReactElement | null
 > = ({ children, user }) => {
   return isPublicSectorEmployee(user ?? { type: UserType.Vendor }) ? (
-    <Alert className="mb-0 mt-4 mr-5" color="primary" fade={false}>
+    <Alert className="mb-0 mt-4 me-5" color="primary" fade={false}>
       <div style={{ color: "black" }}>{children}</div>
       <Link dest={routeDest(adt("contentView", "service-level-agreement"))}>
         See Service Level Agreement for more details on Cost Recovery and

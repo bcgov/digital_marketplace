@@ -44,7 +44,7 @@ jobs:
           POSTGRES_PORT: 5432
           PGHOST: localhost
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          NODE_ENV: "development"
+          VITE_NODE_ENV: "development"
           POSTGRES_URL: "postgresql://digmkt:digmkt@localhost:5432/digmkt"
           MAILER_GMAIL_USER: "fake@gmail.com"
           MAILER_GMAIL_PASS: "password"
