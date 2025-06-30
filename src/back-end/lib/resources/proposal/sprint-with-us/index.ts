@@ -151,7 +151,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       // create a permissions check for Owners and Admins
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+        !(await permissions.isOrgOwnerOrAdmin(connection, request.session))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -229,7 +229,7 @@ const create: crud.Create<
         request.body.tag === "json" ? request.body.value : {};
       return {
         opportunity: getString(body, "opportunity"),
-        organization: getString(body, "organization", undefined),
+        organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),

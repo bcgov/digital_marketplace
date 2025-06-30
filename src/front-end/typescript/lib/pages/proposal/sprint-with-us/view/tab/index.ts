@@ -146,7 +146,7 @@ function makeTeamQuestionsSidebarLink(
   tab: TabId,
   proposal: SWUProposal,
   activeTab: TabId,
-  teamQuestionsTab: "consensus" | "overview" | "teamQuestions",
+  teamQuestionsTab: "consensus" | "evaluation" | "teamQuestions",
   questionEvaluation: SWUTeamQuestionResponseEvaluation | undefined
 ): MenuSidebar.SidebarItem {
   const { icon, title } = idToDefinition(tab);
@@ -160,7 +160,7 @@ function makeTeamQuestionsSidebarLink(
         tab
       });
       break;
-    case "overview":
+    case "evaluation":
       link = adt("questionEvaluationIndividualSWUEdit" as const, {
         proposalId: proposal.id,
         opportunityId: proposal.opportunity.id,
@@ -208,7 +208,7 @@ export function makeSidebarLink(
 export function makeSidebarState(
   activeTab: TabId,
   proposal: SWUProposal,
-  teamQuestionsTab: "consensus" | "overview" | "teamQuestions",
+  teamQuestionsTab: "consensus" | "evaluation" | "teamQuestions",
   questionEvaluation?: SWUTeamQuestionResponseEvaluation
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({

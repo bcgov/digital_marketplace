@@ -15,6 +15,7 @@ import {
   Immutable,
   component as component_
 } from "front-end/lib/framework";
+import * as api from "front-end/lib/http/api";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
 import Link, {
@@ -37,6 +38,7 @@ type TWUCreateSubmitStatus =
 type ModalId = ADT<"publish", TWUCreateSubmitStatus> | ADT<"cancel">;
 
 interface ValidState {
+  routePath: string;
   showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
@@ -47,6 +49,7 @@ interface ValidState {
 export type State = Validation<Immutable<ValidState>, null>;
 
 type InnerMsg =
+  | ADT<"onInitResponse", api.ResponseValidation<User[], string[]>>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"publish", TWUCreateSubmitStatus>
@@ -67,14 +70,16 @@ const init: component_.page.Init<
   Route
 > = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Government, UserType.Admin],
-  success({ shared }) {
+  success({ shared, routePath }) {
     const [formState, formCmds] = Form.init({
       canRemoveExistingAttachments: true, //moot
-      viewerUser: shared.sessionUser
+      viewerUser: shared.sessionUser,
+      users: []
     });
     return [
       valid(
         immutable({
+          routePath,
           showModal: null,
           publishLoading: 0,
           saveDraftLoading: 0,
@@ -84,7 +89,7 @@ const init: component_.page.Init<
       ),
       [
         ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
-        component_.cmd.dispatch(component_.page.readyMsg())
+        api.users.readMany<Msg>()((response) => adt("onInitResponse", response))
       ]
     ];
   },
@@ -110,6 +115,39 @@ const stopSaveDraftLoading = makeStopLoading<ValidState>("saveDraftLoading");
 const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   ({ state, msg }) => {
     switch (msg.tag) {
+      case "onInitResponse": {
+        const response = msg.value;
+        if (!api.isValid(response)) {
+          return [
+            state,
+            [
+              component_.cmd.dispatch(component_.page.readyMsg()),
+              component_.cmd.dispatch(
+                component_.global.replaceRouteMsg(
+                  adt("notFound" as const, {
+                    path: state.routePath
+                  })
+                )
+              )
+            ]
+          ];
+        }
+        const [formState, formCmds] = Form.init({
+          canRemoveExistingAttachments: true, //moot
+          viewerUser: state.viewerUser,
+          users: response.value
+        });
+        return [
+          state.set("form", immutable(formState)),
+          [
+            ...component_.cmd.mapMany(
+              formCmds,
+              (msg) => adt("form", msg) as Msg
+            ),
+            component_.cmd.dispatch(component_.page.readyMsg())
+          ]
+        ];
+      }
       case "showModal":
         return [state.set("showModal", msg.value), []];
       case "hideModal":

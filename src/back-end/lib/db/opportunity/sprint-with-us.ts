@@ -1,11 +1,11 @@
 import { generateUuid } from "back-end/lib";
 import {
   allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted,
-  CHAIR_EVALUATION_STATUS_TABLE_NAME,
-  CHAIR_EVALUATION_TABLE_NAME,
+  SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_CHAIR_EVALUATION_TABLE_NAME,
   Connection,
-  EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
-  EVALUATOR_EVALUATION_TABLE_NAME,
+  SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_EVALUATOR_EVALUATION_TABLE_NAME,
   RawSWUTeamQuestionResponseEvaluation,
   readManySWUTeamQuestionResponseEvaluations,
   SWUTeamQuestionResponseEvaluationStatusRecord,
@@ -1237,25 +1237,6 @@ export const updateSWUOpportunityVersion = tryDb<
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
-    const prevPanel: RawSWUEvaluationPanelMember[] =
-      await connection<RawSWUEvaluationPanelMember>(
-        "swuEvaluationPanelMembers as sepm"
-      )
-        .select("sepm.*")
-        .join(
-          "swuOpportunityVersions as sov",
-          "sepm.opportunityVersion",
-          "=",
-          "sov.id"
-        )
-        .where(
-          "sov.createdAt",
-          "=",
-          connection<Date>("swuOpportunityVersions as sov2")
-            .max("createdAt")
-            .where("sov2.opportunity", "=", restOfOpportunity.id)
-        );
-
     const [versionRecord] = await connection<SWUOpportunityVersionRecord>(
       "swuOpportunityVersions"
     )
@@ -1326,30 +1307,12 @@ export const updateSWUOpportunityVersion = tryDb<
 
     // Create evaluation panel
     for (const member of evaluationPanel) {
-      const prevMember = prevPanel.find(({ user }) => user === member.user);
-      if (prevMember) {
-        await connection<RawSWUEvaluationPanelMember>(
-          "swuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .where({
-            user: prevMember.user,
-            opportunityVersion: prevMember.opportunityVersion
-          })
-          .update({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      } else {
-        await connection<RawSWUEvaluationPanelMember>(
-          "swuEvaluationPanelMembers"
-        )
-          .transacting(trx)
-          .insert({
-            ...member,
-            opportunityVersion: versionRecord.id
-          });
-      }
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: versionRecord.id
+        });
     }
 
     // Add an 'edit' change record
@@ -1707,7 +1670,7 @@ export const addSWUOpportunityNote = tryDb<
   return valid(dbResult.value);
 });
 
-export const submitIndividualQuestionEvaluations = tryDb<
+export const submitIndividualSWUQuestionEvaluations = tryDb<
   [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, evaluationParams, session) => {
@@ -1718,7 +1681,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
         async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+              SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1734,7 +1697,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            EVALUATOR_EVALUATION_TABLE_NAME
+            SWU_EVALUATOR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({
@@ -1785,7 +1748,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
 
   const dbResult = await readOneSWUOpportunity(connection, id, session);
   if (isInvalid(dbResult) || !dbResult.value) {
-    throw new Error("unable to add note");
+    throw new Error("unable to update opportunity");
   }
 
   if (notify) {
@@ -1801,7 +1764,7 @@ export const submitIndividualQuestionEvaluations = tryDb<
   return valid(dbResult.value);
 });
 
-export const submitConsensusQuestionEvaluations = tryDb<
+export const submitConsensusSWUQuestionEvaluations = tryDb<
   [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, evaluationParams, session) => {
@@ -1812,7 +1775,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
         async ({ evaluationPanelMember, proposal }) => {
           const [statusRecord] =
             await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
-              CHAIR_EVALUATION_STATUS_TABLE_NAME
+              SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
             )
               .transacting(trx)
               .insert(
@@ -1828,7 +1791,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
 
           // Update evaluation root record
           await connection<RawSWUTeamQuestionResponseEvaluation>(
-            CHAIR_EVALUATION_TABLE_NAME
+            SWU_CHAIR_EVALUATION_TABLE_NAME
           )
             .transacting(trx)
             .where({
@@ -1857,7 +1820,7 @@ export const submitConsensusQuestionEvaluations = tryDb<
   return valid(dbResult.value);
 });
 
-export const finalizeQuestionConsensus = tryDb<
+export const finalizeSWUQuestionConsensus = tryDb<
   [Id, string, AuthenticatedSession],
   SWUOpportunity
 >(async (connection, id, note, session) => {

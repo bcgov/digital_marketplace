@@ -6,7 +6,7 @@ import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
 import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation-panel";
-import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
+import * as EvaluationTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation";
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
@@ -16,9 +16,7 @@ import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us
 import { routeDest } from "front-end/lib/views/link";
 import {
   canAddAddendumToSWUOpportunity,
-  doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations,
-  SWUOpportunity,
-  SWUOpportunityStatus
+  SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
@@ -128,10 +126,10 @@ export interface Tabs {
     InstructionsTab.InnerMsg,
     InitResponse
   >;
-  overview: TabbedPage.Tab<
+  evaluation: TabbedPage.Tab<
     Params,
-    OverviewTab.State,
-    OverviewTab.InnerMsg,
+    EvaluationTab.State,
+    EvaluationTab.InnerMsg,
     InitResponse
   >;
   consensus: TabbedPage.Tab<
@@ -159,7 +157,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
     case "proposals":
     case "history":
     case "instructions":
-    case "overview":
+    case "evaluation":
     case "consensus":
     case "evaluationPanel":
       return raw;
@@ -168,11 +166,7 @@ export const parseTabId: TabbedPage.ParseTabId<Tabs> = (raw) => {
   }
 };
 
-export function canGovUserViewTab(
-  tab: TabId,
-  tabPermissions: TabPermissions,
-  opportunity: SWUOpportunity
-) {
+export function canGovUserViewTab(tab: TabId, tabPermissions: TabPermissions) {
   const { isOpportunityOwnerOrAdmin, isEvaluator, isChair } = tabPermissions;
   switch (tab) {
     case "summary":
@@ -181,26 +175,16 @@ export function canGovUserViewTab(
     case "history":
       return true;
     case "teamQuestions":
-      return isEvaluator || isOpportunityOwnerOrAdmin;
     case "codeChallenge":
     case "teamScenario":
     case "proposals":
     case "evaluationPanel":
       return isOpportunityOwnerOrAdmin;
     case "instructions":
-    case "overview":
+    case "evaluation":
       return isEvaluator;
     case "consensus":
-      return (
-        isChair ||
-        isOpportunityOwnerOrAdmin ||
-        (isEvaluator &&
-          opportunity.status ===
-            SWUOpportunityStatus.EvaluationTeamQuestionsConsensus) ||
-        doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
-          opportunity.status
-        )
-      );
+      return isChair || isOpportunityOwnerOrAdmin;
   }
 }
 
@@ -262,11 +246,11 @@ export function idToDefinition<K extends TabId>(
         icon: "hand-point-up",
         title: "Instructions"
       } as TabbedPage.TabDefinition<Tabs, K>;
-    case "overview":
+    case "evaluation":
       return {
-        component: OverviewTab.component,
+        component: EvaluationTab.component,
         icon: "list-check",
-        title: "Overview"
+        title: "Evaluation"
       } as TabbedPage.TabDefinition<Tabs, K>;
     case "consensus":
       return {
@@ -307,9 +291,7 @@ export function makeSidebarState(
     return MenuSidebar.init({ items: [] });
   }
   const canGovUserViewTabs = (...tabIds: TabId[]) =>
-    tabIds.some((tabId) =>
-      canGovUserViewTab(tabId, tabPermissions, opportunity)
-    );
+    tabIds.some((tabId) => canGovUserViewTab(tabId, tabPermissions));
   return MenuSidebar.init({
     items: [
       adt("heading", "Summary"),
@@ -328,10 +310,10 @@ export function makeSidebarState(
       ...(canGovUserViewTabs("proposals")
         ? [makeSidebarLink("proposals", opportunity.id, activeTab)]
         : []),
-      ...(canGovUserViewTabs("instructions", "overview")
+      ...(canGovUserViewTabs("instructions", "evaluation")
         ? [
             makeSidebarLink("instructions", opportunity.id, activeTab),
-            makeSidebarLink("overview", opportunity.id, activeTab)
+            makeSidebarLink("evaluation", opportunity.id, activeTab)
           ]
         : []),
       ...(canGovUserViewTabs("teamQuestions")
@@ -364,7 +346,7 @@ export function makeSidebarState(
 
 export function shouldLoadProposalsForTab(tabId: TabId): boolean {
   const proposalTabs: TabId[] = [
-    "overview",
+    "evaluation",
     "consensus",
     "proposals",
     "teamQuestions",
@@ -375,7 +357,7 @@ export function shouldLoadProposalsForTab(tabId: TabId): boolean {
 }
 
 export function shouldLoadEvaluationsForTab(tabId: TabId): boolean {
-  const evaluationTabs: TabId[] = ["overview", "consensus"];
+  const evaluationTabs: TabId[] = ["evaluation", "consensus"];
   return evaluationTabs.includes(tabId);
 }
 
