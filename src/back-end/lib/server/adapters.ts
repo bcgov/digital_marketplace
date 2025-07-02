@@ -28,7 +28,7 @@ import {
   SessionToSessionId,
   TextResponseBody
 } from "back-end/lib/server";
-import * as specs from "back-end/lib/swagger";
+import specs from "back-end/lib/swagger";
 import { parseServerHttpMethod, ServerHttpMethod } from "back-end/lib/types";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
@@ -152,7 +152,7 @@ function parseMultipartRequest<FileUploadMetadata>(
   return new Promise((resolve, reject) => {
     // Reject the promise if the content length is too large.
     const contentLength = expressReq.get("content-length") || maxSize + 1;
-    if (contentLength > maxSize) {
+    if (Number(contentLength) > maxSize) {
       return reject(new Error("Content-Length is too large."));
     }
     // Parse the request.

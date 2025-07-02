@@ -5,7 +5,7 @@ import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
-export { Addendum } from "shared/lib/resources/addendum";
+export type { Addendum } from "shared/lib/resources/addendum";
 
 export const DEFAULT_OPPORTUNITY_TITLE = "Untitled";
 export const DEFAULT_QUESTIONS_WEIGHT = 25;
@@ -38,7 +38,8 @@ export enum TWUServiceArea {
   FullStackDeveloper = "FULL_STACK_DEVELOPER",
   DataProfessional = "DATA_PROFESSIONAL",
   AgileCoach = "AGILE_COACH",
-  DevopsSpecialist = "DEVOPS_SPECIALIST"
+  DevopsSpecialist = "DEVOPS_SPECIALIST",
+  ServiceDesigner = "SERVICE_DESIGNER"
 }
 
 export interface TWUOpportunityHistoryRecord {

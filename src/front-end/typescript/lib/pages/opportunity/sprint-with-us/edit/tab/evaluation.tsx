@@ -288,7 +288,7 @@ const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
   warn
 }) => {
-  const iconClassName = "mr-2 text-warning flex-shrink-0 flex-grow-0";
+  const iconClassName = "me-2 text-warning flex-shrink-0 flex-grow-0";
   return (
     <span className="a d-inline-flex align-items-center flex-nowrap">
       {warn ? (

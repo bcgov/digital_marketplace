@@ -1,7 +1,7 @@
 import { Connection } from "back-end/lib/db";
 
 export async function clearTestDatabase(connection: Connection): Promise<void> {
-  if (process.env.NODE_ENV !== "test") {
+  if (process.env.VITE_NODE_ENV !== "test") {
     throw new Error("Attempt to call test utility in non-test environment");
   }
 

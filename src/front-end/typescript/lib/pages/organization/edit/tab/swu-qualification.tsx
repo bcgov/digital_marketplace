@@ -46,7 +46,7 @@ const Requirement: component_.base.View<RequirementProps> = ({
       <Icon
         name={checked ? "check-circle" : "circle"}
         color={checked ? "success" : "body"}
-        className="mr-2 mt-1 flex-shrink-0"
+        className="me-2 mt-1 flex-shrink-0"
       />
       <div className="flex-grow-1">
         <div className="mb-1">{name}</div>

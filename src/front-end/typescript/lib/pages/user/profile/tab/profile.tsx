@@ -375,7 +375,7 @@ const ViewPermissionsAsGovernment: component_.base.ComponentView<
       {permissions.map((p, i) => (
         <Badge
           pill
-          className={i === permissions.length ? "" : "mr-2"}
+          className={i === permissions.length ? "" : "me-2"}
           key={`user-permission-pill-${i}`}
           text={p}
           color="c-user-profile-permission"
@@ -406,7 +406,7 @@ const ViewPermissionsAsAdmin: component_.base.ComponentView<State, Msg> = ({
           loading: isSavePermissionsLoading,
           slimHeight: true
         }}
-        className="mb-0 mr-3"
+        className="mb-0 me-3"
         disabled={isLoading}
         state={state.adminCheckbox}
         dispatch={component_.base.mapDispatch(dispatch, (value) =>
