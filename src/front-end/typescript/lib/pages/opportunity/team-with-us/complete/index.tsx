@@ -81,7 +81,8 @@ const init: component_.page.Init<
 
     const [formState] = Form.init({
       viewerUser: adminUser,
-      canRemoveExistingAttachments: false
+      canRemoveExistingAttachments: false,
+      users: []
     });
 
     const [addendaInitState] = AddendaTab.component.init({
@@ -238,17 +239,23 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         // Create init messages for tabs that need the opportunity data
         const addendaOnInitMsg = AddendaTab.component.onInitResponse([
           opportunity,
-          [] as TWUProposalSlim[]
+          [] as TWUProposalSlim[],
+          [],
+          []
         ]);
 
         const historyOnInitMsg = HistoryTab.component.onInitResponse([
           opportunity,
-          [] as TWUProposalSlim[]
+          [] as TWUProposalSlim[],
+          [],
+          []
         ]);
 
         const oppTabOnInitMsg = OpportunityTab.component.onInitResponse([
           opportunity,
-          [] as TWUProposalSlim[]
+          [] as TWUProposalSlim[],
+          [],
+          []
         ]);
 
         // Update the state with the opportunity
@@ -280,11 +287,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
         const proposalsOnInitMsg = ProposalsTab.component.onInitResponse([
           state.opportunity,
-          proposalSlims
+          proposalSlims,
+          [],
+          []
         ]);
         const summaryOnInitMsg = SummaryTab.component.onInitResponse([
           state.opportunity,
-          proposalSlims
+          proposalSlims,
+          [],
+          []
         ]);
 
         const proposalCmds = proposalSlims.map((slim) =>

@@ -12,7 +12,7 @@ import * as AddendaTab from "front-end/lib/pages/opportunity/sprint-with-us/edit
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
 import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
-import * as OverviewTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/overview";
+import * as EvaluationTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation";
 import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
@@ -53,7 +53,7 @@ export interface ValidState {
   historyState: Immutable<HistoryTab.State>;
   proposalsState: Immutable<ProposalsTab.State>;
   instructionsState: Immutable<InstructionsTab.State>;
-  overviewState: Immutable<OverviewTab.State>;
+  overviewState: Immutable<EvaluationTab.State>;
   teamQuestionsState: Immutable<TeamQuestionsTab.State>;
   consensusState: Immutable<ConsensusTab.State>;
   codeChallengeState: Immutable<CodeChallengeTab.State>;
@@ -80,7 +80,7 @@ export type InnerMsg =
   | ADT<"history", HistoryTab.InnerMsg>
   | ADT<"proposals", ProposalsTab.InnerMsg>
   | ADT<"instructions", InstructionsTab.InnerMsg>
-  | ADT<"overview", OverviewTab.InnerMsg>
+  | ADT<"overview", EvaluationTab.InnerMsg>
   | ADT<"teamQuestions", TeamQuestionsTab.InnerMsg>
   | ADT<"consensus", ConsensusTab.InnerMsg>
   | ADT<"codeChallenge", CodeChallengeTab.InnerMsg>
@@ -130,7 +130,7 @@ const init: component_.page.Init<
       });
 
     // Initialize the overview tab state structure
-    const [overviewInitState, _overviewCmds] = OverviewTab.component.init({
+    const [overviewInitState, _overviewCmds] = EvaluationTab.component.init({
       viewerUser: shared.sessionUser
     });
 
@@ -370,7 +370,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             component_.cmd.dispatch(
               adt(
                 "overview",
-                OverviewTab.component.onInitResponse([
+                EvaluationTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
                   evaluations as SWUTeamQuestionResponseEvaluation[],
@@ -507,53 +507,67 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               Immutable<ProposalTeamQuestionsTab.State>
             > = {};
 
-            updatedState.overviewState.evaluations.forEach((evaluation) => {
-              if (!evaluation || !evaluation.proposal) return;
-              const relatedProposal = updatedState.proposals.find(
-                (p) => p.id === evaluation.proposal
-              );
-              if (!relatedProposal) return;
+            updatedState.overviewState.evaluations.forEach(
+              (evaluation: any) => {
+                if (!evaluation || !evaluation.proposal) return;
+                const relatedProposal = updatedState.proposals.find(
+                  (p) => p.id === evaluation.proposal
+                );
+                if (!relatedProposal) return;
 
-              // Use composite key here
-              const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
-              individualEvaluationStates[key] = immutable({
-                proposals: updatedState.proposals,
-                opportunity: currentOpportunity,
-                proposal: relatedProposal,
-                viewerUser: updatedState.viewerUser,
-                evaluating: true,
-                isAuthor: false,
-                questionEvaluation: evaluation,
-                panelQuestionEvaluations: [],
-                evaluationScores: evaluation.scores.map(
-                  (score, _i) =>
-                    ({
-                      score: immutable({
-                        child: {
-                          value: score.score,
-                          id: `evaluation-${key}-score-${score.order}`
-                        },
-                        errors: []
-                      }),
-                      notes: immutable({
-                        child: {
-                          value: score.notes,
-                          id: `evaluation-${key}-notes-${score.order}`
-                        },
-                        errors: []
-                      })
-                    } as any)
-                ),
-                openAccordions: new Set(
-                  Array.from({ length: evaluation.scores.length }, (_, i) => i)
-                ),
-                isEditing: false,
-                startEditingLoading: 0,
-                saveLoading: 0,
-                screenToFromLoading: 0,
-                showModal: null
-              });
-            });
+                // Use composite key here
+                const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
+                individualEvaluationStates[key] = immutable({
+                  proposals: updatedState.proposals,
+                  opportunity: currentOpportunity,
+                  proposal: relatedProposal,
+                  viewerUser: updatedState.viewerUser,
+                  evaluating: true,
+                  isAuthor: false,
+                  questionEvaluation: evaluation,
+                  panelQuestionEvaluations: [],
+                  evaluationScores: evaluation.scores.map(
+                    (score: any, _i: any) =>
+                      ({
+                        score: immutable({
+                          child: {
+                            value: score.score,
+                            id: `evaluation-${key}-score-${score.order}`
+                          },
+                          errors: []
+                        }),
+                        notes: immutable({
+                          child: {
+                            value: score.notes,
+                            id: `evaluation-${key}-notes-${score.order}`
+                          },
+                          errors: []
+                        })
+                      } as any)
+                  ),
+                  openAccordions: new Set(
+                    Array.from(
+                      { length: evaluation.scores.length },
+                      (_, i) => i
+                    )
+                  ),
+                  isEditing: false,
+                  startEditingLoading: 0,
+                  saveLoading: 0,
+                  teamQuestionsCarousel: immutable({
+                    evaluation: evaluation,
+                    prevProposal: undefined,
+                    prevEvaluation: undefined,
+                    nextProposal: undefined,
+                    nextEvaluation: undefined,
+                    proposal: relatedProposal,
+                    proposals: updatedState.proposals,
+                    panelEvaluations: []
+                  }),
+                  showModal: null
+                });
+              }
+            );
             updatedState = updatedState.set(
               "individualEvaluationStates",
               individualEvaluationStates
@@ -654,9 +668,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         return component_.base.updateChild({
           state,
           childStatePath: ["overviewState"],
-          childUpdate: OverviewTab.component.update,
+          childUpdate: EvaluationTab.component.update,
           childMsg: msg.value,
-          mapChildMsg: (value: OverviewTab.InnerMsg) => adt("overview", value)
+          mapChildMsg: (value: EvaluationTab.InnerMsg) => adt("overview", value)
         });
       case "teamQuestions":
         return component_.base.updateChild({
@@ -971,7 +985,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           11. Admin View - Team Questions Overview
         </h2>
-        <OverviewTab.component.view
+        <EvaluationTab.component.view
           state={state.overviewState}
           dispatch={() => {}}
         />
@@ -986,7 +1000,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
               style={{ marginBottom: "20px" }}>
               12. Admin View - Team Question Evaluations
             </h2>
-            {state.overviewState.evaluations.map((evaluation, i) => {
+            {state.overviewState.evaluations.map((evaluation: any, i: any) => {
               // Use composite key here for retrieval
               const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
               const evalState = state.individualEvaluationStates[key];

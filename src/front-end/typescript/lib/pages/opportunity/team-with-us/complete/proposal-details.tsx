@@ -85,7 +85,10 @@ const init: component_.base.Init<Params, State, Msg> = ({
       viewerUser: viewerUser,
       proposal,
       opportunity,
-      showAllTabs: true
+      showAllTabs: true,
+      evaluating: false,
+      panelQuestionEvaluations: [],
+      proposals: proposals
     });
 
     const completeProposalTabState: ProposalTab.State = {
@@ -96,7 +99,10 @@ const init: component_.base.Init<Params, State, Msg> = ({
     const [historyState, _historyCmds] = ProposalHistoryTab.component.init({
       viewerUser: viewerUser,
       proposal,
-      opportunity
+      opportunity,
+      evaluating: false,
+      panelQuestionEvaluations: [],
+      proposals: proposals
     });
 
     // Initialize the history state properly
