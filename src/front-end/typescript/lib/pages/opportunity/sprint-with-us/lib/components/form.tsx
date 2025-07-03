@@ -152,6 +152,7 @@ export interface Params {
   viewerUser: User;
   activeTab?: TabId;
   users: User[];
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -203,7 +204,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   viewerUser,
   users,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs = false
 }) => {
   const startingPhase = getStartingPhase(opportunity);
   const questionsWeight = getNumber(
@@ -237,7 +239,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "Scoring",
       "Attachments"
     ],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -427,7 +430,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [phasesState, phasesCmds] = Phases.init({
     opportunity,
-    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception
+    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception,
+    isDetailView: showAllTabs
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity?.teamQuestions || []
@@ -1808,8 +1812,9 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
       case "Agreement":
         return <AgreementView />;
       case "Evaluation Panel":
@@ -1827,12 +1832,16 @@ export const view: component_.base.View<Props> = (props) => {
       case "Attachments":
         return <AttachmentsView {...props} />;
     }
-  })();
+  };
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}
+      getTabContent={getTabContent}
       isTabValid={(tab) => {
         switch (tab) {
           case "Agreement":

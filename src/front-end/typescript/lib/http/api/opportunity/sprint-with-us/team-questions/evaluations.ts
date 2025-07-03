@@ -10,10 +10,11 @@ const NAMESPACE = (opportunityId: Id) =>
  * Parses URL parameters prior to creating a read request for many SWU proposals
  *
  * @param opportunityId
- * @param consensus
+ * @param query - Query string to pass to the API
  */
 export function readMany<Msg>(
-  opportunityId: Id
+  opportunityId: Id,
+  query?: string
 ): crud.ReadManyAction<
   Resource.SWUTeamQuestionResponseEvaluation,
   string[],
@@ -21,6 +22,7 @@ export function readMany<Msg>(
 > {
   return crud.makeReadManyAction(
     NAMESPACE(opportunityId),
-    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation
+    rawSWUTeamQuestionResponseEvaluationToSWUTeamQuestionResponseEvaluation,
+    query
   );
 }

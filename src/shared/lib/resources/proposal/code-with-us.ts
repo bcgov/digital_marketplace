@@ -181,7 +181,7 @@ export type CWUProposalSlim = Omit<
   "proposalText" | "additionalComments" | "history" | "attachments"
 >;
 
-type CWUProponent =
+export type CWUProponent =
   | ADT<"individual", CWUIndividualProponent>
   | ADT<"organization", Organization>;
 

@@ -78,14 +78,16 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 function initForm(
   opportunity: CWUOpportunity,
   proposal: CWUProposal,
-  viewerUser: User
+  viewerUser: User,
+  showAllTabs: boolean = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     viewerUser,
     opportunity,
     proposal,
     affiliations: [],
-    canRemoveExistingAttachments: false
+    canRemoveExistingAttachments: false,
+    showAllTabs
   });
   const immutableFormState = immutable(formState);
   return [immutableFormState, formCmds];

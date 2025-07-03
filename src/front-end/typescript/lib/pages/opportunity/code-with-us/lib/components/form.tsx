@@ -117,6 +117,7 @@ export interface Params {
   opportunity?: CWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
+  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -144,11 +145,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
-  activeTab = DEFAULT_ACTIVE_TAB
+  activeTab = DEFAULT_ACTIVE_TAB,
+  showAllTabs
 }) => {
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Overview", "Description", "Details", "Attachments"],
-    activeTab
+    activeTab,
+    showAllTabs
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -929,11 +932,12 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const OverviewView: component_.base.View<Props> = ({
+export const OverviewView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
 }) => {
+  console.log("OverviewView", state);
   return (
     <Row>
       <Col xs="12">
@@ -1087,7 +1091,7 @@ const OverviewView: component_.base.View<Props> = ({
   );
 };
 
-const DescriptionView: component_.base.View<Props> = ({
+export const DescriptionView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1114,7 +1118,7 @@ const DescriptionView: component_.base.View<Props> = ({
   );
 };
 
-const DetailsView: component_.base.View<Props> = ({
+export const DetailsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1265,7 +1269,7 @@ const DetailsView: component_.base.View<Props> = ({
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const AttachmentsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1296,8 +1300,9 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  const activeTab = (() => {
-    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
+
+  const getTabContent = (tabId: TabId) => {
+    switch (tabId) {
       case "Overview":
         return <OverviewView {...props} />;
       case "Description":
@@ -1307,9 +1312,13 @@ export const view: component_.base.View<Props> = (props) => {
       case "Attachments":
         return <AttachmentsView {...props} />;
     }
-  })();
+  };
+
+  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+
   return (
     <TabbedFormComponent.view
+      getTabContent={getTabContent}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

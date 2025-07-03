@@ -727,6 +727,39 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/opportunities/sprint-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "swuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/code-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "cwuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "twuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
       path: "(.*)",
       makeRoute({ path }) {
         return adt("notFound", { path });
@@ -1032,6 +1065,18 @@ const router: router_.Router<Route> = {
         return prefixPath(`/swu/${route.value.guideAudience}`);
       case "twuGuide":
         return prefixPath(`/twu/${route.value.guideAudience}`);
+      case "swuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}/complete`
+        );
+      case "cwuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/complete`
+        );
+      case "twuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/complete`
+        );
       case "notFound":
         return route.value.path || prefixPath("/not-found");
     }

@@ -54,6 +54,7 @@ export interface State extends Tab.Params {
   updateStatusLoading: number;
   deleteLoading: number;
   isEditing: boolean;
+  showAllTabs?: boolean;
 }
 
 type UpdateStatus =
@@ -99,7 +100,8 @@ function initForm(
   viewerUser: User,
   users: User[],
   activeTab?: Form.TabId,
-  validate = false
+  validate = false,
+  showAllTabs = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -109,6 +111,7 @@ function initForm(
       opportunity,
       isAdmin(viewerUser)
     ),
+    showAllTabs,
     users
   });
   let immutableFormState = immutable(formState);
@@ -285,7 +288,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         state.viewerUser,
         users,
         activeTab,
-        validateForm
+        validateForm,
+        state.showAllTabs
       );
       return [
         state
@@ -746,7 +750,6 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
-
   onInitResponse(response) {
     return adt("resetOpportunity", [
       response[0],

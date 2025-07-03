@@ -41,6 +41,7 @@ import {
   SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
+import { sortSWUProposals } from "shared/lib";
 
 type ModalId = ADT<"completeTeamQuestions">;
 
@@ -51,6 +52,7 @@ export interface State extends Tab.Params {
   completeTeamQuestionsLoading: number;
   canViewProposals: boolean;
   table: Immutable<Table.State>;
+  proposalSortOrder: "default" | "completePage";
 }
 
 export type InnerMsg =
@@ -78,7 +80,8 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       completeTeamQuestionsLoading: 0,
       showModal: null,
       canViewProposals: false,
-      table: immutable(tableState)
+      table: immutable(tableState),
+      proposalSortOrder: params.proposalSortOrder || "default"
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -95,16 +98,26 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
-      let proposals = msg.value[1];
+      const proposals = msg.value[1];
       const canViewProposals =
         canViewSWUOpportunityProposals(opportunity) && !!proposals.length;
-      proposals = proposals.sort((a, b) =>
-        compareSWUProposalsForPublicSector(a, b, "questionsScore")
-      );
+
+      // Sort proposals based on the order specified in the state
+      let useProposals = proposals;
+
+      if (state.proposalSortOrder === "completePage") {
+        useProposals = sortSWUProposals(proposals, "questionsScore");
+      } else {
+        // Default sort for this tab: Use existing logic (by status group, then questionsScore)
+        useProposals.sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "questionsScore")
+        );
+      }
+
       return [
         state
           .set("opportunity", opportunity)
-          .set("proposals", proposals)
+          .set("proposals", useProposals)
           .set("canViewProposals", canViewProposals),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];

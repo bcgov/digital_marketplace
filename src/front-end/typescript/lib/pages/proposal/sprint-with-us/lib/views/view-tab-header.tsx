@@ -88,7 +88,7 @@ const ViewTabHeader: component.base.View<Props> = ({
       : null
   ];
   return (
-    <div>
+    <div className="proposal-view-tab-header">
       <Row>
         <Col xs="12">
           <h3 className="mb-5">Sprint With Us: Vendor Proposal</h3>
