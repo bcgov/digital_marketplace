@@ -6,8 +6,12 @@ import * as HistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab/proposal";
 import * as ResourceQuestionsTab from "front-end/lib/pages/proposal/team-with-us/view/tab/resource-questions";
 import { routeDest } from "front-end/lib/views/link";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
-import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
+import {
+  TWUProposal,
+  TWUProposalSlim
+} from "shared/lib/resources/proposal/team-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 
@@ -33,6 +37,10 @@ export interface Params {
   opportunity: TWUOpportunity;
   viewerUser: User;
   showAllTabs?: boolean;
+  evaluating: boolean;
+  questionEvaluation?: TWUResourceQuestionResponseEvaluation;
+  panelQuestionEvaluations: TWUResourceQuestionResponseEvaluation[];
+  proposals: TWUProposalSlim[];
 }
 
 export type InitResponse = null;
@@ -121,6 +129,49 @@ export function idToDefinition<K extends TabId>(
   }
 }
 
+function makeResourceQuestionsSidebarLink(
+  tab: TabId,
+  proposal: TWUProposal,
+  activeTab: TabId,
+  teamQuestionsTab: "consensus" | "evaluation" | "resourceQuestions",
+  questionEvaluation: TWUResourceQuestionResponseEvaluation | undefined
+): MenuSidebar.SidebarItem {
+  const { icon, title } = idToDefinition(tab);
+  let link;
+  switch (teamQuestionsTab) {
+    case "consensus":
+      link = adt("questionEvaluationConsensusTWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "evaluation":
+      link = adt("questionEvaluationIndividualTWUEdit" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        userId: questionEvaluation?.evaluationPanelMember ?? "",
+        tab
+      });
+      break;
+    case "resourceQuestions":
+      link = adt("proposalTWUView" as const, {
+        proposalId: proposal.id,
+        opportunityId: proposal.opportunity.id,
+        tab
+      });
+      break;
+  }
+
+  return adt("link", {
+    icon,
+    text: `${title} ${link.tag !== "proposalTWUView" ? "(Eval)" : ""}`.trim(),
+    active: activeTab === tab,
+    dest: routeDest(link)
+  });
+}
+
 export function makeSidebarLink(
   tab: TabId,
   proposal: TWUProposal,
@@ -143,7 +194,9 @@ export function makeSidebarLink(
 
 export function makeSidebarState(
   activeTab: TabId,
-  proposal: TWUProposal
+  proposal: TWUProposal,
+  resourceQuestionsTab: "consensus" | "evaluation" | "resourceQuestions",
+  questionEvaluation?: TWUResourceQuestionResponseEvaluation
 ): component.base.InitReturnValue<MenuSidebar.State, MenuSidebar.Msg> {
   return MenuSidebar.init({
     backLink: {
@@ -155,7 +208,7 @@ export function makeSidebarState(
             case "challenge":
               return "challenge" as const;
             case "resourceQuestions":
-              return "resourceQuestions" as const;
+              return resourceQuestionsTab;
             case "proposal":
               return "proposals" as const;
             case "history":
@@ -169,7 +222,13 @@ export function makeSidebarState(
       adt("heading", "Vendor Proposal"),
       makeSidebarLink("proposal", proposal, activeTab),
       adt("heading", "Vendor Evaluation"),
-      makeSidebarLink("resourceQuestions", proposal, activeTab),
+      makeResourceQuestionsSidebarLink(
+        "resourceQuestions",
+        proposal,
+        activeTab,
+        resourceQuestionsTab,
+        questionEvaluation
+      ),
       makeSidebarLink("challenge", proposal, activeTab),
       adt("heading", "Management"),
       makeSidebarLink("history", proposal, activeTab)

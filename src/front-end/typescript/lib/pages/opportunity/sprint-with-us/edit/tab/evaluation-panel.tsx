@@ -1,6 +1,6 @@
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
-import * as EvaluationPanel from "front-end/lib/components/evaluation-panel";
+import * as EvaluationPanel from "front-end/lib/components/swu-evaluation-panel";
 import {
   Immutable,
   immutable,

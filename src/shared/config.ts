@@ -30,6 +30,8 @@ export const SWU_MAX_BUDGET = 5000000;
 
 export const MIN_SWU_EVALUATION_PANEL_MEMBERS = 2;
 
+export const MIN_TWU_EVALUATION_PANEL_MEMBERS = 2;
+
 export const COPY = {
   appTermsTitle: "Digital Marketplace Terms & Conditions for E-Bidding",
   gov: {
@@ -51,3 +53,5 @@ export const EMPTY_STRING = "—"; // emdash
 export const DEFAULT_PAGE_SIZE = 50;
 
 export const SWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 4;
+
+export const TWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 4;

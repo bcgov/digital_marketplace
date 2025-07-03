@@ -436,6 +436,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalTWUEdit", value })
       );
 
+    case "questionEvaluationIndividualTWUCreate":
+    case "questionEvaluationIndividualTWUEdit":
+    case "questionEvaluationConsensusTWUCreate":
+    case "questionEvaluationConsensusTWUEdit":
     case "proposalTWUView":
       return makeViewPageProps(
         props,
@@ -591,12 +595,16 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                 };
                 if (button) {
                   return (
-                    <Link button {...props}>
+                    <Link button {...props} key={`modal-action-${i}`}>
                       {text}
                     </Link>
                   );
                 } else {
-                  return <Link {...props}>{text}</Link>;
+                  return (
+                    <Link {...props} key={`modal-action-${i}`}>
+                      {text}
+                    </Link>
+                  );
                 }
               }
             )}
@@ -691,7 +699,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -716,7 +723,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -744,7 +751,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
+        }
       ]
     })
   };

@@ -18,7 +18,7 @@ import {
 import * as api from "front-end/lib/http/api";
 import * as Phases from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phases";
 import * as TeamQuestions from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/team-questions";
-import * as EvaluationPanel from "front-end/lib/components/evaluation-panel";
+import * as EvaluationPanel from "front-end/lib/components/swu-evaluation-panel";
 import Icon from "front-end/lib/views/icon";
 import Link, { routeDest } from "front-end/lib/views/link";
 import { flatten } from "lodash";
@@ -231,7 +231,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: [
       "Agreement",
-      "Evaluation Panel",
+      ...(!opportunity ? ["Evaluation Panel" as const] : []), // Only displayed on create
       "Overview",
       "Description",
       "Phases",
@@ -679,11 +679,14 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("scenarioWeight", (s) => FormField.validate(s))
     .update("priceWeight", (s) => FormField.validate(s))
     .update("weightsTotal", (s) => FormField.validate(s))
-    .update("attachments", (s) => Attachments.validate(s));
+    .update("attachments", (s) => Attachments.validate(s))
+    .update("evaluationPanel", (s) => EvaluationPanel.validate(s));
 }
 
 export function isEvaluationPanelTabValid(state: Immutable<State>): boolean {
-  return EvaluationPanel.isValid(state.evaluationPanel);
+  return !state.opportunity
+    ? EvaluationPanel.isValid(state.evaluationPanel)
+    : true; // Not editable from form; do note validate
 }
 
 export function isOverviewTabValid(state: Immutable<State>): boolean {

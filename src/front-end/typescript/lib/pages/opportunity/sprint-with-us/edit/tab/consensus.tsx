@@ -11,7 +11,6 @@ import * as Tab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab";
 import * as toasts from "front-end/lib/pages/opportunity/sprint-with-us/lib/toasts";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
 import Link, {
-  emptyIconLinkSymbol,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -24,7 +23,6 @@ import { Badge, Col, Row } from "reactstrap";
 import {
   canViewSWUOpportunityTeamQuestionResponseEvaluations,
   hasSWUOpportunityPassedTeamQuestions,
-  isSWUOpportunityStatusInEvaluation,
   SWUOpportunity,
   SWUOpportunityStatus,
   UpdateValidationErrors
@@ -33,7 +31,8 @@ import {
   compareSWUProposalAnonymousProponentNumber,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim
+  SWUProposalSlim,
+  SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
 import {
   SWUTeamQuestionResponseEvaluation,
@@ -43,6 +42,7 @@ import { ADT, adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { validateSWUTeamQuestionResponseEvaluationScores } from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 import { isAdmin } from "shared/lib/resources/user";
+import Icon from "front-end/lib/views/icon";
 
 type ModalId = "submit" | "finalize";
 
@@ -204,7 +204,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
               api.getValidValue(response, opportunity)
             ),
             api.proposals.swu.readMany(opportunity.id)((response) =>
-              api.getValidValue(response, state.proposals)
+              api
+                .getValidValue(response, state.proposals)
+                .filter(
+                  (proposal) => proposal.status !== SWUProposalStatus.Withdrawn
+                )
             ),
             api.opportunities.swu.teamQuestions.consensuses.readMany(
               opportunity.id
@@ -304,18 +308,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const NotAvailable: component_.base.ComponentView<State, Msg> = ({ state }) => {
-  const opportunity = state.opportunity;
-  if (!opportunity) return null;
-  if (
-    isSWUOpportunityStatusInEvaluation(opportunity.status) ||
-    state.opportunity.status === SWUOpportunityStatus.Awarded
-  ) {
-    return <div>Evaluators have not completed their evaluations yet.</div>;
-  } else {
-    return <div>No proposals were submitted to this opportunity.</div>;
-  }
-};
+const WaitForConsensus: component_.base.ComponentView<State, Msg> = () => (
+  <div>Evaluators have not completed their evaluations yet.</div>
+);
 
 const ContextMenuCell: component_.base.View<{
   disabled: boolean;
@@ -359,32 +354,34 @@ const ContextMenuCell: component_.base.View<{
 
 interface ProponentCellProps {
   proposal: SWUProposalSlim;
-  opportunity: SWUOpportunity;
-  disabled: boolean;
   warn: boolean;
 }
 
 const ProponentCell: component_.base.View<ProponentCellProps> = ({
   proposal,
-  opportunity,
-  disabled,
   warn
 }) => {
-  const proposalRouteParams = {
-    proposalId: proposal.id,
-    opportunityId: opportunity.id,
-    tab: "proposal" as const
-  };
+  const iconClassName = "mr-2 text-danger flex-shrink-0 flex-grow-0";
   return (
-    <Link
-      symbol_={leftPlacement(
-        warn ? iconLinkSymbol("exclamation-triangle") : emptyIconLinkSymbol()
+    <span className="a d-inline-flex align-items-center flex-nowrap">
+      {warn ? (
+        <Icon
+          name="exclamation-triangle"
+          className={iconClassName}
+          width={1}
+          height={1}
+        />
+      ) : (
+        <div
+          style={{
+            width: "1rem",
+            height: "1rem"
+          }}
+          className={iconClassName}
+        />
       )}
-      symbolClassName="text-danger"
-      disabled={disabled}
-      dest={routeDest(adt("proposalSWUView", proposalRouteParams))}>
       {getSWUProponentName(proposal)}
-    </Link>
+    </span>
   );
 };
 
@@ -400,20 +397,16 @@ function evaluationTableBodyRows(state: Immutable<State>): Table.BodyRows {
     ).reduce((acc, tq) => {
       const score = evaluation?.scores[tq.order]?.score;
       return (
-        acc || Boolean(tq.minimumScore && score && score < tq.minimumScore)
+        acc ||
+        Boolean(
+          tq.minimumScore && score !== undefined && score < tq.minimumScore
+        )
       );
     }, false);
     return [
       {
         className: "text-wrap",
-        children: (
-          <ProponentCell
-            proposal={p}
-            opportunity={opportunity}
-            disabled={isLoading}
-            warn={hasScoreBelowMinimum}
-          />
-        )
+        children: <ProponentCell proposal={p} warn={hasScoreBelowMinimum} />
       },
       ...opportunity.teamQuestions.map((tq) => {
         const score = evaluation?.scores[tq.order]?.score;
@@ -558,7 +551,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             {state.canViewEvaluations && state.proposals.length ? (
               <ProponentEvaluations {...props} />
             ) : (
-              <NotAvailable {...props} />
+              <WaitForConsensus {...props} />
             )}
           </Col>
         </Row>
@@ -582,7 +575,7 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Submit Scores for Consensus",
+              text: "Submit Final Consensus Scores",
               icon: "paper-plane",
               color: "info",
               button: true,
@@ -595,8 +588,8 @@ export const component: Tab.Component<State, Msg> = {
             }
           ],
           body: () =>
-            "By submitting this consensus, you, as the chair, along with the" +
-            "panelists, confirm your agreement with the consensus scores and" +
+            "By submitting this consensus, you, as the chair, along with the " +
+            "panelists, confirm your agreement with the consensus scores and " +
             "comments."
         });
       case "finalize":
@@ -605,8 +598,8 @@ export const component: Tab.Component<State, Msg> = {
           onCloseMsg: adt("hideModal") as Msg,
           actions: [
             {
-              text: "Submit Final Consensus Scores",
-              icon: "paper-plane",
+              text: "Finalize Consensus Scores",
+              icon: "comments-alt",
               color: "info",
               button: true,
               msg: adt("finalize") as Msg
@@ -620,11 +613,11 @@ export const component: Tab.Component<State, Msg> = {
           body: () => (
             <>
               <p className="mb-4">
-                By submitting final consensus scores, you are about to lock in
-                all proponent scores and move on to short-listing stage
+                By finalizing consensus scores, you are about to lock in all
+                proponent scores and move on to short-listing stage
               </p>
               <p className="mb-0">
-                Are you sure you want to submit final consensus scores?
+                Are you sure you want to finalize consensus scores?
               </p>
             </>
           )
@@ -669,8 +662,8 @@ export const component: Tab.Component<State, Msg> = {
     return canEvaluationsBeFinalized
       ? component_.page.actions.links([
           {
-            children: "Submit Final Consensus Scores",
-            symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
+            children: "Finalize Consensus Scores",
+            symbol_: leftPlacement(iconLinkSymbol("comments-alt")),
             color: "primary",
             button: true,
             loading: isLoading,
@@ -683,7 +676,7 @@ export const component: Tab.Component<State, Msg> = {
       : state.canEvaluationsBeSubmitted
       ? component_.page.actions.links([
           {
-            children: "Submit Scores for Consensus",
+            children: "Submit Final Consensus Scores",
             symbol_: leftPlacement(iconLinkSymbol("paper-plane")),
             color: "primary",
             button: true,

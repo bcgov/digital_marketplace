@@ -116,7 +116,8 @@ type InitResponse =
         CWUO.CWUOpportunitySlim[],
         SWUO.SWUOpportunitySlim[],
         TWUO.TWUOpportunitySlim[],
-        SWUO.SWUOpportunitySlim[]
+        SWUO.SWUOpportunitySlim[],
+        TWUO.TWUOpportunitySlim[]
       ]
     >;
 
@@ -274,26 +275,28 @@ function makePublicSectorBodyRows(
 }
 
 function makePanelBodyRows(
-  swuOpportunities: SWUO.SWUOpportunitySlim[],
-  _viewerUser: User
+  swu: SWUO.SWUOpportunitySlim[],
+  twu: TWUO.TWUOpportunitySlim[]
 ): Table.BodyRows {
-  return swuOpportunities
-    .sort((a, b) => compareDates(a.createdAt, b.createdAt) * -1)
-    .map((opportunity) => {
+  return [
+    ...swu.map((o) => adt("swu" as const, o)),
+    ...twu.map((o) => adt("twu" as const, o))
+  ]
+    .sort((a, b) => compareDates(a.value.createdAt, b.value.createdAt) * -1)
+    .map((o) => {
+      const defaultTitle = oppHelpers(o).dashboard.getDefaultTitle();
       return [
         {
           children: (
             <div>
               <Link
                 dest={routeDest(
-                  adt("opportunitySWUEdit" as const, {
-                    opportunityId: opportunity.id
-                  })
+                  oppHelpers(o).dashboard.getOppEditRoute(o.value.id)
                 )}>
-                {opportunity.title || "Untitled Sprint With Us Opportunity"}
+                {o.value.title || defaultTitle}
               </Link>
               <div className="small text-secondary text-uppercase">
-                Sprint With Us
+                {o.tag === "swu" ? "Sprint With Us" : "Team With Us"}
               </div>
             </div>
           )
@@ -301,21 +304,17 @@ function makePanelBodyRows(
         {
           children: (
             <Badge
-              color={oppHelpers(
-                adt("swu" as const, opportunity)
-              ).dashboard.getOppStatusColor(opportunity.status)}
-              text={oppHelpers(
-                adt("swu" as const, opportunity)
-              ).dashboard.getOppStatusText(opportunity.status)}
+              color={oppHelpers(o).dashboard.getOppStatusColor(o.value.status)}
+              text={oppHelpers(o).dashboard.getOppStatusText(o.value.status)}
             />
           )
         },
         {
           children: (
             <div>
-              {formatDate(opportunity.createdAt)}
+              {formatDate(o.value.createdAt)}
               <div className="small text-secondary text-uppercase">
-                {opportunity.createdBy?.name}
+                {o.value.createdBy?.name}
               </div>
             </div>
           )
@@ -444,7 +443,7 @@ const init: component_.page.Init<
                   ] as const)
                 ) as Msg
             )
-          : component_.cmd.join4(
+          : component_.cmd.join5(
               api.opportunities.cwu.readMany()((response) =>
                 api.getValidValue(response, [])
               ),
@@ -455,17 +454,21 @@ const init: component_.page.Init<
                 api.getValidValue(response, [])
               ),
               // get panel opportunities
-              api.opportunities.swu.readMany("panelMember=true")((response) =>
-                api.getValidValue(response, [])
+              api.opportunities.swu.readMany({ panelMember: true })(
+                (response) => api.getValidValue(response, [])
               ),
-              (cwu, swu, twu, panelOpps) =>
+              api.opportunities.twu.readMany({ panelMember: true })(
+                (response) => api.getValidValue(response, [])
+              ),
+              (cwu, swu, twu, swuPanelOpps, twuPanelOpps) =>
                 adt(
                   "onInitResponse",
                   adt("publicSector", [
                     cwu,
                     swu,
                     twu,
-                    panelOpps
+                    swuPanelOpps,
+                    twuPanelOpps
                   ] as const) as InitResponse
                 ) as Msg
             )
@@ -538,7 +541,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               cwuOpportunities,
               swuOpportunities,
               twuOpportunities,
-              panelOpportunities
+              swuPanelOpportunities,
+              twuPanelOpportunities
             ] = msg.value.value;
             return [
               state
@@ -554,7 +558,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 )
                 .setIn(
                   ["panelTable", "bodyRows"],
-                  makePanelBodyRows(panelOpportunities, state.viewerUser)
+                  makePanelBodyRows(
+                    swuPanelOpportunities,
+                    twuPanelOpportunities
+                  )
                 ),
               [component_.cmd.dispatch(component_.page.readyMsg())]
             ];
