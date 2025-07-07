@@ -16,12 +16,10 @@ export interface State<TabId> {
   isDropdownOpen: boolean;
   activeTab: TabId;
   tabs: TabId[];
-  showAllTabs?: boolean;
 }
 
 export interface Params<TabId> extends Pick<State<TabId>, "tabs"> {
   activeTab?: TabId;
-  showAllTabs?: boolean;
 }
 
 export type Msg<TabId> =
@@ -64,7 +62,7 @@ export function init<TabId>(): component_.base.Init<
   State<TabId>,
   Msg<TabId>
 > {
-  return ({ tabs, activeTab, showAllTabs = false }) => {
+  return ({ tabs, activeTab }) => {
     if (!tabs.length) {
       throw new Error(
         "Must provide a non-empty array of tabs for tabbed forms."
@@ -75,8 +73,7 @@ export function init<TabId>(): component_.base.Init<
         id: `tabbed-form-${Math.random()}`,
         tabs,
         isDropdownOpen: false,
-        activeTab: activeTab || tabs[0],
-        showAllTabs
+        activeTab: activeTab || tabs[0]
       },
       []
     ];
@@ -141,11 +138,11 @@ export interface Props<TabId>
   getTabContent?(tabId: TabId): React.ReactNode;
 }
 
-interface HeaderProps<TabId> extends Props<TabId> {
+export interface HeaderProps<TabId> extends Props<TabId> {
   currentTabForHeader?: TabId;
 }
 
-const Header = function <TabId>({
+export const Header = function <TabId>({
   valid,
   state,
   dispatch,
@@ -229,10 +226,6 @@ export const TabbedFormHeaderAndContent = function <TabId>(
 
 export function view<TabId>(): component_.base.View<Props<TabId>> {
   const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
-    if (state.showAllTabs) {
-      return null;
-    }
-
     return (
       <div className="mt-5 d-flex flex-nowrap justify-content-between align-items-center">
         {showPreviousButton(state) ? (
@@ -273,27 +266,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  const AllTabsView: component_.base.View<Props<TabId>> = (props) => {
-    return (
-      <div id={props.state.id}>
-        {props.state.tabs.map((tab, index) => (
-          <div
-            key={`all-tabs-${index}`}
-            className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
-            <Header {...props} currentTabForHeader={tab} />
-            {props.getTabContent && props.getTabContent(tab)}
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return function PageWrapper(props) {
-    return props.state.showAllTabs ? (
-      <AllTabsView {...props} />
-    ) : (
-      <SingleTabView {...props} />
-    );
+    return <SingleTabView {...props} />;
   };
 }
 

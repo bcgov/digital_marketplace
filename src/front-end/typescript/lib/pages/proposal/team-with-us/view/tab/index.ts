@@ -36,7 +36,7 @@ export interface Params {
   proposal: TWUProposal;
   opportunity: TWUOpportunity;
   viewerUser: User;
-  showAllTabs?: boolean;
+
   evaluating: boolean;
   questionEvaluation?: TWUResourceQuestionResponseEvaluation;
   panelQuestionEvaluations: TWUResourceQuestionResponseEvaluation[];

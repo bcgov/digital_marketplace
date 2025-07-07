@@ -11,13 +11,13 @@ import * as ProposalCodeChallengeTab from "front-end/lib/pages/proposal/sprint-w
 import * as ProposalTeamScenarioTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-scenario";
 import * as ProposalTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/proposal";
 import * as ProposalHistoryTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/history";
+import ProposalFormReadOnly from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form-readonly";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { ADT, Id } from "shared/lib/types";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
-import ViewTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/view-tab-header";
 
 export interface ProposalDetailState {
   formState: ProposalForm.State;
@@ -70,8 +70,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
       opportunity: opportunity,
       proposal,
       organizations: organizations,
-      evaluationContent: evaluationContent,
-      showAllTabs: true
+      evaluationContent: evaluationContent
     });
 
     // Update the team state with affiliations after form init
@@ -131,7 +130,6 @@ const init: component_.base.Init<Params, State, Msg> = ({
       questionEvaluation: undefined,
       panelQuestionEvaluations: [],
       proposals: proposals,
-      showAllTabs: true,
       expandAccordions: true
     } as ProposalTab.Params);
 
@@ -179,20 +177,15 @@ interface ProposalDetailProps {
 
 const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   proposal,
-  state
+  state,
+  viewerUser
 }) => {
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
-      <div className="proposal-complete-page-header">
-        <ViewTabHeader
-          proposal={proposal}
-          viewerUser={state.formState.viewerUser}
-        />
-      </div>
-
-      <ProposalTab.component.view
-        state={immutable(state.proposalTabState)}
-        dispatch={() => {}}
+      <ProposalFormReadOnly
+        proposal={proposal}
+        viewerUser={viewerUser}
+        form={immutable(state.formState)}
       />
 
       <h3

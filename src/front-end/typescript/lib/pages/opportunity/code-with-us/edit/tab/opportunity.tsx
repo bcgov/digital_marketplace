@@ -89,8 +89,7 @@ function initForm(
   opportunity: CWUOpportunity,
   viewerUser: User,
   activeTab?: Form.TabId,
-  validate = false,
-  showAllTabs = false
+  validate = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
   const [formState, formCmds] = Form.init({
     opportunity,
@@ -99,8 +98,7 @@ function initForm(
     canRemoveExistingAttachments: canCWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    ),
-    showAllTabs
+    )
   });
   let immutableFormState = immutable(formState);
   if (validate) {

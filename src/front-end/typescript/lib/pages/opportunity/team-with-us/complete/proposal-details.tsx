@@ -15,6 +15,7 @@ import * as ProposalForm from "front-end/lib/pages/proposal/team-with-us/lib/com
 import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab/proposal";
 import * as ProposalHistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 import * as History from "front-end/lib/components/table/history";
+import ProposalFormReadOnly from "front-end/lib/pages/proposal/team-with-us/lib/components/form-readonly";
 import {
   twuProposalStatusToColor,
   twuProposalStatusToTitleCase,
@@ -77,15 +78,13 @@ const init: component_.base.Init<Params, State, Msg> = ({
       opportunity: opportunity,
       proposal: proposal,
       organizations: [],
-      evaluationContent: "",
-      showAllTabs: true
+      evaluationContent: ""
     });
 
     const [proposalTabState, _proposalTabCmds] = ProposalTab.component.init({
       viewerUser: viewerUser,
       proposal,
       opportunity,
-      showAllTabs: true,
       evaluating: false,
       panelQuestionEvaluations: [],
       proposals: proposals
@@ -142,13 +141,15 @@ interface ProposalDetailProps {
 const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   proposal,
   state,
+  viewerUser,
   dispatch
 }) => {
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
-      <ProposalTab.component.view
-        state={state.proposalTabState}
-        dispatch={() => dispatch(adt("noop"))}
+      <ProposalFormReadOnly
+        proposal={proposal}
+        viewerUser={viewerUser}
+        form={state.formState}
       />
 
       <hr></hr>

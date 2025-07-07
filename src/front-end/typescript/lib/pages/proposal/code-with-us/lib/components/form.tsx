@@ -112,7 +112,6 @@ export interface Params {
   activeTab?: TabId;
   affiliations: AffiliationSlim[];
   idPrefix?: string;
-  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -140,8 +139,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   proposal,
   affiliations,
   activeTab = DEFAULT_ACTIVE_TAB,
-  idPrefix = "",
-  showAllTabs = false
+  idPrefix = ""
 }) => {
   const selectedOrganizationOption: Select.Option | null = (() => {
     if (proposal?.proponent.tag !== "organization") {
@@ -154,8 +152,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   })();
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Proponent", "Proposal", "Attachments"],
-    activeTab,
-    showAllTabs
+    activeTab
   });
 
   // When multiple instances of this component are used on the same page,
@@ -794,7 +791,7 @@ export function persist(
   });
 }
 
-const IndividualProponent: component_.base.View<Props> = ({
+export const IndividualProponent: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -929,7 +926,7 @@ const IndividualProponent: component_.base.View<Props> = ({
   );
 };
 
-const OrganizationProponent: component_.base.View<Props> = ({
+export const OrganizationProponent: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -976,7 +973,7 @@ const OrganizationProponent: component_.base.View<Props> = ({
   );
 };
 
-const ProponentView: component_.base.View<Props> = (props) => {
+export const ProponentView: component_.base.View<Props> = (props) => {
   const { state, dispatch, disabled } = props;
 
   const proponentType = FormField.getValue(state.proponentType);
@@ -1032,7 +1029,7 @@ const ProponentView: component_.base.View<Props> = (props) => {
   );
 };
 
-const ProposalView: component_.base.View<Props> = ({
+export const ProposalView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1106,7 +1103,7 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 }
 
 // @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const AttachmentsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1133,7 +1130,7 @@ const AttachmentsView: component_.base.View<Props> = ({
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-  
+
   const getTabContent = (tabId: TabId) => {
     switch (tabId) {
       case "Proponent":

@@ -83,7 +83,6 @@ export interface Params {
   evaluationContent: string;
   proposal?: SWUProposal;
   activeTab?: TabId;
-  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -178,8 +177,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   organizations,
   evaluationContent,
   proposal,
-  activeTab = DEFAULT_ACTIVE_TAB,
-  showAllTabs = false
+  activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const inceptionCost = proposal?.inceptionPhase?.proposedCost || 0;
   const prototypeCost = proposal?.prototypePhase?.proposedCost || 0;
@@ -202,8 +200,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "References",
       "Review Proposal"
     ],
-    activeTab,
-    showAllTabs
+    activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -231,7 +228,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
     proposal,
-    isDetailView: showAllTabs ? true : false
+    isDetailView: false
   });
   const [inceptionCostState, inceptionCostCmds] = NumberField.init({
     errors: [],
@@ -318,7 +315,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity.teamQuestions,
     responses: proposal?.teamQuestionResponses || [],
-    isDetailView: showAllTabs ? true : false
+    isDetailView: false
   });
   const [referencesState, referencesCmds] = References.init({
     references: proposal?.references || []
@@ -768,7 +765,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const EvaluationView: component_.base.View<Props> = ({ state }) => {
+export const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -830,7 +827,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
   );
 };
 
-const TeamView: component_.base.View<Props> = ({
+export const TeamView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -911,7 +908,7 @@ const TeamView: component_.base.View<Props> = ({
   );
 };
 
-const PricingView: component_.base.View<Props> = ({
+export const PricingView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1035,7 +1032,7 @@ const PricingView: component_.base.View<Props> = ({
   );
 };
 
-const TeamQuestionsView: component_.base.View<Props> = ({
+export const TeamQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1075,7 +1072,7 @@ const TeamQuestionsView: component_.base.View<Props> = ({
   );
 };
 
-const ReferencesView: component_.base.View<Props> = ({
+export const ReferencesView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1248,7 +1245,7 @@ const ReviewTeamQuestionResponseView: component_.base.View<
   );
 };
 
-const ReviewProposalView: component_.base.View<Props> = ({
+export const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
 }) => {
@@ -1421,7 +1418,7 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled || isLoading(state)
   };
-  
+
   const getTabContent = (tabId: TabId) => {
     switch (tabId) {
       case "Evaluation":

@@ -49,7 +49,7 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   form: Immutable<Form.State> | null;
   disqualificationReason: Immutable<LongText.State>;
-  showAllTabs: boolean;
+
   expandAccordions: boolean;
 }
 
@@ -74,7 +74,6 @@ export type InnerMsg =
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export interface Params extends Tab.Params {
-  showAllTabs?: boolean;
   expandAccordions?: boolean;
 }
 
@@ -98,7 +97,7 @@ const init: component_.base.Init<Params, State, Msg> = (params) => {
       showModal: null,
       form: null,
       disqualificationReason: immutable(disqualificationReasonState),
-      showAllTabs: params.showAllTabs || false,
+
       expandAccordions: params.expandAccordions || false
     },
     [

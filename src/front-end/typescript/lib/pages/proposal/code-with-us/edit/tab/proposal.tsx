@@ -1,4 +1,4 @@
-import { EMPTY_STRING, PROPOSAL_POLL_DURATION } from "front-end/config";
+import { PROPOSAL_POLL_DURATION } from "front-end/config";
 import { makeStartLoading, makeStopLoading } from "front-end/lib";
 import { Route } from "front-end/lib/app/types";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
@@ -11,15 +11,11 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/proposal/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/code-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header";
+import ProposalViewWrapper from "front-end/lib/pages/proposal/code-with-us/lib/components/proposal-view-wrapper";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
-import ReportCardList, {
-  ReportCard
-} from "front-end/lib/views/report-card-list";
 import { compact } from "lodash";
 import React from "react";
-import { Col, Row } from "reactstrap";
-import { formatAmount, formatDateAtTime } from "shared/lib";
+
 import { AffiliationSlim } from "shared/lib/resources/affiliation";
 import {
   CWUOpportunity,
@@ -759,67 +755,21 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
-  const proposal = state.proposal;
-  if (!proposal) return null;
-  const showScoreAndRanking =
-    proposal.status === CWUProposalStatus.Awarded ||
-    proposal.status === CWUProposalStatus.NotAwarded;
-  const reportCards: Array<ReportCard | null> = [
-    {
-      icon: "alarm-clock",
-      name: "Proposals Deadline",
-      value: formatDateAtTime(proposal.opportunity.proposalDeadline, true)
-    },
-    showScoreAndRanking
-      ? {
-          icon: "star-full",
-          iconColor: "c-report-card-icon-highlight",
-          name: "Total Score",
-          value: proposal.score ? `${proposal.score}%` : EMPTY_STRING
-        }
-      : null,
-    showScoreAndRanking
-      ? {
-          icon: "trophy",
-          iconColor: "c-report-card-icon-highlight",
-          name: "Ranking",
-          value: proposal.rank
-            ? formatAmount(proposal.rank, undefined, true)
-            : EMPTY_STRING
-        }
-      : null
-  ];
-  return (
-    <Row className="mt-5">
-      <Col xs="12">
-        <ReportCardList reportCards={reportCards} />
-      </Col>
-    </Row>
-  );
-};
-
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
   const proposal = state.proposal;
   const form = state.form;
   if (!proposal || !form) return null;
   return (
-    <div>
-      <EditTabHeader proposal={proposal} viewerUser={state.viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading(state)}
-            state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (v) =>
-              adt("form" as const, v)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <ProposalViewWrapper proposal={proposal} viewerUser={state.viewerUser}>
+      <Form.view
+        disabled={!state.isEditing || isLoading(state)}
+        state={form}
+        dispatch={component_.base.mapDispatch(dispatch, (v) =>
+          adt("form" as const, v)
+        )}
+      />
+    </ProposalViewWrapper>
   );
 };
 

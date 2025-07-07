@@ -17,6 +17,7 @@ import * as ProposalTab from "front-end/lib/pages/proposal/code-with-us/view/tab
 import * as ProposalHistoryTab from "front-end/lib/pages/proposal/code-with-us/view/tab/history";
 import * as History from "front-end/lib/components/table/history";
 import { getHistoryItems } from "front-end/lib/pages/proposal/code-with-us/view/tab/history";
+import ProposalFormReadOnly from "front-end/lib/pages/proposal/code-with-us/lib/components/form-readonly";
 // import ViewTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header";
 
 export interface ProposalDetailState {
@@ -54,8 +55,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
       proposal: proposal,
       affiliations: [] as unknown as AffiliationSlim[],
       canRemoveExistingAttachments: false,
-      idPrefix: uniqueIdPrefix, // Pass unique ID prefix to form
-      showAllTabs: true
+      idPrefix: uniqueIdPrefix // Pass unique ID prefix to form
     });
 
     const [proposalTabState, _proposalTabCmds] = ProposalTab.component.init({
@@ -113,13 +113,15 @@ interface ProposalDetailProps {
 const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   proposal,
   state,
+  viewerUser,
   dispatch
 }) => {
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
-      <ProposalTab.component.view
-        state={state.proposalTabState}
-        dispatch={() => dispatch(adt("noop"))}
+      <ProposalFormReadOnly
+        proposal={proposal}
+        viewerUser={viewerUser}
+        form={state.formState}
       />
 
       <hr></hr>

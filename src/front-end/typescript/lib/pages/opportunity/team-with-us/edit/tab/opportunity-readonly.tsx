@@ -15,7 +15,7 @@ import {
 } from "../../lib/components/form";
 import { Immutable } from "front-end/lib/framework";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
-import { TabbedFormHeaderAndContent } from "front-end/lib/components/tabbed-form";
+import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 
 type TabId =
   | "Agreement"
@@ -103,29 +103,23 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     }
   };
 
-  const makeTabState = (activeTab: TabId) =>
-    immutable({
-      id: `readonly-${activeTab}`,
-      isDropdownOpen: false,
-      activeTab,
-      tabs: TABS
-    });
+  const getTabLabel = (tabId: TabId): string => tabId;
+
+  const ReadonlyComponent = TabbedFormReadonly.view<TabId>();
 
   return (
     // OpportunityViewWrapper is a wrapper that includes the EditTabHeader, Reporting and <Row>-><Col>->Children components:
     <OpportunityViewWrapper opportunity={opportunity} viewerUser={viewerUser}>
-      {TABS.map((tab) => (
-        <TabbedFormHeaderAndContent
-          key={`tab-${tab}`}
-          valid={true}
-          disabled={true}
-          getTabLabel={() => tab}
-          isTabValid={() => true}
-          dispatch={() => {}}
-          state={makeTabState(tab)}>
-          {getTabContent(tab)}
-        </TabbedFormHeaderAndContent>
-      ))}
+      <ReadonlyComponent
+        id="opportunity-readonly"
+        tabs={TABS}
+        getTabLabel={getTabLabel}
+        getTabContent={getTabContent}
+        isTabValid={() => true}
+        valid={true}
+        state={immutable({})}
+        dispatch={() => {}}
+      />
     </OpportunityViewWrapper>
   );
 };

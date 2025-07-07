@@ -64,7 +64,6 @@ export interface Params {
   evaluationContent: string;
   proposal?: TWUProposal;
   activeTab?: TabId;
-  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -134,8 +133,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   organizations,
   evaluationContent,
   proposal,
-  activeTab = DEFAULT_ACTIVE_TAB,
-  showAllTabs = false
+  activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const organizationOptions = organizations
     .filter(
@@ -152,8 +150,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     : null;
   const [tabbedFormState, tabbedFormCmds] = TabbedFormComponent.init({
     tabs: ["Evaluation", "Team Members", "Questions", "Review Proposal"],
-    activeTab,
-    showAllTabs
+    activeTab
   });
   const [organizationState, organizationCmds] = Select.init({
     errors: [],
@@ -188,7 +185,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     ResourceQuestions.init({
       questions: opportunity.resourceQuestions,
       responses: proposal?.resourceQuestionResponses || [],
-      isDetailView: showAllTabs || false
+      isDetailView: false
     });
   return [
     {
@@ -487,7 +484,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const EvaluationView: component_.base.View<Props> = ({ state }) => {
+export const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -544,7 +541,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
   );
 };
 
-const OrganizationView: component_.base.View<Props> = ({
+export const OrganizationView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -627,7 +624,7 @@ const OrganizationView: component_.base.View<Props> = ({
   );
 };
 
-const ResourceQuestionsView: component_.base.View<Props> = ({
+export const ResourceQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -758,7 +755,7 @@ const ContractDate: component_.base.View<ContractDateProps> = ({
   </>
 );
 
-const ReviewProposalView: component_.base.View<Props> = ({
+export const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
 }) => {
@@ -947,7 +944,7 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled
   };
-  
+
   const getTabContent = (tabId: TabId) => {
     switch (tabId) {
       case "Evaluation":

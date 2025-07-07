@@ -51,9 +51,7 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
-export interface Params extends Tab.Params {
-  showAllTabs?: boolean;
-}
+export interface Params extends Tab.Params {}
 
 export type InnerMsg =
   | ADT<"noop">

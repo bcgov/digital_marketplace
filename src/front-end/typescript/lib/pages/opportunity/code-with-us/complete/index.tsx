@@ -105,7 +105,7 @@ const init: component_.page.Init<
 
     // const [_opportunityInitState] = OpportunityTab.component.init({
     //   viewerUser: adminUser,
-    //   // showAllTabs: true
+
     // });
     // console.log('opportunityInitState: ', _opportunityInitState);
 
