@@ -137,7 +137,6 @@ export interface Params {
   opportunity?: TWUOpportunity;
   viewerUser: User;
   activeTab?: TabId;
-  showAllTabs?: boolean;
   users: User[];
 }
 
@@ -172,7 +171,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   viewerUser,
   activeTab = DEFAULT_ACTIVE_TAB,
-  showAllTabs = false,
   users
 }) => {
   const questionsWeight = getNumber(
@@ -208,8 +206,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "Scoring",
       "Attachments"
     ],
-    activeTab,
-    showAllTabs
+    activeTab
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -1145,7 +1142,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const AgreementView: component_.base.View = () => (
+export const AgreementView: component_.base.View = () => (
   <div className="table-responsive">
     <table className="table-hover" style={{ textAlign: "center" }}>
       <thead>
@@ -1246,7 +1243,7 @@ const AgreementView: component_.base.View = () => (
   </div>
 );
 
-const EvaluationPanelView: component_.base.View<Props> = ({
+export const EvaluationPanelView: component_.base.View<Props> = ({
   disabled,
   state,
   dispatch
@@ -1264,7 +1261,7 @@ const EvaluationPanelView: component_.base.View<Props> = ({
   </Row>
 );
 
-const OverviewView: component_.base.View<Props> = ({
+export const OverviewView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1462,7 +1459,7 @@ const OverviewView: component_.base.View<Props> = ({
   );
 };
 
-const ResourceDetailsView: component_.base.View<Props> = ({
+export const ResourceDetailsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1481,7 +1478,7 @@ const ResourceDetailsView: component_.base.View<Props> = ({
     </Row>
   );
 };
-const DescriptionView: component_.base.View<Props> = ({
+export const DescriptionView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1508,7 +1505,7 @@ const DescriptionView: component_.base.View<Props> = ({
   );
 };
 
-const ResourceQuestionsView: component_.base.View<Props> = ({
+export const ResourceQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1528,7 +1525,7 @@ const ResourceQuestionsView: component_.base.View<Props> = ({
   );
 };
 
-const ScoringView: component_.base.View<Props> = ({
+export const ScoringView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1605,7 +1602,7 @@ const ScoringView: component_.base.View<Props> = ({
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const AttachmentsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled

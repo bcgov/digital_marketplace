@@ -28,6 +28,7 @@ import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as OpportunityView from "../view";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalDetailsSection from "./proposal-details";
+import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -101,10 +102,9 @@ const init: component_.page.Init<
       viewerUser: adminUser
     });
 
-    const [opportunityInitState] = OpportunityTab.component.init({
-      viewerUser: adminUser,
-      showAllTabs: true
-    });
+    // const [opportunityInitState] = OpportunityTab.component.init({
+    //   viewerUser: adminUser
+    // });
 
     const [opportunityViewState, initialOpportunityViewCmds] =
       OpportunityView.component.init({
@@ -138,7 +138,19 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
-          opportunityState: immutable(opportunityInitState),
+          // opportunityState: immutable(opportunityInitState),
+          opportunityState: immutable({
+            viewerUser: shared.sessionUser,
+            opportunity: null,
+            form: null,
+            showModal: null,
+            startEditingLoading: 0,
+            saveChangesLoading: 0,
+            saveChangesAndUpdateStatusLoading: 0,
+            updateStatusLoading: 0,
+            deleteLoading: 0,
+            isEditing: false
+          }),
           proposals: [],
           organizations: [],
           proposalAffiliations: {},
@@ -557,9 +569,10 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity Details
         </h2>
-        <OpportunityTab.component.view
-          state={state.opportunityState}
-          dispatch={() => {}}
+        <OpportunityReadOnly
+          opportunity={state.opportunity}
+          viewerUser={state.viewerUser}
+          form={state.opportunityState.form}
         />
         <hr />
 
