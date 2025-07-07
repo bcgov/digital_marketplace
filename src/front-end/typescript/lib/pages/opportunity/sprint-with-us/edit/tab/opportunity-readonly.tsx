@@ -15,6 +15,7 @@ import {
 } from "../../lib/components/form";
 import { Immutable } from "front-end/lib/framework";
 import * as Form from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/form";
+import * as Phase from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase";
 import { TabbedFormHeaderAndContent } from "front-end/lib/components/tabbed-form";
 
 type TabId =
@@ -58,8 +59,32 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     ? ALL_TABS
     : ALL_TABS.filter((tab) => tab !== "Evaluation Panel");
 
+  // Create a modified form state with all phase accordions expanded for readonly view
+  let formWithExpandedPhases = form;
+
+  try {
+    formWithExpandedPhases = form.update("phases", (phases) => {
+      return phases
+        .update("inceptionPhase", (phase) =>
+          Phase.setIsAccordionOpen(phase, true)
+        )
+        .update("prototypePhase", (phase) =>
+          Phase.setIsAccordionOpen(phase, true)
+        )
+        .update("implementationPhase", (phase) =>
+          Phase.setIsAccordionOpen(phase, true)
+        );
+    });
+  } catch (error) {
+    console.error("Error updating form with expanded phases:", error);
+  }
+
   const getTabContent = (tabId: TabId) => {
-    const viewProps = { dispatch: () => {}, state: form, disabled: true };
+    const viewProps = {
+      dispatch: () => {},
+      state: formWithExpandedPhases,
+      disabled: true
+    };
     switch (tabId) {
       case "Agreement":
         return <AgreementView />;

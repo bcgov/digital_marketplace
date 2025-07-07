@@ -43,7 +43,6 @@ export type ParentMsg<K extends TabId, InnerMsg> = TabbedPage.ParentMsg<
 
 export interface Params {
   viewerUser: User;
-  expandAccordions?: boolean;
   proposalSortOrder?: "default" | "completePage";
 }
 
