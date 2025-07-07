@@ -33,7 +33,7 @@ interface Props {
   form: Immutable<Form.State> | null;
 }
 
-const TABS: TabId[] = [
+const ALL_TABS: TabId[] = [
   "Agreement",
   "Evaluation Panel",
   "Overview",
@@ -50,6 +50,13 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
   if (!form) {
     return null;
   }
+
+  // Only show evaluation panel if there's data for it
+  const hasEvaluationPanel =
+    opportunity.evaluationPanel && opportunity.evaluationPanel.length > 0;
+  const TABS = hasEvaluationPanel
+    ? ALL_TABS
+    : ALL_TABS.filter((tab) => tab !== "Evaluation Panel");
 
   const getTabContent = (tabId: TabId) => {
     const viewProps = { dispatch: () => {}, state: form, disabled: true };

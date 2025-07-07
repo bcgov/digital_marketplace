@@ -33,7 +33,7 @@ interface Props {
   form: Immutable<Form.State> | null;
 }
 
-const TABS: TabId[] = [
+const ALL_TABS: TabId[] = [
   "Agreement",
   "Evaluation Panel",
   "Overview",
@@ -51,8 +51,12 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     return <div>Loading...</div>;
   }
 
-  console.log("form", form);
-  console.log("opportunity", opportunity);
+  // Only show evaluation panel if there's data for it
+  const hasEvaluationPanel =
+    opportunity.evaluationPanel && opportunity.evaluationPanel.length > 0;
+  const TABS = hasEvaluationPanel
+    ? ALL_TABS
+    : ALL_TABS.filter((tab) => tab !== "Evaluation Panel");
 
   const getTabContent = (tab: TabId) => {
     switch (tab) {
