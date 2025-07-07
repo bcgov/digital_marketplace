@@ -38,6 +38,7 @@ import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
 import { InfoTab } from "../view"; // Import the type for tabs
+import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -166,12 +167,11 @@ const init: component_.page.Init<
     });
 
     // Initialize the opportunity tab state structure
-    const [opportunityInitState, _opportunityCmds] =
-      OpportunityTab.component.init({
-        viewerUser: shared.sessionUser,
-        showAllTabs: true,
-        expandAccordions: true
-      });
+    // const [opportunityInitState, _opportunityCmds] =
+    //   OpportunityTab.component.init({
+    //     viewerUser: shared.sessionUser,
+    //     expandAccordions: true
+    //   });
 
     // Initialize the OpportunityView component state
     const [opportunityViewState, _opportunityViewCmds] =
@@ -198,7 +198,18 @@ const init: component_.page.Init<
           codeChallengeState: immutable(codeChallengeInitState),
           teamScenarioState: immutable(teamScenarioInitState),
           summaryState: immutable(summaryInitState),
-          opportunityState: immutable(opportunityInitState),
+          opportunityState: immutable({
+            viewerUser: shared.sessionUser,
+            opportunity: null,
+            form: null,
+            showModal: null,
+            startEditingLoading: 0,
+            saveChangesLoading: 0,
+            saveChangesAndUpdateStatusLoading: 0,
+            updateStatusLoading: 0,
+            deleteLoading: 0,
+            isEditing: false
+          }),
           proposals: [],
           organizations: [],
           evaluationContent: "",
@@ -271,8 +282,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               opportunity,
               viewerUser: state.viewerUser,
               canRemoveExistingAttachments: false,
-              users: [],
-              showAllTabs: true
+              users: []
             });
 
             const updatedOpportunityState = state.opportunityState
@@ -935,9 +945,10 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           6. Admin View - Opportunity Details
         </h2>
-        <OpportunityTab.component.view
-          state={state.opportunityState}
-          dispatch={() => {}}
+        <OpportunityReadOnly
+          opportunity={state.opportunity}
+          viewerUser={state.viewerUser}
+          form={state.opportunityState.form}
         />
 
         <hr></hr>

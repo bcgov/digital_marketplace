@@ -152,7 +152,6 @@ export interface Params {
   viewerUser: User;
   activeTab?: TabId;
   users: User[];
-  showAllTabs?: boolean;
 }
 
 export function getActiveTab(state: Immutable<State>): TabId {
@@ -204,8 +203,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   viewerUser,
   users,
-  activeTab = DEFAULT_ACTIVE_TAB,
-  showAllTabs = false
+  activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const startingPhase = getStartingPhase(opportunity);
   const questionsWeight = getNumber(
@@ -239,8 +237,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       "Scoring",
       "Attachments"
     ],
-    activeTab,
-    showAllTabs
+    activeTab
   });
   const [titleState, titleCmds] = ShortText.init({
     errors: [],
@@ -431,7 +428,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [phasesState, phasesCmds] = Phases.init({
     opportunity,
     startingPhase: startingPhase || SWUOpportunityPhaseType.Inception,
-    isDetailView: showAllTabs
+    isDetailView: false
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity?.teamQuestions || []
@@ -1232,7 +1229,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const AgreementView: component_.base.View = () => (
+export const AgreementView: component_.base.View = () => (
   <div className="table-responsive">
     <table className="table-hover" style={{ textAlign: "center" }}>
       <thead>
@@ -1333,7 +1330,7 @@ const AgreementView: component_.base.View = () => (
   </div>
 );
 
-const EvaluationPanelView: component_.base.View<Props> = ({
+export const EvaluationPanelView: component_.base.View<Props> = ({
   disabled,
   state,
   dispatch
@@ -1351,7 +1348,7 @@ const EvaluationPanelView: component_.base.View<Props> = ({
   </Row>
 );
 
-const OverviewView: component_.base.View<Props> = ({
+export const OverviewView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1564,7 +1561,7 @@ const OverviewView: component_.base.View<Props> = ({
   );
 };
 
-const DescriptionView: component_.base.View<Props> = ({
+export const DescriptionView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1591,7 +1588,7 @@ const DescriptionView: component_.base.View<Props> = ({
   );
 };
 
-const PhasesView: component_.base.View<Props> = ({
+export const PhasesView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1671,7 +1668,7 @@ const PhasesView: component_.base.View<Props> = ({
   );
 };
 
-const TeamQuestionsView: component_.base.View<Props> = ({
+export const TeamQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1691,7 +1688,7 @@ const TeamQuestionsView: component_.base.View<Props> = ({
   );
 };
 
-const ScoringView: component_.base.View<Props> = ({
+export const ScoringView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1781,7 +1778,7 @@ const ScoringView: component_.base.View<Props> = ({
 };
 
 // @duplicated-attachments-view
-const AttachmentsView: component_.base.View<Props> = ({
+export const AttachmentsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
