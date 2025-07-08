@@ -1296,7 +1296,6 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Overview":
@@ -1309,7 +1308,6 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   })();
-
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}
