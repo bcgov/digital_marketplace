@@ -710,7 +710,10 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isUpdateStatusLoading ||
     isDeleteLoading;
   return (
-    <OpportunityViewWrapper opportunity={opportunity} viewerUser={viewerUser}>
+    <OpportunityViewWrapper
+      {...props}
+      opportunity={opportunity}
+      viewerUser={viewerUser}>
       <Form.view
         disabled={!state.isEditing || isLoading}
         state={form}

@@ -16,6 +16,7 @@ import {
 import { Immutable } from "front-end/lib/framework";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
+import { State } from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 
 type TabId =
   | "Agreement"
@@ -107,9 +108,30 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
 
   const ReadonlyComponent = TabbedFormReadonly.view<TabId>();
 
+  // Create state object that matches the State interface expected by OpportunityViewWrapper
+  const wrapperState = immutable({
+    // Tab.Params properties
+    viewerUser,
+    opportunity,
+    // State properties (readonly defaults)
+    form: form,
+    users: [],
+    showModal: null,
+    startEditingLoading: 0,
+    saveChangesLoading: 0,
+    saveChangesAndUpdateStatusLoading: 0,
+    updateStatusLoading: 0,
+    deleteLoading: 0,
+    isEditing: false
+  }) as component_.base.Immutable<State>;
+
   return (
     // OpportunityViewWrapper is a wrapper that includes the EditTabHeader, Reporting and <Row>-><Col>->Children components:
-    <OpportunityViewWrapper opportunity={opportunity} viewerUser={viewerUser}>
+    <OpportunityViewWrapper
+      state={wrapperState}
+      dispatch={() => {}}
+      opportunity={opportunity}
+      viewerUser={viewerUser}>
       <ReadonlyComponent
         id="opportunity-readonly"
         tabs={TABS}
