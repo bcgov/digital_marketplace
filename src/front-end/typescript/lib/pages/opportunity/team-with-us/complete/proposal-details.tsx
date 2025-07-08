@@ -23,6 +23,7 @@ import {
 } from "front-end/lib/pages/proposal/team-with-us/lib";
 
 export interface ProposalDetailState {
+  opportunity: TWUOpportunity;
   formState: Immutable<ProposalForm.State>;
   proposalTabState: Immutable<ProposalTab.State>;
   historyState: Immutable<ProposalHistoryTab.State>;
@@ -118,6 +119,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
     };
 
     detailStates[proposal.id] = immutable({
+      opportunity,
       formState: immutable(formState),
       proposalTabState: immutable(completeProposalTabState),
       historyState: immutable(completeHistoryState)
@@ -148,6 +150,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
         proposal={proposal}
+        opportunity={state.opportunity}
         viewerUser={viewerUser}
         form={state.formState}
       />

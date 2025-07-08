@@ -21,6 +21,7 @@ import ProposalFormReadOnly from "front-end/lib/pages/proposal/code-with-us/lib/
 // import ViewTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header";
 
 export interface ProposalDetailState {
+  opportunity: CWUOpportunity;
   formState: Immutable<ProposalForm.State>;
   proposalTabState: Immutable<ProposalTab.State>;
   historyState: Immutable<ProposalHistoryTab.State>;
@@ -90,6 +91,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
     };
 
     detailStates[proposal.id] = immutable({
+      opportunity,
       formState: immutable(formState),
       proposalTabState: immutable(completeProposalTabState),
       historyState: immutable(completeHistoryState)
@@ -120,6 +122,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
         proposal={proposal}
+        opportunity={state.opportunity}
         viewerUser={viewerUser}
         form={state.formState}
       />

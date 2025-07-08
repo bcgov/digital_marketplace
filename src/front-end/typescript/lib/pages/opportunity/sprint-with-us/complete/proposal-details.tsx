@@ -20,6 +20,7 @@ import { ADT, Id } from "shared/lib/types";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 
 export interface ProposalDetailState {
+  opportunity: SWUOpportunity;
   formState: ProposalForm.State;
   teamQuestionsState: ProposalTeamQuestionsTab.State;
   codeChallengeState: ProposalCodeChallengeTab.State;
@@ -153,6 +154,7 @@ const init: component_.base.Init<Params, State, Msg> = ({
 
     // Store the initialized states
     detailStates[proposal.id] = immutable({
+      opportunity,
       formState: updatedFormState,
       teamQuestionsState,
       codeChallengeState,
@@ -184,6 +186,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
         proposal={proposal}
+        opportunity={state.opportunity}
         viewerUser={viewerUser}
         form={immutable(state.formState)}
       />

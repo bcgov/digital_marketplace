@@ -807,7 +807,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const form = state.form;
   if (!proposal || !form) return null;
   return (
-    <ProposalViewWrapper proposal={proposal} viewerUser={state.viewerUser}>
+    <ProposalViewWrapper {...props}>
       <Form.view
         disabled={!state.isEditing || isLoading(state)}
         state={form}

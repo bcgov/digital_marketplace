@@ -759,9 +759,7 @@ export const Reporting: component_.base.ComponentView<State, Msg> = ({
 const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   return (
-    <ProposalViewWrapper
-      proposal={state.proposal}
-      viewerUser={state.viewerUser}>
+    <ProposalViewWrapper {...props}>
       <Form.view
         disabled={!state.isEditing || isLoading(state)}
         state={state.form}
