@@ -120,8 +120,7 @@ const init: component_.page.Init<
 
     // Initialize the proposals tab state structure
     const [proposalsInitState, _proposalsCmds] = ProposalsTab.component.init({
-      viewerUser: shared.sessionUser,
-      proposalSortOrder: "completePage"
+      viewerUser: shared.sessionUser
     });
 
     // Initialize the instructions tab state structure
@@ -138,8 +137,7 @@ const init: component_.page.Init<
     // Initialize the team questions tab state structure
     const [teamQuestionsInitState, _teamQuestionsCmds] =
       TeamQuestionsTab.component.init({
-        viewerUser: shared.sessionUser,
-        proposalSortOrder: "completePage"
+        viewerUser: shared.sessionUser
       });
 
     // Initialize the consensus tab state structure
@@ -150,15 +148,13 @@ const init: component_.page.Init<
     // Initialize the code challenge tab state structure
     const [codeChallengeInitState, _codeChallengeCmds] =
       CodeChallengeTab.component.init({
-        viewerUser: shared.sessionUser,
-        proposalSortOrder: "completePage"
+        viewerUser: shared.sessionUser
       });
 
     // Initialize the team scenario tab state structure
     const [teamScenarioInitState, _teamScenarioCmds] =
       TeamScenarioTab.component.init({
-        viewerUser: shared.sessionUser,
-        proposalSortOrder: "completePage"
+        viewerUser: shared.sessionUser
       });
 
     // Initialize the summary tab state structure

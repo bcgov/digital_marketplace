@@ -47,7 +47,6 @@ import {
   UpdateValidationErrors as ProposalUpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
-import { sortSWUProposals } from "shared/lib";
 
 type ModalId = ADT<"completeCodeChallenge">;
 
@@ -60,7 +59,6 @@ export interface State extends Tab.Params {
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
   table: Immutable<Table.State>;
-  proposalSortOrder: "default" | "completePage";
 }
 
 export type InnerMsg =
@@ -100,8 +98,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       canViewProposals: false,
       canProposalsBeScreened: false,
-      table: immutable(tableState),
-      proposalSortOrder: params.proposalSortOrder || "default"
+      table: immutable(tableState)
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
   ];
@@ -121,42 +118,29 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const opportunity = msg.value[0];
-      const proposals = msg.value[1];
+      let proposals = msg.value[1];
       const canViewProposals =
         canViewSWUOpportunityProposals(opportunity) &&
         hasSWUOpportunityPassedCodeChallenge(opportunity) &&
         !!proposals.length;
-
-      // Filter proposals first
-      const filteredProposals = proposals.filter((p) =>
-        isSWUProposalInCodeChallenge(p)
-      );
-
-      let useProposals = filteredProposals;
-      // Sort proposals based on the order specified in the state
-
-      if (state.proposalSortOrder === "completePage") {
-        useProposals = sortSWUProposals(filteredProposals, "challengeScore");
-      } else {
-        // Default sort for this tab: Use existing logic (by status group, then challengeScore)
-        useProposals.sort((a, b) =>
+      proposals = proposals
+        .filter((p) => isSWUProposalInCodeChallenge(p))
+        .sort((a, b) =>
           compareSWUProposalsForPublicSector(a, b, "challengeScore")
         );
-      }
-
       // Can be screened in if...
       // - Opportunity has the appropriate status; and
       // - At least one proposal has been evaluated.
       const canProposalsBeScreened =
         canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
-        useProposals.reduce(
+        proposals.reduce(
           (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
           false as boolean
         );
       return [
         state
           .set("opportunity", opportunity)
-          .set("proposals", useProposals)
+          .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
           .set("canProposalsBeScreened", canProposalsBeScreened),
         [component_.cmd.dispatch(component_.page.readyMsg())]
@@ -262,7 +246,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals]) as Msg
               )
             ]
           ];
@@ -319,7 +303,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals]) as Msg
               )
             ]
           ];
