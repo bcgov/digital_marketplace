@@ -119,8 +119,14 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
         getTabContent={getTabContent}
         isTabValid={() => true}
         valid={true}
-        state={immutable({})}
+        state={immutable({
+          id: "swu-opportunity-readonly",
+          isDropdownOpen: false,
+          activeTab: TABS[0],
+          tabs: TABS
+        })}
         dispatch={() => {}}
+        children={null}
       />
     </OpportunityViewWrapper>
   );

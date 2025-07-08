@@ -135,11 +135,6 @@ export interface Props<TabId>
   children: component_.base.ViewElementChildren;
   getTabLabel(tabId: TabId): string;
   isTabValid(tabId: TabId): boolean;
-  getTabContent?(tabId: TabId): React.ReactNode;
-}
-
-export interface HeaderProps<TabId> extends Props<TabId> {
-  currentTabForHeader?: TabId;
 }
 
 export const Header = function <TabId>({
@@ -147,10 +142,9 @@ export const Header = function <TabId>({
   state,
   dispatch,
   getTabLabel,
-  isTabValid,
-  currentTabForHeader
-}: HeaderProps<TabId>) {
-  const tabToDisplay = currentTabForHeader || getActiveTab(state);
+  isTabValid
+}: Props<TabId>) {
+  const tabToDisplay = getActiveTab(state);
   if (!tabToDisplay) {
     return null;
   }
@@ -257,17 +251,13 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
     );
   };
 
-  const SingleTabView: component_.base.View<Props<TabId>> = (props) => {
+  return function PageWrapper(props) {
     return (
       <div id={props.state.id}>
         <TabbedFormHeaderAndContent {...props} />
         <Footer {...props} />
       </div>
     );
-  };
-
-  return function PageWrapper(props) {
-    return <SingleTabView {...props} />;
   };
 }
 

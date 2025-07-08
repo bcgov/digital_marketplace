@@ -15,12 +15,17 @@ import * as Tab from "front-end/lib/pages/proposal/team-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/proposal/team-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/team-with-us/lib/toasts";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
+import ReportCardList, {
+  ReportCard
+} from "front-end/lib/views/report-card-list";
 import ProposalViewWrapper from "front-end/lib/pages/proposal/team-with-us/lib/components/proposal-view-wrapper";
 import { compact } from "lodash";
 import React from "react";
-import // formatAmount,
-// formatDateAtTime
-"shared/lib";
+import { Col, Row } from "reactstrap";
+import {
+  // formatAmount,
+  formatDateAtTime
+} from "shared/lib";
 import { isTWUOpportunityAcceptingProposals } from "shared/lib/resources/opportunity/team-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
@@ -728,6 +733,38 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     default:
       return [state, []];
   }
+};
+
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  const proposal = state.proposal;
+  // const numTeamMembers = twuProposalNumTeamMembers(proposal);
+  // const totalProposedCost = twuProposalTotalProposedCost(proposal);
+  const reportCards: Array<ReportCard | null> = [
+    {
+      icon: "alarm-clock",
+      name: "Proposals Deadline",
+      value: formatDateAtTime(proposal.opportunity.proposalDeadline, true)
+    }
+    // {
+    //   icon: "users",
+    //   name: `Team Member${numTeamMembers === 1 ? "" : "s"}`,
+    //   value: String(numTeamMembers)
+    // },
+    // {
+    //   icon: "badge-dollar",
+    //   name: "Proposed Cost",
+    //   value: formatAmount(totalProposedCost, "$")
+    // }
+  ];
+  return (
+    <Row className="mt-5">
+      <Col xs="12">
+        <ReportCardList reportCards={reportCards} />
+      </Col>
+    </Row>
+  );
 };
 
 /**

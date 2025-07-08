@@ -14,8 +14,13 @@ import {
   leftPlacement,
   Props as LinkProps
 } from "front-end/lib/views/link";
+import ReportCardList, {
+  ReportCard
+} from "front-end/lib/views/report-card-list";
 import React from "react";
 import OpportunityViewWrapper from "./opportunity-view-wrapper";
+import { Col, Row } from "reactstrap";
+import { formatAmount, formatDate } from "shared/lib";
 import {
   canTWUOpportunityDetailsBeEdited,
   isTWUOpportunityPublic,
@@ -669,6 +674,40 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     default:
       return [state, []];
   }
+};
+
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  const opportunity = state.opportunity;
+  if (!opportunity || opportunity.status === TWUOpportunityStatus.Draft) {
+    return null;
+  }
+  const reporting = opportunity.reporting;
+  const reportCards: ReportCard[] = [
+    {
+      icon: "alarm-clock",
+      name: "Proposals Deadline",
+      value: formatDate(opportunity.proposalDeadline)
+    },
+    {
+      icon: "binoculars",
+      name: "Total Views",
+      value: formatAmount(reporting?.numViews || 0)
+    },
+    {
+      icon: "eye",
+      name: "Watching",
+      value: formatAmount(reporting?.numWatchers || 0)
+    }
+  ];
+  return (
+    <Row className="mt-5">
+      <Col xs="12">
+        <ReportCardList reportCards={reportCards} />
+      </Col>
+    </Row>
+  );
 };
 
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {

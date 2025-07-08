@@ -1,9 +1,9 @@
 import { component as component_, Immutable } from "front-end/lib/framework";
 import React from "react";
-import { Header, HeaderProps } from "./tabbed-form";
+import { Header, Msg, State } from "./tabbed-form";
 
 export interface Props<TabId>
-  extends component_.base.ComponentViewProps<object, never> {
+  extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {
   id: string;
   tabs: TabId[];
   getTabLabel(tabId: TabId): string;
@@ -11,6 +11,8 @@ export interface Props<TabId>
   getTabContent?(tabId: TabId): React.ReactNode;
   getTabHeader?(tabId: TabId): React.ReactNode;
   valid?: boolean;
+  disabled?: boolean;
+  children: component_.base.ViewElementChildren;
 }
 
 // Create a mock state and dispatch for the Header component
@@ -20,7 +22,13 @@ function createMockHeaderProps<TabId>(
   getTabLabel: (tabId: TabId) => string,
   isTabValid: (tabId: TabId) => boolean = () => true,
   valid: boolean = true
-): HeaderProps<TabId> {
+): component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> & {
+  getTabLabel: (tabId: TabId) => string;
+  isTabValid: (tabId: TabId) => boolean;
+  valid: boolean;
+  disabled?: boolean;
+  children: component_.base.ViewElementChildren;
+} {
   const mockState = {
     id: "readonly-tabbed-form",
     isDropdownOpen: false,
@@ -36,7 +44,6 @@ function createMockHeaderProps<TabId>(
     dispatch: mockDispatch,
     getTabLabel,
     isTabValid,
-    currentTabForHeader: tabId,
     disabled: true,
     children: null
   };
@@ -82,18 +89,25 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
 }
 
 export function makeComponent<TabId>(): component_.base.Component<
-  object,
-  object,
-  never,
+  Record<string, never>,
+  State<TabId>,
+  Msg<TabId>,
   Props<TabId>
 > {
-  const update: component_.base.Update<object, never> = ({ state }) => [
-    state,
-    []
-  ];
+  const update: component_.base.Update<State<TabId>, Msg<TabId>> = ({
+    state
+  }) => [state, []];
 
   return {
-    init: () => [{} as object, []],
+    init: () => [
+      {
+        id: "readonly-tabbed-form",
+        isDropdownOpen: false,
+        activeTab: {} as TabId, // This will be overridden by props
+        tabs: [] as TabId[]
+      } as State<TabId>,
+      []
+    ],
     update,
     view: view()
   };

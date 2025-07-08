@@ -14,18 +14,13 @@
  *   <div>Hello, world!</div>
  * </OpportunityViewWrapper>
  */
-import { component as component_ } from "front-end/lib/framework";
+import { component as component_, immutable } from "front-end/lib/framework";
 import { Col, Row } from "reactstrap";
 import { User } from "shared/lib/resources/user";
-import {
-  SWUOpportunity,
-  SWUOpportunityStatus
-} from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
+import { Reporting } from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
 import React from "react";
-import { ReportCardList } from "front-end/lib/views/report-card-list";
-import { ReportCard } from "front-end/lib/views/report-card-list";
-import { formatAmount, formatDate } from "shared/lib";
 
 interface Props {
   opportunity: SWUOpportunity;
@@ -33,48 +28,16 @@ interface Props {
   children?: React.ReactNode;
 }
 
-interface ReportingProps {
-  opportunity: SWUOpportunity;
-}
-
-const Reporting: component_.base.View<ReportingProps> = ({ opportunity }) => {
-  if (!opportunity || opportunity.status === SWUOpportunityStatus.Draft) {
-    return null;
-  }
-  const reporting = opportunity.reporting;
-  const reportCards: ReportCard[] = [
-    {
-      icon: "alarm-clock",
-      name: "Proposals Deadline",
-      value: formatDate(opportunity.proposalDeadline)
-    },
-    {
-      icon: "binoculars",
-      name: "Total Views",
-      value: formatAmount(reporting?.numViews || 0)
-    },
-    {
-      icon: "eye",
-      name: "Watching",
-      value: formatAmount(reporting?.numWatchers || 0)
-    }
-  ];
-  return (
-    <Row className="mt-5">
-      <Col xs="12">
-        <ReportCardList reportCards={reportCards} />
-      </Col>
-    </Row>
-  );
-};
-
 const OpportunityViewWrapper: component_.base.View<Props> = (props) => {
   const opportunity = props.opportunity;
   const viewerUser = props.viewerUser;
   return (
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
-      <Reporting opportunity={opportunity} />
+      <Reporting
+        state={immutable({ opportunity }) as any}
+        dispatch={() => {}}
+      />
       <Row className="mt-5">
         <Col xs="12">{props.children}</Col>
       </Row>

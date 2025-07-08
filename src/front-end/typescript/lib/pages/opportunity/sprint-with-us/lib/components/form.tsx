@@ -1838,7 +1838,6 @@ export const view: component_.base.View<Props> = (props) => {
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}
-      getTabContent={getTabContent}
       isTabValid={(tab) => {
         switch (tab) {
           case "Agreement":

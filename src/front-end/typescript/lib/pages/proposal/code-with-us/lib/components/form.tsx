@@ -1146,7 +1146,6 @@ export const view: component_.base.View<Props> = (props) => {
 
   return (
     <TabbedFormComponent.view
-      getTabContent={getTabContent}
       valid={isValid(state)}
       disabled={props.disabled}
       getTabLabel={(a) => a}

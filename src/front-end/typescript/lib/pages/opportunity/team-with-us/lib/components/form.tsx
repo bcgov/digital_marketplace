@@ -1682,7 +1682,6 @@ export const view: component_.base.View<Props> = (props) => {
             return isAttachmentsTabValid(state);
         }
       }}
-      getTabContent={getTabContent}
       state={state.tabbedForm}
       dispatch={component_.base.mapDispatch(dispatch, (msg) =>
         adt("tabbedForm" as const, msg)

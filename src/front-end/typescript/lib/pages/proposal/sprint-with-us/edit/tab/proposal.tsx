@@ -15,15 +15,22 @@ import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
+import ReportCardList, {
+  ReportCard
+} from "front-end/lib/views/report-card-list";
 import ProposalViewWrapper from "front-end/lib/pages/proposal/sprint-with-us/lib/components/proposal-view-wrapper";
 import { compact } from "lodash";
 import React from "react";
+import { Col, Row } from "reactstrap";
+import { formatAmount, formatDateAtTime } from "shared/lib";
 import { isSWUOpportunityAcceptingProposals } from "shared/lib/resources/opportunity/sprint-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import {
   DeleteValidationErrors,
   SWUProposal,
+  swuProposalNumTeamMembers,
   SWUProposalStatus,
+  swuProposalTotalProposedCost,
   UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { isVendor } from "shared/lib/resources/user";
@@ -715,6 +722,38 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     default:
       return [state, []];
   }
+};
+
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
+  const proposal = state.proposal;
+  const numTeamMembers = swuProposalNumTeamMembers(proposal);
+  const totalProposedCost = swuProposalTotalProposedCost(proposal);
+  const reportCards: Array<ReportCard | null> = [
+    {
+      icon: "alarm-clock",
+      name: "Proposals Deadline",
+      value: formatDateAtTime(proposal.opportunity.proposalDeadline, true)
+    },
+    {
+      icon: "users",
+      name: `Team Member${numTeamMembers === 1 ? "" : "s"}`,
+      value: String(numTeamMembers)
+    },
+    {
+      icon: "badge-dollar",
+      name: "Proposed Cost",
+      value: formatAmount(totalProposedCost, "$")
+    }
+  ];
+  return (
+    <Row className="mt-5">
+      <Col xs="12">
+        <ReportCardList reportCards={reportCards} />
+      </Col>
+    </Row>
+  );
 };
 
 const view: component_.base.ComponentView<State, Msg> = (props) => {

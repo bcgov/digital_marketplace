@@ -118,8 +118,14 @@ const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
         getTabContent={getTabContent}
         isTabValid={() => true}
         valid={true}
-        state={immutable({})}
+        state={immutable({
+          id: "swu-proposal-readonly",
+          isDropdownOpen: false,
+          activeTab: TABS[0],
+          tabs: TABS
+        })}
         dispatch={() => {}}
+        children={null}
       />
     </ProposalViewWrapper>
   );

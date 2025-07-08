@@ -14,55 +14,19 @@
  *   <div>Hello, world!</div>
  * </OpportunityViewWrapper>
  */
-import { component as component_ } from "front-end/lib/framework";
+import { component as component_, immutable } from "front-end/lib/framework";
 import { Col, Row } from "reactstrap";
 import { User } from "shared/lib/resources/user";
-import {
-  TWUOpportunity,
-  TWUOpportunityStatus
-} from "shared/lib/resources/opportunity/team-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
+import { Reporting } from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 import React from "react";
-import { ReportCardList } from "front-end/lib/views/report-card-list";
-import { ReportCard } from "front-end/lib/views/report-card-list";
-import { formatAmount, formatDate } from "shared/lib";
 
 interface Props {
   opportunity: TWUOpportunity;
   viewerUser: User;
   children: React.ReactNode;
 }
-
-const Reporting: component_.base.View<Props> = ({ opportunity }) => {
-  if (!opportunity || opportunity.status === TWUOpportunityStatus.Draft) {
-    return null;
-  }
-  const reporting = opportunity.reporting;
-  const reportCards: ReportCard[] = [
-    {
-      icon: "alarm-clock",
-      name: "Proposals Deadline",
-      value: formatDate(opportunity.proposalDeadline)
-    },
-    {
-      icon: "binoculars",
-      name: "Total Views",
-      value: formatAmount(reporting?.numViews || 0)
-    },
-    {
-      icon: "eye",
-      name: "Watching",
-      value: formatAmount(reporting?.numWatchers || 0)
-    }
-  ];
-  return (
-    <Row className="mt-5">
-      <Col xs="12">
-        <ReportCardList reportCards={reportCards} />
-      </Col>
-    </Row>
-  );
-};
 
 const OpportunityViewWrapper: component_.base.View<Props> = ({
   opportunity,
@@ -73,9 +37,8 @@ const OpportunityViewWrapper: component_.base.View<Props> = ({
     <div>
       <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
       <Reporting
-        opportunity={opportunity}
-        viewerUser={viewerUser}
-        children={children}
+        state={immutable({ opportunity }) as any}
+        dispatch={() => {}}
       />
       <Row className="mt-5">
         <Col xs="12">{children}</Col>
