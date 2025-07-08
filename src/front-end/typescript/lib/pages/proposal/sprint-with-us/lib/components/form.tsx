@@ -1419,8 +1419,8 @@ export const view: component_.base.View<Props> = ({
     disabled: disabled || isLoading(state)
   };
 
-  const getTabContent = (tabId: TabId) => {
-    switch (tabId) {
+  const activeTab = (() => {
+    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
         return <EvaluationView {...props} />;
       case "Team":
@@ -1434,9 +1434,7 @@ export const view: component_.base.View<Props> = ({
       case "Review Proposal":
         return <ReviewProposalView {...props} />;
     }
-  };
-
-  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+  })();
 
   return (
     <TabbedFormComponent.view

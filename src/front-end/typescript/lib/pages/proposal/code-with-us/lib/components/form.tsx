@@ -1131,8 +1131,8 @@ export const AttachmentsView: component_.base.View<Props> = ({
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
 
-  const getTabContent = (tabId: TabId) => {
-    switch (tabId) {
+  const activeTab = (() => {
+    switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Proponent":
         return <ProponentView {...props} />;
       case "Proposal":
@@ -1140,9 +1140,7 @@ export const view: component_.base.View<Props> = (props) => {
       case "Attachments":
         return <AttachmentsView {...props} />;
     }
-  };
-
-  const activeTab = getTabContent(TabbedForm.getActiveTab(state.tabbedForm));
+  })();
 
   return (
     <TabbedFormComponent.view
