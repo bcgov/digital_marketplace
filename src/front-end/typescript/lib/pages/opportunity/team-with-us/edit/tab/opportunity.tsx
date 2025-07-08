@@ -726,7 +726,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isUpdateStatusLoading ||
     isDeleteLoading;
   return (
-    // OpportunityViewWrapper is a wrapper that includes the EditTabHeader, Reporting and <Row>-><Col>->Children components:
     <OpportunityViewWrapper opportunity={opportunity} viewerUser={viewerUser}>
       <Form.view
         disabled={!state.isEditing || isLoading}
@@ -743,6 +742,7 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
   onInitResponse(response) {
     return adt("resetOpportunity", [
       response[0],

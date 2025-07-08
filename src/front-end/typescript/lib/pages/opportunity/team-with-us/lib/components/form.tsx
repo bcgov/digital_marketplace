@@ -170,8 +170,8 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   canRemoveExistingAttachments,
   opportunity,
   viewerUser,
-  activeTab = DEFAULT_ACTIVE_TAB,
-  users
+  users,
+  activeTab = DEFAULT_ACTIVE_TAB
 }) => {
   const questionsWeight = getNumber(
     opportunity,
@@ -1633,7 +1633,6 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Agreement":
@@ -1654,7 +1653,6 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   })();
-
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}

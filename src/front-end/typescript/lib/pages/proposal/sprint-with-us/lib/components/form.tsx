@@ -227,8 +227,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     opportunity,
     orgId: proposal?.organization?.id,
     affiliations: [], // Re-initialize with affiliations once loaded.
-    proposal,
-    isDetailView: false
+    proposal
   });
   const [inceptionCostState, inceptionCostCmds] = NumberField.init({
     errors: [],
@@ -314,8 +313,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity.teamQuestions,
-    responses: proposal?.teamQuestionResponses || [],
-    isDetailView: false
+    responses: proposal?.teamQuestionResponses || []
   });
   const [referencesState, referencesCmds] = References.init({
     references: proposal?.references || []
@@ -1418,7 +1416,6 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled || isLoading(state)
   };
-
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
@@ -1435,7 +1432,6 @@ export const view: component_.base.View<Props> = ({
         return <ReviewProposalView {...props} />;
     }
   })();
-
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}

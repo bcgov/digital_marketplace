@@ -376,6 +376,7 @@ export const component: Tab.Component<State, InnerMsg> = {
   onInitResponse(response) {
     return adt("onInitResponse", response);
   },
+  // Add "View Complete Competition" button action if the opportunity is awarded and the user is an admin
   getActions: ({ state }) => {
     const opportunity = state.opportunity;
     const viewerUser = state.viewerUser;

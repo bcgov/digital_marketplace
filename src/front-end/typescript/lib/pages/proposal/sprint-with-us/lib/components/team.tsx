@@ -23,7 +23,6 @@ export interface Params {
   affiliations: AffiliationMember[];
   opportunity: SWUOpportunity;
   proposal?: SWUProposal;
-  isDetailView?: boolean;
 }
 
 export interface State extends Omit<Params, "orgId"> {
@@ -57,27 +56,27 @@ export function setAffiliations(
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  const { orgId, affiliations, opportunity, proposal, isDetailView } = params;
+  const { orgId, affiliations, opportunity, proposal } = params;
   const [inceptionPhaseState, inceptionPhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.inceptionPhase,
     proposalPhase: proposal?.inceptionPhase,
-    isAccordionOpen: isDetailView ? true : false
+    isAccordionOpen: false
   });
   const [prototypePhaseState, prototypePhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.prototypePhase,
     proposalPhase: proposal?.prototypePhase,
-    isAccordionOpen: isDetailView ? true : false
+    isAccordionOpen: false
   });
   const [implementationPhaseState, implementationPhaseCmds] = Phase.init({
     orgId,
     affiliations,
     opportunityPhase: opportunity.implementationPhase,
     proposalPhase: proposal?.implementationPhase,
-    isAccordionOpen: isDetailView ? true : !opportunity.prototypePhase
+    isAccordionOpen: !opportunity.prototypePhase
   });
   return [
     {
@@ -232,7 +231,6 @@ export const view: component_.base.View<Props> = ({
   const isInceptionPhaseValid = Phase.isValid(state.inceptionPhase);
   const isPrototypePhaseValid = Phase.isValid(state.prototypePhase);
   const isImplementationPhaseValid = Phase.isValid(state.implementationPhase);
-
   return (
     <div>
       {hasPhase(state, SWUProposalPhaseType.Inception) ? (

@@ -36,13 +36,11 @@ export type Msg =
 export interface Params {
   questions: SWUTeamQuestion[];
   responses: SWUProposalTeamQuestionResponse[];
-  isDetailView?: boolean;
 }
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   questions,
-  responses,
-  isDetailView = false
+  responses
 }) => {
   const responseInits = questions.map((question, i) => {
     const [responseState, responseCmds] = RichMarkdownEditor.init({
@@ -60,7 +58,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
     });
     return [
       {
-        isAccordianOpen: isDetailView ? true : false,
+        isAccordianOpen: false,
         question,
         response: immutable(responseState)
       },
@@ -160,7 +158,6 @@ const ResponseView: component_.base.View<ResponseViewProps> = (props) => {
   const { response, dispatch, index, disabled } = props;
   const isValid = isResponseValid(response);
   const title = `Question ${index + 1}`;
-
   return (
     <Accordion
       className={""}
