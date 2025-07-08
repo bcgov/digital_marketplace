@@ -51,8 +51,6 @@ export interface State extends Tab.Params {
   disqualificationReason: Immutable<LongText.State>;
 }
 
-export interface Params extends Tab.Params {}
-
 export type InnerMsg =
   | ADT<"noop">
   | ADT<"onInitResponse", [OrganizationSlim[], string]>
@@ -73,7 +71,7 @@ export type InnerMsg =
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-const init: component_.base.Init<Params, State, Msg> = (params) => {
+const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
   const [disqualificationReasonState, disqualificationReasonCmds] =
     LongText.init({
       errors: [],

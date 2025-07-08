@@ -184,8 +184,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   const [resourceQuestionsState, resourceQuestionsCmds] =
     ResourceQuestions.init({
       questions: opportunity.resourceQuestions,
-      responses: proposal?.resourceQuestionResponses || [],
-      isDetailView: false
+      responses: proposal?.resourceQuestionResponses || []
     });
   return [
     {
