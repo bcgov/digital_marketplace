@@ -237,9 +237,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   );
 };
 
-const view: component_.base.View<
-  component_.base.ComponentViewProps<State, Msg>
-> = ({ state }) => {
+const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
   const proposals = Object.keys(state.detailStates).sort((a, b) =>
     a.localeCompare(b, "en", { sensitivity: "base" })
   );

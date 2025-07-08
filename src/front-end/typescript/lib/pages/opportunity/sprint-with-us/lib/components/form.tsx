@@ -427,8 +427,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   });
   const [phasesState, phasesCmds] = Phases.init({
     opportunity,
-    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception,
-    isDetailView: false
+    startingPhase: startingPhase || SWUOpportunityPhaseType.Inception
   });
   const [teamQuestionsState, teamQuestionsCmds] = TeamQuestions.init({
     questions: opportunity?.teamQuestions || []
@@ -1809,7 +1808,6 @@ interface Props extends component_.base.ComponentViewProps<State, Msg> {
 
 export const view: component_.base.View<Props> = (props) => {
   const { state, dispatch } = props;
-
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Agreement":
@@ -1830,7 +1828,6 @@ export const view: component_.base.View<Props> = (props) => {
         return <AttachmentsView {...props} />;
     }
   })();
-
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}

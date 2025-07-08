@@ -16,11 +16,7 @@ import * as ProposalTab from "front-end/lib/pages/proposal/team-with-us/view/tab
 import * as ProposalHistoryTab from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 import * as History from "front-end/lib/components/table/history";
 import ProposalFormReadOnly from "front-end/lib/pages/proposal/team-with-us/lib/components/form-readonly";
-import {
-  twuProposalStatusToColor,
-  twuProposalStatusToTitleCase,
-  twuProposalEventToTitleCase
-} from "front-end/lib/pages/proposal/team-with-us/lib";
+import { getHistoryItems } from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
 
 export interface ProposalDetailState {
   opportunity: TWUOpportunity;
@@ -40,31 +36,6 @@ export interface Params {
 }
 
 export type Msg = ADT<"noop">;
-
-// Helper function to get history items in the same way as in the history tab
-function getHistoryItems(
-  proposal: TWUProposal,
-  viewerUserType: User["type"]
-): History.Item[] {
-  if (!proposal.history) {
-    return [];
-  }
-  return proposal.history.map((s) => ({
-    type: {
-      text:
-        s.type.tag === "status"
-          ? twuProposalStatusToTitleCase(s.type.value, viewerUserType)
-          : twuProposalEventToTitleCase(s.type.value),
-      color:
-        s.type.tag === "status"
-          ? twuProposalStatusToColor(s.type.value, viewerUserType)
-          : undefined
-    },
-    note: s.note,
-    createdAt: s.createdAt,
-    createdBy: s.createdBy || undefined
-  }));
-}
 
 const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
@@ -167,9 +138,10 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   );
 };
 
-const view: component_.base.View<
-  component_.base.ComponentViewProps<State, Msg>
-> = ({ state, dispatch }) => {
+const view: component_.base.ComponentView<State, Msg> = ({
+  state,
+  dispatch
+}) => {
   const proposals = Object.keys(state.detailStates).sort((a, b) =>
     a.localeCompare(b, "en", { sensitivity: "base" })
   );

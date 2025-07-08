@@ -65,7 +65,8 @@ export type InnerMsg =
   | ADT<"onProposalsReceived", TWUProposalSlim[]>
   | ADT<"onProposalDetailResponse", TWUProposal>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>
-  | ADT<"proposalDetails", ProposalDetailsSection.Msg>;
+  | ADT<"proposalDetails", ProposalDetailsSection.Msg>
+  | ADT<"noop">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -102,10 +103,6 @@ const init: component_.page.Init<
       viewerUser: adminUser
     });
 
-    // const [opportunityInitState] = OpportunityTab.component.init({
-    //   viewerUser: adminUser
-    // });
-
     const [opportunityViewState, initialOpportunityViewCmds] =
       OpportunityView.component.init({
         routeParams,
@@ -138,7 +135,6 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
-          // opportunityState: immutable(opportunityInitState),
           opportunityState: immutable({
             viewerUser: shared.sessionUser,
             opportunity: null,
@@ -240,7 +236,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
         const opportunity = response.value;
         if (!opportunity) {
-          return [state, []];
+          return [state.set("loading", false), []];
         }
 
         const finalOpportunityState = state.opportunityState.set(
@@ -293,6 +289,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           component_.Cmd<Msg>[]
         ];
       }
+
       case "onProposalsReceived": {
         const proposalSlims = msg.value;
         if (!state.opportunity) return [state, []];
@@ -314,30 +311,25 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           api.proposals.twu.readOne(state.opportunity!.id)(
             slim.id,
             (response) => {
-              if (api.isValid(response)) {
-                return adt("onProposalDetailResponse", response.value);
-              } else {
-                return adt("noop");
-              }
+              return api.isValid(response)
+                ? adt("onProposalDetailResponse", response.value)
+                : adt("noop");
             }
           )
         );
 
-        const updatedState = state;
-        const summaryTabCmds: component_.Cmd<Msg>[] = [];
-
         const commands = [
           component_.cmd.dispatch(adt("proposals", proposalsOnInitMsg)),
           component_.cmd.dispatch(adt("summary", summaryOnInitMsg)),
-          ...proposalCmds,
-          ...summaryTabCmds
+          ...proposalCmds
         ];
 
-        return [updatedState, commands] as [
+        return [state, commands] as [
           Immutable<ValidState>,
           component_.Cmd<Msg>[]
         ];
       }
+
       case "onProposalDetailResponse": {
         const proposal = msg.value;
         const updatedState = state.update("proposals", (ps) => [
@@ -346,7 +338,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         ]);
 
         const orgCommands: component_.Cmd<Msg>[] = [];
-
         const [finalState, initCmds] = maybeInitProposalDetails(updatedState);
 
         return [finalState, [...orgCommands, ...initCmds]] as [
@@ -354,6 +345,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           component_.Cmd<Msg>[]
         ];
       }
+
       case "addenda":
         return component_.base.updateChild({
           state,
@@ -362,6 +354,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => adt("addenda", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "history":
         return component_.base.updateChild({
           state,
@@ -370,6 +363,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => adt("history", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "proposals":
         return component_.base.updateChild({
           state,
@@ -378,6 +372,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => adt("proposals", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "summary":
         return component_.base.updateChild({
           state,
@@ -386,6 +381,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => adt("summary", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "opportunityTab":
         return component_.base.updateChild({
           state,
@@ -394,6 +390,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value) => adt("opportunityTab", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "proposalDetails":
         return component_.base.updateChild({
           state,
@@ -403,6 +400,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value: ProposalDetailsSection.Msg) =>
             adt("proposalDetails", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
       case "opportunityView": {
         const opportunityViewMsg = msg.value;
         if (opportunityViewMsg.tag === "onInitResponse") {
@@ -444,6 +442,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         }
         return [state, []];
       }
+
+      case "noop":
+        return [state, []];
+
       default:
         return [state, []];
     }
@@ -474,12 +476,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
     const createOpportunityViewState = (
       activeTab: OpportunityView.State["activeInfoTab"]
     ): Immutable<OpportunityView.State> | null => {
-      const opportunityViewState = state.opportunityViewState;
-      const modifiedInnerState = opportunityViewState.set(
-        "activeInfoTab",
-        activeTab
-      );
-      return modifiedInnerState;
+      return state.opportunityViewState.set("activeInfoTab", activeTab);
     };
 
     const opportunityViewStates = {
