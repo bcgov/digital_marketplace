@@ -18,6 +18,7 @@ import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import { ADT, Id } from "shared/lib/types";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
+import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 
 export interface ProposalDetailState {
   opportunity: SWUOpportunity;
@@ -130,9 +131,8 @@ const init: component_.base.Init<Params, State, Msg> = ({
       evaluating: false,
       questionEvaluation: undefined,
       panelQuestionEvaluations: [],
-      proposals: proposals,
-      expandAccordions: true
-    } as ProposalTab.Params);
+      proposals: proposals
+    } as Tab.Params);
 
     // Create a complete proposalTabState with the form correctly initialized
     const completeProposalTabState = {
