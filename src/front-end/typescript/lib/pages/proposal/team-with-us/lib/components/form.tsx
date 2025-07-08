@@ -943,7 +943,6 @@ export const view: component_.base.View<Props> = ({
     dispatch,
     disabled: disabled
   };
-
   const activeTab = (() => {
     switch (TabbedForm.getActiveTab(state.tabbedForm)) {
       case "Evaluation":
@@ -956,7 +955,6 @@ export const view: component_.base.View<Props> = ({
         return <ReviewProposalView {...props} />;
     }
   })();
-
   return (
     <TabbedFormComponent.view
       valid={isValid(state)}

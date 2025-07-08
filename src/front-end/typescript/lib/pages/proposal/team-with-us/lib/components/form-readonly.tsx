@@ -13,16 +13,25 @@ import { Immutable } from "front-end/lib/framework";
 import * as Form from "./form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 import ProposalViewWrapper from "./proposal-view-wrapper";
-import { State } from "front-end/lib/pages/proposal/team-with-us/edit/tab/proposal";
+import { State as WrapperState } from "front-end/lib/pages/proposal/team-with-us/edit/tab/proposal";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
 
 type TabId = "Evaluation" | "Team Members" | "Questions" | "Review Proposal";
 
-interface Props {
+interface Params {
   proposal: TWUProposal;
   opportunity: TWUOpportunity;
   viewerUser: User;
   form: Immutable<Form.State> | null;
+}
+
+interface State {
+  proposal: TWUProposal;
+  opportunity: TWUOpportunity;
+  viewerUser: User;
+  form: Immutable<Form.State> | null;
+  expandedForm: Immutable<Form.State>;
+  activeTab: TabId;
 }
 
 const TABS: TabId[] = [
@@ -32,37 +41,64 @@ const TABS: TabId[] = [
   "Review Proposal"
 ];
 
-const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
-  const { proposal, opportunity, viewerUser, form } = props;
+const init: component_.base.Init<Params, State, never> = (params) => {
+  const { proposal, opportunity, viewerUser, form } = params;
 
+  // If form is null, we can't proceed - return early state
   if (!form) {
-    return null;
+    // Create a default empty form state to avoid null
+    const defaultForm = immutable({} as Form.State);
+    const state: State = {
+      proposal,
+      opportunity,
+      viewerUser,
+      form: null,
+      expandedForm: defaultForm,
+      activeTab: TABS[0]
+    };
+    return [state, []];
   }
 
-  // Create a modified form state with all accordions expanded for readonly view
-  let formWithExpandedAccordions = form;
+  // Create expanded form state for readonly view
+  let expandedForm = form;
 
   try {
-    // Expand Resource Questions accordions
-    formWithExpandedAccordions = formWithExpandedAccordions.update(
-      "resourceQuestions",
-      (resourceQuestions) => {
-        return resourceQuestions.update("responses", (responses) =>
-          responses.map((response) => ({
-            ...response,
-            isAccordianOpen: true
-          }))
-        );
-      }
-    );
+    // Expand Resource Questions accordions following immutable update pattern
+    expandedForm = form.update("resourceQuestions", (resourceQuestions) => {
+      return resourceQuestions.update("responses", (responses) =>
+        responses.map((response) => ({
+          ...response,
+          isAccordianOpen: true
+        }))
+      );
+    });
   } catch (error) {
+    // Log error but continue with original form
     console.error("Error updating form with expanded accordions:", error);
+    expandedForm = form;
+  }
+
+  const state: State = {
+    proposal,
+    opportunity,
+    viewerUser,
+    form,
+    expandedForm,
+    activeTab: TABS[0]
+  };
+
+  return [state, []];
+};
+
+const view: component_.base.ComponentView<State, never> = ({ state }) => {
+  if (!state.form) {
+    return null;
   }
 
   const getTabContent = (tabId: TabId) => {
     const viewProps = {
-      dispatch: () => {},
-      state: formWithExpandedAccordions,
+      dispatch: () => {}, // Empty dispatch for readonly view
+      state: state.expandedForm, // Now guaranteed to be non-null
       disabled: true
     };
     switch (tabId) {
@@ -81,12 +117,12 @@ const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
 
   const ReadonlyComponent = TabbedFormReadonly.view<TabId>();
 
-  // Create state object that matches the State interface expected by ProposalViewWrapper
+  // Create state object that matches the WrapperState interface expected by ProposalViewWrapper
   const wrapperState = immutable({
     // Tab.Params properties
-    proposal,
-    opportunity,
-    viewerUser,
+    proposal: state.proposal,
+    opportunity: state.opportunity,
+    viewerUser: state.viewerUser,
     // State properties (readonly defaults)
     organizations: [],
     evaluationContent: "",
@@ -98,9 +134,9 @@ const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
     withdrawLoading: 0,
     deleteLoading: 0,
     showModal: null,
-    form: form || immutable({} as Form.State),
+    form: state.form,
     submitTerms: immutable({} as SubmitProposalTerms.State)
-  }) as component_.base.Immutable<State>;
+  }) as component_.base.Immutable<WrapperState>;
 
   return (
     <ProposalViewWrapper state={wrapperState} dispatch={() => {}}>
@@ -114,7 +150,7 @@ const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
         state={immutable({
           id: "twu-proposal-readonly",
           isDropdownOpen: false,
-          activeTab: TABS[0],
+          activeTab: state.activeTab,
           tabs: TABS
         })}
         dispatch={() => {}}
@@ -122,6 +158,15 @@ const ProposalFormReadOnly: component_.base.View<Props> = (props) => {
       />
     </ProposalViewWrapper>
   );
+};
+
+// Create a React component that can be used directly in JSX
+const ProposalFormReadOnly: component_.base.View<Params> = (params) => {
+  const [state] = init(params);
+  return view({
+    state: immutable(state) as component_.base.Immutable<State>,
+    dispatch: () => {}
+  });
 };
 
 export default ProposalFormReadOnly;
