@@ -29,6 +29,7 @@ import {
 } from "shared/lib/resources/proposal/team-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 import * as OpportunityView from "../view";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalDetailsSection from "./proposal-details";
@@ -74,10 +75,13 @@ export type InnerMsg =
   | ADT<"resourceQuestions", ResourceQuestionsTab.InnerMsg>
   | ADT<"consensus", ConsensusTab.InnerMsg>
   | ADT<"challenge", ChallengeTab.InnerMsg>
-  | ADT<"onProposalsReceived", TWUProposalSlim[]>
   | ADT<"onProposalDetailResponse", TWUProposal>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>
   | ADT<"proposalDetails", ProposalDetailsSection.Msg>
+  | ADT<
+      "onProposalsAndConsensusesReceived",
+      [TWUProposalSlim[], TWUResourceQuestionResponseEvaluation[]]
+    >
   | ADT<"noop">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
@@ -163,10 +167,6 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
-          evaluationPanelState: immutable(evaluationPanelInitState),
-          resourceQuestionsState: immutable(resourceQuestionsInitState),
-          consensusState: immutable(consensusInitState),
-          challengeState: immutable(challengeInitState),
           opportunityState: immutable({
             viewerUser: shared.sessionUser,
             opportunity: null,
@@ -179,6 +179,10 @@ const init: component_.page.Init<
             deleteLoading: 0,
             isEditing: false
           }),
+          evaluationPanelState: immutable(evaluationPanelInitState),
+          resourceQuestionsState: immutable(resourceQuestionsInitState),
+          consensusState: immutable(consensusInitState),
+          challengeState: immutable(challengeInitState),
           proposals: [],
           organizations: [],
           proposalAffiliations: {},
@@ -349,8 +353,19 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           component_.cmd.dispatch(adt("consensus", consensusOnInitMsg)),
           component_.cmd.dispatch(adt("challenge", challengeOnInitMsg)),
           component_.cmd.dispatch(component_.page.readyMsg()),
-          api.proposals.twu.readMany(opportunity.id)((proposalResponse) =>
-            adt("onProposalsReceived", api.getValidValue(proposalResponse, []))
+          component_.cmd.join(
+            api.proposals.twu.readMany(opportunity.id)((response) =>
+              api.getValidValue(response, [])
+            ),
+            api.opportunities.twu.resourceQuestions.consensuses.readMany(
+              opportunity.id
+            )((response) => api.getValidValue(response, [])),
+            (proposals, consensuses) => {
+              return adt("onProposalsAndConsensusesReceived", [
+                proposals,
+                consensuses
+              ]) as Msg;
+            }
           )
         ];
 
@@ -360,8 +375,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         ];
       }
 
-      case "onProposalsReceived": {
-        const proposalSlims = msg.value;
+      case "onProposalsAndConsensusesReceived": {
+        const [proposalSlims, consensuses] = msg.value;
         if (!state.opportunity) return [state, []];
 
         const proposalsOnInitMsg = ProposalsTab.component.onInitResponse([
@@ -388,7 +403,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const consensusOnInitMsg = ConsensusTab.component.onInitResponse([
           state.opportunity,
           proposalSlims,
-          [],
+          consensuses,
           []
         ]);
 
@@ -738,6 +753,15 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr />
 
         <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Proposals
+        </h2>
+        <ProposalsTab.component.view
+          state={state.proposalsState}
+          dispatch={() => {}}
+        />
+        <hr />
+
+        <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Resource Questions
         </h2>
         <ResourceQuestionsTab.component.view
@@ -760,15 +784,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         </h2>
         <ChallengeTab.component.view
           state={state.challengeState}
-          dispatch={() => {}}
-        />
-        <hr />
-
-        <h2 className="complete-report-section-header">
-          {sectionCounter++}. Admin View - Proposals
-        </h2>
-        <ProposalsTab.component.view
-          state={state.proposalsState}
           dispatch={() => {}}
         />
         <hr />
