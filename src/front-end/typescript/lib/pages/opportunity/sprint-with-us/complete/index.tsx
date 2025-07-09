@@ -19,6 +19,7 @@ import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-u
 import * as TeamScenarioTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-scenario";
 import * as SummaryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/summary";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity";
+import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation-panel";
 import React from "react";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User, UserType } from "shared/lib/resources/user";
@@ -61,6 +62,7 @@ export interface ValidState {
   teamScenarioState: Immutable<TeamScenarioTab.State>;
   summaryState: Immutable<SummaryTab.State>;
   opportunityState: Immutable<OpportunityTab.State>;
+  evaluationPanelState: Immutable<EvaluationPanelTab.State>;
   proposals: SWUProposal[];
   organizations: OrganizationSlim[];
   evaluationContent: string;
@@ -89,6 +91,7 @@ export type InnerMsg =
   | ADT<"summary", SummaryTab.InnerMsg>
   | ADT<"proposalDetails", ProposalDetailsSection.Msg>
   | ADT<"opportunityView", OpportunityView.InnerMsg>
+  | ADT<"evaluationPanel", EvaluationPanelTab.InnerMsg>
   | ADT<
       "onProposalsAndEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
@@ -117,6 +120,12 @@ const init: component_.page.Init<
     const [historyInitState, _historyCmds] = HistoryTab.component.init({
       viewerUser: shared.sessionUser
     });
+
+    // Initialize the evaluation panel tab state structure
+    const [evaluationPanelInitState, _evaluationPanelCmds] =
+      EvaluationPanelTab.component.init({
+        viewerUser: shared.sessionUser
+      });
 
     // Initialize the proposals tab state structure
     const [proposalsInitState, _proposalsCmds] = ProposalsTab.component.init({
@@ -194,6 +203,7 @@ const init: component_.page.Init<
           codeChallengeState: immutable(codeChallengeInitState),
           teamScenarioState: immutable(teamScenarioInitState),
           summaryState: immutable(summaryInitState),
+          evaluationPanelState: immutable(evaluationPanelInitState),
           opportunityState: immutable({
             viewerUser: shared.sessionUser,
             opportunity: null,
@@ -266,6 +276,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               [] as User[]
             ]);
 
+            const evaluationPanelOnInitMsg =
+              EvaluationPanelTab.component.onInitResponse([
+                opportunity,
+                [] as SWUProposalSlim[],
+                [] as SWUTeamQuestionResponseEvaluation[],
+                [] as User[]
+              ]);
+
             const instructionsOnInitMsg =
               InstructionsTab.component.onInitResponse([
                 opportunity,
@@ -299,6 +317,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 component_.cmd.dispatch(adt("history", historyOnInitMsg)),
                 component_.cmd.dispatch(
                   adt("instructions", instructionsOnInitMsg)
+                ),
+                component_.cmd.dispatch(
+                  adt("evaluationPanel", evaluationPanelOnInitMsg)
                 ),
                 component_.cmd.dispatch(component_.page.readyMsg()),
                 component_.cmd.join(
@@ -653,6 +674,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value: HistoryTab.InnerMsg) => adt("history", value)
         });
+      case "evaluationPanel":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["evaluationPanelState"],
+          childUpdate: EvaluationPanelTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value: EvaluationPanelTab.InnerMsg) =>
+            adt("evaluationPanel", value)
+        });
       case "proposals":
         return component_.base.updateChild({
           state,
@@ -826,6 +856,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.summaryState ||
       !state.opportunityState ||
       !state.proposalDetailsState ||
+      !state.evaluationPanelState ||
       !state.opportunityViewState
     ) {
       return <div>Loading...</div>;
@@ -950,7 +981,17 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          7. Admin View - Opportunity Addenda
+          7. Admin View - Opportunity Evaluation Panel
+        </h2>
+        <EvaluationPanelTab.component.view
+          state={state.evaluationPanelState}
+          dispatch={() => {}}
+        />
+
+        <hr></hr>
+
+        <h2 className="complete-report-section-header">
+          8. Admin View - Opportunity Addenda
         </h2>
         <AddendaTab.component.view
           state={state.addendaState}
@@ -960,7 +1001,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          8. Admin View - Opportunity History
+          9. Admin View - Opportunity History
         </h2>
         <HistoryTab.component.view
           state={state.historyState}
@@ -970,7 +1011,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          9. Admin View - Proposals
+          10. Admin View - Proposals
         </h2>
         <ProposalsTab.component.view
           state={state.proposalsState}
@@ -980,7 +1021,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          10. Admin View - Instructions
+          11. Admin View - Instructions
         </h2>
         <InstructionsTab.component.view
           state={state.instructionsState}
@@ -990,7 +1031,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          11. Admin View - Team Questions Overview
+          12. Admin View - Team Questions Overview
         </h2>
         <EvaluationTab.component.view
           state={state.overviewState}
@@ -1005,7 +1046,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2
               className="complete-report-section-header"
               style={{ marginBottom: "20px" }}>
-              12. Admin View - Team Question Evaluations
+              13. Admin View - Team Question Evaluations
             </h2>
             {state.overviewState.evaluations.map((evaluation: any, i: any) => {
               // Use composite key here for retrieval
@@ -1043,7 +1084,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         )}
 
         <h2 className="complete-report-section-header">
-          13. Admin View - Team Questions
+          14. Admin View - Team Questions
         </h2>
         <TeamQuestionsTab.component.view
           state={state.teamQuestionsState}
@@ -1053,7 +1094,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          14. Admin View - Consensus
+          15. Admin View - Consensus
         </h2>
         <ConsensusTab.component.view
           state={state.consensusState}
@@ -1063,7 +1104,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          15. Admin View - Code Challenge
+          16. Admin View - Code Challenge
         </h2>
         <CodeChallengeTab.component.view
           state={state.codeChallengeState}
@@ -1073,7 +1114,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          16. Admin View - Team Scenario
+          17. Admin View - Team Scenario
         </h2>
         <TeamScenarioTab.component.view
           state={state.teamScenarioState}
@@ -1083,7 +1124,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          17. Admin View - Proposal Details
+          18. Admin View - Proposal Details
         </h2>
         <ProposalDetailsSection.component.view
           state={state.proposalDetailsState}

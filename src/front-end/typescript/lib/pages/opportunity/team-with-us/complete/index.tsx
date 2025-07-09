@@ -13,6 +13,7 @@ import * as HistoryTab from "front-end/lib/pages/opportunity/team-with-us/edit/t
 import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/summary";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
+import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/evaluation-panel";
 import React from "react";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User, UserType } from "shared/lib/resources/user";
@@ -45,6 +46,7 @@ export interface ValidState {
   proposalsState: Immutable<ProposalsTab.State>;
   summaryState: Immutable<SummaryTab.State>;
   opportunityState: Immutable<OpportunityTab.State>;
+  evaluationPanelState: Immutable<EvaluationPanelTab.State>;
   proposals: TWUProposal[];
   organizations: OrganizationSlim[];
   proposalAffiliations: Record<Id, AffiliationMember[]>;
@@ -62,6 +64,7 @@ export type InnerMsg =
   | ADT<"summary", SummaryTab.InnerMsg>
   | ADT<"opportunityTab", OpportunityTab.InnerMsg>
   | ADT<"opportunityView", OpportunityView.InnerMsg>
+  | ADT<"evaluationPanel", EvaluationPanelTab.InnerMsg>
   | ADT<"onProposalsReceived", TWUProposalSlim[]>
   | ADT<"onProposalDetailResponse", TWUProposal>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>
@@ -92,6 +95,10 @@ const init: component_.page.Init<
     });
 
     const [historyInitState] = HistoryTab.component.init({
+      viewerUser: adminUser
+    });
+
+    const [evaluationPanelInitState] = EvaluationPanelTab.component.init({
       viewerUser: adminUser
     });
 
@@ -135,6 +142,7 @@ const init: component_.page.Init<
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
+          evaluationPanelState: immutable(evaluationPanelInitState),
           opportunityState: immutable({
             viewerUser: shared.sessionUser,
             opportunity: null,
@@ -259,6 +267,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           []
         ]);
 
+        const evaluationPanelOnInitMsg =
+          EvaluationPanelTab.component.onInitResponse([
+            opportunity,
+            [] as TWUProposalSlim[],
+            [],
+            []
+          ]);
+
         const oppTabOnInitMsg = OpportunityTab.component.onInitResponse([
           opportunity,
           [] as TWUProposalSlim[],
@@ -278,6 +294,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           component_.cmd.dispatch(adt("addenda", addendaOnInitMsg)),
           component_.cmd.dispatch(adt("history", historyOnInitMsg)),
           component_.cmd.dispatch(adt("opportunityTab", oppTabOnInitMsg)),
+          component_.cmd.dispatch(
+            adt("evaluationPanel", evaluationPanelOnInitMsg)
+          ),
           component_.cmd.dispatch(component_.page.readyMsg()),
           api.proposals.twu.readMany(opportunity.id)((proposalResponse) =>
             adt("onProposalsReceived", api.getValidValue(proposalResponse, []))
@@ -362,6 +381,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childUpdate: HistoryTab.component.update,
           childMsg: msg.value,
           mapChildMsg: (value) => adt("history", value)
+        }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
+      case "evaluationPanel":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["evaluationPanelState"],
+          childUpdate: EvaluationPanelTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("evaluationPanel", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
 
       case "proposals":
@@ -468,7 +496,8 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.proposalsState ||
       !state.summaryState ||
       !state.opportunityState ||
-      !state.proposalDetailsState
+      !state.proposalDetailsState ||
+      !state.evaluationPanelState
     ) {
       return <div>Loading...</div>;
     }
@@ -570,6 +599,15 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           opportunity={state.opportunity}
           viewerUser={state.viewerUser}
           form={state.opportunityState.form}
+        />
+        <hr />
+
+        <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Evaluation Panel
+        </h2>
+        <EvaluationPanelTab.component.view
+          state={state.evaluationPanelState}
+          dispatch={() => {}}
         />
         <hr />
 

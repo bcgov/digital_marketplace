@@ -5,7 +5,6 @@ import OpportunityViewWrapper from "./opportunity-view-wrapper";
 import React from "react";
 import {
   AgreementView,
-  EvaluationPanelView,
   OverviewView,
   DescriptionView,
   PhasesView,
@@ -21,7 +20,6 @@ import { State } from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/o
 
 type TabId =
   | "Agreement"
-  | "Evaluation Panel"
   | "Overview"
   | "Description"
   | "Phases"
@@ -37,7 +35,6 @@ interface Props {
 
 const ALL_TABS: TabId[] = [
   "Agreement",
-  "Evaluation Panel",
   "Overview",
   "Description",
   "Phases",
@@ -53,12 +50,7 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     return null;
   }
 
-  // Only show evaluation panel if there's data for it
-  const hasEvaluationPanel =
-    opportunity.evaluationPanel && opportunity.evaluationPanel.length > 0;
-  const TABS = hasEvaluationPanel
-    ? ALL_TABS
-    : ALL_TABS.filter((tab) => tab !== "Evaluation Panel");
+  const TABS = ALL_TABS;
 
   // Create a modified form state with all phase accordions expanded for readonly view
   let formWithExpandedPhases = form;
@@ -89,8 +81,6 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     switch (tabId) {
       case "Agreement":
         return <AgreementView />;
-      case "Evaluation Panel":
-        return <EvaluationPanelView {...viewProps} />;
       case "Overview":
         return <OverviewView {...viewProps} />;
       case "Description":

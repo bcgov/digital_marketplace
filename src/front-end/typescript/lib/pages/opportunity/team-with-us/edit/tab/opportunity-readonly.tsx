@@ -5,7 +5,6 @@ import OpportunityViewWrapper from "./opportunity-view-wrapper";
 import React from "react";
 import {
   AgreementView,
-  EvaluationPanelView,
   OverviewView,
   ResourceDetailsView,
   DescriptionView,
@@ -20,7 +19,6 @@ import { State } from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opp
 
 type TabId =
   | "Agreement"
-  | "Evaluation Panel"
   | "Overview"
   | "Resource Details"
   | "Description"
@@ -36,7 +34,6 @@ interface Props {
 
 const ALL_TABS: TabId[] = [
   "Agreement",
-  "Evaluation Panel",
   "Overview",
   "Resource Details",
   "Description",
@@ -52,25 +49,12 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
     return <div>Loading...</div>;
   }
 
-  // Only show evaluation panel if there's data for it
-  const hasEvaluationPanel =
-    opportunity.evaluationPanel && opportunity.evaluationPanel.length > 0;
-  const TABS = hasEvaluationPanel
-    ? ALL_TABS
-    : ALL_TABS.filter((tab) => tab !== "Evaluation Panel");
+  const TABS = ALL_TABS;
 
   const getTabContent = (tab: TabId) => {
     switch (tab) {
       case "Agreement":
         return <AgreementView />;
-      case "Evaluation Panel":
-        return (
-          <EvaluationPanelView
-            state={form}
-            dispatch={() => {}}
-            disabled={true}
-          />
-        );
       case "Overview":
         return (
           <OverviewView state={form} dispatch={() => {}} disabled={true} />
