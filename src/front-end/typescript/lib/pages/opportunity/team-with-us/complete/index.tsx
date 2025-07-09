@@ -59,6 +59,7 @@ export interface ValidState {
   proposalAffiliations: Record<Id, AffiliationMember[]>;
   opportunityViewState: Immutable<OpportunityView.State>;
   proposalDetailsState: Immutable<ProposalDetailsSection.State>;
+  consensusEvaluations: TWUResourceQuestionResponseEvaluation[];
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -187,7 +188,8 @@ const init: component_.page.Init<
           organizations: [],
           proposalAffiliations: {},
           opportunityViewState: immutable(opportunityViewState),
-          proposalDetailsState: immutable({ detailStates: {} })
+          proposalDetailsState: immutable({ detailStates: {} }),
+          consensusEvaluations: []
         })
       ),
       [...pageCommands, ...mappedOpportunityViewCmds] as component_.Cmd<Msg>[]
@@ -233,7 +235,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           ProposalDetailsSection.component.init({
             opportunity: currentOpportunity,
             proposals: currentState.proposals,
-            viewerUser: currentState.viewerUser
+            viewerUser: currentState.viewerUser,
+            consensusEvaluations: currentState.consensusEvaluations
           });
 
         const proposalDetailsCmds: component_.Cmd<Msg>[] =
@@ -379,14 +382,17 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const [proposalSlims, consensuses] = msg.value;
         if (!state.opportunity) return [state, []];
 
+        // Store consensus evaluations in state
+        const updatedState = state.set("consensusEvaluations", consensuses);
+
         const proposalsOnInitMsg = ProposalsTab.component.onInitResponse([
-          state.opportunity,
+          updatedState.opportunity!,
           proposalSlims,
           [],
           []
         ]);
         const summaryOnInitMsg = SummaryTab.component.onInitResponse([
-          state.opportunity,
+          updatedState.opportunity!,
           proposalSlims,
           [],
           []
@@ -394,28 +400,28 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
         const resourceQuestionsOnInitMsg =
           ResourceQuestionsTab.component.onInitResponse([
-            state.opportunity,
+            updatedState.opportunity!,
             proposalSlims,
             [],
             []
           ]);
 
         const consensusOnInitMsg = ConsensusTab.component.onInitResponse([
-          state.opportunity,
+          updatedState.opportunity!,
           proposalSlims,
           consensuses,
           []
         ]);
 
         const challengeOnInitMsg = ChallengeTab.component.onInitResponse([
-          state.opportunity,
+          updatedState.opportunity!,
           proposalSlims,
           [],
           []
         ]);
 
         const proposalCmds = proposalSlims.map((slim) =>
-          api.proposals.twu.readOne(state.opportunity!.id)(
+          api.proposals.twu.readOne(updatedState.opportunity!.id)(
             slim.id,
             (response) => {
               return api.isValid(response)
@@ -436,7 +442,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           ...proposalCmds
         ];
 
-        return [state, commands] as [
+        return [updatedState, commands] as [
           Immutable<ValidState>,
           component_.Cmd<Msg>[]
         ];

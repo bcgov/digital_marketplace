@@ -19,14 +19,20 @@ import * as ChallengeTab from "front-end/lib/pages/proposal/team-with-us/view/ta
 import * as History from "front-end/lib/components/table/history";
 import ProposalFormReadOnly from "front-end/lib/pages/proposal/team-with-us/lib/components/form-readonly";
 import { getHistoryItems } from "front-end/lib/pages/proposal/team-with-us/view/tab/history";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
+import * as api from "front-end/lib/http/api";
 
 export interface ProposalDetailState {
   opportunity: TWUOpportunity;
   formState: Immutable<ProposalForm.State>;
   proposalTabState: Immutable<ProposalTab.State>;
   resourceQuestionsState: Immutable<ResourceQuestionsTab.State>;
+  resourceQuestionsEvalState: Immutable<ResourceQuestionsTab.State>;
   challengeState: Immutable<ChallengeTab.State>;
   historyState: Immutable<ProposalHistoryTab.State>;
+  panelEvaluations: TWUResourceQuestionResponseEvaluation[];
+  consensusEvaluation: TWUResourceQuestionResponseEvaluation | null;
+  evaluationsLoaded: boolean;
 }
 
 export interface State {
@@ -37,16 +43,23 @@ export interface Params {
   opportunity: TWUOpportunity;
   proposals: TWUProposal[];
   viewerUser: User;
+  consensusEvaluations: TWUResourceQuestionResponseEvaluation[];
 }
 
-export type Msg = ADT<"noop">;
+export type Msg =
+  | ADT<"noop">
+  | ADT<"onEvaluationsLoaded", [Id, TWUResourceQuestionResponseEvaluation[]]>;
 
 const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
   proposals,
-  viewerUser
+  viewerUser,
+  consensusEvaluations
 }) => {
   const detailStates: Record<Id, Immutable<ProposalDetailState>> = {};
+
+  // Create commands to load individual panel evaluations for each proposal
+  const evaluationCommands: component_.Cmd<Msg>[] = [];
 
   for (const proposal of proposals) {
     const [formState, _formCmds] = ProposalForm.init({
@@ -73,6 +86,17 @@ const init: component_.base.Init<Params, State, Msg> = ({
         opportunity,
         evaluating: false,
         panelQuestionEvaluations: [],
+        proposals: proposals
+      });
+
+    // Initialize ResourceQuestionsTab for evaluation view - will be updated with real data when loaded
+    const [resourceQuestionsEvalState, _resourceQuestionsEvalCmds] =
+      ResourceQuestionsTab.component.init({
+        viewerUser: viewerUser,
+        proposal,
+        opportunity,
+        evaluating: true,
+        panelQuestionEvaluations: [], // Will be populated with real data when evaluations load
         proposals: proposals
       });
 
@@ -112,21 +136,91 @@ const init: component_.base.Init<Params, State, Msg> = ({
       history: immutable(historyTableState)
     };
 
+    // Find the consensus evaluation for this proposal
+    const consensusEvaluation =
+      consensusEvaluations.find(
+        (evaluation) => evaluation.proposal === proposal.id
+      ) || null;
+
     detailStates[proposal.id] = immutable({
       opportunity,
       formState: immutable(formState),
       proposalTabState: immutable(completeProposalTabState),
       resourceQuestionsState: immutable(resourceQuestionsState),
+      resourceQuestionsEvalState: immutable(resourceQuestionsEvalState),
       challengeState: immutable(challengeState),
-      historyState: immutable(completeHistoryState)
+      historyState: immutable(completeHistoryState),
+      panelEvaluations: [],
+      consensusEvaluation,
+      evaluationsLoaded: false
     });
+
+    // Add command to load individual panel evaluations for this proposal
+    evaluationCommands.push(
+      api.proposals.twu.resourceQuestions.evaluations.readMany(proposal.id)(
+        (
+          response: api.ResponseValidation<
+            TWUResourceQuestionResponseEvaluation[],
+            string[]
+          >
+        ) => {
+          const evaluations = api.isValid(response) ? response.value : [];
+          return adt("onEvaluationsLoaded", [proposal.id, evaluations]);
+        }
+      ) as component_.Cmd<Msg>
+    );
   }
 
-  return [{ detailStates }, []];
+  return [{ detailStates }, evaluationCommands];
 };
 
-const update: component_.base.Update<State, Msg> = ({ state }) => {
-  return [state, []];
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case "onEvaluationsLoaded": {
+      const [proposalId, evaluations] = msg.value;
+      const currentDetailState = state.detailStates[proposalId];
+
+      if (!currentDetailState) {
+        return [state, []];
+      }
+
+      // Update the detail state with the loaded evaluations
+      const updatedDetailState = currentDetailState.merge({
+        panelEvaluations: evaluations,
+        evaluationsLoaded: true
+      });
+
+      // Re-initialize the ResourceQuestionsTab with the loaded evaluation data
+      const [updatedResourceQuestionsEvalState, _] =
+        ResourceQuestionsTab.component.init({
+          viewerUser: updatedDetailState.formState.viewerUser,
+          proposal: updatedDetailState.resourceQuestionsEvalState.proposal,
+          opportunity: updatedDetailState.opportunity,
+          evaluating: true,
+          panelQuestionEvaluations: evaluations,
+          questionEvaluation:
+            updatedDetailState.consensusEvaluation || undefined,
+          proposals: updatedDetailState.resourceQuestionsEvalState.proposals
+        });
+
+      const finalDetailState = updatedDetailState.set(
+        "resourceQuestionsEvalState",
+        immutable(updatedResourceQuestionsEvalState)
+      );
+
+      // Update the state with the new detail state
+      const updatedState = state.setIn(
+        ["detailStates", proposalId],
+        finalDetailState
+      );
+
+      return [updatedState, []];
+    }
+    case "noop":
+      return [state, []];
+    default:
+      return [state, []];
+  }
 };
 
 interface ProposalDetailProps {
@@ -157,6 +251,15 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       </h3>
       <ResourceQuestionsTab.component.view
         state={state.resourceQuestionsState}
+        dispatch={() => dispatch(adt("noop"))}
+      />
+
+      <hr></hr>
+      <h3 className="complete-report-section-header">
+        Proposal - {getTWUProponentName(proposal)} - Resource Questions (Eval)
+      </h3>
+      <ResourceQuestionsTab.component.view
+        state={state.resourceQuestionsEvalState}
         dispatch={() => dispatch(adt("noop"))}
       />
 
