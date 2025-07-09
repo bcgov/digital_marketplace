@@ -943,16 +943,11 @@ export async function readOneSWUTeamQuestionResponseConsensus(
 export async function readManySWUTeamQuestionResponseEvaluations(
   connection: Connection,
   session: Session,
-  opportunity: SWUOpportunity,
-  filterByUser = true
+  opportunity: SWUOpportunity
 ): Promise<boolean> {
-  // When filterByUser is false, only admins can see all evaluations for the opportunity
-  // Used for generating the complete competition view for reporting purposes
   return (
     !!session &&
-    (filterByUser
-      ? isAdmin(session) || isGovernment(session)
-      : isAdmin(session)) &&
+    (isAdmin(session) || isGovernment(session)) &&
     (doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
       opportunity.status
     ) ||

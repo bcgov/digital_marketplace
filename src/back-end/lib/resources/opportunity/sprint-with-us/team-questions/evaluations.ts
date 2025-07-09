@@ -30,8 +30,6 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       return respond(401, [permissions.ERROR_MESSAGE]);
     }
 
-    const filterByUser = request.query.filterByUser !== "false";
-
     const validatedSWUOpportunity = await validateSWUOpportunityId(
       connection,
       request.params.opportunityId,
@@ -45,8 +43,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       !(await permissions.readManySWUTeamQuestionResponseEvaluations(
         connection,
         request.session,
-        validatedSWUOpportunity.value,
-        filterByUser
+        validatedSWUOpportunity.value
       ))
     ) {
       return respond(401, [permissions.ERROR_MESSAGE]);
@@ -54,9 +51,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
     const dbResult = await db.readManySWUTeamQuestionResponseEvaluations(
       connection,
       request.session,
-      request.params.opportunityId,
-      false, // consensus flag - false by default
-      filterByUser
+      request.params.opportunityId
     );
     if (isInvalid(dbResult)) {
       return respond(503, [db.ERROR_MESSAGE]);

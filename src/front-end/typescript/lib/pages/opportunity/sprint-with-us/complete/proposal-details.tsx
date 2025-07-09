@@ -16,18 +16,24 @@ import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
 import { User } from "shared/lib/resources/user";
-import { ADT, Id } from "shared/lib/types";
+import { ADT, Id, adt } from "shared/lib/types";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import * as api from "front-end/lib/http/api";
 
 export interface ProposalDetailState {
   opportunity: SWUOpportunity;
   formState: ProposalForm.State;
   teamQuestionsState: ProposalTeamQuestionsTab.State;
+  teamQuestionsEvalState: ProposalTeamQuestionsTab.State;
   codeChallengeState: ProposalCodeChallengeTab.State;
   teamScenarioState: ProposalTeamScenarioTab.State;
   proposalTabState: ProposalTab.State;
   historyState: ProposalHistoryTab.State;
+  panelEvaluations: SWUTeamQuestionResponseEvaluation[];
+  consensusEvaluation: SWUTeamQuestionResponseEvaluation | null;
+  evaluationsLoaded: boolean;
 }
 
 export interface State {
@@ -41,9 +47,12 @@ export interface Params {
   organizations: OrganizationSlim[];
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
+  consensusEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
-export type Msg = ADT<"noop">;
+export type Msg =
+  | ADT<"noop">
+  | ADT<"onEvaluationsLoaded", [Id, SWUTeamQuestionResponseEvaluation[]]>;
 
 const init: component_.base.Init<Params, State, Msg> = ({
   opportunity,
@@ -51,9 +60,13 @@ const init: component_.base.Init<Params, State, Msg> = ({
   viewerUser,
   organizations,
   evaluationContent,
-  proposalAffiliations
+  proposalAffiliations,
+  consensusEvaluations
 }) => {
   const detailStates: Record<Id, Immutable<ProposalDetailState>> = {};
+
+  // Create commands to load individual panel evaluations for each proposal
+  const evaluationCommands: component_.Cmd<Msg>[] = [];
 
   // Initialize component state for each proposal
   for (const proposal of proposals) {
@@ -89,6 +102,12 @@ const init: component_.base.Init<Params, State, Msg> = ({
       };
     }
 
+    // Find the consensus evaluation for this proposal
+    const consensusEvaluation =
+      consensusEvaluations.find(
+        (evaluation) => evaluation.proposal === proposal.id
+      ) || null;
+
     // Initialize tab components
     const [teamQuestionsState, _teamQuestionsCmds] =
       ProposalTeamQuestionsTab.component.init({
@@ -98,6 +117,18 @@ const init: component_.base.Init<Params, State, Msg> = ({
         evaluating: false,
         questionEvaluation: undefined,
         panelQuestionEvaluations: [],
+        proposals: proposals
+      });
+
+    // Initialize team questions evaluation state (initially with empty evaluations)
+    const [teamQuestionsEvalState, _teamQuestionsEvalCmds] =
+      ProposalTeamQuestionsTab.component.init({
+        proposal,
+        opportunity: opportunity,
+        viewerUser: viewerUser,
+        evaluating: true,
+        questionEvaluation: consensusEvaluation || undefined,
+        panelQuestionEvaluations: [], // Will be populated when evaluations load
         proposals: proposals
       });
 
@@ -152,23 +183,80 @@ const init: component_.base.Init<Params, State, Msg> = ({
       proposals: proposals
     });
 
+    // Add command to load individual panel evaluations for this proposal
+    evaluationCommands.push(
+      api.proposals.swu.teamQuestions.evaluations.readMany(proposal.id)(
+        (
+          response: api.ResponseValidation<
+            SWUTeamQuestionResponseEvaluation[],
+            string[]
+          >
+        ) => {
+          const evaluations = api.isValid(response) ? response.value : [];
+          return adt("onEvaluationsLoaded", [proposal.id, evaluations]) as Msg;
+        }
+      ) as component_.Cmd<Msg>
+    );
+
     // Store the initialized states
     detailStates[proposal.id] = immutable({
       opportunity,
       formState: updatedFormState,
       teamQuestionsState,
+      teamQuestionsEvalState,
       codeChallengeState,
       teamScenarioState,
       proposalTabState: completeProposalTabState,
-      historyState
+      historyState,
+      panelEvaluations: [],
+      consensusEvaluation: consensusEvaluation,
+      evaluationsLoaded: false
     });
   }
 
-  return [{ detailStates }, []];
+  return [{ detailStates }, evaluationCommands];
 };
 
-const update: component_.base.Update<State, Msg> = ({ state }) => {
-  return [state, []];
+const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case "onEvaluationsLoaded": {
+      const [proposalId, evaluations] = msg.value;
+      const currentDetailState = state.detailStates[proposalId];
+
+      if (!currentDetailState) {
+        return [state, []];
+      }
+
+      // Update the detail state with the loaded evaluations
+      const updatedDetailState = currentDetailState.merge({
+        panelEvaluations: evaluations,
+        evaluationsLoaded: true
+      });
+
+      // Re-initialize the TeamQuestionsTab with the loaded evaluation data
+      const [updatedTeamQuestionsEvalState, _] =
+        ProposalTeamQuestionsTab.component.init({
+          proposal: updatedDetailState.teamQuestionsEvalState.proposal,
+          opportunity: updatedDetailState.opportunity,
+          viewerUser: updatedDetailState.formState.viewerUser,
+          evaluating: true,
+          questionEvaluation:
+            updatedDetailState.consensusEvaluation || undefined,
+          panelQuestionEvaluations: evaluations,
+          proposals: updatedDetailState.teamQuestionsEvalState.proposals
+        });
+
+      // Update the state with the new evaluation data
+      const finalDetailState = updatedDetailState.set(
+        "teamQuestionsEvalState",
+        updatedTeamQuestionsEvalState
+      );
+
+      return [state.setIn(["detailStates", proposalId], finalDetailState), []];
+    }
+    default:
+      return [state, []];
+  }
 };
 
 interface ProposalDetailProps {
@@ -198,6 +286,17 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       </h3>
       <ProposalTeamQuestionsTab.component.view
         state={immutable(state.teamQuestionsState)}
+        dispatch={() => {}}
+      />
+
+      <hr></hr>
+      <h3
+        className="complete-report-section-header"
+        style={{ marginBottom: "-37px", marginTop: "20px" }}>
+        Proposal - {proposal.anonymousProponentName} - Team Questions (Eval)
+      </h3>
+      <ProposalTeamQuestionsTab.component.view
+        state={immutable(state.teamQuestionsEvalState)}
         dispatch={() => {}}
       />
 

@@ -11,8 +11,6 @@ import * as Form from "front-end/lib/pages/opportunity/sprint-with-us/lib/compon
 import * as AddendaTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/addenda";
 import * as HistoryTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/history";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/proposals";
-import * as InstructionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/instructions";
-import * as EvaluationTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/evaluation";
 import * as TeamQuestionsTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/team-questions";
 import * as ConsensusTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/consensus";
 import * as CodeChallengeTab from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/code-challenge";
@@ -37,7 +35,6 @@ import { AffiliationMember } from "shared/lib/resources/affiliation";
 import * as OpportunityView from "../view";
 import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
-import * as ProposalTeamQuestionsTab from "front-end/lib/pages/proposal/sprint-with-us/view/tab/team-questions";
 import { InfoTab } from "../view"; // Import the type for tabs
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 
@@ -54,8 +51,6 @@ export interface ValidState {
   addendaState: Immutable<AddendaTab.State>;
   historyState: Immutable<HistoryTab.State>;
   proposalsState: Immutable<ProposalsTab.State>;
-  instructionsState: Immutable<InstructionsTab.State>;
-  overviewState: Immutable<EvaluationTab.State>;
   teamQuestionsState: Immutable<TeamQuestionsTab.State>;
   consensusState: Immutable<ConsensusTab.State>;
   codeChallengeState: Immutable<CodeChallengeTab.State>;
@@ -68,11 +63,8 @@ export interface ValidState {
   evaluationContent: string;
   proposalAffiliations: Record<Id, AffiliationMember[]>;
   proposalDetailsState: Immutable<ProposalDetailsSection.State>;
-  individualEvaluationStates: Record<
-    string,
-    Immutable<ProposalTeamQuestionsTab.State>
-  >;
   opportunityViewState: Immutable<OpportunityView.State>;
+  consensusEvaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -82,8 +74,6 @@ export type InnerMsg =
   | ADT<"addenda", AddendaTab.InnerMsg>
   | ADT<"history", HistoryTab.InnerMsg>
   | ADT<"proposals", ProposalsTab.InnerMsg>
-  | ADT<"instructions", InstructionsTab.InnerMsg>
-  | ADT<"overview", EvaluationTab.InnerMsg>
   | ADT<"teamQuestions", TeamQuestionsTab.InnerMsg>
   | ADT<"consensus", ConsensusTab.InnerMsg>
   | ADT<"codeChallenge", CodeChallengeTab.InnerMsg>
@@ -93,7 +83,7 @@ export type InnerMsg =
   | ADT<"opportunityView", OpportunityView.InnerMsg>
   | ADT<"evaluationPanel", EvaluationPanelTab.InnerMsg>
   | ADT<
-      "onProposalsAndEvaluationsReceived",
+      "onProposalsAndConsensusEvaluationsReceived",
       [SWUProposalSlim[], SWUTeamQuestionResponseEvaluation[]]
     >
   | ADT<"onProposalDetailResponse", SWUProposal>
@@ -129,17 +119,6 @@ const init: component_.page.Init<
 
     // Initialize the proposals tab state structure
     const [proposalsInitState, _proposalsCmds] = ProposalsTab.component.init({
-      viewerUser: shared.sessionUser
-    });
-
-    // Initialize the instructions tab state structure
-    const [instructionsInitState, _instructionsCmds] =
-      InstructionsTab.component.init({
-        viewerUser: shared.sessionUser
-      });
-
-    // Initialize the overview tab state structure
-    const [overviewInitState, _overviewCmds] = EvaluationTab.component.init({
       viewerUser: shared.sessionUser
     });
 
@@ -196,8 +175,6 @@ const init: component_.page.Init<
           addendaState: immutable(addendaInitState),
           historyState: immutable(historyInitState),
           proposalsState: immutable(proposalsInitState),
-          instructionsState: immutable(instructionsInitState),
-          overviewState: immutable(overviewInitState),
           teamQuestionsState: immutable(teamQuestionsInitState),
           consensusState: immutable(consensusInitState),
           codeChallengeState: immutable(codeChallengeInitState),
@@ -221,8 +198,8 @@ const init: component_.page.Init<
           evaluationContent: "",
           proposalAffiliations: {},
           proposalDetailsState: immutable({ detailStates: {} }),
-          individualEvaluationStates: {},
-          opportunityViewState: opportunityViewState
+          opportunityViewState: opportunityViewState,
+          consensusEvaluations: []
         })
       ),
       [
@@ -284,14 +261,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 [] as User[]
               ]);
 
-            const instructionsOnInitMsg =
-              InstructionsTab.component.onInitResponse([
-                opportunity,
-                [] as SWUProposalSlim[],
-                [] as SWUTeamQuestionResponseEvaluation[],
-                [] as User[]
-              ]);
-
             const [oppFormState, _oppFormCmds] = Form.init({
               opportunity,
               viewerUser: state.viewerUser,
@@ -316,9 +285,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 component_.cmd.dispatch(adt("addenda", addendaOnInitMsg)),
                 component_.cmd.dispatch(adt("history", historyOnInitMsg)),
                 component_.cmd.dispatch(
-                  adt("instructions", instructionsOnInitMsg)
-                ),
-                component_.cmd.dispatch(
                   adt("evaluationPanel", evaluationPanelOnInitMsg)
                 ),
                 component_.cmd.dispatch(component_.page.readyMsg()),
@@ -326,14 +292,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                   api.proposals.swu.readMany(opportunity.id)((response) =>
                     api.getValidValue(response, [])
                   ),
-                  api.opportunities.swu.teamQuestions.evaluations.readMany(
-                    opportunity.id,
-                    "filterByUser=false"
+                  api.opportunities.swu.teamQuestions.consensuses.readMany(
+                    opportunity.id
                   )((response) => api.getValidValue(response, [])),
-                  (proposals, evaluations) => {
-                    return adt("onProposalsAndEvaluationsReceived", [
+                  (proposals, consensusEvaluations) => {
+                    return adt("onProposalsAndConsensusEvaluationsReceived", [
                       proposals,
-                      evaluations
+                      consensusEvaluations
                     ]) as Msg;
                   }
                 ) as component_.Cmd<Msg>,
@@ -365,8 +330,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           }
         }
       }
-      case "onProposalsAndEvaluationsReceived": {
-        const [proposalSlims, evaluations] = msg.value;
+      case "onProposalsAndConsensusEvaluationsReceived": {
+        const [proposalSlims, consensusEvaluations] = msg.value;
         // Create a cmd to fetch the full details of each proposal
         const proposalCmds = proposalSlims.map((slim) => {
           return api.proposals.swu.readOne(state.opportunity?.id as Id)(
@@ -380,8 +345,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           ) as component_.Cmd<Msg>;
         });
 
+        // Update state with consensus evaluations
+        const updatedState = state.set(
+          "consensusEvaluations",
+          consensusEvaluations
+        );
+
         return [
-          state,
+          updatedState,
           [
             component_.cmd.dispatch(
               adt(
@@ -394,17 +365,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ])
               )
             ) as component_.Cmd<Msg>,
-            component_.cmd.dispatch(
-              adt(
-                "overview",
-                EvaluationTab.component.onInitResponse([
-                  state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
-                  evaluations as SWUTeamQuestionResponseEvaluation[],
-                  [] as User[]
-                ])
-              )
-            ) as component_.Cmd<Msg>,
+
             component_.cmd.dispatch(
               adt(
                 "teamQuestions",
@@ -422,7 +383,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ConsensusTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  evaluations as SWUTeamQuestionResponseEvaluation[],
+                  consensusEvaluations as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
               )
@@ -489,12 +450,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           );
         }
 
-        // Check if all proposals have been loaded and evaluations are present
+        // Check if all proposals have been loaded
         const expectedProposalCount = state.proposalsState.proposals.length;
         const loadedProposalCount = updatedState.proposals.length;
         const allProposalsLoaded =
           loadedProposalCount === expectedProposalCount;
-        const evaluationsPresent = state.overviewState.evaluations.length > 0;
         const opportunityPresent = !!updatedState.opportunity;
 
         let proposalDetailsCmds: component_.Cmd<Msg>[] = [];
@@ -510,7 +470,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               viewerUser: updatedState.viewerUser,
               organizations: updatedState.organizations,
               evaluationContent: updatedState.evaluationContent,
-              proposalAffiliations: updatedState.proposalAffiliations
+              proposalAffiliations: updatedState.proposalAffiliations,
+              consensusEvaluations: updatedState.consensusEvaluations
             });
 
           // Map the commands from the proposal details component
@@ -525,81 +486,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             "proposalDetailsState",
             immutable(proposalDetailsState)
           );
-
-          // Compute individual evaluation states if evaluations are present
-          if (evaluationsPresent) {
-            // Ensure the type matches the updated ValidState
-            const individualEvaluationStates: Record<
-              string,
-              Immutable<ProposalTeamQuestionsTab.State>
-            > = {};
-
-            updatedState.overviewState.evaluations.forEach(
-              (evaluation: any) => {
-                if (!evaluation || !evaluation.proposal) return;
-                const relatedProposal = updatedState.proposals.find(
-                  (p) => p.id === evaluation.proposal
-                );
-                if (!relatedProposal) return;
-
-                // Use composite key here
-                const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
-                individualEvaluationStates[key] = immutable({
-                  proposals: updatedState.proposals,
-                  opportunity: currentOpportunity,
-                  proposal: relatedProposal,
-                  viewerUser: updatedState.viewerUser,
-                  evaluating: true,
-                  isAuthor: false,
-                  questionEvaluation: evaluation,
-                  panelQuestionEvaluations: [],
-                  evaluationScores: evaluation.scores.map(
-                    (score: any, _i: any) =>
-                      ({
-                        score: immutable({
-                          child: {
-                            value: score.score,
-                            id: `evaluation-${key}-score-${score.order}`
-                          },
-                          errors: []
-                        }),
-                        notes: immutable({
-                          child: {
-                            value: score.notes,
-                            id: `evaluation-${key}-notes-${score.order}`
-                          },
-                          errors: []
-                        })
-                      } as any)
-                  ),
-                  openAccordions: new Set(
-                    Array.from(
-                      { length: evaluation.scores.length },
-                      (_, i) => i
-                    )
-                  ),
-                  isEditing: false,
-                  startEditingLoading: 0,
-                  saveLoading: 0,
-                  teamQuestionsCarousel: immutable({
-                    evaluation: evaluation,
-                    prevProposal: undefined,
-                    prevEvaluation: undefined,
-                    nextProposal: undefined,
-                    nextEvaluation: undefined,
-                    proposal: relatedProposal,
-                    proposals: updatedState.proposals,
-                    panelEvaluations: []
-                  }),
-                  showModal: null
-                });
-              }
-            );
-            updatedState = updatedState.set(
-              "individualEvaluationStates",
-              individualEvaluationStates
-            );
-          }
         }
 
         return [updatedState, [...cmds, ...proposalDetailsCmds]];
@@ -638,7 +524,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
               viewerUser: updatedState.viewerUser,
               organizations: updatedState.organizations,
               evaluationContent: updatedState.evaluationContent,
-              proposalAffiliations: updatedState.proposalAffiliations
+              proposalAffiliations: updatedState.proposalAffiliations,
+              consensusEvaluations: updatedState.consensusEvaluations
             });
           proposalDetailsCmds = initialProposalDetailsCmds.map((cmd) =>
             component_.cmd.map(
@@ -691,23 +578,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childMsg: msg.value,
           mapChildMsg: (value: ProposalsTab.InnerMsg) => adt("proposals", value)
         });
-      case "instructions":
-        return component_.base.updateChild({
-          state,
-          childStatePath: ["instructionsState"],
-          childUpdate: InstructionsTab.component.update,
-          childMsg: msg.value,
-          mapChildMsg: (value: InstructionsTab.InnerMsg) =>
-            adt("instructions", value)
-        });
-      case "overview":
-        return component_.base.updateChild({
-          state,
-          childStatePath: ["overviewState"],
-          childUpdate: EvaluationTab.component.update,
-          childMsg: msg.value,
-          mapChildMsg: (value: EvaluationTab.InnerMsg) => adt("overview", value)
-        });
+
       case "teamQuestions":
         return component_.base.updateChild({
           state,
@@ -847,8 +718,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.addendaState ||
       !state.historyState ||
       !state.proposalsState ||
-      !state.instructionsState ||
-      !state.overviewState ||
       !state.teamQuestionsState ||
       !state.consensusState ||
       !state.codeChallengeState ||
@@ -1021,70 +890,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          11. Admin View - Instructions
-        </h2>
-        <InstructionsTab.component.view
-          state={state.instructionsState}
-          dispatch={() => {}}
-        />
-
-        <hr></hr>
-
-        <h2 className="complete-report-section-header">
-          12. Admin View - Evaluation
-        </h2>
-        <EvaluationTab.component.view
-          state={state.overviewState}
-          dispatch={() => {}}
-        />
-
-        <hr></hr>
-
-        {/* Render individual evaluations for team questions */}
-        {Object.keys(state.individualEvaluationStates).length > 0 && (
-          <>
-            <h2
-              className="complete-report-section-header"
-              style={{ marginBottom: "20px" }}>
-              13. Admin View - Team Question Evaluations
-            </h2>
-            {state.overviewState.evaluations.map((evaluation: any, i: any) => {
-              // Use composite key here for retrieval
-              const key = `${evaluation.evaluationPanelMember}-${evaluation.proposal}`;
-              const evalState = state.individualEvaluationStates[key];
-              if (!evalState) return null;
-
-              // Find the corresponding evaluator user from the opportunity's evaluationPanel
-              const evaluator = state.opportunity?.evaluationPanel?.find(
-                (panelMember) =>
-                  panelMember.user.id === evaluation.evaluationPanelMember
-              );
-
-              // Get evaluator name, fallback to ID if not found
-              const evaluatorName = evaluator
-                ? evaluator.user.name
-                : evaluation.evaluationPanelMember;
-
-              return (
-                <div
-                  key={`team-question-evaluation-${key}-${i}`}
-                  className="mb-5">
-                  <h3 style={{ marginBottom: "-40px" }}>
-                    Evaluator: {evaluatorName}
-                  </h3>
-                  {ProposalTeamQuestionsTab.component.view({
-                    state: evalState,
-                    dispatch: () => {}
-                  })}
-                </div>
-              );
-            })}
-            <hr></hr>
-          </>
-        )}
-
-        <h2 className="complete-report-section-header">
-          14. Admin View - Team Questions
+          11. Admin View - Team Questions
         </h2>
         <TeamQuestionsTab.component.view
           state={state.teamQuestionsState}
@@ -1094,7 +900,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          15. Admin View - Consensus
+          12. Admin View - Consensus
         </h2>
         <ConsensusTab.component.view
           state={state.consensusState}
@@ -1104,7 +910,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          16. Admin View - Code Challenge
+          13. Admin View - Code Challenge
         </h2>
         <CodeChallengeTab.component.view
           state={state.codeChallengeState}
@@ -1114,7 +920,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          17. Admin View - Team Scenario
+          14. Admin View - Team Scenario
         </h2>
         <TeamScenarioTab.component.view
           state={state.teamScenarioState}
@@ -1124,7 +930,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          18. Admin View - Proposal Details
+          15. Admin View - Proposal Details
         </h2>
         <ProposalDetailsSection.component.view
           state={state.proposalDetailsState}
