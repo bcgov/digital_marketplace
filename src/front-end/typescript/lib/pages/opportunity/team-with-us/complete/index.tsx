@@ -14,6 +14,9 @@ import * as ProposalsTab from "front-end/lib/pages/opportunity/team-with-us/edit
 import * as SummaryTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/summary";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";
 import * as EvaluationPanelTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/evaluation-panel";
+import * as ResourceQuestionsTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/resource-questions";
+import * as ConsensusTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/consensus";
+import * as ChallengeTab from "front-end/lib/pages/opportunity/team-with-us/edit/tab/challenge";
 import React from "react";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User, UserType } from "shared/lib/resources/user";
@@ -47,6 +50,9 @@ export interface ValidState {
   summaryState: Immutable<SummaryTab.State>;
   opportunityState: Immutable<OpportunityTab.State>;
   evaluationPanelState: Immutable<EvaluationPanelTab.State>;
+  resourceQuestionsState: Immutable<ResourceQuestionsTab.State>;
+  consensusState: Immutable<ConsensusTab.State>;
+  challengeState: Immutable<ChallengeTab.State>;
   proposals: TWUProposal[];
   organizations: OrganizationSlim[];
   proposalAffiliations: Record<Id, AffiliationMember[]>;
@@ -65,6 +71,9 @@ export type InnerMsg =
   | ADT<"opportunityTab", OpportunityTab.InnerMsg>
   | ADT<"opportunityView", OpportunityView.InnerMsg>
   | ADT<"evaluationPanel", EvaluationPanelTab.InnerMsg>
+  | ADT<"resourceQuestions", ResourceQuestionsTab.InnerMsg>
+  | ADT<"consensus", ConsensusTab.InnerMsg>
+  | ADT<"challenge", ChallengeTab.InnerMsg>
   | ADT<"onProposalsReceived", TWUProposalSlim[]>
   | ADT<"onProposalDetailResponse", TWUProposal>
   | ADT<"onAffiliationsResponse", [Id, AffiliationMember[]]>
@@ -106,6 +115,18 @@ const init: component_.page.Init<
       viewerUser: adminUser
     });
 
+    const [resourceQuestionsInitState] = ResourceQuestionsTab.component.init({
+      viewerUser: adminUser
+    });
+
+    const [consensusInitState] = ConsensusTab.component.init({
+      viewerUser: adminUser
+    });
+
+    const [challengeInitState] = ChallengeTab.component.init({
+      viewerUser: adminUser
+    });
+
     const [summaryInitState] = SummaryTab.component.init({
       viewerUser: adminUser
     });
@@ -143,6 +164,9 @@ const init: component_.page.Init<
           proposalsState: immutable(proposalsInitState),
           summaryState: immutable(summaryInitState),
           evaluationPanelState: immutable(evaluationPanelInitState),
+          resourceQuestionsState: immutable(resourceQuestionsInitState),
+          consensusState: immutable(consensusInitState),
+          challengeState: immutable(challengeInitState),
           opportunityState: immutable({
             viewerUser: shared.sessionUser,
             opportunity: null,
@@ -275,6 +299,28 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             []
           ]);
 
+        const resourceQuestionsOnInitMsg =
+          ResourceQuestionsTab.component.onInitResponse([
+            opportunity,
+            [] as TWUProposalSlim[],
+            [],
+            []
+          ]);
+
+        const consensusOnInitMsg = ConsensusTab.component.onInitResponse([
+          opportunity,
+          [] as TWUProposalSlim[],
+          [],
+          []
+        ]);
+
+        const challengeOnInitMsg = ChallengeTab.component.onInitResponse([
+          opportunity,
+          [] as TWUProposalSlim[],
+          [],
+          []
+        ]);
+
         const oppTabOnInitMsg = OpportunityTab.component.onInitResponse([
           opportunity,
           [] as TWUProposalSlim[],
@@ -297,6 +343,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           component_.cmd.dispatch(
             adt("evaluationPanel", evaluationPanelOnInitMsg)
           ),
+          component_.cmd.dispatch(
+            adt("resourceQuestions", resourceQuestionsOnInitMsg)
+          ),
+          component_.cmd.dispatch(adt("consensus", consensusOnInitMsg)),
+          component_.cmd.dispatch(adt("challenge", challengeOnInitMsg)),
           component_.cmd.dispatch(component_.page.readyMsg()),
           api.proposals.twu.readMany(opportunity.id)((proposalResponse) =>
             adt("onProposalsReceived", api.getValidValue(proposalResponse, []))
@@ -326,6 +377,28 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           []
         ]);
 
+        const resourceQuestionsOnInitMsg =
+          ResourceQuestionsTab.component.onInitResponse([
+            state.opportunity,
+            proposalSlims,
+            [],
+            []
+          ]);
+
+        const consensusOnInitMsg = ConsensusTab.component.onInitResponse([
+          state.opportunity,
+          proposalSlims,
+          [],
+          []
+        ]);
+
+        const challengeOnInitMsg = ChallengeTab.component.onInitResponse([
+          state.opportunity,
+          proposalSlims,
+          [],
+          []
+        ]);
+
         const proposalCmds = proposalSlims.map((slim) =>
           api.proposals.twu.readOne(state.opportunity!.id)(
             slim.id,
@@ -340,6 +413,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const commands = [
           component_.cmd.dispatch(adt("proposals", proposalsOnInitMsg)),
           component_.cmd.dispatch(adt("summary", summaryOnInitMsg)),
+          component_.cmd.dispatch(
+            adt("resourceQuestions", resourceQuestionsOnInitMsg)
+          ),
+          component_.cmd.dispatch(adt("consensus", consensusOnInitMsg)),
+          component_.cmd.dispatch(adt("challenge", challengeOnInitMsg)),
           ...proposalCmds
         ];
 
@@ -390,6 +468,33 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           childUpdate: EvaluationPanelTab.component.update,
           childMsg: msg.value,
           mapChildMsg: (value) => adt("evaluationPanel", value)
+        }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
+      case "resourceQuestions":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["resourceQuestionsState"],
+          childUpdate: ResourceQuestionsTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("resourceQuestions", value)
+        }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
+      case "consensus":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["consensusState"],
+          childUpdate: ConsensusTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("consensus", value)
+        }) as component_.base.UpdateReturnValue<ValidState, Msg>;
+
+      case "challenge":
+        return component_.base.updateChild({
+          state,
+          childStatePath: ["challengeState"],
+          childUpdate: ChallengeTab.component.update,
+          childMsg: msg.value,
+          mapChildMsg: (value) => adt("challenge", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
 
       case "proposals":
@@ -497,7 +602,10 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       !state.summaryState ||
       !state.opportunityState ||
       !state.proposalDetailsState ||
-      !state.evaluationPanelState
+      !state.evaluationPanelState ||
+      !state.resourceQuestionsState ||
+      !state.consensusState ||
+      !state.challengeState
     ) {
       return <div>Loading...</div>;
     }
@@ -621,19 +729,46 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr />
 
         <h2 className="complete-report-section-header">
-          {sectionCounter++}. Admin View - Proposals
+          {sectionCounter++}. Admin View - Opportunity History
         </h2>
-        <ProposalsTab.component.view
-          state={state.proposalsState}
+        <HistoryTab.component.view
+          state={state.historyState}
           dispatch={() => {}}
         />
         <hr />
 
         <h2 className="complete-report-section-header">
-          {sectionCounter++}. Admin View - Opportunity History
+          {sectionCounter++}. Admin View - Resource Questions
         </h2>
-        <HistoryTab.component.view
-          state={state.historyState}
+        <ResourceQuestionsTab.component.view
+          state={state.resourceQuestionsState}
+          dispatch={() => {}}
+        />
+        <hr />
+
+        <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Consensus
+        </h2>
+        <ConsensusTab.component.view
+          state={state.consensusState}
+          dispatch={() => {}}
+        />
+        <hr />
+
+        <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Interview & Challenge
+        </h2>
+        <ChallengeTab.component.view
+          state={state.challengeState}
+          dispatch={() => {}}
+        />
+        <hr />
+
+        <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Proposals
+        </h2>
+        <ProposalsTab.component.view
+          state={state.proposalsState}
           dispatch={() => {}}
         />
         <hr />

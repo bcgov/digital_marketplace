@@ -1031,7 +1031,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr></hr>
 
         <h2 className="complete-report-section-header">
-          12. Admin View - Team Questions Overview
+          12. Admin View - Evaluation
         </h2>
         <EvaluationTab.component.view
           state={state.overviewState}
