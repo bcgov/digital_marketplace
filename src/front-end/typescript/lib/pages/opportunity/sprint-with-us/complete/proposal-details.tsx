@@ -218,45 +218,41 @@ const init: component_.base.Init<Params, State, Msg> = ({
 };
 
 const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
-  switch (msg.tag) {
-    case "onEvaluationsLoaded": {
-      const [proposalId, evaluations] = msg.value;
-      const currentDetailState = state.detailStates[proposalId];
+  if (msg.tag === "onEvaluationsLoaded") {
+    const [proposalId, evaluations] = msg.value;
+    const currentDetailState = state.detailStates[proposalId];
 
-      if (!currentDetailState) {
-        return [state, []];
-      }
+    if (!currentDetailState) {
+      return [state, []];
+    }
 
-      // Update the detail state with the loaded evaluations
-      const updatedDetailState = currentDetailState.merge({
-        panelEvaluations: evaluations,
-        evaluationsLoaded: true
+    // Update the detail state with the loaded evaluations
+    const updatedDetailState = currentDetailState.merge({
+      panelEvaluations: evaluations,
+      evaluationsLoaded: true
+    });
+
+    // Re-initialize the TeamQuestionsTab with the loaded evaluation data
+    const [updatedTeamQuestionsEvalState, _] =
+      ProposalTeamQuestionsTab.component.init({
+        proposal: updatedDetailState.teamQuestionsEvalState.proposal,
+        opportunity: updatedDetailState.opportunity,
+        viewerUser: updatedDetailState.formState.viewerUser,
+        evaluating: true,
+        questionEvaluation: updatedDetailState.consensusEvaluation || undefined,
+        panelQuestionEvaluations: evaluations,
+        proposals: updatedDetailState.teamQuestionsEvalState.proposals
       });
 
-      // Re-initialize the TeamQuestionsTab with the loaded evaluation data
-      const [updatedTeamQuestionsEvalState, _] =
-        ProposalTeamQuestionsTab.component.init({
-          proposal: updatedDetailState.teamQuestionsEvalState.proposal,
-          opportunity: updatedDetailState.opportunity,
-          viewerUser: updatedDetailState.formState.viewerUser,
-          evaluating: true,
-          questionEvaluation:
-            updatedDetailState.consensusEvaluation || undefined,
-          panelQuestionEvaluations: evaluations,
-          proposals: updatedDetailState.teamQuestionsEvalState.proposals
-        });
+    // Update the state with the new evaluation data
+    const finalDetailState = updatedDetailState.set(
+      "teamQuestionsEvalState",
+      updatedTeamQuestionsEvalState
+    );
 
-      // Update the state with the new evaluation data
-      const finalDetailState = updatedDetailState.set(
-        "teamQuestionsEvalState",
-        updatedTeamQuestionsEvalState
-      );
-
-      return [state.setIn(["detailStates", proposalId], finalDetailState), []];
-    }
-    default:
-      return [state, []];
+    return [state.setIn(["detailStates", proposalId], finalDetailState), []];
   }
+  return [state, []];
 };
 
 interface ProposalDetailProps {
@@ -367,8 +363,8 @@ const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
           );
           return { proposalId, proposalState, proposal, proponentNum };
         })
-        .filter((x) => x !== null)
-        .sort((a, b) => a!.proponentNum - b!.proponentNum)
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+        .sort((a, b) => a.proponentNum - b.proponentNum)
         .map((item, index) => {
           if (!item) return null;
           const { proposalId, proposalState, proposal } = item;
