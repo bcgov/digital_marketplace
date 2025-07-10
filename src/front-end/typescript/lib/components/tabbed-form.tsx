@@ -27,7 +27,7 @@ export type Msg<TabId> =
   | ADT<"previous">;
 
 export function getActiveTab<TabId>(state: Immutable<State<TabId>>): TabId {
-  return TabbedFormHeader.getActiveTab(state);
+  return state.activeTab;
 }
 
 function getActiveTabIndex<TabId>(state: Immutable<State<TabId>>): number {

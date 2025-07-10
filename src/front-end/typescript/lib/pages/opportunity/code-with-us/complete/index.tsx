@@ -32,6 +32,10 @@ import * as ProposalDetailsSection from "./proposal-details";
 import { InfoTab } from "../view";
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 import { ViewAlerts } from "front-end/lib/app/view/page";
+import {
+  BrowserWarning,
+  isUnsupportedBrowser
+} from "front-end/lib/pages/opportunity/lib/components/browser-warning";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -502,6 +506,8 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     return (
       <div className="opportunity-complete-page">
+        {isUnsupportedBrowser() && <BrowserWarning />}
+
         {opportunityViewStates.details ? (
           <>
             <h2>{sectionCounter++}. Public View - Opportunity Details</h2>

@@ -39,6 +39,10 @@ import EditTabHeader from "../lib/views/edit-tab-header";
 import { InfoTab } from "../view"; // Import the type for tabs
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
 import { ViewAlerts } from "front-end/lib/app/view/page";
+import {
+  BrowserWarning,
+  isUnsupportedBrowser
+} from "front-end/lib/pages/opportunity/lib/components/browser-warning";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -794,6 +798,8 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     return (
       <div className="opportunity-complete-page">
+        {isUnsupportedBrowser() && <BrowserWarning />}
+
         {/* Render the OpportunityView component multiple times */}
         {opportunityViewStates.details ? (
           <>
