@@ -13,7 +13,7 @@ export interface Props<TabId>
   getTabHeader?(tabId: TabId): React.ReactNode;
   valid?: boolean;
   disabled?: boolean;
-  children: component_.base.ViewElementChildren;
+  children?: component_.base.ViewElementChildren;
 }
 
 // Create a mock state and dispatch for the Header component

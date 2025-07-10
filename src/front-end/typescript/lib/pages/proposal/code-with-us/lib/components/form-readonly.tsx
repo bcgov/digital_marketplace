@@ -128,7 +128,6 @@ const view: component_.base.ComponentView<State, never> = ({ state }) => {
           tabs: TABS
         })}
         dispatch={() => {}}
-        children={null}
       />
     </ProposalViewWrapper>
   );

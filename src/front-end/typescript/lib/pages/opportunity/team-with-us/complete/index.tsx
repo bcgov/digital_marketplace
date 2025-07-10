@@ -631,6 +631,18 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       return <div>Loading...</div>;
     }
 
+    // Extract components into PascalCase aliases for JSX usage
+    const OpportunityViewComponent = OpportunityView.component.view;
+    const SummaryTabComponent = SummaryTab.component.view;
+    const EvaluationPanelTabComponent = EvaluationPanelTab.component.view;
+    const AddendaTabComponent = AddendaTab.component.view;
+    const HistoryTabComponent = HistoryTab.component.view;
+    const ProposalsTabComponent = ProposalsTab.component.view;
+    const ResourceQuestionsTabComponent = ResourceQuestionsTab.component.view;
+    const ConsensusTabComponent = ConsensusTab.component.view;
+    const ChallengeTabComponent = ChallengeTab.component.view;
+    const ProposalDetailsComponent = ProposalDetailsSection.component.view;
+
     const createOpportunityViewState = (
       activeTab: OpportunityView.State["activeInfoTab"]
     ): Immutable<OpportunityView.State> | null => {
@@ -651,7 +663,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         {opportunityViewStates.details ? (
           <>
             <h2>{sectionCounter++}. Public View - Opportunity Details</h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.details}
               dispatch={() => {}}
             />
@@ -666,7 +678,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Competition Rules
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.competitionRules}
               dispatch={() => {}}
             />
@@ -681,7 +693,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Opportunity Attachments
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.attachments}
               dispatch={() => {}}
             />
@@ -696,7 +708,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Opportunity Addenda
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.addenda}
               dispatch={() => {}}
             />
@@ -715,10 +727,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             viewerUser={state.viewerUser}
           />
         </div>
-        <SummaryTab.component.view
-          state={state.summaryState}
-          dispatch={() => {}}
-        />
+        <SummaryTabComponent state={state.summaryState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
@@ -734,7 +743,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Evaluation Panel
         </h2>
-        <EvaluationPanelTab.component.view
+        <EvaluationPanelTabComponent
           state={state.evaluationPanelState}
           dispatch={() => {}}
         />
@@ -743,25 +752,19 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity Addenda
         </h2>
-        <AddendaTab.component.view
-          state={state.addendaState}
-          dispatch={() => {}}
-        />
+        <AddendaTabComponent state={state.addendaState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity History
         </h2>
-        <HistoryTab.component.view
-          state={state.historyState}
-          dispatch={() => {}}
-        />
+        <HistoryTabComponent state={state.historyState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Proposals
         </h2>
-        <ProposalsTab.component.view
+        <ProposalsTabComponent
           state={state.proposalsState}
           dispatch={() => {}}
         />
@@ -770,7 +773,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Resource Questions
         </h2>
-        <ResourceQuestionsTab.component.view
+        <ResourceQuestionsTabComponent
           state={state.resourceQuestionsState}
           dispatch={() => {}}
         />
@@ -779,7 +782,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Consensus
         </h2>
-        <ConsensusTab.component.view
+        <ConsensusTabComponent
           state={state.consensusState}
           dispatch={() => {}}
         />
@@ -788,7 +791,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Interview & Challenge
         </h2>
-        <ChallengeTab.component.view
+        <ChallengeTabComponent
           state={state.challengeState}
           dispatch={() => {}}
         />
@@ -797,7 +800,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Proposal Details
         </h2>
-        <ProposalDetailsSection.component.view
+        <ProposalDetailsComponent
           state={state.proposalDetailsState}
           dispatch={(msg: ProposalDetailsSection.Msg) =>
             dispatch(adt("proposalDetails", msg) as Msg)

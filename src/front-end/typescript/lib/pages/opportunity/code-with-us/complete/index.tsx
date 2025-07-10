@@ -463,6 +463,13 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       return <div>Loading...</div>;
     }
 
+    // Extract components into PascalCase aliases for JSX usage
+    const OpportunityViewComponent = OpportunityView.component.view;
+    const AddendaTabComponent = AddendaTab.component.view;
+    const ProposalsTabComponent = ProposalsTab.component.view;
+    const HistoryTabComponent = HistoryTab.component.view;
+    const ProposalDetailsComponent = ProposalDetailsSection.component.view;
+
     const createOpportunityViewState = (
       activeTab: InfoTab
     ): Immutable<OpportunityView.State> | null => {
@@ -489,7 +496,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         {opportunityViewStates.details ? (
           <>
             <h2>{sectionCounter++}. Public View - Opportunity Details</h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.details}
               dispatch={() => {}}
             />
@@ -504,7 +511,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Terms and Conditions
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.terms}
               dispatch={() => {}}
             />
@@ -519,7 +526,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Opportunity Attachments
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.attachments}
               dispatch={() => {}}
             />
@@ -534,7 +541,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <h2 className="complete-report-section-header">
               {sectionCounter++}. Public View - Opportunity Addenda
             </h2>
-            <OpportunityView.component.view
+            <OpportunityViewComponent
               state={opportunityViewStates.addenda}
               dispatch={() => {}}
             />
@@ -577,16 +584,13 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity Addenda
         </h2>
-        <AddendaTab.component.view
-          state={state.addendaState}
-          dispatch={() => {}}
-        />
+        <AddendaTabComponent state={state.addendaState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Proposals
         </h2>
-        <ProposalsTab.component.view
+        <ProposalsTabComponent
           state={state.proposalsState}
           dispatch={() => {}}
         />
@@ -595,16 +599,13 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Opportunity History
         </h2>
-        <HistoryTab.component.view
-          state={state.historyState}
-          dispatch={() => {}}
-        />
+        <HistoryTabComponent state={state.historyState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Proposal Details
         </h2>
-        <ProposalDetailsSection.component.view
+        <ProposalDetailsComponent
           state={state.proposalDetailsState}
           dispatch={(msg) => dispatch(adt("proposalDetails", msg) as Msg)}
         />

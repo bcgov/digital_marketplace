@@ -133,7 +133,6 @@ const OpportunityReadOnly: component_.base.View<Props> = (props) => {
           tabs: TABS
         })}
         dispatch={() => {}}
-        children={null}
       />
     </OpportunityViewWrapper>
   );
