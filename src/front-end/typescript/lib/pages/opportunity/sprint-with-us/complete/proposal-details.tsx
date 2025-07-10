@@ -359,7 +359,7 @@ const view: component_.base.ComponentView<State, Msg> = ({ state }) => {
       {proposals
         .map((proposalId) => {
           const proposalState = state.detailStates[proposalId];
-          const proposal = proposalState?.formState.proposal;
+          const proposal = proposalState.formState.proposal;
           if (!proposal) return null;
           // Extract number from "Proponent X" format
           const proponentNum = parseInt(

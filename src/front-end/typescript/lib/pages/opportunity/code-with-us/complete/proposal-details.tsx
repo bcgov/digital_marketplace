@@ -161,8 +161,8 @@ const view: component_.base.ComponentView<State, Msg> = ({
           if (!proposal) return null;
           return { proposalId, proposalState, proposal };
         })
-        .filter((x) => x !== null)
-        .sort((a, b) => a!.proposal.id.localeCompare(b!.proposal.id))
+        .filter((x): x is NonNullable<typeof x> => x !== null)
+        .sort((a, b) => a.proposal.id.localeCompare(b.proposal.id))
         .map((item, index) => {
           if (!item) return null;
           const { proposalId, proposalState, proposal } = item;
