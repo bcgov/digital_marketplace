@@ -293,9 +293,7 @@ const view: component_.base.ComponentView<State, Msg> = ({
   state,
   dispatch
 }) => {
-  const proposals = Object.keys(state.detailStates).sort((a, b) =>
-    a.localeCompare(b, "en", { sensitivity: "base" })
-  );
+  const proposals = Object.keys(state.detailStates);
   if (proposals.length === 0) {
     return <div>No proposals available to display.</div>;
   }
@@ -310,7 +308,6 @@ const view: component_.base.ComponentView<State, Msg> = ({
           return { proposalId, proposalState, proposal };
         })
         .filter((x): x is NonNullable<typeof x> => x !== null)
-        .sort((a, b) => a.proposal.id.localeCompare(b.proposal.id))
         .map((item, index) => {
           if (!item) return null;
           const { proposalId, proposalState, proposal } = item;

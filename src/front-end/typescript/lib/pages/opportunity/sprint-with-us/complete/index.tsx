@@ -27,7 +27,8 @@ import { invalid, valid, isValid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
 import {
   SWUProposalSlim,
-  SWUProposal
+  SWUProposal,
+  compareSWUProposalsForPublicSector
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
@@ -37,6 +38,7 @@ import * as ProposalDetailsSection from "./proposal-details";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import { InfoTab } from "../view"; // Import the type for tabs
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import { ViewAlerts } from "front-end/lib/app/view/page";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -332,8 +334,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
       }
       case "onProposalsAndConsensusEvaluationsReceived": {
         const [proposalSlims, consensusEvaluations] = msg.value;
+
+        // Sort proposals using the same logic as the ProposalsTab component
+        const sortedProposalSlims = [...proposalSlims].sort((a, b) =>
+          compareSWUProposalsForPublicSector(a, b, "totalScore")
+        );
+
         // Create a cmd to fetch the full details of each proposal
-        const proposalCmds = proposalSlims.map((slim) => {
+        const proposalCmds = sortedProposalSlims.map((slim) => {
           return api.proposals.swu.readOne(state.opportunity?.id as Id)(
             slim.id,
             (response) => {
@@ -359,7 +367,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "proposals",
                 ProposalsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
@@ -371,7 +379,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "teamQuestions",
                 TeamQuestionsTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
@@ -382,7 +390,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "consensus",
                 ConsensusTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   consensusEvaluations,
                   [] as User[]
                 ])
@@ -393,7 +401,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "codeChallenge",
                 CodeChallengeTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
@@ -404,7 +412,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "teamScenario",
                 TeamScenarioTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
@@ -415,7 +423,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 "summary",
                 SummaryTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
-                  proposalSlims as SWUProposalSlim[],
+                  [...sortedProposalSlims] as SWUProposalSlim[],
                   [] as SWUTeamQuestionResponseEvaluation[],
                   [] as User[]
                 ])
@@ -463,10 +471,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           const currentOpportunity = updatedState.opportunity;
           if (!currentOpportunity) return [updatedState, cmds];
 
+          // Sort the proposals before passing to ProposalDetailsComponent
+          const sortedProposals = [...updatedState.proposals].sort((a, b) =>
+            compareSWUProposalsForPublicSector(a, b, "totalScore")
+          );
+
           const [proposalDetailsState, initialProposalDetailsCmds] =
             ProposalDetailsSection.component.init({
               opportunity: currentOpportunity,
-              proposals: updatedState.proposals,
+              proposals: sortedProposals,
               viewerUser: updatedState.viewerUser,
               organizations: updatedState.organizations,
               evaluationContent: updatedState.evaluationContent,
@@ -517,10 +530,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           const currentOpportunity = updatedState.opportunity;
           if (!currentOpportunity) return [updatedState, proposalDetailsCmds];
 
+          // Sort the proposals before passing to ProposalDetailsComponent
+          const sortedProposals = [...updatedState.proposals].sort((a, b) =>
+            compareSWUProposalsForPublicSector(a, b, "totalScore")
+          );
+
           const [proposalDetailsState, initialProposalDetailsCmds] =
             ProposalDetailsSection.component.init({
               opportunity: currentOpportunity,
-              proposals: updatedState.proposals,
+              proposals: sortedProposals,
               viewerUser: updatedState.viewerUser,
               organizations: updatedState.organizations,
               evaluationContent: updatedState.evaluationContent,
@@ -766,12 +784,21 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       addenda: createOpportunityViewState("addenda")
     };
 
+    // Use the existing getAlerts function from OpportunityView
+    const opportunityViewAlerts = OpportunityView.component.getAlerts
+      ? OpportunityView.component.getAlerts(state.opportunityViewState)
+      : component_.page.alerts.empty();
+
+    // Cast the alerts for display only (we don't need the dispatch functionality)
+    const alerts = opportunityViewAlerts as component_.page.Alerts<Msg>;
+
     return (
       <div className="opportunity-complete-page">
         {/* Render the OpportunityView component multiple times */}
         {opportunityViewStates.details ? (
           <>
             <h2>1. Public View - Opportunity Details</h2>
+            <ViewAlerts alerts={alerts} dispatch={dispatch} />
             <OpportunityViewComponent
               state={opportunityViewStates.details}
               dispatch={() => {}} // Dispatch is no-op for these read-only views

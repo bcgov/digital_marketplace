@@ -21,7 +21,8 @@ import { invalid, valid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
 import {
   CWUProposalSlim,
-  CWUProposal
+  CWUProposal,
+  compareCWUProposalsForPublicSector
 } from "shared/lib/resources/proposal/code-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
@@ -30,6 +31,7 @@ import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalDetailsSection from "./proposal-details";
 import { InfoTab } from "../view";
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import { ViewAlerts } from "front-end/lib/app/view/page";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -101,12 +103,6 @@ const init: component_.page.Init<
     const [summaryInitState] = SummaryTab.component.init({
       viewerUser: adminUser
     });
-
-    // const [_opportunityInitState] = OpportunityTab.component.init({
-    //   viewerUser: adminUser,
-
-    // });
-    // console.log('opportunityInitState: ', _opportunityInitState);
 
     const [opportunityViewState, initialOpportunityViewCmds] =
       OpportunityView.component.init({
@@ -195,10 +191,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const currentOpportunity = currentState.opportunity;
         if (!currentOpportunity) return [currentState, []];
 
+        // Sort the proposals before passing to ProposalDetailsComponent
+        const sortedProposals = [...currentState.proposals].sort((a, b) =>
+          compareCWUProposalsForPublicSector(a, b)
+        );
+
         const [proposalDetailsState, initialProposalDetailsCmds] =
           ProposalDetailsSection.component.init({
             opportunity: currentOpportunity,
-            proposals: currentState.proposals,
+            proposals: sortedProposals,
             viewerUser: currentState.viewerUser
           });
 
@@ -221,8 +222,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
     switch (msg.tag) {
       case "onInitResponse": {
-        console.log("index.tsx onInitResponse: ", msg.value);
-
         const response = msg.value;
         if (response.tag === "invalid") {
           return [
@@ -246,8 +245,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           "opportunity",
           opportunity
         );
-
-        console.log("finalOpportunityState: ", finalOpportunityState);
 
         // Create init messages for tabs that need the opportunity data
         const addendaOnInitMsg = AddendaTab.component.onInitResponse([
@@ -292,16 +289,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const proposalSlims = msg.value;
         if (!state.opportunity) return [state, []];
 
+        // Sort proposals using the same logic as the ProposalsTab component
+        const sortedProposalSlims = [...proposalSlims].sort((a, b) =>
+          compareCWUProposalsForPublicSector(a, b)
+        );
+
+        // Each component gets its own copy of the sorted array to prevent mutation
         const proposalsOnInitMsg = ProposalsTab.component.onInitResponse([
           state.opportunity,
-          proposalSlims
+          [...sortedProposalSlims]
         ]);
         const summaryOnInitMsg = SummaryTab.component.onInitResponse([
           state.opportunity,
-          proposalSlims
+          [...sortedProposalSlims]
         ]);
 
-        const proposalCmds = proposalSlims.map((slim) =>
+        const proposalCmds = sortedProposalSlims.map((slim) =>
           api.proposals.cwu.readOne(state.opportunity!.id)(
             slim.id,
             (response) => {
@@ -378,7 +381,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           mapChildMsg: (value) => adt("summary", value)
         }) as component_.base.UpdateReturnValue<ValidState, Msg>;
       case "opportunityTab":
-        console.log("opportunityTab!!: ", state.opportunityState, msg.value);
         // this will run 'resetOpportunity'
         return component_.base.updateChild({
           state,
@@ -490,12 +492,20 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     let sectionCounter = 1;
 
-    console.log("state.opportunityState.form: ", state.opportunityState);
+    // Use the existing getAlerts function from OpportunityView
+    const opportunityViewAlerts = OpportunityView.component.getAlerts
+      ? OpportunityView.component.getAlerts(state.opportunityViewState)
+      : component_.page.alerts.empty();
+
+    // Cast the alerts for display only (we don't need the dispatch functionality)
+    const alerts = opportunityViewAlerts as component_.page.Alerts<Msg>;
+
     return (
       <div className="opportunity-complete-page">
         {opportunityViewStates.details ? (
           <>
             <h2>{sectionCounter++}. Public View - Opportunity Details</h2>
+            <ViewAlerts alerts={alerts} dispatch={dispatch} />
             <OpportunityViewComponent
               state={opportunityViewStates.details}
               dispatch={() => {}}
@@ -571,11 +581,6 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           viewerUser={state.viewerUser}
           form={state.opportunityState.form}
         />
-        {/* WORKING:
-        <OpportunityTab.component.view
-          state={state.opportunityState}
-          dispatch={() => {}}
-        /> */}
         <hr />
 
         <h2 className="complete-report-section-header">
@@ -585,18 +590,18 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
         <hr />
 
         <h2 className="complete-report-section-header">
+          {sectionCounter++}. Admin View - Opportunity History
+        </h2>
+        <HistoryTabComponent state={state.historyState} dispatch={() => {}} />
+        <hr />
+
+        <h2 className="complete-report-section-header">
           {sectionCounter++}. Admin View - Proposals
         </h2>
         <ProposalsTabComponent
           state={state.proposalsState}
           dispatch={() => {}}
         />
-        <hr />
-
-        <h2 className="complete-report-section-header">
-          {sectionCounter++}. Admin View - Opportunity History
-        </h2>
-        <HistoryTabComponent state={state.historyState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">

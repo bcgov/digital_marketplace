@@ -25,7 +25,8 @@ import { invalid, valid } from "shared/lib/http";
 import { Validation } from "shared/lib/validation";
 import {
   TWUProposalSlim,
-  TWUProposal
+  TWUProposal,
+  compareTWUProposalsForPublicSector
 } from "shared/lib/resources/proposal/team-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
@@ -34,6 +35,7 @@ import * as OpportunityView from "../view";
 import EditTabHeader from "../lib/views/edit-tab-header";
 import * as ProposalDetailsSection from "./proposal-details";
 import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import { ViewAlerts } from "front-end/lib/app/view/page";
 
 export interface RouteParams {
   opportunityId: Id;
@@ -231,10 +233,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const currentOpportunity = currentState.opportunity;
         if (!currentOpportunity) return [currentState, []];
 
+        // Sort the proposals before passing to ProposalDetailsComponent
+        const sortedProposals = [...currentState.proposals].sort((a, b) =>
+          compareTWUProposalsForPublicSector(a, b, "totalScore")
+        );
+
         const [proposalDetailsState, initialProposalDetailsCmds] =
           ProposalDetailsSection.component.init({
             opportunity: currentOpportunity,
-            proposals: currentState.proposals,
+            proposals: sortedProposals,
             viewerUser: currentState.viewerUser,
             consensusEvaluations: currentState.consensusEvaluations
           });
@@ -382,18 +389,23 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const [proposalSlims, consensuses] = msg.value;
         if (!state.opportunity) return [state, []];
 
+        // Sort proposals using the same logic as the ProposalsTab component
+        const sortedProposalSlims = [...proposalSlims].sort((a, b) =>
+          compareTWUProposalsForPublicSector(a, b, "totalScore")
+        );
         // Store consensus evaluations in state
         const updatedState = state.set("consensusEvaluations", consensuses);
 
+        // Each component gets its own copy of the sorted array to prevent mutation
         const proposalsOnInitMsg = ProposalsTab.component.onInitResponse([
           updatedState.opportunity!,
-          proposalSlims,
+          [...sortedProposalSlims], // Create a copy for ProposalsTab
           [],
           []
         ]);
         const summaryOnInitMsg = SummaryTab.component.onInitResponse([
           updatedState.opportunity!,
-          proposalSlims,
+          [...sortedProposalSlims], // Create a copy for SummaryTab
           [],
           []
         ]);
@@ -401,26 +413,26 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
         const resourceQuestionsOnInitMsg =
           ResourceQuestionsTab.component.onInitResponse([
             updatedState.opportunity!,
-            proposalSlims,
+            [...sortedProposalSlims], // Create a copy for ResourceQuestionsTab
             [],
             []
           ]);
 
         const consensusOnInitMsg = ConsensusTab.component.onInitResponse([
           updatedState.opportunity!,
-          proposalSlims,
+          [...sortedProposalSlims], // Create a copy for ConsensusTab
           consensuses,
           []
         ]);
 
         const challengeOnInitMsg = ChallengeTab.component.onInitResponse([
           updatedState.opportunity!,
-          proposalSlims,
+          [...sortedProposalSlims], // Create a copy for ChallengeTab
           [],
           []
         ]);
 
-        const proposalCmds = proposalSlims.map((slim) =>
+        const proposalCmds = sortedProposalSlims.map((slim) =>
           api.proposals.twu.readOne(updatedState.opportunity!.id)(
             slim.id,
             (response) => {
@@ -658,11 +670,20 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
 
     let sectionCounter = 1;
 
+    // Use the existing getAlerts function from OpportunityView
+    const opportunityViewAlerts = OpportunityView.component.getAlerts
+      ? OpportunityView.component.getAlerts(state.opportunityViewState)
+      : component_.page.alerts.empty();
+
+    // Cast the alerts for display only (we don't need the dispatch functionality)
+    const alerts = opportunityViewAlerts as component_.page.Alerts<Msg>;
+
     return (
       <div className="opportunity-complete-page">
         {opportunityViewStates.details ? (
           <>
             <h2>{sectionCounter++}. Public View - Opportunity Details</h2>
+            <ViewAlerts alerts={alerts} dispatch={dispatch} />
             <OpportunityViewComponent
               state={opportunityViewStates.details}
               dispatch={() => {}}
