@@ -595,20 +595,12 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                 };
                 if (button) {
                   return (
-                    <Link button {...props} key={`modal-action-${i}`}>
-                      {" "}
-                      {/* NOSONAR */}
+                    <Link button {...props}>
                       {text}
                     </Link>
                   );
                 } else {
-                  return (
-                    <Link {...props} key={`modal-action-${i}`}>
-                      {" "}
-                      {/* NOSONAR */}
-                      {text}
-                    </Link>
-                  );
+                  return <Link {...props}>{text}</Link>;
                 }
               }
             )}
