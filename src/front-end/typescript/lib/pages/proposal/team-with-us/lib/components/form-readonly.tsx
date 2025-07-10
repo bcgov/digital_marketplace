@@ -1,4 +1,8 @@
-import { component as component_, immutable } from "front-end/lib/framework";
+import {
+  component as component_,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
 import { TWUProposal } from "shared/lib/resources/proposal/team-with-us";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
@@ -9,7 +13,6 @@ import {
   ResourceQuestionsView,
   ReviewProposalView
 } from "./form";
-import { Immutable } from "front-end/lib/framework";
 import * as Form from "./form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 import ProposalViewWrapper from "./proposal-view-wrapper";
@@ -60,7 +63,7 @@ const init: component_.base.Init<Params, State, never> = (params) => {
   }
 
   // Create expanded form state for readonly view
-  let expandedForm = form;
+  let expandedForm: typeof form;
 
   try {
     // Expand Resource Questions accordions following immutable update pattern

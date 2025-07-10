@@ -32,7 +32,6 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
-import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
@@ -79,6 +78,7 @@ import {
 import { adt, ADT, adtCurried } from "shared/lib/types";
 import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 
 function setSession(
   state: Immutable<State>,

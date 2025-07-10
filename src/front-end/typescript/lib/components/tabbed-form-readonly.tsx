@@ -80,7 +80,7 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
                 )}
               />
             )}
-            {getTabContent && getTabContent(tab)}
+            {getTabContent?.(tab)}
           </div>
         ))}
       </div>

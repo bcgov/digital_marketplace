@@ -18,7 +18,6 @@ import * as ProposalHistoryTab from "front-end/lib/pages/proposal/code-with-us/v
 import * as History from "front-end/lib/components/table/history";
 import { getHistoryItems } from "front-end/lib/pages/proposal/code-with-us/view/tab/history";
 import ProposalFormReadOnly from "front-end/lib/pages/proposal/code-with-us/lib/components/form-readonly";
-// import ViewTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/view-tab-header";
 
 export interface ProposalDetailState {
   opportunity: CWUOpportunity;

@@ -1,4 +1,8 @@
-import { component as component_, immutable } from "front-end/lib/framework";
+import {
+  component as component_,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
 import OpportunityViewWrapper from "./opportunity-view-wrapper";
@@ -12,7 +16,6 @@ import {
   ScoringView,
   AttachmentsView
 } from "../../lib/components/form";
-import { Immutable } from "front-end/lib/framework";
 import * as Form from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/form";
 import * as Phase from "front-end/lib/pages/opportunity/sprint-with-us/lib/components/phase";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";

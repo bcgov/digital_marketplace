@@ -1,10 +1,13 @@
-import { component as component_, immutable } from "front-end/lib/framework";
+import {
+  component as component_,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
 import { CWUProposal } from "shared/lib/resources/proposal/code-with-us";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import { User } from "shared/lib/resources/user";
 import React from "react";
 import { AttachmentsView, ProponentView, ProposalView } from "./form";
-import { Immutable } from "front-end/lib/framework";
 import * as Form from "./form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 import ProposalViewWrapper from "./proposal-view-wrapper";

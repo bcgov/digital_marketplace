@@ -240,6 +240,7 @@ export interface State {
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
     swuOpportunityCompleteView?: Immutable<PageOpportunitySWUComplete.State>;
     cwuOpportunityCompleteView?: Immutable<PageOpportunityCWUComplete.State>;
+    twuOpportunityCompleteView?: Immutable<PageOpportunityTWUComplete.State>;
     opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
     opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
     opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
@@ -257,7 +258,6 @@ export interface State {
     proposalCWUExportOne?: Immutable<PageProposalCWUExportOne.State>;
     proposalCWUExportAll?: Immutable<PageProposalCWUExportAll.State>;
     proposalList?: Immutable<PageProposalList.State>;
-    twuOpportunityCompleteView?: Immutable<PageOpportunityTWUComplete.State>;
   };
 }
 
@@ -311,10 +311,10 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
   | ADT<"pageOpportunitySWUComplete", PageOpportunitySWUComplete.Msg>
   | ADT<"pageOpportunityCWUComplete", PageOpportunityCWUComplete.Msg>
+  | ADT<"pageOpportunityTWUComplete", PageOpportunityTWUComplete.Msg>
   | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
   | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
   | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
-  | ADT<"pageOpportunityTWUComplete", PageOpportunityTWUComplete.Msg>
   | ADT<"pageProposalTWUCreate", PageProposalTWUCreate.Msg>
   | ADT<"pageProposalTWUEdit", PageProposalTWUEdit.Msg>
   | ADT<"pageProposalTWUView", PageProposalTWUView.Msg>

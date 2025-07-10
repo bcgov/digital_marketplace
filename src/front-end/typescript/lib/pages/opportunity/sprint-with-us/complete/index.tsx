@@ -299,7 +299,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                     return adt("onProposalsAndConsensusEvaluationsReceived", [
                       proposals,
                       consensusEvaluations
-                    ]) as Msg;
+                    ]);
                   }
                 ) as component_.Cmd<Msg>,
                 api.content.readOne()(
@@ -383,7 +383,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 ConsensusTab.component.onInitResponse([
                   state.opportunity as SWUOpportunity,
                   proposalSlims as SWUProposalSlim[],
-                  consensusEvaluations as SWUTeamQuestionResponseEvaluation[],
+                  consensusEvaluations,
                   [] as User[]
                 ])
               )

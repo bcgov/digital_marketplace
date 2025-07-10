@@ -137,13 +137,10 @@ export interface Props<TabId>
   isTabValid(tabId: TabId): boolean;
 }
 
-export const Header = function <TabId>({
-  valid,
-  state,
-  dispatch,
-  getTabLabel,
-  isTabValid
-}: Props<TabId>) {
+export function Header<TabId>(
+  props: Props<TabId>
+): component_.base.ViewElement | null {
+  const { valid, state, dispatch, getTabLabel, isTabValid } = props;
   const tabToDisplay = getActiveTab(state);
   if (!tabToDisplay) {
     return null;
@@ -205,18 +202,7 @@ export const Header = function <TabId>({
       </Nav>
     </div>
   );
-};
-
-export const TabbedFormHeaderAndContent = function <TabId>(
-  props: Props<TabId>
-) {
-  return (
-    <>
-      <Header {...props} />
-      <div>{props.children}</div>
-    </>
-  );
-};
+}
 
 export function view<TabId>(): component_.base.View<Props<TabId>> {
   const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
@@ -254,7 +240,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   return function PageWrapper(props) {
     return (
       <div id={props.state.id}>
-        <TabbedFormHeaderAndContent {...props} />
+        <Header {...props} />
+        <div>{props.children}</div>
         <Footer {...props} />
       </div>
     );

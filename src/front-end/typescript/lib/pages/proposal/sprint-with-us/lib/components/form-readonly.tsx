@@ -1,4 +1,8 @@
-import { component as component_, immutable } from "front-end/lib/framework";
+import {
+  component as component_,
+  immutable,
+  Immutable
+} from "front-end/lib/framework";
 import { SWUProposal } from "shared/lib/resources/proposal/sprint-with-us";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
 import { User } from "shared/lib/resources/user";
@@ -11,7 +15,6 @@ import {
   ReferencesView,
   ReviewProposalView
 } from "./form";
-import { Immutable } from "front-end/lib/framework";
 import * as Form from "./form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 import ProposalViewWrapper from "./proposal-view-wrapper";

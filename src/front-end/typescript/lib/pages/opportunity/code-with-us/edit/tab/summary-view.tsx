@@ -27,7 +27,7 @@ const SuccessfulProponent: component_.base.View<Props> = ({
 }) => {
   if (!opportunity) return null;
   const { successfulProponent } = opportunity;
-  if (!successfulProponent || !successfulProponent.score) {
+  if (!successfulProponent?.score) {
     return null;
   }
   const isViewerAdmin = isAdmin(viewerUser);
