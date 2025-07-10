@@ -12,7 +12,6 @@ import * as AddendaTab from "front-end/lib/pages/opportunity/code-with-us/edit/t
 import * as HistoryTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/history";
 import * as ProposalsTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/proposals";
 import * as SummaryTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/summary";
-import SummaryView from "front-end/lib/pages/opportunity/code-with-us/edit/tab/summary-view";
 import * as OpportunityTab from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity";
 import React from "react";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
@@ -468,6 +467,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
     const AddendaTabComponent = AddendaTab.component.view;
     const ProposalsTabComponent = ProposalsTab.component.view;
     const HistoryTabComponent = HistoryTab.component.view;
+    const SummaryTabComponent = SummaryTab.component.view;
     const ProposalDetailsComponent = ProposalDetailsSection.component.view;
 
     const createOpportunityViewState = (
@@ -560,10 +560,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             viewerUser={state.viewerUser}
           />
         </div>
-        <SummaryView
-          opportunity={state.opportunity}
-          viewerUser={state.viewerUser}
-        />
+        <SummaryTabComponent state={state.summaryState} dispatch={() => {}} />
         <hr />
 
         <h2 className="complete-report-section-header">
