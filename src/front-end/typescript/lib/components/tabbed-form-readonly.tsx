@@ -1,6 +1,7 @@
 import { component as component_, Immutable } from "front-end/lib/framework";
 import React from "react";
-import { Header, Msg, State } from "./tabbed-form";
+import { Msg, State } from "./tabbed-form";
+import * as TabbedFormHeader from "./tabbed-form-header";
 
 export interface Props<TabId>
   extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {
@@ -22,13 +23,7 @@ function createMockHeaderProps<TabId>(
   getTabLabel: (tabId: TabId) => string,
   isTabValid: (tabId: TabId) => boolean = () => true,
   valid: boolean = true
-): component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> & {
-  getTabLabel: (tabId: TabId) => string;
-  isTabValid: (tabId: TabId) => boolean;
-  valid: boolean;
-  disabled?: boolean;
-  children: component_.base.ViewElementChildren;
-} {
+): TabbedFormHeader.Props<TabId> {
   const mockState = {
     id: "readonly-tabbed-form",
     isDropdownOpen: false,
@@ -65,12 +60,12 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
       <div id={id}>
         {tabs.map((tab, index) => (
           <div
-            key={`readonly-tab-${index}`}
+            key={`readonly-tab-${String(tab)}`}
             className={index > 0 ? "mt-5 pt-5 border-top" : ""}>
             {getTabHeader ? (
               getTabHeader(tab)
             ) : (
-              <Header
+              <TabbedFormHeader.view
                 {...createMockHeaderProps(
                   tab,
                   tabs,
