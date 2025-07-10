@@ -270,6 +270,15 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   state,
   viewerUser
 }) => {
+  // Extract components into PascalCase aliases for JSX usage
+  const ProposalTeamQuestionsTabComponent =
+    ProposalTeamQuestionsTab.component.view;
+  const ProposalCodeChallengeTabComponent =
+    ProposalCodeChallengeTab.component.view;
+  const ProposalTeamScenarioTabComponent =
+    ProposalTeamScenarioTab.component.view;
+  const ProposalHistoryTabComponent = ProposalHistoryTab.component.view;
+
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
@@ -284,7 +293,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         style={{ marginBottom: "-37px", marginTop: "20px" }}>
         Proposal - {proposal.anonymousProponentName} - Team Questions
       </h3>
-      <ProposalTeamQuestionsTab.component.view
+      <ProposalTeamQuestionsTabComponent
         state={immutable(state.teamQuestionsState)}
         dispatch={() => {}}
       />
@@ -295,7 +304,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         style={{ marginBottom: "-37px", marginTop: "20px" }}>
         Proposal - {proposal.anonymousProponentName} - Team Questions (Eval)
       </h3>
-      <ProposalTeamQuestionsTab.component.view
+      <ProposalTeamQuestionsTabComponent
         state={immutable(state.teamQuestionsEvalState)}
         dispatch={() => {}}
       />
@@ -306,7 +315,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         style={{ marginBottom: "-37px", marginTop: "20px" }}>
         Proposal - {proposal.anonymousProponentName} - Code Challenge
       </h3>
-      <ProposalCodeChallengeTab.component.view
+      <ProposalCodeChallengeTabComponent
         state={immutable(state.codeChallengeState)}
         dispatch={() => {}}
       />
@@ -317,7 +326,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         style={{ marginBottom: "-37px", marginTop: "20px" }}>
         Proposal - {proposal.anonymousProponentName} - Team Scenario
       </h3>
-      <ProposalTeamScenarioTab.component.view
+      <ProposalTeamScenarioTabComponent
         state={immutable(state.teamScenarioState)}
         dispatch={() => {}}
       />
@@ -328,7 +337,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
         style={{ marginBottom: "-37px", marginTop: "20px" }}>
         Proposal - {proposal.anonymousProponentName} - History
       </h3>
-      <ProposalHistoryTab.component.view
+      <ProposalHistoryTabComponent
         state={immutable(state.historyState)}
         dispatch={() => {}}
       />

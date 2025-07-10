@@ -117,6 +117,9 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   viewerUser,
   dispatch
 }) => {
+  // Extract components into PascalCase aliases for JSX usage
+  const ProposalHistoryTabComponent = ProposalHistoryTab.component.view;
+
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
@@ -130,7 +133,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <h3 className="complete-report-section-header">
         Proposal - {getProponentName(proposal.proponent)} - History
       </h3>
-      <ProposalHistoryTab.component.view
+      <ProposalHistoryTabComponent
         state={state.historyState}
         dispatch={() => dispatch(adt("noop"))}
       />

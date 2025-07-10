@@ -56,6 +56,8 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
       valid = true
     } = props;
 
+    const TabbedFormHeaderView = TabbedFormHeader.view;
+
     return (
       <div id={id}>
         {tabs.map((tab, index) => (
@@ -65,7 +67,7 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
             {getTabHeader ? (
               getTabHeader(tab)
             ) : (
-              <TabbedFormHeader.view
+              <TabbedFormHeaderView
                 {...createMockHeaderProps(
                   tab,
                   tabs,

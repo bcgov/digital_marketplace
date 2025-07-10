@@ -236,6 +236,11 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
   viewerUser,
   dispatch
 }) => {
+  // Extract components into PascalCase aliases for JSX usage
+  const ResourceQuestionsTabComponent = ResourceQuestionsTab.component.view;
+  const ChallengeTabComponent = ChallengeTab.component.view;
+  const ProposalHistoryTabComponent = ProposalHistoryTab.component.view;
+
   return (
     <div key={proposal.id} className="mb-5 pb-5 border-bottom">
       <ProposalFormReadOnly
@@ -249,7 +254,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <h3 className="complete-report-section-header">
         Proposal - {getTWUProponentName(proposal)} - Resource Questions
       </h3>
-      <ResourceQuestionsTab.component.view
+      <ResourceQuestionsTabComponent
         state={state.resourceQuestionsState}
         dispatch={() => dispatch(adt("noop"))}
       />
@@ -258,7 +263,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <h3 className="complete-report-section-header">
         Proposal - {getTWUProponentName(proposal)} - Resource Questions (Eval)
       </h3>
-      <ResourceQuestionsTab.component.view
+      <ResourceQuestionsTabComponent
         state={state.resourceQuestionsEvalState}
         dispatch={() => dispatch(adt("noop"))}
       />
@@ -267,7 +272,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <h3 className="complete-report-section-header">
         Proposal - {getTWUProponentName(proposal)} - Interview/Challenge
       </h3>
-      <ChallengeTab.component.view
+      <ChallengeTabComponent
         state={state.challengeState}
         dispatch={() => dispatch(adt("noop"))}
       />
@@ -276,7 +281,7 @@ const ProposalDetail: component_.base.View<ProposalDetailProps> = ({
       <h3 className="complete-report-section-header">
         Proposal - {getTWUProponentName(proposal)} - History
       </h3>
-      <ProposalHistoryTab.component.view
+      <ProposalHistoryTabComponent
         state={state.historyState}
         dispatch={() => dispatch(adt("noop"))}
       />

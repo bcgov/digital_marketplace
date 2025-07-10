@@ -168,9 +168,10 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   };
 
   return function PageWrapper(props) {
+    const TabbedFormHeaderView = TabbedFormHeader.view;
     return (
       <div id={props.state.id}>
-        <TabbedFormHeader.view {...props} />
+        <TabbedFormHeaderView {...props} />
         <div>{props.children}</div>
         <Footer {...props} />
       </div>
