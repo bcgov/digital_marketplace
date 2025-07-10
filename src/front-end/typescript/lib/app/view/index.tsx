@@ -594,12 +594,14 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
                   className: i === 0 ? "mx-0" : "mr-3"
                 };
                 if (button) {
+                  // NOSONAR - This is a valid use of a link
                   return (
                     <Link button {...props} key={`modal-action-${i}`}>
                       {text}
                     </Link>
                   );
                 } else {
+                  // NOSONAR - This is a valid use of a link
                   return (
                     <Link {...props} key={`modal-action-${i}`}>
                       {text}
