@@ -64,7 +64,7 @@ import * as PageUserList from "front-end/lib/pages/user/list";
 import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
-import { ADT, Id } from "shared/lib/types";
+import { ADT } from "shared/lib/types";
 import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 
 /**
@@ -158,9 +158,9 @@ export type Route =
   | ADT<"cwuGuide", PageGuideView.RouteParams>
   | ADT<"swuGuide", PageGuideView.RouteParams>
   | ADT<"twuGuide", PageGuideView.RouteParams>
-  | ADT<"swuOpportunityCompleteView", { opportunityId: Id }>
-  | ADT<"cwuOpportunityCompleteView", { opportunityId: Id }>
-  | ADT<"twuOpportunityCompleteView", { opportunityId: Id }>;
+  | ADT<"swuOpportunityCompleteView", PageOpportunitySWUComplete.RouteParams>
+  | ADT<"cwuOpportunityCompleteView", PageOpportunityCWUComplete.RouteParams>
+  | ADT<"twuOpportunityCompleteView", PageOpportunityTWUComplete.RouteParams>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
