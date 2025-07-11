@@ -19,7 +19,8 @@ export function swuOpportunityStatusToColor(
       return "warning";
     case SWUOpportunityStatus.Published:
       return "success";
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       return "warning";
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return "warning";
@@ -46,8 +47,10 @@ export function swuOpportunityStatusToTitleCase(
       return "Under Review";
     case SWUOpportunityStatus.Published:
       return "Published";
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
-      return "Team Questions";
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return "Team Questions Evaluation";
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+      return "Team Questions Consensus";
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return "Code Challenge";
     case SWUOpportunityStatus.EvaluationTeamScenario:

@@ -12,7 +12,9 @@ import {
 } from "back-end/lib/server";
 import {
   validateAttachments,
-  validateSWUOpportunityId
+  validateSWUOpportunityId,
+  validateSWUEvaluationPanelMembers,
+  validateSWUTeamQuestionResponseEvaluation
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
 import {
@@ -38,14 +40,26 @@ import {
   SWUOpportunityStatus,
   UpdateRequestBody as SharedUpdateRequestBody,
   UpdateValidationErrors,
-  UpdateWithNoteRequestBody
+  UpdateWithNoteRequestBody,
+  CreateSWUEvaluationPanelMemberBody,
+  CreateSWUEvaluationPanelMemberValidationErrors,
+  SubmitQuestionEvaluationsWithNoteRequestBody,
+  canChangeEvaluationPanel
 } from "shared/lib/resources/opportunity/sprint-with-us";
+import {
+  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors,
+  isValidEvaluationStatusChange,
+  isValidConsensusStatusChange,
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { ADT, adt, Id } from "shared/lib/types";
 import {
   allValid,
   getInvalidValue,
   getValidValue,
+  Invalid,
   isInvalid,
   isValid,
   optional,
@@ -59,6 +73,7 @@ import {
   SWUProposalStatus,
   isSWUProposalInCodeChallenge
 } from "shared/lib/resources/proposal/sprint-with-us";
+import * as questionEvaluationValidation from "shared/lib/validation/evaluations/sprint-with-us/team-questions";
 
 interface ValidatedCreateSWUOpportunityPhaseBody
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
@@ -85,6 +100,7 @@ interface ValidatedCreateRequestBody
     | "teamQuestions"
     | "codeChallengeEndDate"
     | "teamScenarioEndDate"
+    | "evaluationPanel"
   > {
   status: CreateSWUOpportunityStatus;
   session: AuthenticatedSession;
@@ -92,6 +108,7 @@ interface ValidatedCreateRequestBody
   prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
   implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
 }
 
 interface ValidatedUpdateRequestBody {
@@ -105,7 +122,17 @@ interface ValidatedUpdateRequestBody {
     | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
-    | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>;
+    | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>
+    | ADT<
+        "submitIndividualQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
+    | ADT<
+        "submitConsensusQuestionEvaluations",
+        ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+      >
+    | ADT<"editEvaluationPanel", ValidatedUpdateEditRequestBody>
+    | ADT<"finalizeQuestionConsensuses", string>;
 }
 
 type ValidatedUpdateEditRequestBody = Omit<
@@ -116,6 +143,11 @@ type ValidatedUpdateEditRequestBody = Omit<
 interface ValidatedUpdateWithNoteRequestBody
   extends Omit<UpdateWithNoteRequestBody, "attachments"> {
   attachments: FileRecord[];
+}
+
+interface ValidatedSubmitQuestionEvaluationsWithNoteRequestBody
+  extends Omit<SubmitQuestionEvaluationsWithNoteRequestBody, "proposals"> {
+  evaluations: SWUTeamQuestionResponseEvaluation[];
 }
 
 type ValidatedDeleteRequestBody = Id;
@@ -137,9 +169,14 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
   >(async (request) => {
     const respond = (code: number, body: SWUOpportunitySlim[] | string[]) =>
       basicResponse(code, request.session, makeJsonResponseBody(body));
+
+    // Read and validate the panelMember flag
+    const isPanelMember = request.query.panelMember === "true";
+
     const dbResult = await db.readManySWUOpportunities(
       connection,
-      request.session
+      request.session,
+      isPanelMember
     );
     if (isInvalid(dbResult)) {
       return respond(503, [db.ERROR_MESSAGE]);
@@ -212,7 +249,8 @@ const create: crud.Create<
         inceptionPhase: get(body, "inceptionPhase"),
         prototypePhase: get(body, "prototypePhase"),
         implementationPhase: get(body, "implementationPhase"),
-        teamQuestions: get(body, "teamQuestions")
+        teamQuestions: get(body, "teamQuestions"),
+        evaluationPanel: get(body, "evaluationPanel")
       };
     },
     async validateRequestBody(request) {
@@ -238,7 +276,8 @@ const create: crud.Create<
         inceptionPhase,
         prototypePhase,
         implementationPhase,
-        teamQuestions
+        teamQuestions,
+        evaluationPanel
       } = request.body;
 
       const validatedStatus =
@@ -354,6 +393,20 @@ const create: crud.Create<
           )
         );
 
+      const validatedEvaluationPanel = await validateSWUEvaluationPanelMembers(
+        connection,
+        evaluationPanel
+      );
+      if (
+        isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+          validatedEvaluationPanel
+        )
+      ) {
+        return invalid({
+          evaluationPanel: validatedEvaluationPanel.value
+        });
+      }
+
       // Do not validate other fields if the opportunity a draft
       if (validatedStatus.value === SWUOpportunityStatus.Draft) {
         const defaultPhaseLength = 7;
@@ -381,6 +434,7 @@ const create: crud.Create<
                 question: getString(v, "question"),
                 guideline: getString(v, "guideline"),
                 score: getNumber(v, "score"),
+                minimumScore: getNumber<null>(v, "minimumScore", null),
                 wordLimit: getNumber(v, "wordLimit"),
                 order: getNumber(v, "order")
               }))
@@ -473,7 +527,8 @@ const create: crud.Create<
                 defaultPhaseLength
               )
             )
-          }
+          },
+          evaluationPanel: validatedEvaluationPanel.value
         });
       }
 
@@ -551,7 +606,8 @@ const create: crud.Create<
           validatedProposalDeadline,
           validatedAssignmentDate,
           validatedAttachments,
-          validatedStatus
+          validatedStatus,
+          validatedEvaluationPanel
         ])
       ) {
         // Ensure that score weights total 100%
@@ -600,7 +656,8 @@ const create: crud.Create<
           proposalDeadline: validatedProposalDeadline.value,
           assignmentDate: validatedAssignmentDate.value,
           attachments: validatedAttachments.value,
-          status: validatedStatus.value
+          status: validatedStatus.value,
+          evaluationPanel: validatedEvaluationPanel.value
         } as ValidatedCreateRequestBody);
       } else {
         return invalid({
@@ -644,7 +701,11 @@ const create: crud.Create<
             validatedProposalDeadline,
             undefined
           ),
-          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined)
+          assignmentDate: getInvalidValue(validatedAssignmentDate, undefined),
+          evaluationPanel: getInvalidValue<
+            CreateSWUEvaluationPanelMemberValidationErrors[],
+            undefined
+          >(validatedEvaluationPanel, undefined)
         });
       }
     },
@@ -740,12 +801,15 @@ const update: crud.Update<
             inceptionPhase: get(value, "inceptionPhase"),
             prototypePhase: get(value, "prototypePhase"),
             implementationPhase: get(value, "implementationPhase"),
-            teamQuestions: get(value, "teamQuestions")
+            teamQuestions: get(value, "teamQuestions"),
+            evaluationPanel: get(value, "evaluationPanel")
           });
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));
         case "publish":
           return adt("publish", getString(body, "value"));
+        case "finalizeQuestionConsensuses":
+          return adt("finalizeQuestionConsensuses", getString(body, "value"));
         case "startCodeChallenge":
           return adt("startCodeChallenge", getString(body, "value"));
         case "startTeamScenario":
@@ -761,6 +825,21 @@ const update: crud.Update<
             note: getString(value, "note"),
             attachments: getStringArray(value, "attachments")
           });
+        case "submitIndividualQuestionEvaluations":
+          return adt(
+            "submitIndividualQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
+        case "submitConsensusQuestionEvaluations":
+          return adt(
+            "submitConsensusQuestionEvaluations",
+            value as SubmitQuestionEvaluationsWithNoteRequestBody
+          );
+        case "editEvaluationPanel":
+          return adt(
+            "editEvaluationPanel",
+            value as CreateSWUEvaluationPanelMemberBody[]
+          );
         default:
           return null;
       }
@@ -783,11 +862,16 @@ const update: crud.Update<
       const swuOpportunity = validatedSWUOpportunity.value;
 
       if (
-        !(await permissions.editSWUOpportunity(
-          connection,
-          request.session,
-          request.params.id
-        )) ||
+        // Evaluation panel actions checked separately
+        (![
+          "submitIndividualQuestionEvaluations",
+          "submitConsensusQuestionEvaluations"
+        ].includes(request.body.tag) &&
+          !(await permissions.editSWUOpportunity(
+            connection,
+            request.session,
+            request.params.id
+          ))) ||
         !permissions.isSignedIn(request.session)
       ) {
         return invalid({
@@ -958,7 +1042,8 @@ const update: crud.Update<
                       guideline: getString(v, "guideline"),
                       score: getNumber(v, "score"),
                       wordLimit: getNumber(v, "wordLimit"),
-                      order: getNumber(v, "order")
+                      order: getNumber(v, "order"),
+                      minimumScore: getNumber<null>(v, "minimumScore", null)
                     }))
                   : [],
                 attachments: validatedAttachments.value,
@@ -1389,6 +1474,75 @@ const update: crud.Update<
             body: adt("publish", validatedPublishNote.value)
           });
         }
+        case "finalizeQuestionConsensuses": {
+          if (
+            !isValidStatusChange(
+              validatedSWUOpportunity.value.status,
+              SWUOpportunityStatus.EvaluationCodeChallenge
+            )
+          ) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+
+          const consensuses = getValidValue<
+            SWUTeamQuestionResponseEvaluation[]
+          >(
+            await db.readManySWUTeamQuestionResponseEvaluations(
+              connection,
+              request.session,
+              request.params.id,
+              true
+            ),
+            []
+          );
+
+          if (
+            !consensuses.every(
+              ({ status }) =>
+                status === SWUTeamQuestionResponseEvaluationStatus.Submitted
+            )
+          ) {
+            return invalid({
+              permissions: ["Not all consensuses have been submitted."]
+            });
+          }
+
+          const anyScreenableProponents = consensuses.some((consensus) => {
+            return swuOpportunity.teamQuestions.every((tq) => {
+              if (!tq.minimumScore) {
+                return true;
+              }
+
+              return consensus.scores[tq.order].score >= tq.minimumScore;
+            });
+          });
+
+          if (!anyScreenableProponents) {
+            return invalid({
+              permissions: [
+                "You must have at least one proponent that can be screened into the Code Challenge."
+              ]
+            });
+          }
+
+          const validatedFinalizeQuestionConsensusesNote =
+            opportunityValidation.validateNote(request.body.value);
+          if (isInvalid(validatedFinalizeQuestionConsensusesNote)) {
+            return invalid({
+              opportunity: adt(
+                "finalizeQuestionConsensuses" as const,
+                validatedFinalizeQuestionConsensusesNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt(
+              "finalizeQuestionConsensuses",
+              validatedFinalizeQuestionConsensusesNote.value
+            )
+          } as ValidatedUpdateRequestBody);
+        }
         case "startCodeChallenge": {
           if (
             !isValidStatusChange(
@@ -1634,6 +1788,307 @@ const update: crud.Update<
             });
           }
         }
+        case "submitIndividualQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.proposals.map<
+              Promise<
+                Validation<
+                  SWUTeamQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (proposalId) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedSWUTeamQuestionResponseEvaluation =
+                await validateSWUTeamQuestionResponseEvaluation(
+                  connection,
+                  proposalId,
+                  request.session.user.id,
+                  request.session
+                );
+
+              if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedSWUTeamQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  swuOpportunity,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !isValidEvaluationStatusChange(
+                  validatedSWUTeamQuestionResponseEvaluation.value.status,
+                  SWUTeamQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                  validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                  validatedSWUOpportunity.value.teamQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedSWUOpportunity.value.teamQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitIndividualQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitSWUTeamQuestionResponseEvaluation(
+                  request.session,
+                  swuOpportunity,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(validatedSWUTeamQuestionResponseEvaluation.value);
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitIndividualQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitIndividualQuestionEvaluations", {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as SWUTeamQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
+        case "submitConsensusQuestionEvaluations": {
+          const validations = await Promise.all(
+            request.body.value.proposals.map<
+              Promise<
+                Validation<
+                  SWUTeamQuestionResponseEvaluation,
+                  UpdateValidationErrors
+                >
+              >
+            >(async (proposalId) => {
+              // Satisfy the compiler.
+              if (!permissions.isSignedIn(request.session)) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedSWUTeamQuestionResponseEvaluation =
+                await validateSWUTeamQuestionResponseEvaluation(
+                  connection,
+                  proposalId,
+                  request.session.user.id,
+                  request.session,
+                  true
+                );
+
+              if (isInvalid(validatedSWUTeamQuestionResponseEvaluation)) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    getInvalidValue(
+                      validatedSWUTeamQuestionResponseEvaluation,
+                      []
+                    )
+                  )
+                });
+              }
+
+              if (
+                !permissions.editSWUTeamQuestionResponseConsensus(
+                  request.session,
+                  swuOpportunity,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              if (
+                !isValidConsensusStatusChange(
+                  validatedSWUTeamQuestionResponseEvaluation.value.status,
+                  SWUTeamQuestionResponseEvaluationStatus.Submitted
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              const validatedScores =
+                questionEvaluationValidation.validateSWUTeamQuestionResponseEvaluationScores(
+                  validatedSWUTeamQuestionResponseEvaluation.value.scores,
+                  validatedSWUOpportunity.value.teamQuestions
+                );
+
+              if (
+                isInvalid<
+                  CreateSWUTeamQuestionResponseEvaluationScoreValidationErrors[]
+                >(validatedScores) ||
+                validatedScores.value.length !==
+                  validatedSWUOpportunity.value.teamQuestions.length
+              ) {
+                return invalid({
+                  opportunity: adt(
+                    "submitConsensusQuestionEvaluations" as const,
+                    [
+                      "This evaluation could not be submitted for review because it is incomplete. Please edit, complete and save the appropriate form before trying to submit it again."
+                    ]
+                  )
+                });
+              }
+
+              if (
+                !permissions.submitSWUTeamQuestionResponseConsensus(
+                  request.session,
+                  swuOpportunity,
+                  validatedSWUTeamQuestionResponseEvaluation.value
+                )
+              ) {
+                return invalid({
+                  permissions: [permissions.ERROR_MESSAGE]
+                });
+              }
+
+              return valid(validatedSWUTeamQuestionResponseEvaluation.value);
+            })
+          );
+
+          if (!allValid(validations)) {
+            return validations.find(
+              isInvalid
+            ) as Invalid<UpdateValidationErrors>;
+          }
+          const validatedSubmissionNote =
+            questionEvaluationValidation.validateNote(request.body.value.note);
+          if (isInvalid(validatedSubmissionNote)) {
+            return invalid({
+              opportunity: adt(
+                "submitConsensusQuestionEvaluations" as const,
+                validatedSubmissionNote.value
+              )
+            });
+          }
+          return valid({
+            session: request.session,
+            body: adt("submitConsensusQuestionEvaluations", {
+              note: validatedSubmissionNote.value,
+              evaluations: validations.map(
+                ({ value }) => value
+              ) as SWUTeamQuestionResponseEvaluation[]
+            })
+          } as ValidatedUpdateRequestBody);
+        }
+        case "editEvaluationPanel": {
+          if (!canChangeEvaluationPanel(swuOpportunity)) {
+            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
+          }
+          const validatedEvaluationPanel =
+            await validateSWUEvaluationPanelMembers(
+              connection,
+              request.body.value
+            );
+          if (
+            isInvalid<CreateSWUEvaluationPanelMemberValidationErrors[]>(
+              validatedEvaluationPanel
+            )
+          ) {
+            return invalid({
+              opportunity: adt("editEvaluationPanel" as const, {
+                evaluationPanel: validatedEvaluationPanel.value
+              })
+            });
+          }
+
+          // status: CreateSWUOpportunityStatus;
+          // session: AuthenticatedSession;
+          // inceptionPhase?: ValidatedCreateSWUOpportunityPhaseBody;
+          // prototypePhase?: ValidatedCreateSWUOpportunityPhaseBody;
+          // implementationPhase: ValidatedCreateSWUOpportunityPhaseBody;
+          // teamQuestions: CreateSWUTeamQuestionBody[];
+          // evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
+          return valid({
+            session: request.session,
+            body: adt("editEvaluationPanel" as const, {
+              ...omit(
+                swuOpportunity,
+                "createdAt",
+                "updatedAt",
+                "createdBy",
+                "updatedBy",
+                "status",
+                "id",
+                "addenda",
+                "history",
+                "publishedAt",
+                "subscribed",
+                "codeChallengeEndDate",
+                "teamScenarioEndDate",
+                "evaluationPanel",
+                "reporting"
+              ),
+              evaluationPanel: validatedEvaluationPanel.value
+            })
+          } as ValidatedUpdateRequestBody);
+        }
         default:
           return invalid({ opportunity: adt("parseFailure" as const) });
       }
@@ -1647,11 +2102,27 @@ const update: crud.Update<
           SWUOpportunityStatus.Suspended,
           SWUOpportunityStatus.Canceled
         ];
+        const existingOpportunity = getValidValue(
+          await db.readOneSWUOpportunity(
+            connection,
+            request.params.id,
+            session
+          ),
+          null
+        );
         switch (body.tag) {
           case "edit":
             dbResult = await db.updateSWUOpportunityVersion(
               connection,
-              { ...body.value, id: request.params.id },
+              {
+                ...body.value,
+                evaluationPanel:
+                  existingOpportunity?.evaluationPanel?.map((member) => ({
+                    ...member,
+                    user: member.user.id
+                  })) ?? [],
+                id: request.params.id
+              },
               session
             );
             /**
@@ -1685,14 +2156,6 @@ const update: crud.Update<
             }
             break;
           case "publish": {
-            const existingOpportunity = getValidValue(
-              await db.readOneSWUOpportunity(
-                connection,
-                request.params.id,
-                session
-              ),
-              null
-            );
             dbResult = await db.updateSWUOpportunityStatus(
               connection,
               request.params.id,
@@ -1788,6 +2251,56 @@ const update: crud.Update<
               body.value,
               session
             );
+            break;
+          case "submitIndividualQuestionEvaluations":
+            dbResult = await db.submitIndividualSWUQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            break;
+          case "submitConsensusQuestionEvaluations":
+            dbResult = await db.submitConsensusSWUQuestionEvaluations(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUQuestionConsensusSubmitted(
+                connection,
+                dbResult.value
+              );
+            }
+            break;
+          case "editEvaluationPanel":
+            dbResult = await db.updateSWUOpportunityVersion(
+              connection,
+              { ...body.value, id: request.params.id },
+              session
+            );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUPanelChange(
+                connection,
+                dbResult.value,
+                existingOpportunity
+              );
+            }
+            break;
+          case "finalizeQuestionConsensuses":
+            dbResult = await db.finalizeSWUQuestionConsensus(
+              connection,
+              request.params.id,
+              body.value,
+              session
+            );
+            if (isValid(dbResult)) {
+              swuOpportunityNotifications.handleSWUQuestionConsensusFinalized(
+                connection,
+                dbResult.value
+              );
+            }
             break;
         }
         if (isInvalid(dbResult)) {

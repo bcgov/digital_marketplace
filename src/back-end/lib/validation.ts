@@ -1,6 +1,6 @@
 import { Content } from "shared/lib/resources/content";
 import * as db from "back-end/lib/db";
-import { get, union } from "lodash";
+import { get, union, uniqBy } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
 import {
   Affiliation,
@@ -9,6 +9,8 @@ import {
 import { FileRecord } from "shared/lib/resources/file";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import {
+  CreateSWUEvaluationPanelMemberBody,
+  CreateSWUEvaluationPanelMemberValidationErrors,
   SWUOpportunity,
   SWUOpportunityPhase
 } from "shared/lib/resources/opportunity/sprint-with-us";
@@ -26,7 +28,7 @@ import {
   SWUProposal
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-import { User } from "shared/lib/resources/user";
+import { isPublicSectorEmployee, User } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import {
   allValid,
@@ -51,6 +53,8 @@ import {
   validateSWUProposalTeamMemberScrumMaster
 } from "shared/lib/validation/proposal/sprint-with-us";
 import {
+  CreateTWUEvaluationPanelMemberBody,
+  CreateTWUEvaluationPanelMemberValidationErrors,
   CreateTWUResourceBody,
   CreateTWUResourceValidationErrors,
   parseTWUServiceArea,
@@ -72,6 +76,16 @@ import {
   validateMandatorySkills,
   validateOptionalSkills
 } from "shared/lib/validation/opportunity/utility";
+import {
+  MIN_SWU_EVALUATION_PANEL_MEMBERS,
+  MIN_TWU_EVALUATION_PANEL_MEMBERS
+} from "shared/config";
+import {
+  validateEvaluationPanelMemberChair,
+  validateEvaluationPanelMemberEvaluator
+} from "shared/lib/validation/opportunity/utility";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
 
 /**
  * TWU - Team With Us Validation
@@ -399,6 +413,155 @@ export async function validateTWUProposalTeamMembers(
   );
 }
 
+async function validateTWUEvaluationPanelMember(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  Validation<
+    CreateTWUEvaluationPanelMemberBody,
+    CreateTWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  let validatedUser = await validateUserId(connection, getString(raw, "user"));
+  const validaValidatedUser = getValidValue(validatedUser, null);
+  if (validaValidatedUser && !isPublicSectorEmployee(validaValidatedUser)) {
+    validatedUser = invalid(["The user must be a public sector employee."]);
+  }
+  const validatedEvaluator = validateEvaluationPanelMemberEvaluator(
+    get(raw, "evaluator")
+  );
+  const validatedChair = validateEvaluationPanelMemberChair(get(raw, "chair"));
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([
+      validatedUser,
+      validatedEvaluator,
+      validatedChair,
+      validatedOrder
+    ])
+  ) {
+    return valid({
+      evaluator: validatedEvaluator.value,
+      chair: validatedChair.value,
+      user: (validatedUser.value as User).id,
+      order: validatedOrder.value
+    } as CreateTWUEvaluationPanelMemberBody);
+  } else {
+    return invalid({
+      user: getInvalidValue(validatedUser, undefined),
+      evaluator: getInvalidValue(validatedEvaluator, undefined),
+      chair: getInvalidValue(validatedChair, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+}
+
+/**
+ * Checks to see if there is at least one member in an array of evaluation
+ * panel members, that there are no duplicate evaluation panel members, and
+ * that there is one and only one chair.
+ *
+ * @param connection
+ * @param raw - Array of evaluation panel member bodies
+ * @param organization
+ */
+export async function validateTWUEvaluationPanelMembers(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  ArrayValidation<
+    CreateTWUEvaluationPanelMemberBody,
+    CreateTWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of evaluation panel members."] }
+    ]);
+  }
+  if (raw.length < MIN_TWU_EVALUATION_PANEL_MEMBERS) {
+    return invalid([
+      {
+        members: [
+          `Please select at least ${MIN_TWU_EVALUATION_PANEL_MEMBERS} evaluation panel member(s).`
+        ]
+      }
+    ]);
+  }
+  const validatedEvaluationPanelMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateTWUEvaluationPanelMember(connection, v),
+    {}
+  );
+
+  const validValidatedEvaluationPanelMembers = getValidValue<
+    CreateTWUEvaluationPanelMemberBody[],
+    undefined
+  >(validatedEvaluationPanelMembers, undefined);
+
+  if (!validValidatedEvaluationPanelMembers) {
+    return validatedEvaluationPanelMembers;
+  }
+
+  if (
+    validValidatedEvaluationPanelMembers.filter((member) => member.chair)
+      .length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single chair."]
+      }
+    ]);
+  }
+
+  if (
+    uniqBy(validValidatedEvaluationPanelMembers, "user").length !== raw.length
+  ) {
+    return invalid([
+      {
+        members: [
+          "You may not specify the same evaluation panel member more than once."
+        ]
+      }
+    ]);
+  }
+
+  return validatedEvaluationPanelMembers;
+}
+
+export async function validateTWUResourceQuestionResponseEvaluation(
+  connection: db.Connection,
+  proposalId: Id,
+  userId: Id,
+  session: AuthenticatedSession,
+  consensus = false
+): Promise<Validation<TWUResourceQuestionResponseEvaluation>> {
+  try {
+    const dbResult = await db.readOneTWUResourceQuestionResponseEvaluation(
+      connection,
+      proposalId,
+      userId,
+      session,
+      consensus
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const evaluation = dbResult.value;
+    if (!evaluation) {
+      return invalid([
+        "The specified resource question response evaluation was not found."
+      ]);
+    }
+    return valid(evaluation);
+  } catch (exception) {
+    return invalid([
+      "Please select a valid resource question response evaluation."
+    ]);
+  }
+}
+
 export async function validateUserId(
   connection: db.Connection,
   userId: Id
@@ -677,6 +840,123 @@ export async function validateSWUOpportunityId(
   }
 }
 
+async function validateSWUEvaluationPanelMember(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  Validation<
+    CreateSWUEvaluationPanelMemberBody,
+    CreateSWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  let validatedUser = await validateUserId(connection, getString(raw, "user"));
+  const validaValidatedUser = getValidValue(validatedUser, null);
+  if (validaValidatedUser && !isPublicSectorEmployee(validaValidatedUser)) {
+    validatedUser = invalid(["The user must be a public sector employee."]);
+  }
+  const validatedEvaluator = validateEvaluationPanelMemberEvaluator(
+    get(raw, "evaluator")
+  );
+  const validatedChair = validateEvaluationPanelMemberChair(get(raw, "chair"));
+  const validatedOrder = validateOrder(getNumber(raw, "order"));
+
+  if (
+    allValid([
+      validatedUser,
+      validatedEvaluator,
+      validatedChair,
+      validatedOrder
+    ])
+  ) {
+    return valid({
+      evaluator: validatedEvaluator.value,
+      chair: validatedChair.value,
+      user: (validatedUser.value as User).id,
+      order: validatedOrder.value
+    } as CreateSWUEvaluationPanelMemberBody);
+  } else {
+    return invalid({
+      user: getInvalidValue(validatedUser, undefined),
+      evaluator: getInvalidValue(validatedEvaluator, undefined),
+      chair: getInvalidValue(validatedChair, undefined),
+      order: getInvalidValue(validatedOrder, undefined)
+    });
+  }
+}
+
+/**
+ * Checks to see if there is at least one member in an array of evaluation
+ * panel members, that there are no duplicate evaluation panel members, and
+ * that there is one and only one chair.
+ *
+ * @param connection
+ * @param raw - Array of evaluation panel member bodies
+ * @param organization
+ */
+export async function validateSWUEvaluationPanelMembers(
+  connection: db.Connection,
+  raw: any
+): Promise<
+  ArrayValidation<
+    CreateSWUEvaluationPanelMemberBody,
+    CreateSWUEvaluationPanelMemberValidationErrors
+  >
+> {
+  if (!Array.isArray(raw)) {
+    return invalid([
+      { parseFailure: ["Please provide an array of evaluation panel members."] }
+    ]);
+  }
+  if (raw.length < MIN_SWU_EVALUATION_PANEL_MEMBERS) {
+    return invalid([
+      {
+        members: [
+          `Please select at least ${MIN_SWU_EVALUATION_PANEL_MEMBERS} evaluation panel member(s).`
+        ]
+      }
+    ]);
+  }
+  const validatedEvaluationPanelMembers = await validateArrayCustomAsync(
+    raw,
+    async (v) => await validateSWUEvaluationPanelMember(connection, v),
+    {}
+  );
+
+  const validValidatedEvaluationPanelMembers = getValidValue<
+    CreateSWUEvaluationPanelMemberBody[],
+    undefined
+  >(validatedEvaluationPanelMembers, undefined);
+
+  if (!validValidatedEvaluationPanelMembers) {
+    return validatedEvaluationPanelMembers;
+  }
+
+  if (
+    validValidatedEvaluationPanelMembers.filter((member) => member.chair)
+      .length > 1
+  ) {
+    return invalid([
+      {
+        members: ["You may only specify a single chair."]
+      }
+    ]);
+  }
+
+  if (
+    uniqBy(validValidatedEvaluationPanelMembers, "user").length !== raw.length
+  ) {
+    return invalid([
+      {
+        members: [
+          "You may not specify the same evaluation panel member more than once."
+        ]
+      }
+    ]);
+  }
+
+  return validatedEvaluationPanelMembers;
+}
+
 export async function validateMember(
   connection: db.Connection,
   memberId: Id,
@@ -863,6 +1143,38 @@ export async function validateDraftProposalOrganization(
   return await optionalAsync(organization, (v) =>
     validateOrganizationId(connection, v, session, false)
   );
+}
+
+export async function validateSWUTeamQuestionResponseEvaluation(
+  connection: db.Connection,
+  proposalId: Id,
+  userId: Id,
+  session: AuthenticatedSession,
+  consensus = false
+): Promise<Validation<SWUTeamQuestionResponseEvaluation>> {
+  try {
+    const dbResult = await db.readOneSWUTeamQuestionResponseEvaluation(
+      connection,
+      proposalId,
+      userId,
+      session,
+      consensus
+    );
+    if (isInvalid(dbResult)) {
+      return invalid([db.ERROR_MESSAGE]);
+    }
+    const evaluation = dbResult.value;
+    if (!evaluation) {
+      return invalid([
+        "The specified team question response evaluation was not found."
+      ]);
+    }
+    return valid(evaluation);
+  } catch (exception) {
+    return invalid([
+      "Please select a valid team question response evaluation."
+    ]);
+  }
 }
 
 export async function validateContentId(

@@ -4,7 +4,8 @@ const ALL_SERVICE_AREAS = [
   TWUServiceArea.FullStackDeveloper,
   TWUServiceArea.DataProfessional,
   TWUServiceArea.AgileCoach,
-  TWUServiceArea.DevopsSpecialist
+  TWUServiceArea.DevopsSpecialist,
+  TWUServiceArea.ServiceDesigner
 ];
 
 export default ALL_SERVICE_AREAS;

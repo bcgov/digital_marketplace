@@ -4,11 +4,13 @@ import {
   getOrgIdsForOwnerOrAdmin,
   Transaction,
   isUserOwnerOrAdminOfOrg,
-  tryDb
+  tryDb,
+  readOneTWUResourceQuestionResponseEvaluation
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateTWUOpportunityQuery,
+  RawTWUEvaluationPanelMember,
   RawTWUOpportunity,
   RawTWUOpportunitySlim,
   readManyResourceQuestions,
@@ -80,7 +82,7 @@ interface TWUProposalStatusRecord {
   note: string;
 }
 
-interface RawTWUProposal
+export interface RawTWUProposal
   extends Omit<
     TWUProposal,
     | "createdBy"
@@ -467,22 +469,34 @@ export const readOwnTWUProposals = tryDb<
             priceWeight: number;
           }
         >();
+      const chair = await connection<
+        RawTWUEvaluationPanelMember,
+        RawTWUEvaluationPanelMember["user"]
+      >("twuEvaluationPanelMembers")
+        .select("user")
+        .where({
+          opportunityVersion: opportunity.versionId,
+          chair: true
+        });
       const opportunityResourceQuestions = getValidValue(
         await readManyResourceQuestions(connection, opportunity.versionId),
         null
       );
-      const questionResponses = getValidValue(
-        await readManyProposalResourceQuestionResponses(
-          connection,
-          proposal.id,
-          true
-        ),
-        null
-      );
+      const consensusScores =
+        getValidValue(
+          await readOneTWUResourceQuestionResponseEvaluation(
+            connection,
+            proposal.id,
+            chair.user,
+            session,
+            true
+          ),
+          null
+        )?.scores ?? [];
       proposal.questionsScore =
-        opportunityResourceQuestions && questionResponses
+        opportunityResourceQuestions && consensusScores.length
           ? calculateProposalResourceQuestionScore(
-              questionResponses,
+              consensusScores,
               opportunityResourceQuestions
             )
           : undefined;
@@ -1602,7 +1616,17 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
       await readManyResourceQuestions(connection, opportunity.versionId ?? ""),
       null
     );
-  if (!opportunity || !opportunityResourceQuestions) {
+  const chair = await connection<
+    RawTWUEvaluationPanelMember,
+    RawTWUEvaluationPanelMember["user"]
+  >("twuEvaluationPanelMembers")
+    .select("user")
+    .where({
+      opportunityVersion: opportunity.versionId,
+      chair: true
+    })
+    .first();
+  if (!opportunity || !opportunityResourceQuestions || !chair) {
     return proposals;
   }
 
@@ -1616,17 +1640,20 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
     );
 
   for (const scoring of proposalScorings) {
-    const questionResponses =
+    const consensusScores =
       getValidValue(
-        await readManyProposalResourceQuestionResponses(
+        await readOneTWUResourceQuestionResponseEvaluation(
           connection,
           scoring.id,
+          chair.user,
+          session,
           true
         ),
-        []
-      ) ?? [];
+        undefined
+      )?.scores ?? [];
+
     scoring.questionsScore = calculateProposalResourceQuestionScore(
-      questionResponses,
+      consensusScores,
       opportunityResourceQuestions
     );
     scoring.totalScore =
@@ -1743,3 +1770,4 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
     );
   }
 }
+export { RawHistoryRecord as RawTWUProposalHistoryRecord };

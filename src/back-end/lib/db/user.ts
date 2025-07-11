@@ -95,15 +95,17 @@ export const readOneUserSlim = tryDb<[Id], UserSlim | null>(
 );
 
 export const readOneUserByEmail = tryDb<
-  [string, boolean?, UserType?],
+  [string, boolean?, UserType[]?],
   User | null
->(async (connection, email, allowInactive = false, userType) => {
+>(async (connection, email, allowInactive = false, userTypes) => {
   const where = {
     email,
-    status: allowInactive ? "*" : UserStatus.Active,
-    type: userType || "*"
+    status: allowInactive ? "*" : UserStatus.Active
   };
-  const result: RawUser = await connection("users").where(where).first();
+  const query = connection("users").where(where).first();
+  const result: RawUser = await (userTypes
+    ? query.whereIn("type", userTypes)
+    : query);
   return valid(result ? await rawUserToUser(connection, result) : null);
 });
 

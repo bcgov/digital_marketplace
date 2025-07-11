@@ -14,7 +14,10 @@ import {
   allValid,
   ArrayValidation,
   getInvalidValue,
+  getValidValue,
   invalid,
+  mapValid,
+  optional,
   valid,
   validateArrayCustom,
   validateDate,
@@ -76,6 +79,24 @@ export function validateResourceQuestionScore(raw: number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Score");
 }
 
+export function validateResourceQuestionMinimumScore(
+  raw?: number | null,
+  questionScore?: number | null
+): Validation<number | null> {
+  return mapValid(
+    optional(raw, (v) =>
+      validateNumber(
+        v,
+        0,
+        questionScore ? questionScore - 1 : undefined,
+        "minimum score",
+        "a"
+      )
+    ),
+    (v) => v || null
+  );
+}
+
 export function validateResourceQuestionWordLimit(
   raw: number
 ): Validation<number> {
@@ -104,13 +125,18 @@ export function validateResourceQuestion(
     getNumber(raw, "wordLimit")
   );
   const validatedOrder = validateOrder(getNumber(raw, "order"));
+  const validatedMinimumScore = validateResourceQuestionMinimumScore(
+    getNumber<null>(raw, "minimumScore", null),
+    getValidValue(validatedScore, null)
+  );
   if (
     allValid([
       validatedQuestion,
       validatedGuideline,
       validatedScore,
       validatedWordLimit,
-      validatedOrder
+      validatedOrder,
+      validatedMinimumScore
     ])
   ) {
     return valid({
@@ -118,7 +144,8 @@ export function validateResourceQuestion(
       guideline: validatedGuideline.value,
       score: validatedScore.value,
       wordLimit: validatedWordLimit.value,
-      order: validatedOrder.value
+      order: validatedOrder.value,
+      minimumScore: validatedMinimumScore.value
     } as CreateTWUResourceQuestionBody);
   } else {
     return invalid({
@@ -126,7 +153,8 @@ export function validateResourceQuestion(
       guideline: getInvalidValue(validatedGuideline, undefined),
       score: getInvalidValue(validatedScore, undefined),
       wordLimit: getInvalidValue(validatedWordLimit, undefined),
-      order: getInvalidValue(validatedOrder, undefined)
+      order: getInvalidValue(validatedOrder, undefined),
+      minimumScore: getInvalidValue(validatedMinimumScore, undefined)
     });
   }
 }
