@@ -1,3 +1,102 @@
+/**
+ * TWU OPPORTUNITY COMPLETE REPORT
+ *
+ * This file implements a comprehensive report that displays all aspects of a completed
+ * Code with Us opportunity in a single, continuous document. Unlike typical pages in
+ * this application, this component serves as a static report generator rather than an
+ * interactive interface.
+ *
+ * FRAMEWORK USAGE DIFFERENCES:
+ *
+ * This file deviates from standard framework patterns in several important ways to
+ * achieve its reporting objectives:
+ *
+ * 1. COMPONENT REUSE FOR STATIC DISPLAY:
+ *    - Normal Usage: Components are used interactively with full dispatch functionality
+ *    - This File: Reuses existing interactive components (OpportunityView, SummaryTab,
+ *      ProposalsTab, etc.) but disables their interactivity by providing no-op dispatchers
+ *    - Purpose: Leverages existing component rendering logic while preventing user interaction
+ *
+ * 2. STATE MANAGEMENT APPROACH:
+ *    - Normal Usage: Each tab component manages its own state through proper initialization
+ *      and update cycles, with state flowing through framework channels
+ *    - This File: Manually constructs and manages all component states in a single location,
+ *      bypassing individual component lifecycle management
+ *    - Purpose: Ensures all sections are rendered simultaneously rather than tab-by-tab
+ *
+ * 3. COMPONENT LIFECYCLE BYPASSING:
+ *    - Normal Usage: Components follow strict init → update → view lifecycle patterns
+ *    - This File: Creates artificial state objects that match component interfaces without
+ *      going through proper initialization sequences
+ *    - Purpose: Eliminates interactive behavior while maintaining rendering compatibility
+ *
+ * 4. TABBED PAGE ABSTRACTION AVOIDANCE:
+ *    - Normal Usage: Uses TabbedPage component for managing multiple tabs with sidebar
+ *      navigation and proper URL routing
+ *    - This File: Directly instantiates and renders multiple tab components simultaneously
+ *      without tab navigation or routing
+ *    - Purpose: Displays all sections in a linear, printable format
+ *
+ * 5. VIEW STATE MANIPULATION:
+ *    - Normal Usage: Tab changes trigger proper update cycles and state transitions
+ *    - This File: Creates multiple artificial view states for the same component to
+ *      render different tabs (e.g., OpportunityView with different activeInfoTab values)
+ *    - Purpose: Shows different "views" of the same data without user interaction
+ *
+ * 6. MESSAGE PASSING ELIMINATION:
+ *    - Normal Usage: Components communicate through ADT-based message passing with
+ *      proper dispatch routing
+ *    - This File: Provides empty dispatch functions (() => {}) to all components
+ *    - Purpose: Prevents any interactive behavior while maintaining component interfaces
+ *
+ * 7. DATA LOADING STRATEGY:
+ *    - Normal Usage: Each tab component loads its own data as needed through API calls
+ *    - This File: Loads all required data upfront and distributes it to manually
+ *      constructed component states
+ *    - Purpose: Ensures complete data availability for comprehensive reporting
+ *
+ * 8. COMPONENT INITIALIZATION PATTERNS:
+ *    - Normal Usage: Components are initialized through proper framework channels with
+ *      command execution and state management
+ *    - This File: Uses component.init() functions but ignores returned commands,
+ *      focusing only on initial state creation
+ *    - Purpose: Generates states compatible with existing components without triggering
+ *      side effects or async operations
+ *
+ * STRUCTURAL DIFFERENCES:
+ *
+ * - Public View Sections: Renders different "tabs" of the OpportunityView component
+ *   by creating multiple states with different activeInfoTab values
+ * - Admin View Sections: Renders various admin-only tab components (Summary, Opportunity
+ *   Details, Addenda, History, Proposals) in sequential order
+ * - Proposal Details: Uses a specialized ProposalDetailsSection component that manages
+ *   multiple proposal forms and histories simultaneously
+ * - Layout: Uses a linear, section-based layout instead of tabbed navigation
+ * - Browser Warning: Includes client-side browser compatibility checking for optimal
+ *   report rendering
+ *
+ * COMPONENT REUSE EXAMPLES:
+ *
+ * - OpportunityView: Rendered multiple times with different activeInfoTab values to
+ *   show details, attachments, addenda, and terms sections
+ * - Tab Components: SummaryTab, AddendaTab, HistoryTab, ProposalsTab rendered with
+ *   disabled dispatchers
+ * - Form Components: OpportunityReadOnly and ProposalFormReadOnly used for static
+ *   display of form data
+ *
+ * DATA FLOW:
+ *
+ * 1. Single initialization loads opportunity data and proposals
+ * 2. All component states are constructed manually in the update function
+ * 3. ProposalDetailsSection handles complex proposal rendering internally
+ * 4. View function renders all sections sequentially with section numbering
+ * 5. No state updates occur after initial load (except for data loading states)
+ *
+ * This approach allows the application to generate comprehensive reports while reusing
+ * existing component rendering logic, though it requires careful state management to
+ * ensure compatibility with the underlying framework patterns.
+ */
+
 import { makePageMetadata, updateValid, viewValid } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
 import { Route, SharedState } from "front-end/lib/app/types";
