@@ -504,8 +504,8 @@ const AwardDecision: View<AwardDecisionProps> = (props) => {
       {/* Display opportunity details as a standard description list */}
       <Row style={styles.utilities.text.center}>
         <Fragment>
-          {opportunityDetails.map((item, i) => (
-            <DescriptionItem key={`award-detail-${i}`} {...item} />
+          {opportunityDetails.map((item) => (
+            <DescriptionItem key={`award-detail-${item.name}`} {...item} />
           ))}
         </Fragment>
       </Row>
@@ -519,8 +519,11 @@ const AwardDecision: View<AwardDecisionProps> = (props) => {
       <Fragment>
         {callsToAction ? (
           <Row style={{ ...styles.utilities.text.center }}>
-            {callsToAction.map((call, i) => (
-              <CallToAction key={`award-call-to-action-${i}`} {...call} />
+            {callsToAction.map((call) => (
+              <CallToAction
+                key={`award-call-to-action-${call.url}`}
+                {...call}
+              />
             ))}
           </Row>
         ) : null}
