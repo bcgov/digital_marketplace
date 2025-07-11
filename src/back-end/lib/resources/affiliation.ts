@@ -176,7 +176,7 @@ const create: crud.Create<
         connection,
         validatedUserEmail.value,
         false,
-        UserType.Vendor
+        [UserType.Vendor]
       );
       const validatedOrganization = await validateOrganizationId(
         connection,

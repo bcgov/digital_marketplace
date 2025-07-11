@@ -2,7 +2,7 @@ import { SWU_MAX_BUDGET } from "shared/config";
 import { formatAmount, isDateInTheFuture, isDateInThePast } from "shared/lib";
 import { Addendum } from "shared/lib/resources/addendum";
 import { FileRecord } from "shared/lib/resources/file";
-import { UserSlim } from "shared/lib/resources/user";
+import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -57,7 +57,8 @@ export enum SWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationTeamQuestions = "EVAL_QUESTIONS",
+  EvaluationTeamQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Awarded = "AWARDED",
@@ -90,8 +91,10 @@ export function parseSWUOpportunityStatus(
       return SWUOpportunityStatus.UnderReview;
     case SWUOpportunityStatus.Published:
       return SWUOpportunityStatus.Published;
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
-      return SWUOpportunityStatus.EvaluationTeamQuestions;
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return SWUOpportunityStatus.EvaluationTeamQuestionsIndividual;
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
+      return SWUOpportunityStatus.EvaluationTeamQuestionsConsensus;
     case SWUOpportunityStatus.EvaluationCodeChallenge:
       return SWUOpportunityStatus.EvaluationCodeChallenge;
     case SWUOpportunityStatus.EvaluationTeamScenario:
@@ -111,7 +114,8 @@ export function isSWUOpportunityStatusInEvaluation(
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return true;
@@ -122,7 +126,8 @@ export function isSWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Published,
-  SWUOpportunityStatus.EvaluationTeamQuestions,
+  SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
+  SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
   SWUOpportunityStatus.Awarded
@@ -209,6 +214,7 @@ export interface SWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+  evaluationPanel?: SWUEvaluationPanelMember[];
 }
 
 export interface SWUSuccessfulProponent {
@@ -244,6 +250,14 @@ export interface SWUTeamQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+  minimumScore?: number | null;
+}
+
+export interface SWUEvaluationPanelMember {
+  user: UserSlim & { email: User["email"] };
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
 }
 
 export function getQuestionByOrder(
@@ -299,6 +313,13 @@ export type CreateSWUTeamQuestionBody = Omit<
   "createdAt" | "createdBy"
 >;
 
+export type CreateSWUEvaluationPanelMemberBody = {
+  user: Id;
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -322,6 +343,7 @@ export interface CreateRequestBody {
   prototypePhase?: CreateSWUOpportunityPhaseBody;
   implementationPhase: CreateSWUOpportunityPhaseBody;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberBody[];
 }
 
 export interface CreateSWUOpportunityPhaseValidationErrors
@@ -343,6 +365,12 @@ export interface CreateSWUTeamQuestionValidationErrors
   parseFailure?: string[];
 }
 
+export interface CreateSWUEvaluationPanelMemberValidationErrors
+  extends ErrorTypeFrom<CreateSWUEvaluationPanelMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
@@ -353,6 +381,7 @@ export interface CreateValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -363,6 +392,7 @@ export interface CreateValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Update.
@@ -376,7 +406,17 @@ export type UpdateRequestBody =
   | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
-  | ADT<"addNote", UpdateWithNoteRequestBody>;
+  | ADT<"addNote", UpdateWithNoteRequestBody>
+  | ADT<
+      "submitIndividualQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<
+      "submitConsensusQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<"editEvaluationPanel", CreateSWUEvaluationPanelMemberBody[]>
+  | ADT<"finalizeQuestionConsensuses", string>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -390,6 +430,11 @@ export interface UpdateWithNoteValidationErrors
   attachments?: string[][];
 }
 
+export interface SubmitQuestionEvaluationsWithNoteRequestBody {
+  note: string;
+  proposals: Id[];
+}
+
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
@@ -400,6 +445,10 @@ type UpdateADTErrors =
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
   | ADT<"addNote", UpdateWithNoteValidationErrors>
+  | ADT<"submitIndividualQuestionEvaluations", string[]>
+  | ADT<"submitConsensusQuestionEvaluations", string[]>
+  | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
+  | ADT<"finalizeQuestionConsensuses", string[]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -416,6 +465,7 @@ export interface UpdateEditValidationErrors
     | "implementationPhase"
     | "teamQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   mandatorySkills?: string[][];
   optionalSkills?: string[][];
@@ -426,6 +476,7 @@ export interface UpdateEditValidationErrors
   attachments?: string[][];
   scoreWeights?: string[];
   phases?: string[];
+  evaluationPanel?: CreateSWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Delete.
@@ -453,9 +504,15 @@ export function isValidStatusChange(
       return [
         SWUOpportunityStatus.Canceled,
         SWUOpportunityStatus.Suspended,
-        SWUOpportunityStatus.EvaluationTeamQuestions
+        SWUOpportunityStatus.EvaluationTeamQuestionsIndividual
       ].includes(to);
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      return [
+        SWUOpportunityStatus.Canceled,
+        SWUOpportunityStatus.Suspended,
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus
+      ].includes(to);
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       return [
         SWUOpportunityStatus.Canceled,
         SWUOpportunityStatus.Suspended,
@@ -478,17 +535,6 @@ export function isValidStatusChange(
         SWUOpportunityStatus.Published,
         SWUOpportunityStatus.Canceled
       ].includes(to);
-    default:
-      return false;
-  }
-}
-
-export function canSWUOpportunityBeScreenedInToCodeChallenge(
-  o: SWUOpportunity
-): boolean {
-  switch (o.status) {
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
-      return true;
     default:
       return false;
   }
@@ -529,6 +575,21 @@ export function canViewSWUOpportunityProposals(o: SWUOpportunity): boolean {
   );
 }
 
+export function canViewSWUOpportunityTeamQuestionResponseEvaluations(
+  o: SWUOpportunity,
+  status: SWUOpportunityStatus
+): boolean {
+  // Return true if the opportunity has ever had the status.
+  return (
+    !!o.history &&
+    o.history.reduce((acc, record) => {
+      return (
+        acc || (record.type.tag === "status" && record.type.value === status)
+      );
+    }, false as boolean)
+  );
+}
+
 export function canSWUOpportunityDetailsBeEdited(
   o: SWUOpportunity,
   adminsOnly: boolean
@@ -548,7 +609,8 @@ export function canSWUOpportunityDetailsBeEdited(
 export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
   switch (o.status) {
     case SWUOpportunityStatus.Published:
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
@@ -562,12 +624,26 @@ export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
 export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
   switch (o.status) {
     case SWUOpportunityStatus.Published:
-    case SWUOpportunityStatus.EvaluationTeamQuestions:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
     case SWUOpportunityStatus.Awarded:
     case SWUOpportunityStatus.Suspended:
     case SWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canChangeEvaluationPanel(o: SWUOpportunity): boolean {
+  switch (o.status) {
+    case SWUOpportunityStatus.Draft:
+    case SWUOpportunityStatus.UnderReview:
+    case SWUOpportunityStatus.Published:
+    case SWUOpportunityStatus.Suspended:
+    case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
       return true;
     default:
       return false;
@@ -595,7 +671,8 @@ export function hasSWUOpportunityPassedTeamQuestions(
       return acc;
     }
     switch (h.type.value) {
-      case SWUOpportunityStatus.EvaluationTeamQuestions:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsIndividual:
+      case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
       case SWUOpportunityStatus.Awarded:
@@ -661,6 +738,19 @@ export function doesSWUOpportunityStatusAllowGovToViewProposals(
 }
 
 export function doesSWUOpportunityStatusAllowGovToViewFullProposal(
+  s: SWUOpportunityStatus
+): boolean {
+  switch (s) {
+    case SWUOpportunityStatus.EvaluationCodeChallenge:
+    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function doesSWUOpportunityStatusAllowGovToViewTeamQuestionResponseEvaluations(
   s: SWUOpportunityStatus
 ): boolean {
   switch (s) {
