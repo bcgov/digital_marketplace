@@ -56,9 +56,9 @@ import { adt, ADT, Id } from "shared/lib/types";
 import { valid, Validation } from "shared/lib/validation";
 import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "scope" | "attachments" | "addenda";
+export type InfoTab = "details" | "scope" | "attachments" | "addenda";
 
-interface ValidState {
+export interface ValidState {
   toggleWatchLoading: number;
   opportunity: SWUOpportunity | null;
   existingProposal?: SWUProposalSlim | null;
@@ -71,7 +71,7 @@ interface ValidState {
 
 export type State = Validation<Immutable<ValidState>, null>;
 
-type InnerMsg =
+export type InnerMsg =
   | ADT<"noop">
   | ADT<
       "onInitResponse",
@@ -813,7 +813,10 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
     const isDetails = props.state.activeInfoTab === "details";
     return (
       <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
-        <div className="mb-5">
+        <div
+          className={`mb-5 ${
+            isDetails ? "public-details-tab-container" : "public-tab-container"
+          }`}>
           <Header {...props} />
           <Info {...props} />
           {isDetails ? <Budget {...props} /> : null}
