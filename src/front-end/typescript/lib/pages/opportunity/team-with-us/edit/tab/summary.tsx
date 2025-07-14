@@ -10,6 +10,7 @@ import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/view
 import DescriptionList from "front-end/lib/views/description-list";
 import Link, {
   emailDest,
+  externalDest,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -393,14 +394,10 @@ export const component: Tab.Component<State, InnerMsg> = {
         symbol_: leftPlacement(iconLinkSymbol("external-link")),
         button: true,
         color: "primary" as const,
-        onClick: () => {
-          window.open(
-            prefixPath(
-              `/opportunities/team-with-us/${opportunity.id}/complete`
-            ),
-            "_blank"
-          );
-        }
+        dest: externalDest(
+          prefixPath(`/opportunities/team-with-us/${opportunity.id}/complete`)
+        ),
+        newTab: true
       }
     ]);
   }

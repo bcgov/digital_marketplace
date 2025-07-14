@@ -7,6 +7,7 @@ import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/vi
 import DescriptionList from "front-end/lib/views/description-list";
 import Link, {
   emailDest,
+  externalDest,
   iconLinkSymbol,
   leftPlacement,
   routeDest
@@ -311,14 +312,10 @@ export const component: Tab.Component<State, InnerMsg> = {
         symbol_: leftPlacement(iconLinkSymbol("external-link")),
         button: true,
         color: "primary" as const,
-        onClick: () => {
-          window.open(
-            prefixPath(
-              `/opportunities/sprint-with-us/${opportunity.id}/complete`
-            ),
-            "_blank"
-          );
-        }
+        dest: externalDest(
+          prefixPath(`/opportunities/sprint-with-us/${opportunity.id}/complete`)
+        ),
+        newTab: true
       }
     ]);
   }
