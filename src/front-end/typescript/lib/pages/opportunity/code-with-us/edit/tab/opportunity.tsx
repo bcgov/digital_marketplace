@@ -30,7 +30,7 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import { adt, ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { isAdmin, User } from "shared/lib/resources/user";
-import OpportunityViewWrapper from "./opportunity-view-wrapper";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity-view-wrapper";
 
 type ModalId =
   | "publish"

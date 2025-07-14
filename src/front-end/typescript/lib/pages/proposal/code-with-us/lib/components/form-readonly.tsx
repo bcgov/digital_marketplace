@@ -7,10 +7,14 @@ import { CWUProposal } from "shared/lib/resources/proposal/code-with-us";
 import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
 import { User } from "shared/lib/resources/user";
 import React from "react";
-import { AttachmentsView, ProponentView, ProposalView } from "./form";
-import * as Form from "./form";
+import {
+  AttachmentsView,
+  ProponentView,
+  ProposalView
+} from "front-end/lib/pages/proposal/code-with-us/lib/components/form";
+import * as Form from "front-end/lib/pages/proposal/code-with-us/lib/components/form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
-import ProposalViewWrapper from "./proposal-view-wrapper";
+import ProposalViewWrapper from "front-end/lib/pages/proposal/code-with-us/lib/components/proposal-view-wrapper";
 import { State as WrapperState } from "front-end/lib/pages/proposal/code-with-us/edit/tab/proposal";
 import * as SubmitProposalTerms from "front-end/lib/components/submit-proposal-terms";
 

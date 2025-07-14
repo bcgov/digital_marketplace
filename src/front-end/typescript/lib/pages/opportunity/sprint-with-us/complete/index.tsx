@@ -132,11 +132,11 @@ import {
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { SWU_PROPOSAL_EVALUATION_CONTENT_ID } from "front-end/config";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
-import * as OpportunityView from "../view";
-import * as ProposalDetailsSection from "./proposal-details";
-import EditTabHeader from "../lib/views/edit-tab-header";
-import { InfoTab } from "../view"; // Import the type for tabs
-import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import * as OpportunityView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as ProposalDetailsSection from "front-end/lib/pages/opportunity/sprint-with-us/complete/proposal-details";
+import EditTabHeader from "front-end/lib/pages/opportunity/sprint-with-us/lib/views/edit-tab-header";
+import { InfoTab } from "front-end/lib/pages/opportunity/sprint-with-us/view"; // Import the type for tabs
+import OpportunityReadOnly from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity-readonly";
 import { ViewAlerts } from "front-end/lib/app/view/page";
 import {
   BrowserWarning,

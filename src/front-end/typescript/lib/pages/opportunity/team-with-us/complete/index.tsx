@@ -130,10 +130,10 @@ import {
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
 import { TWUResourceQuestionResponseEvaluation } from "shared/lib/resources/evaluations/team-with-us/resource-questions";
-import * as OpportunityView from "../view";
-import EditTabHeader from "../lib/views/edit-tab-header";
-import * as ProposalDetailsSection from "./proposal-details";
-import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import * as OpportunityView from "front-end/lib/pages/opportunity/team-with-us/view";
+import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
+import * as ProposalDetailsSection from "front-end/lib/pages/opportunity/team-with-us/complete/proposal-details";
+import OpportunityReadOnly from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity-readonly";
 import { ViewAlerts } from "front-end/lib/app/view/page";
 import {
   BrowserWarning,

@@ -1,7 +1,7 @@
 import { component as component_, Immutable } from "front-end/lib/framework";
 import React from "react";
-import { Msg, State } from "./tabbed-form";
-import * as TabbedFormHeader from "./tabbed-form-header";
+import { Msg, State } from "front-end/lib/components/tabbed-form";
+import * as TabbedFormHeader from "front-end/lib/components/tabbed-form-header";
 
 export interface Props<TabId>
   extends component_.base.ComponentViewProps<State<TabId>, Msg<TabId>> {

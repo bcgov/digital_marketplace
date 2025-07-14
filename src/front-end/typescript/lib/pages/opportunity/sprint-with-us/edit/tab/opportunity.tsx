@@ -20,7 +20,7 @@ import ReportCardList, {
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
-import OpportunityViewWrapper from "./opportunity-view-wrapper";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/sprint-with-us/edit/tab/opportunity-view-wrapper";
 import {
   canSWUOpportunityDetailsBeEdited,
   isSWUOpportunityPublic,

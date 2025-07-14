@@ -5,7 +5,7 @@ import {
 } from "front-end/lib/framework";
 import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 import { User } from "shared/lib/resources/user";
-import OpportunityViewWrapper from "./opportunity-view-wrapper";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity-view-wrapper";
 import React from "react";
 import {
   AgreementView,
@@ -15,7 +15,7 @@ import {
   ResourceQuestionsView,
   ScoringView,
   AttachmentsView
-} from "../../lib/components/form";
+} from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as TabbedFormReadonly from "front-end/lib/components/tabbed-form-readonly";
 import { State } from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity";

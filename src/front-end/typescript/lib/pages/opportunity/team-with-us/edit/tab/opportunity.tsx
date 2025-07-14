@@ -18,7 +18,7 @@ import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
 import React from "react";
-import OpportunityViewWrapper from "./opportunity-view-wrapper";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity-view-wrapper";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import {

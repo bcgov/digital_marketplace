@@ -125,11 +125,11 @@ import {
 } from "shared/lib/resources/proposal/code-with-us";
 import { OrganizationSlim } from "shared/lib/resources/organization";
 import { AffiliationMember } from "shared/lib/resources/affiliation";
-import * as OpportunityView from "../view";
-import EditTabHeader from "../lib/views/edit-tab-header";
-import * as ProposalDetailsSection from "./proposal-details";
-import { InfoTab } from "../view";
-import OpportunityReadOnly from "../edit/tab/opportunity-readonly";
+import * as OpportunityView from "front-end/lib/pages/opportunity/code-with-us/view";
+import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
+import * as ProposalDetailsSection from "front-end/lib/pages/opportunity/code-with-us/complete/proposal-details";
+import { InfoTab } from "front-end/lib/pages/opportunity/code-with-us/view";
+import OpportunityReadOnly from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity-readonly";
 import { ViewAlerts } from "front-end/lib/app/view/page";
 import {
   BrowserWarning,
