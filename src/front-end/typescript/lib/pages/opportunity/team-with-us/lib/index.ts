@@ -122,7 +122,8 @@ export function twuOpportunityToPublicStatus(
     } else if (o.status === TWUOpportunityStatus.Suspended) {
       return "Suspended";
     } else if (
-      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsIndividual ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsConsensus ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "Evaluation";
@@ -152,7 +153,8 @@ export function twuOpportunityToPublicColor(
     if (isOpen(o)) {
       return "success";
     } else if (
-      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsIndividual ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsConsensus ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "warning";

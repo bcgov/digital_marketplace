@@ -124,7 +124,8 @@ export function swuOpportunityToPublicStatus(
     } else if (o.status === SWUOpportunityStatus.Suspended) {
       return "Suspended";
     } else if (
-      o.status === SWUOpportunityStatus.EvaluationTeamQuestions ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsIndividual ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus ||
       o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {
@@ -155,7 +156,8 @@ export function swuOpportunityToPublicColor(
     if (isOpen(o)) {
       return "success";
     } else if (
-      o.status === SWUOpportunityStatus.EvaluationTeamQuestions ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsIndividual ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus ||
       o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
       o.status === SWUOpportunityStatus.EvaluationTeamScenario
     ) {

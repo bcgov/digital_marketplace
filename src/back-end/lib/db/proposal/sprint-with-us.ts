@@ -2081,7 +2081,7 @@ async function checkAndUpdateSWUOpportunityProcessingStatus(
       // Exclude proposals that didn't make it to the team scenario phase
       SWUProposalStatus.Submitted,
       SWUProposalStatus.UnderReviewTeamQuestions,
-      // SWUProposalStatus.EvaluatedTeamQuestions, // TODO: REVIEW
+      SWUProposalStatus.DeprecatedEvaluatedTeamQuestions,
       SWUProposalStatus.UnderReviewCodeChallenge,
       SWUProposalStatus.EvaluatedCodeChallenge
     ]);
