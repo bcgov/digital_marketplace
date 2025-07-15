@@ -1055,10 +1055,6 @@ export async function checkAndUpdateCWUOpportunityProcessingStatus(
     .select("stat.status")
     .first();
 
-  if (!currentOpportunity) {
-    return; // Opportunity not found
-  }
-
   const currentStatus = currentOpportunity.status;
   const totalProposalsCount = activeProposals.length;
   const evaluatedCount = activeProposals.filter(

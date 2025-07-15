@@ -1780,10 +1780,6 @@ export async function checkAndUpdateTWUOpportunityProcessingStatus(
     .select("statuses.status")
     .first();
 
-  if (!currentOpportunity) {
-    return; // Opportunity not found
-  }
-
   const currentStatus = currentOpportunity.status;
   const totalProposalsCount = activeProposals.length;
   const evaluatedCount = activeProposals.filter(
