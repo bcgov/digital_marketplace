@@ -491,7 +491,7 @@ async function makeEmailNotificationReference(): Promise<
     {
       title: "TWU Opportunity Proposal Deadline Passed",
       emails: await readyForEvalTWUOpportunityT(
-        mocks.govUser,
+        [mocks.govUser],
         mocks.twuOpportunity
       )
     },
