@@ -56,7 +56,6 @@ import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import * as questionEvaluationValidation from "shared/lib/validation/evaluations/team-with-us/resource-questions";
 import * as twuOpportunityNotifications from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import { ADT, adt, Id } from "shared/lib/types";
-import { TWUProposalStatus } from "shared/lib/resources/proposal/team-with-us";
 import {
   CreateTWUResourceQuestionResponseEvaluationScoreValidationErrors,
   isValidConsensusStatusChange,
@@ -1043,38 +1042,6 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
-
-          // todo: remove - not needed any more - the block is deprecated
-          // "startChallenge" triggered - opportunity is about to be moved to EvaluationChallenge status
-          // Check that all proposals have resource question scores, otherwise it is possible
-          // to move to EvaluationChallenge status without all proposals having scores
-          const proposals = getValidValue(
-            await db.readManyTWUProposals(
-              connection,
-              request.session,
-              twuOpportunity.id
-            ),
-            []
-          );
-
-          // If there are proposals but some don't have scores and are not disqualified, return an error
-          if (
-            proposals?.length &&
-            !proposals.every(
-              (p) =>
-                p.questionsScore !== undefined ||
-                p.status === TWUProposalStatus.Disqualified
-            )
-          ) {
-            // todo: check that withdrawn proposals are not included in the count
-            console.log("ERROR: Not all proposals have scores");
-            return invalid({
-              permissions: [
-                "You must score all proponents before moving to the Interview/Challenge evaluation step."
-              ]
-            });
-          }
-
           // Ensure there is at least one screened in proponent
           const screenedInCProponentCount = getValidValue(
             await db.countScreenedInTWUChallenge(connection, twuOpportunity.id),

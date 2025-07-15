@@ -1553,37 +1553,6 @@ const update: crud.Update<
           ) {
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
-
-          // "startCodeChallenge" triggered - opportunity is about to be moved to EvaluationCodeChallenge status
-          // Check that all proposals have team questions scores, otherwise it is possible
-          // to move to EvaluationCodeChallenge status without all proposals having scores
-          const proposals = getValidValue(
-            await db.readManySWUProposals(
-              connection,
-              request.session,
-              validatedSWUOpportunity.value.id
-            ),
-            []
-          );
-
-          // If there are proposals but some don't have scores and are not disqualified, return an error
-          if (
-            proposals?.length &&
-            !proposals.every(
-              (p) =>
-                p.questionsScore !== undefined ||
-                p.status === SWUProposalStatus.Disqualified
-            )
-          ) {
-            // todo: does this handle any other kind of proposals?
-            console.log("ERROR: Not all proposals have scores");
-            return invalid({
-              permissions: [
-                "You must score all proponents before moving to the Code Challenge evaluation step."
-              ]
-            });
-          }
-
           // Ensure there is at least one screened in proponent
           const screenedInCCProponentCount = getValidValue(
             await db.countScreenedInSWUCodeChallenge(

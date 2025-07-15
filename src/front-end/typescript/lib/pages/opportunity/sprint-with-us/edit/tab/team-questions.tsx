@@ -38,8 +38,7 @@ import {
   compareSWUProposalsForPublicSector,
   getSWUProponentName,
   NUM_SCORE_DECIMALS,
-  SWUProposalSlim,
-  SWUProposalStatus
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { ADT, adt } from "shared/lib/types";
 
@@ -51,7 +50,6 @@ export interface State extends Tab.Params {
   showModal: ModalId | null;
   completeTeamQuestionsLoading: number;
   canViewProposals: boolean;
-  allProposalsScored: boolean;
   table: Immutable<Table.State>;
 }
 
@@ -80,7 +78,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       completeTeamQuestionsLoading: 0,
       showModal: null,
       canViewProposals: false,
-      allProposalsScored: false, // todo: how does this work with in-app eval?
       table: immutable(tableState)
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
@@ -104,49 +101,18 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       proposals = proposals.sort((a, b) =>
         compareSWUProposalsForPublicSector(a, b, "questionsScore")
       );
-
-      // TODO: remove - this is not needed any more - the block is deprecated
-      /**
-       * Check if all proposals have been scored for team questions
-       * or are disqualified (which means they don't need to be scored)
-       */
-      const allProposalsScored =
-        proposals.length > 0 &&
-        proposals.every(
-          (p) =>
-            p.questionsScore !== undefined ||
-            p.status === SWUProposalStatus.Disqualified
-        );
-
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
-          .set("canViewProposals", canViewProposals)
-          .set("allProposalsScored", allProposalsScored),
+          .set("canViewProposals", canViewProposals),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
-
+    // todo: remove this and associated code - not needed any more - the block is deprecated
     case "completeTeamQuestions": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
-      // Don't allow completing team questions if not all proposals have been scored
-      if (!state.allProposalsScored) {
-        return [
-          state.set("showModal", null),
-          [
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt("error", {
-                  title: "Incomplete Evaluation",
-                  body: "You must score all proponents before moving to the Code Challenge evaluation step."
-                })
-              )
-            )
-          ]
-        ];
-      }
       state = state.set("showModal", null);
       return [
         startCompleteTeamQuestionsLoading(state),

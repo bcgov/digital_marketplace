@@ -59,7 +59,6 @@ export interface State extends Tab.Params {
   screenToFromLoading: Id | null;
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
-  allProposalsScored: boolean;
   table: Immutable<Table.State>;
 }
 
@@ -100,7 +99,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       canViewProposals: false,
       canProposalsBeScreened: false,
-      allProposalsScored: false,
       table: immutable(tableState)
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
@@ -136,26 +134,12 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           (acc, p) => acc || canTWUProposalBeScreenedToFromChallenge(p),
           false as boolean
         );
-
-      /**
-       * Check if all proposals have been scored for resource questions
-       * or are disqualified (which means they don't need to be scored)
-       */
-      const allProposalsScored =
-        proposals.length > 0 &&
-        proposals.every(
-          (p) =>
-            p.questionsScore !== undefined ||
-            p.status === TWUProposalStatus.Disqualified
-        );
-
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          .set("canProposalsBeScreened", canProposalsBeScreened)
-          .set("allProposalsScored", allProposalsScored),
+          .set("canProposalsBeScreened", canProposalsBeScreened),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -164,22 +148,6 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "completeResourceQuestions": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
-      // Don't allow completing resource questions if not all proposals have been scored
-      if (!state.allProposalsScored) {
-        return [
-          state.set("showModal", null),
-          [
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt("error", {
-                  title: "Incomplete Evaluation",
-                  body: "You must score all proponents before moving to the Interview/Challenge evaluation step."
-                })
-              )
-            )
-          ]
-        ];
-      }
       state = state.set("showModal", null);
       return [
         startCompleteResourceQuestionsLoading(state),
