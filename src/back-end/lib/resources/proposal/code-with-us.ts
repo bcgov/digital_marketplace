@@ -849,7 +849,7 @@ const update: crud.Update<
               session
             );
             break;
-          case "disqualify":
+          case "disqualify": {
             dbResult = await db.updateCWUProposalStatus(
               connection,
               request.params.id,
@@ -857,7 +857,17 @@ const update: crud.Update<
               body.value,
               session
             );
+            // Check if opportunity should be moved to "Processing" status after disqualification
+            const opportunityId = dbResult.value?.opportunity.id;
+            if (opportunityId) {
+              await db.checkAndUpdateCWUOpportunityProcessingStatus(
+                connection,
+                opportunityId,
+                session
+              );
+            }
             break;
+          }
           case "withdraw":
             dbResult = await db.updateCWUProposalStatus(
               connection,

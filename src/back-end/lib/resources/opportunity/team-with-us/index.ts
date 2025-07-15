@@ -1033,6 +1033,7 @@ const update: crud.Update<
             )
           } as ValidatedUpdateRequestBody);
         }
+        // todo: remove - not needed any more - the block is deprecated
         case "startChallenge": {
           if (
             !isValidStatusChange(
@@ -1043,7 +1044,10 @@ const update: crud.Update<
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
 
-          // Check that all proposals have resource question scores
+          // todo: remove - not needed any more - the block is deprecated
+          // "startChallenge" triggered - opportunity is about to be moved to EvaluationChallenge status
+          // Check that all proposals have resource question scores, otherwise it is possible
+          // to move to EvaluationChallenge status without all proposals having scores
           const proposals = getValidValue(
             await db.readManyTWUProposals(
               connection,
@@ -1062,6 +1066,8 @@ const update: crud.Update<
                 p.status === TWUProposalStatus.Disqualified
             )
           ) {
+            // todo: check that withdrawn proposals are not included in the count
+            console.log("ERROR: Not all proposals have scores");
             return invalid({
               permissions: [
                 "You must score all proponents before moving to the Interview/Challenge evaluation step."

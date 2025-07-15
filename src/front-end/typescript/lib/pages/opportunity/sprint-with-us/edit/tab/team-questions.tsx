@@ -105,10 +105,10 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         compareSWUProposalsForPublicSector(a, b, "questionsScore")
       );
 
+      // TODO: remove - this is not needed any more - the block is deprecated
       /**
        * Check if all proposals have been scored for team questions
        * or are disqualified (which means they don't need to be scored)
-       * TODO: review
        */
       const allProposalsScored =
         proposals.length > 0 &&
@@ -123,7 +123,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          .set("allProposalsScored", allProposalsScored), // TODO: REVIEW
+          .set("allProposalsScored", allProposalsScored),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }

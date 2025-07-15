@@ -495,8 +495,7 @@ export function isValidStatusChange(
     case TWUOpportunityStatus.Processing:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
-        TWUOpportunityStatus.Awarded
+        TWUOpportunityStatus.Suspended
       ].includes(to);
     case TWUOpportunityStatus.Suspended:
       return [

@@ -1007,19 +1007,6 @@ export const updateTWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
-      if (
-        status === TWUProposalStatus.EvaluatedChallenge ||
-        status === TWUProposalStatus.Disqualified
-      ) {
-        const opportunityId = dbResult.value.opportunity.id;
-        await checkAndUpdateTWUOpportunityProcessingStatus(
-          trx,
-          opportunityId,
-          session
-        );
-      }
-
       return dbResult.value;
     })
   );
@@ -1227,7 +1214,8 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
         throw new Error("unable to update proposal scores");
       }
 
-      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      // updateTWUProposalChallengeAndPriceScores was invoked
+      // - this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
       const opportunityId = dbResult.value.opportunity.id;
       await checkAndUpdateTWUOpportunityProcessingStatus(
         trx,
@@ -1721,12 +1709,12 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
  * Checks if all proposals for a TWU opportunity that have reached the Challenge phase are evaluated
  * and updates the opportunity status accordingly.
  */
-async function checkAndUpdateTWUOpportunityProcessingStatus(
+export async function checkAndUpdateTWUOpportunityProcessingStatus(
   connection: Connection,
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all active proposals using the existing query generator
+  // Get all active proposals
   const activeProposals = await generateTWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
     .whereNotIn("statuses.status", [
@@ -1739,7 +1727,7 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
       TWUProposalStatus.EvaluatedResourceQuestions
     ]);
 
-  // Get current opportunity status using the existing opportunity query generator
+  // Get current opportunity status
   const currentOpportunity = await generateTWUOpportunityQuery(connection)
     .where({ "opportunities.id": opportunityId })
     .select("statuses.status")

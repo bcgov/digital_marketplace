@@ -1543,6 +1543,7 @@ const update: crud.Update<
             )
           } as ValidatedUpdateRequestBody);
         }
+        // todo: remove - not needed any more - the block is deprecated
         case "startCodeChallenge": {
           if (
             !isValidStatusChange(
@@ -1553,7 +1554,9 @@ const update: crud.Update<
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
 
-          // Check that all proposals have team questions scores
+          // "startCodeChallenge" triggered - opportunity is about to be moved to EvaluationCodeChallenge status
+          // Check that all proposals have team questions scores, otherwise it is possible
+          // to move to EvaluationCodeChallenge status without all proposals having scores
           const proposals = getValidValue(
             await db.readManySWUProposals(
               connection,
@@ -1572,6 +1575,8 @@ const update: crud.Update<
                 p.status === SWUProposalStatus.Disqualified
             )
           ) {
+            // todo: does this handle any other kind of proposals?
+            console.log("ERROR: Not all proposals have scores");
             return invalid({
               permissions: [
                 "You must score all proponents before moving to the Code Challenge evaluation step."
@@ -1622,7 +1627,9 @@ const update: crud.Update<
             return invalid({ permissions: [permissions.ERROR_MESSAGE] });
           }
 
-          // Check that all proposals have code challenge scores
+          // "startTeamScenario" triggered - opportunity is about to be moved to EvaluationTeamScenario status
+          // Check that all proposals have code challenge scores, otherwise it is possible
+          // to move to EvaluationTeamScenario status without all proposals having scores
           const proposals = getValidValue(
             await db.readManySWUProposals(
               connection,

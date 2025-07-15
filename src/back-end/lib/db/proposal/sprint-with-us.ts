@@ -1315,19 +1315,6 @@ export const updateSWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
-      if (
-        status === SWUProposalStatus.EvaluatedTeamScenario ||
-        status === SWUProposalStatus.Disqualified
-      ) {
-        const opportunityId = dbResult.value.opportunity.id;
-        await checkAndUpdateSWUOpportunityProcessingStatus(
-          trx,
-          opportunityId,
-          session
-        );
-      }
-
       return dbResult.value;
     })
   );
@@ -1507,7 +1494,8 @@ export const updateSWUProposalScenarioAndPriceScores = tryDb<
         throw new Error("unable to update proposal scores");
       }
 
-      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      // updateSWUProposalScenarioAndPriceScores was invoked -
+      // this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
       const opportunityId = dbResult.value.opportunity.id;
       await checkAndUpdateSWUOpportunityProcessingStatus(
         trx,
@@ -2066,12 +2054,12 @@ export const readOneSWUProposalAuthor = tryDb<[Id], User | null>(
  * This function checks if all proposals for an SWU opportunity are evaluated for the Team Scenario phase
  * If all proposals are evaluated, it automatically changes the opportunity status to Processing
  */
-async function checkAndUpdateSWUOpportunityProcessingStatus(
+export async function checkAndUpdateSWUOpportunityProcessingStatus(
   connection: Connection,
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all active proposals using the existing query generator
+  // Get all active proposals
   const activeProposals = await generateSWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
     .whereNotIn("statuses.status", [
@@ -2086,7 +2074,7 @@ async function checkAndUpdateSWUOpportunityProcessingStatus(
       SWUProposalStatus.EvaluatedCodeChallenge
     ]);
 
-  // Get current opportunity status using the existing opportunity query generator
+  // Get current opportunity status
   const currentOpportunity = await generateSWUOpportunityQuery(connection)
     .where({ "opportunities.id": opportunityId })
     .select("statuses.status")

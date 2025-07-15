@@ -215,6 +215,7 @@ function makeVendorBodyRows(
             />
           )
         },
+        // Vendor can see the opportunity status
         {
           children: (
             <Badge
@@ -375,6 +376,8 @@ const init: component_.page.Init<
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
     const title = vendor ? "" : "My Opportunities";
+    // Vendors can see both the proposal status as well as the opportunity status
+    // Public sector users can only see the opportunity status
     const headCells: Table.HeadCells = vendor
       ? [
           {

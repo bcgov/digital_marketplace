@@ -278,7 +278,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               )
             ]
           ];
@@ -335,7 +335,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               )
             ]
           ];

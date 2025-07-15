@@ -893,19 +893,6 @@ export const updateCWUProposalStatus = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
-      if (
-        status === CWUProposalStatus.Evaluated ||
-        status === CWUProposalStatus.Disqualified
-      ) {
-        const opportunityId = dbResult.value.opportunity.id;
-        await checkAndUpdateCWUOpportunityProcessingStatus(
-          trx,
-          opportunityId,
-          session
-        );
-      }
-
       return dbResult.value;
     })
   );
@@ -983,7 +970,8 @@ export const updateCWUProposalScore = tryDb<
         throw new Error("unable to update proposal");
       }
 
-      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      // updateCWUProposalScore was invoked -
+      // this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
       const opportunityId = dbResult.value.opportunity.id;
       await checkAndUpdateCWUOpportunityProcessingStatus(
         trx,
@@ -1000,12 +988,12 @@ export const updateCWUProposalScore = tryDb<
  * Checks if all proposals for a CWU opportunity are evaluated and
  * updates the opportunity status accordingly.
  */
-async function checkAndUpdateCWUOpportunityProcessingStatus(
+export async function checkAndUpdateCWUOpportunityProcessingStatus(
   connection: Connection,
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all active proposals using the existing query generator
+  // Get all active proposals
   const activeProposals = await generateCWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
     .whereNotIn("statuses.status", [
@@ -1014,7 +1002,7 @@ async function checkAndUpdateCWUOpportunityProcessingStatus(
       CWUProposalStatus.Draft
     ]);
 
-  // Get current opportunity status using the existing opportunity query generator
+  // Get current opportunity status
   const currentOpportunity = await generateCWUOpportunityQuery(connection)
     .where({ "opp.id": opportunityId })
     .select("stat.status")
