@@ -1267,55 +1267,102 @@ async function updateSWUProposalTeamQuestionResponses(
   }
 }
 
+/**
+ * Internal function that updates an SWU proposal status.
+ */
+async function _updateSWUProposalStatusInternal(
+  trx: Transaction,
+  proposalId: Id,
+  status: SWUProposalStatus,
+  note: string,
+  session: AuthenticatedSession
+): Promise<SWUProposal> {
+  const now = new Date();
+
+  const [statusRecord] = await trx<RawHistoryRecord & { id: Id; proposal: Id }>(
+    "swuProposalStatuses"
+  ).insert(
+    {
+      id: generateUuid(),
+      proposal: proposalId,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    },
+    "*"
+  );
+
+  // Update proposal root record
+  await trx<RawSWUProposal>("swuProposals").where({ id: proposalId }).update(
+    {
+      updatedAt: now,
+      updatedBy: session.user.id
+    },
+    "*"
+  );
+
+  if (!statusRecord) {
+    throw new Error("unable to update proposal");
+  }
+
+  const dbResult = await readOneSWUProposal(
+    trx,
+    statusRecord.proposal,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update proposal");
+  }
+
+  return dbResult.value;
+}
+
 export const updateSWUProposalStatus = tryDb<
   [Id, SWUProposalStatus, string, AuthenticatedSession],
   SWUProposal
 >(async (connection, proposalId, status, note, session) => {
-  const now = new Date();
   return valid(
     await connection.transaction(async (trx) => {
-      const [statusRecord] = await connection<
-        RawHistoryRecord & { id: Id; proposal: Id }
-      >("swuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: now,
-            createdBy: session.user.id,
-            status,
-            note
-          },
-          "*"
-        );
-
-      // Update proposal root record
-      await connection<RawSWUProposal>("swuProposals")
-        .transacting(trx)
-        .where({ id: proposalId })
-        .update(
-          {
-            updatedAt: now,
-            updatedBy: session.user.id
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update proposal");
-      }
-
-      const dbResult = await readOneSWUProposal(
+      return await _updateSWUProposalStatusInternal(
         trx,
-        statusRecord.proposal,
+        proposalId,
+        status,
+        note,
         session
       );
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update proposal");
-      }
+    })
+  );
+});
 
-      return dbResult.value;
+/**
+ * Disqualifies an SWU proposal and updates the opportunity processing status in a single transaction.
+ * This ensures both operations succeed or fail together.
+ */
+export const disqualifySWUProposalAndUpdateOpportunity = tryDb<
+  [Id, string, AuthenticatedSession],
+  SWUProposal
+>(async (connection, proposalId, disqualificationReason, session) => {
+  return valid(
+    await connection.transaction(async (trx) => {
+      // Update proposal status to disqualified
+      const updatedProposal = await _updateSWUProposalStatusInternal(
+        trx,
+        proposalId,
+        SWUProposalStatus.Disqualified,
+        disqualificationReason,
+        session
+      );
+
+      // Check if opportunity should be moved to "Processing" status after disqualification
+      const opportunityId = updatedProposal.opportunity.id;
+      await checkAndUpdateSWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
+
+      return updatedProposal;
     })
   );
 });

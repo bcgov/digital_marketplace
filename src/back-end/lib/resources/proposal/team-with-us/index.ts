@@ -1247,22 +1247,12 @@ const update: crud.Update<
             }
             break;
           case "disqualify": {
-            dbResult = await db.updateTWUProposalStatus(
+            dbResult = await db.disqualifyTWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              TWUProposalStatus.Disqualified,
               body.value,
               session
             );
-            // Check if opportunity should be moved to "Processing" status after disqualification
-            const opportunityId = dbResult.value?.opportunity.id;
-            if (opportunityId) {
-              await db.checkAndUpdateTWUOpportunityProcessingStatus(
-                connection,
-                opportunityId,
-                session
-              );
-            }
             break;
           }
           case "withdraw":

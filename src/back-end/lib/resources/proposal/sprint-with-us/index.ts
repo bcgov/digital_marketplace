@@ -1437,22 +1437,12 @@ const update: crud.Update<
             }
             break;
           case "disqualify": {
-            dbResult = await db.updateSWUProposalStatus(
+            dbResult = await db.disqualifySWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              SWUProposalStatus.Disqualified,
               body.value,
               session
             );
-            // Check if opportunity should be moved to "Processing" status after disqualification
-            const opportunityId = dbResult.value?.opportunity.id;
-            if (opportunityId) {
-              await db.checkAndUpdateSWUOpportunityProcessingStatus(
-                connection,
-                opportunityId,
-                session
-              );
-            }
             break;
           }
           case "withdraw":
