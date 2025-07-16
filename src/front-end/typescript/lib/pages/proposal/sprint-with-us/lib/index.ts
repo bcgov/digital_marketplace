@@ -19,7 +19,7 @@ export function swuProposalStatusToColor(
     case SWUProposalStatus.UnderReviewCodeChallenge:
     case SWUProposalStatus.UnderReviewTeamScenario:
       return "warning";
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
     case SWUProposalStatus.EvaluatedCodeChallenge:
     case SWUProposalStatus.EvaluatedTeamScenario:
       return viewerUserType === UserType.Vendor ? "warning" : "primary";
@@ -52,7 +52,7 @@ export function swuProposalStatusToTitleCase(
       return viewerUserType === UserType.Vendor
         ? "Under Review"
         : "Under Review (TS)";
-    case SWUProposalStatus.EvaluatedTeamQuestions:
+    case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
       return viewerUserType === UserType.Vendor
         ? "Under Review"
         : "Evaluated (TQ)";

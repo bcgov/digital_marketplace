@@ -51,6 +51,14 @@ import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-u
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
+import * as PageQuestionEvaluationIndividualSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-individual";
+import * as PageQuestionEvaluationIndividualSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
+import * as PageQuestionEvaluationConsensusSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-consensus";
+import * as PageQuestionEvaluationConsensusSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-consensus";
+import * as PageQuestionEvaluationIndividualTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-individual";
+import * as PageQuestionEvaluationIndividualTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-individual";
+import * as PageQuestionEvaluationConsensusTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-consensus";
+import * as PageQuestionEvaluationConsensusTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-consensus";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
@@ -68,6 +76,9 @@ import {
   Session
 } from "shared/lib/resources/session";
 import { adt, ADT, adtCurried } from "shared/lib/types";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 
 function setSession(
   state: Immutable<State>,
@@ -173,6 +184,50 @@ function initPage(
         pageStatePath: ["pages", "proposalSWUView"],
         pageRouteParams: route.value,
         pageInit: PageProposalSWUView.component.init,
+        pageGetMetadata: PageProposalSWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalSWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationIndividualSWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalSWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationIndividualSWUCreate.component.init,
+        pageGetMetadata: PageProposalSWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalSWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationIndividualSWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalSWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationIndividualSWUEdit.component.init,
+        pageGetMetadata: PageProposalSWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalSWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationConsensusSWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalSWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationConsensusSWUCreate.component.init,
+        pageGetMetadata: PageProposalSWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalSWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationConsensusSWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalSWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationConsensusSWUEdit.component.init,
         pageGetMetadata: PageProposalSWUView.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalSWUView", value) as Msg;
@@ -409,6 +464,50 @@ function initPage(
         pageGetMetadata: PageProposalTWUView.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageProposalTWUView", value);
+        }
+      });
+    case "questionEvaluationIndividualTWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationIndividualTWUCreate.component.init,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationIndividualTWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationIndividualTWUEdit.component.init,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationConsensusTWUCreate":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationConsensusTWUCreate.component.init,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUView", value) as Msg;
+        }
+      });
+    case "questionEvaluationConsensusTWUEdit":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "proposalTWUView"],
+        pageRouteParams: route.value,
+        pageInit: PageQuestionEvaluationConsensusTWUEdit.component.init,
+        pageGetMetadata: PageProposalTWUView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageProposalTWUView", value) as Msg;
         }
       });
     case "proposalList":
@@ -686,6 +785,42 @@ function initPage(
         pageGetMetadata: PageNotFound.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageNotFound", value);
+        }
+      });
+
+    case "swuOpportunityCompleteView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "swuOpportunityCompleteView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunitySWUComplete.component.init,
+        pageGetMetadata: PageOpportunitySWUComplete.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunitySWUComplete", value);
+        }
+      });
+
+    case "cwuOpportunityCompleteView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "cwuOpportunityCompleteView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityCWUComplete.component.init,
+        pageGetMetadata: PageOpportunityCWUComplete.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityCWUComplete", value);
+        }
+      });
+
+    case "twuOpportunityCompleteView":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "twuOpportunityCompleteView"],
+        pageRouteParams: route.value,
+        pageInit: PageOpportunityTWUComplete.component.init,
+        pageGetMetadata: PageOpportunityTWUComplete.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageOpportunityTWUComplete", value);
         }
       });
   }
@@ -1025,6 +1160,54 @@ const update: component.base.Update<State, Msg> = ({ state, msg }) => {
         pageStatePath: ["pages", "opportunitySWUCreate"],
         pageUpdate: PageOpportunitySWUCreate.component.update,
         pageGetMetadata: PageOpportunitySWUCreate.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunitySWUComplete":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunitySWUComplete.State,
+        PageOpportunitySWUComplete.InnerMsg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => ({
+          tag: "pageOpportunitySWUComplete" as const,
+          value
+        }),
+        pageStatePath: ["pages", "swuOpportunityCompleteView"],
+        pageUpdate: PageOpportunitySWUComplete.component.update,
+        pageGetMetadata: PageOpportunitySWUComplete.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunityCWUComplete":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityCWUComplete.State,
+        PageOpportunityCWUComplete.Msg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageOpportunityCWUComplete", value),
+        pageStatePath: ["pages", "cwuOpportunityCompleteView"],
+        pageUpdate: PageOpportunityCWUComplete.component.update,
+        pageGetMetadata: PageOpportunityCWUComplete.component.getMetadata,
+        pageMsg: msg.value
+      });
+    case "pageOpportunityTWUComplete":
+      return component.app.updatePage<
+        State,
+        Msg,
+        PageOpportunityTWUComplete.State,
+        PageOpportunityTWUComplete.InnerMsg,
+        Route
+      >({
+        ...defaultPageUpdateParams,
+        mapPageMsg: (value) => adt("pageOpportunityTWUComplete", value),
+        pageStatePath: ["pages", "twuOpportunityCompleteView"],
+        pageUpdate: PageOpportunityTWUComplete.component.update,
+        pageGetMetadata: PageOpportunityTWUComplete.component.getMetadata,
         pageMsg: msg.value
       });
     case "pageOpportunitySWUView":

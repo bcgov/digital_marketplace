@@ -81,11 +81,16 @@ Debugging the front-end might require evaluating MSG's in the state object.
 - running locally
 - command line access
 
-1. Run the following:
-`NODE_ENV=development npm run back-end:watch`
+### Regular Development (without source maps)
 
+Run the following for normal development:
+```bash
+NODE_ENV=development npm run back-end:watch
+```
 
-``` bash
+This will display server logs:
+
+```bash
 [request:76d1029e-445a-46b1-a45b-db34cdefbac4] -> GET /images/illustrations/sprint_with_us.svg sessionId="anonymous"
 [request:76d1029e-445a-46b1-a45b-db34cdefbac4] <- 200 1ms
 [request:b7c10e3f-5bd9-49f7-a82f-3d4d21e2b042] -> GET /images/illustrations/collaboration_work.svg sessionId="anonymous"
@@ -99,3 +104,11 @@ Debugging the front-end might require evaluating MSG's in the state object.
 [hooks] Invoked cwuCrudHook at Thu Nov 24 2022 16:02:55 GMT-0800 (Pacific Standard Time)
 [hooks] Invoked swuCrudHook at Thu Nov 24 2022 16:02:55 GMT-0800 (Pacific Standard Time)
 ```
+
+### Debugging with Source Maps
+
+For debugging with IDE integration and source maps, use the following:
+
+In your IDE, set up a debug configuration that connects to your Node.js application. For VS Code You can use the pre-configured 'Run Script:back-end:debug' command, which will automatically start and attach to the debug session. This allows you to set breakpoints, inspect variables, and step through your back-end code.
+
+This setup uses a separate `tsconfig.debug.json` configuration that only generates source maps when needed for debugging.

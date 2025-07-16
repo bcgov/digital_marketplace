@@ -22,10 +22,11 @@ import {
   DEFAULT_OPPORTUNITY_TITLE,
   SWUOpportunity
 } from "shared/lib/resources/opportunity/sprint-with-us";
-import { UserType } from "shared/lib/resources/user";
+import { User, UserType, isAdmin } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUProposalSlim } from "shared/lib/resources/proposal/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   opportunity: SWUOpportunity | null;
@@ -46,7 +47,10 @@ export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
       string,
       Tab.TabId,
       api.ResponseValidation<SWUOpportunity, string[]>,
-      api.ResponseValidation<SWUProposalSlim[], string[]>
+      api.ResponseValidation<SWUProposalSlim[], string[]>,
+      api.ResponseValidation<SWUTeamQuestionResponseEvaluation[], string[]>,
+      User,
+      api.ResponseValidation<User[], string[]>
     ]
   >
 >;
@@ -73,7 +77,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
     userType: [UserType.Government, UserType.Admin],
     success({ routePath, routeParams, shared }) {
       const tabId = routeParams.tab ?? "summary";
-      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId);
+      const [sidebarState, sidebarCmds] = Tab.makeSidebarState(tabId, {
+        isOpportunityOwnerOrAdmin: false,
+        isEvaluator: false,
+        isChair: false
+      });
       const tabComponent = Tab.idToDefinition(tabId).component;
       const [tabState, tabCmds] = tabComponent.init({
         viewerUser: shared.sessionUser
@@ -92,7 +100,7 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
             (msg) => adt("sidebar", msg) as Msg
           ),
           ...component_.cmd.mapMany(tabCmds, (msg) => adt("tab", msg) as Msg),
-          component_.cmd.join(
+          component_.cmd.join4(
             api.opportunities.swu.readOne()(
               routeParams.opportunityId,
               (response) => response
@@ -102,12 +110,27 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                   (response) => response
                 )
               : component_.cmd.dispatch(valid([])),
-            (opportunity, proposals) =>
+            Tab.shouldLoadEvaluationsForTab(tabId)
+              ? tabId === "consensus"
+                ? api.opportunities.swu.teamQuestions.consensuses.readMany(
+                    routeParams.opportunityId
+                  )((response) => response)
+                : api.opportunities.swu.teamQuestions.evaluations.readMany(
+                    routeParams.opportunityId
+                  )((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            Tab.shouldLoadUsersForTab(tabId)
+              ? api.users.readMany()((response) => response)
+              : component_.cmd.dispatch(valid([])),
+            (opportunity, proposals, evaluations, users) =>
               adt("onInitResponse", [
                 routePath,
                 tabId,
                 opportunity,
-                proposals
+                proposals,
+                evaluations,
+                shared.sessionUser,
+                users
               ]) as Msg
           )
         ]
@@ -148,8 +171,15 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [routePath, tabId, opportunityResponse, proposalsResponse] =
-                msg.value;
+              const [
+                routePath,
+                tabId,
+                opportunityResponse,
+                proposalsResponse,
+                evaluationsResponse,
+                viewerUser,
+                usersResponse
+              ] = msg.value;
               // If the opportunity request failed, then show the "Not Found" page.
               // The back-end will return a 404 if the viewer is a Government
               // user and is not the owner.
@@ -168,9 +198,38 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
               }
               const opportunity = opportunityResponse.value;
               const proposals = api.getValidValue(proposalsResponse, []);
+              const evaluations = api.getValidValue(evaluationsResponse, []);
+              const users = api.getValidValue(usersResponse, []);
+
+              // Tab Permissions
+              const evaluationPanelMember = opportunity.evaluationPanel?.find(
+                ({ user: eu }) => eu.id === viewerUser.id
+              );
+              const tabPermissions = {
+                isOpportunityOwnerOrAdmin:
+                  viewerUser.id === opportunity?.createdBy?.id ||
+                  isAdmin(viewerUser),
+                isEvaluator: Boolean(evaluationPanelMember?.evaluator),
+                isChair: Boolean(evaluationPanelMember?.chair)
+              };
+
+              if (!Tab.canGovUserViewTab(tabId, tabPermissions)) {
+                return [
+                  state,
+                  [
+                    component_.cmd.dispatch(
+                      component_.global.replaceRouteMsg(
+                        adt("notFound" as const, { path: routePath })
+                      )
+                    )
+                  ]
+                ];
+              }
+
               // Re-initialize sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
+                tabPermissions,
                 opportunity
               );
               const tabComponent = Tab.idToDefinition(tabId).component;
@@ -185,7 +244,12 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                   ),
                   component_.cmd.dispatch(
                     component_.page.mapMsg(
-                      tabComponent.onInitResponse([opportunity, proposals]),
+                      tabComponent.onInitResponse([
+                        opportunity,
+                        proposals,
+                        evaluations,
+                        users
+                      ]),
                       (msg) => adt("tab", msg)
                     ) as Msg
                   )

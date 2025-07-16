@@ -135,6 +135,68 @@ const router: router_.Router<Route> = {
     },
     {
       path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/evaluations/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualSWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/evaluations/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualSWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/consensus/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusSWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/team-questions/consensus/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusSWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
+            tab: SWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
         "/opportunities/sprint-with-us/:opportunityId/proposals/:proposalId/export"
       ),
       makeRoute({ params }) {
@@ -337,6 +399,68 @@ const router: router_.Router<Route> = {
           value: {
             proposalId: params.proposalId || "",
             opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/evaluations/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualTWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/evaluations/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationIndividualTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/consensus/create"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusTWUCreate",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath(
+        "/opportunities/team-with-us/:opportunityId/proposals/:proposalId/resource-questions/consensus/:userId/edit"
+      ),
+      makeRoute({ params, query }) {
+        return {
+          tag: "questionEvaluationConsensusTWUEdit",
+          value: {
+            proposalId: params.proposalId || "",
+            opportunityId: params.opportunityId || "",
+            userId: params.userId || "",
             tab: TWUProposalViewTab.parseTabId(query.tab) || undefined
           }
         };
@@ -603,6 +727,39 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/opportunities/sprint-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "swuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/code-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "cwuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
+      path: prefixPath("/opportunities/team-with-us/:opportunityId/complete"),
+      makeRoute({ params }) {
+        return {
+          tag: "twuOpportunityCompleteView",
+          value: {
+            opportunityId: params.opportunityId || ""
+          }
+        };
+      }
+    },
+    {
       path: "(.*)",
       makeRoute({ path }) {
         return adt("notFound", { path });
@@ -724,6 +881,42 @@ const router: router_.Router<Route> = {
             route.value.tab ? `?tab=${route.value.tab}` : ""
           }`
         );
+      case "questionEvaluationIndividualSWUCreate":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/team-questions/evaluations/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationIndividualSWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${route.value.proposalId}/team-questions/evaluations/${
+            route.value.userId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
+      case "questionEvaluationConsensusSWUCreate":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${
+            route.value.proposalId
+          }/team-questions/consensus/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusSWUEdit":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${
+            route.value.opportunityId
+          }/proposals/${route.value.proposalId}/team-questions/consensus/${
+            route.value.userId
+          }/edit${route.value.tab ? `?tab=${route.value.tab}` : ""}`
+        );
       case "proposalSWUExportOne":
         return prefixPath(
           `/opportunities/sprint-with-us/${route.value.opportunityId}/proposals/${route.value.proposalId}/export`
@@ -788,6 +981,38 @@ const router: router_.Router<Route> = {
             route.value.proposalId
           }${route.value.tab ? `?tab=${route.value.tab}` : ""}`
         );
+      case "questionEvaluationIndividualTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/resource-questions/evaluations/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationIndividualTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/resource-questions/evaluations/${route.value.userId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusTWUCreate":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/resource-questions/consensus/create${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
+      case "questionEvaluationConsensusTWUEdit":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/proposals/${
+            route.value.proposalId
+          }/resource-questions/consensus/${route.value.userId}/edit${
+            route.value.tab ? `?tab=${route.value.tab}` : ""
+          }`
+        );
       case "opportunityCWUCreate":
         return prefixPath("/opportunities/code-with-us/create");
       case "opportunityCWUEdit":
@@ -840,6 +1065,18 @@ const router: router_.Router<Route> = {
         return prefixPath(`/swu/${route.value.guideAudience}`);
       case "twuGuide":
         return prefixPath(`/twu/${route.value.guideAudience}`);
+      case "swuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/sprint-with-us/${route.value.opportunityId}/complete`
+        );
+      case "cwuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/code-with-us/${route.value.opportunityId}/complete`
+        );
+      case "twuOpportunityCompleteView":
+        return prefixPath(
+          `/opportunities/team-with-us/${route.value.opportunityId}/complete`
+        );
       case "notFound":
         return route.value.path || prefixPath("/not-found");
     }

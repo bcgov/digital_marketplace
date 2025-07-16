@@ -27,6 +27,7 @@
     "back-end:start": "node build/back-end/back-end/start.js",
     "back-end:build": "npx grunt back-end-build",
     "back-end:watch": "npx nodemon --watch ./src/back-end --watch ./src/shared --ext ts,tsx,js,json,yaml --exec \"npx grunt back-end-build-development && npm run back-end:start\"",
+    "back-end:debug-watch": "npx nodemon --watch ./src/back-end --watch ./src/shared --ext ts,tsx,js,json,yaml --exec \"npx tsc --project src/back-end/tsconfig.debug.json --outDir build/back-end && npm run back-end:start\"",
     "back-end:typedoc": "npx typedoc --name 'Digital Marketplace Back-End' --tsconfig src/back-end/tsconfig.json --cleanOutputDir --out typedoc/back-end --excludeExternals --entryPointStrategy expand src/back-end",
     "shared:lint": "npx eslint -c .eslintrc.js src/shared && echo Lint Successful\n",
     "shared:typedoc": "npx typedoc --name 'Digital Marketplace Shared' --tsconfig src/shared/tsconfig.json --cleanOutputDir --out typedoc/shared --excludeExternals --entryPointStrategy expand src/shared",

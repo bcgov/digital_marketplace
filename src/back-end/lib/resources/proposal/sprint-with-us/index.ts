@@ -38,8 +38,6 @@ import {
   SWUProposalStatus,
   UpdateEditValidationErrors,
   UpdateRequestBody as SharedUpdateRequestBody,
-  UpdateTeamQuestionScoreBody,
-  UpdateTeamQuestionScoreValidationErrors,
   UpdateValidationErrors
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
@@ -68,9 +66,6 @@ interface ValidatedUpdateRequestBody {
   body:
     | ADT<"edit", ValidatedUpdateEditRequestBody>
     | ADT<"submit", string>
-    | ADT<"scoreQuestions", UpdateTeamQuestionScoreBody[]>
-    | ADT<"screenInToCodeChallenge", string>
-    | ADT<"screenOutFromCodeChallenge", string>
     | ADT<"scoreCodeChallenge", number>
     | ADT<"screenInToTeamScenario", string>
     | ADT<"screenOutFromTeamScenario", string>
@@ -156,7 +151,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       // create a permissions check for Owners and Admins
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+        !(await permissions.isOrgOwnerOrAdmin(connection, request.session))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -234,7 +229,7 @@ const create: crud.Create<
         request.body.tag === "json" ? request.body.value : {};
       return {
         opportunity: getString(body, "opportunity"),
-        organization: getString(body, "organization", undefined),
+        organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         inceptionPhase: get(body, "inceptionPhase"),
@@ -574,12 +569,6 @@ const update: crud.Update<
           });
         case "submit":
           return adt("submit", getString(body, "value", ""));
-        case "scoreQuestions":
-          return adt("scoreQuestions", value as UpdateTeamQuestionScoreBody[]);
-        case "screenInToCodeChallenge":
-          return adt("screenInToCodeChallenge", getString(body, "value"));
-        case "screenOutFromCodeChallenge":
-          return adt("screenOutFromCodeChallenge", getString(body, "value"));
         case "scoreCodeChallenge":
           return adt(
             "scoreCodeChallenge",
@@ -1094,138 +1083,6 @@ const update: crud.Update<
             body: adt("submit" as const, validatedSubmissionNote.value)
           } as ValidatedUpdateRequestBody);
         }
-        case "scoreQuestions": {
-          if (
-            ![
-              SWUProposalStatus.UnderReviewTeamQuestions,
-              SWUProposalStatus.EvaluatedTeamQuestions
-            ].includes(validatedSWUProposal.value.status)
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
-          // The opportunity must be in team questions stage
-          if (
-            swuOpportunity.status !==
-            SWUOpportunityStatus.EvaluationTeamQuestions
-          ) {
-            return invalid({
-              permissions: [
-                "The opportunity is not in the correct stage of evaluation to perform that action."
-              ]
-            });
-          }
-          const validatedQuestionsScore =
-            proposalValidation.validateTeamQuestionScores(
-              request.body.value,
-              swuOpportunity.teamQuestions
-            );
-          if (
-            isInvalid<UpdateTeamQuestionScoreValidationErrors[]>(
-              validatedQuestionsScore
-            )
-          ) {
-            return invalid({
-              proposal: adt(
-                "scoreQuestions" as const,
-                getInvalidValue(validatedQuestionsScore, [])
-              )
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt("scoreQuestions" as const, validatedQuestionsScore.value)
-          } as ValidatedUpdateRequestBody);
-        }
-        case "screenInToCodeChallenge": {
-          if (
-            !isValidStatusChange(
-              validatedSWUProposal.value.status,
-              SWUProposalStatus.UnderReviewCodeChallenge,
-              request.session.user.type,
-              swuOpportunity.proposalDeadline
-            )
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
-          // The opportunity must be in team question stage still
-          if (
-            swuOpportunity.status !==
-            SWUOpportunityStatus.EvaluationTeamQuestions
-          ) {
-            return invalid({
-              permissions: [
-                "The opportunity is not in the correct stage of evaluation to perform that action."
-              ]
-            });
-          }
-          const validatedScreenInCCNote = proposalValidation.validateNote(
-            request.body.value
-          );
-          if (isInvalid(validatedScreenInCCNote)) {
-            return invalid({
-              proposal: adt(
-                "screenInToCodeChallenge" as const,
-                getInvalidValue(validatedScreenInCCNote, [])
-              )
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt(
-              "screenInToCodeChallenge" as const,
-              validatedScreenInCCNote.value
-            )
-          });
-        }
-        case "screenOutFromCodeChallenge": {
-          if (
-            !isValidStatusChange(
-              validatedSWUProposal.value.status,
-              SWUProposalStatus.EvaluatedTeamQuestions,
-              request.session.user.type,
-              swuOpportunity.proposalDeadline
-            )
-          ) {
-            return invalid({
-              permissions: [permissions.ERROR_MESSAGE]
-            });
-          }
-          // The opportunity must be in the team questions or code challenge stage
-          if (
-            ![
-              SWUOpportunityStatus.EvaluationTeamQuestions,
-              SWUOpportunityStatus.EvaluationCodeChallenge
-            ].includes(swuOpportunity.status)
-          ) {
-            return invalid({
-              permissions: [
-                "The opportunity is not in the correct stage of evaluation to perform that action."
-              ]
-            });
-          }
-          const validatedScreenOutCCNote = proposalValidation.validateNote(
-            request.body.value
-          );
-          if (isInvalid(validatedScreenOutCCNote)) {
-            return invalid({
-              proposal: adt(
-                "screenOutFromCodeChallenge" as const,
-                getInvalidValue(validatedScreenOutCCNote, [])
-              )
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt(
-              "screenOutFromCodeChallenge" as const,
-              validatedScreenOutCCNote.value
-            )
-          });
-        }
         case "scoreCodeChallenge": {
           if (
             ![
@@ -1531,32 +1388,6 @@ const update: crud.Update<
                 request.body.session
               );
             }
-            break;
-          case "scoreQuestions":
-            dbResult = await db.updateSWUProposalTeamQuestionScores(
-              connection,
-              request.params.id,
-              body.value,
-              session
-            );
-            break;
-          case "screenInToCodeChallenge":
-            dbResult = await db.updateSWUProposalStatus(
-              connection,
-              request.params.id,
-              SWUProposalStatus.UnderReviewCodeChallenge,
-              body.value,
-              session
-            );
-            break;
-          case "screenOutFromCodeChallenge":
-            dbResult = await db.updateSWUProposalStatus(
-              connection,
-              request.params.id,
-              SWUProposalStatus.EvaluatedTeamQuestions,
-              body.value,
-              session
-            );
             break;
           case "scoreCodeChallenge":
             dbResult = await db.updateSWUProposalCodeChallengeScore(

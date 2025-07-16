@@ -341,6 +341,24 @@ export function validateTeamQuestionScore(raw: number): Validation<number> {
   return validateNumber(raw, 1, undefined, "Score");
 }
 
+export function validateTeamQuestionMinimumScore(
+  raw?: number | null,
+  questionScore?: number | null
+): Validation<number | null> {
+  return mapValid(
+    optional(raw, (v) =>
+      validateNumber(
+        v,
+        0,
+        questionScore ? questionScore - 1 : undefined,
+        "minimum score",
+        "a"
+      )
+    ),
+    (v) => v || null
+  );
+}
+
 export function validateTeamQuestionWordLimit(raw: number): Validation<number> {
   return validateNumber(raw, 1, MAX_TEAM_QUESTION_WORD_LIMIT, "Word Limit");
 }
@@ -367,13 +385,18 @@ export function validateTeamQuestion(
     getNumber(raw, "wordLimit")
   );
   const validatedOrder = validateTeamQuestionOrder(getNumber(raw, "order"));
+  const validatedMinimumScore = validateTeamQuestionMinimumScore(
+    getNumber<null>(raw, "minimumScore", null),
+    getValidValue(validatedScore, null)
+  );
   if (
     allValid([
       validatedQuestion,
       validatedGuideline,
       validatedScore,
       validatedWordLimit,
-      validatedOrder
+      validatedOrder,
+      validatedMinimumScore
     ])
   ) {
     return valid({
@@ -381,7 +404,8 @@ export function validateTeamQuestion(
       guideline: validatedGuideline.value,
       score: validatedScore.value,
       wordLimit: validatedWordLimit.value,
-      order: validatedOrder.value
+      order: validatedOrder.value,
+      minimumScore: validatedMinimumScore.value
     } as CreateSWUTeamQuestionBody);
   } else {
     return invalid({
@@ -389,7 +413,8 @@ export function validateTeamQuestion(
       guideline: getInvalidValue(validatedGuideline, undefined),
       score: getInvalidValue(validatedScore, undefined),
       wordLimit: getInvalidValue(validatedWordLimit, undefined),
-      order: getInvalidValue(validatedOrder, undefined)
+      order: getInvalidValue(validatedOrder, undefined),
+      minimumScore: getInvalidValue(validatedMinimumScore, undefined)
     });
   }
 }

@@ -9,6 +9,7 @@ import {
   RawAddendum,
   rawAddendumToAddendum
 } from "front-end/lib/http/api/addendum/lib";
+export * as teamQuestions from "front-end/lib/http/api/opportunity/sprint-with-us/team-questions";
 
 const NAMESPACE = "opportunities/sprint-with-us";
 
@@ -21,14 +22,18 @@ export function create<Msg>(): crud.CreateAction<
   return crud.makeCreateAction(NAMESPACE, rawSWUOpportunityToSWUOpportunity);
 }
 
-export function readMany<Msg>(): crud.ReadManyAction<
-  Resource.SWUOpportunitySlim,
-  string[],
-  Msg
-> {
+export function readMany<Msg>({
+  panelMember
+}: {
+  panelMember?: true;
+} = {}): crud.ReadManyAction<Resource.SWUOpportunitySlim, string[], Msg> {
+  const params = new URLSearchParams({
+    ...(panelMember !== undefined ? { panelMember: "true" } : {})
+  });
   return crud.makeReadManyAction(
     NAMESPACE,
-    (a: Resource.SWUOpportunitySlim) => a
+    (a: Resource.SWUOpportunitySlim) => a,
+    params.toString()
   );
 }
 
@@ -171,6 +176,9 @@ function rawSWUOpportunityToSWUOpportunity(
     ),
     teamQuestions: raw.teamQuestions
       .map((tq) => rawSWUTeamQuestionToSWUTeamQuestion(tq))
-      .sort((a, b) => compareNumbers(a.order, b.order))
+      .sort((a, b) => compareNumbers(a.order, b.order)),
+    evaluationPanel: raw.evaluationPanel?.sort((a, b) =>
+      compareNumbers(a.order, b.order)
+    )
   };
 }
