@@ -18,18 +18,7 @@ import {
 import Badge from "front-end/lib/views/badge";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
-import {
-  Button,
-  Col,
-  Row,
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  FormGroup,
-  Label,
-  Input
-} from "reactstrap";
+import { Button, Col, Row, FormGroup, Label, Input } from "reactstrap";
 import { compareStrings } from "shared/lib";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -307,16 +296,12 @@ function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   });
 }
 
-interface ExportModalProps {
-  state: Immutable<State>;
-  dispatch: component_.base.Dispatch<Msg>;
-}
+const getModal: component_.page.GetModal<State, Msg> = (state) => {
+  if (!state.showExportModal) {
+    return component_.page.modal.hide();
+  }
 
-const ExportModal: component_.base.View<ExportModalProps> = ({
-  state,
-  dispatch
-}) => {
-  const { exportOptions, showExportModal, exportLoading } = state;
+  const { exportOptions, exportLoading } = state;
   const isLoading = exportLoading;
 
   // Check if at least one user type and one field is selected
@@ -326,14 +311,26 @@ const ExportModal: component_.base.View<ExportModalProps> = ({
   const hasFieldSelected = Object.values(exportOptions.fields).some((v) => v);
   const canExport = hasUserTypeSelected && hasFieldSelected && !isLoading;
 
-  return (
-    <Modal
-      isOpen={showExportModal}
-      toggle={() => dispatch(adt("hideExportModal"))}>
-      <ModalHeader toggle={() => dispatch(adt("hideExportModal"))}>
-        Export Contact List
-      </ModalHeader>
-      <ModalBody>
+  return component_.page.modal.show<Msg>({
+    title: "Export Contact List",
+    onCloseMsg: adt("hideExportModal"),
+    actions: [
+      {
+        text: isLoading ? "Exporting..." : "Export",
+        color: "primary",
+        msg: adt("exportContactList"),
+        button: true,
+        disabled: !canExport,
+        loading: isLoading
+      },
+      {
+        text: "Cancel",
+        color: "secondary",
+        msg: adt("hideExportModal")
+      }
+    ],
+    body: (dispatch) => (
+      <div>
         <div className="mb-4">
           <h5>Select User Types</h5>
           <FormGroup check className="mb-2">
@@ -415,22 +412,9 @@ const ExportModal: component_.base.View<ExportModalProps> = ({
             </Label>
           </FormGroup>
         </div>
-      </ModalBody>
-      <ModalFooter>
-        <Button
-          color="secondary"
-          onClick={() => dispatch(adt("hideExportModal"))}>
-          Cancel
-        </Button>
-        <Button
-          color="primary"
-          onClick={() => dispatch(adt("exportContactList"))}
-          disabled={!canExport}>
-          {isLoading ? "Exporting..." : "Export"}
-        </Button>
-      </ModalFooter>
-    </Modal>
-  );
+      </div>
+    )
+  });
 };
 
 const view: component_.page.View<State, InnerMsg, Route> = ({
@@ -459,8 +443,6 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
           state={state.table}
           dispatch={dispatchTable}
         />
-
-        <ExportModal state={state} dispatch={dispatch} />
       </Col>
     </Row>
   );
@@ -478,5 +460,6 @@ export const component: component_.page.Component<
   view,
   getMetadata() {
     return makePageMetadata("Users");
-  }
+  },
+  getModal
 };
