@@ -244,7 +244,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               ) as component_.Cmd<Msg>
             ]
           ];
@@ -301,7 +301,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               ) as component_.Cmd<Msg>
             ]
           ];
