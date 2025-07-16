@@ -12,6 +12,7 @@ import {
   nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
+import { ServerHttpMethod } from "back-end/lib/types";
 import { validateFileRecord, validateUserId } from "back-end/lib/validation";
 import { get, isBoolean } from "lodash";
 import { getString } from "shared/lib";
@@ -110,6 +111,7 @@ const exportContactList = (connection: db.Connection) => {
       let users: User[] = [];
 
       if (userTypes.includes("gov")) {
+        // Fetch government users
         const govUsers = await db.readManyUsersByRole(
           connection,
           UserType.Government,
@@ -117,6 +119,16 @@ const exportContactList = (connection: db.Connection) => {
         );
         if (isValid(govUsers)) {
           users = [...users, ...govUsers.value];
+        }
+
+        // Fetch admin users
+        const adminUsers = await db.readManyUsersByRole(
+          connection,
+          UserType.Admin,
+          false
+        );
+        if (isValid(adminUsers)) {
+          users = [...users, ...adminUsers.value];
         }
       }
 
@@ -575,17 +587,21 @@ const delete_: crud.Delete<
   };
 };
 
+const exportContactListRoute = (connection: db.Connection) => {
+  return {
+    method: ServerHttpMethod.Get,
+    path: "/export-contact-list",
+    handler: exportContactList(connection)
+  };
+};
+
 const resource: crud.BasicCrudResource<Session, db.Connection> = {
   routeNamespace,
   readOne,
   readMany,
   update,
-  delete: delete_
+  delete: delete_,
+  custom: [exportContactListRoute]
 };
 
-export default {
-  ...resource,
-  custom: {
-    exportContactList
-  }
-};
+export default resource;
