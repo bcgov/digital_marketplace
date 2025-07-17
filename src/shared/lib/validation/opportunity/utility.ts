@@ -147,3 +147,19 @@ export function validateDescription(raw: string): Validation<string> {
 export function validateLocation(raw: string): Validation<string> {
   return validateGenericString(raw, "Location", 1);
 }
+
+export function validateEvaluationPanelMemberEvaluator(
+  raw: any
+): Validation<boolean> {
+  return typeof raw === "boolean"
+    ? valid(raw)
+    : invalid(["Invalid value provided for evaluator."]);
+}
+
+export function validateEvaluationPanelMemberChair(
+  raw: any
+): Validation<boolean> {
+  return typeof raw === "boolean"
+    ? valid(raw)
+    : invalid(["Invalid value provided for chair."]);
+}

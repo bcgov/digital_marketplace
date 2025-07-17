@@ -9,7 +9,6 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/opportunity/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/code-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
 import {
   iconLinkSymbol,
   leftPlacement,
@@ -31,6 +30,7 @@ import {
 } from "shared/lib/resources/opportunity/code-with-us";
 import { adt, ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { isAdmin, User } from "shared/lib/resources/user";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/code-with-us/edit/tab/opportunity-view-wrapper";
 
 type ModalId =
   | "publish"
@@ -656,7 +656,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
   const opportunity = state.opportunity;
   if (!opportunity || opportunity.status === CWUOpportunityStatus.Draft) {
     return null;
@@ -704,21 +706,18 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isUpdateStatusLoading ||
     isDeleteLoading;
   return (
-    <div>
-      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading}
-            state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("form" as const, msg)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <OpportunityViewWrapper
+      {...props}
+      opportunity={opportunity}
+      viewerUser={viewerUser}>
+      <Form.view
+        disabled={!state.isEditing || isLoading}
+        state={form}
+        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+          adt("form" as const, msg)
+        )}
+      />
+    </OpportunityViewWrapper>
   );
 };
 

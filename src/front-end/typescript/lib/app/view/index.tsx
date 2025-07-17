@@ -1,7 +1,4 @@
-import {
-  DEFAULT_USER_AVATAR_IMAGE_PATH,
-  PROCUREMENT_CONCIERGE_URL
-} from "front-end/config";
+import { DEFAULT_USER_AVATAR_IMAGE_PATH } from "front-end/config";
 import { fileBlobPath, prefixPath } from "front-end/lib";
 import getAppModal from "front-end/lib/app/modal";
 import {
@@ -34,6 +31,9 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
@@ -67,11 +67,9 @@ import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { ThemeColor } from "front-end/lib/types";
 import Icon, { AvailableIcons } from "front-end/lib/views/icon";
 import Link, {
-  externalDest,
   iconLinkSymbol,
   imageLinkSymbol,
   leftPlacement,
-  rightPlacement,
   routeDest
 } from "front-end/lib/views/link";
 import { compact } from "lodash";
@@ -260,6 +258,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalSWUEdit", value })
       );
 
+    case "questionEvaluationIndividualSWUCreate":
+    case "questionEvaluationIndividualSWUEdit":
+    case "questionEvaluationConsensusSWUCreate":
+    case "questionEvaluationConsensusSWUEdit":
     case "proposalSWUView":
       return makeViewPageProps(
         props,
@@ -290,6 +292,30 @@ function pageToViewPageProps(
         PageOpportunitySWUView.component,
         (state) => state.pages.opportunitySWUView,
         (value) => ({ tag: "pageOpportunitySWUView", value })
+      );
+
+    case "swuOpportunityCompleteView":
+      return makeViewPageProps(
+        props,
+        PageOpportunitySWUComplete.component,
+        (state) => state.pages.swuOpportunityCompleteView,
+        (value) => ({ tag: "pageOpportunitySWUComplete", value })
+      );
+
+    case "cwuOpportunityCompleteView":
+      return makeViewPageProps(
+        props,
+        PageOpportunityCWUComplete.component,
+        (state) => state.pages.cwuOpportunityCompleteView,
+        (value) => ({ tag: "pageOpportunityCWUComplete", value })
+      );
+
+    case "twuOpportunityCompleteView":
+      return makeViewPageProps(
+        props,
+        PageOpportunityTWUComplete.component,
+        (state) => state.pages.twuOpportunityCompleteView,
+        (value) => ({ tag: "pageOpportunityTWUComplete", value })
       );
 
     case "opportunityTWUCreate":
@@ -410,6 +436,10 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageProposalTWUEdit", value })
       );
 
+    case "questionEvaluationIndividualTWUCreate":
+    case "questionEvaluationIndividualTWUEdit":
+    case "questionEvaluationConsensusTWUCreate":
+    case "questionEvaluationConsensusTWUEdit":
     case "proposalTWUView":
       return makeViewPageProps(
         props,
@@ -665,13 +695,6 @@ const signOutLink: Nav.NavLink = {
   symbol_: leftPlacement(iconLinkSymbol("sign-out"))
 };
 
-const procurementConciergeLink: Nav.NavLink = {
-  children: "Procurement Concierge",
-  dest: externalDest(PROCUREMENT_CONCIERGE_URL),
-  newTab: true,
-  symbol_: rightPlacement(iconLinkSymbol("external-link"))
-};
-
 function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
   const sessionUser = state.shared.session && state.shared.session.user;
   // Return standard sign-in/up links if user is not signed in.
@@ -696,8 +719,7 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
             state.activeRoute.value.userId === sessionUser.id
         }),
         Nav.linkAccountAction(signOutLink)
-      ],
-      [Nav.linkAccountAction(procurementConciergeLink)]
+      ]
     ]),
     desktop: Nav.authenticatedDesktopAccountMenu({
       text: userIdentifier,
@@ -725,9 +747,6 @@ function navAccountMenus(state: Immutable<State>): Nav.Props["accountMenus"] {
         },
         {
           links: [signOutLink]
-        },
-        {
-          links: [procurementConciergeLink]
         }
       ]
     })

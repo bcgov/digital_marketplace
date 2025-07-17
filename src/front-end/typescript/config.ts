@@ -18,9 +18,6 @@ export const FORM_FIELD_DEBOUNCE_DURATION = 500; //ms
 
 export const SEARCH_DEBOUNCE_DURATION = 200; //ms
 
-export const PROCUREMENT_CONCIERGE_URL =
-  "https://procurementconcierge.gov.bc.ca";
-
 export const DEFAULT_USER_AVATAR_IMAGE_PATH = prefixPath(
   "/images/default_user_avatar.svg"
 );
@@ -54,6 +51,12 @@ export const TWU_PROPOSAL_EVALUATION_CONTENT_ID =
 export const SWU_QUALIFICATION_TERMS_ID = "sprint-with-us-terms-and-conditions";
 
 export const TWU_QUALIFICATION_TERMS_ID = "team-with-us-terms-and-conditions";
+
+export const SWU_PROPOSAL_EVALUATION_INSTRUCTIONS_ID =
+  "sprint-with-us-evaluation-instructions";
+
+export const TWU_PROPOSAL_EVALUATION_INSTRUCTIONS_ID =
+  "team-with-us-evaluation-instructions";
 
 export const TRUNCATE_OPPORTUNITY_TITLE_LENGTH = 80;
 

@@ -9,7 +9,6 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/opportunity/team-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/opportunity/team-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/opportunity/team-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/opportunity/team-with-us/lib/views/edit-tab-header";
 import {
   iconLinkSymbol,
   leftPlacement,
@@ -19,6 +18,7 @@ import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
 import React from "react";
+import OpportunityViewWrapper from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity-view-wrapper";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import {
@@ -45,6 +45,7 @@ type ModalId =
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
   form: Immutable<Form.State> | null;
+  users: User[];
   showModal: ModalId | null;
   startEditingLoading: number;
   saveChangesLoading: number;
@@ -60,14 +61,17 @@ type UpdateStatus =
   | TWUOpportunityStatus.Canceled;
 
 export type InnerMsg =
-  | ADT<"resetOpportunity", [TWUOpportunity, boolean]>
+  | ADT<"resetOpportunity", [TWUOpportunity, User[], boolean]>
   | ADT<"form", Form.Msg>
   | ADT<"showModal", ModalId>
   | ADT<"hideModal">
   | ADT<"startEditing">
   | ADT<
       "onStartEditingResponse",
-      api.ResponseValidation<TWUOpportunity, string[]>
+      [
+        api.ResponseValidation<TWUOpportunity, string[]>,
+        api.ResponseValidation<User[], string[]>
+      ]
     >
   | ADT<"cancelEditing">
   | ADT<"saveChanges">
@@ -91,6 +95,7 @@ export type Msg = component_.page.Msg<InnerMsg, Route>;
 function initForm(
   opportunity: TWUOpportunity,
   viewerUser: User,
+  users: User[],
   activeTab?: Form.TabId,
   validate = false
 ): [Immutable<Form.State>, component_.Cmd<Form.Msg>[]] {
@@ -101,7 +106,8 @@ function initForm(
     canRemoveExistingAttachments: canTWUOpportunityDetailsBeEdited(
       opportunity,
       isAdmin(viewerUser)
-    )
+    ),
+    users
   });
   let immutableFormState = immutable(formState);
   if (validate) {
@@ -115,6 +121,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
     {
       ...params,
       opportunity: null,
+      users: [],
       form: null,
       showModal: null,
       startEditingLoading: 0,
@@ -236,6 +243,7 @@ function handleUpdateStatusResult(
       const [newFormState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
+        state.users,
         Form.getActiveTab(currentFormState)
       );
       state = state.set("opportunity", opportunity).set("form", newFormState);
@@ -263,7 +271,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
 }) => {
   switch (msg.tag) {
     case "resetOpportunity": {
-      const [opportunity, validateForm] = msg.value;
+      const [opportunity, users, validateForm] = msg.value;
       const currentFormState = state.form;
       const activeTab = currentFormState
         ? Form.getActiveTab(currentFormState)
@@ -271,11 +279,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const [formState, formCmds] = initForm(
         opportunity,
         state.viewerUser,
+        users,
         activeTab,
         validateForm
       );
       return [
-        state.set("opportunity", opportunity).set("form", formState),
+        state
+          .set("opportunity", opportunity)
+          .set("users", users)
+          .set("form", formState),
         [
           ...component_.cmd.mapMany(formCmds, (msg) => adt("form", msg) as Msg),
           component_.cmd.dispatch(component_.page.readyMsg())
@@ -300,8 +312,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startStartEditingLoading(state),
         [
-          api.opportunities.twu.readOne<Msg>()(opportunity.id, (result) =>
-            adt("onStartEditingResponse", result)
+          component_.cmd.join(
+            api.opportunities.twu.readOne()(
+              opportunity.id,
+              (response) => response
+            ),
+            api.users.readMany()((response) => response),
+            (opportunity, users) => {
+              return adt("onStartEditingResponse", [opportunity, users]) as Msg;
+            }
           )
         ]
       ];
@@ -309,42 +328,39 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "onStartEditingResponse": {
       state = stopStartEditingLoading(state);
       const result = msg.value;
-      switch (result.tag) {
-        case "valid":
-          return [
-            state.set("isEditing", true),
-            [
-              component_.cmd.dispatch(
-                adt("resetOpportunity", [
-                  result.value,
-                  isUnpublished(result.value)
-                ]) as InnerMsg
-              )
-            ]
-          ];
-        case "invalid":
-        case "unhandled":
-          return [
-            state,
-            [
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", toasts.startedEditing.error)
-                )
-              )
-            ]
-          ];
+      if (api.isValid(result[0]) && api.isValid(result[1])) {
+        return [
+          state.set("isEditing", true),
+          [
+            component_.cmd.dispatch(
+              adt("resetOpportunity", [
+                result[0].value,
+                result[1].value,
+                isUnpublished(result[0].value)
+              ]) as InnerMsg
+            )
+          ]
+        ];
       }
-      break;
+      return [
+        state,
+        [
+          component_.cmd.dispatch(
+            component_.global.showToastMsg(
+              adt("error", toasts.startedEditing.error)
+            )
+          )
+        ]
+      ];
     }
     case "cancelEditing": {
-      const opportunity = state.opportunity;
-      if (!opportunity) return [state, []];
+      const { opportunity, users } = state;
+      if (!opportunity || !users) return [state, []];
       return [
         state.set("isEditing", false),
         [
           component_.cmd.dispatch(
-            adt("resetOpportunity", [opportunity, false]) as InnerMsg
+            adt("resetOpportunity", [opportunity, users, false]) as InnerMsg
           )
         ]
       ];
@@ -656,7 +672,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
   const opportunity = state.opportunity;
   if (!opportunity || opportunity.status === TWUOpportunityStatus.Draft) {
     return null;
@@ -704,21 +722,18 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isUpdateStatusLoading ||
     isDeleteLoading;
   return (
-    <div>
-      <EditTabHeader opportunity={opportunity} viewerUser={viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading}
-            state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("form" as const, msg)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <OpportunityViewWrapper
+      {...props}
+      opportunity={opportunity}
+      viewerUser={viewerUser}>
+      <Form.view
+        disabled={!state.isEditing || isLoading}
+        state={form}
+        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+          adt("form" as const, msg)
+        )}
+      />
+    </OpportunityViewWrapper>
   );
 };
 
@@ -728,7 +743,11 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   onInitResponse(response) {
-    return adt("resetOpportunity", [response[0], false]) as InnerMsg;
+    return adt("resetOpportunity", [
+      response[0],
+      response[3],
+      false
+    ]) as InnerMsg;
   },
 
   getAlerts(state) {
@@ -1134,7 +1153,8 @@ export const component: Tab.Component<State, Msg> = {
             }
           ]
         });
-      case TWUOpportunityStatus.EvaluationResourceQuestions:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       case TWUOpportunityStatus.EvaluationChallenge:
         if (!viewerIsAdmin) {
           return component_.page.actions.none();

@@ -478,7 +478,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUProposalStatus.UnderReviewTeamQuestions:
       case SWUProposalStatus.UnderReviewCodeChallenge:
       case SWUProposalStatus.UnderReviewTeamScenario:
-      case SWUProposalStatus.EvaluatedTeamQuestions:
+      case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
       case SWUProposalStatus.EvaluatedCodeChallenge:
         return component_.page.actions.links([
           {

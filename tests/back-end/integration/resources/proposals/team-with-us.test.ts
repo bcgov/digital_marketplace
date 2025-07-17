@@ -407,7 +407,7 @@ test("team-with-us proposal crud", async () => {
     opportunity: {
       ...resubmitResult.body.opportunity,
       proposalDeadline: newDeadline.toISOString(),
-      status: TWUOpportunityStatus.EvaluationResourceQuestions,
+      status: TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
       updatedAt: expect.any(String),
       createdBy: expect.objectContaining({ id: testAdmin.id })
     },

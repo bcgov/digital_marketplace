@@ -21,19 +21,19 @@ import {
 } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
-interface ViewAlertProps {
+export interface ViewAlertProps<Msg> {
   messages: Array<component_.page.alerts.Alert<Msg>>;
   dispatch: component_.base.Dispatch<Msg>;
   color: ThemeColor;
   className?: string;
 }
 
-function ViewAlert({
+export function ViewAlert<Msg>({
   messages,
   dispatch,
   color,
   className = ""
-}: ViewAlertProps) {
+}: ViewAlertProps<Msg>) {
   if (!messages.length) {
     return null;
   }
@@ -66,12 +66,12 @@ function ViewAlert({
   );
 }
 
-interface ViewAlertsProps {
+export interface ViewAlertsProps<Msg> {
   alerts: component_.page.Alerts<Msg>;
   dispatch: component_.base.Dispatch<Msg>;
 }
 
-function ViewAlerts({ alerts, dispatch }: ViewAlertsProps) {
+export function ViewAlerts<Msg>({ alerts, dispatch }: ViewAlertsProps<Msg>) {
   const { info = [], warnings = [], errors = [] } = alerts;
   //Show highest priority alerts first.
   return (
@@ -119,7 +119,7 @@ function ViewBreadcrumbs(
   );
 }
 
-type ViewAlertsAndBreadcrumbsProps = ViewAlertsProps &
+type ViewAlertsAndBreadcrumbsProps = ViewAlertsProps<Msg> &
   ViewBreadcrumbsProps & { container?: boolean; className?: string };
 
 function ViewAlertsAndBreadcrumbs(props: ViewAlertsAndBreadcrumbsProps) {

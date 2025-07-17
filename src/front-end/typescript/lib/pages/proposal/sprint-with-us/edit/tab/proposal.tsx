@@ -14,11 +14,11 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/proposal/sprint-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/sprint-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/proposal/sprint-with-us/lib/views/edit-tab-header";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
+import ProposalViewWrapper from "front-end/lib/pages/proposal/sprint-with-us/lib/components/proposal-view-wrapper";
 import { compact } from "lodash";
 import React from "react";
 import { Col, Row } from "reactstrap";
@@ -724,7 +724,9 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
   const proposal = state.proposal;
   const numTeamMembers = swuProposalNumTeamMembers(proposal);
   const totalProposedCost = swuProposalTotalProposedCost(proposal);
@@ -757,21 +759,15 @@ const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
 const view: component_.base.ComponentView<State, Msg> = (props) => {
   const { state, dispatch } = props;
   return (
-    <div>
-      <EditTabHeader proposal={state.proposal} viewerUser={state.viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading(state)}
-            state={state.form}
-            dispatch={component_.base.mapDispatch(dispatch, (v) =>
-              adt("form" as const, v)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <ProposalViewWrapper {...props}>
+      <Form.view
+        disabled={!state.isEditing || isLoading(state)}
+        state={state.form}
+        dispatch={component_.base.mapDispatch(dispatch, (v) =>
+          adt("form" as const, v)
+        )}
+      />
+    </ProposalViewWrapper>
   );
 };
 
@@ -1124,7 +1120,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUProposalStatus.UnderReviewTeamQuestions:
       case SWUProposalStatus.UnderReviewCodeChallenge:
       case SWUProposalStatus.UnderReviewTeamScenario:
-      case SWUProposalStatus.EvaluatedTeamQuestions:
+      case SWUProposalStatus.DeprecatedEvaluatedTeamQuestions:
       case SWUProposalStatus.EvaluatedCodeChallenge:
       case SWUProposalStatus.EvaluatedTeamScenario:
       case SWUProposalStatus.Awarded:
