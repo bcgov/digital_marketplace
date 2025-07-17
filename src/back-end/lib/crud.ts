@@ -203,26 +203,6 @@ export type BasicCrudResource<Session, Connection> = Resource<
 >;
 
 /**
- * Custom route type that follows the same pattern as CRUD operations
- */
-export type CustomRoute<
-  SupportedRequestBodies,
-  SupportedResponseBodies,
-  Session,
-  Connection
-> = (
-  connection: Connection
-) => Route<
-  SupportedRequestBodies,
-  any,
-  any,
-  any,
-  SupportedResponseBodies,
-  null,
-  Session
->;
-
-/**
  * The Resource type for the back-end framework. Defines supported request/response bodies, CRUD operations,
  * and database connection
  *
@@ -291,12 +271,6 @@ export interface Resource<
     DeleteReqBErrors,
     SupportedResponseBodies
   >;
-  custom?: CustomRoute<
-    SupportedRequestBodies,
-    SupportedResponseBodies,
-    Session,
-    Connection
-  >[];
 }
 
 export function makeCreateRoute<
@@ -530,17 +504,6 @@ export function makeRouter<
       null,
       Session
     >[] = [];
-
-    // Add custom routes FIRST to take priority over CRUD routes
-    if (resource.custom) {
-      routes.push(
-        ...resource.custom.map((customRoute) => {
-          const route = customRoute(connection);
-          return namespaceRoute(resource.routeNamespace, route);
-        })
-      );
-    }
-
     if (create) {
       routes.push(
         namespaceRoute(

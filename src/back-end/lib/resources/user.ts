@@ -7,16 +7,10 @@ import {
   basicResponse,
   JsonResponseBody,
   makeJsonResponseBody,
-  TextResponseBody,
-  makeTextResponseBody,
   nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
-import { ServerHttpMethod } from "back-end/lib/types";
-import {
-  SupportedRequestBodies as DefaultSupportedRequestBodies,
-  SupportedResponseBodies as DefaultSupportedResponseBodies
-} from "back-end/lib/types";
+
 import { validateFileRecord, validateUserId } from "back-end/lib/validation";
 import { get, isBoolean } from "lodash";
 import { getString } from "shared/lib";
@@ -58,207 +52,7 @@ export type ValidatedUpdateRequestBody =
 
 type DeleteValidatedReqBody = User;
 
-// Add validation error types for export contact list
-export interface ExportContactListValidationErrors {
-  userTypes?: string[];
-  fields?: string[];
-  permissions?: string[];
-}
-
-// Add request body types for export contact list
-export interface ExportContactListRequestBody {
-  userTypes: string[];
-  fields: string[];
-}
-
 const routeNamespace = "users";
-
-const exportContactList: crud.CustomRoute<
-  DefaultSupportedRequestBodies,
-  DefaultSupportedResponseBodies,
-  Session,
-  db.Connection
-> = (connection: db.Connection) => {
-  return {
-    method: ServerHttpMethod.Get,
-    path: "/export-contact-list",
-    handler: {
-      async parseRequestBody(request) {
-        const userTypes = request.query.userTypes?.split(",") || [];
-        const fields = request.query.fields?.split(",") || [];
-
-        return {
-          userTypes,
-          fields
-        } as ExportContactListRequestBody;
-      },
-      async validateRequestBody(request) {
-        // Check admin permissions
-        if (!permissions.isAdmin(request.session)) {
-          return invalid({
-            permissions: [permissions.ERROR_MESSAGE]
-          });
-        }
-
-        const { userTypes, fields } = request.body;
-
-        // Validate input parameters
-        if (!userTypes.length) {
-          return invalid({
-            userTypes: ["At least one user type must be specified"]
-          });
-        }
-
-        if (!fields.length) {
-          return invalid({
-            fields: ["At least one field must be specified"]
-          });
-        }
-
-        // Validate user types
-        const validUserTypes = ["gov", "vendor"];
-        const invalidUserTypes = userTypes.filter(
-          (type: string) => !validUserTypes.includes(type)
-        );
-        if (invalidUserTypes.length > 0) {
-          return invalid({
-            userTypes: [`Invalid user type(s): ${invalidUserTypes.join(", ")}`]
-          });
-        }
-
-        // Validate fields
-        const validFields = [
-          "firstName",
-          "lastName",
-          "email",
-          "organizationName"
-        ];
-        const invalidFields = fields.filter(
-          (field: string) => !validFields.includes(field)
-        );
-        if (invalidFields.length > 0) {
-          return invalid({
-            fields: [`Invalid field(s): ${invalidFields.join(", ")}`]
-          });
-        }
-
-        return valid(request.body);
-      },
-      respond: wrapRespond<
-        ExportContactListRequestBody,
-        ExportContactListValidationErrors,
-        TextResponseBody,
-        JsonResponseBody<ExportContactListValidationErrors>,
-        Session
-      >({
-        valid: async (request) => {
-          try {
-            const { userTypes, fields } = request.body;
-
-            // Use the new optimized function to get users with their organizations
-            const userTypesToFetch: UserType[] = [];
-            if (userTypes.includes("gov")) {
-              userTypesToFetch.push(UserType.Government, UserType.Admin);
-            }
-            if (userTypes.includes("vendor")) {
-              userTypesToFetch.push(UserType.Vendor);
-            }
-
-            const usersWithOrganizations =
-              await db.readManyUsersWithOrganizations(
-                connection,
-                userTypesToFetch,
-                false
-              );
-
-            const headerRow: string[] = [];
-
-            if (fields.includes("firstName")) headerRow.push("First Name");
-            if (fields.includes("lastName")) headerRow.push("Last Name");
-            if (fields.includes("email")) headerRow.push("Email");
-
-            // Add User Type column if both gov and vendor types are selected
-            const includeUserType =
-              userTypes.includes("gov") && userTypes.includes("vendor");
-            if (includeUserType) headerRow.push("User Type");
-
-            if (fields.includes("organizationName"))
-              headerRow.push("Organization Name");
-
-            let csvContent = headerRow.join(",") + "\n";
-
-            if (isValid(usersWithOrganizations)) {
-              for (const userWithOrgs of usersWithOrganizations.value) {
-                const user = userWithOrgs.user;
-                const row: string[] = [];
-
-                const nameParts = (user.name || "").split(" ");
-                const firstName = nameParts[0] || "";
-                const lastName =
-                  nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
-
-                if (fields.includes("firstName")) row.push(`"${firstName}"`);
-                if (fields.includes("lastName")) row.push(`"${lastName}"`);
-                if (fields.includes("email")) row.push(`"${user.email || ""}"`);
-
-                // Add user type if both gov and vendor types are selected
-                if (includeUserType) {
-                  const userTypeLabel =
-                    user.type === UserType.Government
-                      ? "Government"
-                      : user.type === UserType.Vendor
-                      ? "Vendor"
-                      : "Admin";
-                  row.push(`"${userTypeLabel}"`);
-                }
-
-                if (fields.includes("organizationName")) {
-                  const orgNamesString =
-                    userWithOrgs.organizationNames.length > 0
-                      ? userWithOrgs.organizationNames.join("; ")
-                      : "";
-                  row.push(`"${orgNamesString}"`);
-                }
-
-                csvContent += row.join(",") + "\n";
-              }
-            }
-
-            return {
-              code: 200,
-              headers: {
-                "Content-Type": "text/csv",
-                "Content-Disposition": "attachment; filename=dm-contacts.csv"
-              },
-              session: request.session,
-              body: makeTextResponseBody(csvContent)
-            };
-          } catch (error) {
-            request.logger.error(
-              "Error generating contact list CSV",
-              error as object
-            );
-            return {
-              code: 500,
-              headers: {},
-              session: request.session,
-              body: makeTextResponseBody(
-                "An error occurred while generating the contact list"
-              )
-            };
-          }
-        },
-        invalid: async (request) => {
-          return basicResponse(
-            400,
-            request.session,
-            makeJsonResponseBody(request.body)
-          );
-        }
-      })
-    }
-  };
-};
 
 const readOne: crud.ReadOne<Session, db.Connection> = (
   connection: db.Connection
@@ -628,8 +422,7 @@ const resource: crud.BasicCrudResource<Session, db.Connection> = {
   readOne,
   readMany,
   update,
-  delete: delete_,
-  custom: [exportContactList]
+  delete: delete_
 };
 
 export default resource;
