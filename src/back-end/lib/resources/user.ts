@@ -154,63 +154,22 @@ const exportContactList: crud.CustomRoute<
         valid: async (request) => {
           try {
             const { userTypes, fields } = request.body;
-            let users: User[] = [];
 
+            // Use the new optimized function to get users with their organizations
+            const userTypesToFetch: UserType[] = [];
             if (userTypes.includes("gov")) {
-              // Fetch government users
-              const govUsers = await db.readManyUsersByRole(
-                connection,
-                UserType.Government,
-                false
-              );
-              if (isValid(govUsers)) {
-                users = [...users, ...govUsers.value];
-              }
-
-              // Fetch admin users
-              const adminUsers = await db.readManyUsersByRole(
-                connection,
-                UserType.Admin,
-                false
-              );
-              if (isValid(adminUsers)) {
-                users = [...users, ...adminUsers.value];
-              }
+              userTypesToFetch.push(UserType.Government, UserType.Admin);
             }
-
             if (userTypes.includes("vendor")) {
-              const vendorUsers = await db.readManyUsersByRole(
+              userTypesToFetch.push(UserType.Vendor);
+            }
+
+            const usersWithOrganizations =
+              await db.readManyUsersWithOrganizations(
                 connection,
-                UserType.Vendor,
+                userTypesToFetch,
                 false
               );
-              if (isValid(vendorUsers)) {
-                users = [...users, ...vendorUsers.value];
-              }
-            }
-
-            const organizationsMap: Record<string, string> = {};
-            if (
-              fields.includes("organizationName") &&
-              userTypes.includes("vendor")
-            ) {
-              const vendorUserIds = users
-                .filter((user) => user.type === UserType.Vendor)
-                .map((user) => user.id);
-
-              for (const userId of vendorUserIds) {
-                const affiliations = await db.readManyAffiliations(
-                  connection,
-                  userId
-                );
-                if (isValid(affiliations) && affiliations.value.length > 0) {
-                  const firstOrg = affiliations.value[0];
-                  if (firstOrg && firstOrg.organization) {
-                    organizationsMap[userId] = firstOrg.organization.legalName;
-                  }
-                }
-              }
-            }
 
             const headerRow: string[] = [];
 
@@ -228,35 +187,41 @@ const exportContactList: crud.CustomRoute<
 
             let csvContent = headerRow.join(",") + "\n";
 
-            for (const user of users) {
-              const row: string[] = [];
+            if (isValid(usersWithOrganizations)) {
+              for (const userWithOrgs of usersWithOrganizations.value) {
+                const user = userWithOrgs.user;
+                const row: string[] = [];
 
-              const nameParts = (user.name || "").split(" ");
-              const firstName = nameParts[0] || "";
-              const lastName =
-                nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+                const nameParts = (user.name || "").split(" ");
+                const firstName = nameParts[0] || "";
+                const lastName =
+                  nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
 
-              if (fields.includes("firstName")) row.push(`"${firstName}"`);
-              if (fields.includes("lastName")) row.push(`"${lastName}"`);
-              if (fields.includes("email")) row.push(`"${user.email || ""}"`);
+                if (fields.includes("firstName")) row.push(`"${firstName}"`);
+                if (fields.includes("lastName")) row.push(`"${lastName}"`);
+                if (fields.includes("email")) row.push(`"${user.email || ""}"`);
 
-              // Add user type if both gov and vendor types are selected
-              if (includeUserType) {
-                const userTypeLabel =
-                  user.type === UserType.Government
-                    ? "Government"
-                    : user.type === UserType.Vendor
-                    ? "Vendor"
-                    : "Admin";
-                row.push(`"${userTypeLabel}"`);
+                // Add user type if both gov and vendor types are selected
+                if (includeUserType) {
+                  const userTypeLabel =
+                    user.type === UserType.Government
+                      ? "Government"
+                      : user.type === UserType.Vendor
+                      ? "Vendor"
+                      : "Admin";
+                  row.push(`"${userTypeLabel}"`);
+                }
+
+                if (fields.includes("organizationName")) {
+                  const orgNamesString =
+                    userWithOrgs.organizationNames.length > 0
+                      ? userWithOrgs.organizationNames.join("; ")
+                      : "";
+                  row.push(`"${orgNamesString}"`);
+                }
+
+                csvContent += row.join(",") + "\n";
               }
-
-              if (fields.includes("organizationName")) {
-                const orgName = organizationsMap[user.id] || "";
-                row.push(`"${orgName}"`);
-              }
-
-              csvContent += row.join(",") + "\n";
             }
 
             return {
