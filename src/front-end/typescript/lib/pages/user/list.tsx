@@ -213,24 +213,31 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         return [state, []];
       }
 
-      // Build the download URL with query parameters
-      const userTypesParam = selectedUserTypes.join(",");
-      const fieldsParam = selectedFields.join(",");
-      const downloadUrl = `/api/users/export-contact-list?userTypes=${userTypesParam}&fields=${fieldsParam}`;
+      // Use URLSearchParams for safer URL construction
+      const params = new URLSearchParams({
+        userTypes: selectedUserTypes.join(","),
+        fields: selectedFields.join(",")
+      });
 
-      // Create a hidden anchor and trigger the download
-      const a = document.createElement("a");
-      a.href = downloadUrl;
-      a.download = "dm-contacts.csv";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Fetch and create blob download
+      fetch(`/api/users/export-contact-list?${params}`)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "dm-contacts.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        })
+        .catch((error) => console.error("Export failed:", error));
 
       return [
         state.set("showExportModal", false).set("exportLoading", true),
         [component_.cmd.dispatch(adt("exportComplete"))]
       ];
     }
+
     case "exportComplete":
       return [state.set("exportLoading", false), []];
     default:
