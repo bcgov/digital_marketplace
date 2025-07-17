@@ -9,7 +9,7 @@ import {
   nullRequestBodyHandler
 } from "back-end/lib/server";
 import { Session } from "shared/lib/resources/session";
-import { UserType } from "shared/lib/resources/user";
+import { UserType, userTypeToTitleCase } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
 import { isValid } from "shared/lib/validation";
 import { getString } from "shared/lib";
@@ -108,11 +108,9 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
           // Add user type if both Government and Vendor types are selected
           if (includeUserType) {
             const userTypeLabel =
-              user.type === UserType.Government
-                ? "Government"
-                : user.type === UserType.Vendor
-                ? "Vendor"
-                : "Admin";
+              user.type === UserType.Admin
+                ? "Admin"
+                : userTypeToTitleCase(user.type);
             row.push(`"${userTypeLabel}"`);
           }
 

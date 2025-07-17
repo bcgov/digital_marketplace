@@ -12,9 +12,9 @@ import {
 import * as api from "front-end/lib/http/api";
 import {
   userStatusToColor,
-  userStatusToTitleCase,
-  userTypeToTitleCase
+  userStatusToTitleCase
 } from "front-end/lib/pages/user/lib";
+import { userTypeToTitleCase } from "shared/lib/resources/user";
 import Badge from "front-end/lib/views/badge";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React from "react";
