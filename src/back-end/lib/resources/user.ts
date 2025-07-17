@@ -10,7 +10,6 @@ import {
   nullRequestBodyHandler,
   wrapRespond
 } from "back-end/lib/server";
-
 import { validateFileRecord, validateUserId } from "back-end/lib/validation";
 import { get, isBoolean } from "lodash";
 import { getString } from "shared/lib";

@@ -47,18 +47,17 @@ export interface State {
   };
 }
 
-type ToggleableUserType = UserType.Vendor | UserType.Government;
-
 type InnerMsg =
   | ADT<"onInitResponse", TableUser[]>
   | ADT<"table", Table.Msg>
   | ADT<"showExportModal">
   | ADT<"hideExportModal">
-  | ADT<"userTypeCheckbox", { userType: ToggleableUserType; msg: Checkbox.Msg }>
-  | ADT<
-      "fieldCheckbox",
-      { field: keyof State["fieldCheckboxes"]; msg: Checkbox.Msg }
-    >
+  | ADT<"userTypeCheckboxGovernment", Checkbox.Msg>
+  | ADT<"userTypeCheckboxVendor", Checkbox.Msg>
+  | ADT<"fieldCheckboxFirstName", Checkbox.Msg>
+  | ADT<"fieldCheckboxLastName", Checkbox.Msg>
+  | ADT<"fieldCheckboxEmail", Checkbox.Msg>
+  | ADT<"fieldCheckboxOrganizationName", Checkbox.Msg>
   | ADT<"exportContactList">
   | ADT<"exportComplete">;
 
@@ -144,29 +143,27 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
       ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
       ...component_.cmd.mapMany(
         govCheckboxCmds,
-        (msg) =>
-          adt("userTypeCheckbox", { userType: UserType.Government, msg }) as Msg
+        (msg) => adt("userTypeCheckboxGovernment", msg) as Msg
       ),
       ...component_.cmd.mapMany(
         vendorCheckboxCmds,
-        (msg) =>
-          adt("userTypeCheckbox", { userType: UserType.Vendor, msg }) as Msg
+        (msg) => adt("userTypeCheckboxVendor", msg) as Msg
       ),
       ...component_.cmd.mapMany(
         firstNameCheckboxCmds,
-        (msg) => adt("fieldCheckbox", { field: "firstName", msg }) as Msg
+        (msg) => adt("fieldCheckboxFirstName", msg) as Msg
       ),
       ...component_.cmd.mapMany(
         lastNameCheckboxCmds,
-        (msg) => adt("fieldCheckbox", { field: "lastName", msg }) as Msg
+        (msg) => adt("fieldCheckboxLastName", msg) as Msg
       ),
       ...component_.cmd.mapMany(
         emailCheckboxCmds,
-        (msg) => adt("fieldCheckbox", { field: "email", msg }) as Msg
+        (msg) => adt("fieldCheckboxEmail", msg) as Msg
       ),
       ...component_.cmd.mapMany(
         organizationNameCheckboxCmds,
-        (msg) => adt("fieldCheckbox", { field: "organizationName", msg }) as Msg
+        (msg) => adt("fieldCheckboxOrganizationName", msg) as Msg
       )
     ]
   ];
@@ -255,27 +252,53 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [state.set("showExportModal", true), []];
     case "hideExportModal":
       return [state.set("showExportModal", false), []];
-    case "userTypeCheckbox":
+    case "userTypeCheckboxGovernment":
       return component_.base.updateChild({
         state,
-        childStatePath: ["userTypeCheckboxes", msg.value.userType],
+        childStatePath: ["userTypeCheckboxes", UserType.Government],
         childUpdate: Checkbox.update,
-        childMsg: msg.value.msg,
-        mapChildMsg: (value) => ({
-          tag: "userTypeCheckbox",
-          value: { userType: msg.value.userType, msg: value }
-        })
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("userTypeCheckboxGovernment", value)
       });
-    case "fieldCheckbox":
+    case "userTypeCheckboxVendor":
       return component_.base.updateChild({
         state,
-        childStatePath: ["fieldCheckboxes", msg.value.field],
+        childStatePath: ["userTypeCheckboxes", UserType.Vendor],
         childUpdate: Checkbox.update,
-        childMsg: msg.value.msg,
-        mapChildMsg: (value) => ({
-          tag: "fieldCheckbox",
-          value: { field: msg.value.field, msg: value }
-        })
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("userTypeCheckboxVendor", value)
+      });
+    case "fieldCheckboxFirstName":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["fieldCheckboxes", "firstName"],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("fieldCheckboxFirstName", value)
+      });
+    case "fieldCheckboxLastName":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["fieldCheckboxes", "lastName"],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("fieldCheckboxLastName", value)
+      });
+    case "fieldCheckboxEmail":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["fieldCheckboxes", "email"],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("fieldCheckboxEmail", value)
+      });
+    case "fieldCheckboxOrganizationName":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["fieldCheckboxes", "organizationName"],
+        childUpdate: Checkbox.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => adt("fieldCheckboxOrganizationName", value)
       });
     case "exportContactList": {
       // Build query parameters from checkbox states
@@ -428,10 +451,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.userTypeCheckboxes.GOV}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("userTypeCheckbox" as const, {
-                userType: UserType.Government as ToggleableUserType,
-                msg
-              })
+              adt("userTypeCheckboxGovernment" as const, msg)
             )}
           />
           <Checkbox.view
@@ -441,10 +461,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.userTypeCheckboxes.VENDOR}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("userTypeCheckbox" as const, {
-                userType: UserType.Vendor as ToggleableUserType,
-                msg
-              })
+              adt("userTypeCheckboxVendor" as const, msg)
             )}
           />
         </div>
@@ -458,10 +475,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.fieldCheckboxes.firstName}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("fieldCheckbox" as const, {
-                field: "firstName" as const,
-                msg
-              })
+              adt("fieldCheckboxFirstName" as const, msg)
             )}
           />
           <Checkbox.view
@@ -471,7 +485,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.fieldCheckboxes.lastName}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("fieldCheckbox" as const, { field: "lastName" as const, msg })
+              adt("fieldCheckboxLastName" as const, msg)
             )}
           />
           <Checkbox.view
@@ -481,7 +495,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.fieldCheckboxes.email}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("fieldCheckbox" as const, { field: "email" as const, msg })
+              adt("fieldCheckboxEmail" as const, msg)
             )}
           />
           <Checkbox.view
@@ -491,10 +505,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
             className="mb-0"
             state={state.fieldCheckboxes.organizationName}
             dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-              adt("fieldCheckbox" as const, {
-                field: "organizationName" as const,
-                msg
-              })
+              adt("fieldCheckboxOrganizationName" as const, msg)
             )}
           />
         </div>
