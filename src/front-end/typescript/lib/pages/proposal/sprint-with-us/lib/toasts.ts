@@ -57,6 +57,28 @@ export const scored = {
   })
 };
 
+export const questionEvaluationDraftCreated = {
+  success: {
+    title: "Draft Evaluation Saved",
+    body: "Your draft Sprint With Us evaluation has been saved. You can return to this page to modify your evaluation prior to submission."
+  },
+  error: {
+    title: "Unable to Save Draft Evaluation",
+    body: "Your draft Sprint With Us evaluation could not be saved. Please try again later."
+  }
+};
+
+export const questionEvaluationChangesSaved = {
+  success: {
+    title: "Evaluation Changes Saved",
+    body: "Your changes to your Sprint With Us evaluation have been saved."
+  },
+  error: {
+    title: "Unable to Save Evaluation",
+    body: "Your changes to your Sprint With Us evaluation could not be saved. Please try again later."
+  }
+};
+
 export const screenedIn = {
   success: {
     title: "Proposal Screened In",

@@ -160,7 +160,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       // create a permissions check for Owners and Admins
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+        !(await permissions.isOrgOwnerOrAdmin(connection, request.session))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -261,7 +261,7 @@ const create: crud.Create<
       const team = get(body, "team");
       return {
         opportunity: getString(body, "opportunity"),
-        organization: getString(body, "organization", undefined),
+        organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
         resourceQuestionResponses: get(body, "resourceQuestionResponses"),
@@ -903,10 +903,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team questions stage
+          // The opportunity must be in resource questions stage
           if (
             twuOpportunity.status !==
-            TWUOpportunityStatus.EvaluationResourceQuestions
+            TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
           ) {
             return invalid({
               permissions: [
@@ -949,10 +949,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team question stage still
+          // The opportunity must be in resource question stage still
           if (
             twuOpportunity.status !==
-            TWUOpportunityStatus.EvaluationResourceQuestions
+            TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
           ) {
             return invalid({
               permissions: [
@@ -992,10 +992,10 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in the team questions or code challenge stage
+          // The opportunity must be in the resource questions or code challenge stage
           if (
             ![
-              TWUOpportunityStatus.EvaluationResourceQuestions,
+              TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
               TWUOpportunityStatus.EvaluationChallenge
             ].includes(twuOpportunity.status)
           ) {
@@ -1246,15 +1246,15 @@ const update: crud.Update<
               );
             }
             break;
-          case "disqualify":
-            dbResult = await db.updateTWUProposalStatus(
+          case "disqualify": {
+            dbResult = await db.disqualifyTWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              TWUProposalStatus.Disqualified,
               body.value,
               session
             );
             break;
+          }
           case "withdraw":
             dbResult = await db.updateTWUProposalStatus(
               connection,

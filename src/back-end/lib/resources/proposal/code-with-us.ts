@@ -178,7 +178,7 @@ const readMany: crud.ReadMany<Session, db.Connection> = (
       // create a permissions check for Owners and Admins
       if (
         !permissions.isSignedIn(request.session) ||
-        !permissions.isOrgOwnerOrAdmin(connection, request.session)
+        !(await permissions.isOrgOwnerOrAdmin(connection, request.session))
       ) {
         return respond(401, [permissions.ERROR_MESSAGE]);
       }
@@ -849,15 +849,15 @@ const update: crud.Update<
               session
             );
             break;
-          case "disqualify":
-            dbResult = await db.updateCWUProposalStatus(
+          case "disqualify": {
+            dbResult = await db.disqualifyCWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              CWUProposalStatus.Disqualified,
               body.value,
               session
             );
             break;
+          }
           case "withdraw":
             dbResult = await db.updateCWUProposalStatus(
               connection,

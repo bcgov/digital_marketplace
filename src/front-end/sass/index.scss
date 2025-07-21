@@ -89,6 +89,7 @@ $purple-light: lighten($purple, 20);
 $yellow: #fcba19;
 $yellow-light: #fdd675;
 $red: #dc3545;
+$red-light: #fbebec;
 $green: #2e8540;
 $orange: #fd7e14;
 
@@ -599,6 +600,11 @@ nav.navbar .nav-link:hover {
   display: inline-flex;
   padding: 0.5em 0.75em;
   letter-spacing: 0.75px;
+  &.below-minimum-score {
+    font-size: 100%;
+    background-color: $red-light;
+    padding: 0.25em 0.375em;
+  }
 }
 
 .custom-radio,
@@ -828,6 +834,37 @@ nav.navbar .nav-link:hover {
   }
 }
 
+.chair-evaluation {
+  $panel-notes-height: calc((0.75rem + (4em * 1.5)) + 2px);
+  &.disabled {
+    @extend .form-control:disabled;
+    cursor: not-allowed !important;
+  }
+
+  &.panel-score {
+    width: min-content;
+  }
+
+  &.panel-notes {
+    height: $panel-notes-height; // 4 lines of text
+    overflow-y: scroll;
+  }
+
+  &.consensus-notes-container {
+    height: calc(
+      #{$panel-notes-height} + 1.05em
+    ); // + 1.05ems to account for error messages
+  }
+
+  &.warn input,
+  & .warn textarea {
+    border-color: $danger !important;
+    &:focus {
+      box-shadow: 0 0 0 $input-focus-width rgba($danger, 0.25);
+    }
+  }
+}
+
 .sidebar {
   @include media-breakpoint-down(sm) {
     background-color: $white !important;
@@ -903,6 +940,10 @@ nav.navbar .nav-link:hover {
       }
     }
 
+    &__menu {
+      z-index: 2; // Above checkboxes
+    }
+
     &__placeholder {
       color: $input-placeholder-color;
       white-space: nowrap;
@@ -924,6 +965,11 @@ nav.navbar .nav-link:hover {
 }
 
 .markdown {
+  &.response-consensus {
+    max-height: calc((3rem + (1.5 * 10em)) + 2px); // 10 lines of text
+    overflow-y: scroll;
+  }
+
   img {
     width: 100%;
     max-width: 600px;
@@ -1006,5 +1052,59 @@ nav.navbar .nav-link:hover {
         }
       }
     }
+  }
+}
+
+.opportunity-complete-page {
+  // Show only the first header for the opportunity data
+  .opportunity-edit-tab-header{
+    display: none;
+  }
+  .opportunity-complete-page-header .opportunity-edit-tab-header{
+    display: block;
+  }
+  // Show only the first header for the proposal data
+  .proposal-view-tab-header{
+    display: none;
+  }
+  .proposal-complete-page-header .proposal-view-tab-header{
+    display: block;
+  }
+  // Remove minimum height requirements for text boxes
+  // (fixes print view)
+  .d-flex.flex-column{
+    min-height: unset !important;
+    height: unset !important;
+  }
+   /* Force new page */
+  .complete-report-section-header {
+    page-break-before: always;
+  }
+  .tabbed-form-section-header {
+    page-break-before: always;
+  }
+  .tabbed-form-section-header-0 {
+    page-break-before: unset;
+  }
+
+  // Hide headers on public tabs, except for the details tab
+  .public-tab-container > :first-child  {
+    display: none;
+  }
+
+  // Ensures textarea fields are full size, hides scrollbars
+  // Note: this is not supported in firefox and safari as of May 2025
+  textarea {
+    field-sizing: content;
+    height: auto !important;
+  }
+
+  // Ensure non-textarea fields are full size
+  .markdown.response-consensus{
+    max-height: none;
+  }
+
+  .panel-notes{
+    height: auto;
   }
 }

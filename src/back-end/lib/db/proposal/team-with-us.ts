@@ -4,11 +4,13 @@ import {
   getOrgIdsForOwnerOrAdmin,
   Transaction,
   isUserOwnerOrAdminOfOrg,
-  tryDb
+  tryDb,
+  readOneTWUResourceQuestionResponseEvaluation
 } from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import {
   generateTWUOpportunityQuery,
+  RawTWUEvaluationPanelMember,
   RawTWUOpportunity,
   RawTWUOpportunitySlim,
   readManyResourceQuestions,
@@ -80,7 +82,7 @@ interface TWUProposalStatusRecord {
   note: string;
 }
 
-interface RawTWUProposal
+export interface RawTWUProposal
   extends Omit<
     TWUProposal,
     | "createdBy"
@@ -467,22 +469,34 @@ export const readOwnTWUProposals = tryDb<
             priceWeight: number;
           }
         >();
+      const chair = await connection<
+        RawTWUEvaluationPanelMember,
+        RawTWUEvaluationPanelMember["user"]
+      >("twuEvaluationPanelMembers")
+        .select("user")
+        .where({
+          opportunityVersion: opportunity.versionId,
+          chair: true
+        });
       const opportunityResourceQuestions = getValidValue(
         await readManyResourceQuestions(connection, opportunity.versionId),
         null
       );
-      const questionResponses = getValidValue(
-        await readManyProposalResourceQuestionResponses(
-          connection,
-          proposal.id,
-          true
-        ),
-        null
-      );
+      const consensusScores =
+        getValidValue(
+          await readOneTWUResourceQuestionResponseEvaluation(
+            connection,
+            proposal.id,
+            chair.user,
+            session,
+            true
+          ),
+          null
+        )?.scores ?? [];
       proposal.questionsScore =
-        opportunityResourceQuestions && questionResponses
+        opportunityResourceQuestions && consensusScores.length
           ? calculateProposalResourceQuestionScore(
-              questionResponses,
+              consensusScores,
               opportunityResourceQuestions
             )
           : undefined;
@@ -945,68 +959,102 @@ async function updateTWUProposalResourceQuestionResponses(
   }
 }
 
+/**
+ * Internal function that updates a TWU proposal status.
+ */
+async function _updateTWUProposalStatusInternal(
+  trx: Transaction,
+  proposalId: Id,
+  status: TWUProposalStatus,
+  note: string,
+  session: AuthenticatedSession
+): Promise<TWUProposal> {
+  const now = new Date();
+
+  const [statusRecord] = await trx<RawHistoryRecord & { id: Id; proposal: Id }>(
+    "twuProposalStatuses"
+  ).insert(
+    {
+      id: generateUuid(),
+      proposal: proposalId,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    },
+    "*"
+  );
+
+  // Update proposal root record
+  await trx<RawTWUProposal>("twuProposals").where({ id: proposalId }).update(
+    {
+      updatedAt: now,
+      updatedBy: session.user.id
+    },
+    "*"
+  );
+
+  if (!statusRecord) {
+    throw new Error("unable to update proposal");
+  }
+
+  const dbResult = await readOneTWUProposal(
+    trx,
+    statusRecord.proposal,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update proposal");
+  }
+
+  return dbResult.value;
+}
+
 export const updateTWUProposalStatus = tryDb<
   [Id, TWUProposalStatus, string, AuthenticatedSession],
   TWUProposal
 >(async (connection, proposalId, status, note, session) => {
-  const now = new Date();
   return valid(
     await connection.transaction(async (trx) => {
-      const [statusRecord] = await connection<
-        RawHistoryRecord & { id: Id; proposal: Id }
-      >("twuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: now,
-            createdBy: session.user.id,
-            status,
-            note
-          },
-          "*"
-        );
-
-      // Update proposal root record
-      await connection<RawTWUProposal>("twuProposals")
-        .transacting(trx)
-        .where({ id: proposalId })
-        .update(
-          {
-            updatedAt: now,
-            updatedBy: session.user.id
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update proposal");
-      }
-
-      const dbResult = await readOneTWUProposal(
+      return await _updateTWUProposalStatusInternal(
         trx,
-        statusRecord.proposal,
+        proposalId,
+        status,
+        note,
         session
       );
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update proposal");
-      }
+    })
+  );
+});
 
-      // If the proposal status is changing to or from Evaluated or Disqualified, check opportunity "Processing" status
-      if (
-        status === TWUProposalStatus.EvaluatedChallenge ||
-        status === TWUProposalStatus.Disqualified
-      ) {
-        const opportunityId = dbResult.value.opportunity.id;
-        await checkAndUpdateTWUOpportunityProcessingStatus(
-          trx,
-          opportunityId,
-          session
-        );
-      }
+/**
+ * Disqualifies a TWU proposal and updates the opportunity processing status in a single transaction.
+ * This ensures both operations succeed or fail together.
+ */
+export const disqualifyTWUProposalAndUpdateOpportunity = tryDb<
+  [Id, string, AuthenticatedSession],
+  TWUProposal
+>(async (connection, proposalId, disqualificationReason, session) => {
+  return valid(
+    await connection.transaction(async (trx) => {
+      // Update proposal status to disqualified
+      const updatedProposal = await _updateTWUProposalStatusInternal(
+        trx,
+        proposalId,
+        TWUProposalStatus.Disqualified,
+        disqualificationReason,
+        session
+      );
 
-      return dbResult.value;
+      // Check if opportunity should be moved to "Processing" status after disqualification
+      const opportunityId = updatedProposal.opportunity.id;
+      await checkAndUpdateTWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
+
+      return updatedProposal;
     })
   );
 });
@@ -1213,7 +1261,8 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
         throw new Error("unable to update proposal scores");
       }
 
-      // This proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      // updateTWUProposalChallengeAndPriceScores was invoked
+      // - this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
       const opportunityId = dbResult.value.opportunity.id;
       await checkAndUpdateTWUOpportunityProcessingStatus(
         trx,
@@ -1602,7 +1651,17 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
       await readManyResourceQuestions(connection, opportunity.versionId ?? ""),
       null
     );
-  if (!opportunity || !opportunityResourceQuestions) {
+  const chair = await connection<
+    RawTWUEvaluationPanelMember,
+    RawTWUEvaluationPanelMember["user"]
+  >("twuEvaluationPanelMembers")
+    .select("user")
+    .where({
+      opportunityVersion: opportunity.versionId,
+      chair: true
+    })
+    .first();
+  if (!opportunity || !opportunityResourceQuestions || !chair) {
     return proposals;
   }
 
@@ -1616,17 +1675,20 @@ async function calculateScores<T extends RawTWUProposal | RawTWUProposalSlim>(
     );
 
   for (const scoring of proposalScorings) {
-    const questionResponses =
+    const consensusScores =
       getValidValue(
-        await readManyProposalResourceQuestionResponses(
+        await readOneTWUResourceQuestionResponseEvaluation(
           connection,
           scoring.id,
+          chair.user,
+          session,
           true
         ),
-        []
-      ) ?? [];
+        undefined
+      )?.scores ?? [];
+
     scoring.questionsScore = calculateProposalResourceQuestionScore(
-      questionResponses,
+      consensusScores,
       opportunityResourceQuestions
     );
     scoring.totalScore =
@@ -1694,12 +1756,12 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
  * Checks if all proposals for a TWU opportunity that have reached the Challenge phase are evaluated
  * and updates the opportunity status accordingly.
  */
-async function checkAndUpdateTWUOpportunityProcessingStatus(
+export async function checkAndUpdateTWUOpportunityProcessingStatus(
   connection: Connection,
   opportunityId: Id,
   session: AuthenticatedSession
 ): Promise<void> {
-  // Get all active proposals using the existing query generator
+  // Get all active proposals
   const activeProposals = await generateTWUProposalQuery(connection)
     .where({ "proposals.opportunity": opportunityId })
     .whereNotIn("statuses.status", [
@@ -1712,15 +1774,11 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
       TWUProposalStatus.EvaluatedResourceQuestions
     ]);
 
-  // Get current opportunity status using the existing opportunity query generator
+  // Get current opportunity status
   const currentOpportunity = await generateTWUOpportunityQuery(connection)
     .where({ "opportunities.id": opportunityId })
     .select("statuses.status")
     .first();
-
-  if (!currentOpportunity) {
-    return; // Opportunity not found
-  }
 
   const currentStatus = currentOpportunity.status;
   const totalProposalsCount = activeProposals.length;
@@ -1743,3 +1801,4 @@ async function checkAndUpdateTWUOpportunityProcessingStatus(
     );
   }
 }
+export { RawHistoryRecord as RawTWUProposalHistoryRecord };

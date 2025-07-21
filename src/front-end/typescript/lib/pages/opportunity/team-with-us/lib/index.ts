@@ -21,7 +21,8 @@ export function twuOpportunityStatusToColor(
       return "warning";
     case TWUOpportunityStatus.Published:
       return "success";
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       return "warning";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "warning";
@@ -46,8 +47,10 @@ export function twuOpportunityStatusToTitleCase(
       return "Under Review";
     case TWUOpportunityStatus.Published:
       return "Published";
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
-      return "Resource Questions";
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      return "Resource Questions Evaluation";
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
+      return "Resource Questions Consensus";
     case TWUOpportunityStatus.EvaluationChallenge:
       return "Evaluation Challenge";
     case TWUOpportunityStatus.Processing:
@@ -119,7 +122,8 @@ export function twuOpportunityToPublicStatus(
     } else if (o.status === TWUOpportunityStatus.Suspended) {
       return "Suspended";
     } else if (
-      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsIndividual ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsConsensus ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "Evaluation";
@@ -149,7 +153,8 @@ export function twuOpportunityToPublicColor(
     if (isOpen(o)) {
       return "success";
     } else if (
-      o.status === TWUOpportunityStatus.EvaluationResourceQuestions ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsIndividual ||
+      o.status === TWUOpportunityStatus.EvaluationResourceQuestionsConsensus ||
       o.status === TWUOpportunityStatus.EvaluationChallenge
     ) {
       return "warning";

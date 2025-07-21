@@ -30,7 +30,7 @@ export type InnerMsg = ADT<"history", History.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
-function getHistoryItems(
+export function getHistoryItems(
   { history }: TWUProposal,
   viewerUserType: UserType
 ): History.Item[] {

@@ -1,7 +1,7 @@
 import { isDateInTheFuture, isDateInThePast } from "shared/lib";
 import { Addendum } from "shared/lib/resources/addendum";
 import { FileRecord } from "shared/lib/resources/file";
-import { UserSlim } from "shared/lib/resources/user";
+import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
@@ -20,7 +20,8 @@ export enum TWUOpportunityStatus {
   Draft = "DRAFT",
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
-  EvaluationResourceQuestions = "EVAL_QUESTIONS",
+  EvaluationResourceQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
+  EvaluationResourceQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationChallenge = "EVAL_C",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
@@ -38,7 +39,8 @@ export enum TWUServiceArea {
   FullStackDeveloper = "FULL_STACK_DEVELOPER",
   DataProfessional = "DATA_PROFESSIONAL",
   AgileCoach = "AGILE_COACH",
-  DevopsSpecialist = "DEVOPS_SPECIALIST"
+  DevopsSpecialist = "DEVOPS_SPECIALIST",
+  ServiceDesigner = "SERVICE_DESIGNER"
 }
 
 export interface TWUOpportunityHistoryRecord {
@@ -111,7 +113,7 @@ export function isTWUOpportunityStatusInEvaluation(
   s: TWUOpportunityStatus
 ): boolean {
   switch (s) {
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationChallenge:
       return true;
     default:
@@ -121,7 +123,8 @@ export function isTWUOpportunityStatusInEvaluation(
 
 export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Published,
-  TWUOpportunityStatus.EvaluationResourceQuestions,
+  TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
+  TWUOpportunityStatus.EvaluationResourceQuestionsConsensus,
   TWUOpportunityStatus.EvaluationChallenge,
   TWUOpportunityStatus.Processing,
   TWUOpportunityStatus.Awarded,
@@ -185,8 +188,6 @@ export interface TWUOpportunity {
   remoteOk: boolean;
   remoteDesc: string;
   location: string;
-  // mandatorySkills: string[];
-  // optionalSkills: string[];
   resources: TWUResource[];
   description: string;
   proposalDeadline: Date;
@@ -209,6 +210,7 @@ export interface TWUOpportunity {
     numWatchers: number;
     numViews: number;
   };
+  evaluationPanel?: TWUEvaluationPanelMember[];
 }
 
 export interface TWUSuccessfulProponent {
@@ -227,6 +229,14 @@ export interface TWUResourceQuestion {
   order: number;
   createdAt: Date;
   createdBy?: UserSlim;
+  minimumScore?: number | null;
+}
+
+export interface TWUEvaluationPanelMember {
+  user: UserSlim & { email: User["email"] };
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
 }
 
 export interface TWUResource {
@@ -298,6 +308,13 @@ export type ValidatedCreateTWUResourceBody = Omit<
   serviceArea: number;
 };
 
+export type CreateTWUEvaluationPanelMemberBody = {
+  user: Id;
+  chair: boolean;
+  evaluator: boolean;
+  order: number;
+};
+
 export interface CreateRequestBody {
   title: string;
   teaser: string;
@@ -317,6 +334,7 @@ export interface CreateRequestBody {
   attachments: Id[];
   status: CreateTWUOpportunityStatus;
   resourceQuestions: CreateTWUResourceQuestionBody[];
+  evaluationPanel: CreateTWUEvaluationPanelMemberBody[];
 }
 
 export interface CreateTWUResourceQuestionValidationErrors
@@ -329,6 +347,12 @@ export interface CreateTWUResourceValidationErrors
   parseFailure?: string[];
 }
 
+export interface CreateTWUEvaluationPanelMemberValidationErrors
+  extends ErrorTypeFrom<CreateTWUEvaluationPanelMemberBody> {
+  parseFailure?: string[];
+  members?: string[];
+}
+
 export interface CreateValidationErrors
   extends Omit<
     ErrorTypeFrom<CreateRequestBody> & BodyWithErrors,
@@ -337,6 +361,7 @@ export interface CreateValidationErrors
     | "optionalSkills"
     | "resourceQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
@@ -344,6 +369,7 @@ export interface CreateValidationErrors
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];
   attachments?: string[][];
   scoreWeights?: string[];
+  evaluationPanel?: CreateTWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Update.
@@ -355,7 +381,17 @@ export type UpdateRequestBody =
   | ADT<"startChallenge", string>
   | ADT<"suspend", string>
   | ADT<"cancel", string>
-  | ADT<"addAddendum", string>;
+  | ADT<"addAddendum", string>
+  | ADT<
+      "submitIndividualQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<
+      "submitConsensusQuestionEvaluations",
+      SubmitQuestionEvaluationsWithNoteRequestBody
+    >
+  | ADT<"editEvaluationPanel", CreateTWUEvaluationPanelMemberBody[]>
+  | ADT<"finalizeQuestionConsensuses", string>;
 
 export type UpdateEditRequestBody = Omit<CreateRequestBody, "status">;
 
@@ -369,6 +405,11 @@ export interface UpdateWithNoteValidationErrors
   attachments?: string[][];
 }
 
+export interface SubmitQuestionEvaluationsWithNoteRequestBody {
+  note: string;
+  proposals: Id[];
+}
+
 type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
@@ -377,7 +418,10 @@ type UpdateADTErrors =
   | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
-  | ADT<"addNote", UpdateWithNoteValidationErrors>
+  | ADT<"submitIndividualQuestionEvaluations", string[]>
+  | ADT<"submitConsensusQuestionEvaluations", string[]>
+  | ADT<"editEvaluationPanel", UpdateEditValidationErrors>
+  | ADT<"finalizeQuestionConsensuses", string[]>
   | ADT<"parseFailure">;
 
 export interface UpdateValidationErrors extends BodyWithErrors {
@@ -392,6 +436,7 @@ export interface UpdateEditValidationErrors
     | "optionalSkills"
     | "resourceQuestions"
     | "attachments"
+    | "evaluationPanel"
   > {
   resources?: CreateTWUResourceValidationErrors[];
   mandatorySkills?: string[][];
@@ -399,6 +444,7 @@ export interface UpdateEditValidationErrors
   resourceQuestions?: CreateTWUResourceQuestionValidationErrors[];
   attachments?: string[][];
   scoreWeights?: string[];
+  evaluationPanel?: CreateTWUEvaluationPanelMemberValidationErrors[];
 }
 
 // Delete.
@@ -426,9 +472,15 @@ export function isValidStatusChange(
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
-        TWUOpportunityStatus.EvaluationResourceQuestions
+        TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
       ].includes(to);
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      return [
+        TWUOpportunityStatus.Canceled,
+        TWUOpportunityStatus.Suspended,
+        TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
+      ].includes(to);
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       return [
         TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended,
@@ -443,8 +495,7 @@ export function isValidStatusChange(
     case TWUOpportunityStatus.Processing:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
-        TWUOpportunityStatus.Awarded
+        TWUOpportunityStatus.Suspended
       ].includes(to);
     case TWUOpportunityStatus.Suspended:
       return [
@@ -460,7 +511,7 @@ export function canTWUOpportunityBeScreenedInToChallenge(
   o: TWUOpportunity
 ): boolean {
   switch (o.status) {
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:
       return false;
@@ -491,6 +542,21 @@ export function canViewTWUOpportunityProposals(o: TWUOpportunity): boolean {
   );
 }
 
+export function canViewTWUOpportunityResourceQuestionResponseEvaluations(
+  o: TWUOpportunity,
+  status: TWUOpportunityStatus
+): boolean {
+  // Return true if the opportunity has ever had the status.
+  return (
+    !!o.history &&
+    o.history.reduce((acc, record) => {
+      return (
+        acc || (record.type.tag === "status" && record.type.value === status)
+      );
+    }, false as boolean)
+  );
+}
+
 export function canTWUOpportunityDetailsBeEdited(
   o: TWUOpportunity,
   adminsOnly: boolean
@@ -510,7 +576,8 @@ export function canTWUOpportunityDetailsBeEdited(
 export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
@@ -524,12 +591,26 @@ export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
 export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
   switch (o.status) {
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.EvaluationResourceQuestions:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.Canceled:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function canChangeEvaluationPanel(o: TWUOpportunity): boolean {
+  switch (o.status) {
+    case TWUOpportunityStatus.Draft:
+    case TWUOpportunityStatus.UnderReview:
+    case TWUOpportunityStatus.Published:
+    case TWUOpportunityStatus.Suspended:
+    case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:
       return false;
@@ -557,7 +638,8 @@ export function hasTWUOpportunityPassedResourceQuestions(
       return acc;
     }
     switch (h.type.value) {
-      case TWUOpportunityStatus.EvaluationResourceQuestions:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
+      case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       case TWUOpportunityStatus.EvaluationChallenge:
       case TWUOpportunityStatus.Awarded:
         return true;
@@ -623,6 +705,18 @@ export function doesTWUOpportunityStatusAllowGovToViewFullProposal(
   switch (s) {
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Processing:
+    case TWUOpportunityStatus.Awarded:
+      return true;
+    default:
+      return false;
+  }
+}
+
+export function doesTWUOpportunityStatusAllowGovToViewResourceQuestionResponseEvaluations(
+  s: TWUOpportunityStatus
+): boolean {
+  switch (s) {
+    case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Awarded:
       return true;
     default:

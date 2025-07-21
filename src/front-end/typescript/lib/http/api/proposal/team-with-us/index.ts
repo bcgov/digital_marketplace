@@ -8,6 +8,7 @@ import {
   rawFileRecordToFileRecord
 } from "front-end/lib/http/api/file/lib";
 import { compareDates, compareNumbers } from "shared/lib";
+export * as resourceQuestions from "front-end/lib/http/api/proposal/team-with-us/resource-questions";
 
 /**
  * reflects the path for the CRUD request being made

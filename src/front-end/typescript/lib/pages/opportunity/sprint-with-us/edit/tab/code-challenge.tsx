@@ -166,22 +166,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "completeCodeChallenge": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
-      // Don't allow completing code challenge if not all proposals have been scored
-      if (!state.allProposalsScored) {
-        return [
-          state.set("showModal", null),
-          [
-            component_.cmd.dispatch(
-              component_.global.showToastMsg(
-                adt("error", {
-                  title: "Incomplete Evaluation",
-                  body: "You must score all proponents before moving to the Team Scenario evaluation step."
-                })
-              )
-            )
-          ]
-        ];
-      }
       state = state.set("showModal", null);
       return [
         startCompleteCodeChallengeLoading(state),
@@ -278,7 +262,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               )
             ]
           ];
@@ -335,7 +319,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
                   api.getValidValue(response, state.proposals)
                 ),
                 (newOpp, newProposals) =>
-                  adt("onInitResponse", [newOpp, newProposals]) as Msg
+                  adt("onInitResponse", [newOpp, newProposals, [], []]) as Msg
               )
             ]
           ];
@@ -679,6 +663,7 @@ export const component: Tab.Component<State, Msg> = {
           // At least one proposal already screened in.
           return (
             isLoading ||
+            !state.allProposalsScored ||
             !(
               canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
               state.proposals.reduce(

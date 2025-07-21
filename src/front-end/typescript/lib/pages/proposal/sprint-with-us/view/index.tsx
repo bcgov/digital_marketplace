@@ -20,15 +20,20 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/sprint-with-us/view/tab";
 import {
   DEFAULT_SWU_PROPOSAL_TITLE,
-  SWUProposal
+  SWUProposal,
+  SWUProposalSlim
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { UserType, User } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { SWUOpportunity } from "shared/lib/resources/opportunity/sprint-with-us";
+import { SWUTeamQuestionResponseEvaluation } from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
+import { getTeamQuestionsOpportunityTab } from "./tab/team-questions";
 
 interface ValidState<K extends Tab.TabId> extends Tab.ParentState<K> {
   proposal: SWUProposal | null;
+  questionEvaluations: SWUTeamQuestionResponseEvaluation[];
+  proposals: SWUProposalSlim[];
 }
 
 export type State_<K extends Tab.TabId> = Validation<
@@ -40,7 +45,19 @@ export type State = State_<Tab.TabId>;
 
 export type InnerMsg_<K extends Tab.TabId> = Tab.ParentInnerMsg<
   K,
-  ADT<"onInitResponse", [User, RouteParams, SWUProposal, SWUOpportunity]>
+  ADT<
+    "onInitResponse",
+    [
+      User,
+      RouteParams,
+      SWUProposal,
+      SWUOpportunity,
+      boolean,
+      SWUTeamQuestionResponseEvaluation | undefined,
+      SWUTeamQuestionResponseEvaluation[],
+      SWUProposalSlim[]
+    ]
+  >
 >;
 
 export type InnerMsg = InnerMsg_<Tab.TabId>;
@@ -71,7 +88,9 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
           immutable({
             proposal: null,
             tab: null,
-            sidebar: null
+            sidebar: null,
+            questionEvaluations: [],
+            proposals: []
           })
         ) as State_<K>,
         [
@@ -91,7 +110,11 @@ function makeInit<K extends Tab.TabId>(): component_.page.Init<
                 shared.sessionUser,
                 routeParams,
                 proposal,
-                opportunity
+                opportunity,
+                false,
+                undefined, // No Evaluation
+                [], // Empty Panel Evaluatons
+                [] // Empty Proposals
               ]) as Msg;
             }
           )
@@ -139,21 +162,38 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
         extraUpdate: ({ state, msg }) => {
           switch (msg.tag) {
             case "onInitResponse": {
-              const [viewerUser, routeParams, proposal, opportunity] =
-                msg.value;
+              const [
+                viewerUser,
+                routeParams,
+                proposal,
+                opportunity,
+                evaluating,
+                questionEvaluation,
+                panelQuestionEvaluations,
+                proposals
+              ] = msg.value;
               // Set up the visible tab state.
               const tabId = routeParams.tab || "proposal";
               // Initialize the sidebar.
               const [sidebarState, sidebarCmds] = Tab.makeSidebarState(
                 tabId,
-                proposal
+                proposal,
+                getTeamQuestionsOpportunityTab(
+                  evaluating,
+                  panelQuestionEvaluations
+                ),
+                questionEvaluation
               );
               // Initialize the tab.
               const tabComponent = Tab.idToDefinition(tabId).component;
               const [tabState, tabCmds] = tabComponent.init({
                 viewerUser,
                 proposal,
-                opportunity
+                opportunity,
+                evaluating,
+                questionEvaluation,
+                panelQuestionEvaluations,
+                proposals
               });
               // Everything checks out, return valid state.
               return [
@@ -163,7 +203,8 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
                     immutable<Tab.Tabs[K]["state"]>(tabState)
                   ])
                   .set("sidebar", immutable(sidebarState))
-                  .set("proposal", proposal),
+                  .set("proposal", proposal)
+                  .set("proposals", proposals),
                 [
                   ...component_.cmd.mapMany(
                     sidebarCmds,
