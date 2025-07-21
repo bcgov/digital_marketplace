@@ -1,9 +1,11 @@
-import { EMPTY_STRING } from "front-end/config";
+import { SEARCH_DEBOUNCE_DURATION } from "front-end/config";
 import { makePageMetadata } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
 import router from "front-end/lib/app/router";
 import { Route, SharedState } from "front-end/lib/app/types";
 import * as Table from "front-end/lib/components/table";
+import * as ShortText from "front-end/lib/components/form-field/short-text";
+import * as FormField from "front-end/lib/components/form-field";
 import {
   immutable,
   Immutable,
@@ -22,6 +24,7 @@ import { Col, Row, Spinner } from "reactstrap";
 import { compareStrings } from "shared/lib";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
+import { EMPTY_STRING } from "shared/config";
 
 interface TableUser extends User {
   statusTitleCase: string;
@@ -31,28 +34,78 @@ interface TableUser extends User {
 export interface State {
   table: Immutable<Table.State>;
   users: TableUser[];
+  visibleUsers: TableUser[];
   loading: boolean;
+  searchFilter: Immutable<ShortText.State>;
 }
 
-type InnerMsg = ADT<"onInitResponse", TableUser[]> | ADT<"table", Table.Msg>;
+type InnerMsg =
+  | ADT<"onInitResponse", TableUser[]>
+  | ADT<"table", Table.Msg>
+  | ADT<"searchFilter", ShortText.Msg>
+  | ADT<"search", null>
+  | ADT<"noop", null>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
 export type RouteParams = null;
 
+function makeQueryRegExp(query: string): RegExp | null {
+  if (!query) {
+    return null;
+  }
+  return new RegExp(query.split(/\s+/).join(".*"), "i");
+}
+
+function filterUsers(users: TableUser[], query: string): TableUser[] {
+  const regExp = makeQueryRegExp(query);
+  if (!regExp) {
+    return users;
+  }
+  return users.filter((user) => {
+    return user.name && user.name.match(regExp);
+  });
+}
+
+function runSearch(state: Immutable<State>): Immutable<State> {
+  const query = FormField.getValue(state.searchFilter);
+  const filteredUsers = filterUsers(state.users, query);
+  return state.set("visibleUsers", filteredUsers);
+}
+
+const dispatchSearch = component_.cmd.makeDebouncedDispatch(
+  adt("noop", null) as InnerMsg,
+  adt("search", null) as InnerMsg,
+  SEARCH_DEBOUNCE_DURATION
+);
+
 function baseInit(): component_.base.InitReturnValue<State, Msg> {
   const [tableState, tableCmds] = Table.init({
     idNamespace: "user-list-table"
   });
+  const [searchFilterState, searchFilterCmds] = ShortText.init({
+    errors: [],
+    child: {
+      type: "text",
+      value: "",
+      id: "user-list-search"
+    }
+  });
   return [
     {
       users: [],
+      visibleUsers: [],
       table: immutable(tableState),
-      loading: true
+      loading: true,
+      searchFilter: immutable(searchFilterState)
     },
     [
       component_.cmd.dispatch(component_.page.readyMsg()),
-      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
+      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
+      ...component_.cmd.mapMany(
+        searchFilterCmds,
+        (msg) => adt("searchFilter", msg) as Msg
+      )
     ]
   ];
 }
@@ -126,8 +179,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   msg
 }) => {
   switch (msg.tag) {
-    case "onInitResponse":
-      return [state.set("users", msg.value).set("loading", false), []];
+    case "onInitResponse": {
+      const newState = state.set("users", msg.value).set("loading", false);
+      return [runSearch(newState), []];
+    }
     case "table":
       return component_.base.updateChild({
         state,
@@ -136,6 +191,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         childMsg: msg.value,
         mapChildMsg: (value) => ({ tag: "table", value })
       });
+    case "searchFilter":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["searchFilter"],
+        childUpdate: ShortText.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => ({ tag: "searchFilter", value }),
+        updateAfter: (state) =>
+          [state, [dispatchSearch()]] as component_.page.UpdateReturnValue<
+            State,
+            InnerMsg,
+            Route
+          >
+      });
+    case "search":
+      return [runSearch(state), []];
+    case "noop":
+      return [state, []];
     default:
       return [state, []];
   }
@@ -196,7 +269,7 @@ const VirtualizedTable: React.FC<{
 
       const visibleCount = Math.ceil(clientHeight / rowHeight);
       const visibleEnd = Math.min(
-        state.users.length,
+        state.visibleUsers.length,
         visibleStart + visibleCount + buffer * 2
       );
 
@@ -212,11 +285,14 @@ const VirtualizedTable: React.FC<{
       clearTimeout(timerId);
       container.removeEventListener("scroll", handleScroll);
     };
-  }, [state.users.length]);
+  }, [state.visibleUsers.length]);
 
-  const visibleUsers = state.users.slice(visibleRange.start, visibleRange.end);
+  const visibleUsers = state.visibleUsers.slice(
+    visibleRange.start,
+    visibleRange.end
+  );
 
-  const totalHeight = state.users.length * 50; // 50px per row (must match CSS)
+  const totalHeight = state.visibleUsers.length * 50; // 50px per row (must match CSS)
   const paddingTop = visibleRange.start * 50; // Calculate top padding based on hidden rows
 
   return (
@@ -294,6 +370,10 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
     dispatch,
     (value) => ({ tag: "table", value })
   );
+  const dispatchSearchFilter = component_.base.mapDispatch<Msg, ShortText.Msg>(
+    dispatch,
+    (value) => ({ tag: "searchFilter", value })
+  );
   return (
     <Row>
       <Col xs="12">
@@ -306,7 +386,19 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               <Spinner color="primary" />
             </div>
           ) : (
-            <VirtualizedTable state={state} dispatch={dispatchTable} />
+            <>
+              <div className="mb-4">
+                <ShortText.view
+                  extraChildProps={{}}
+                  placeholder="Search by name..."
+                  disabled={false}
+                  state={state.searchFilter}
+                  className="w-100"
+                  dispatch={dispatchSearchFilter}
+                />
+              </div>
+              <VirtualizedTable state={state} dispatch={dispatchTable} />
+            </>
           )}
         </div>
       </Col>
