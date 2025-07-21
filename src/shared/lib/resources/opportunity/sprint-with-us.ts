@@ -397,7 +397,6 @@ export type UpdateRequestBody =
   | ADT<"publish", string>
   | ADT<"startCodeChallenge", string>
   | ADT<"startTeamScenario", string>
-  | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
   | ADT<"addNote", UpdateWithNoteRequestBody>
@@ -435,7 +434,6 @@ type UpdateADTErrors =
   | ADT<"publish", string[]>
   | ADT<"startCodeChallenge", string[]>
   | ADT<"startTeamScenario", string[]>
-  | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
   | ADT<"addNote", UpdateWithNoteValidationErrors>
