@@ -1,5 +1,5 @@
 /* Wrapper for the fixed header table */
-.table-header-wrapper {
+.virtualized-table-header-wrapper {
   // Headers should not scroll
   overflow: hidden;
   border: 1px solid #dee2e6; // Match body container border
@@ -8,7 +8,7 @@
 }
 
 /* Header table specific styles */
-.table-header-fixed {
+.virtualized-table-header-fixed {
   margin-bottom: 0 !important; // Remove default table margin
   width: 100%;
   table-layout: fixed;
@@ -67,12 +67,3 @@
     }
   }
 }
-
-/* Loading spinner styles (adjust positioning if needed) */
-.loading-spinner {
-  position: absolute;
-  top: 50%; // Relative to nearest positioned ancestor (could be .virtualized-body-container)
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-} 

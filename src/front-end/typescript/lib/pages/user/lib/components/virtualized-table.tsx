@@ -20,16 +20,38 @@ export interface VirtualizedTableState {
   scrollTop: number;
   containerHeight: number;
   totalItems: number;
+  rowHeight: number;
+  bufferSize: number;
 }
 
 export type VirtualizedTableMsg =
   | ADT<"scroll", { scrollTop: number; containerHeight: number }>
-  | ADT<"updateVisibleRange", { start: number; end: number }>;
+  | ADT<"updateVisibleRange", { start: number; end: number }>
+  | ADT<"updateTotalItems", number>
+  | ADT<"resetScroll", null>
+  | ADT<"noop", null>;
 
 interface VirtualizedTableParams {
   totalItems: number;
   rowHeight: number;
   bufferSize: number;
+}
+
+// Helper function to scroll the virtualized table container to top
+function scrollContainerToTop(): void {
+  const container = document.getElementById("virtualized-table-container");
+  if (container) {
+    container.scrollTop = 0;
+  }
+}
+
+// Separate interface for the view props that includes the data
+interface VirtualizedTableViewProps
+  extends component_.base.ComponentViewProps<
+    VirtualizedTableState,
+    VirtualizedTableMsg
+  > {
+  visibleUsers: TableUser[];
 }
 
 function tableHeadCells(): Table.HeadCells {
@@ -93,15 +115,19 @@ function generateBodyRows(visibleUsers: TableUser[]): Table.BodyRows {
 // Custom TBody component for virtualized table
 interface VirtualizedTBodyProps {
   rows: Table.BodyRows;
+  rowHeight: number;
 }
 
 const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
-  rows
+  rows,
+  rowHeight
 }) => {
   return (
     <tbody className="font-size-small">
       {rows.map((row, rowIndex) => (
-        <tr key={`virtualized-row-${rowIndex}`} style={{ height: "50px" }}>
+        <tr
+          key={`virtualized-row-${rowIndex}`}
+          style={{ height: `${rowHeight}px` }}>
           {row.map((cell, cellIndex) => (
             <td
               key={`virtualized-cell-${rowIndex}-${cellIndex}`}
@@ -115,136 +141,152 @@ const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
   );
 };
 
-export const VirtualizedTable = {
-  init: (
-    params: VirtualizedTableParams
-  ): component_.base.InitReturnValue<
-    VirtualizedTableState,
-    VirtualizedTableMsg
-  > => {
-    return [
-      {
-        visibleRange: { start: 0, end: 20 },
-        scrollTop: 0,
-        containerHeight: 0,
-        totalItems: params.totalItems
-      },
-      []
-    ];
-  },
+const init: component_.base.Init<
+  VirtualizedTableParams,
+  VirtualizedTableState,
+  VirtualizedTableMsg
+> = (params) => {
+  return [
+    {
+      visibleRange: { start: 0, end: 20 },
+      scrollTop: 0,
+      containerHeight: 0,
+      totalItems: params.totalItems,
+      rowHeight: params.rowHeight,
+      bufferSize: params.bufferSize
+    },
+    []
+  ];
+};
 
-  update: ({
-    state,
-    msg
-  }: component_.base.UpdateParams<
-    VirtualizedTableState,
-    VirtualizedTableMsg
-  >): component_.base.UpdateReturnValue<
-    VirtualizedTableState,
-    VirtualizedTableMsg
-  > => {
-    switch (msg.tag) {
-      case "scroll": {
-        const { scrollTop, containerHeight } = msg.value;
-        const rowHeight = 50; // Must match CSS
-        const buffer = 5;
-        const start = Math.floor(scrollTop / rowHeight);
-        const visibleStart = Math.max(0, start - buffer);
+const update: component_.base.Update<
+  VirtualizedTableState,
+  VirtualizedTableMsg
+> = ({ state, msg }) => {
+  switch (msg.tag) {
+    case "scroll": {
+      const { scrollTop, containerHeight } = msg.value;
+      const rowHeight = state.rowHeight;
+      const buffer = state.bufferSize;
+      const start = Math.floor(scrollTop / rowHeight);
+      const visibleStart = Math.max(0, start - buffer);
 
-        if (containerHeight <= 0) {
-          return [state, []];
-        }
-
-        const visibleCount = Math.ceil(containerHeight / rowHeight);
-        const visibleEnd = Math.min(
-          state.totalItems || 0,
-          visibleStart + visibleCount + buffer * 2
-        );
-
-        return [
-          state
-            .set("scrollTop", scrollTop)
-            .set("containerHeight", containerHeight)
-            .set("visibleRange", { start: visibleStart, end: visibleEnd }),
-          []
-        ];
-      }
-      case "updateVisibleRange":
-        return [state.set("visibleRange", msg.value), []];
-      default:
+      if (containerHeight <= 0) {
         return [state, []];
-    }
-  },
+      }
 
-  view: ({
-    state,
-    dispatch,
-    visibleUsers
-  }: component_.base.ComponentViewProps<
-    VirtualizedTableState,
-    VirtualizedTableMsg
-  > & { visibleUsers: TableUser[] }) => {
-    const headCells = tableHeadCells();
-    const totalHeight = state.totalItems * 50; // 50px per row (must match CSS)
-    const paddingTop = state.visibleRange.start * 50; // Calculate top padding based on hidden rows
-
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-      const target = e.target as HTMLDivElement;
-      dispatch(
-        adt("scroll", {
-          scrollTop: target.scrollTop,
-          containerHeight: target.clientHeight
-        })
+      const visibleCount = Math.ceil(containerHeight / rowHeight);
+      const visibleEnd = Math.min(
+        state.totalItems || 0,
+        visibleStart + visibleCount + buffer * 2
       );
-    };
 
-    // Generate body rows for visible users
-    const visibleUsersSlice = visibleUsers.slice(
-      state.visibleRange.start,
-      state.visibleRange.end
+      return [
+        state
+          .set("scrollTop", scrollTop)
+          .set("containerHeight", containerHeight)
+          .set("visibleRange", { start: visibleStart, end: visibleEnd }),
+        []
+      ];
+    }
+    case "updateVisibleRange":
+      return [state.set("visibleRange", msg.value), []];
+    case "updateTotalItems":
+      return [state.set("totalItems", msg.value), []];
+    case "resetScroll": {
+      scrollContainerToTop();
+      return [
+        state.set("scrollTop", 0).set("visibleRange", {
+          start: 0,
+          end: Math.min(20, state.totalItems || 0)
+        }),
+        []
+      ];
+    }
+    case "noop":
+      return [state, []];
+    default:
+      return [state, []];
+  }
+};
+
+const view: component_.base.View<VirtualizedTableViewProps> = ({
+  state,
+  dispatch,
+  visibleUsers
+}) => {
+  const headCells = tableHeadCells();
+  const totalHeight = state.totalItems * state.rowHeight;
+  const paddingTop = state.visibleRange.start * state.rowHeight;
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    dispatch(
+      adt("scroll", {
+        scrollTop: target.scrollTop,
+        containerHeight: target.clientHeight
+      })
     );
-    const bodyRows = generateBodyRows(visibleUsersSlice);
+  };
 
-    return (
-      <div className="virtualized-table-layout">
-        {/* 1. Render Header Separately */}
-        <div className="table-header-wrapper">
-          <Table.view
-            state={immutable(
-              Table.init({ idNamespace: "user-list-header" })[0]
-            )}
-            dispatch={() => {}} // No dispatch needed for header
-            headCells={headCells}
-            bodyRows={[]} // No body rows for the header table
-            className="table table-header-fixed" // Apply fixed layout
-          />
-        </div>
+  // Generate body rows for visible users
+  const visibleUsersSlice = visibleUsers.slice(
+    state.visibleRange.start,
+    state.visibleRange.end
+  );
+  const bodyRows = generateBodyRows(visibleUsersSlice);
 
-        {/* 2. Render Scrollable Body Container */}
-        <div className="virtualized-body-container" onScroll={handleScroll}>
-          {/* 3. Inner div for total height simulation */}
-          <div style={{ height: totalHeight, position: "relative" }}>
-            {/* 4. Absolutely positioned div for visible rows, using padding */}
-            <div
-              style={{
-                position: "absolute",
-                top: `${paddingTop}px`, // Use padding instead of transform
-                left: 0,
-                width: "100%"
-              }}>
-              {/* 5. Render Body Table using existing Table components */}
-              <table className="table virtualized-body-table">
-                <colgroup>
-                  {headCells.map((cell, index) => (
-                    <col key={index} style={cell.style} />
-                  ))}
-                </colgroup>
-                <VirtualizedTBody rows={bodyRows} />
-              </table>
-            </div>
+  return (
+    <div className="virtualized-table-layout">
+      {/* 1. Render Header Separately */}
+      <div className="virtualized-table-header-wrapper">
+        <Table.view
+          state={immutable(Table.init({ idNamespace: "user-list-header" })[0])}
+          dispatch={() => {}} // No dispatch needed for header
+          headCells={headCells}
+          bodyRows={[]} // No body rows for the header table
+          className="table virtualized-table-header-fixed" // Apply fixed layout
+        />
+      </div>
+
+      {/* 2. Render Scrollable Body Container */}
+      <div
+        id="virtualized-table-container"
+        className="virtualized-body-container"
+        onScroll={handleScroll}>
+        {/* 3. Inner div for total height simulation */}
+        <div style={{ height: totalHeight, position: "relative" }}>
+          {/* 4. Absolutely positioned div for visible rows, using padding */}
+          <div
+            style={{
+              position: "absolute",
+              top: `${paddingTop}px`, // Use padding instead of transform
+              left: 0,
+              width: "100%"
+            }}>
+            {/* 5. Render Body Table using existing Table components */}
+            <table className="table virtualized-body-table">
+              <colgroup>
+                {headCells.map((cell, index) => (
+                  <col key={index} style={cell.style} />
+                ))}
+              </colgroup>
+              <VirtualizedTBody rows={bodyRows} rowHeight={state.rowHeight} />
+            </table>
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+};
+
+export const VirtualizedTable: component_.base.Component<
+  VirtualizedTableParams,
+  VirtualizedTableState,
+  VirtualizedTableMsg,
+  VirtualizedTableViewProps
+> = {
+  init,
+  update,
+  view
 };

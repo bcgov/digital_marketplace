@@ -196,11 +196,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       const newState = state.set("users", msg.value).set("loading", false);
       const searchState = runSearch(newState);
       return [
-        searchState.setIn(
-          ["virtualizedTable", "totalItems"],
-          searchState.visibleUsers.length
-        ),
-        []
+        searchState,
+        [
+          component_.cmd.dispatch(
+            adt(
+              "virtualizedTable",
+              adt("updateTotalItems", searchState.visibleUsers.length)
+            ) as Msg
+          ),
+          component_.cmd.dispatch(
+            adt("virtualizedTable", adt("resetScroll", null)) as Msg
+          )
+        ]
       ];
     }
     case "table":
@@ -228,11 +235,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
     case "search": {
       const searchState = runSearch(state);
       return [
-        searchState.setIn(
-          ["virtualizedTable", "totalItems"],
-          searchState.visibleUsers.length
-        ),
-        []
+        searchState,
+        [
+          component_.cmd.dispatch(
+            adt(
+              "virtualizedTable",
+              adt("updateTotalItems", searchState.visibleUsers.length)
+            ) as Msg
+          ),
+          component_.cmd.dispatch(
+            adt("virtualizedTable", adt("resetScroll", null)) as Msg
+          )
+        ]
       ];
     }
     case "virtualizedTable":

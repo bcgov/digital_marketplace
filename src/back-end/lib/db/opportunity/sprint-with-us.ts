@@ -461,21 +461,21 @@ export function generateSWUOpportunityQuery(
   const query: Knex.QueryBuilder = connection<RawSWUOpportunity>(
     "swuOpportunities as opportunities"
   )
-    // Join on latest SWU status using window function
+    // Join on latest SWU status
     .join(
       connection.raw(
-        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityStatuses" 
-         WHERE status IS NOT NULL 
+        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityStatuses"
+         WHERE status IS NOT NULL
          ORDER BY opportunity, "createdAt" DESC) as statuses`,
         []
       ),
       "opportunities.id",
       "statuses.opportunity"
     )
-    // Join on latest SWU version using window function
+    // Join on latest SWU version
     .join(
       connection.raw(
-        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityVersions" 
+        `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityVersions"
          ORDER BY opportunity, "createdAt" DESC) as versions`,
         []
       ),

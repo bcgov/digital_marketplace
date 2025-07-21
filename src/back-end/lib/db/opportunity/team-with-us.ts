@@ -513,21 +513,21 @@ export function generateTWUOpportunityQuery(
   const query: Knex.QueryBuilder = connection<RawTWUOpportunity>(
     "twuOpportunities as opportunities"
   )
-    // Join on latest TWU status using window function
+    // Join on latest TWU status
     .join(
       connection.raw(
-        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityStatuses" 
-         WHERE status IS NOT NULL 
+        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityStatuses"
+         WHERE status IS NOT NULL
          ORDER BY opportunity, "createdAt" DESC) as statuses`,
         []
       ),
       "opportunities.id",
       "statuses.opportunity"
     )
-    // Join on latest TWU version using window function
+    // Join on latest TWU version
     .join(
       connection.raw(
-        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityVersions" 
+        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityVersions"
          ORDER BY opportunity, "createdAt" DESC) as versions`,
         []
       ),
