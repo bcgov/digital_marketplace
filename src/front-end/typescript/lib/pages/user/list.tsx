@@ -13,18 +13,19 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
-  userStatusToColor,
   userStatusToTitleCase,
   userTypeToTitleCase
 } from "front-end/lib/pages/user/lib";
-import Badge from "front-end/lib/views/badge";
-import Link, { routeDest } from "front-end/lib/views/link";
-import React, { useState, useEffect } from "react";
+import {
+  VirtualizedTable,
+  VirtualizedTableState,
+  VirtualizedTableMsg
+} from "front-end/lib/pages/user/lib/components/virtualized-table";
+import React from "react";
 import { Col, Row, Spinner } from "reactstrap";
 import { compareStrings } from "shared/lib";
-import { isAdmin, User, UserType } from "shared/lib/resources/user";
+import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import { EMPTY_STRING } from "shared/config";
 
 interface TableUser extends User {
   statusTitleCase: string;
@@ -37,6 +38,7 @@ export interface State {
   visibleUsers: TableUser[];
   loading: boolean;
   searchFilter: Immutable<ShortText.State>;
+  virtualizedTable: Immutable<VirtualizedTableState>;
 }
 
 type InnerMsg =
@@ -44,7 +46,8 @@ type InnerMsg =
   | ADT<"table", Table.Msg>
   | ADT<"searchFilter", ShortText.Msg>
   | ADT<"search", null>
-  | ADT<"noop", null>;
+  | ADT<"noop", null>
+  | ADT<"virtualizedTable", VirtualizedTableMsg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -91,13 +94,19 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
       id: "user-list-search"
     }
   });
+  const [virtualizedTableState, virtualizedTableCmds] = VirtualizedTable.init({
+    totalItems: 0,
+    rowHeight: 50,
+    bufferSize: 5
+  });
   return [
     {
       users: [],
       visibleUsers: [],
       table: immutable(tableState),
       loading: true,
-      searchFilter: immutable(searchFilterState)
+      searchFilter: immutable(searchFilterState),
+      virtualizedTable: immutable(virtualizedTableState)
     },
     [
       component_.cmd.dispatch(component_.page.readyMsg()),
@@ -105,6 +114,10 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
       ...component_.cmd.mapMany(
         searchFilterCmds,
         (msg) => adt("searchFilter", msg) as Msg
+      ),
+      ...component_.cmd.mapMany(
+        virtualizedTableCmds,
+        (msg) => adt("virtualizedTable", msg) as Msg
       )
     ]
   ];
@@ -181,7 +194,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const newState = state.set("users", msg.value).set("loading", false);
-      return [runSearch(newState), []];
+      const searchState = runSearch(newState);
+      return [
+        searchState.setIn(
+          ["virtualizedTable", "totalItems"],
+          searchState.visibleUsers.length
+        ),
+        []
+      ];
     }
     case "table":
       return component_.base.updateChild({
@@ -205,8 +225,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
             Route
           >
       });
-    case "search":
-      return [runSearch(state), []];
+    case "search": {
+      const searchState = runSearch(state);
+      return [
+        searchState.setIn(
+          ["virtualizedTable", "totalItems"],
+          searchState.visibleUsers.length
+        ),
+        []
+      ];
+    }
+    case "virtualizedTable":
+      return component_.base.updateChild({
+        state,
+        childStatePath: ["virtualizedTable"],
+        childUpdate: VirtualizedTable.update,
+        childMsg: msg.value,
+        mapChildMsg: (value) => ({ tag: "virtualizedTable", value })
+      });
     case "noop":
       return [state, []];
     default:
@@ -214,166 +250,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-function tableHeadCells(): Table.HeadCells {
-  return [
-    {
-      children: "Status",
-      className: "text-nowrap",
-      style: { width: "10%", minWidth: "80px" }
-    },
-    {
-      children: "Account Type",
-      className: "text-nowrap",
-      style: { width: "15%", minWidth: "180px" }
-    },
-    {
-      children: "Name",
-      className: "text-nowrap",
-      style: {
-        width: "30%",
-        minWidth: "200px"
-      }
-    },
-    {
-      children: "Admin?",
-      className: "text-center text-nowrap",
-      style: { width: "10%", minWidth: "52px" }
-    }
-  ];
-}
-
-const VirtualizedTable: React.FC<{
-  state: Immutable<State>;
-  dispatch: component_.base.Dispatch<Table.Msg>;
-}> = ({ state, dispatch }) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-  const bodyContainerRef = React.useRef<HTMLDivElement>(null);
-  const headCells = React.useMemo(() => tableHeadCells(), []);
-
-  useEffect(() => {
-    const container = bodyContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const rowHeight = 50; // Must match CSS
-      const start = Math.floor(scrollTop / rowHeight);
-      const buffer = 5;
-      const visibleStart = Math.max(0, start - buffer);
-
-      // Ensure container height is calculated before proceeding
-      const clientHeight = container.clientHeight;
-      if (clientHeight <= 0) {
-        return; // Don't calculate if height isn't ready
-      }
-
-      const visibleCount = Math.ceil(clientHeight / rowHeight);
-      const visibleEnd = Math.min(
-        state.visibleUsers.length,
-        visibleStart + visibleCount + buffer * 2
-      );
-
-      setVisibleRange({ start: visibleStart, end: visibleEnd });
-    };
-
-    container.addEventListener("scroll", handleScroll);
-
-    // Delay initial calculation slightly to allow layout
-    const timerId = setTimeout(handleScroll, 0);
-
-    return () => {
-      clearTimeout(timerId);
-      container.removeEventListener("scroll", handleScroll);
-    };
-  }, [state.visibleUsers.length]);
-
-  const visibleUsers = state.visibleUsers.slice(
-    visibleRange.start,
-    visibleRange.end
-  );
-
-  const totalHeight = state.visibleUsers.length * 50; // 50px per row (must match CSS)
-  const paddingTop = visibleRange.start * 50; // Calculate top padding based on hidden rows
-
-  return (
-    <div className="virtualized-table-layout">
-      {/* 1. Render Header Separately */}
-      <div className="table-header-wrapper">
-        <Table.view
-          // Use a dummy table state if Table.view requires it
-          state={immutable(Table.init({ idNamespace: "user-list-header" })[0])}
-          dispatch={dispatch} // Dispatch might not be needed here
-          headCells={headCells}
-          bodyRows={[]} // No body rows for the header table
-          className="table table-header-fixed" // Apply fixed layout
-        />
-      </div>
-
-      {/* 2. Render Scrollable Body Container */}
-      <div ref={bodyContainerRef} className="virtualized-body-container">
-        {/* 3. Inner div for total height simulation */}
-        <div style={{ height: totalHeight, position: "relative" }}>
-          {/* 4. Absolutely positioned div for visible rows, using padding */}
-          <div
-            style={{
-              position: "absolute",
-              top: `${paddingTop}px`, // Use padding instead of transform
-              left: 0,
-              width: "100%"
-            }}>
-            {/* 5. Render Body Table Manually */}
-            <table className="table virtualized-body-table">
-              <colgroup>
-                {headCells.map((cell, index) => (
-                  <col key={index} style={cell.style} />
-                ))}
-              </colgroup>
-              <tbody>
-                {visibleUsers.map((user) => (
-                  <tr key={user.id} style={{ height: "50px" }}>
-                    <td className="align-middle">
-                      <Badge
-                        text={user.statusTitleCase}
-                        color={userStatusToColor(user.status)}
-                      />
-                    </td>
-                    <td className="align-middle text-nowrap">
-                      {user.typeTitleCase}
-                    </td>
-                    <td className="align-middle">
-                      <Link
-                        dest={routeDest(
-                          adt("userProfile", { userId: user.id })
-                        )}>
-                        {user.name || EMPTY_STRING}
-                      </Link>
-                    </td>
-                    <td className="align-middle text-center">
-                      <Table.Check checked={isAdmin(user)} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const view: component_.page.View<State, InnerMsg, Route> = ({
   state,
   dispatch
 }) => {
-  const dispatchTable = component_.base.mapDispatch<Msg, Table.Msg>(
-    dispatch,
-    (value) => ({ tag: "table", value })
-  );
   const dispatchSearchFilter = component_.base.mapDispatch<Msg, ShortText.Msg>(
     dispatch,
     (value) => ({ tag: "searchFilter", value })
   );
+  const dispatchVirtualizedTable = component_.base.mapDispatch<
+    Msg,
+    VirtualizedTableMsg
+  >(dispatch, (value) => ({ tag: "virtualizedTable", value }));
   return (
     <Row>
       <Col xs="12">
@@ -397,7 +285,11 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
                   dispatch={dispatchSearchFilter}
                 />
               </div>
-              <VirtualizedTable state={state} dispatch={dispatchTable} />
+              <VirtualizedTable.view
+                state={state.virtualizedTable}
+                dispatch={dispatchVirtualizedTable}
+                visibleUsers={state.visibleUsers}
+              />
             </>
           )}
         </div>
