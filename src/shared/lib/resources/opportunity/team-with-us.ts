@@ -24,6 +24,7 @@ export enum TWUOpportunityStatus {
   EvaluationResourceQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationChallenge = "EVAL_C",
   Awarded = "AWARDED",
+  Suspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 

@@ -27,6 +27,8 @@ export function swuOpportunityStatusToColor(
       return "warning";
     case SWUOpportunityStatus.Awarded:
       return "success";
+    case SWUOpportunityStatus.Suspended:
+      return "secondary";
     case SWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -52,6 +54,8 @@ export function swuOpportunityStatusToTitleCase(
       return "Team Scenario";
     case SWUOpportunityStatus.Awarded:
       return "Awarded";
+    case SWUOpportunityStatus.Suspended:
+      return "Suspended";
     case SWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
   }
@@ -69,6 +73,8 @@ export function swuOpportunityStatusToPresentTenseVerb(
       return "Publish";
     case SWUOpportunityStatus.Awarded:
       return "Award";
+    case SWUOpportunityStatus.Suspended:
+      return "Suspend";
     case SWUOpportunityStatus.Canceled:
       return "Cancel";
     default:
@@ -88,6 +94,8 @@ export function swuOpportunityStatusToPastTenseVerb(
       return "Published";
     case SWUOpportunityStatus.Awarded:
       return "Awarded";
+    case SWUOpportunityStatus.Suspended:
+      return "Suspended";
     case SWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
     default:

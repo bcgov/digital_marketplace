@@ -22,6 +22,8 @@ export function cwuOpportunityStatusToColor(
       return "warning";
     case CWUOpportunityStatus.Awarded:
       return "success";
+    case CWUOpportunityStatus.Suspended:
+      return "secondary";
     case CWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -41,6 +43,8 @@ export function cwuOpportunityStatusToTitleCase(
       return "Evaluation";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
+    case CWUOpportunityStatus.Suspended:
+      return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled"; // Use British spelling for copy.
   }
@@ -86,6 +90,8 @@ export function cwuOpportunityStatusToPresentTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
+    case CWUOpportunityStatus.Suspended:
+      return "Suspend";
     case CWUOpportunityStatus.Canceled:
       return "Cancel";
     case CWUOpportunityStatus.UnderReview:
@@ -104,6 +110,8 @@ export function cwuOpportunityStatusToPastTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
+    case CWUOpportunityStatus.Suspended:
+      return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled";
     case CWUOpportunityStatus.UnderReview:
