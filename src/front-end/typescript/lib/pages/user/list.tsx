@@ -1,3 +1,4 @@
+import { EMPTY_STRING } from "front-end/config";
 import { makePageMetadata } from "front-end/lib";
 import { isUserType } from "front-end/lib/access-control";
 import router from "front-end/lib/app/router";
@@ -15,12 +16,11 @@ import {
   userTypeToTitleCase
 } from "front-end/lib/pages/user/lib";
 import Badge from "front-end/lib/views/badge";
-import Icon from "front-end/lib/views/icon";
 import Link, { routeDest } from "front-end/lib/views/link";
 import React, { useState, useEffect } from "react";
 import { Col, Row, Spinner } from "reactstrap";
 import { compareStrings } from "shared/lib";
-import { User, UserType } from "shared/lib/resources/user";
+import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 
 interface TableUser extends User {
@@ -141,8 +141,18 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-function tableHeadCells(_state: Immutable<State>): Table.HeadCells {
+function tableHeadCells(): Table.HeadCells {
   return [
+    {
+      children: "Status",
+      className: "text-nowrap",
+      style: { width: "10%", minWidth: "80px" }
+    },
+    {
+      children: "Account Type",
+      className: "text-nowrap",
+      style: { width: "15%", minWidth: "180px" }
+    },
     {
       children: "Name",
       className: "text-nowrap",
@@ -152,27 +162,9 @@ function tableHeadCells(_state: Immutable<State>): Table.HeadCells {
       }
     },
     {
-      children: "Email",
-      className: "text-nowrap",
-      style: {
-        width: "30%",
-        minWidth: "200px"
-      }
-    },
-    {
-      children: "Account Type",
-      className: "text-nowrap",
-      style: { width: "15%" }
-    },
-    {
-      children: "Status",
-      className: "text-nowrap",
-      style: { width: "15%" }
-    },
-    {
-      children: "Actions",
-      className: "text-nowrap text-right",
-      style: { width: "10%" }
+      children: "Admin?",
+      className: "text-center text-nowrap",
+      style: { width: "10%", minWidth: "52px" }
     }
   ];
 }
@@ -183,7 +175,7 @@ const VirtualizedTable: React.FC<{
 }> = ({ state, dispatch }) => {
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
   const bodyContainerRef = React.useRef<HTMLDivElement>(null);
-  const headCells = React.useMemo(() => tableHeadCells(state), [state]);
+  const headCells = React.useMemo(() => tableHeadCells(), []);
 
   useEffect(() => {
     const container = bodyContainerRef.current;
@@ -201,21 +193,24 @@ const VirtualizedTable: React.FC<{
       if (clientHeight <= 0) {
         return; // Don't calculate if height isn't ready
       }
-      
+
       const visibleCount = Math.ceil(clientHeight / rowHeight);
-      const visibleEnd = Math.min(state.users.length, visibleStart + visibleCount + buffer * 2);
+      const visibleEnd = Math.min(
+        state.users.length,
+        visibleStart + visibleCount + buffer * 2
+      );
 
       setVisibleRange({ start: visibleStart, end: visibleEnd });
     };
 
-    container.addEventListener('scroll', handleScroll);
-    
+    container.addEventListener("scroll", handleScroll);
+
     // Delay initial calculation slightly to allow layout
     const timerId = setTimeout(handleScroll, 0);
 
     return () => {
       clearTimeout(timerId);
-      container.removeEventListener('scroll', handleScroll);
+      container.removeEventListener("scroll", handleScroll);
     };
   }, [state.users.length]);
 
@@ -230,7 +225,7 @@ const VirtualizedTable: React.FC<{
       <div className="table-header-wrapper">
         <Table.view
           // Use a dummy table state if Table.view requires it
-          state={immutable(Table.init({ idNamespace: 'user-list-header' })[0])}
+          state={immutable(Table.init({ idNamespace: "user-list-header" })[0])}
           dispatch={dispatch} // Dispatch might not be needed here
           headCells={headCells}
           bodyRows={[]} // No body rows for the header table
@@ -239,21 +234,17 @@ const VirtualizedTable: React.FC<{
       </div>
 
       {/* 2. Render Scrollable Body Container */}
-      <div 
-        ref={bodyContainerRef}
-        className="virtualized-body-container"
-      >
+      <div ref={bodyContainerRef} className="virtualized-body-container">
         {/* 3. Inner div for total height simulation */}
-        <div style={{ height: totalHeight, position: 'relative' }}>
+        <div style={{ height: totalHeight, position: "relative" }}>
           {/* 4. Absolutely positioned div for visible rows, using padding */}
-          <div 
+          <div
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: `${paddingTop}px`, // Use padding instead of transform
               left: 0,
-              width: '100%'
-            }}
-          >
+              width: "100%"
+            }}>
             {/* 5. Render Body Table Manually */}
             <table className="table virtualized-body-table">
               <colgroup>
@@ -262,36 +253,27 @@ const VirtualizedTable: React.FC<{
                 ))}
               </colgroup>
               <tbody>
-                {visibleUsers.map(user => (
-                  <tr key={user.id} style={{ height: '50px' }}>
-                    <td className="align-middle">
-                      <Link
-                        dest={routeDest(adt("userProfile", { userId: user.id }))}
-                        className="text-body">
-                        {user.name}
-                      </Link>
-                    </td>
-                    <td className="align-middle">{user.email}</td>
-                    <td className="align-middle">
-                      <Badge
-                        text={user.typeTitleCase}
-                        color="primary"
-                        className="text-uppercase" />
-                    </td>
+                {visibleUsers.map((user) => (
+                  <tr key={user.id} style={{ height: "50px" }}>
                     <td className="align-middle">
                       <Badge
                         text={user.statusTitleCase}
                         color={userStatusToColor(user.status)}
-                        className="text-uppercase" />
+                      />
                     </td>
-                    <td className="align-middle text-right">
+                    <td className="align-middle text-nowrap">
+                      {user.typeTitleCase}
+                    </td>
+                    <td className="align-middle">
                       <Link
-                        dest={routeDest(adt("userProfile", { userId: user.id }))}
-                        color="primary"
-                        className="text-nowrap">
-                        <Icon name="edit" width={0.9} height={0.9} className="mr-1" />
-                        Edit
+                        dest={routeDest(
+                          adt("userProfile", { userId: user.id })
+                        )}>
+                        {user.name || EMPTY_STRING}
                       </Link>
+                    </td>
+                    <td className="align-middle text-center">
+                      <Table.Check checked={isAdmin(user)} />
                     </td>
                   </tr>
                 ))}
@@ -318,7 +300,9 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
         <h1 className="mb-5">Digital Marketplace Users</h1>
         <div className="mb-3">
           {state.loading ? (
-            <div className="d-flex justify-content-center align-items-center" style={{ height: "60vh" }}>
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{ height: "60vh" }}>
               <Spinner color="primary" />
             </div>
           ) : (
