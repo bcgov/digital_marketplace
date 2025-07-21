@@ -20,7 +20,7 @@ import {
   CWUOpportunityHistoryRecord,
   CWUOpportunitySlim,
   CWUOpportunityStatus,
-  privateOpportunitiesStatuses,
+  privateOpportunityStatuses,
   publicOpportunityStatuses
 } from "shared/lib/resources/opportunity/code-with-us";
 import {
@@ -402,7 +402,7 @@ export const readOneCWUOpportunity = tryDb<
       ).orWhere(function () {
         this.whereIn(
           "stat.status",
-          privateOpportunitiesStatuses as CWUOpportunityStatus[]
+          privateOpportunityStatuses as CWUOpportunityStatus[]
         ).andWhere({ "opp.createdBy": session.user?.id });
       });
     });
@@ -410,7 +410,7 @@ export const readOneCWUOpportunity = tryDb<
     // Admin users can see both private and public opportunities
     query = query.whereIn("stat.status", [
       ...publicOpportunityStatuses,
-      ...privateOpportunitiesStatuses
+      ...privateOpportunityStatuses
     ]);
   }
 
@@ -622,7 +622,7 @@ export const readManyCWUOpportunities = tryDb<[Session], CWUOpportunitySlim[]>(
         .orWhere(function () {
           this.whereIn(
             "stat.status",
-            privateOpportunitiesStatuses as CWUOpportunityStatus[]
+            privateOpportunityStatuses as CWUOpportunityStatus[]
           ).andWhere({ "opp.createdBy": session.user?.id });
         });
     }
