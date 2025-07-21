@@ -1,8 +1,23 @@
 import { generateUuid } from "back-end/lib";
-import { Connection, Transaction, tryDb } from "back-end/lib/db";
+import {
+  allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted,
+  SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_CHAIR_EVALUATION_TABLE_NAME,
+  Connection,
+  SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME,
+  SWU_EVALUATOR_EVALUATION_TABLE_NAME,
+  RawSWUTeamQuestionResponseEvaluation,
+  readManySWUTeamQuestionResponseEvaluations,
+  SWUTeamQuestionResponseEvaluationStatusRecord,
+  Transaction,
+  tryDb
+} from "back-end/lib/db";
 import { readOneFileById } from "back-end/lib/db/file";
 import { readOneOrganizationContactEmail } from "back-end/lib/db/organization";
 import {
+  RawSWUProposalHistoryRecord,
+  RawSWUProposal,
+  readManySWUProposals,
   readOneSWUAwardedProposal,
   readSubmittedSWUProposalCount
 } from "back-end/lib/db/proposal/sprint-with-us";
@@ -15,11 +30,13 @@ import { Addendum } from "shared/lib/resources/addendum";
 import { getSWUOpportunityViewsCounterName } from "shared/lib/resources/counter";
 import { FileRecord } from "shared/lib/resources/file";
 import {
+  CreateSWUEvaluationPanelMemberBody,
   CreateSWUOpportunityPhaseBody,
   CreateSWUOpportunityStatus,
   CreateSWUTeamQuestionBody,
   privateOpportunityStatuses,
   publicOpportunityStatuses,
+  SWUEvaluationPanelMember,
   SWUOpportunity,
   SWUOpportunityEvent,
   SWUOpportunityHistoryRecord,
@@ -31,13 +48,20 @@ import {
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  compareSWUProposalsForPublicSector,
+  SWUProposalEvent,
   SWUProposalSlim,
   SWUProposalStatus
 } from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  SWUTeamQuestionResponseEvaluation,
+  SWUTeamQuestionResponseEvaluationStatus
+} from "shared/lib/resources/evaluations/sprint-with-us/team-questions";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
 import { User, UserType } from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import { getValidValue, isInvalid, isValid } from "shared/lib/validation";
+import { SWU_CODE_CHALLENGE_SCREEN_IN_COUNT } from "shared/config";
 
 export interface CreateSWUOpportunityParams
   extends Omit<
@@ -53,12 +77,14 @@ export interface CreateSWUOpportunityParams
     | "prototypePhase"
     | "implementationPhase"
     | "teamQuestions"
+    | "evaluationPanel"
   > {
   status: CreateSWUOpportunityStatus;
   inceptionPhase?: CreateSWUOpportunityPhaseParams;
   prototypePhase?: CreateSWUOpportunityPhaseParams;
   implementationPhase: CreateSWUOpportunityPhaseParams;
   teamQuestions: CreateSWUTeamQuestionBody[];
+  evaluationPanel: CreateSWUEvaluationPanelMemberParams[];
 }
 
 interface UpdateSWUOpportunityParams
@@ -71,10 +97,20 @@ interface UpdateSWUOpportunityWithNoteParams {
   attachments: FileRecord[];
 }
 
+interface SubmitQuestionEvaluationsWithNoteParams {
+  note: string;
+  evaluations: SWUTeamQuestionResponseEvaluation[];
+}
+
 export interface CreateSWUOpportunityPhaseParams
   extends Omit<CreateSWUOpportunityPhaseBody, "startDate" | "completionDate"> {
   startDate: Date;
   completionDate: Date;
+}
+
+interface CreateSWUEvaluationPanelMemberParams
+  extends Omit<CreateSWUEvaluationPanelMemberBody, "email"> {
+  user: Id;
 }
 
 interface SWUOpportunityRootRecord {
@@ -161,6 +197,12 @@ interface RawSWUOpportunityHistoryRecord
   status?: SWUOpportunityStatus;
   event?: SWUOpportunityEvent;
   attachments: Id[];
+}
+
+export interface RawSWUEvaluationPanelMember
+  extends Omit<SWUEvaluationPanelMember, "user"> {
+  opportunityVersion: Id;
+  user: Id;
 }
 
 async function rawSWUOpportunityToSWUOpportunity(
@@ -390,6 +432,28 @@ async function rawHistoryRecordToHistoryRecord(
   };
 }
 
+async function rawEvaluationPanelMemberToEvaluationPanelMember(
+  connection: Connection,
+  raw: RawSWUEvaluationPanelMember
+): Promise<SWUEvaluationPanelMember> {
+  const { opportunityVersion, user: userId, ...restOfRaw } = raw;
+  const user = getValidValue(await readOneUser(connection, userId), null);
+
+  if (!user) {
+    throw new Error("unable to process evaluation panel member");
+  }
+
+  return {
+    ...restOfRaw,
+    user: {
+      id: user.id,
+      name: user.name,
+      avatarImageFile: user.avatarImageFile,
+      email: user.email
+    }
+  };
+}
+
 export function generateSWUOpportunityQuery(
   connection: Connection,
   full = false
@@ -559,18 +623,33 @@ export const readManyTeamQuestions = tryDb<[Id], SWUTeamQuestion[]>(
   }
 );
 
-export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(
-  async (connection, session) => {
-    let query = generateSWUOpportunityQuery(connection);
+export const readManySWUOpportunities = tryDb<
+  [Session, boolean?],
+  SWUOpportunitySlim[]
+>(async (connection, session, isPanelMember = false) => {
+  let query = generateSWUOpportunityQuery(connection);
 
-    if (!session || session.user.type === UserType.Vendor) {
-      // Anonymous users and vendors can only see public opportunities
-      query = query.whereIn(
-        "statuses.status",
-        publicOpportunityStatuses as SWUOpportunityStatus[]
-      );
+  if (!session || session.user.type === UserType.Vendor) {
+    // Anonymous users and vendors can only see public opportunities
+    query = query.whereIn(
+      "statuses.status",
+      publicOpportunityStatuses as SWUOpportunityStatus[]
+    );
+  } else if (
+    session.user.type === UserType.Government ||
+    session.user.type === UserType.Admin
+  ) {
+    if (isPanelMember) {
+      // When isPanelMember=true, ONLY include opportunities where user is on evaluation panel
+      // works for admin and gov basic users
+      query = query.whereIn("versions.id", function () {
+        this.select("opportunityVersion")
+          .from("swuEvaluationPanelMembers")
+          .where("user", "=", session.user.id);
+      });
     } else if (session.user.type === UserType.Government) {
-      // Gov basic users should only see private opportunities that they own, and public opportunities
+      // Regular behavior - show public opportunities and private ones the user created
+      // works for gov basic users only
       query = query
         .whereIn(
           "statuses.status",
@@ -583,33 +662,33 @@ export const readManySWUOpportunities = tryDb<[Session], SWUOpportunitySlim[]>(
           ).andWhere({ "opportunities.createdBy": session.user?.id });
         });
     }
-    // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
-    // Process results to eliminate fields not viewable by the current role
-    const results = await Promise.all(
-      (
-        await query
-      ).map(async (result: RawSWUOpportunity | RawSWUOpportunitySlim) => {
-        if (session) {
-          result.subscribed = await isSubscribed(
-            connection,
-            result.id,
-            session.user.id
-          );
-        }
-        return processForRole(result, session);
-      })
-    );
-
-    return valid(
-      await Promise.all(
-        results.map(
-          async (raw) =>
-            await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw)
-        )
-      )
-    );
   }
-);
+  // Admins can see all opportunities, so no additional filter necessary if none of the previous conditions match
+  // Process results to eliminate fields not viewable by the current role
+  const results = await Promise.all(
+    (
+      await query
+    ).map(async (result: RawSWUOpportunity | RawSWUOpportunitySlim) => {
+      if (session) {
+        result.subscribed = await isSubscribed(
+          connection,
+          result.id,
+          session.user.id
+        );
+      }
+      return processForRole(result, session, isPanelMember);
+    })
+  );
+
+  return valid(
+    await Promise.all(
+      results.map(
+        async (raw) =>
+          await rawSWUOpportunitySlimToSWUOpportunitySlim(connection, raw)
+      )
+    )
+  );
+});
 
 export const readOneSWUOpportunityPhase = tryDb<[Id], SWUOpportunityPhase>(
   async (connection, id) => {
@@ -653,14 +732,16 @@ async function createSWUOpportunityAttachments(
 
 function processForRole<T extends RawSWUOpportunity | RawSWUOpportunitySlim>(
   result: T,
-  session: Session
+  session: Session,
+  isPanelMember = false
 ) {
   // Remove createdBy/updatedBy for non-admin or non-author
   if (
     !session ||
     (session.user.type !== UserType.Admin &&
       session.user.id !== result.createdBy &&
-      session.user.id !== result.updatedBy)
+      session.user.id !== result.updatedBy &&
+      !isPanelMember)
   ) {
     delete result.createdBy;
     delete result.updatedBy;
@@ -712,7 +793,8 @@ export const readOneSWUOpportunity = tryDb<
       publicOpportunityStatuses as SWUOpportunityStatus[]
     );
   } else if (session.user.type === UserType.Government) {
-    // Gov users should only see private opportunities they own, and public opportunities
+    // Gov users should only see private opportunities they own or are on the
+    // evaluation panel for, and public opportunities
     query = query.andWhere(function () {
       this.whereIn(
         "statuses.status",
@@ -721,7 +803,16 @@ export const readOneSWUOpportunity = tryDb<
         this.whereIn(
           "statuses.status",
           privateOpportunityStatuses as SWUOpportunityStatus[]
-        ).andWhere({ "opportunities.createdBy": session.user?.id });
+        ).andWhere(function () {
+          this.where({ "opportunities.createdBy": session.user.id }).orWhereIn(
+            "versions.id",
+            function () {
+              this.select("opportunityVersion")
+                .from("swuEvaluationPanelMembers")
+                .where("user", "=", session.user.id);
+            }
+          );
+        });
       });
     });
   } else {
@@ -800,10 +891,18 @@ export const readOneSWUOpportunity = tryDb<
       );
     }
 
-    // If admin/owner, add on history, reporting metrics, and successful proponent if applicable
+    const rawEvaluationPanelMembers =
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .where("opportunityVersion", result.versionId)
+        .orderBy("order");
+
+    // If admin/owner/evaluation panel member, add on history,
+    // evaluation panel, reporting metrics, and successful proponent if
+    // applicable
     if (
       session?.user.type === UserType.Admin ||
-      result.createdBy === session?.user.id
+      result.createdBy === session?.user.id ||
+      rawEvaluationPanelMembers.find(({ user }) => user === session?.user.id)
     ) {
       const rawHistory = await connection<RawSWUOpportunityHistoryRecord>(
         "swuOpportunityStatuses"
@@ -831,6 +930,16 @@ export const readOneSWUOpportunity = tryDb<
         rawHistory.map(
           async (raw) =>
             await rawHistoryRecordToHistoryRecord(connection, session, raw)
+        )
+      );
+
+      result.evaluationPanel = await Promise.all(
+        rawEvaluationPanelMembers.map(
+          async (raw) =>
+            await rawEvaluationPanelMemberToEvaluationPanelMember(
+              connection,
+              raw
+            )
         )
       );
 
@@ -945,6 +1054,7 @@ export const createSWUOpportunity = tryDb<
       prototypePhase,
       implementationPhase,
       teamQuestions,
+      evaluationPanel,
       ...restOfOpportunity
     } = opportunity;
     const [opportunityVersionRecord] =
@@ -1034,6 +1144,16 @@ export const createSWUOpportunity = tryDb<
         });
     }
 
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
+          opportunityVersion: opportunityVersionRecord.id
+        });
+    }
+
     return opportunityRootRecord.id;
   });
 
@@ -1112,6 +1232,7 @@ export const updateSWUOpportunityVersion = tryDb<
     prototypePhase,
     implementationPhase,
     teamQuestions,
+    evaluationPanel,
     ...restOfOpportunity
   } = opportunity;
   const opportunityVersion = await connection.transaction(async (trx) => {
@@ -1179,6 +1300,16 @@ export const updateSWUOpportunityVersion = tryDb<
           ...teamQuestion,
           createdAt: now,
           createdBy: session.user.id,
+          opportunityVersion: versionRecord.id
+        });
+    }
+
+    // Create evaluation panel
+    for (const member of evaluationPanel) {
+      await connection<RawSWUEvaluationPanelMember>("swuEvaluationPanelMembers")
+        .transacting(trx)
+        .insert({
+          ...member,
           opportunityVersion: versionRecord.id
         });
     }
@@ -1323,12 +1454,12 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
         )) as RawSWUOpportunity[];
 
       for (const lapsedOpportunity of lapsedOpportunities) {
-        // Set the opportunity to EVAL_TEAM_QUESTIONS status
+        // Set the opportunity to EVAL_QUESTIONS_INDIVIDUAL status
         await connection("swuOpportunityStatuses").transacting(trx).insert({
           id: generateUuid(),
           createdAt: now,
           opportunity: lapsedOpportunity.id,
-          status: SWUOpportunityStatus.EvaluationTeamQuestions,
+          status: SWUOpportunityStatus.EvaluationTeamQuestionsIndividual,
           note: "This opportunity has closed."
         });
 
@@ -1357,7 +1488,7 @@ export const closeSWUOpportunities = tryDb<[], number>(async (connection) => {
           )?.map((result) => result.id) || [];
 
         for (const [index, proposalId] of proposalIds.entries()) {
-          // Set the proposal to UNDER_REVIEW status
+          // Set the proposal to UNDER_REVIEW_QUESTIONS status
           await connection("swuProposalStatuses").transacting(trx).insert({
             id: generateUuid(),
             createdAt: now,
@@ -1469,6 +1600,33 @@ export const readOneSWUOpportunityAuthor = tryDb<[Id], User | null>(
   }
 );
 
+export const readOneSWUEvaluationPanelMember = tryDb<
+  [Id, Id],
+  SWUEvaluationPanelMember | null
+>(async (connection, user, opportunity) => {
+  const raw = await connection<RawSWUEvaluationPanelMember>(
+    "swuEvaluationPanelMembers"
+  )
+    .join(
+      "swuOpportunityVersions",
+      "swuEvaluationPanelMembers.opportunityVersion",
+      "=",
+      "swuOpportunityVersions.id"
+    )
+    .where({
+      "swuOpportunityVersions.opportunity": opportunity,
+      "swuEvaluationPanelMembers.user": user
+    })
+    .select("swuEvaluationPanelMembers.*")
+    .first();
+
+  return valid(
+    raw
+      ? await rawEvaluationPanelMemberToEvaluationPanelMember(connection, raw)
+      : null
+  );
+});
+
 export const addSWUOpportunityNote = tryDb<
   [Id, UpdateSWUOpportunityWithNoteParams, AuthenticatedSession],
   SWUOpportunity
@@ -1509,4 +1667,302 @@ export const addSWUOpportunityNote = tryDb<
     throw new Error("unable to add note");
   }
   return valid(dbResult.value);
+});
+
+export const submitIndividualSWUQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  const notify = await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({ evaluationPanelMember, proposal }) => {
+          const [statusRecord] =
+            await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+              SWU_EVALUATOR_EVALUATION_STATUS_TABLE_NAME
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember,
+                  proposal,
+                  createdAt: now,
+                  status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            SWU_EVALUATOR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({
+              proposal,
+              evaluationPanelMember
+            })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update team question evaluation");
+          }
+        }
+      )
+    );
+
+    // Update opportunity status if all evaluations complete
+    if (
+      await allSWUTeamQuestionResponseEvaluatorEvaluationsSubmitted(
+        connection,
+        trx,
+        id,
+        evaluationParams.evaluations.map(({ proposal }) => proposal)
+      )
+    ) {
+      const result = await updateSWUOpportunityStatus(
+        connection,
+        id,
+        SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
+        "",
+        session
+      );
+
+      if (!result) {
+        throw new Error("unable to update opportunity");
+      }
+
+      // Notify chair and author
+      return true;
+    }
+    // Some evaluations are incomplete
+    return false;
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update opportunity");
+  }
+
+  if (notify) {
+    const opportunity = getValidValue(dbResult, null);
+    if (opportunity) {
+      swuOpportunityNotifications.handleSWUReadyForQuestionConsensus(
+        connection,
+        opportunity
+      );
+    }
+  }
+
+  return valid(dbResult.value);
+});
+
+export const submitConsensusSWUQuestionEvaluations = tryDb<
+  [Id, SubmitQuestionEvaluationsWithNoteParams, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, evaluationParams, session) => {
+  const now = new Date();
+  await connection.transaction(async (trx) => {
+    await Promise.all(
+      evaluationParams.evaluations.map(
+        async ({ evaluationPanelMember, proposal }) => {
+          const [statusRecord] =
+            await connection<SWUTeamQuestionResponseEvaluationStatusRecord>(
+              SWU_CHAIR_EVALUATION_STATUS_TABLE_NAME
+            )
+              .transacting(trx)
+              .insert(
+                {
+                  evaluationPanelMember,
+                  proposal,
+                  createdAt: now,
+                  status: SWUTeamQuestionResponseEvaluationStatus.Submitted,
+                  note: evaluationParams.note
+                },
+                "*"
+              );
+
+          // Update evaluation root record
+          await connection<RawSWUTeamQuestionResponseEvaluation>(
+            SWU_CHAIR_EVALUATION_TABLE_NAME
+          )
+            .transacting(trx)
+            .where({
+              proposal,
+              evaluationPanelMember
+            })
+            .update(
+              {
+                updatedAt: now
+              },
+              "*"
+            );
+
+          if (!statusRecord) {
+            throw new Error("unable to update team question evaluation");
+          }
+        }
+      )
+    );
+  });
+
+  const dbResult = await readOneSWUOpportunity(connection, id, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to add note");
+  }
+  return valid(dbResult.value);
+});
+
+export const finalizeSWUQuestionConsensus = tryDb<
+  [Id, string, AuthenticatedSession],
+  SWUOpportunity
+>(async (connection, id, note, session) => {
+  const now = new Date();
+  return await connection.transaction(async (trx) => {
+    const opportunity = getValidValue(
+      await readOneSWUOpportunity(connection, id, session),
+      null
+    );
+    if (!opportunity) {
+      throw new Error("unable to read opportunity");
+    }
+    const proposals = getValidValue<SWUProposalSlim[]>(
+      await readManySWUProposals(connection, session, id),
+      []
+    );
+    const consensuses = getValidValue<SWUTeamQuestionResponseEvaluation[]>(
+      await readManySWUTeamQuestionResponseEvaluations(
+        connection,
+        session,
+        id,
+        true
+      ),
+      []
+    );
+    const consensusesWithProposals = consensuses.map((consensus) => {
+      const proposal = proposals.find(
+        (proposal) => proposal.id === consensus.proposal
+      );
+      if (!proposal) {
+        throw new Error("unable to read consensuses");
+      }
+      return {
+        ...consensus,
+        proposal
+      };
+    });
+
+    // Log scores
+    for (const consensusWithProposal of consensusesWithProposals) {
+      const [eventRecord] = await connection<
+        RawSWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("swuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: consensusWithProposal.proposal.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            event: SWUProposalEvent.QuestionsScoreEntered,
+            note: `Team question scores were entered. ${consensusWithProposal.scores
+              .map((s, i) => `Q${i + 1}: ${s.score}`)
+              .join("; ")}.`
+          },
+          "*"
+        );
+
+      // Update proposal root record
+      await connection<RawSWUProposal>("swuProposals")
+        .transacting(trx)
+        .where({ id: consensusWithProposal.proposal.id })
+        .update(
+          {
+            updatedAt: now,
+            updatedBy: session.user.id
+          },
+          "*"
+        );
+
+      if (!eventRecord) {
+        throw new Error("unable to log consensus scores");
+      }
+    }
+
+    // Filter candidates that are below the minimum score or that have the wrong status
+    const candidates = consensusesWithProposals.reduce<SWUProposalSlim[]>(
+      (candidates, consensusWithProposal) => {
+        if (
+          consensusWithProposal.proposal.status !==
+          SWUProposalStatus.UnderReviewTeamQuestions
+        ) {
+          return candidates;
+        }
+        const suitable = opportunity.teamQuestions.every((question) => {
+          if (!question.minimumScore) {
+            return true;
+          }
+          const consensusScore = consensusWithProposal.scores.find(
+            (score) => score.order === question.order
+          );
+          return (
+            consensusScore && consensusScore.score >= question.minimumScore
+          );
+        });
+        return suitable
+          ? [...candidates, consensusWithProposal.proposal]
+          : candidates;
+      },
+      []
+    );
+
+    // Screen in top candidates
+    candidates.sort((a, b) =>
+      compareSWUProposalsForPublicSector(a, b, "questionsScore")
+    );
+    for (const candidate of candidates.slice(
+      0,
+      SWU_CODE_CHALLENGE_SCREEN_IN_COUNT
+    )) {
+      const [statusRecord] = await connection<
+        RawSWUProposalHistoryRecord & { id: Id; proposal: Id }
+      >("swuProposalStatuses")
+        .transacting(trx)
+        .insert(
+          {
+            id: generateUuid(),
+            proposal: candidate.id,
+            createdAt: now,
+            createdBy: session.user.id,
+            status: SWUProposalStatus.UnderReviewCodeChallenge,
+            note
+          },
+          "*"
+        );
+
+      if (!statusRecord) {
+        throw new Error("unable to screen in proponents");
+      }
+    }
+
+    const result = await updateSWUOpportunityStatus(
+      connection,
+      id,
+      SWUOpportunityStatus.EvaluationCodeChallenge,
+      note,
+      session
+    );
+
+    if (!result) {
+      throw new Error("unable to finalize consensus scores");
+    }
+
+    return result;
+  });
 });

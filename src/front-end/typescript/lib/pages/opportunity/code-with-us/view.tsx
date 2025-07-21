@@ -42,7 +42,7 @@ import { isVendor, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT, Id } from "shared/lib/types";
 import { Content } from "shared/lib/resources/content";
 
-type InfoTab = "details" | "terms" | "attachments" | "addenda";
+export type InfoTab = "details" | "terms" | "attachments" | "addenda";
 
 export interface State {
   toggleWatchLoading: number;
@@ -689,7 +689,10 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const isDetails = props.state.activeInfoTab === "details";
   return (
     <div className="flex-grow-1 d-flex flex-column flex-nowrap align-items-stretch">
-      <div className="mb-5">
+      <div
+        className={`mb-5 ${
+          isDetails ? "public-details-tab-container" : "public-tab-container"
+        }`}>
         <Header {...props} />
         <Info {...props} />
         {isDetails ? <AcceptanceCriteria {...props} /> : null}

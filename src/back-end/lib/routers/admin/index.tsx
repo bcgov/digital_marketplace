@@ -28,6 +28,18 @@ import {
   suspendedSWUOpportunitySubscribedT,
   updatedSWUOpportunityT
 } from "back-end/lib/mailer/notifications/opportunity/sprint-with-us";
+import {
+  cancelledTWUOpportunityActionedT,
+  cancelledTWUOpportunitySubscribedT,
+  newTWUOpportunityPublishedT,
+  newTWUOpportunitySubmittedForReviewAuthorT,
+  newTWUOpportunitySubmittedForReviewT,
+  readyForEvalTWUOpportunityT,
+  successfulTWUPublicationT,
+  suspendedTWUOpportunityActionedT,
+  suspendedTWUOpportunitySubscribedT,
+  updatedTWUOpportunityT
+} from "back-end/lib/mailer/notifications/opportunity/team-with-us";
 import { organizationArchivedT } from "back-end/lib/mailer/notifications/organization";
 import {
   awardedCWUProposalSubmissionT,
@@ -43,6 +55,13 @@ import {
   withdrawnSWUProposalSubmissionProposalAuthorT,
   withdrawnSWUProposalSubmissionT
 } from "back-end/lib/mailer/notifications/proposal/sprint-with-us";
+import {
+  awardedTWUProposalSubmissionT,
+  successfulTWUProposalSubmissionT,
+  unsuccessfulTWUProposalSubmissionT,
+  withdrawnTWUProposalSubmissionProposalAuthorT,
+  withdrawnTWUProposalSubmissionT
+} from "back-end/lib/mailer/notifications/proposal/team-with-us";
 import { vendorTermsChangedT } from "back-end/lib/mailer/notifications/terms-updated";
 import {
   accountDeactivatedAdminT,
@@ -352,7 +371,7 @@ async function makeEmailNotificationReference(): Promise<
     {
       title: "SWU Opportunity Proposal Deadline Passed",
       emails: await readyForEvalSWUOpportunityT(
-        mocks.govUser,
+        [mocks.govUser],
         mocks.swuOpportunity
       )
     },
@@ -390,6 +409,126 @@ async function makeEmailNotificationReference(): Promise<
           mocks.govUser,
           mocks.vendorUser,
           mocks.swuOpportunity
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Submitted For Review",
+      emails: [
+        ...(await newTWUOpportunitySubmittedForReviewT(
+          mocks.adminUser,
+          mocks.twuOpportunity
+        )),
+        ...(await newTWUOpportunitySubmittedForReviewAuthorT(
+          mocks.govUser,
+          mocks.twuOpportunity
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Published",
+      emails: [
+        ...(await newTWUOpportunityPublishedT(
+          [mocks.vendorUser],
+          mocks.twuOpportunity,
+          false
+        )),
+        ...(await successfulTWUPublicationT(
+          mocks.govUser,
+          mocks.twuOpportunity,
+          false
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Re-published after being suspended",
+      emails: [
+        ...(await newTWUOpportunityPublishedT(
+          [mocks.vendorUser],
+          mocks.publishedTWUOpportunity,
+          true
+        )),
+        ...(await successfulTWUPublicationT(
+          mocks.govUser,
+          mocks.publishedTWUOpportunity,
+          true
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Updated",
+      emails: await updatedTWUOpportunityT(
+        [mocks.vendorUser],
+        mocks.twuOpportunity
+      )
+    },
+    {
+      title: "TWU Opportunity Cancelled",
+      emails: [
+        ...(await cancelledTWUOpportunitySubscribedT(
+          mocks.vendorUser,
+          mocks.twuOpportunity
+        )),
+        ...(await cancelledTWUOpportunityActionedT(
+          mocks.govUser,
+          mocks.twuOpportunity
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Suspended",
+      emails: [
+        ...(await suspendedTWUOpportunitySubscribedT(
+          mocks.vendorUser,
+          mocks.twuOpportunity
+        )),
+        ...(await suspendedTWUOpportunityActionedT(
+          mocks.govUser,
+          mocks.twuOpportunity
+        ))
+      ]
+    },
+    {
+      title: "TWU Opportunity Proposal Deadline Passed",
+      emails: await readyForEvalTWUOpportunityT(
+        [mocks.govUser],
+        mocks.twuOpportunity
+      )
+    },
+    {
+      title: "TWU Proposal Submitted",
+      emails: await successfulTWUProposalSubmissionT(
+        mocks.vendorUser,
+        mocks.twuOpportunity,
+        mocks.twuProposal
+      )
+    },
+    {
+      title: "TWU Proposal Awarded",
+      emails: [
+        ...(await awardedTWUProposalSubmissionT(
+          mocks.vendorUser,
+          mocks.twuOpportunity,
+          mocks.twuProposal
+        )),
+        ...(await unsuccessfulTWUProposalSubmissionT(
+          mocks.vendorUser,
+          mocks.twuOpportunity,
+          mocks.twuProposal
+        ))
+      ]
+    },
+    {
+      title: "TWU Proposal Withdrawn",
+      emails: [
+        ...(await withdrawnTWUProposalSubmissionProposalAuthorT(
+          mocks.vendorUser,
+          mocks.twuOpportunity
+        )),
+        ...(await withdrawnTWUProposalSubmissionT(
+          mocks.govUser,
+          mocks.vendorUser,
+          mocks.twuOpportunity
         ))
       ]
     },

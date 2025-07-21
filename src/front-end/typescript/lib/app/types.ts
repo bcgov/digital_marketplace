@@ -22,11 +22,17 @@ import * as PageOpportunities from "front-end/lib/pages/opportunity/list";
 import * as PageOpportunitySWUCreate from "front-end/lib/pages/opportunity/sprint-with-us/create";
 import * as PageOpportunitySWUEdit from "front-end/lib/pages/opportunity/sprint-with-us/edit";
 import * as PageOpportunitySWUView from "front-end/lib/pages/opportunity/sprint-with-us/view";
+import * as PageOpportunitySWUComplete from "front-end/lib/pages/opportunity/sprint-with-us/complete";
 import * as PageOpportunityTWUCreate from "front-end/lib/pages/opportunity/team-with-us/create";
 import * as PageOpportunityTWUEdit from "front-end/lib/pages/opportunity/team-with-us/edit";
 import * as PageOpportunityTWUView from "front-end/lib/pages/opportunity/team-with-us/view";
+import * as PageOpportunityTWUComplete from "front-end/lib/pages/opportunity/team-with-us/complete";
 import * as PageProposalTWUCreate from "front-end/lib/pages/proposal/team-with-us/create";
 import * as PageProposalTWUEdit from "front-end/lib/pages/proposal/team-with-us/edit";
+import * as PageEvaluationIndividualTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-individual";
+import * as PageEvaluationIndividualTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-individual";
+import * as PageEvaluationConsensusTWUCreate from "front-end/lib/pages/evaluations/team-with-us/resource-questions/create-consensus";
+import * as PageEvaluationConsensusTWUEdit from "front-end/lib/pages/evaluations/team-with-us/resource-questions/edit-individual";
 import * as PageProposalTWUView from "front-end/lib/pages/proposal/team-with-us/view";
 import * as PageProposalTWUExportAll from "front-end/lib/pages/proposal/team-with-us/export/all";
 import * as PageProposalTWUExportOne from "front-end/lib/pages/proposal/team-with-us/export/one";
@@ -45,6 +51,10 @@ import * as PageProposalSWUCreate from "front-end/lib/pages/proposal/sprint-with
 import * as PageProposalSWUEdit from "front-end/lib/pages/proposal/sprint-with-us/edit";
 import * as PageProposalSWUExportAll from "front-end/lib/pages/proposal/sprint-with-us/export/all";
 import * as PageProposalSWUExportOne from "front-end/lib/pages/proposal/sprint-with-us/export/one";
+import * as PageEvaluationIndividualSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-individual";
+import * as PageEvaluationIndividualSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
+import * as PageEvaluationConsensusSWUCreate from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/create-consensus";
+import * as PageEvaluationConsensusSWUEdit from "front-end/lib/pages/evaluations/sprint-with-us/team-questions/edit-individual";
 import * as PageProposalSWUView from "front-end/lib/pages/proposal/sprint-with-us/view";
 import * as PageSignIn from "front-end/lib/pages/sign-in";
 import * as PageSignOut from "front-end/lib/pages/sign-out";
@@ -55,6 +65,7 @@ import * as PageUserProfile from "front-end/lib/pages/user/profile";
 import { includes } from "lodash";
 import { Session } from "shared/lib/resources/session";
 import { ADT } from "shared/lib/types";
+import * as PageOpportunityCWUComplete from "front-end/lib/pages/opportunity/code-with-us/complete";
 
 /**
  * Union Types combined for the purpose of constraining routes that the
@@ -90,6 +101,22 @@ export type Route =
   | ADT<"proposalSWUCreate", PageProposalSWUCreate.RouteParams>
   | ADT<"proposalSWUEdit", PageProposalSWUEdit.RouteParams>
   | ADT<"proposalSWUView", PageProposalSWUView.RouteParams>
+  | ADT<
+      "questionEvaluationIndividualSWUCreate",
+      PageEvaluationIndividualSWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationIndividualSWUEdit",
+      PageEvaluationIndividualSWUEdit.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusSWUCreate",
+      PageEvaluationConsensusSWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusSWUEdit",
+      PageEvaluationConsensusSWUEdit.RouteParams
+    >
   | ADT<"proposalSWUExportOne", PageProposalSWUExportOne.RouteParams>
   | ADT<"proposalSWUExportAll", PageProposalSWUExportAll.RouteParams>
   | ADT<"opportunitySWUCreate", PageOpportunitySWUCreate.RouteParams>
@@ -105,6 +132,22 @@ export type Route =
   | ADT<"proposalTWUExportAll", PageProposalTWUExportAll.RouteParams>
   | ADT<"proposalTWUCreate", PageProposalTWUCreate.RouteParams>
   | ADT<"proposalTWUView", PageProposalTWUView.RouteParams>
+  | ADT<
+      "questionEvaluationIndividualTWUCreate",
+      PageEvaluationIndividualTWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationIndividualTWUEdit",
+      PageEvaluationIndividualTWUEdit.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusTWUCreate",
+      PageEvaluationConsensusTWUCreate.RouteParams
+    >
+  | ADT<
+      "questionEvaluationConsensusTWUEdit",
+      PageEvaluationConsensusTWUEdit.RouteParams
+    >
   | ADT<"proposalTWUEdit", PageProposalTWUEdit.RouteParams>
   | ADT<"proposalCWUCreate", PageProposalCWUCreate.RouteParams>
   | ADT<"proposalCWUEdit", PageProposalCWUEdit.RouteParams>
@@ -114,7 +157,10 @@ export type Route =
   | ADT<"proposalList", PageProposalList.RouteParams>
   | ADT<"cwuGuide", PageGuideView.RouteParams>
   | ADT<"swuGuide", PageGuideView.RouteParams>
-  | ADT<"twuGuide", PageGuideView.RouteParams>;
+  | ADT<"twuGuide", PageGuideView.RouteParams>
+  | ADT<"swuOpportunityCompleteView", PageOpportunitySWUComplete.RouteParams>
+  | ADT<"cwuOpportunityCompleteView", PageOpportunityCWUComplete.RouteParams>
+  | ADT<"twuOpportunityCompleteView", PageOpportunityTWUComplete.RouteParams>;
 
 /**
  * Used when users sign up but have yet to complete step 2 which involves accepting general app terms.
@@ -192,6 +238,9 @@ export interface State {
     opportunitySWUCreate?: Immutable<PageOpportunitySWUCreate.State>;
     opportunitySWUEdit?: Immutable<PageOpportunitySWUEdit.State>;
     opportunitySWUView?: Immutable<PageOpportunitySWUView.State>;
+    swuOpportunityCompleteView?: Immutable<PageOpportunitySWUComplete.State>;
+    cwuOpportunityCompleteView?: Immutable<PageOpportunityCWUComplete.State>;
+    twuOpportunityCompleteView?: Immutable<PageOpportunityTWUComplete.State>;
     opportunityTWUCreate?: Immutable<PageOpportunityTWUCreate.State>;
     opportunityTWUEdit?: Immutable<PageOpportunityTWUEdit.State>;
     opportunityTWUView?: Immutable<PageOpportunityTWUView.State>;
@@ -260,6 +309,9 @@ export type InnerMsg =
   | ADT<"pageOpportunitySWUCreate", PageOpportunitySWUCreate.Msg>
   | ADT<"pageOpportunitySWUEdit", PageOpportunitySWUEdit.Msg>
   | ADT<"pageOpportunitySWUView", PageOpportunitySWUView.Msg>
+  | ADT<"pageOpportunitySWUComplete", PageOpportunitySWUComplete.Msg>
+  | ADT<"pageOpportunityCWUComplete", PageOpportunityCWUComplete.Msg>
+  | ADT<"pageOpportunityTWUComplete", PageOpportunityTWUComplete.Msg>
   | ADT<"pageOpportunityTWUCreate", PageOpportunityTWUCreate.Msg>
   | ADT<"pageOpportunityTWUEdit", PageOpportunityTWUEdit.Msg>
   | ADT<"pageOpportunityTWUView", PageOpportunityTWUView.Msg>
