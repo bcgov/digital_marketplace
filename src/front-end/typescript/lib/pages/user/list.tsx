@@ -34,7 +34,6 @@ export interface State {
   table: Immutable<Table.State>;
   users: TableUser[];
   showExportModal: boolean;
-  exportLoading: boolean;
   userTypeCheckboxes: {
     [UserType.Government]: Immutable<Checkbox.State>;
     [UserType.Vendor]: Immutable<Checkbox.State>;
@@ -58,8 +57,7 @@ type InnerMsg =
   | ADT<"fieldCheckboxLastName", Checkbox.Msg>
   | ADT<"fieldCheckboxEmail", Checkbox.Msg>
   | ADT<"fieldCheckboxOrganizationName", Checkbox.Msg>
-  | ADT<"exportContactList">
-  | ADT<"exportComplete">;
+  | ADT<"exportContactList">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -126,7 +124,6 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
       users: [],
       table: immutable(tableState),
       showExportModal: false,
-      exportLoading: false,
       userTypeCheckboxes: {
         [UserType.Government]: immutable(govCheckboxState),
         [UserType.Vendor]: immutable(vendorCheckboxState)
@@ -321,27 +318,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         fields: selectedFields.join(",")
       });
 
-      // Fetch and create blob download
-      fetch(`/api/contact-list?${params}`)
-        .then((response) => response.blob())
-        .then((blob) => {
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = "dm-contacts.csv";
-          a.click();
-          URL.revokeObjectURL(url);
-        })
-        .catch((error) => console.error("Export failed:", error));
+      // Open download URL in new tab
+      if (typeof window !== "undefined") {
+        window.open(`/api/contact-list?${params}`, "_blank");
+      }
 
-      return [
-        state.set("showExportModal", false).set("exportLoading", true),
-        [component_.cmd.dispatch(adt("exportComplete"))]
-      ];
+      return [state.set("showExportModal", false), []];
     }
 
-    case "exportComplete":
-      return [state.set("exportLoading", false), []];
     default:
       return [state, []];
   }
@@ -410,9 +394,6 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
     return component_.page.modal.hide();
   }
 
-  const { exportLoading } = state;
-  const isLoading = exportLoading;
-
   // Check if at least one user type and one field is selected
   const hasUserTypeSelected = Object.values(state.userTypeCheckboxes).some(
     (checkboxState) => FormField.getValue(checkboxState)
@@ -420,19 +401,18 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
   const hasFieldSelected = Object.values(state.fieldCheckboxes).some(
     (checkboxState) => FormField.getValue(checkboxState)
   );
-  const canExport = hasUserTypeSelected && hasFieldSelected && !isLoading;
+  const canExport = hasUserTypeSelected && hasFieldSelected;
 
   return component_.page.modal.show<Msg>({
     title: "Export Contact List",
     onCloseMsg: adt("hideExportModal"),
     actions: [
       {
-        text: isLoading ? "Exporting..." : "Export",
+        text: "Export",
         color: "primary",
         msg: adt("exportContactList"),
         button: true,
-        disabled: !canExport,
-        loading: isLoading
+        disabled: !canExport
       },
       {
         text: "Cancel",
@@ -529,8 +509,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
           <h1 className="mb-3 mb-md-0">Digital Marketplace Users</h1>
           <Button
             color="primary"
-            onClick={() => dispatch(adt("showExportModal"))}
-            disabled={state.exportLoading}>
+            onClick={() => dispatch(adt("showExportModal"))}>
             Export Contact List
           </Button>
         </div>
