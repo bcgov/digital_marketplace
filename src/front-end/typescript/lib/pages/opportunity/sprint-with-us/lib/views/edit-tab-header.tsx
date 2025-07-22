@@ -67,7 +67,7 @@ const EditTabHeader: component.base.View<Props> = ({
       : null
   ];
   return (
-    <div>
+    <div className="opportunity-edit-tab-header">
       <Row className="mb-5">
         <Col xs="12">
           <h3 className="mb-2">

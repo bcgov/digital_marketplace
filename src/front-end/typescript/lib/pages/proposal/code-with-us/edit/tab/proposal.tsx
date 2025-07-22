@@ -11,7 +11,7 @@ import * as api from "front-end/lib/http/api";
 import * as Tab from "front-end/lib/pages/proposal/code-with-us/edit/tab";
 import * as Form from "front-end/lib/pages/proposal/code-with-us/lib/components/form";
 import * as toasts from "front-end/lib/pages/proposal/code-with-us/lib/toasts";
-import EditTabHeader from "front-end/lib/pages/proposal/code-with-us/lib/views/edit-tab-header";
+import ProposalViewWrapper from "front-end/lib/pages/proposal/code-with-us/lib/components/proposal-view-wrapper";
 import { iconLinkSymbol, leftPlacement } from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
@@ -759,7 +759,9 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   }
 };
 
-const Reporting: component_.base.ComponentView<State, Msg> = ({ state }) => {
+export const Reporting: component_.base.ComponentView<State, Msg> = ({
+  state
+}) => {
   const proposal = state.proposal;
   if (!proposal) return null;
   const showScoreAndRanking =
@@ -805,21 +807,15 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const form = state.form;
   if (!proposal || !form) return null;
   return (
-    <div>
-      <EditTabHeader proposal={proposal} viewerUser={state.viewerUser} />
-      <Reporting {...props} />
-      <Row className="mt-5">
-        <Col xs="12">
-          <Form.view
-            disabled={!state.isEditing || isLoading(state)}
-            state={form}
-            dispatch={component_.base.mapDispatch(dispatch, (v) =>
-              adt("form" as const, v)
-            )}
-          />
-        </Col>
-      </Row>
-    </div>
+    <ProposalViewWrapper {...props}>
+      <Form.view
+        disabled={!state.isEditing || isLoading(state)}
+        state={form}
+        dispatch={component_.base.mapDispatch(dispatch, (v) =>
+          adt("form" as const, v)
+        )}
+      />
+    </ProposalViewWrapper>
   );
 };
 

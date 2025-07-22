@@ -1,15 +1,12 @@
-import { DROPDOWN_CARET_SIZE } from "front-end/config";
 import { Immutable, component as component_ } from "front-end/lib/framework";
-import Icon from "front-end/lib/views/icon";
 import Link, {
-  emptyIconLinkSymbol,
   iconLinkSymbol,
   leftPlacement,
   rightPlacement
 } from "front-end/lib/views/link";
 import React from "react";
-import { Dropdown, DropdownMenu, DropdownToggle, Nav } from "reactstrap";
 import { ADT, adt } from "shared/lib/types";
+import * as TabbedFormHeader from "front-end/lib/components/tabbed-form-header";
 
 export interface State<TabId> {
   id: string;
@@ -138,76 +135,6 @@ export interface Props<TabId>
 }
 
 export function view<TabId>(): component_.base.View<Props<TabId>> {
-  const Header: component_.base.View<Props<TabId>> = ({
-    valid,
-    state,
-    dispatch,
-    getTabLabel,
-    isTabValid
-  }) => {
-    const activeTab = getActiveTab(state);
-    if (!activeTab) {
-      return null;
-    }
-    return (
-      <div className="d-flex mb-5">
-        <Nav tabs className="flex-grow-1 flex-nowrap">
-          <Dropdown
-            nav
-            isOpen={state.isDropdownOpen}
-            toggle={() => dispatch(adt("toggleDropdown"))}>
-            <DropdownToggle
-              tag="div"
-              nav
-              className="d-flex align-items-center flex-nowrap active">
-              <Link
-                symbol_={
-                  valid
-                    ? undefined
-                    : leftPlacement(iconLinkSymbol("exclamation-circle"))
-                }
-                symbolClassName="text-warning"
-                color="body">
-                {String(state.tabs.indexOf(activeTab) + 1)}.{" "}
-                {getTabLabel(activeTab)}
-              </Link>
-              <Icon
-                name="caret-down"
-                color="body"
-                className="ms-2"
-                width={DROPDOWN_CARET_SIZE}
-                height={DROPDOWN_CARET_SIZE}
-              />
-            </DropdownToggle>
-            <DropdownMenu>
-              {state.tabs.map((tab, i) => (
-                <div
-                  key={`form-tab-dropdown-item-${i}`}
-                  className="dropdown-item d-flex align-items-center flex-nowrap ps-3">
-                  <Link
-                    symbol_={
-                      valid
-                        ? undefined
-                        : leftPlacement(
-                            isTabValid(tab)
-                              ? emptyIconLinkSymbol()
-                              : iconLinkSymbol("exclamation-circle")
-                          )
-                    }
-                    symbolClassName="text-warning"
-                    onClick={() => dispatch(adt("setActiveTab", tab))}
-                    color="body">
-                    {String(i + 1)}. {getTabLabel(tab)}
-                  </Link>
-                </div>
-              ))}
-            </DropdownMenu>
-          </Dropdown>
-        </Nav>
-      </div>
-    );
-  };
-
   const Footer: component_.base.View<Props<TabId>> = ({ state, dispatch }) => {
     return (
       <div className="mt-5 d-flex flex-nowrap justify-content-between align-items-center">
@@ -241,9 +168,10 @@ export function view<TabId>(): component_.base.View<Props<TabId>> {
   };
 
   return function PageWrapper(props) {
+    const TabbedFormHeaderView = TabbedFormHeader.view;
     return (
       <div id={props.state.id}>
-        <Header {...props} />
+        <TabbedFormHeaderView {...props} />
         <div>{props.children}</div>
         <Footer {...props} />
       </div>

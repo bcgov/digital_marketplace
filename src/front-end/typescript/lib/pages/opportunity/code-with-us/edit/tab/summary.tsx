@@ -4,18 +4,28 @@ import { component as component_ } from "front-end/lib/framework";
 import * as Tab from "front-end/lib/pages/opportunity/code-with-us/edit/tab";
 import EditTabHeader from "front-end/lib/pages/opportunity/code-with-us/lib/views/edit-tab-header";
 import DescriptionList from "front-end/lib/views/description-list";
-import Link, { emailDest, routeDest } from "front-end/lib/views/link";
+import Link, {
+  emailDest,
+  externalDest,
+  iconLinkSymbol,
+  leftPlacement,
+  routeDest
+} from "front-end/lib/views/link";
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
 import Skills from "front-end/lib/views/skills";
 import React from "react";
-import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
+import {
+  CWUOpportunity,
+  CWUOpportunityStatus
+} from "shared/lib/resources/opportunity/code-with-us";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
 import { NUM_SCORE_DECIMALS } from "shared/lib/resources/proposal/code-with-us";
 import { isAdmin } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
+import { prefixPath } from "front-end/lib";
 
 export interface State extends Tab.Params {
   opportunity: CWUOpportunity | null;
@@ -234,5 +244,29 @@ export const component: Tab.Component<State, InnerMsg> = {
   view,
   onInitResponse(response) {
     return adt("onInitResponse", response);
+  },
+  // Add "View Complete Competition" button action if the opportunity is awarded and the user is an admin
+  getActions: ({ state }) => {
+    const opportunity = state.opportunity;
+    const viewerUser = state.viewerUser;
+    if (
+      !opportunity ||
+      !isAdmin(viewerUser) ||
+      opportunity.status !== CWUOpportunityStatus.Awarded
+    ) {
+      return component_.page.actions.none();
+    }
+    return component_.page.actions.links([
+      {
+        children: "View Complete Competition",
+        symbol_: leftPlacement(iconLinkSymbol("external-link")),
+        button: true,
+        color: "primary" as const,
+        dest: externalDest(
+          prefixPath(`/opportunities/code-with-us/${opportunity.id}/complete`)
+        ),
+        newTab: true
+      }
+    ]);
   }
 };
