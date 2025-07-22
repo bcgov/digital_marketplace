@@ -16,7 +16,7 @@ import {
 } from "front-end/lib/pages/user/lib";
 import { userTypeToTitleCase } from "shared/lib/resources/user";
 import Badge from "front-end/lib/views/badge";
-import Link, { routeDest } from "front-end/lib/views/link";
+import Link, { routeDest, externalDest } from "front-end/lib/views/link";
 import React from "react";
 import { Button, Col, Row } from "reactstrap";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
@@ -56,8 +56,7 @@ type InnerMsg =
   | ADT<"fieldCheckboxFirstName", Checkbox.Msg>
   | ADT<"fieldCheckboxLastName", Checkbox.Msg>
   | ADT<"fieldCheckboxEmail", Checkbox.Msg>
-  | ADT<"fieldCheckboxOrganizationName", Checkbox.Msg>
-  | ADT<"exportContactList">;
+  | ADT<"fieldCheckboxOrganizationName", Checkbox.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -297,34 +296,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         childMsg: msg.value,
         mapChildMsg: (value) => adt("fieldCheckboxOrganizationName", value)
       });
-    case "exportContactList": {
-      // Build query parameters from checkbox states
-      const selectedUserTypes = Object.entries(state.userTypeCheckboxes)
-        .filter(([_, checkboxState]) => FormField.getValue(checkboxState))
-        .map(([type]) => type);
-
-      const selectedFields = Object.entries(state.fieldCheckboxes)
-        .filter(([_, checkboxState]) => FormField.getValue(checkboxState))
-        .map(([field]) => field);
-
-      // Make sure there's at least one user type and field selected
-      if (!selectedUserTypes.length || !selectedFields.length) {
-        return [state, []];
-      }
-
-      // Use URLSearchParams for safer URL construction
-      const params = new URLSearchParams({
-        userTypes: selectedUserTypes.join(","),
-        fields: selectedFields.join(",")
-      });
-
-      // Open download URL in new tab
-      if (typeof window !== "undefined") {
-        window.open(`/api/contact-list?${params}`, "_blank");
-      }
-
-      return [state.set("showExportModal", false), []];
-    }
 
     default:
       return [state, []];
@@ -403,23 +374,27 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
   );
   const canExport = hasUserTypeSelected && hasFieldSelected;
 
+  // Build query parameters from checkbox states
+  const selectedUserTypes = Object.entries(state.userTypeCheckboxes)
+    .filter(([_, checkboxState]) => FormField.getValue(checkboxState))
+    .map(([type]) => type);
+
+  const selectedFields = Object.entries(state.fieldCheckboxes)
+    .filter(([_, checkboxState]) => FormField.getValue(checkboxState))
+    .map(([field]) => field);
+
+  // Use URLSearchParams for safer URL construction
+  const params = new URLSearchParams({
+    userTypes: selectedUserTypes.join(","),
+    fields: selectedFields.join(",")
+  });
+
+  const csvURLWithQueryParams = `/api/contact-list?${params}`;
+
   return component_.page.modal.show<Msg>({
     title: "Export Contact List",
     onCloseMsg: adt("hideExportModal"),
-    actions: [
-      {
-        text: "Export",
-        color: "primary",
-        msg: adt("exportContactList"),
-        button: true,
-        disabled: !canExport
-      },
-      {
-        text: "Cancel",
-        color: "secondary",
-        msg: adt("hideExportModal")
-      }
-    ],
+    actions: [],
     body: (dispatch) => (
       <div>
         <div className="mb-4">
@@ -446,7 +421,7 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
           />
         </div>
 
-        <div>
+        <div className="mb-4">
           <h5>Select Fields to Export</h5>
           <Checkbox.view
             extraChildProps={{
@@ -488,6 +463,35 @@ const getModal: component_.page.GetModal<State, Msg> = (state) => {
               adt("fieldCheckboxOrganizationName" as const, msg)
             )}
           />
+        </div>
+
+        {!canExport && (
+          <div className="mb-4 text-muted">
+            Please select at least one user type and one field to export.
+          </div>
+        )}
+
+        {/* Action buttons styled like modal footer */}
+        <div
+          className="p-0 modal-footer ml-n3 mr-n3"
+          style={{ overflowX: "auto", justifyContent: "normal" }}>
+          <div className="p-3 d-flex flex-row-reverse justify-content-start align-items-center text-nowrap flex-grow-1">
+            <Link
+              newTab
+              download
+              dest={externalDest(csvURLWithQueryParams)}
+              onClick={() => dispatch(adt("hideExportModal"))}
+              disabled={!canExport}
+              className="mx-0">
+              Export
+            </Link>
+            <Link
+              onClick={() => dispatch(adt("hideExportModal"))}
+              color="secondary"
+              className="mr-3">
+              Cancel
+            </Link>
+          </div>
         </div>
       </div>
     )
