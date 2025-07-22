@@ -38,7 +38,8 @@ export enum TWUServiceArea {
   FullStackDeveloper = "FULL_STACK_DEVELOPER",
   DataProfessional = "DATA_PROFESSIONAL",
   AgileCoach = "AGILE_COACH",
-  DevopsSpecialist = "DEVOPS_SPECIALIST"
+  DevopsSpecialist = "DEVOPS_SPECIALIST",
+  ServiceDesigner = "SERVICE_DESIGNER"
 }
 
 export interface TWUOpportunityHistoryRecord {

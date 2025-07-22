@@ -39,5 +39,6 @@ yarn-error.log
 
 # TypeScript
 tsconfig.tsbuildinfo
+
 .specstory/
-src/marketplace-ai/dist
+.cursor/

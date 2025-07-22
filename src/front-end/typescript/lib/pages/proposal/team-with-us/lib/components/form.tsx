@@ -483,7 +483,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const EvaluationView: component_.base.View<Props> = ({ state }) => {
+export const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -540,7 +540,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
   );
 };
 
-const OrganizationView: component_.base.View<Props> = ({
+export const OrganizationView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -623,7 +623,7 @@ const OrganizationView: component_.base.View<Props> = ({
   );
 };
 
-const ResourceQuestionsView: component_.base.View<Props> = ({
+export const ResourceQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -754,7 +754,7 @@ const ContractDate: component_.base.View<ContractDateProps> = ({
   </>
 );
 
-const ReviewProposalView: component_.base.View<Props> = ({
+export const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
 }) => {

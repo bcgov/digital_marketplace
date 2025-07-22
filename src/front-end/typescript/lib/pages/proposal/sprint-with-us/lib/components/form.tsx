@@ -763,7 +763,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   }
 };
 
-const EvaluationView: component_.base.View<Props> = ({ state }) => {
+export const EvaluationView: component_.base.View<Props> = ({ state }) => {
   return (
     <Row>
       <Col xs="12">
@@ -825,7 +825,7 @@ const EvaluationView: component_.base.View<Props> = ({ state }) => {
   );
 };
 
-const TeamView: component_.base.View<Props> = ({
+export const TeamView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -906,7 +906,7 @@ const TeamView: component_.base.View<Props> = ({
   );
 };
 
-const PricingView: component_.base.View<Props> = ({
+export const PricingView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1030,7 +1030,7 @@ const PricingView: component_.base.View<Props> = ({
   );
 };
 
-const TeamQuestionsView: component_.base.View<Props> = ({
+export const TeamQuestionsView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1070,7 +1070,7 @@ const TeamQuestionsView: component_.base.View<Props> = ({
   );
 };
 
-const ReferencesView: component_.base.View<Props> = ({
+export const ReferencesView: component_.base.View<Props> = ({
   state,
   dispatch,
   disabled
@@ -1243,7 +1243,7 @@ const ReviewTeamQuestionResponseView: component_.base.View<
   );
 };
 
-const ReviewProposalView: component_.base.View<Props> = ({
+export const ReviewProposalView: component_.base.View<Props> = ({
   state,
   dispatch
 }) => {
