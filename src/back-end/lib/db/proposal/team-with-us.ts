@@ -959,55 +959,102 @@ async function updateTWUProposalResourceQuestionResponses(
   }
 }
 
+/**
+ * Internal function that updates a TWU proposal status.
+ */
+async function _updateTWUProposalStatusInternal(
+  trx: Transaction,
+  proposalId: Id,
+  status: TWUProposalStatus,
+  note: string,
+  session: AuthenticatedSession
+): Promise<TWUProposal> {
+  const now = new Date();
+
+  const [statusRecord] = await trx<RawHistoryRecord & { id: Id; proposal: Id }>(
+    "twuProposalStatuses"
+  ).insert(
+    {
+      id: generateUuid(),
+      proposal: proposalId,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    },
+    "*"
+  );
+
+  // Update proposal root record
+  await trx<RawTWUProposal>("twuProposals").where({ id: proposalId }).update(
+    {
+      updatedAt: now,
+      updatedBy: session.user.id
+    },
+    "*"
+  );
+
+  if (!statusRecord) {
+    throw new Error("unable to update proposal");
+  }
+
+  const dbResult = await readOneTWUProposal(
+    trx,
+    statusRecord.proposal,
+    session
+  );
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update proposal");
+  }
+
+  return dbResult.value;
+}
+
 export const updateTWUProposalStatus = tryDb<
   [Id, TWUProposalStatus, string, AuthenticatedSession],
   TWUProposal
 >(async (connection, proposalId, status, note, session) => {
-  const now = new Date();
   return valid(
     await connection.transaction(async (trx) => {
-      const [statusRecord] = await connection<
-        RawHistoryRecord & { id: Id; proposal: Id }
-      >("twuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: now,
-            createdBy: session.user.id,
-            status,
-            note
-          },
-          "*"
-        );
-
-      // Update proposal root record
-      await connection<RawTWUProposal>("twuProposals")
-        .transacting(trx)
-        .where({ id: proposalId })
-        .update(
-          {
-            updatedAt: now,
-            updatedBy: session.user.id
-          },
-          "*"
-        );
-
-      if (!statusRecord) {
-        throw new Error("unable to update proposal");
-      }
-
-      const dbResult = await readOneTWUProposal(
+      return await _updateTWUProposalStatusInternal(
         trx,
-        statusRecord.proposal,
+        proposalId,
+        status,
+        note,
         session
       );
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update proposal");
-      }
+    })
+  );
+});
 
-      return dbResult.value;
+/**
+ * Disqualifies a TWU proposal and updates the opportunity processing status in a single transaction.
+ * This ensures both operations succeed or fail together.
+ */
+export const disqualifyTWUProposalAndUpdateOpportunity = tryDb<
+  [Id, string, AuthenticatedSession],
+  TWUProposal
+>(async (connection, proposalId, disqualificationReason, session) => {
+  return valid(
+    await connection.transaction(async (trx) => {
+      // Update proposal status to disqualified
+      const updatedProposal = await _updateTWUProposalStatusInternal(
+        trx,
+        proposalId,
+        TWUProposalStatus.Disqualified,
+        disqualificationReason,
+        session
+      );
+
+      // Check if opportunity should be moved to "Processing" status after disqualification
+      const opportunityId = updatedProposal.opportunity.id;
+      await checkAndUpdateTWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
+
+      return updatedProposal;
     })
   );
 });
@@ -1213,6 +1260,15 @@ export const updateTWUProposalChallengeAndPriceScores = tryDb<
       if (isInvalid(dbResult) || !dbResult.value) {
         throw new Error("unable to update proposal scores");
       }
+
+      // updateTWUProposalChallengeAndPriceScores was invoked
+      // - this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateTWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
       return dbResult.value;
     })
@@ -1696,4 +1752,53 @@ export const readOneTWUProposalAuthor = tryDb<[Id], User | null>(
   }
 );
 
+/**
+ * Checks if all proposals for a TWU opportunity that have reached the Challenge phase are evaluated
+ * and updates the opportunity status accordingly.
+ */
+export async function checkAndUpdateTWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all active proposals
+  const activeProposals = await generateTWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
+      TWUProposalStatus.Withdrawn,
+      TWUProposalStatus.Disqualified,
+      TWUProposalStatus.Draft,
+      // Exclude proposals that didn't make it to the challenge phase
+      TWUProposalStatus.Submitted,
+      TWUProposalStatus.UnderReviewResourceQuestions,
+      TWUProposalStatus.EvaluatedResourceQuestions
+    ]);
+
+  // Get current opportunity status
+  const currentOpportunity = await generateTWUOpportunityQuery(connection)
+    .where({ "opportunities.id": opportunityId })
+    .select("statuses.status")
+    .first();
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === TWUProposalStatus.EvaluatedChallenge
+  ).length;
+
+  // All proposals are evaluated in challenge phase and opportunity is in EVALUATION_CHALLENGE, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === TWUOpportunityStatus.EvaluationChallenge
+  ) {
+    await updateTWUOpportunityStatus(
+      connection,
+      opportunityId,
+      TWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated in the Challenge phase.",
+      session
+    );
+  }
+}
 export { RawHistoryRecord as RawTWUProposalHistoryRecord };
