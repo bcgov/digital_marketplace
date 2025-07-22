@@ -4,6 +4,7 @@ import { readOneFileById } from "back-end/lib/db/file";
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import { valid } from "shared/lib/http";
+import { MembershipStatus } from "shared/lib/resources/affiliation";
 import {
   User,
   UserSlim,
@@ -187,6 +188,70 @@ export const readManyUsersByRole = tryDb<[UserType, boolean?], User[]>(
     );
   }
 );
+
+export const readManyUsersWithOrganizations = tryDb<
+  [UserType[], boolean?],
+  Array<{ user: User; organizationNames: string[] }>
+>(async (connection, userTypes, includeInactive = true) => {
+  // Single query with LEFT JOIN to get users and all their organizations
+  const results = await connection("users")
+    .leftJoin("affiliations", "users.id", "=", "affiliations.user")
+    .leftJoin(
+      "organizations",
+      "affiliations.organization",
+      "=",
+      "organizations.id"
+    )
+    .whereIn("users.type", userTypes)
+    .andWhere(function () {
+      if (!includeInactive) {
+        this.where({ "users.status": UserStatus.Active });
+      }
+    })
+    .andWhere(function () {
+      // Only include active affiliations and organizations, or users without affiliations
+      this.whereNull("affiliations.id").orWhere(function () {
+        this.where({
+          "organizations.active": true
+        }).andWhereNot({
+          "affiliations.membershipStatus": MembershipStatus.Inactive
+        });
+      });
+    })
+    .select("users.*", "organizations.legalName as organizationName")
+    .orderBy("affiliations.createdAt", "desc"); // Order by newest affiliations first
+
+  // Process results to group by user and collect all organizations
+  const userMap = new Map<
+    string,
+    { user: RawUser; organizationNames: Set<string> }
+  >();
+
+  for (const result of results) {
+    const userId = result.id;
+    if (!userMap.has(userId)) {
+      userMap.set(userId, {
+        user: result,
+        organizationNames: new Set<string>()
+      });
+    }
+
+    // Add organization name if it exists
+    if (result.organizationName) {
+      userMap.get(userId)!.organizationNames.add(result.organizationName);
+    }
+  }
+
+  // Convert to User objects
+  const processedResults = await Promise.all(
+    Array.from(userMap.values()).map(async ({ user, organizationNames }) => ({
+      user: await rawUserToUser(connection, user),
+      organizationNames: Array.from(organizationNames)
+    }))
+  );
+
+  return valid(processedResults);
+});
 
 const tempLogger = makeDomainLogger(consoleAdapter, "create-user-debug");
 export const createUser = tryDb<[CreateUserParams], User>(
