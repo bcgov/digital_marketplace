@@ -1,7 +1,7 @@
 import { prefixPath } from "back-end/lib";
 import { CSSProperties, default as React, Fragment, ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { SHOW_TEST_INDICATOR } from "shared/config";
+import { EMPTY_STRING, SHOW_TEST_INDICATOR } from "shared/config";
 import { VIEWER_USER_ROUTE_PARAM } from "shared/lib/resources/user";
 
 // Styles.
@@ -467,3 +467,70 @@ const Simple: View<SimpleProps> = (props) => {
 };
 
 export const simple: Template<SimpleProps> = makeTemplate(Simple);
+
+// Award Decision template - special format for award decision notifications
+
+export interface AwardDecisionProps extends TemplateBaseProps {
+  opportunityTitle: string;
+  awardedTo: string;
+  opportunityDetails: DescriptionItemProps[];
+  callsToAction?: LinkProps[];
+  body?: string | ReactElement;
+}
+
+const AwardDecision: View<AwardDecisionProps> = (props) => {
+  const {
+    opportunityTitle,
+    awardedTo,
+    opportunityDetails,
+    callsToAction,
+    body
+  } = props;
+  return (
+    <Layout {...props}>
+      {/* Display the opportunity title */}
+      <Row style={styles.utilities.text.center}>
+        <b>{opportunityTitle}</b>
+      </Row>
+
+      {/* Display "Awarded to" */}
+      <Row style={styles.utilities.text.center}>
+        <p>
+          The opportunity has been awarded to:{" "}
+          <b>{awardedTo || EMPTY_STRING}</b>
+        </p>
+      </Row>
+
+      {/* Display opportunity details as a standard description list */}
+      <Row style={styles.utilities.text.center}>
+        <Fragment>
+          {opportunityDetails.map((item) => (
+            <DescriptionItem key={`award-detail-${item.name}`} {...item} />
+          ))}
+        </Fragment>
+      </Row>
+
+      {/* Display the body content */}
+      <Fragment>
+        {body ? <Row style={{ textAlign: "center" }}>{body}</Row> : null}
+      </Fragment>
+
+      {/* Display call to action buttons */}
+      <Fragment>
+        {callsToAction ? (
+          <Row style={{ ...styles.utilities.text.center }}>
+            {callsToAction.map((call) => (
+              <CallToAction
+                key={`award-call-to-action-${call.url}`}
+                {...call}
+              />
+            ))}
+          </Row>
+        ) : null}
+      </Fragment>
+    </Layout>
+  );
+};
+
+export const awardDecision: Template<AwardDecisionProps> =
+  makeTemplate(AwardDecision);

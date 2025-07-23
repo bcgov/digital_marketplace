@@ -324,11 +324,11 @@ export function makeTWUOpportunityInformation(
     { name: "Value", value: `$${formatAmount(opportunity.maxBudget)}` },
     ...serviceAreas,
     {
-      name: "Contract Start Date",
+      name: "Estimated Contract Start Date",
       value: formatDate(opportunity.startDate, false)
     },
     {
-      name: "Contract End Date",
+      name: "Estimated Contract End Date",
       value: opportunity.completionDate
         ? formatDate(opportunity.completionDate, false)
         : ""
