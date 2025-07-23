@@ -849,15 +849,15 @@ const update: crud.Update<
               session
             );
             break;
-          case "disqualify":
-            dbResult = await db.updateCWUProposalStatus(
+          case "disqualify": {
+            dbResult = await db.disqualifyCWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              CWUProposalStatus.Disqualified,
               body.value,
               session
             );
             break;
+          }
           case "withdraw":
             dbResult = await db.updateCWUProposalStatus(
               connection,

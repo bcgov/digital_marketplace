@@ -61,6 +61,7 @@ export enum SWUOpportunityStatus {
   EvaluationTeamQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationCodeChallenge = "EVAL_CC",
   EvaluationTeamScenario = "EVAL_SCENARIO",
+  Processing = "PROCESSING",
   Awarded = "AWARDED",
   Suspended = "SUSPENDED",
   Canceled = "CANCELED"
@@ -99,6 +100,8 @@ export function parseSWUOpportunityStatus(
       return SWUOpportunityStatus.EvaluationCodeChallenge;
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return SWUOpportunityStatus.EvaluationTeamScenario;
+    case SWUOpportunityStatus.Processing:
+      return SWUOpportunityStatus.Processing;
     case SWUOpportunityStatus.Awarded:
       return SWUOpportunityStatus.Awarded;
     case SWUOpportunityStatus.Suspended:
@@ -130,6 +133,7 @@ export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.EvaluationTeamQuestionsConsensus,
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
+  SWUOpportunityStatus.Processing,
   SWUOpportunityStatus.Awarded
 ];
 
@@ -528,6 +532,12 @@ export function isValidStatusChange(
       return [
         SWUOpportunityStatus.Canceled,
         SWUOpportunityStatus.Suspended,
+        SWUOpportunityStatus.Processing
+      ].includes(to);
+    case SWUOpportunityStatus.Processing:
+      return [
+        SWUOpportunityStatus.Canceled,
+        SWUOpportunityStatus.Suspended,
         SWUOpportunityStatus.Awarded
       ].includes(to);
     case SWUOpportunityStatus.Suspended:
@@ -553,7 +563,7 @@ export function canSWUOpportunityBeScreenedInToTeamScenario(
 
 export function canSWUOpportunityBeAwarded(o: SWUOpportunity): boolean {
   switch (o.status) {
-    case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Processing:
     case SWUOpportunityStatus.Awarded:
       return true;
     default:
@@ -613,6 +623,7 @@ export function isSWUOpportunityPublic(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Processing:
     case SWUOpportunityStatus.Awarded:
     case SWUOpportunityStatus.Canceled:
       return true;
@@ -628,6 +639,7 @@ export function canAddAddendumToSWUOpportunity(o: SWUOpportunity): boolean {
     case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Processing:
     case SWUOpportunityStatus.Awarded:
     case SWUOpportunityStatus.Suspended:
     case SWUOpportunityStatus.Canceled:
@@ -675,6 +687,7 @@ export function hasSWUOpportunityPassedTeamQuestions(
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Processing:
       case SWUOpportunityStatus.Awarded:
         return true;
       default:
@@ -696,6 +709,7 @@ export function hasSWUOpportunityPassedCodeChallenge(
     switch (h.type.value) {
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Processing:
       case SWUOpportunityStatus.Awarded:
         return true;
       default:
@@ -716,6 +730,7 @@ export function hasSWUOpportunityPassedTeamScenario(
     }
     switch (h.type.value) {
       case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Processing:
       case SWUOpportunityStatus.Awarded:
         return true;
       default:
@@ -743,6 +758,7 @@ export function doesSWUOpportunityStatusAllowGovToViewFullProposal(
   switch (s) {
     case SWUOpportunityStatus.EvaluationCodeChallenge:
     case SWUOpportunityStatus.EvaluationTeamScenario:
+    case SWUOpportunityStatus.Processing:
     case SWUOpportunityStatus.Awarded:
       return true;
     default:

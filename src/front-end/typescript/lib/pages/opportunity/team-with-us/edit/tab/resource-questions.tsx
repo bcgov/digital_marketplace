@@ -144,6 +144,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
 
+    // todo: remove this and associated code - not needed any more - the block is deprecated
     case "completeResourceQuestions": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];

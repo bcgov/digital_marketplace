@@ -23,6 +23,7 @@ export enum TWUOpportunityStatus {
   EvaluationResourceQuestionsIndividual = "EVAL_QUESTIONS_INDIVIDUAL",
   EvaluationResourceQuestionsConsensus = "EVAL_QUESTIONS_CONSENSUS",
   EvaluationChallenge = "EVAL_C",
+  Processing = "PROCESSING",
   Awarded = "AWARDED",
   Suspended = "SUSPENDED",
   Canceled = "CANCELED"
@@ -125,6 +126,7 @@ export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.EvaluationResourceQuestionsIndividual,
   TWUOpportunityStatus.EvaluationResourceQuestionsConsensus,
   TWUOpportunityStatus.EvaluationChallenge,
+  TWUOpportunityStatus.Processing,
   TWUOpportunityStatus.Awarded
 ];
 
@@ -487,6 +489,12 @@ export function isValidStatusChange(
     case TWUOpportunityStatus.EvaluationChallenge:
       return [
         TWUOpportunityStatus.Canceled,
+        TWUOpportunityStatus.Suspended,
+        TWUOpportunityStatus.Processing
+      ].includes(to);
+    case TWUOpportunityStatus.Processing:
+      return [
+        TWUOpportunityStatus.Canceled,
         TWUOpportunityStatus.Suspended
       ].includes(to);
     case TWUOpportunityStatus.Suspended:
@@ -512,7 +520,7 @@ export function canTWUOpportunityBeScreenedInToChallenge(
 
 export function canTWUOpportunityBeAwarded(o: TWUOpportunity): boolean {
   switch (o.status) {
-    case TWUOpportunityStatus.EvaluationChallenge:
+    case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
       return true;
     default:
@@ -571,6 +579,7 @@ export function isTWUOpportunityPublic(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
+    case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Canceled:
       return true;
@@ -585,6 +594,7 @@ export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
     case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
     case TWUOpportunityStatus.EvaluationChallenge:
+    case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
     case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.Canceled:
@@ -639,24 +649,41 @@ export function hasTWUOpportunityPassedResourceQuestions(
   }, false as boolean);
 }
 
+/**
+ * Determines if a Team With Us (TWU) opportunity has passed the challenge phase.
+ *
+ * This function checks the opportunity's history to see if it has ever been in a status
+ * that indicates it has moved beyond the challenge evaluation phase (EvaluationChallenge,
+ * Processing, or Awarded statuses).
+ *
+ * @param o - The TWU opportunity object containing a history property
+ * @returns true if the opportunity has passed the challenge phase, false otherwise
+ */
 export function hasTWUOpportunityPassedChallenge(
   o: Pick<TWUOpportunity, "history">
 ): boolean {
+  // If no history exists, the opportunity hasn't passed any phases
   if (!o.history) {
     return false;
   }
+  // Reduce the history array to a single boolean value
   return o.history.reduce((acc, h) => {
+    // If we've already determined it passed the challenge (acc is true)
+    // or if the current history item is not a status change, maintain the current result
     if (acc || h.type.tag !== "status") {
       return acc;
     }
+
+    // Check specific status values that indicate the opportunity has passed the challenge phase
     switch (h.type.value) {
       case TWUOpportunityStatus.EvaluationChallenge:
+      case TWUOpportunityStatus.Processing:
       case TWUOpportunityStatus.Awarded:
         return true;
       default:
         return false;
     }
-  }, false as boolean);
+  }, false as boolean); // Start with false as the initial accumulator value
 }
 
 export function doesTWUOpportunityStatusAllowGovToViewProposals(
@@ -677,6 +704,7 @@ export function doesTWUOpportunityStatusAllowGovToViewFullProposal(
 ): boolean {
   switch (s) {
     case TWUOpportunityStatus.EvaluationChallenge:
+    case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
       return true;
     default:

@@ -1,5 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { isDateInThePast } from "shared/lib";
 import {
   isOpen,
   SWUOpportunity,
@@ -25,10 +26,12 @@ export function swuOpportunityStatusToColor(
       return "warning";
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return "warning";
+    case SWUOpportunityStatus.Processing:
+      return "warning";
     case SWUOpportunityStatus.Awarded:
       return "success";
     case SWUOpportunityStatus.Suspended:
-      return "secondary";
+      return "danger";
     case SWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -52,6 +55,8 @@ export function swuOpportunityStatusToTitleCase(
       return "Code Challenge";
     case SWUOpportunityStatus.EvaluationTeamScenario:
       return "Team Scenario";
+    case SWUOpportunityStatus.Processing:
+      return "Processing";
     case SWUOpportunityStatus.Awarded:
       return "Awarded";
     case SWUOpportunityStatus.Suspended:
@@ -116,8 +121,25 @@ export function swuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === SWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (o.status === SWUOpportunityStatus.Suspended) {
+      return "Suspended";
+    } else if (
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsIndividual ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus ||
+      o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
+      o.status === SWUOpportunityStatus.EvaluationTeamScenario
+    ) {
+      return "Evaluation";
+    } else if (
+      o.status === SWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
+    } else if (o.status === SWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }
@@ -133,8 +155,27 @@ export function swuOpportunityToPublicColor(
   } else {
     if (isOpen(o)) {
       return "success";
-    } else {
+    } else if (
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsIndividual ||
+      o.status === SWUOpportunityStatus.EvaluationTeamQuestionsConsensus ||
+      o.status === SWUOpportunityStatus.EvaluationCodeChallenge ||
+      o.status === SWUOpportunityStatus.EvaluationTeamScenario
+    ) {
+      return "warning";
+    } else if (
+      o.status === SWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
+      return "warning";
+    } else if (o.status === SWUOpportunityStatus.Processing) {
+      return "warning";
+    } else if (o.status === SWUOpportunityStatus.Suspended) {
       return "danger";
+    } else if (o.status === SWUOpportunityStatus.Canceled) {
+      return "danger";
+    } else {
+      return "success";
     }
   }
 }
