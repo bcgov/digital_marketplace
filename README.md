@@ -169,11 +169,13 @@ docker-compose up db # Start PostgreSQL only
 npm run back-end:watch # Start the back-end server, restart on source changes.
 
 # Terminal 3
-npm run front-end:watch # Build the front-end source code, rebuild on source changes.
+npx vite dev # Start the development server, serves files with hot module replacement on source changes.
 
 # Terminal 4
 npm run migrations:latest # Run all database migrations.
 ```
+
+The application will be available at http://localhost:5173/
 
 #### Admin user
 
@@ -200,8 +202,8 @@ npm run <SCRIPT_NAME>
 | `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                    |
 | `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                  |
 | `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                   |
-| `front-end:build`                       | Builds the front-end source code using grunt.                                                                                                                                                                    |
-| `front-end:watch`                       | Builds the front-end source code using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                |
+| `front-end:build`                       | Builds the front-end source code using grunt. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                                                                                    |
+| `front-end:watch`                       | Builds the front-end source code using grunt, and rebuilds it whenever a front-end or shared source file changes. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                |
 | `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                  |
 | `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                     |
 | `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                   |

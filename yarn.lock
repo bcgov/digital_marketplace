@@ -8789,7 +8789,25 @@ kleur@^3.0.3:
   resolved "https://registry.yarnpkg.com/kleur/-/kleur-3.0.3.tgz#a79c9ecc86ee1ce3fa6206d1216c501f147fc07e"
   integrity sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==
 
-knex@2.5.1:
+knex@^0.21.13:
+  version "0.21.21"
+  resolved "https://registry.yarnpkg.com/knex/-/knex-0.21.21.tgz#b1335c75afd15ff83371b096e9cc4c4eafab8c05"
+  integrity sha512-cjw5qO1EzVKjbywcVa61IQJMLt7PfYBRI/2NwCA/B9beXgbw652wDNLz+JM+UKKNsfwprq0ugYqBYc9q4JN36A==
+  dependencies:
+    colorette "1.2.1"
+    commander "^6.2.0"
+    debug "4.3.1"
+    esm "^3.2.25"
+    getopts "2.2.5"
+    interpret "^2.2.0"
+    liftoff "3.1.0"
+    lodash "^4.17.20"
+    pg-connection-string "2.4.0"
+    tarn "^3.0.1"
+    tildify "2.0.0"
+    v8flags "^3.2.0"
+
+knex@^2.5.1:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/knex/-/knex-2.5.1.tgz#a6c6b449866cf4229f070c17411f23871ba52ef9"
   integrity sha512-z78DgGKUr4SE/6cm7ku+jHvFT0X97aERh/f0MUKAKgFnwCYBEW4TFBqtHWFYiJFid7fMrtpZ/gxJthvz5mEByA==
@@ -8808,24 +8826,6 @@ knex@2.5.1:
     resolve-from "^5.0.0"
     tarn "^3.0.2"
     tildify "2.0.0"
-
-knex@^0.21.13:
-  version "0.21.21"
-  resolved "https://registry.yarnpkg.com/knex/-/knex-0.21.21.tgz#b1335c75afd15ff83371b096e9cc4c4eafab8c05"
-  integrity sha512-cjw5qO1EzVKjbywcVa61IQJMLt7PfYBRI/2NwCA/B9beXgbw652wDNLz+JM+UKKNsfwprq0ugYqBYc9q4JN36A==
-  dependencies:
-    colorette "1.2.1"
-    commander "^6.2.0"
-    debug "4.3.1"
-    esm "^3.2.25"
-    getopts "2.2.5"
-    interpret "^2.2.0"
-    liftoff "3.1.0"
-    lodash "^4.17.20"
-    pg-connection-string "2.4.0"
-    tarn "^3.0.1"
-    tildify "2.0.0"
-    v8flags "^3.2.0"
 
 lazy-ass@^1.6.0:
   version "1.6.0"
@@ -10673,7 +10673,7 @@ pg-types@2.2.0, pg-types@^2.1.0:
     postgres-date "~1.0.4"
     postgres-interval "^1.1.0"
 
-pg@8.11.x:
+pg@8.11.6:
   version "8.11.6"
   resolved "https://registry.yarnpkg.com/pg/-/pg-8.11.6.tgz#a35b1c1e0211a39a4700f641152430c58c340a2f"
   integrity sha512-6CyL4F0j3vPmakU9rWdeRY8qF5Cjc3OE86y6YpgDI6YtKHhNyCjGEIE8U5ZRfBjKTZikwolKIFWh3I22MeRnoA==
@@ -13426,7 +13426,7 @@ typedoc@^0.25.0:
     minimatch "^9.0.3"
     shiki "^0.14.7"
 
-typescript@^5.3.0:
+typescript@^5.8.3:
   version "5.8.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.8.3.tgz#92f8a3e5e3cf497356f4178c34cd65a7f5e8440e"
   integrity sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==
