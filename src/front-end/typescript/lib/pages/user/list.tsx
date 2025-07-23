@@ -13,6 +13,8 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import { userStatusToTitleCase } from "front-end/lib/pages/user/lib";
+import { userTypeToTitleCase, User, UserType } from "shared/lib/resources/user";
+import Link, { externalDest } from "front-end/lib/views/link";
 import {
   VirtualizedTable,
   VirtualizedTableState,
@@ -20,12 +22,9 @@ import {
 } from "front-end/lib/pages/user/lib/components/virtualized-table";
 import React from "react";
 import { Button, Col, Row, Spinner } from "reactstrap";
-import { userTypeToTitleCase } from "shared/lib/resources/user";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import { compareStrings } from "shared/lib";
-import { User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
-import Link, { externalDest } from "front-end/lib/views/link";
 
 interface TableUser extends User {
   statusTitleCase: string;
