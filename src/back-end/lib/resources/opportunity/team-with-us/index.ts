@@ -1038,6 +1038,7 @@ const update: crud.Update<
             )
           } as ValidatedUpdateRequestBody);
         }
+        // todo: remove - not needed any more - the block is deprecated
         case "startChallenge": {
           if (
             !isValidStatusChange(

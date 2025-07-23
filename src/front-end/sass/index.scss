@@ -1212,4 +1212,13 @@ nav.navbar .nav-link:hover {
     field-sizing: content;
     height: auto !important;
   }
+
+  // Ensure non-textarea fields are full size
+  .markdown.response-consensus{
+    max-height: none;
+  }
+
+  .panel-notes{
+    height: auto;
+  }
 }

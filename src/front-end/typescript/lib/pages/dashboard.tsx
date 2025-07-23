@@ -54,6 +54,18 @@ import {
   twuProposalStatusToTitleCase
 } from "front-end/lib/pages/proposal/team-with-us/lib";
 import TabbedNav, { Tab } from "front-end/lib/views/tabbed-nav";
+import {
+  cwuOpportunityToPublicColor,
+  cwuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/code-with-us/lib";
+import {
+  swuOpportunityToPublicColor,
+  swuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/sprint-with-us/lib";
+import {
+  twuOpportunityToPublicColor,
+  twuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 type ProposalsTab = "my-proposals" | "org-proposals";
 
@@ -203,6 +215,36 @@ function makeVendorBodyRows(
             />
           )
         },
+        // Vendor can see the opportunity status
+        {
+          children: (
+            <Badge
+              color={
+                p.tag === "cwu"
+                  ? cwuOpportunityToPublicColor(p.value.opportunity, viewerUser)
+                  : p.tag === "swu"
+                  ? swuOpportunityToPublicColor(p.value.opportunity, viewerUser)
+                  : twuOpportunityToPublicColor(p.value.opportunity, viewerUser)
+              }
+              text={
+                p.tag === "cwu"
+                  ? cwuOpportunityToPublicStatus(
+                      p.value.opportunity,
+                      viewerUser
+                    )
+                  : p.tag === "swu"
+                  ? swuOpportunityToPublicStatus(
+                      p.value.opportunity,
+                      viewerUser
+                    )
+                  : twuOpportunityToPublicStatus(
+                      p.value.opportunity,
+                      viewerUser
+                    )
+              }
+            />
+          )
+        },
         {
           children: (
             <div>
@@ -334,24 +376,49 @@ const init: component_.page.Init<
     const viewerUser = shared.sessionUser;
     const vendor = isVendor(viewerUser);
     const title = vendor ? "" : "My Opportunities";
-    const headCells: Table.HeadCells = [
-      {
-        children: vendor ? "Opportunity" : "Title",
-        style: {
-          width: "90%",
-          minWidth: "200px"
-        }
-      },
-      {
-        children: "Status",
-        style: { width: "0px" }
-      },
-      {
-        children: "Created",
-        className: "text-nowrap",
-        style: { width: "10%", minWidth: "125px" }
-      }
-    ];
+    // Vendors can see both the proposal status as well as the opportunity status
+    // Public sector users can only see the opportunity status
+    const headCells: Table.HeadCells = vendor
+      ? [
+          {
+            children: "Opportunity",
+            style: {
+              width: "70%",
+              minWidth: "200px"
+            }
+          },
+          {
+            children: "Proposal Status",
+            style: { width: "0px" }
+          },
+          {
+            children: "Opportunity Status",
+            style: { width: "0px" }
+          },
+          {
+            children: "Created",
+            className: "text-nowrap",
+            style: { width: "10%", minWidth: "125px" }
+          }
+        ]
+      : [
+          {
+            children: "Title",
+            style: {
+              width: "90%",
+              minWidth: "200px"
+            }
+          },
+          {
+            children: "Status",
+            style: { width: "0px" }
+          },
+          {
+            children: "Created",
+            className: "text-nowrap",
+            style: { width: "10%", minWidth: "125px" }
+          }
+        ];
     const [tableState, tableCmds] = Table.init({
       idNamespace: "dashboard-table"
     });

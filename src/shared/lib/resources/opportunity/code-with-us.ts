@@ -16,6 +16,7 @@ export enum CWUOpportunityStatus {
   UnderReview = "UNDER_REVIEW",
   Published = "PUBLISHED",
   Evaluation = "EVALUATION",
+  Processing = "PROCESSING",
   Awarded = "AWARDED",
   Suspended = "SUSPENDED",
   Canceled = "CANCELED"
@@ -114,6 +115,7 @@ export function isCWUOpportunityPublic(o: CWUOpportunity): boolean {
   switch (o.status) {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Processing:
     case CWUOpportunityStatus.Awarded:
     case CWUOpportunityStatus.Canceled:
       return true;
@@ -126,6 +128,7 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
   switch (o.status) {
     case CWUOpportunityStatus.Published:
     case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Processing:
     case CWUOpportunityStatus.Awarded:
     case CWUOpportunityStatus.Suspended:
     case CWUOpportunityStatus.Canceled:
@@ -268,6 +271,12 @@ export function isValidStatusChange(
       return [
         CWUOpportunityStatus.Canceled,
         CWUOpportunityStatus.Suspended,
+        CWUOpportunityStatus.Processing
+      ].includes(to);
+    case CWUOpportunityStatus.Processing:
+      return [
+        CWUOpportunityStatus.Canceled,
+        CWUOpportunityStatus.Suspended,
         CWUOpportunityStatus.Awarded
       ].includes(to);
     case CWUOpportunityStatus.Suspended:
@@ -282,7 +291,7 @@ export function isValidStatusChange(
 
 export function canCWUOpportunityBeAwarded(o: CWUOpportunity): boolean {
   switch (o.status) {
-    case CWUOpportunityStatus.Evaluation:
+    case CWUOpportunityStatus.Processing:
     case CWUOpportunityStatus.Awarded:
       return true;
     default:
@@ -309,6 +318,7 @@ export function canCWUOpportunityDetailsBeEdited(
 export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Published,
   CWUOpportunityStatus.Evaluation,
+  CWUOpportunityStatus.Processing,
   CWUOpportunityStatus.Awarded
 ];
 
