@@ -50,8 +50,6 @@
   tbody {
     tr {
       // Height is set inline on <tr> for virtualization
-      // height: 50px;
-
       &:hover {
         background-color: rgba(0, 0, 0, 0.075);
       }

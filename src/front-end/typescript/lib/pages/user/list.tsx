@@ -66,7 +66,7 @@ function filterUsers(users: TableUser[], query: string): TableUser[] {
     return users;
   }
   return users.filter((user) => {
-    return user.name && user.name.match(regExp);
+    return user.name && regExp.exec(user.name);
   });
 }
 
@@ -276,6 +276,9 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
     Msg,
     VirtualizedTableMsg
   >(dispatch, (value) => ({ tag: "virtualizedTable", value }));
+  const ShortTextView = ShortText.view;
+  const VirtualizedTableView = VirtualizedTable.view;
+
   return (
     <Row>
       <Col xs="12">
@@ -290,7 +293,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
           ) : (
             <>
               <div className="mb-4">
-                <ShortText.view
+                <ShortTextView
                   extraChildProps={{}}
                   placeholder="Search by name..."
                   disabled={false}
@@ -299,7 +302,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
                   dispatch={dispatchSearchFilter}
                 />
               </div>
-              <VirtualizedTable.view
+              <VirtualizedTableView
                 state={state.virtualizedTable}
                 dispatch={dispatchVirtualizedTable}
                 visibleUsers={state.visibleUsers}

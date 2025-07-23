@@ -1,13 +1,11 @@
 import React from "react";
 import { adt, ADT } from "shared/lib/types";
-import { component as component_ } from "front-end/lib/framework";
+import { component as component_, immutable } from "front-end/lib/framework";
 import * as Table from "front-end/lib/components/table";
-import { immutable } from "front-end/lib/framework";
-import { User } from "shared/lib/resources/user";
 import { userStatusToColor } from "front-end/lib/pages/user/lib";
 import Badge from "front-end/lib/views/badge";
 import Link, { routeDest } from "front-end/lib/views/link";
-import { isAdmin } from "shared/lib/resources/user";
+import { isAdmin, User } from "shared/lib/resources/user";
 import { EMPTY_STRING } from "shared/config";
 
 interface TableUser extends User {
@@ -235,12 +233,13 @@ const view: component_.base.View<VirtualizedTableViewProps> = ({
     state.visibleRange.end
   );
   const bodyRows = generateBodyRows(visibleUsersSlice);
+  const TableView = Table.view;
 
   return (
     <div className="virtualized-table-layout">
       {/* 1. Render Header Separately */}
       <div className="virtualized-table-header-wrapper">
-        <Table.view
+        <TableView
           state={immutable(Table.init({ idNamespace: "user-list-header" })[0])}
           dispatch={() => {}} // No dispatch needed for header
           headCells={headCells}
