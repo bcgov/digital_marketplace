@@ -12,23 +12,97 @@ import {
   component as component_
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
-import { userStatusToTitleCase } from "front-end/lib/pages/user/lib";
-import { userTypeToTitleCase, User, UserType } from "shared/lib/resources/user";
-import Link, { externalDest } from "front-end/lib/views/link";
 import {
-  VirtualizedTable,
-  VirtualizedTableState,
-  VirtualizedTableMsg
-} from "front-end/lib/pages/user/lib/components/virtualized-table";
+  userStatusToTitleCase,
+  userStatusToColor
+} from "front-end/lib/pages/user/lib";
+import {
+  userTypeToTitleCase,
+  UserType,
+  isAdmin,
+  User
+} from "shared/lib/resources/user";
+import Link, { externalDest, routeDest } from "front-end/lib/views/link";
+import * as VirtualizedTable from "front-end/lib/components/virtualized-table";
 import React from "react";
 import { Button, Col, Row, Spinner } from "reactstrap";
 import * as Checkbox from "front-end/lib/components/form-field/checkbox";
 import { compareStrings } from "shared/lib";
 import { adt, ADT } from "shared/lib/types";
+import Badge from "front-end/lib/views/badge";
+import { EMPTY_STRING } from "shared/config";
 
 interface TableUser extends User {
   statusTitleCase: string;
   typeTitleCase: string;
+}
+
+function tableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: "Status",
+      className: "text-nowrap",
+      style: { width: "10%", minWidth: "80px" },
+      tooltipText: "Current status of the user account (Active, Inactive, etc.)"
+    },
+    {
+      children: "Account Type",
+      className: "text-nowrap",
+      style: { width: "15%", minWidth: "180px" },
+      tooltipText: "Type of account (Government, Vendor, etc.)"
+    },
+    {
+      children: "Name",
+      className: "text-nowrap",
+      style: {
+        width: "30%",
+        minWidth: "200px"
+      },
+      tooltipText: "Full name of the user"
+    },
+    {
+      children: "Admin?",
+      className: "text-center text-nowrap",
+      style: { width: "10%", minWidth: "52px" },
+      tooltipText: "Whether the user has administrative privileges"
+    }
+  ];
+}
+
+function generateBodyRows(users: TableUser[]): Table.BodyRows {
+  return users.map((user: TableUser) => [
+    {
+      children: (
+        <Badge
+          text={user.statusTitleCase}
+          color={userStatusToColor(user.status)}
+        />
+      ),
+      className: "align-middle",
+      tooltipText: `User status: ${user.statusTitleCase}`
+    },
+    {
+      children: user.typeTitleCase,
+      className: "align-middle text-nowrap",
+      tooltipText: `Account type: ${user.typeTitleCase}`
+    },
+    {
+      children: (
+        <Link dest={routeDest(adt("userProfile", { userId: user.id }))}>
+          {user.name || EMPTY_STRING}
+        </Link>
+      ),
+      className: "align-middle",
+      tooltipText: `Click to view profile for ${user.name || "Unknown User"}`
+    },
+    {
+      children: <Table.Check checked={isAdmin(user)} />,
+      className: "align-middle text-center",
+      tooltipText: isAdmin(user)
+        ? "This user has admin privileges"
+        : "This user does not have admin privileges"
+    }
+  ]);
 }
 
 export interface State {
@@ -37,7 +111,7 @@ export interface State {
   visibleUsers: TableUser[];
   loading: boolean;
   searchFilter: Immutable<ShortText.State>;
-  virtualizedTable: Immutable<VirtualizedTableState>;
+  virtualizedTable: Immutable<VirtualizedTable.State>;
   showExportModal: boolean;
   userTypeCheckboxes: {
     [UserType.Government]: Immutable<Checkbox.State>;
@@ -57,7 +131,7 @@ type InnerMsg =
   | ADT<"searchFilter", ShortText.Msg>
   | ADT<"search", null>
   | ADT<"noop", null>
-  | ADT<"virtualizedTable", VirtualizedTableMsg>
+  | ADT<"virtualizedTable", VirtualizedTable.Msg>
   | ADT<"showExportModal">
   | ADT<"hideExportModal">
   | ADT<"userTypeCheckboxGovernment", Checkbox.Msg>
@@ -91,7 +165,9 @@ function filterUsers(users: TableUser[], query: string): TableUser[] {
 function runSearch(state: Immutable<State>): Immutable<State> {
   const query = FormField.getValue(state.searchFilter);
   const filteredUsers = filterUsers(state.users, query);
-  return state.set("visibleUsers", filteredUsers);
+  return state
+    .set("visibleUsers", filteredUsers)
+    .setIn(["virtualizedTable", "totalItems"], filteredUsers.length);
 }
 
 const dispatchSearch = component_.cmd.makeDebouncedDispatch(
@@ -113,6 +189,7 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
     }
   });
   const [virtualizedTableState, virtualizedTableCmds] = VirtualizedTable.init({
+    idNamespace: "user-list-virtualized",
     totalItems: 0,
     rowHeight: 50,
     bufferSize: 5
@@ -304,12 +381,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         searchState,
         [
           component_.cmd.dispatch(
-            adt(
-              "virtualizedTable",
-              adt("updateTotalItems", searchState.visibleUsers.length)
-            ) as Msg
-          ),
-          component_.cmd.dispatch(
             adt("virtualizedTable", adt("resetScroll", null)) as Msg
           )
         ]
@@ -342,12 +413,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         searchState,
         [
-          component_.cmd.dispatch(
-            adt(
-              "virtualizedTable",
-              adt("updateTotalItems", searchState.visibleUsers.length)
-            ) as Msg
-          ),
           component_.cmd.dispatch(
             adt("virtualizedTable", adt("resetScroll", null)) as Msg
           )
@@ -570,7 +635,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
   );
   const dispatchVirtualizedTable = component_.base.mapDispatch<
     Msg,
-    VirtualizedTableMsg
+    VirtualizedTable.Msg
   >(dispatch, (value) => ({ tag: "virtualizedTable", value }));
   const ShortTextView = ShortText.view;
   const VirtualizedTableView = VirtualizedTable.view;
@@ -608,7 +673,8 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
               <VirtualizedTableView
                 state={state.virtualizedTable}
                 dispatch={dispatchVirtualizedTable}
-                visibleUsers={state.visibleUsers}
+                headCells={tableHeadCells()}
+                bodyRows={generateBodyRows(state.visibleUsers)}
               />
             </>
           )}

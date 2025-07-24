@@ -308,16 +308,6 @@ export function generateCWUOpportunityQuery(
   const query: Knex.QueryBuilder = connection<RawCWUOpportunity>(
     "cwuOpportunities as opp"
   )
-    /**
-     * Performance optimization: Replaced correlated subqueries with DISTINCT ON window functions.
-     *
-     * The previous approach used max(createdAt) subqueries that executed once per opportunity record,
-     * resulting in O(n²) complexity. This new approach uses PostgreSQL's DISTINCT ON to scan each
-     * table once, sort by (opportunity, createdAt DESC), and select the first (most recent) record
-     * per opportunity group. This reduces complexity to O(n log n) and typically provides 10-100x
-     * performance improvement on large datasets by enabling better index utilization and join optimization.
-     */
-
     // Join on latest CWU status
     .join(
       connection.raw(
