@@ -78,6 +78,7 @@ type InnerMsg =
   | ADT<"onInitResponse", TableUser[]>
   | ADT<"searchFilter", ShortText.Msg>
   | ADT<"search", null>
+  | ADT<"searchCompleted", { filteredUsers: TableUser[] }>
   | ADT<"noop">
   | ADT<"virtualizedTable", VirtualizedTable.Msg>
   | ADT<"showExportModal">
@@ -110,13 +111,14 @@ function filterUsers(users: TableUser[], query: string): TableUser[] {
   });
 }
 
-function runSearch(state: Immutable<State>): Immutable<State> {
+// Search command factory that encapsulates search logic
+const makeSearchCommand = (
+  state: Immutable<State>
+): component_.cmd.Cmd<InnerMsg> => {
   const query = FormField.getValue(state.searchFilter);
   const filteredUsers = filterUsers(state.users, query);
-  return state
-    .set("visibleUsers", filteredUsers)
-    .setIn(["virtualizedTable", "totalItems"], filteredUsers.length);
-}
+  return component_.cmd.dispatch(adt("searchCompleted", { filteredUsers }));
+};
 
 const dispatchSearch = component_.cmd.makeDebouncedDispatch(
   adt("noop") as InnerMsg,
@@ -318,10 +320,10 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const newState = state.set("users", msg.value).set("loading", false);
-      const searchState = runSearch(newState);
       return [
-        searchState,
+        newState,
         [
+          makeSearchCommand(newState),
           component_.cmd.dispatch(
             adt("virtualizedTable", adt("resetScroll", null)) as Msg
           )
@@ -343,14 +345,25 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           >
       });
     case "search": {
-      const searchState = runSearch(state);
       return [
-        searchState,
+        state,
         [
+          makeSearchCommand(state),
           component_.cmd.dispatch(
             adt("virtualizedTable", adt("resetScroll", null)) as Msg
           )
         ]
+      ];
+    }
+    case "searchCompleted": {
+      return [
+        state
+          .set("visibleUsers", msg.value.filteredUsers)
+          .setIn(
+            ["virtualizedTable", "totalItems"],
+            msg.value.filteredUsers.length
+          ),
+        []
       ];
     }
     case "virtualizedTable":
