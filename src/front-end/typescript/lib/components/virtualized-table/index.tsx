@@ -8,9 +8,6 @@ import { ADT, adt } from "shared/lib/types";
 const DEFAULT_BUFFER_SIZE = 5;
 const INITIAL_VISIBLE_ITEMS = 20;
 const BUFFER_MULTIPLIER = 2;
-const MIN_COLUMN_SPAN = 1;
-const SCROLL_TOP_POSITION = 0;
-const ZERO_INDEX = 0;
 
 // Simple visible range interface
 interface VisibleRange {
@@ -69,9 +66,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       TDView,
       activeTooltipThIndex: null,
       activeTooltipTdIndex: null,
-      visibleRange: { start: ZERO_INDEX, end: initialEnd },
-      scrollTop: SCROLL_TOP_POSITION,
-      containerHeight: ZERO_INDEX,
+      visibleRange: { start: 0, end: initialEnd },
+      scrollTop: 0,
+      containerHeight: 0,
       totalItems,
       rowHeight,
       bufferSize,
@@ -104,15 +101,15 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const rowHeight = state.rowHeight;
       const buffer = state.bufferSize;
       const start = Math.floor(scrollTop / rowHeight);
-      const visibleStart = Math.max(ZERO_INDEX, start - buffer);
+      const visibleStart = Math.max(0, start - buffer);
 
-      if (containerHeight <= ZERO_INDEX) {
+      if (containerHeight <= 0) {
         return [state, []];
       }
 
       const visibleCount = Math.ceil(containerHeight / rowHeight);
       const visibleEnd = Math.min(
-        state.totalItems || ZERO_INDEX,
+        state.totalItems || 0,
         visibleStart + visibleCount + buffer * BUFFER_MULTIPLIER
       );
 
@@ -149,14 +146,11 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
     case "resetScroll": {
-      const initialEnd = Math.min(
-        INITIAL_VISIBLE_ITEMS,
-        state.totalItems || ZERO_INDEX
-      );
+      const initialEnd = Math.min(INITIAL_VISIBLE_ITEMS, state.totalItems || 0);
       return [
         state
-          .set("scrollTop", SCROLL_TOP_POSITION)
-          .set("visibleRange", { start: ZERO_INDEX, end: initialEnd }),
+          .set("scrollTop", 0)
+          .set("visibleRange", { start: 0, end: initialEnd }),
         [component_.cmd.delayedDispatch(10, adt("scrollToTop", null))]
       ];
     }
@@ -171,8 +165,8 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           state,
           [
             component_.cmd.scrollContainerTo(
-              SCROLL_TOP_POSITION,
-              SCROLL_TOP_POSITION,
+              0,
+              0,
               adt("scrollCompleted", null),
               scrollContainer
             )
@@ -225,22 +219,16 @@ const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
       <tr
         className="virtual-spacer"
         style={{
-          height: `${totalHeight}px`,
-          display: "block"
+          height: `${totalHeight}px`
         }}></tr>
 
       {/* Container for visible rows positioned absolutely */}
       <tr>
-        <td
-          colSpan={rows[0]?.length || MIN_COLUMN_SPAN}
-          className="virtualized-container-td">
+        <td colSpan={rows[0]?.length || 1} className="virtualized-container-td">
           <div
             className="virtualized-rows-container"
             style={{
-              position: "absolute",
-              top: `${paddingTop}px`,
-              left: ZERO_INDEX,
-              width: "100%"
+              top: `${paddingTop}px`
             }}>
             {/* Visible rows */}
             {rows.map((row, rowIndex) => (

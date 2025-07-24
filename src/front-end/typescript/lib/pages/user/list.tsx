@@ -34,7 +34,6 @@ import { EMPTY_STRING } from "shared/config";
 
 // Constants
 const TABLE_ROW_HEIGHT = 50;
-const TABLE_BUFFER_SIZE = 5;
 const LOADING_CONTAINER_HEIGHT = "60vh";
 
 // Column width constants
@@ -137,8 +136,7 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
   const [virtualizedTableState, virtualizedTableCmds] = VirtualizedTable.init({
     idNamespace: "user-list-virtualized",
     totalItems: 0,
-    rowHeight: TABLE_ROW_HEIGHT,
-    bufferSize: TABLE_BUFFER_SIZE
+    rowHeight: TABLE_ROW_HEIGHT
   });
 
   // Initialize user type checkboxes
