@@ -39,17 +39,14 @@ const LOADING_CONTAINER_HEIGHT = "60vh";
 
 // Column width constants
 const COLUMN_WIDTHS = {
-  STATUS: "10%",
-  ACCOUNT_TYPE: "15%",
-  NAME: "30%",
-  ADMIN: "10%"
+  STATUS: "0px",
+  ACCOUNT_TYPE: "0px",
+  NAME: "100%%",
+  ADMIN: "0px"
 };
 
 const MIN_COLUMN_WIDTHS = {
-  STATUS: "80px",
-  ACCOUNT_TYPE: "180px",
-  NAME: "200px",
-  ADMIN: "52px"
+  NAME: "200px"
 };
 
 interface TableUser extends User {
@@ -426,15 +423,12 @@ function tableHeadCells(): Table.HeadCells {
     {
       children: "Status",
       className: "text-nowrap",
-      style: { width: COLUMN_WIDTHS.STATUS, minWidth: MIN_COLUMN_WIDTHS.STATUS }
+      style: { width: COLUMN_WIDTHS.STATUS }
     },
     {
       children: "Account Type",
       className: "text-nowrap",
-      style: {
-        width: COLUMN_WIDTHS.ACCOUNT_TYPE,
-        minWidth: MIN_COLUMN_WIDTHS.ACCOUNT_TYPE
-      }
+      style: { width: COLUMN_WIDTHS.ACCOUNT_TYPE }
     },
     {
       children: "Name",
@@ -447,13 +441,13 @@ function tableHeadCells(): Table.HeadCells {
     {
       children: "Admin?",
       className: "text-center text-nowrap",
-      style: { width: COLUMN_WIDTHS.ADMIN, minWidth: MIN_COLUMN_WIDTHS.ADMIN }
+      style: { width: COLUMN_WIDTHS.ADMIN }
     }
   ];
 }
 
-function generateBodyRows(users: TableUser[]): Table.BodyRows {
-  return users.map((user: TableUser) => [
+function generateBodyRows(state: Immutable<State>): Table.BodyRows {
+  return state.visibleUsers.map((user: TableUser) => [
     {
       children: (
         <Badge
@@ -669,7 +663,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
                 state={state.virtualizedTable}
                 dispatch={dispatchVirtualizedTable}
                 headCells={tableHeadCells()}
-                bodyRows={generateBodyRows(state.visibleUsers)}
+                bodyRows={generateBodyRows(state)}
               />
             </>
           )}
