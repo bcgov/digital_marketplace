@@ -39,14 +39,17 @@ const LOADING_CONTAINER_HEIGHT = "60vh";
 
 // Column width constants
 const COLUMN_WIDTHS = {
-  STATUS: "0px",
-  ACCOUNT_TYPE: "0px",
-  NAME: "100%%",
-  ADMIN: "0px"
+  STATUS: "10%",
+  ACCOUNT_TYPE: "15%",
+  NAME: "30%",
+  ADMIN: "10%"
 };
 
 const MIN_COLUMN_WIDTHS = {
-  NAME: "200px"
+  STATUS: "80px",
+  ACCOUNT_TYPE: "180px",
+  NAME: "200px",
+  ADMIN: "52px"
 };
 
 interface TableUser extends User {
@@ -423,12 +426,15 @@ function tableHeadCells(): Table.HeadCells {
     {
       children: "Status",
       className: "text-nowrap",
-      style: { width: COLUMN_WIDTHS.STATUS }
+      style: { width: COLUMN_WIDTHS.STATUS, minWidth: MIN_COLUMN_WIDTHS.STATUS }
     },
     {
       children: "Account Type",
       className: "text-nowrap",
-      style: { width: COLUMN_WIDTHS.ACCOUNT_TYPE }
+      style: {
+        width: COLUMN_WIDTHS.ACCOUNT_TYPE,
+        minWidth: MIN_COLUMN_WIDTHS.ACCOUNT_TYPE
+      }
     },
     {
       children: "Name",
@@ -441,7 +447,7 @@ function tableHeadCells(): Table.HeadCells {
     {
       children: "Admin?",
       className: "text-center text-nowrap",
-      style: { width: COLUMN_WIDTHS.ADMIN }
+      style: { width: COLUMN_WIDTHS.ADMIN, minWidth: MIN_COLUMN_WIDTHS.STATUS }
     }
   ];
 }
