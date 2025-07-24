@@ -452,7 +452,7 @@ function tableHeadCells(): Table.HeadCells {
   ];
 }
 
-function generateBodyRows(state: Immutable<State>): Table.BodyRows {
+function tableBodyRows(state: Immutable<State>): Table.BodyRows {
   return state.visibleUsers.map((user: TableUser) => [
     {
       children: (
@@ -669,7 +669,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
                 state={state.virtualizedTable}
                 dispatch={dispatchVirtualizedTable}
                 headCells={tableHeadCells()}
-                bodyRows={generateBodyRows(state)}
+                bodyRows={tableBodyRows(state)}
               />
             </>
           )}
