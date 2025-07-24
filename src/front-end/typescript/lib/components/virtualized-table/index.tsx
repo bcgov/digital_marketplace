@@ -53,7 +53,6 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   bufferSize = 5
 }) => {
   const initialEnd = Math.min(20, totalItems);
-
   return [
     {
       idNamespace,
@@ -127,13 +126,11 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     case "updateTotalItems": {
       const newTotalItems = msg.value;
       const currentRange = state.visibleRange;
-
       // Update visible range if current range is invalid with new total
       const updatedRange = {
         start: currentRange.start,
         end: Math.min(currentRange.end, newTotalItems)
       };
-
       return [
         state
           .set("totalItems", newTotalItems)
@@ -143,7 +140,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "resetScroll": {
       const initialEnd = Math.min(20, state.totalItems || 0);
-
       return [
         state
           .set("scrollTop", 0)
@@ -178,33 +174,65 @@ interface VirtualizedTBodyProps {
   rows: Table.BodyRows;
   rowHeight: number;
   borderless?: boolean;
+  totalHeight: number;
+  paddingTop: number;
+  columnStyles?: CSSProperties[];
 }
 
 const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
   rows,
   rowHeight,
-  borderless
+  borderless,
+  totalHeight,
+  paddingTop,
+  columnStyles = []
 }) => {
   return (
     <tbody
-      className={`font-size-small ${borderless ? "table-borderless" : ""}`}>
-      {rows.map((row, rowIndex) => (
-        <tr
-          key={`virtualized-row-${rowIndex}`}
-          style={{ height: `${rowHeight}px` }}>
-          {row.map((cell, cellIndex) => (
-            <td
-              key={`virtualized-cell-${rowIndex}-${cellIndex}`}
-              className={cell.className}
-              style={cell.style}
-              colSpan={cell.colSpan}>
-              <div className={cell.showOnHover ? "table-show-on-hover" : ""}>
-                {cell.children}
+      className={`font-size-small virtualized-tbody ${
+        borderless ? "table-borderless" : ""
+      }`}>
+      {/* Virtual spacer as first row */}
+      <tr
+        className="virtual-spacer"
+        style={{
+          height: `${totalHeight}px`,
+          display: "block"
+        }}></tr>
+
+      {/* Container for visible rows positioned absolutely */}
+      <tr>
+        <td colSpan={rows[0]?.length || 1} className="virtualized-container-td">
+          <div
+            className="virtualized-rows-container"
+            style={{
+              position: "absolute",
+              top: `${paddingTop}px`,
+              left: 0,
+              width: "100%"
+            }}>
+            {/* Visible rows */}
+            {rows.map((row, rowIndex) => (
+              <div
+                key={`virtualized-row-${rowIndex}`}
+                className="virtualized-row"
+                style={{ height: `${rowHeight}px` }}>
+                {row.map((cell, cellIndex) => (
+                  <div
+                    key={`virtualized-cell-${rowIndex}-${cellIndex}`}
+                    className={`virtualized-cell ${cell.className || ""}`}
+                    style={{
+                      ...cell.style,
+                      ...columnStyles[cellIndex]
+                    }}>
+                    <div>{cell.children}</div>
+                  </div>
+                ))}
               </div>
-            </td>
-          ))}
-        </tr>
-      ))}
+            ))}
+          </div>
+        </td>
+      </tr>
     </tbody>
   );
 };
@@ -236,6 +264,21 @@ export const view: component_.base.View<Props> = ({
 
   const visibleRows = bodyRows.slice(visibleRange.start, visibleRange.end);
 
+  const virtualizationStyles = {
+    totalHeight: state.totalItems * state.rowHeight,
+    paddingTop: visibleRange.start * state.rowHeight
+  };
+
+  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    dispatch(
+      adt("handleScroll", {
+        scrollTop: target.scrollTop,
+        containerHeight: target.clientHeight
+      })
+    );
+  };
+
   const bodyProps = {
     rows: visibleRows.map((row, rowIndex) => {
       const actualRowIndex = visibleRange.start + rowIndex;
@@ -253,71 +296,29 @@ export const view: component_.base.View<Props> = ({
       });
     }),
     rowHeight: state.rowHeight,
-    borderless
-  };
-
-  const virtualizationStyles = {
-    totalHeight: state.totalItems * state.rowHeight,
-    paddingTop: visibleRange.start * state.rowHeight
-  };
-
-  const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLDivElement;
-    dispatch(
-      adt("handleScroll", {
-        scrollTop: target.scrollTop,
-        containerHeight: target.clientHeight
-      })
-    );
+    borderless,
+    totalHeight: virtualizationStyles.totalHeight,
+    paddingTop: virtualizationStyles.paddingTop,
+    columnStyles: headCells.map((cell) => cell.style || {})
   };
 
   return (
     <div className="virtualized-table-layout">
-      {/* Fixed Header */}
-      <div className="virtualized-table-header-wrapper">
-        <ReactstrapTable
-          className={`mb-0 ${className} virtualized-table-header-fixed`}
-          style={style}
-          responsive
-          hover={hover}>
-          <Table.THead {...headProps} />
-        </ReactstrapTable>
-      </div>
-
-      {/* Scrollable Body Container */}
-      <div
-        id={`virtualized-table-container-${state.idNamespace}`}
-        className="virtualized-body-container"
-        onScroll={handleScroll}>
-        {/* Inner div for total height simulation */}
-        <div
-          style={{
-            height: virtualizationStyles.totalHeight,
-            position: "relative"
-          }}>
-          {/* Absolutely positioned div for visible rows */}
-          <div
-            style={{
-              position: "absolute",
-              top: `${virtualizationStyles.paddingTop}px`,
-              left: 0,
-              width: "100%"
-            }}>
-            <ReactstrapTable
-              className={`mb-0 ${className} virtualized-body-table`}
-              style={style}
-              responsive
-              hover={hover}>
-              <colgroup>
-                {headCells.map((cell, index) => (
-                  <col key={index} style={cell.style} />
-                ))}
-              </colgroup>
-              <VirtualizedTBody {...bodyProps} />
-            </ReactstrapTable>
-          </div>
-        </div>
-      </div>
+      <ReactstrapTable
+        onScroll={handleScroll}
+        className={`mb-0 virtualized-body-table virtualized-body-container table ${
+          hover ? "table-hover" : ""
+        } ${className}`}
+        style={style}
+        responsive>
+        <Table.THead {...headProps} />
+        <colgroup>
+          {headCells.map((cell, index) => (
+            <col key={index} style={cell.style} />
+          ))}
+        </colgroup>
+        <VirtualizedTBody {...bodyProps} />
+      </ReactstrapTable>
     </div>
   );
 };
