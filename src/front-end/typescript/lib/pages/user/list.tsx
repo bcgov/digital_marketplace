@@ -32,6 +32,26 @@ import { adt, ADT } from "shared/lib/types";
 import Badge from "front-end/lib/views/badge";
 import { EMPTY_STRING } from "shared/config";
 
+// Constants
+const TABLE_ROW_HEIGHT = 50;
+const TABLE_BUFFER_SIZE = 5;
+const LOADING_CONTAINER_HEIGHT = "60vh";
+
+// Column width constants
+const COLUMN_WIDTHS = {
+  STATUS: "10%",
+  ACCOUNT_TYPE: "15%",
+  NAME: "30%",
+  ADMIN: "10%"
+};
+
+const MIN_COLUMN_WIDTHS = {
+  STATUS: "80px",
+  ACCOUNT_TYPE: "180px",
+  NAME: "200px",
+  ADMIN: "52px"
+};
+
 interface TableUser extends User {
   statusTitleCase: string;
   typeTitleCase: string;
@@ -42,29 +62,28 @@ function tableHeadCells(): Table.HeadCells {
     {
       children: "Status",
       className: "text-nowrap",
-      style: { width: "10%", minWidth: "80px" },
-      tooltipText: "Current status of the user account (Active, Inactive, etc.)"
+      style: { width: COLUMN_WIDTHS.STATUS, minWidth: MIN_COLUMN_WIDTHS.STATUS }
     },
     {
       children: "Account Type",
       className: "text-nowrap",
-      style: { width: "15%", minWidth: "180px" },
-      tooltipText: "Type of account (Government, Vendor, etc.)"
+      style: {
+        width: COLUMN_WIDTHS.ACCOUNT_TYPE,
+        minWidth: MIN_COLUMN_WIDTHS.ACCOUNT_TYPE
+      }
     },
     {
       children: "Name",
       className: "text-nowrap",
       style: {
-        width: "30%",
-        minWidth: "200px"
-      },
-      tooltipText: "Full name of the user"
+        width: COLUMN_WIDTHS.NAME,
+        minWidth: MIN_COLUMN_WIDTHS.NAME
+      }
     },
     {
       children: "Admin?",
       className: "text-center text-nowrap",
-      style: { width: "10%", minWidth: "52px" },
-      tooltipText: "Whether the user has administrative privileges"
+      style: { width: COLUMN_WIDTHS.ADMIN, minWidth: MIN_COLUMN_WIDTHS.ADMIN }
     }
   ];
 }
@@ -78,13 +97,11 @@ function generateBodyRows(users: TableUser[]): Table.BodyRows {
           color={userStatusToColor(user.status)}
         />
       ),
-      className: "align-middle",
-      tooltipText: `User status: ${user.statusTitleCase}`
+      className: "align-middle"
     },
     {
       children: user.typeTitleCase,
-      className: "align-middle text-nowrap",
-      tooltipText: `Account type: ${user.typeTitleCase}`
+      className: "align-middle text-nowrap"
     },
     {
       children: (
@@ -92,21 +109,16 @@ function generateBodyRows(users: TableUser[]): Table.BodyRows {
           {user.name || EMPTY_STRING}
         </Link>
       ),
-      className: "align-middle",
-      tooltipText: `Click to view profile for ${user.name || "Unknown User"}`
+      className: "align-middle"
     },
     {
       children: <Table.Check checked={isAdmin(user)} />,
-      className: "align-middle text-center",
-      tooltipText: isAdmin(user)
-        ? "This user has admin privileges"
-        : "This user does not have admin privileges"
+      className: "align-middle text-center"
     }
   ]);
 }
 
 export interface State {
-  table: Immutable<Table.State>;
   users: TableUser[];
   visibleUsers: TableUser[];
   loading: boolean;
@@ -127,7 +139,6 @@ export interface State {
 
 type InnerMsg =
   | ADT<"onInitResponse", TableUser[]>
-  | ADT<"table", Table.Msg>
   | ADT<"searchFilter", ShortText.Msg>
   | ADT<"search", null>
   | ADT<"noop", null>
@@ -177,9 +188,6 @@ const dispatchSearch = component_.cmd.makeDebouncedDispatch(
 );
 
 function baseInit(): component_.base.InitReturnValue<State, Msg> {
-  const [tableState, tableCmds] = Table.init({
-    idNamespace: "user-list-table"
-  });
   const [searchFilterState, searchFilterCmds] = ShortText.init({
     errors: [],
     child: {
@@ -191,8 +199,8 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
   const [virtualizedTableState, virtualizedTableCmds] = VirtualizedTable.init({
     idNamespace: "user-list-virtualized",
     totalItems: 0,
-    rowHeight: 50,
-    bufferSize: 5
+    rowHeight: TABLE_ROW_HEIGHT,
+    bufferSize: TABLE_BUFFER_SIZE
   });
 
   // Initialize user type checkboxes
@@ -249,7 +257,6 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
   return [
     {
       visibleUsers: [],
-      table: immutable(tableState),
       loading: true,
       searchFilter: immutable(searchFilterState),
       virtualizedTable: immutable(virtualizedTableState),
@@ -268,7 +275,6 @@ function baseInit(): component_.base.InitReturnValue<State, Msg> {
     },
     [
       component_.cmd.dispatch(component_.page.readyMsg()),
-      ...component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg),
       ...component_.cmd.mapMany(
         searchFilterCmds,
         (msg) => adt("searchFilter", msg) as Msg
@@ -386,14 +392,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         ]
       ];
     }
-    case "table":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["table"],
-        childUpdate: Table.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => ({ tag: "table", value })
-      });
     case "searchFilter":
       return component_.base.updateChild({
         state,
@@ -655,7 +653,7 @@ const view: component_.page.View<State, InnerMsg, Route> = ({
           {state.loading ? (
             <div
               className="d-flex justify-content-center align-items-center"
-              style={{ height: "60vh" }}>
+              style={{ height: LOADING_CONTAINER_HEIGHT }}>
               <Spinner color="primary" />
             </div>
           ) : (

@@ -4,6 +4,14 @@ import * as Table from "front-end/lib/components/table";
 import { Table as ReactstrapTable } from "reactstrap";
 import { ADT, adt } from "shared/lib/types";
 
+// Constants
+const DEFAULT_BUFFER_SIZE = 5;
+const INITIAL_VISIBLE_ITEMS = 20;
+const BUFFER_MULTIPLIER = 2;
+const MIN_COLUMN_SPAN = 1;
+const SCROLL_TOP_POSITION = 0;
+const ZERO_INDEX = 0;
+
 // Simple visible range interface
 interface VisibleRange {
   start: number;
@@ -23,6 +31,7 @@ export interface State {
   totalItems: number;
   rowHeight: number;
   bufferSize: number;
+  scrollContainerId: string;
 }
 
 export interface Params {
@@ -50,9 +59,9 @@ export const init: component_.base.Init<Params, State, Msg> = ({
   TDView = Table.DefaultTDView,
   totalItems,
   rowHeight,
-  bufferSize = 5
+  bufferSize = DEFAULT_BUFFER_SIZE
 }) => {
-  const initialEnd = Math.min(20, totalItems);
+  const initialEnd = Math.min(INITIAL_VISIBLE_ITEMS, totalItems);
   return [
     {
       idNamespace,
@@ -60,12 +69,13 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       TDView,
       activeTooltipThIndex: null,
       activeTooltipTdIndex: null,
-      visibleRange: { start: 0, end: initialEnd },
-      scrollTop: 0,
-      containerHeight: 0,
+      visibleRange: { start: ZERO_INDEX, end: initialEnd },
+      scrollTop: SCROLL_TOP_POSITION,
+      containerHeight: ZERO_INDEX,
       totalItems,
       rowHeight,
-      bufferSize
+      bufferSize,
+      scrollContainerId: `virtualized-table-${idNamespace}-scroll-container`
     },
     []
   ];
@@ -75,7 +85,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "toggleTooltipTh": {
       const currentThIndex = state.activeTooltipThIndex;
-      if (!currentThIndex) {
+      if (currentThIndex === null) {
         return [state.set("activeTooltipThIndex", msg.value), []];
       } else {
         return [state.set("activeTooltipThIndex", null), []];
@@ -83,7 +93,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
     }
     case "toggleTooltipTd": {
       const currentTdIndex = state.activeTooltipTdIndex;
-      if (!currentTdIndex) {
+      if (currentTdIndex === null) {
         return [state.set("activeTooltipTdIndex", msg.value), []];
       } else {
         return [state.set("activeTooltipTdIndex", null), []];
@@ -94,16 +104,16 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       const rowHeight = state.rowHeight;
       const buffer = state.bufferSize;
       const start = Math.floor(scrollTop / rowHeight);
-      const visibleStart = Math.max(0, start - buffer);
+      const visibleStart = Math.max(ZERO_INDEX, start - buffer);
 
-      if (containerHeight <= 0) {
+      if (containerHeight <= ZERO_INDEX) {
         return [state, []];
       }
 
       const visibleCount = Math.ceil(containerHeight / rowHeight);
       const visibleEnd = Math.min(
-        state.totalItems || 0,
-        visibleStart + visibleCount + buffer * 2
+        state.totalItems || ZERO_INDEX,
+        visibleStart + visibleCount + buffer * BUFFER_MULTIPLIER
       );
 
       return [
@@ -139,19 +149,38 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
     case "resetScroll": {
-      const initialEnd = Math.min(20, state.totalItems || 0);
+      const initialEnd = Math.min(
+        INITIAL_VISIBLE_ITEMS,
+        state.totalItems || ZERO_INDEX
+      );
       return [
         state
-          .set("scrollTop", 0)
-          .set("visibleRange", { start: 0, end: initialEnd }),
-        [component_.cmd.scrollTo(0, 0, adt("scrollCompleted", null))]
+          .set("scrollTop", SCROLL_TOP_POSITION)
+          .set("visibleRange", { start: ZERO_INDEX, end: initialEnd }),
+        [component_.cmd.delayedDispatch(10, adt("scrollToTop", null))]
       ];
     }
     case "scrollToTop": {
-      return [
-        state,
-        [component_.cmd.scrollTo(0, 0, adt("scrollCompleted", null))]
-      ];
+      // Get the scrollable container element and scroll within it instead of the document
+      const tableElement = document.getElementById(state.scrollContainerId);
+      const scrollContainer = tableElement?.querySelector(
+        ".virtualized-tbody"
+      ) as HTMLElement;
+      if (scrollContainer) {
+        return [
+          state,
+          [
+            component_.cmd.scrollContainerTo(
+              SCROLL_TOP_POSITION,
+              SCROLL_TOP_POSITION,
+              adt("scrollCompleted", null),
+              scrollContainer
+            )
+          ]
+        ];
+      } else {
+        return [state, []];
+      }
     }
     case "scrollCompleted":
       return [state, []];
@@ -202,13 +231,15 @@ const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
 
       {/* Container for visible rows positioned absolutely */}
       <tr>
-        <td colSpan={rows[0]?.length || 1} className="virtualized-container-td">
+        <td
+          colSpan={rows[0]?.length || MIN_COLUMN_SPAN}
+          className="virtualized-container-td">
           <div
             className="virtualized-rows-container"
             style={{
               position: "absolute",
               top: `${paddingTop}px`,
-              left: 0,
+              left: ZERO_INDEX,
               width: "100%"
             }}>
             {/* Visible rows */}
@@ -305,6 +336,7 @@ export const view: component_.base.View<Props> = ({
   return (
     <div className="virtualized-table-layout">
       <ReactstrapTable
+        id={state.scrollContainerId}
         onScroll={handleScroll}
         className={`mb-0 virtualized-body-table virtualized-body-container table ${
           hover ? "table-hover" : ""

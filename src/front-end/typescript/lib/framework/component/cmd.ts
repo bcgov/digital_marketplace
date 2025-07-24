@@ -128,6 +128,18 @@ export function scrollTo<Msg>(x: number, y: number, msg: Msg): Cmd<Msg> {
   });
 }
 
+export function scrollContainerTo<Msg>(
+  x: number,
+  y: number,
+  msg: Msg,
+  element: HTMLElement
+): Cmd<Msg> {
+  return adt("async", async () => {
+    element.scrollTo(x, y);
+    return msg;
+  });
+}
+
 export function pushUrlState<Msg>(url: string, msg: Msg): Cmd<Msg> {
   return adt("async", async () => {
     router.pushState(url, 0);
