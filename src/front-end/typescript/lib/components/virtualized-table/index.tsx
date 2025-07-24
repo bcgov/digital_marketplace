@@ -20,7 +20,6 @@ export interface State {
   THView: component_.base.View<Table.THProps>;
   TDView: component_.base.View<Table.TDProps>;
   activeTooltipThIndex: number | null;
-  activeTooltipTdIndex: [number, number] | null;
   // Virtualization-specific state
   visibleRange: VisibleRange;
   scrollTop: number;
@@ -89,12 +88,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       }
     }
     case "toggleTooltipTd": {
-      const currentTdIndex = state.activeTooltipTdIndex;
-      if (currentTdIndex === null) {
-        return [state.set("activeTooltipTdIndex", msg.value), []];
-      } else {
-        return [state.set("activeTooltipTdIndex", null), []];
-      }
+      return [state, []];
     }
     case "handleScroll": {
       const { scrollTop, containerHeight } = msg.value;
@@ -306,11 +300,7 @@ export const view: component_.base.View<Props> = ({
           ...cell,
           dispatch,
           index: [actualRowIndex, cellIndex],
-          id: `virtualized-table-${state.idNamespace}-td-${actualRowIndex}-${cellIndex}`,
-          tooltipIsOpen:
-            !!state.activeTooltipTdIndex &&
-            actualRowIndex === state.activeTooltipTdIndex[0] &&
-            cellIndex === state.activeTooltipTdIndex[1]
+          id: `virtualized-table-${state.idNamespace}-td-${actualRowIndex}-${cellIndex}`
         };
       });
     }),
