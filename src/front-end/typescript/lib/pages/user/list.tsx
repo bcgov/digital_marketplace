@@ -13,8 +13,8 @@ import {
 } from "front-end/lib/framework";
 import * as api from "front-end/lib/http/api";
 import {
-  userStatusToTitleCase,
-  userStatusToColor
+  userStatusToColor,
+  userStatusToTitleCase
 } from "front-end/lib/pages/user/lib";
 import {
   userTypeToTitleCase,
@@ -56,68 +56,6 @@ interface TableUser extends User {
   statusTitleCase: string;
   typeTitleCase: string;
 }
-
-function tableHeadCells(): Table.HeadCells {
-  return [
-    {
-      children: "Status",
-      className: "text-nowrap",
-      style: { width: COLUMN_WIDTHS.STATUS, minWidth: MIN_COLUMN_WIDTHS.STATUS }
-    },
-    {
-      children: "Account Type",
-      className: "text-nowrap",
-      style: {
-        width: COLUMN_WIDTHS.ACCOUNT_TYPE,
-        minWidth: MIN_COLUMN_WIDTHS.ACCOUNT_TYPE
-      }
-    },
-    {
-      children: "Name",
-      className: "text-nowrap",
-      style: {
-        width: COLUMN_WIDTHS.NAME,
-        minWidth: MIN_COLUMN_WIDTHS.NAME
-      }
-    },
-    {
-      children: "Admin?",
-      className: "text-center text-nowrap",
-      style: { width: COLUMN_WIDTHS.ADMIN, minWidth: MIN_COLUMN_WIDTHS.ADMIN }
-    }
-  ];
-}
-
-function generateBodyRows(users: TableUser[]): Table.BodyRows {
-  return users.map((user: TableUser) => [
-    {
-      children: (
-        <Badge
-          text={user.statusTitleCase}
-          color={userStatusToColor(user.status)}
-        />
-      ),
-      className: "align-middle"
-    },
-    {
-      children: user.typeTitleCase,
-      className: "align-middle text-nowrap"
-    },
-    {
-      children: (
-        <Link dest={routeDest(adt("userProfile", { userId: user.id }))}>
-          {user.name || EMPTY_STRING}
-        </Link>
-      ),
-      className: "align-middle"
-    },
-    {
-      children: <Table.Check checked={isAdmin(user)} />,
-      className: "align-middle text-center"
-    }
-  ]);
-}
-
 export interface State {
   users: TableUser[];
   visibleUsers: TableUser[];
@@ -141,7 +79,7 @@ type InnerMsg =
   | ADT<"onInitResponse", TableUser[]>
   | ADT<"searchFilter", ShortText.Msg>
   | ADT<"search", null>
-  | ADT<"noop", null>
+  | ADT<"noop">
   | ADT<"virtualizedTable", VirtualizedTable.Msg>
   | ADT<"showExportModal">
   | ADT<"hideExportModal">
@@ -182,7 +120,7 @@ function runSearch(state: Immutable<State>): Immutable<State> {
 }
 
 const dispatchSearch = component_.cmd.makeDebouncedDispatch(
-  adt("noop", null) as InnerMsg,
+  adt("noop") as InnerMsg,
   adt("search", null) as InnerMsg,
   SEARCH_DEBOUNCE_DURATION
 );
@@ -425,8 +363,6 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         childMsg: msg.value,
         mapChildMsg: (value) => ({ tag: "virtualizedTable", value })
       });
-    case "noop":
-      return [state, []];
     case "showExportModal":
       return [state.set("showExportModal", true), []];
     case "hideExportModal":
@@ -484,6 +420,67 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [state, []];
   }
 };
+
+function tableHeadCells(): Table.HeadCells {
+  return [
+    {
+      children: "Status",
+      className: "text-nowrap",
+      style: { width: COLUMN_WIDTHS.STATUS, minWidth: MIN_COLUMN_WIDTHS.STATUS }
+    },
+    {
+      children: "Account Type",
+      className: "text-nowrap",
+      style: {
+        width: COLUMN_WIDTHS.ACCOUNT_TYPE,
+        minWidth: MIN_COLUMN_WIDTHS.ACCOUNT_TYPE
+      }
+    },
+    {
+      children: "Name",
+      className: "text-nowrap",
+      style: {
+        width: COLUMN_WIDTHS.NAME,
+        minWidth: MIN_COLUMN_WIDTHS.NAME
+      }
+    },
+    {
+      children: "Admin?",
+      className: "text-center text-nowrap",
+      style: { width: COLUMN_WIDTHS.ADMIN, minWidth: MIN_COLUMN_WIDTHS.ADMIN }
+    }
+  ];
+}
+
+function generateBodyRows(users: TableUser[]): Table.BodyRows {
+  return users.map((user: TableUser) => [
+    {
+      children: (
+        <Badge
+          text={user.statusTitleCase}
+          color={userStatusToColor(user.status)}
+        />
+      ),
+      className: "align-middle"
+    },
+    {
+      children: user.typeTitleCase,
+      className: "align-middle text-nowrap"
+    },
+    {
+      children: (
+        <Link dest={routeDest(adt("userProfile", { userId: user.id }))}>
+          {user.name || EMPTY_STRING}
+        </Link>
+      ),
+      className: "align-middle"
+    },
+    {
+      children: <Table.Check checked={isAdmin(user)} />,
+      className: "align-middle text-center"
+    }
+  ]);
+}
 
 const getModal: component_.page.GetModal<State, Msg> = (state) => {
   if (!state.showExportModal) {
