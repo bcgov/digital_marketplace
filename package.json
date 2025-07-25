@@ -96,7 +96,6 @@
   "engines": {
     "node": ">=16.19"
   },
-  "type": "module",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
