@@ -304,12 +304,12 @@ export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Published,
   CWUOpportunityStatus.Evaluation,
   CWUOpportunityStatus.Processing,
-  CWUOpportunityStatus.Awarded
+  CWUOpportunityStatus.Awarded,
+  CWUOpportunityStatus.Canceled
 ];
 
-export const privateOpportunitiesStatuses: readonly CWUOpportunityStatus[] = [
+export const privateOpportunityStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Draft,
-  CWUOpportunityStatus.Canceled,
   CWUOpportunityStatus.UnderReview
 ];
 
