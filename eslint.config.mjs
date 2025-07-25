@@ -40,6 +40,7 @@ export default [
       ...cypressPlugin.configs.recommended.rules,
 
       // Your custom overrides
+      "no-redeclare": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "react/prop-types": "off",
       "@typescript-eslint/no-var-requires": "off",
