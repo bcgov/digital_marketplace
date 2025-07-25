@@ -27,7 +27,7 @@ function get(name: string, fallback: string): string {
 
 // export the root directory of the repository.
 export const REPOSITORY_ROOT_DIR =
-  dirname(findUp.sync("package.json") || "") || __dirname;
+  dirname(findUp.findUpSync("package.json") || "") || __dirname;
 
 // Load environment variables from a .env file.
 dotenv.config({

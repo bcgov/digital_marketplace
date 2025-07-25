@@ -92,7 +92,7 @@ export type NavLink = ExtendLinkProps<{ active?: boolean }>;
 
 type NavLinkProps = NavLink & { dispatch: component_.base.Dispatch<Msg> };
 
-const NavLink: component_.base.View<NavLinkProps> = (props) => {
+const NavLinkComponent: component_.base.View<NavLinkProps> = (props) => {
   const onClick = (e: MouseEvent) => {
     props.dispatch(adt("toggleMobileMenu", false));
     props.dispatch(adt("toggleDesktopAccountDropdown", false));
@@ -137,14 +137,14 @@ const ContextualDropdown: component_.base.View<
           {text}
         </Link>
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-contextual-dropdown-group-${i}`}>
             {group.label ? (
               <DropdownItem header>{group.label}</DropdownItem>
             ) : null}
             {group.links.map((link, j) => (
-              <NavLink
+              <NavLinkComponent
                 {...link}
                 className={`${link.className || ""} dropdown-item`}
                 button={false}
@@ -165,7 +165,7 @@ export interface NavAccountDropdown extends component_.page.actions.Dropdown {
   imageUrl: string;
 }
 
-const NavAccountDropdown: component_.base.View<
+const NavAccountDropdownComponent: component_.base.View<
   NavAccountDropdown & {
     isOpen: boolean;
     dispatch: component_.base.Dispatch<Msg>;
@@ -198,14 +198,14 @@ const NavAccountDropdown: component_.base.View<
           height={DROPDOWN_CARET_SIZE}
         />
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-account-dropdown-group-${i}`}>
             {group.label ? (
               <DropdownItem header>{group.label}</DropdownItem>
             ) : null}
             {group.links.map((link, j) => (
-              <NavLink
+              <NavLinkComponent
                 {...link}
                 className={`${link.className || ""} dropdown-item`}
                 button={false}
@@ -255,7 +255,7 @@ interface AccountActionProps {
   dispatch: component_.base.Dispatch<Msg>;
 }
 
-const AccountAction: component_.base.View<AccountActionProps> = ({
+const AccountActionComponent: component_.base.View<AccountActionProps> = ({
   className = "",
   color = "c-nav-fg",
   action,
@@ -268,7 +268,7 @@ const AccountAction: component_.base.View<AccountActionProps> = ({
       );
     case "link":
       return (
-        <NavLink
+        <NavLinkComponent
           className={className}
           color={color}
           {...action.value}
@@ -312,7 +312,7 @@ export interface Props extends component_.base.ComponentViewProps<State, Msg> {
   contextualActions?: component_.page.Actions;
 }
 
-const DesktopAccountMenu: component_.base.View<Props> = (props) => {
+const DesktopAccountMenuComponent: component_.base.View<Props> = (props) => {
   const { accountMenus, state, dispatch } = props;
   const menu = accountMenus.desktop;
   switch (menu.tag) {
@@ -320,7 +320,7 @@ const DesktopAccountMenu: component_.base.View<Props> = (props) => {
       return (
         <Fragment>
           {menu.value.map((action, i) => (
-            <AccountAction
+            <AccountActionComponent
               action={action}
               className={i !== menu.value.length - 1 ? "me-3" : ""}
               dispatch={dispatch}
@@ -333,7 +333,7 @@ const DesktopAccountMenu: component_.base.View<Props> = (props) => {
     case "authenticated":
       return (
         <Fragment>
-          <NavAccountDropdown
+          <NavAccountDropdownComponent
             {...menu.value}
             isOpen={state.isDesktopAccountDropdownOpen}
             dispatch={dispatch}
@@ -343,7 +343,7 @@ const DesktopAccountMenu: component_.base.View<Props> = (props) => {
   }
 };
 
-const MobileAccountMenu: component_.base.View<Props> = (props) => {
+const MobileAccountMenuComponent: component_.base.View<Props> = (props) => {
   const menu = props.accountMenus.mobile;
   const viewActions = (actions: AccountAction[], marginClassName: string) => (
     <Fragment>
@@ -355,7 +355,7 @@ const MobileAccountMenu: component_.base.View<Props> = (props) => {
         const active = isAccountActionActive(action);
         const button = isAccountActionButton(action);
         return (
-          <AccountAction
+          <AccountActionComponent
             action={clonedAction}
             color="c-nav-fg-alt"
             className={`${i !== arr.length - 1 ? marginClassName : ""} ${
@@ -404,7 +404,7 @@ const Title: component_.base.View<TitleProps> = ({
   className = ""
 }) => (
   <div className={`nav-title ${className}`}>
-    <NavLink
+    <NavLinkComponent
       dispatch={dispatch}
       children={title}
       focusable={false}
@@ -442,7 +442,7 @@ const MobileMenu: component_.base.View<Props> = (props) => {
             <Col xs="12">
               <div className="pb-4 border-bottom mb-4 d-flex flex-column align-items-start">
                 {appLinks.map((link, i) => (
-                  <NavLink
+                  <NavLinkComponent
                     {...link}
                     focusable={false}
                     dispatch={props.dispatch}
@@ -457,7 +457,7 @@ const MobileMenu: component_.base.View<Props> = (props) => {
         ) : null}
         <Row>
           <Col xs="12">
-            <MobileAccountMenu {...props} />
+            <MobileAccountMenuComponent {...props} />
           </Col>
         </Row>
       </Container>
@@ -497,7 +497,7 @@ const TopNavbar: component_.base.View<Props> = (props) => {
                 ) : null}
               </div>
               <div className="d-none d-md-flex align-items-center flex-shrink-0">
-                <DesktopAccountMenu {...props} />
+                <DesktopAccountMenuComponent {...props} />
               </div>
               <div className="d-md-none">
                 <Icon
@@ -541,7 +541,7 @@ const ContextualLinks: component_.base.View<
               className: `ms-3 ${link.button ? "" : "font-size-small"}`
             } as NavLink;
             return (
-              <NavLink
+              <NavLinkComponent
                 {...linkProps}
                 dispatch={dispatch}
                 key={`contextual-link-${i}`}
@@ -581,7 +581,7 @@ const DesktopBottomNavbar: component_.base.View<Props> = (props) => {
             <div className="d-flex flex-nowrap">
               {appLinks.map((link, i) => (
                 <Fragment key={`app-link-${i}`}>
-                  <NavLink
+                  <NavLinkComponent
                     {...link}
                     dispatch={props.dispatch}
                     color="c-nav-fg-alt"
