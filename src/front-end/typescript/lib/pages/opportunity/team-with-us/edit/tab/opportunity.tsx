@@ -40,8 +40,7 @@ type ModalId =
   | "saveChangesAndPublish"
   | "saveChangesAndSubmit"
   | "delete"
-  | "cancel"
-  | "suspend";
+  | "cancel";
 
 export interface State extends Tab.Params {
   opportunity: TWUOpportunity | null;
@@ -59,8 +58,7 @@ export interface State extends Tab.Params {
 type UpdateStatus =
   | TWUOpportunityStatus.UnderReview
   | TWUOpportunityStatus.Published
-  | TWUOpportunityStatus.Canceled
-  | TWUOpportunityStatus.Suspended;
+  | TWUOpportunityStatus.Canceled;
 
 export type InnerMsg =
   | ADT<"resetOpportunity", [TWUOpportunity, User[], boolean]>
@@ -216,8 +214,6 @@ function updateStatus(
         return "submitForReview";
       case TWUOpportunityStatus.Published:
         return "publish";
-      case TWUOpportunityStatus.Suspended:
-        return "suspend";
       case TWUOpportunityStatus.Canceled:
         return "cancel";
     }
@@ -871,27 +867,6 @@ export const component: Tab.Component<State, Msg> = {
           body: () =>
             "Are you sure you want to submit your changes to this Team With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
-      case "suspend":
-        return component_.page.modal.show({
-          title: "Suspend Team With Us Opportunity?",
-          onCloseMsg: adt("hideModal"),
-          actions: [
-            {
-              text: "Suspend Opportunity",
-              icon: "pause-circle",
-              color: "warning",
-              button: true,
-              msg: adt("updateStatus", TWUOpportunityStatus.Suspended) as Msg
-            },
-            {
-              text: "Cancel",
-              color: "secondary",
-              msg: adt("hideModal")
-            }
-          ],
-          body: () =>
-            "Are you sure you want to suspend this opportunity? Once suspended, all subscribers and vendors with pending or submitted proposals will be notified."
-        });
       case "delete":
         return component_.page.modal.show({
           title: "Delete Team With Us Opportunity?",
@@ -1160,44 +1135,6 @@ export const component: Tab.Component<State, Msg> = {
           linkGroups: [
             {
               links: [
-                {
-                  children: "Edit",
-                  symbol_: leftPlacement(iconLinkSymbol("edit")),
-                  onClick: () => dispatch(adt("startEditing"))
-                }
-              ]
-            },
-            {
-              links: [
-                {
-                  children: "Suspend",
-                  symbol_: leftPlacement(iconLinkSymbol("pause-circle")),
-                  onClick: () => dispatch(adt("showModal", "suspend" as const))
-                },
-                {
-                  children: "Cancel",
-                  symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
-                  onClick: () => dispatch(adt("showModal", "cancel" as const))
-                }
-              ]
-            }
-          ]
-        });
-      case TWUOpportunityStatus.Suspended:
-        if (!viewerIsAdmin) {
-          return component_.page.actions.none();
-        }
-        return component_.page.actions.dropdown({
-          text: "Actions",
-          loading: isLoading,
-          linkGroups: [
-            {
-              links: [
-                {
-                  children: "Publish",
-                  symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                  onClick: () => dispatch(adt("showModal", "publish" as const))
-                },
                 {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),

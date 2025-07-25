@@ -145,14 +145,13 @@ export async function newCWUOpportunitySubmittedForReviewAuthorT(
 
 export async function handleCWUPublished(
   connection: db.Connection,
-  opportunity: CWUOpportunity,
-  repost: boolean
+  opportunity: CWUOpportunity
 ): Promise<void> {
   // Notify all users with notifications turned on
   const subscribedUsers =
     getValidValue(await db.readManyUsersNotificationsOn(connection), null) ||
     [];
-  await newCWUOpportunityPublished(subscribedUsers, opportunity, repost);
+  await newCWUOpportunityPublished(subscribedUsers, opportunity);
 
   // Notify authoring gov user of successful publish
   if (opportunity.createdBy) {
@@ -161,7 +160,7 @@ export async function handleCWUPublished(
       null
     );
     if (author) {
-      await successfulCWUPublication(author, opportunity, repost);
+      await successfulCWUPublication(author, opportunity);
     }
   }
 }
@@ -229,40 +228,6 @@ export async function handleCWUCancelled(
   }
 }
 
-export async function handleCWUSuspended(
-  connection: db.Connection,
-  opportunity: CWUOpportunity
-): Promise<void> {
-  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
-  const subscribedUsers =
-    getValidValue(
-      await db.readManyCWUSubscribedUsers(connection, opportunity.id),
-      null
-    ) || [];
-  const usersWithProposals =
-    getValidValue(
-      await db.readManyCWUProposalAuthors(connection, opportunity.id),
-      null
-    ) || [];
-  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-  await Promise.all(
-    unionedUsers.map(
-      async (user) => await suspendedCWUOpportunitySubscribed(user, opportunity)
-    )
-  );
-
-  // Notify gov user that opportunity is suspended
-  const author =
-    opportunity.createdBy &&
-    getValidValue(
-      await db.readOneUser(connection, opportunity.createdBy.id),
-      null
-    );
-  if (author) {
-    await suspendedCWUOpportunityActioned(author, opportunity);
-  }
-}
-
 export async function handleCWUReadyForEvaluation(
   connection: db.Connection,
   opportunity: CWUOpportunity
@@ -284,31 +249,20 @@ export const newCWUOpportunityPublished = makeSend(newCWUOpportunityPublishedT);
 
 export async function newCWUOpportunityPublishedT(
   recipients: User[],
-  opportunity: CWUOpportunity,
-  repost: boolean
+  opportunity: CWUOpportunity
 ): Promise<Emails> {
-  const title = `A ${repost ? "" : "New"} Code With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
+  const title = `A New Code With Us Opportunity Has Been Posted`;
   const emails: Emails = [];
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      summary: `${
-        repost
-          ? "CWU opportunity re-published after suspension"
-          : "New CWU opportunity published"
-      }; sent to user with notifications turned on.`,
+      summary: `New CWU opportunity published; sent to user with notifications turned on.`,
       to: MAILER_REPLY,
       bcc: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
         title,
-        description: `A ${
-          repost ? "previously suspended" : "new"
-        } opportunity has been ${
-          repost ? "re-posted" : "posted"
-        } to the Digital Marketplace:`,
+        description: `A new opportunity has been posted to the Digital Marketplace:`,
         descriptionLists: [makeCWUOpportunityInformation(opportunity)],
         callsToAction: [viewCWUOpportunityCallToAction(opportunity)]
       })
@@ -321,20 +275,13 @@ export const successfulCWUPublication = makeSend(successfulCWUPublicationT);
 
 export async function successfulCWUPublicationT(
   recipient: User,
-  opportunity: CWUOpportunity,
-  repost: boolean
+  opportunity: CWUOpportunity
 ): Promise<Emails> {
-  const title = `Your Code With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
-  const description = `You have successfully ${
-    repost ? "re-posted" : "posted"
-  } the following Digital Marketplace opportunity`;
+  const title = `Your Code With Us Opportunity Has Been Posted`;
+  const description = `You have successfully posted the following Digital Marketplace opportunity`;
   return [
     {
-      summary: `CWU successfully ${
-        repost ? "re-published" : "published"
-      }; sent to publishing government user.`,
+      summary: `CWU successfully published; sent to publishing government user.`,
       to: recipient.email || [],
       subject: title,
       html: templates.simple({
@@ -448,70 +395,6 @@ export async function cancelledCWUOpportunityActionedT(
     {
       summary:
         "CWU opportunity cancelled; sent to the administrator who actioned.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeCWUOpportunityInformation(opportunity)]
-      })
-    }
-  ];
-}
-
-export const suspendedCWUOpportunitySubscribed = makeSend(
-  suspendedCWUOpportunitySubscribedT
-);
-
-export async function suspendedCWUOpportunitySubscribedT(
-  recipient: User,
-  opportunity: CWUOpportunity
-): Promise<Emails> {
-  const title = "A Code With Us Opportunity Has Been Suspended";
-  const description =
-    "The following Digital Marketplace opportunity has been suspended:";
-  return [
-    {
-      summary:
-        "CWU opportunity suspended; sent to subscribed users and vendors with proposals.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeCWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              If you have already submitted a proposal to this opportunity, you
-              may make changes to it while the opportunity is suspended.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
-            </p>
-          </div>
-        )
-      })
-    }
-  ];
-}
-
-export const suspendedCWUOpportunityActioned = makeSend(
-  suspendedCWUOpportunityActionedT
-);
-
-export async function suspendedCWUOpportunityActionedT(
-  recipient: User,
-  opportunity: CWUOpportunity
-): Promise<Emails> {
-  const title = "A Code With Us Opportunity Has Been Suspended";
-  const description =
-    "You have suspended the following opportunity on the Digital Marketplace:";
-  return [
-    {
-      summary:
-        "CWU opportunity suspended; sent to the administrator who actioned.",
       to: recipient.email || [],
       subject: title,
       html: templates.simple({
