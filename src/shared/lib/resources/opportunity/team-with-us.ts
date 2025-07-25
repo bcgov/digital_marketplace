@@ -25,7 +25,7 @@ export enum TWUOpportunityStatus {
   EvaluationChallenge = "EVAL_C",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
+  DeprecatedSuspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 

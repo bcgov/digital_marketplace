@@ -25,7 +25,7 @@ export function cwuOpportunityStatusToColor(
       return "warning";
     case CWUOpportunityStatus.Awarded:
       return "success";
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "danger";
     case CWUOpportunityStatus.Canceled:
       return "danger";
@@ -48,7 +48,7 @@ export function cwuOpportunityStatusToTitleCase(
       return "Processing";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled"; // Use British spelling for copy.
@@ -68,7 +68,7 @@ export function cwuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === CWUOpportunityStatus.Canceled) {
       return "Canceled";
-    } else if (o.status === CWUOpportunityStatus.Suspended) {
+    } else if (o.status === CWUOpportunityStatus.DeprecatedSuspended) {
       return "Suspended";
     } else if (o.status === CWUOpportunityStatus.Evaluation) {
       return "Evaluation";
@@ -107,7 +107,7 @@ export function cwuOpportunityToPublicColor(
       return "warning";
     } else if (o.status === CWUOpportunityStatus.Processing) {
       return "warning";
-    } else if (o.status === CWUOpportunityStatus.Suspended) {
+    } else if (o.status === CWUOpportunityStatus.DeprecatedSuspended) {
       return "danger";
     } else if (o.status === CWUOpportunityStatus.Canceled) {
       return "danger";
@@ -121,7 +121,7 @@ export function cwuOpportunityStatusToPresentTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspend";
     case CWUOpportunityStatus.Canceled:
       return "Cancel";
@@ -143,7 +143,7 @@ export function cwuOpportunityStatusToPastTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled";

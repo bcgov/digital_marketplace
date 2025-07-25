@@ -63,7 +63,7 @@ export enum SWUOpportunityStatus {
   EvaluationTeamScenario = "EVAL_SCENARIO",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
+  DeprecatedSuspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 
@@ -104,8 +104,8 @@ export function parseSWUOpportunityStatus(
       return SWUOpportunityStatus.Processing;
     case SWUOpportunityStatus.Awarded:
       return SWUOpportunityStatus.Awarded;
-    case SWUOpportunityStatus.Suspended:
-      return SWUOpportunityStatus.Suspended;
+    case SWUOpportunityStatus.DeprecatedSuspended:
+      return SWUOpportunityStatus.DeprecatedSuspended;
     case SWUOpportunityStatus.Canceled:
       return SWUOpportunityStatus.Canceled;
     default:

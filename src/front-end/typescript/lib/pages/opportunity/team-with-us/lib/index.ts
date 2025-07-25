@@ -30,7 +30,7 @@ export function twuOpportunityStatusToColor(
       return "warning";
     case TWUOpportunityStatus.Awarded:
       return "success";
-    case TWUOpportunityStatus.Suspended:
+    case TWUOpportunityStatus.DeprecatedSuspended:
       return "danger";
     case TWUOpportunityStatus.Canceled:
       return "danger";
@@ -57,7 +57,7 @@ export function twuOpportunityStatusToTitleCase(
       return "Processing";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
-    case TWUOpportunityStatus.Suspended:
+    case TWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case TWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
@@ -76,7 +76,7 @@ export function twuOpportunityStatusToPresentTenseVerb(
       return "Publish";
     case TWUOpportunityStatus.Awarded:
       return "Award";
-    case TWUOpportunityStatus.Suspended:
+    case TWUOpportunityStatus.DeprecatedSuspended:
       return "Suspend";
     case TWUOpportunityStatus.Canceled:
       return "Cancel";
@@ -97,7 +97,7 @@ export function twuOpportunityStatusToPastTenseVerb(
       return "Published";
     case TWUOpportunityStatus.Awarded:
       return "Awarded";
-    case TWUOpportunityStatus.Suspended:
+    case TWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case TWUOpportunityStatus.Canceled:
       return "Cancelled"; //British spelling
@@ -119,7 +119,7 @@ export function twuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === TWUOpportunityStatus.Canceled) {
       return "Canceled";
-    } else if (o.status === TWUOpportunityStatus.Suspended) {
+    } else if (o.status === TWUOpportunityStatus.DeprecatedSuspended) {
       return "Suspended";
     } else if (
       o.status === TWUOpportunityStatus.EvaluationResourceQuestionsIndividual ||
@@ -166,7 +166,7 @@ export function twuOpportunityToPublicColor(
       return "warning";
     } else if (o.status === TWUOpportunityStatus.Processing) {
       return "warning";
-    } else if (o.status === TWUOpportunityStatus.Suspended) {
+    } else if (o.status === TWUOpportunityStatus.DeprecatedSuspended) {
       return "danger";
     } else if (o.status === TWUOpportunityStatus.Canceled) {
       return "danger";

@@ -18,7 +18,7 @@ export enum CWUOpportunityStatus {
   Evaluation = "EVALUATION",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
+  DeprecatedSuspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 
