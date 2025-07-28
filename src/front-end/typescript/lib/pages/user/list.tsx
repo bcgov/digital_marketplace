@@ -77,7 +77,7 @@ export interface State {
 type InnerMsg =
   | ADT<"onInitResponse", TableUser[]>
   | ADT<"searchFilter", ShortText.Msg>
-  | ADT<"search", null>
+  | ADT<"search">
   | ADT<"searchCompleted", { filteredUsers: TableUser[] }>
   | ADT<"noop">
   | ADT<"virtualizedTable", VirtualizedTable.Msg>
@@ -122,7 +122,7 @@ const makeSearchCommand = (
 
 const dispatchSearch = component_.cmd.makeDebouncedDispatch(
   adt("noop") as InnerMsg,
-  adt("search", null) as InnerMsg,
+  adt("search") as InnerMsg,
   SEARCH_DEBOUNCE_DURATION
 );
 
@@ -325,7 +325,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [
           makeSearchCommand(newState),
           component_.cmd.dispatch(
-            adt("virtualizedTable", adt("resetScroll", null)) as Msg
+            adt("virtualizedTable", adt("resetScroll")) as Msg
           )
         ]
       ];
@@ -350,7 +350,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         [
           makeSearchCommand(state),
           component_.cmd.dispatch(
-            adt("virtualizedTable", adt("resetScroll", null)) as Msg
+            adt("virtualizedTable", adt("resetScroll")) as Msg
           )
         ]
       ];

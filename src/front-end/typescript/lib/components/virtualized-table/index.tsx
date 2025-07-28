@@ -45,9 +45,9 @@ export type Msg =
   | ADT<"handleScroll", { scrollTop: number; containerHeight: number }>
   | ADT<"updateVisibleRange", { start: number; end: number }>
   | ADT<"updateTotalItems", number>
-  | ADT<"resetScroll", null>
-  | ADT<"scrollToTop", null>
-  | ADT<"scrollCompleted", null>;
+  | ADT<"resetScroll">
+  | ADT<"scrollToTop">
+  | ADT<"scrollCompleted">;
 
 export const init: component_.base.Init<Params, State, Msg> = ({
   idNamespace,
@@ -145,7 +145,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         state
           .set("scrollTop", 0)
           .set("visibleRange", { start: 0, end: initialEnd }),
-        [component_.cmd.delayedDispatch(10, adt("scrollToTop", null))]
+        [component_.cmd.delayedDispatch(10, adt("scrollToTop"))]
       ];
     }
     case "scrollToTop": {
@@ -161,7 +161,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
             component_.cmd.scrollContainerTo(
               0,
               0,
-              adt("scrollCompleted", null),
+              adt("scrollCompleted"),
               scrollContainer
             )
           ]
