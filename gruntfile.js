@@ -111,6 +111,15 @@ module.exports = function (grunt) {
     "clean:frontEndBuild",
     "copy:frontEndStatic"
   ]);
+  grunt.registerTask("front-end-build-production", [
+    "front-end-common",
+    "shell:frontEndViteBuildProd", // Added Vite build for prod
+    // "postcss:frontEndMin", // Vite handles minification
+    // "terser:production", // Vite handles minification
+    // "htmlmin:production", // Vite handles minification
+    "compress:gzip",
+    "compress:brotli"
+  ]);
   grunt.registerTask("front-end-build", [`front-end-build-${VITE_NODE_ENV}`]);
   grunt.registerTask("front-end-watch-development", [
     "shell:frontEndViteWatch" // Vite handles watch and rebuilds

@@ -1,4 +1,6 @@
 module.exports = {
+  frontEndViteBuildProd:
+    "VITE_NODE_ENV=production vite build --mode production",
   frontEndViteWatch:
     "VITE_NODE_ENV=development vite build --watch --mode development",
   backEndTypeScript: `npx tsc --project "${gruntConfig.backEnd.src.dir}" --outDir "${gruntConfig.backEnd.build.dir}"`,
