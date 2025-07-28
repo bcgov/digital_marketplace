@@ -466,8 +466,7 @@ export function generateSWUOpportunityQuery(
       connection.raw(
         `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityStatuses"
          WHERE status IS NOT NULL
-         ORDER BY opportunity, "createdAt" DESC) as statuses`,
-        []
+         ORDER BY opportunity, "createdAt" DESC) as statuses`
       ),
       "opportunities.id",
       "statuses.opportunity"
@@ -476,8 +475,7 @@ export function generateSWUOpportunityQuery(
     .join(
       connection.raw(
         `(SELECT DISTINCT ON (opportunity) * FROM "swuOpportunityVersions"
-         ORDER BY opportunity, "createdAt" DESC) as versions`,
-        []
+         ORDER BY opportunity, "createdAt" DESC) as versions`
       ),
       "opportunities.id",
       "versions.opportunity"
