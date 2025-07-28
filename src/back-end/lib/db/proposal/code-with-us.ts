@@ -23,7 +23,7 @@ import { valid } from "shared/lib/http";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   CWUOpportunityStatus,
-  privateOpportunitiesStatuses,
+  privateOpportunityStatuses,
   publicOpportunityStatuses
 } from "shared/lib/resources/opportunity/code-with-us";
 import { Organization } from "shared/lib/resources/organization";
@@ -302,7 +302,7 @@ export async function hasCWUAttachmentPermission(
     query.orWhere(function () {
       this.whereIn(
         "stat.status",
-        privateOpportunitiesStatuses as CWUOpportunityStatus[]
+        privateOpportunityStatuses as CWUOpportunityStatus[]
       ).andWhere({ "opp.createdBy": session.user.id, "attachments.file": id });
     });
   }

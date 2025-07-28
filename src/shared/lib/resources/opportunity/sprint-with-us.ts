@@ -134,13 +134,13 @@ export const publicOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.EvaluationCodeChallenge,
   SWUOpportunityStatus.EvaluationTeamScenario,
   SWUOpportunityStatus.Processing,
-  SWUOpportunityStatus.Awarded
+  SWUOpportunityStatus.Awarded,
+  SWUOpportunityStatus.Canceled
 ];
 
 export const privateOpportunityStatuses: readonly SWUOpportunityStatus[] = [
   SWUOpportunityStatus.Draft,
   SWUOpportunityStatus.UnderReview,
-  SWUOpportunityStatus.Canceled,
   SWUOpportunityStatus.Suspended
 ];
 
