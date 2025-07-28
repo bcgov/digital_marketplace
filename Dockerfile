@@ -2,7 +2,7 @@ FROM --platform=linux/amd64 docker.io/node:22 AS dm_app_build
 ARG DIRPATH=/usr/app
 WORKDIR $DIRPATH
 COPY ./src $DIRPATH/src
-COPY package.json gruntfile.js yarn.lock tsconfig.json ./
+COPY package.json gruntfile.js yarn.lock tsconfig.json vite.config.mts ./
 COPY ./lib $DIRPATH/lib
 COPY ./grunt-configs ./grunt-configs
 
