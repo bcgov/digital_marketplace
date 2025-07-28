@@ -45,7 +45,6 @@ export type Msg =
   | ADT<"handleScroll", { scrollTop: number; containerHeight: number }>
   | ADT<"updateVisibleRange", { start: number; end: number }>
   | ADT<"updateTotalItems", number>
-  | ADT<"resetScroll">
   | ADT<"scrollToTop">
   | ADT<"scrollCompleted">;
 
@@ -73,7 +72,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       bufferSize,
       scrollContainerId: `virtualized-table-${idNamespace}-scroll-container`
     },
-    []
+    [component_.cmd.delayedDispatch(10, adt("scrollToTop"))]
   ];
 };
 
@@ -137,15 +136,6 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
           .set("totalItems", newTotalItems)
           .set("visibleRange", updatedRange),
         []
-      ];
-    }
-    case "resetScroll": {
-      const initialEnd = Math.min(INITIAL_VISIBLE_ITEMS, state.totalItems || 0);
-      return [
-        state
-          .set("scrollTop", 0)
-          .set("visibleRange", { start: 0, end: initialEnd }),
-        [component_.cmd.delayedDispatch(10, adt("scrollToTop"))]
       ];
     }
     case "scrollToTop": {

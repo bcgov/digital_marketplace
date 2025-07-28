@@ -320,12 +320,22 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
   switch (msg.tag) {
     case "onInitResponse": {
       const newState = state.set("users", msg.value).set("loading", false);
+      const stateWithVisibleUsers = newState.set("visibleUsers", msg.value);
+      const [virtualizedTableState, virtualizedTableCmds] =
+        VirtualizedTable.init({
+          idNamespace: "user-list-virtualized",
+          totalItems: msg.value.length,
+          rowHeight: TABLE_ROW_HEIGHT
+        });
       return [
-        newState,
+        stateWithVisibleUsers.set(
+          "virtualizedTable",
+          immutable(virtualizedTableState)
+        ),
         [
-          makeSearchCommand(newState),
-          component_.cmd.dispatch(
-            adt("virtualizedTable", adt("resetScroll")) as Msg
+          ...component_.cmd.mapMany(
+            virtualizedTableCmds,
+            (msg) => adt("virtualizedTable", msg) as Msg
           )
         ]
       ];
@@ -345,12 +355,19 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           >
       });
     case "search": {
+      const [virtualizedTableState, virtualizedTableCmds] =
+        VirtualizedTable.init({
+          idNamespace: "user-list-virtualized",
+          totalItems: state.visibleUsers.length,
+          rowHeight: TABLE_ROW_HEIGHT
+        });
       return [
-        state,
+        state.set("virtualizedTable", immutable(virtualizedTableState)),
         [
           makeSearchCommand(state),
-          component_.cmd.dispatch(
-            adt("virtualizedTable", adt("resetScroll")) as Msg
+          ...component_.cmd.mapMany(
+            virtualizedTableCmds,
+            (msg) => adt("virtualizedTable", msg) as Msg
           )
         ]
       ];
