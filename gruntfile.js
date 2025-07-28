@@ -103,7 +103,9 @@ module.exports = function (grunt) {
   //create task lists for dev and prod envs
   //front-end
   grunt.registerTask("front-end-build-production", [
-    "shell:frontEndViteBuildProd"
+    "shell:frontEndViteBuildProd",
+    "compress:gzip",
+    "compress:brotli"
   ]);
   grunt.registerTask("front-end-build", [`front-end-build-${VITE_NODE_ENV}`]);
   grunt.registerTask("front-end-watch-development", [
