@@ -11,9 +11,9 @@ import * as api from "front-end/lib/http/api";
 import {
   userStatusToColor,
   userStatusToTitleCase,
-  userTypeToPermissions,
-  userTypeToTitleCase
+  userTypeToPermissions
 } from "front-end/lib/pages/user/lib";
+import { userTypeToTitleCase } from "shared/lib/resources/user";
 import * as ProfileForm from "front-end/lib/pages/user/lib/components/profile-form";
 import * as toasts from "front-end/lib/pages/user/lib/toasts";
 import * as Tab from "front-end/lib/pages/user/profile/tab";

@@ -381,14 +381,13 @@ export function viewTWUOpportunityCallToAction(
  */
 export async function handleTWUPublished(
   connection: db.Connection,
-  opportunity: TWUOpportunity,
-  repost: boolean
+  opportunity: TWUOpportunity
 ): Promise<void> {
   // Notify all users with notifications on
   const subscribedUsers =
     getValidValue(await db.readManyUsersNotificationsOn(connection), null) ||
     [];
-  await newTWUOpportunityPublished(subscribedUsers, opportunity, repost);
+  await newTWUOpportunityPublished(subscribedUsers, opportunity);
 
   // Notify authoring gov user of successful publish
   const author =
@@ -398,7 +397,7 @@ export async function handleTWUPublished(
       null
     );
   if (author) {
-    await successfulTWUPublication(author, opportunity, repost);
+    await successfulTWUPublication(author, opportunity);
   }
 
   const panel =
@@ -413,7 +412,7 @@ export async function handleTWUPublished(
       .map((user) => getValidValue(user, null))
       .filter((user): user is User => !!user);
 
-  if (panel?.length && !repost) {
+  if (panel?.length) {
     await newTWUPanel(panel, opportunity);
   }
 }
@@ -492,47 +491,6 @@ export async function handleTWUCancelled(
     );
   if (author) {
     await cancelledTWUOpportunityActioned(author, opportunity);
-  }
-}
-
-/**
- *  Notify all subscribed users on this opportunity, as well as users with
- *  proposals (we union so that we don't notify anyone twice).
- *  Notify authoring gov user of suspension
- *
- * @param connection
- * @param opportunity
- */
-export async function handleTWUSuspended(
-  connection: db.Connection,
-  opportunity: TWUOpportunity
-): Promise<void> {
-  const subscribedUsers =
-    getValidValue(
-      await db.readManyTWUSubscribedUsers(connection, opportunity.id),
-      null
-    ) || [];
-  const usersWithProposals =
-    getValidValue(
-      await db.readManyTWUProposalAuthors(connection, opportunity.id),
-      null
-    ) || [];
-  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-
-  await Promise.all(
-    unionedUsers.map(
-      async (user) => await suspendedTWUOpportunitySubscribed(user, opportunity)
-    )
-  );
-
-  const author =
-    opportunity.createdBy &&
-    getValidValue(
-      await db.readOneUser(connection, opportunity.createdBy.id),
-      null
-    );
-  if (author) {
-    await suspendedTWUOpportunityActioned(author, opportunity);
   }
 }
 
@@ -738,40 +696,27 @@ export async function editTWUPanelT(
 export const newTWUOpportunityPublished = makeSend(newTWUOpportunityPublishedT);
 
 /**
- * Generates email content related to the publishing, or re-publishing of
- * an opportunity
+ * Generates email content related to the publishing of an opportunity
  *
  * @param recipients
  * @param opportunity
- * @param repost
  */
 export async function newTWUOpportunityPublishedT(
   recipients: User[],
-  opportunity: TWUOpportunity,
-  repost: boolean
+  opportunity: TWUOpportunity
 ): Promise<Emails> {
-  const title = `A ${repost ? "" : "New"} Team With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
+  const title = `A New Team With Us Opportunity Has Been Posted`;
   const emails: Emails = [];
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      summary: `${
-        repost
-          ? "TWU opportunity re-published after suspension"
-          : "New TWU opportunity published"
-      }; sent to user with notifications turned on.`,
+      summary: `New TWU opportunity published; sent to user with notifications turned on.`,
       to: MAILER_REPLY,
       bcc: batch.map((r) => r.email || ""),
       subject: title,
       html: templates.simple({
         title,
-        description: `A ${
-          repost ? "previously suspended" : "new"
-        } opportunity has been ${
-          repost ? "re-posted" : "posted"
-        } to the Digital Marketplace:`,
+        description: `A new opportunity has been posted to the Digital Marketplace:`,
         descriptionLists: [makeTWUOpportunityInformation(opportunity)],
         callsToAction: [viewTWUOpportunityCallToAction(opportunity)]
       })
@@ -794,20 +739,13 @@ export const successfulTWUPublication = makeSend(successfulTWUPublicationT);
  */
 export async function successfulTWUPublicationT(
   recipient: User,
-  opportunity: TWUOpportunity,
-  repost: boolean
+  opportunity: TWUOpportunity
 ): Promise<Emails> {
-  const title = `Your Team With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
-  const description = `You have successfully ${
-    repost ? "re-posted" : "posted"
-  } the following Digital Marketplace opportunity`;
+  const title = `Your Team With Us Opportunity Has Been Posted`;
+  const description = `You have successfully posted the following Digital Marketplace opportunity`;
   return [
     {
-      summary: `TWU successfully ${
-        repost ? "re-published" : "published"
-      }; sent to publishing government user.`,
+      summary: `TWU successfully published; sent to publishing government user.`,
       to: recipient.email || [],
       subject: title,
       html: templates.simple({
@@ -894,70 +832,6 @@ export async function cancelledTWUOpportunityActionedT(
     {
       summary:
         "TWU opportunity cancelled; sent to the administrator who actioned.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeTWUOpportunityInformation(opportunity)]
-      })
-    }
-  ];
-}
-
-export const suspendedTWUOpportunitySubscribed = makeSend(
-  suspendedTWUOpportunitySubscribedT
-);
-
-export async function suspendedTWUOpportunitySubscribedT(
-  recipient: User,
-  opportunity: TWUOpportunity
-): Promise<Emails> {
-  const title = "A Team With Us Opportunity Has Been Suspended";
-  const description =
-    "The following Digital Marketplace opportunity has been suspended:";
-  return [
-    {
-      summary:
-        "TWU opportunity suspended; sent to subscribed users and vendors with proposals.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeTWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              If you have already submitted a proposal to this opportunity, you
-              may make changes to it while the opportunity is suspended.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
-            </p>
-          </div>
-        )
-      })
-    }
-  ];
-}
-
-export const suspendedTWUOpportunityActioned = makeSend(
-  suspendedTWUOpportunityActionedT
-);
-
-export async function suspendedTWUOpportunityActionedT(
-  recipient: User,
-  opportunity: TWUOpportunity
-): Promise<Emails> {
-  const title = "A Team With Us Opportunity Has Been Suspended";
-  const description =
-    "You have suspended the following opportunity on the Digital Marketplace:";
-  return [
-    {
-      summary:
-        "TWU opportunity suspended; sent to the administrator who actioned.",
       to: recipient.email || [],
       subject: title,
       html: templates.simple({

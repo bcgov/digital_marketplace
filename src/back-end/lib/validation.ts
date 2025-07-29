@@ -28,7 +28,11 @@ import {
   SWUProposal
 } from "shared/lib/resources/proposal/sprint-with-us";
 import { AuthenticatedSession, Session } from "shared/lib/resources/session";
-import { isPublicSectorEmployee, User } from "shared/lib/resources/user";
+import {
+  isPublicSectorEmployee,
+  User,
+  UserType
+} from "shared/lib/resources/user";
 import { adt, Id } from "shared/lib/types";
 import {
   allValid,
@@ -1202,5 +1206,76 @@ export async function validateContentId(
     return valid(content);
   } catch (exception) {
     return invalid(["Please select a valid content id."]);
+  }
+}
+
+/**
+ * Contact List Export Validation
+ */
+
+export interface ExportContactListValidationErrors {
+  userTypes?: string[];
+  fields?: string[];
+  permissions?: string[];
+}
+
+export function validateContactListUserTypes(
+  userTypes: string[]
+): Validation<UserType[]> {
+  if (!userTypes.length) {
+    return invalid(["At least one user type must be specified"]);
+  }
+
+  const validUserTypes = [UserType.Government, UserType.Vendor];
+  const invalidUserTypes = userTypes.filter(
+    (type: string) => !validUserTypes.includes(type as UserType)
+  );
+
+  if (invalidUserTypes.length > 0) {
+    return invalid([`Invalid user type(s): ${invalidUserTypes.join(", ")}`]);
+  }
+
+  return valid(userTypes.map((type) => type as UserType));
+}
+
+export function validateContactListFields(
+  fields: string[]
+): Validation<string[]> {
+  if (!fields.length) {
+    return invalid(["At least one field must be specified"]);
+  }
+
+  const validFields = ["firstName", "lastName", "email", "organizationName"];
+  const invalidFields = fields.filter(
+    (field: string) => !validFields.includes(field)
+  );
+
+  if (invalidFields.length > 0) {
+    return invalid([`Invalid field(s): ${invalidFields.join(", ")}`]);
+  }
+
+  return valid(fields);
+}
+
+export function validateContactListExportParams(
+  userTypes: string[],
+  fields: string[]
+): Validation<
+  { userTypes: UserType[]; fields: string[] },
+  ExportContactListValidationErrors
+> {
+  const validatedUserTypes = validateContactListUserTypes(userTypes);
+  const validatedFields = validateContactListFields(fields);
+
+  if (isValid(validatedUserTypes) && isValid(validatedFields)) {
+    return valid({
+      userTypes: validatedUserTypes.value,
+      fields: validatedFields.value
+    });
+  } else {
+    return invalid({
+      userTypes: getInvalidValue(validatedUserTypes, undefined),
+      fields: getInvalidValue(validatedFields, undefined)
+    });
   }
 }

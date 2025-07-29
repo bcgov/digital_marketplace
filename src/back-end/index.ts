@@ -50,6 +50,7 @@ import teamWithUsOpportunityResourceQuestionEvaluationResource from "back-end/li
 import teamWithUsProposalResourceQuestionConsensusResource from "back-end/lib/resources/proposal/team-with-us/resource-questions/consensus";
 import teamWithUsOpportunityResourceQuestionConsensusResource from "back-end/lib/resources/opportunity/team-with-us/resource-questions/consensus";
 import userResource from "back-end/lib/resources/user";
+import contactListResource from "back-end/lib/resources/contact-list";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
 import jwtRouter from "back-end/lib/routers/jwt";
@@ -169,6 +170,7 @@ export function createRouter(connection: Connection): AppRouter {
     ownedOrganizationResource,
     sessionResource,
     userResource,
+    contactListResource,
     metricsResource,
     emailNotificationsResource,
     sprintWithUsProposalTeamQuestionEvaluationResource,

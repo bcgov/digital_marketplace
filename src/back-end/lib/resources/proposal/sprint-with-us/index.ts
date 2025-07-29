@@ -1266,11 +1266,8 @@ const update: crud.Update<
               permissions: [permissions.ERROR_MESSAGE]
             });
           }
-          // The opportunity must be in team scenario stage
-          if (
-            swuOpportunity.status !==
-            SWUOpportunityStatus.EvaluationTeamScenario
-          ) {
+          // To award the opportunity, it must be in Processing stage
+          if (swuOpportunity.status !== SWUOpportunityStatus.Processing) {
             return invalid({
               permissions: [
                 "The opportunity is not in the correct stage of evaluation to perform that action."
@@ -1441,15 +1438,15 @@ const update: crud.Update<
               );
             }
             break;
-          case "disqualify":
-            dbResult = await db.updateSWUProposalStatus(
+          case "disqualify": {
+            dbResult = await db.disqualifySWUProposalAndUpdateOpportunity(
               connection,
               request.params.id,
-              SWUProposalStatus.Disqualified,
               body.value,
               session
             );
             break;
+          }
           case "withdraw":
             dbResult = await db.updateSWUProposalStatus(
               connection,

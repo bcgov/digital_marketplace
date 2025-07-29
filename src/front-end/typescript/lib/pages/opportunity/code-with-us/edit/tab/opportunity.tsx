@@ -40,8 +40,7 @@ type ModalId =
   | "saveChangesAndPublish"
   | "saveChangesAndSubmit"
   | "delete"
-  | "cancel"
-  | "suspend";
+  | "cancel";
 
 export interface State extends Tab.Params {
   opportunity: CWUOpportunity | null;
@@ -58,8 +57,7 @@ export interface State extends Tab.Params {
 type UpdateStatus =
   | CWUOpportunityStatus.UnderReview
   | CWUOpportunityStatus.Published
-  | CWUOpportunityStatus.Canceled
-  | CWUOpportunityStatus.Suspended;
+  | CWUOpportunityStatus.Canceled;
 
 export type InnerMsg =
   | ADT<"resetOpportunity", [CWUOpportunity, boolean]>
@@ -209,8 +207,6 @@ function updateStatus(
         return "submitForReview";
       case CWUOpportunityStatus.Published:
         return "publish";
-      case CWUOpportunityStatus.Suspended:
-        return "suspend";
       case CWUOpportunityStatus.Canceled:
         return "cancel";
     }
@@ -851,27 +847,6 @@ export const component: Tab.Component<State, Msg> = {
             "Are you sure you want to submit your changes to this Code With Us opportunity for review? Once" +
             " submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
-      case "suspend":
-        return component_.page.modal.show({
-          title: "Suspend Code With Us Opportunity?",
-          onCloseMsg: adt("hideModal"),
-          actions: [
-            {
-              text: "Suspend Opportunity",
-              icon: "pause-circle",
-              color: "warning",
-              button: true,
-              msg: adt("updateStatus", CWUOpportunityStatus.Suspended) as Msg
-            },
-            {
-              text: "Cancel",
-              color: "secondary",
-              msg: adt("hideModal")
-            }
-          ],
-          body: () =>
-            "Are you sure you want to suspend this opportunity? Once suspended, all subscribers and vendors with pending or submitted proposals will be notified."
-        });
       case "delete":
         return component_.page.modal.show({
           title: "Delete Code With Us Opportunity?",
@@ -1131,47 +1106,6 @@ export const component: Tab.Component<State, Msg> = {
             linkGroups: [
               {
                 links: [
-                  {
-                    children: "Edit",
-                    symbol_: leftPlacement(iconLinkSymbol("edit")),
-                    onClick: () => dispatch(adt("startEditing"))
-                  }
-                ]
-              },
-              {
-                links: [
-                  {
-                    children: "Suspend",
-                    symbol_: leftPlacement(iconLinkSymbol("pause-circle")),
-                    onClick: () =>
-                      dispatch(adt("showModal", "suspend" as const))
-                  },
-                  {
-                    children: "Cancel",
-                    symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
-                    onClick: () => dispatch(adt("showModal", "cancel" as const))
-                  }
-                ]
-              }
-            ]
-          });
-        } else {
-          return component_.page.actions.none();
-        }
-      case CWUOpportunityStatus.Suspended:
-        if (viewerIsAdmin) {
-          return adt("dropdown", {
-            text: "Actions",
-            loading: isLoading,
-            linkGroups: [
-              {
-                links: [
-                  {
-                    children: "Publish",
-                    symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                    onClick: () =>
-                      dispatch(adt("showModal", "publish" as const))
-                  },
                   {
                     children: "Edit",
                     symbol_: leftPlacement(iconLinkSymbol("edit")),

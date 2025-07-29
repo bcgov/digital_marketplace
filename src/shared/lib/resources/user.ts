@@ -25,6 +25,16 @@ export function userTypeToKeycloakIdentityProvider(
   }
 }
 
+export function userTypeToTitleCase(v: UserType): string {
+  switch (v) {
+    case UserType.Government:
+    case UserType.Admin:
+      return "Public Sector Employee";
+    case UserType.Vendor:
+      return "Vendor";
+  }
+}
+
 export function gitHubProfileLink(username: string): string {
   return `https://github.com/${username}`;
 }

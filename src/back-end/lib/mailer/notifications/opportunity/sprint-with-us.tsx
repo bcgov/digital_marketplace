@@ -45,14 +45,13 @@ export async function handleSWUSubmittedForReview(
 
 export async function handleSWUPublished(
   connection: db.Connection,
-  opportunity: SWUOpportunity,
-  repost: boolean
+  opportunity: SWUOpportunity
 ): Promise<void> {
   // Notify all users with notifications on
   const subscribedUsers =
     getValidValue(await db.readManyUsersNotificationsOn(connection), null) ||
     [];
-  await newSWUOpportunityPublished(subscribedUsers, opportunity, repost);
+  await newSWUOpportunityPublished(subscribedUsers, opportunity);
 
   // Notify authoring gov user of successful publish
   const author =
@@ -62,7 +61,7 @@ export async function handleSWUPublished(
       null
     );
   if (author) {
-    await successfulSWUPublication(author, opportunity, repost);
+    await successfulSWUPublication(author, opportunity);
   }
 
   const panel =
@@ -77,7 +76,7 @@ export async function handleSWUPublished(
       .map((user) => getValidValue(user, null))
       .filter((user): user is User => !!user);
 
-  if (panel?.length && !repost) {
+  if (panel?.length) {
     await newSWUPanel(panel, opportunity);
   }
 }
@@ -142,40 +141,6 @@ export async function handleSWUCancelled(
     );
   if (author) {
     await cancelledSWUOpportunityActioned(author, opportunity);
-  }
-}
-
-export async function handleSWUSuspended(
-  connection: db.Connection,
-  opportunity: SWUOpportunity
-): Promise<void> {
-  // Notify all subscribed users on this opportunity, as well as users with proposals (we union so we don't notify anyone twice)
-  const subscribedUsers =
-    getValidValue(
-      await db.readManySWUSubscribedUsers(connection, opportunity.id),
-      null
-    ) || [];
-  const usersWithProposals =
-    getValidValue(
-      await db.readManySWUProposalAuthors(connection, opportunity.id),
-      null
-    ) || [];
-  const unionedUsers = unionBy(subscribedUsers, usersWithProposals, "id");
-  await Promise.all(
-    unionedUsers.map(
-      async (user) => await suspendedSWUOpportunitySubscribed(user, opportunity)
-    )
-  );
-
-  // Notify authoring gov user of suspension
-  const author =
-    opportunity.createdBy &&
-    getValidValue(
-      await db.readOneUser(connection, opportunity.createdBy.id),
-      null
-    );
-  if (author) {
-    await suspendedSWUOpportunityActioned(author, opportunity);
   }
 }
 
@@ -299,26 +264,15 @@ export const newSWUOpportunityPublished = makeSend(newSWUOpportunityPublishedT);
 
 export async function newSWUOpportunityPublishedT(
   recipients: User[],
-  opportunity: SWUOpportunity,
-  repost: boolean
+  opportunity: SWUOpportunity
 ): Promise<Emails> {
-  const title = `A ${repost ? "" : "New"} Sprint With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
-  const description = `A ${
-    repost ? "previously suspended" : "new"
-  } opportunity has been ${
-    repost ? "re-posted" : "posted"
-  } to the Digital Marketplace:`;
+  const title = `A New Sprint With Us Opportunity Has Been Posted`;
+  const description = `A new opportunity has been posted to the Digital Marketplace:`;
   const emails: Emails = [];
   for (let i = 0; i < recipients.length; i += MAILER_BATCH_SIZE) {
     const batch = recipients.slice(i, i + MAILER_BATCH_SIZE);
     emails.push({
-      summary: `${
-        repost
-          ? "SWU opportunity re-published after suspension"
-          : "New SWU opportunity published"
-      }; sent to user with notifications turned on.`,
+      summary: `New SWU opportunity published; sent to user with notifications turned on.`,
       to: MAILER_REPLY,
       bcc: batch.map((r) => r.email || ""),
       subject: title,
@@ -488,20 +442,13 @@ export const successfulSWUPublication = makeSend(successfulSWUPublicationT);
 
 export async function successfulSWUPublicationT(
   recipient: User,
-  opportunity: SWUOpportunity,
-  repost: boolean
+  opportunity: SWUOpportunity
 ): Promise<Emails> {
-  const title = `Your Sprint With Us Opportunity Has Been ${
-    repost ? "Re-posted" : "Posted"
-  }`;
-  const description = `You have successfully ${
-    repost ? "re-posted" : "posted"
-  } the following Digital Marketplace opportunity`;
+  const title = `Your Sprint With Us Opportunity Has Been Posted`;
+  const description = `You have successfully posted the following Digital Marketplace opportunity`;
   return [
     {
-      summary: `SWU successfully ${
-        repost ? "re-published" : "published"
-      }; sent to publishing government user.`,
+      summary: `SWU successfully published; sent to publishing government user.`,
       to: recipient.email || [],
       subject: title,
       html: templates.simple({
@@ -588,70 +535,6 @@ export async function cancelledSWUOpportunityActionedT(
     {
       summary:
         "SWU opportunity cancelled; sent to the administrator who actioned.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeSWUOpportunityInformation(opportunity)]
-      })
-    }
-  ];
-}
-
-export const suspendedSWUOpportunitySubscribed = makeSend(
-  suspendedSWUOpportunitySubscribedT
-);
-
-export async function suspendedSWUOpportunitySubscribedT(
-  recipient: User,
-  opportunity: SWUOpportunity
-): Promise<Emails> {
-  const title = "A Sprint With Us Opportunity Has Been Suspended";
-  const description =
-    "The following Digital Marketplace opportunity has been suspended:";
-  return [
-    {
-      summary:
-        "SWU opportunity suspended; sent to subscribed users and vendors with proposals.",
-      to: recipient.email || [],
-      subject: title,
-      html: templates.simple({
-        title,
-        description,
-        descriptionLists: [makeSWUOpportunityInformation(opportunity)],
-        body: (
-          <div>
-            <p>
-              If you have already submitted a proposal to this opportunity, you
-              may make changes to it while the opportunity is suspended.
-            </p>
-            <p>
-              If you have any questions, please send an email to{" "}
-              <templates.Link text={CONTACT_EMAIL} url={CONTACT_EMAIL} />.
-            </p>
-          </div>
-        )
-      })
-    }
-  ];
-}
-
-export const suspendedSWUOpportunityActioned = makeSend(
-  suspendedSWUOpportunityActionedT
-);
-
-export async function suspendedSWUOpportunityActionedT(
-  recipient: User,
-  opportunity: SWUOpportunity
-): Promise<Emails> {
-  const title = "A Sprint With Us Opportunity Has Been Suspended";
-  const description =
-    "You have suspended the following opportunity on the Digital Marketplace:";
-  return [
-    {
-      summary:
-        "SWU opportunity suspended; sent to the administrator who actioned.",
       to: recipient.email || [],
       subject: title,
       html: templates.simple({

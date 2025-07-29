@@ -11,7 +11,7 @@ $grid-gutter-width: $spacer * 2;
 $primary-bg-subtle: #ceebf7;
 $primary-border-subtle: #bbe2f4;
 @import "bootstrap/scss/variables";
-
+@import "./components/virtualized-table";
 
 
 // Custom Bootstrap variable overrides.
@@ -1219,7 +1219,17 @@ nav.navbar .nav-link:hover {
   // Note: this is not supported in firefox and safari as of May 2025
   textarea {
     field-sizing: content;
-    height: auto !important;
+  }
+}
+
+// Print-specific media query to ensure all content is visible
+@media print {
+  .opportunity-complete-page {
+    * {
+      overflow: visible !important;
+      max-height: none !important;
+      height: auto !important;
+    }
   }
 }
 

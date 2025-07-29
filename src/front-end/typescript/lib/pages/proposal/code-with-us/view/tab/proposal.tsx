@@ -21,7 +21,10 @@ import ReportCardList, {
 import React from "react";
 import { Col, Row } from "reactstrap";
 import { formatAmount } from "shared/lib";
-import { CWUOpportunity } from "shared/lib/resources/opportunity/code-with-us";
+import {
+  CWUOpportunity,
+  CWUOpportunityStatus
+} from "shared/lib/resources/opportunity/code-with-us";
 import {
   CWUProposal,
   CWUProposalStatus,
@@ -621,6 +624,10 @@ export const component: Tab.Component<State, Msg> = {
     const proposal = state.proposal;
     if (!proposal) return component_.page.actions.none();
     const propStatus = proposal.status;
+    const opportunity = state.opportunity;
+    if (!opportunity) return component_.page.actions.none();
+    const isProcessing = opportunity.status === CWUOpportunityStatus.Processing;
+
     switch (propStatus) {
       case CWUProposalStatus.UnderReview:
         return component_.page.actions.links([
@@ -650,6 +657,7 @@ export const component: Tab.Component<State, Msg> = {
                 {
                   children: "Award",
                   symbol_: leftPlacement(iconLinkSymbol("award")),
+                  disabled: !isProcessing,
                   onClick: () => dispatch(adt("showModal", "award" as const))
                 },
                 {
@@ -678,6 +686,7 @@ export const component: Tab.Component<State, Msg> = {
             symbol_: leftPlacement(iconLinkSymbol("award")),
             button: true,
             color: "primary",
+            disabled: !isProcessing,
             onClick: () => dispatch(adt("showModal", "award" as const))
           }
         ]);

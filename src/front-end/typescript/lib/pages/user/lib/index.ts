@@ -41,16 +41,6 @@ export function userToKeyCloakIdentityProviderTitleCase(
   );
 }
 
-export function userTypeToTitleCase(v: UserType): string {
-  switch (v) {
-    case UserType.Government:
-    case UserType.Admin:
-      return "Public Sector Employee";
-    case UserType.Vendor:
-      return "Vendor";
-  }
-}
-
 export function userTypeToPermissions(v: UserType): string[] {
   switch (v) {
     case UserType.Admin:

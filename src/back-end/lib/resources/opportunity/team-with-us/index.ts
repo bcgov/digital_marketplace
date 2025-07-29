@@ -106,7 +106,6 @@ interface ValidatedUpdateRequestBody {
     | ADT<"submitForReview", string>
     | ADT<"publish", string>
     | ADT<"startChallenge", string>
-    | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
     | ADT<
@@ -533,8 +532,7 @@ const create: crud.Create<
         if (dbResult.value.status === TWUOpportunityStatus.Published) {
           await twuOpportunityNotifications.handleTWUPublished(
             connection,
-            dbResult.value,
-            false
+            dbResult.value
           );
         }
         return basicResponse(
@@ -597,8 +595,6 @@ const update: crud.Update<
           return adt("finalizeQuestionConsensuses", getString(body, "value"));
         case "startChallenge":
           return adt("startChallenge", getString(body, "value", ""));
-        case "suspend":
-          return adt("suspend", getString(body, "value", ""));
         case "cancel":
           return adt("cancel", getString(body, "value", ""));
         case "addAddendum":
@@ -676,13 +672,12 @@ const update: crud.Update<
             attachments,
             resourceQuestions
           } = request.body.value;
-          // TWU Opportunities can only be edited if they are in DRAFT, UNDER REVIEW, PUBLISHED, or SUSPENDED
+          // TWU Opportunities can only be edited if they are in DRAFT, UNDER REVIEW or PUBLISHED
           if (
             ![
               TWUOpportunityStatus.Draft,
               TWUOpportunityStatus.UnderReview,
-              TWUOpportunityStatus.Published,
-              TWUOpportunityStatus.Suspended
+              TWUOpportunityStatus.Published
             ].includes(twuOpportunity.status)
           ) {
             return invalid({
@@ -1038,6 +1033,7 @@ const update: crud.Update<
             )
           } as ValidatedUpdateRequestBody);
         }
+        // todo: remove - not needed any more - the block is deprecated
         case "startChallenge": {
           if (
             !isValidStatusChange(
@@ -1073,29 +1069,6 @@ const update: crud.Update<
             session: request.session,
             body: adt("startChallenge", validatedEvaluationChallengeNote.value)
           });
-        }
-        case "suspend": {
-          if (
-            !isValidStatusChange(
-              twuOpportunity.status,
-              TWUOpportunityStatus.Suspended
-            ) ||
-            !permissions.suspendTWUOpportunity(request.session)
-          ) {
-            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-          }
-          const validatedSuspendNote = opportunityValidation.validateNote(
-            request.body.value
-          );
-          if (isInvalid(validatedSuspendNote)) {
-            return invalid({
-              opportunity: adt("suspend" as const, validatedSuspendNote.value)
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt("suspend", validatedSuspendNote.value)
-          } as ValidatedUpdateRequestBody);
         }
         case "cancel": {
           if (
@@ -1471,7 +1444,6 @@ const update: crud.Update<
         const { session, body } = request.body;
         const doNotNotify = [
           TWUOpportunityStatus.Draft,
-          TWUOpportunityStatus.Suspended,
           TWUOpportunityStatus.Canceled
         ];
         const existingOpportunity = getValidValue(
@@ -1499,7 +1471,7 @@ const update: crud.Update<
             );
             /**
              * Notify all subscribed users on the opportunity of the update
-             * (only if not draft or suspended status)
+             * (only if not draft status)
              */
             if (
               isValid(dbResult) &&
@@ -1539,8 +1511,7 @@ const update: crud.Update<
             if (isValid(dbResult)) {
               twuOpportunityNotifications.handleTWUPublished(
                 connection,
-                dbResult.value,
-                existingOpportunity?.status === TWUOpportunityStatus.Suspended
+                dbResult.value
               );
             }
             break;
@@ -1553,22 +1524,6 @@ const update: crud.Update<
               body.value,
               session
             );
-            break;
-          case "suspend":
-            dbResult = await db.updateTWUOpportunityStatus(
-              connection,
-              request.params.id,
-              TWUOpportunityStatus.Suspended,
-              body.value,
-              session
-            );
-            // Notify subscribers of suspension
-            if (isValid(dbResult)) {
-              twuOpportunityNotifications.handleTWUSuspended(
-                connection,
-                dbResult.value
-              );
-            }
             break;
           case "cancel":
             dbResult = await db.updateTWUOpportunityStatus(

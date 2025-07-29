@@ -109,7 +109,7 @@ const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
-
+    // todo: remove this and associated code - not needed any more - the block is deprecated
     case "completeTeamQuestions": {
       const opportunity = state.opportunity;
       if (!opportunity) return [state, []];
