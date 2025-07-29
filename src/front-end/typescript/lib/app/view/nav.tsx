@@ -137,7 +137,7 @@ const ContextualDropdown: component_.base.View<
           {text}
         </Link>
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-contextual-dropdown-group-${i}`}>
             {group.label ? (
@@ -198,7 +198,7 @@ const NavAccountDropdown: component_.base.View<
           height={DROPDOWN_CARET_SIZE}
         />
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-account-dropdown-group-${i}`}>
             {group.label ? (

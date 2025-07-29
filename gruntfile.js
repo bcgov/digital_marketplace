@@ -19,7 +19,6 @@ const buildFrontEnd = path.resolve(__dirname, "./build/front-end");
 const buildBackEnd = path.resolve(__dirname, "./build/back-end");
 const buildScripts = path.resolve(__dirname, "./build/scripts");
 const buildLearnFrontEnd = path.resolve(__dirname, "./build/learn-front-end");
-const tmpFrontEnd = path.resolve(__dirname, "./tmp/grunt/front-end");
 const tmpLearnFrontEnd = path.resolve(__dirname, "./tmp/grunt/learn-front-end");
 global.gruntConfig = {
   helpers: {
@@ -37,9 +36,6 @@ global.gruntConfig = {
       dir: buildFrontEnd,
       css: `${buildFrontEnd}/app.css`,
       js: `${buildFrontEnd}/app.js`
-    },
-    tmp: {
-      dir: tmpFrontEnd
     },
     env: {
       VITE_NODE_ENV,
@@ -106,35 +102,14 @@ module.exports = function (grunt) {
   );
   //create task lists for dev and prod envs
   //front-end
-  grunt.registerTask("front-end-common", [
-    "clean:frontEndTmp",
-    "clean:frontEndBuild",
-    "copy:frontEndStatic"
-    // "ejs:frontEndHtml", // Vite handles index.html
-    // "sass:frontEndCss", // Vite handles SASS/CSS
-    // "postcss:frontEndPrefix", // Vite handles PostCSS
-    // "shell:frontEndTypeScript", // Vite handles TS
-    // "browserify:frontEnd" // Vite handles bundling
-  ]);
-  grunt.registerTask("front-end-build-development", [
-    "front-end-common",
-    "shell:frontEndViteBuildDev", // Added Vite build for dev
-    "compress:gzip"
-  ]);
   grunt.registerTask("front-end-build-production", [
-    "front-end-common",
-    "shell:frontEndViteBuildProd", // Added Vite build for prod
-    // "postcss:frontEndMin", // Vite handles minification
-    // "terser:production", // Vite handles minification
-    // "htmlmin:production", // Vite handles minification
+    "shell:frontEndViteBuildProd",
     "compress:gzip",
     "compress:brotli"
   ]);
   grunt.registerTask("front-end-build", [`front-end-build-${VITE_NODE_ENV}`]);
   grunt.registerTask("front-end-watch-development", [
-    // "front-end-build-development", // Vite watch handles initial build
-    "shell:frontEndViteWatch" // Vite handles watch and rebuilds
-    // "concurrent:frontEndWatch" // Replaced by Vite's watch mode
+    "shell:frontEndViteWatch"
   ]);
   //back-end
   grunt.registerTask("back-end-build-production", [

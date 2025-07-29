@@ -258,16 +258,16 @@ const create: crud.Create<
     async parseRequestBody(request) {
       const body: unknown =
         request.body.tag === "json" ? request.body.value : {};
-      const team = get(body, "team");
+      const team = get<typeof body, string>(body, "team");
       return {
         opportunity: getString(body, "opportunity"),
         organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestionResponses: get(
+        resourceQuestionResponses: get<typeof body, string>(
           body,
           "resourceQuestionResponses"
-        ) as any,
+        ),
         team: (Array.isArray(team) ? team : []).map((member) => ({
           member: getString(member, "member"),
           hourlyRate: getNumber(member, "hourlyRate"),
@@ -554,12 +554,12 @@ const update: crud.Update<
         case "edit":
           return adt("edit", {
             organization: getString(value, "organization"),
-            resourceQuestionResponses: get(
+            resourceQuestionResponses: get<typeof value, string>(
               value,
               "resourceQuestionResponses"
-            ) as any,
+            ),
             attachments: getStringArray(value, "attachments"),
-            team: get(value, "team") as any
+            team: get<typeof value, string>(value, "team")
           });
         case "submit":
           return adt("submit", getString(body, "value", ""));

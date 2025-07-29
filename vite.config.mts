@@ -47,7 +47,6 @@ export default defineConfig(({ mode }) => {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
         '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript')
-        // '/app.js': path.resolve(process.cwd(), 'src/front-end/typescript/index.ts')
       }
     },
     // Set the base public path when served in production
@@ -71,7 +70,6 @@ export default defineConfig(({ mode }) => {
       strictPort: true, // Exit if port is already in use
       // Proxy API requests to the backend server
       proxy: {
-        // Adjust '/api' if your API routes have a different prefix
         '/api': {
           target: 'http://localhost:3000', // Point proxy to backend on 3000
           changeOrigin: true, // Needed for virtual hosted sites

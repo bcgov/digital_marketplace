@@ -1,7 +1,4 @@
 module.exports = {
-  // frontEndTypeScript: `npx tsc --project "${gruntConfig.frontEnd.src.ts}" --outDir "${gruntConfig.frontEnd.tmp.dir}"`, // Replaced by Vite
-  frontEndViteBuildDev:
-    "VITE_NODE_ENV=development vite build --mode development",
   frontEndViteBuildProd:
     "VITE_NODE_ENV=production vite build --mode production",
   frontEndViteWatch:
