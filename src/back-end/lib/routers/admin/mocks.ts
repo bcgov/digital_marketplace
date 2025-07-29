@@ -21,6 +21,13 @@ import {
   SWUTeamQuestion
 } from "shared/lib/resources/opportunity/sprint-with-us";
 import {
+  TWUOpportunity,
+  TWUOpportunitySlim,
+  TWUOpportunityStatus,
+  TWUServiceArea,
+  TWUResourceQuestion
+} from "shared/lib/resources/opportunity/team-with-us";
+import {
   Organization,
   OrganizationSlim
 } from "shared/lib/resources/organization";
@@ -34,6 +41,10 @@ import {
   SWUProposalStatus,
   SWUProposalTeamQuestionResponse
 } from "shared/lib/resources/proposal/sprint-with-us";
+import {
+  TWUProposal,
+  TWUProposalStatus
+} from "shared/lib/resources/proposal/team-with-us";
 import {
   User,
   UserSlim,
@@ -308,4 +319,93 @@ export const affiliation: Affiliation = {
   organization,
   membershipType: MembershipType.Member,
   membershipStatus: MembershipStatus.Active
+};
+
+export const twuResourceQuestion: TWUResourceQuestion = {
+  question: "Question",
+  guideline: "Guideline",
+  score: 5,
+  wordLimit: 300,
+  order: 1,
+  createdAt: date,
+  createdBy: vendorUserSlim
+};
+
+export const twuOpportunity: TWUOpportunity = {
+  id,
+  createdAt: date,
+  updatedAt: date,
+  title: "TWU Title",
+  teaser: "",
+  remoteOk: true,
+  remoteDesc: "",
+  location: "Location",
+  maxBudget: 1500000,
+  description: "Description",
+  proposalDeadline: date,
+  assignmentDate: date,
+  startDate: date,
+  completionDate: date,
+  questionsWeight: 20,
+  challengeWeight: 30,
+  priceWeight: 20,
+  status: TWUOpportunityStatus.Published,
+  resourceQuestions: [twuResourceQuestion],
+  resources: [
+    {
+      id,
+      serviceArea: TWUServiceArea.DataProfessional,
+      targetAllocation: 100,
+      mandatorySkills: ["Mandatory Skill"],
+      optionalSkills: [],
+      order: 1
+    }
+  ],
+  successfulProponent: {
+    id,
+    name: "Successful Proponent",
+    email: "donotreply_DigitalMarketplace@gov.bc.ca",
+    createdBy: vendorUserSlim
+  },
+  attachments: [],
+  addenda: []
+};
+
+export const publishedTWUOpportunity: TWUOpportunity = {
+  ...twuOpportunity,
+  publishedAt: date
+};
+
+export const twuOpportunitySlim: TWUOpportunitySlim = {
+  id: twuOpportunity.id,
+  title: twuOpportunity.title,
+  teaser: twuOpportunity.teaser,
+  remoteOk: twuOpportunity.remoteOk,
+  location: twuOpportunity.location,
+  maxBudget: twuOpportunity.maxBudget,
+  createdAt: twuOpportunity.createdAt,
+  updatedAt: twuOpportunity.updatedAt,
+  status: twuOpportunity.status,
+  proposalDeadline: twuOpportunity.proposalDeadline
+};
+
+export const twuProposal: TWUProposal = {
+  id,
+  createdBy: vendorUserSlim,
+  createdAt: date,
+  updatedBy: vendorUserSlim,
+  updatedAt: date,
+  opportunity: twuOpportunitySlim,
+  status: TWUProposalStatus.Submitted,
+  attachments: [],
+  resourceQuestionResponses: [],
+  team: [
+    {
+      member: vendorUserSlim,
+      idpUsername: "vendor_user",
+      hourlyRate: 100,
+      resource: id
+    }
+  ],
+  anonymousProponentName: "Proponent 1"
 };

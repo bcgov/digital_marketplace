@@ -1,5 +1,6 @@
 import * as History from "front-end/lib/components/table/history";
 import { ThemeColor } from "front-end/lib/types";
+import { isDateInThePast } from "shared/lib";
 import {
   CWUOpportunity,
   CWUOpportunityEvent,
@@ -20,10 +21,12 @@ export function cwuOpportunityStatusToColor(
       return "success";
     case CWUOpportunityStatus.Evaluation:
       return "warning";
+    case CWUOpportunityStatus.Processing:
+      return "warning";
     case CWUOpportunityStatus.Awarded:
       return "success";
-    case CWUOpportunityStatus.Suspended:
-      return "secondary";
+    case CWUOpportunityStatus.DeprecatedSuspended:
+      return "danger";
     case CWUOpportunityStatus.Canceled:
       return "danger";
   }
@@ -41,9 +44,11 @@ export function cwuOpportunityStatusToTitleCase(
       return "Published";
     case CWUOpportunityStatus.Evaluation:
       return "Evaluation";
+    case CWUOpportunityStatus.Processing:
+      return "Processing";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled"; // Use British spelling for copy.
@@ -63,8 +68,20 @@ export function cwuOpportunityToPublicStatus(
       return "Open";
     } else if (o.status === CWUOpportunityStatus.Canceled) {
       return "Canceled";
+    } else if (o.status === CWUOpportunityStatus.DeprecatedSuspended) {
+      return "Suspended";
+    } else if (o.status === CWUOpportunityStatus.Evaluation) {
+      return "Evaluation";
+    } else if (
+      o.status === CWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, show as Evaluation
+      return "Evaluation";
+    } else if (o.status === CWUOpportunityStatus.Processing) {
+      return "Processing";
     } else {
-      return "Closed";
+      return "Completed";
     }
   }
 }
@@ -80,8 +97,22 @@ export function cwuOpportunityToPublicColor(
   } else {
     if (isOpen(o)) {
       return "success";
-    } else {
+    } else if (o.status === CWUOpportunityStatus.Evaluation) {
+      return "warning";
+    } else if (
+      o.status === CWUOpportunityStatus.Published &&
+      isDateInThePast(o.proposalDeadline)
+    ) {
+      // If deadline has passed but status is still Published, use warning color
+      return "warning";
+    } else if (o.status === CWUOpportunityStatus.Processing) {
+      return "warning";
+    } else if (o.status === CWUOpportunityStatus.DeprecatedSuspended) {
       return "danger";
+    } else if (o.status === CWUOpportunityStatus.Canceled) {
+      return "danger";
+    } else {
+      return "success";
     }
   }
 }
@@ -90,7 +121,7 @@ export function cwuOpportunityStatusToPresentTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspend";
     case CWUOpportunityStatus.Canceled:
       return "Cancel";
@@ -100,6 +131,8 @@ export function cwuOpportunityStatusToPresentTenseVerb(
       return "Publish";
     case CWUOpportunityStatus.Awarded:
       return "Award";
+    case CWUOpportunityStatus.Processing:
+      return "Process";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
       return "Update";
@@ -110,7 +143,7 @@ export function cwuOpportunityStatusToPastTenseVerb(
   s: CWUOpportunityStatus
 ): string {
   switch (s) {
-    case CWUOpportunityStatus.Suspended:
+    case CWUOpportunityStatus.DeprecatedSuspended:
       return "Suspended";
     case CWUOpportunityStatus.Canceled:
       return "Cancelled";
@@ -120,6 +153,8 @@ export function cwuOpportunityStatusToPastTenseVerb(
       return "Published";
     case CWUOpportunityStatus.Awarded:
       return "Awarded";
+    case CWUOpportunityStatus.Processing:
+      return "Processed";
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Draft:
       return "Updated";

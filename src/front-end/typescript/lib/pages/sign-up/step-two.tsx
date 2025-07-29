@@ -16,7 +16,7 @@ import {
   immutable,
   component as component_
 } from "front-end/lib/framework";
-import { userTypeToTitleCase } from "front-end/lib/pages/user/lib";
+import { userTypeToTitleCase } from "shared/lib/resources/user";
 import * as ProfileForm from "front-end/lib/pages/user/lib/components/profile-form";
 import Link, {
   iconLinkSymbol,

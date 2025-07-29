@@ -262,24 +262,26 @@ export async function unsuccessfulCWUProposalSubmissionT(
   opportunity: CWUOpportunity,
   proposal: CWUProposal | CWUProposalSlim
 ): Promise<Emails> {
-  const title = "A Code With Us Opportunity Has Closed";
+  const title = "A Code With Us Opportunity: Award Decision Made";
   const description =
-    "The following Digital Marketplace opportunity that you submitted a proposal to has closed:";
+    "The following Digital Marketplace opportunity that you submitted a proposal to has been awarded:";
+
+  // Get opportunity details from the standard information function
+  const opportunityDetails = makeCWUOpportunityInformation(opportunity, false);
+
   return [
     {
       summary: "CWU opportunity awarded; sent to unsuccessful proponents.",
       to: recipient.email || [],
       subject: title,
-      html: templates.simple({
+      html: templates.awardDecision({
         title,
         description,
-        descriptionLists: [makeCWUOpportunityInformation(opportunity, false)],
+        opportunityTitle: opportunity.title,
+        awardedTo: opportunity.successfulProponent?.name || EMPTY_STRING,
+        opportunityDetails: opportunityDetails.items,
         body: (
           <div>
-            <p>
-              The opportunity has been awarded to{" "}
-              {opportunity.successfulProponent?.name || EMPTY_STRING}.
-            </p>
             <p>
               If you would like to view your total score,{" "}
               <templates.Link

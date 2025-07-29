@@ -16,6 +16,10 @@ import { Col, Row } from "reactstrap";
 import { CWUProposal } from "shared/lib/resources/proposal/code-with-us";
 import { User } from "shared/lib/resources/user";
 import { adt } from "shared/lib/types";
+import {
+  cwuOpportunityToPublicColor,
+  cwuOpportunityToPublicStatus
+} from "front-end/lib/pages/opportunity/code-with-us/lib";
 
 export interface Props {
   proposal: CWUProposal;
@@ -43,7 +47,16 @@ const ViewTabHeader: component.base.View<Props> = ({
   ];
   const items = [
     {
-      name: "Status",
+      name: "Opportunity Status",
+      children: (
+        <Badge
+          text={cwuOpportunityToPublicStatus(proposal.opportunity, viewerUser)}
+          color={cwuOpportunityToPublicColor(proposal.opportunity, viewerUser)}
+        />
+      )
+    },
+    {
+      name: "Proposal Status",
       children: (
         <Badge
           text={cwuProposalStatusToTitleCase(propStatus, viewerUser.type)}

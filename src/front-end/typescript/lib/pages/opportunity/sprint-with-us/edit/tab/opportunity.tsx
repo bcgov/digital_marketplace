@@ -40,8 +40,7 @@ type ModalId =
   | "saveChangesAndPublish"
   | "saveChangesAndSubmit"
   | "delete"
-  | "cancel"
-  | "suspend";
+  | "cancel";
 
 export interface State extends Tab.Params {
   opportunity: SWUOpportunity | null;
@@ -59,8 +58,7 @@ export interface State extends Tab.Params {
 type UpdateStatus =
   | SWUOpportunityStatus.UnderReview
   | SWUOpportunityStatus.Published
-  | SWUOpportunityStatus.Canceled
-  | SWUOpportunityStatus.Suspended;
+  | SWUOpportunityStatus.Canceled;
 
 export type InnerMsg =
   | ADT<"resetOpportunity", [SWUOpportunity, User[], boolean]>
@@ -216,8 +214,6 @@ function updateStatus(
         return "submitForReview";
       case SWUOpportunityStatus.Published:
         return "publish";
-      case SWUOpportunityStatus.Suspended:
-        return "suspend";
       case SWUOpportunityStatus.Canceled:
         return "cancel";
     }
@@ -872,27 +868,6 @@ export const component: Tab.Component<State, Msg> = {
           body: () =>
             "Are you sure you want to submit your changes to this Sprint With Us opportunity for review? Once submitted, an administrator will review it and may reach out to you to request changes before publishing it."
         });
-      case "suspend":
-        return component_.page.modal.show({
-          title: "Suspend Sprint With Us Opportunity?",
-          onCloseMsg: adt("hideModal"),
-          actions: [
-            {
-              text: "Suspend Opportunity",
-              icon: "pause-circle",
-              color: "warning",
-              button: true,
-              msg: adt("updateStatus", SWUOpportunityStatus.Suspended) as Msg
-            },
-            {
-              text: "Cancel",
-              color: "secondary",
-              msg: adt("hideModal")
-            }
-          ],
-          body: () =>
-            "Are you sure you want to suspend this opportunity? Once suspended, all subscribers and vendors with pending or submitted proposals will be notified."
-        });
       case "delete":
         return component_.page.modal.show({
           title: "Delete Sprint With Us Opportunity?",
@@ -1156,44 +1131,6 @@ export const component: Tab.Component<State, Msg> = {
           linkGroups: [
             {
               links: [
-                {
-                  children: "Edit",
-                  symbol_: leftPlacement(iconLinkSymbol("edit")),
-                  onClick: () => dispatch(adt("startEditing"))
-                }
-              ]
-            },
-            {
-              links: [
-                {
-                  children: "Suspend",
-                  symbol_: leftPlacement(iconLinkSymbol("pause-circle")),
-                  onClick: () => dispatch(adt("showModal", "suspend" as const))
-                },
-                {
-                  children: "Cancel",
-                  symbol_: leftPlacement(iconLinkSymbol("minus-circle")),
-                  onClick: () => dispatch(adt("showModal", "cancel" as const))
-                }
-              ]
-            }
-          ]
-        });
-      case SWUOpportunityStatus.Suspended:
-        if (!viewerIsAdmin) {
-          return component_.page.actions.none();
-        }
-        return component_.page.actions.dropdown({
-          text: "Actions",
-          loading: isLoading,
-          linkGroups: [
-            {
-              links: [
-                {
-                  children: "Publish",
-                  symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                  onClick: () => dispatch(adt("showModal", "publish" as const))
-                },
                 {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),

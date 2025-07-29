@@ -23,7 +23,7 @@ import { valid } from "shared/lib/http";
 import { FileRecord } from "shared/lib/resources/file";
 import {
   CWUOpportunityStatus,
-  privateOpportunitiesStatuses,
+  privateOpportunityStatuses,
   publicOpportunityStatuses
 } from "shared/lib/resources/opportunity/code-with-us";
 import { Organization } from "shared/lib/resources/organization";
@@ -302,7 +302,7 @@ export async function hasCWUAttachmentPermission(
     query.orWhere(function () {
       this.whereIn(
         "stat.status",
-        privateOpportunitiesStatuses as CWUOpportunityStatus[]
+        privateOpportunityStatuses as CWUOpportunityStatus[]
       ).andWhere({ "opp.createdBy": session.user.id, "attachments.file": id });
     });
   }
@@ -852,48 +852,95 @@ export const updateCWUProposal = tryDb<
   );
 });
 
+/**
+ * Internal function that updates a CWU proposal status.
+ */
+async function _updateCWUProposalStatusInternal(
+  trx: Transaction,
+  proposalId: Id,
+  status: CWUProposalStatus,
+  note: string,
+  session: AuthenticatedSession
+): Promise<CWUProposal> {
+  const now = new Date();
+
+  const [result] = await trx<RawCWUProposalHistoryRecord & { proposal: Id }>(
+    "cwuProposalStatuses"
+  ).insert(
+    {
+      id: generateUuid(),
+      proposal: proposalId,
+      createdAt: now,
+      createdBy: session.user.id,
+      status,
+      note
+    },
+    "*"
+  );
+
+  // Update updatedAt/By stamp on proposal root record
+  await trx("cwuProposals").where({ id: proposalId }).update({
+    updatedAt: now,
+    updatedBy: session.user.id
+  });
+
+  if (!result) {
+    throw new Error("unable to update proposal");
+  }
+
+  const dbResult = await readOneCWUProposal(trx, result.proposal, session);
+  if (isInvalid(dbResult) || !dbResult.value) {
+    throw new Error("unable to update proposal");
+  }
+
+  return dbResult.value;
+}
+
 export const updateCWUProposalStatus = tryDb<
   [Id, CWUProposalStatus, string, AuthenticatedSession],
   CWUProposal
 >(async (connection, proposalId, status, note, session) => {
-  const now = new Date();
   return valid(
     await connection.transaction(async (trx) => {
-      const [result] = await connection<
-        RawCWUProposalHistoryRecord & { proposal: Id }
-      >("cwuProposalStatuses")
-        .transacting(trx)
-        .insert(
-          {
-            id: generateUuid(),
-            proposal: proposalId,
-            createdAt: now,
-            createdBy: session.user.id,
-            status,
-            note
-          },
-          "*"
-        );
+      return await _updateCWUProposalStatusInternal(
+        trx,
+        proposalId,
+        status,
+        note,
+        session
+      );
+    })
+  );
+});
 
-      // Update updatedAt/By stamp on proposal root record
-      await connection("cwuProposals")
-        .transacting(trx)
-        .where({ id: proposalId })
-        .update({
-          updatedAt: now,
-          updatedBy: session.user.id
-        });
+/**
+ * Disqualifies a CWU proposal and updates the opportunity processing status in a single transaction.
+ * This ensures both operations succeed or fail together.
+ */
+export const disqualifyCWUProposalAndUpdateOpportunity = tryDb<
+  [Id, string, AuthenticatedSession],
+  CWUProposal
+>(async (connection, proposalId, disqualificationReason, session) => {
+  return valid(
+    await connection.transaction(async (trx) => {
+      // Update proposal status to disqualified
+      const updatedProposal = await _updateCWUProposalStatusInternal(
+        trx,
+        proposalId,
+        CWUProposalStatus.Disqualified,
+        disqualificationReason,
+        session
+      );
 
-      if (!result) {
-        throw new Error("unable to update proposal");
-      }
+      // Check if opportunity should be moved to "Processing" status after disqualification
+      const opportunityId = updatedProposal.opportunity.id;
+      await checkAndUpdateCWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
 
-      const dbResult = await readOneCWUProposal(trx, result.proposal, session);
-      if (isInvalid(dbResult) || !dbResult.value) {
-        throw new Error("unable to update proposal");
-      }
-
-      return dbResult.value;
+      return updatedProposal;
     })
   );
 });
@@ -970,10 +1017,65 @@ export const updateCWUProposalScore = tryDb<
         throw new Error("unable to update proposal");
       }
 
+      // updateCWUProposalScore was invoked -
+      // this proposal is now fully evaluated, check if we need to change the opportunity "Processing" status
+      const opportunityId = dbResult.value.opportunity.id;
+      await checkAndUpdateCWUOpportunityProcessingStatus(
+        trx,
+        opportunityId,
+        session
+      );
+
       return dbResult.value;
     })
   );
 });
+
+/**
+ * Checks if all proposals for a CWU opportunity are evaluated and
+ * updates the opportunity status accordingly.
+ */
+export async function checkAndUpdateCWUOpportunityProcessingStatus(
+  connection: Connection,
+  opportunityId: Id,
+  session: AuthenticatedSession
+): Promise<void> {
+  // Get all active proposals
+  const activeProposals = await generateCWUProposalQuery(connection)
+    .where({ "proposals.opportunity": opportunityId })
+    .whereNotIn("statuses.status", [
+      CWUProposalStatus.Withdrawn,
+      CWUProposalStatus.Disqualified,
+      CWUProposalStatus.Draft
+    ]);
+
+  // Get current opportunity status
+  const currentOpportunity = await generateCWUOpportunityQuery(connection)
+    .where({ "opp.id": opportunityId })
+    .select("stat.status")
+    .first();
+
+  const currentStatus = currentOpportunity.status;
+  const totalProposalsCount = activeProposals.length;
+  const evaluatedCount = activeProposals.filter(
+    (p) => p.status === CWUProposalStatus.Evaluated
+  ).length;
+
+  // All proposals are evaluated and opportunity is in EVALUATION, change to PROCESSING
+  if (
+    totalProposalsCount > 0 &&
+    evaluatedCount === totalProposalsCount &&
+    currentStatus === CWUOpportunityStatus.Evaluation
+  ) {
+    await updateCWUOpportunityStatus(
+      connection,
+      opportunityId,
+      CWUOpportunityStatus.Processing,
+      "Automatically moved to Processing as all proposals have been evaluated.",
+      session
+    );
+  }
+}
 
 export const awardCWUProposal = tryDb<
   [Id, string, AuthenticatedSession],

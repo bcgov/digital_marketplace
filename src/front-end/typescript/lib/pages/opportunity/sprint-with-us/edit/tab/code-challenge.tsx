@@ -58,6 +58,7 @@ export interface State extends Tab.Params {
   screenToFromLoading: Id | null;
   canProposalsBeScreened: boolean;
   canViewProposals: boolean;
+  allProposalsScored: boolean;
   table: Immutable<Table.State>;
 }
 
@@ -98,6 +99,7 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       showModal: null,
       canViewProposals: false,
       canProposalsBeScreened: false,
+      allProposalsScored: false,
       table: immutable(tableState)
     },
     component_.cmd.mapMany(tableCmds, (msg) => adt("table", msg) as Msg)
@@ -137,12 +139,26 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           (acc, p) => acc || canSWUProposalBeScreenedToFromTeamScenario(p),
           false as boolean
         );
+
+      /**
+       * Check if all proposals have been scored for code challenge
+       * or are disqualified (which means they don't need to be scored)
+       */
+      const allProposalsScored =
+        proposals.length > 0 &&
+        proposals.every(
+          (p) =>
+            p.challengeScore !== undefined ||
+            p.status === SWUProposalStatus.Disqualified
+        );
+
       return [
         state
           .set("opportunity", opportunity)
           .set("proposals", proposals)
           .set("canViewProposals", canViewProposals)
-          .set("canProposalsBeScreened", canProposalsBeScreened),
+          .set("canProposalsBeScreened", canProposalsBeScreened)
+          .set("allProposalsScored", allProposalsScored),
         [component_.cmd.dispatch(component_.page.readyMsg())]
       ];
     }
@@ -647,6 +663,7 @@ export const component: Tab.Component<State, Msg> = {
           // At least one proposal already screened in.
           return (
             isLoading ||
+            !state.allProposalsScored ||
             !(
               canSWUOpportunityBeScreenedInToTeamScenario(opportunity) &&
               state.proposals.reduce(
