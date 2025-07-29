@@ -1096,15 +1096,16 @@ nav.navbar .nav-link:hover {
   // Note: this is not supported in firefox and safari as of May 2025
   textarea {
     field-sizing: content;
-    height: auto !important;
   }
+}
 
-  // Ensure non-textarea fields are full size
-  .markdown.response-consensus{
-    max-height: none;
-  }
-
-  .panel-notes{
-    height: auto;
+// Print-specific media query to ensure all content is visible
+@media print {
+  .opportunity-complete-page {
+    * {
+      overflow: visible !important;
+      max-height: none !important;
+      height: auto !important;
+    }
   }
 }
