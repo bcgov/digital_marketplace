@@ -35,7 +35,7 @@ const ProgramCard: component.base.View<Props> = ({
 }) => {
   return (
     <Col xs="12" md="4" className={className}>
-      <div className="d-flex flex-column align-items-center bg-white rounded-lg border p-4 p-sm-5 text-center h-100 shadow-hover">
+      <div className="d-flex flex-column align-items-center bg-white rounded-3 border p-4 p-sm-5 text-center h-100 shadow-hover">
         <img
           src={img}
           className="w-100"

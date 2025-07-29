@@ -1,13 +1,15 @@
+/* eslint @typescript-eslint/no-require-imports: "off" */
+
 const path = require("path");
 //set up global constants and helpers for all grunt tasks
 const deslash = (s) => s.replace(/^\/*/, "").replace(/\/*$/, "");
 const prefix = (a) => (b) => `/${a ? deslash(a) + "/" : ""}${deslash(b)}`;
-const NODE_ENV =
-  process.env.NODE_ENV === "development" ? "development" : "production";
+const VITE_NODE_ENV =
+  process.env.VITE_NODE_ENV === "development" ? "development" : "production";
 const CONTACT_EMAIL =
   process.env.CONTACT_EMAIL || "digitalmarketplace@gov.bc.ca";
-const PATH_PREFIX = process.env.PATH_PREFIX || "";
-const SHOW_TEST_INDICATOR = process.env.SHOW_TEST_INDICATOR || "";
+const VITE_PATH_PREFIX = process.env.VITE_PATH_PREFIX || "";
+const VITE_SHOW_TEST_INDICATOR = process.env.VITE_SHOW_TEST_INDICATOR || "";
 const srcFrontEnd = path.resolve(__dirname, "./src/front-end");
 const srcBackEnd = path.resolve(__dirname, "./src/back-end");
 const srcScripts = path.resolve(__dirname, "./src/scripts");
@@ -17,11 +19,10 @@ const buildFrontEnd = path.resolve(__dirname, "./build/front-end");
 const buildBackEnd = path.resolve(__dirname, "./build/back-end");
 const buildScripts = path.resolve(__dirname, "./build/scripts");
 const buildLearnFrontEnd = path.resolve(__dirname, "./build/learn-front-end");
-const tmpFrontEnd = path.resolve(__dirname, "./tmp/grunt/front-end");
 const tmpLearnFrontEnd = path.resolve(__dirname, "./tmp/grunt/learn-front-end");
 global.gruntConfig = {
   helpers: {
-    prefixPath: prefix(PATH_PREFIX)
+    prefixPath: prefix(VITE_PATH_PREFIX)
   },
   frontEnd: {
     src: {
@@ -36,14 +37,11 @@ global.gruntConfig = {
       css: `${buildFrontEnd}/app.css`,
       js: `${buildFrontEnd}/app.js`
     },
-    tmp: {
-      dir: tmpFrontEnd
-    },
     env: {
-      NODE_ENV,
+      VITE_NODE_ENV,
       CONTACT_EMAIL,
-      PATH_PREFIX,
-      SHOW_TEST_INDICATOR
+      VITE_PATH_PREFIX,
+      VITE_SHOW_TEST_INDICATOR
     }
   },
   backEnd: {
@@ -104,32 +102,14 @@ module.exports = function (grunt) {
   );
   //create task lists for dev and prod envs
   //front-end
-  grunt.registerTask("front-end-common", [
-    "clean:frontEndTmp",
-    "clean:frontEndBuild",
-    "copy:frontEndStatic",
-    "ejs:frontEndHtml",
-    "sass:frontEndCss",
-    "postcss:frontEndPrefix",
-    "shell:frontEndTypeScript",
-    "browserify:frontEnd"
-  ]);
-  grunt.registerTask("front-end-build-development", [
-    "front-end-common",
-    "compress:gzip"
-  ]);
   grunt.registerTask("front-end-build-production", [
-    "front-end-common",
-    "postcss:frontEndMin",
-    "terser:production",
-    "htmlmin:production",
+    "shell:frontEndViteBuildProd",
     "compress:gzip",
     "compress:brotli"
   ]);
-  grunt.registerTask("front-end-build", [`front-end-build-${NODE_ENV}`]);
+  grunt.registerTask("front-end-build", [`front-end-build-${VITE_NODE_ENV}`]);
   grunt.registerTask("front-end-watch-development", [
-    "front-end-build-development",
-    "concurrent:frontEndWatch"
+    "shell:frontEndViteWatch"
   ]);
   //back-end
   grunt.registerTask("back-end-build-production", [
@@ -137,14 +117,14 @@ module.exports = function (grunt) {
     "shell:backEndTypeScript"
   ]);
   grunt.registerTask("back-end-build-development", ["shell:backEndTypeScript"]);
-  grunt.registerTask("back-end-build", [`back-end-build-${NODE_ENV}`]);
+  grunt.registerTask("back-end-build", [`back-end-build-${VITE_NODE_ENV}`]);
   //scripts
   grunt.registerTask("scripts-build-production", [
     "clean:scriptsBuild",
     "shell:scriptsTypeScript"
   ]);
   grunt.registerTask("scripts-build-development", ["shell:scriptsTypeScript"]);
-  grunt.registerTask("scripts-build", [`scripts-build-${NODE_ENV}`]);
+  grunt.registerTask("scripts-build", [`scripts-build-${VITE_NODE_ENV}`]);
   //learn-front-end
   grunt.registerTask("learn-front-end-build", [
     "clean:learnFrontEndTmp",

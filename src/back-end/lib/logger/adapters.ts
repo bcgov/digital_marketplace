@@ -1,4 +1,4 @@
-import { Chalk, default as chalk } from "chalk";
+import chalk from "chalk";
 
 export type AdapterFunction = (prefix: string, msg: string) => void;
 
@@ -9,7 +9,11 @@ export interface Adapter {
   debug: AdapterFunction;
 }
 
-function oneLine(prefix: string, msg: string, prefixColor: Chalk): string {
+function oneLine(
+  prefix: string,
+  msg: string,
+  prefixColor: typeof chalk
+): string {
   return `${chalk.gray("[")}${prefixColor(prefix)}${chalk.gray("]")} ${msg}\n`;
 }
 

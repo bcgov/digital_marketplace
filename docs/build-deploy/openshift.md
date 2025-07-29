@@ -4,6 +4,8 @@ All below commands should be run from openshift directory in the project root. Y
 
 For instructions on deploying the Backup Container for each environment please refer to [backups.md](../build-deploy/backups.md).
 
+For instructions on deploying the new AI services (NestJS AI service and ChromaDB) please refer to [ai-services.md](../build-deploy/ai-services.md).
+
 -----
 ## Prerequisites
 
@@ -99,7 +101,7 @@ oc -n ccc866-dev process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=dev \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://dev.loginproxy.gov.bc.ca/auth \
--p SHOW_TEST_INDICATOR=1 \
+-p VITE_SHOW_TEST_INDICATOR=1 \
 -p BASIC_AUTH_USERNAME=<username> \
 -p BASIC_AUTH_PASSWORD_HASH=<hashed_password> \
 -p ORIGIN=https://app-digmkt-dev.apps.silver.devops.gov.bc.ca \
@@ -113,7 +115,7 @@ oc -n ccc866-test process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=test \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://test.loginproxy.gov.bc.ca/auth \
--p SHOW_TEST_INDICATOR=1 \
+-p VITE_SHOW_TEST_INDICATOR=1 \
 -p ORIGIN=https://app-digmkt-test.apps.silver.devops.gov.bc.ca \
 -p HOST=app-digmkt-test.apps.silver.devops.gov.bc.ca \
 -p BASIC_AUTH_USERNAME=<username> \
@@ -127,7 +129,7 @@ oc -n ccc866-prod process -f openshift/templates/app/app-digmkt-deploy.yaml \
 -p TAG_NAME=prod \
 -p KEYCLOAK_CLIENT_SECRET=<secret> \
 -p KEYCLOAK_URL=https://loginproxy.gov.bc.ca/auth \
--p SHOW_TEST_INDICATOR=0 \
+-p VITE_SHOW_TEST_INDICATOR=0 \
 -p ORIGIN=https://marketplace.digital.gov.bc.ca \
 -p HOST=marketplace.digital.gov.bc.ca \
 -p DATABASE_SERVICE_NAME=patroni-pg12 | oc -n ccc866-prod apply -f -

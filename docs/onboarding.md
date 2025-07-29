@@ -58,7 +58,7 @@ The front-end is built using tasks defined with Grunt. This includes:
 
 All commonly-used build scripts are aliased as NPM scripts in `package.json` for convenience.
 
-To build the front-end, simply run `NODE_ENV=development npm run front-end:build`. To build the app for production, which includes asset minification, optimization and compression, change the value of `NODE_ENV` to `production`.
+To build the front-end, simply run `VITE_NODE_ENV=development npm run front-end:build`. To build the app for production, which includes asset minification, optimization and compression, change the value of `VITE_NODE_ENV` to `production`.
 
 To watch for source file changes and rebuild the front-end during local development, execute the `npm run front-end:watch` command in your terminal.
 
@@ -101,7 +101,7 @@ The `npm run migrations:*` scripts in `package.json` are how developers can crea
 
 The back-end is compiled from TypeScript to JavaScript, which is implemented as a Grunt task.
 
-To build the back-end, simply run `NODE_ENV=development npm run back-end:build`. To build the app for production, which involves cleaning the build directory before rebuilding, change the value of `NODE_ENV` to `production`.
+To build the back-end, simply run `VITE_NODE_ENV=development npm run back-end:build`. To build the app for production, which involves cleaning the build directory before rebuilding, change the value of `VITE_NODE_ENV` to `production`.
 
 To watch for source file changes and rebuild the back-end during local development, execute the `npm run back-end:watch` command in your terminal.
 

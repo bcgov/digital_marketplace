@@ -10,6 +10,7 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
+import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
 import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -75,7 +76,7 @@ export interface State {
   remoteOk: Immutable<RadioGroup.State<RemoteOk>>;
   remoteDesc: Immutable<LongText.State>;
   // Description Tab
-  description: Immutable<RichMarkdownEditor.State>;
+  description: Immutable<PlateEditor.State>;
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
   startDate: Immutable<DateField.State>;
@@ -100,7 +101,7 @@ export type Msg =
   | ADT<"remoteOk", RadioGroup.Msg<RemoteOk>>
   | ADT<"remoteDesc", LongText.Msg>
   // Description Tab
-  | ADT<"description", RichMarkdownEditor.Msg>
+  | ADT<"description", PlateEditor.Msg>
   // Details Tab
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"startDate", DateField.Msg>
@@ -243,13 +244,12 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "cwu-opportunity-remote-desc"
     }
   });
-  const [descriptionState, descriptionCmds] = RichMarkdownEditor.init({
+  const [descriptionState, descriptionCmds] = PlateEditor.init({
     errors: [],
     validate: genericValidation.validateDescription,
     child: {
       value: opportunity?.description || "",
-      id: "cwu-opportunity-description",
-      uploadImage: api.files.markdownImages.makeUploadImage()
+      id: "cwu-opportunity-description"
     }
   });
   const [proposalDeadlineState, proposalDeadlineCmds] = DateField.init({
@@ -443,7 +443,7 @@ function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
         FormField.setErrors(s, errors.skills ? flatten(errors.skills) : [])
       )
       .update("description", (s) =>
-        FormField.setErrors(s, errors.description || [])
+        PlateEditor.setErrors(s, errors.description || [])
       )
       .update("remoteOk", (s) => FormField.setErrors(s, errors.remoteOk || []))
       .update("remoteDesc", (s) =>
@@ -482,7 +482,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("location", (s) => FormField.validate(s))
     .update("reward", (s) => FormField.validate(s))
     .update("skills", (s) => FormField.validate(s))
-    .update("description", (s) => FormField.validate(s))
+    .update("description", (s) => PlateEditor.validateState(s))
     .update("remoteOk", (s) => FormField.validate(s))
     .update("proposalDeadline", (s) => FormField.validate(s))
     .update("startDate", (s) => FormField.validate(s))
@@ -514,7 +514,7 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
 }
 
 export function isDescriptionTabValid(state: Immutable<State>): boolean {
-  return FormField.isValid(state.description);
+  return PlateEditor.isValid(state.description);
 }
 
 export function isDetailsTabValid(state: Immutable<State>): boolean {
@@ -553,7 +553,7 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     reward: FormField.getValue(state.reward) || 0,
     skills: SelectMulti.getValueAsStrings(state.skills),
-    description: FormField.getValue(state.description),
+    description: PlateEditor.getValue(state.description),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
     startDate: DateField.getValueAsString(state.startDate),
@@ -817,7 +817,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       return component_.base.updateChild({
         state,
         childStatePath: ["description"],
-        childUpdate: RichMarkdownEditor.update,
+        childUpdate: PlateEditor.update,
         childMsg: msg.value,
         mapChildMsg: (value) => adt("description", value)
       });
@@ -972,7 +972,9 @@ export const OverviewView: component_.base.View<Props> = ({
           extraChildProps={{ inline: true }}
           required
           label="Remote OK?"
-          help="Indicate if the successful proponent may complete the work as outlined in the opportunity’s acceptance criteria remotely or not. If you select “yes”, provide further details on acceptable remote work options."
+          help={
+            'Indicate if the successful proponent may complete the work as outlined in the opportunity\'s acceptance criteria remotely or not. If you select "yes", provide further details on acceptable remote work options.'
+          }
           disabled={disabled}
           state={state.remoteOk}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1024,8 +1026,8 @@ export const OverviewView: component_.base.View<Props> = ({
               <p>
                 To the best of your ability, estimate a fair price for the
                 amount of work that you think it should take from the successful
-                proponent to meet the opportunity’s acceptance criteria. It is
-                suggested that you overestimate.
+                proponent to meet the opportunity&apos;s acceptance criteria. It
+                is suggested that you overestimate.
               </p>
               <p className="mb-0">
                 The price estimate must not exceed {FORMATTED_MAX_BUDGET}.
@@ -1092,16 +1094,27 @@ export const DescriptionView: component_.base.View<Props> = ({
   dispatch,
   disabled
 }) => {
+  // Get title and teaser values from form state for opportunity context
+  const title = FormField.getValue(state.title);
+  const teaser = FormField.getValue(state.teaser);
+
   return (
     <Row>
       <Col xs="12">
-        <RichMarkdownEditor.view
+        <PlateEditor.view
           required
           label="Description"
-          help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc. You can format this description with Markdown."
-          placeholder="Describe this opportunity."
+          placeholder="Describe this opportunity..."
+          help="Provide a complete description of the opportunity. For example, you may choose to include background information, a description of what you are attempting to accomplish by offering the opportunity, etc."
           extraChildProps={{
-            style: { height: "60vh", minHeight: "400px" }
+            style: {
+              // height: "60vh",
+              // minHeight: "400px"
+            }
+          }}
+          opportunityContext={{
+            title,
+            teaser
           }}
           disabled={disabled}
           state={state.description}
@@ -1164,7 +1177,7 @@ export const DetailsView: component_.base.View<Props> = ({
           required
           extraChildProps={{}}
           label="Proposed Start Date"
-          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to begin the work as outlined in the opportunity's acceptance criteria."
           state={state.startDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1176,7 +1189,7 @@ export const DetailsView: component_.base.View<Props> = ({
         <DateField.view
           extraChildProps={{}}
           label="Completion Date"
-          help="Choose a date that you expect the successful proponent to meet the opportunity’s acceptance criteria."
+          help="Choose a date that you expect the successful proponent to meet the opportunity's acceptance criteria."
           state={state.completionDate}
           disabled={disabled}
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
@@ -1189,7 +1202,7 @@ export const DetailsView: component_.base.View<Props> = ({
         <ShortText.view
           extraChildProps={{}}
           label="Project Submission Info"
-          help="Provide information on how the successful proponent may submit their work as outlined in the opportunity’s acceptance criteria (e.g. GitHub repository URL)."
+          help="Provide information on how the successful proponent may submit their work as outlined in the opportunity's acceptance criteria (e.g. GitHub repository URL)."
           placeholder="e.g. GitHub repository URL"
           state={state.submissionInfo}
           disabled={disabled}
@@ -1226,9 +1239,9 @@ export const DetailsView: component_.base.View<Props> = ({
               <p>
                 Describe the criteria that you will use to score the submitted
                 proposals. State the weight, or points, that you will give to
-                each criterion (e.g. “Experience contributing Java code to any
-                public code repositories with more than 5 contributors (10
-                points)”). You can format this evaluation criteria with
+                each criterion (e.g. &quot;Experience contributing Java code to
+                any public code repositories with more than 5 contributors (10
+                points)&quot;). You can format this evaluation criteria with
                 Markdown.
               </p>
               <p className="mb-0">
@@ -1236,7 +1249,7 @@ export const DetailsView: component_.base.View<Props> = ({
                 you wish to use.
                 {MANDATORY_WEIGHTED_CRITERIA_URL ? (
                   <span>
-                    &nbsp;Please refer to the {COPY.gov.name.short}’s{" "}
+                    &nbsp;Please refer to the {COPY.gov.name.short}&apos;s{" "}
                     <Link
                       newTab
                       dest={externalDest(MANDATORY_WEIGHTED_CRITERIA_URL)}>

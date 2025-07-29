@@ -431,7 +431,7 @@ function affiliatedTableBodyRows(
             ) : (
               <span>{affiliation.organization.legalName}</span>
             )}
-            {isPending ? <PendingBadge className="ml-3" /> : null}
+            {isPending ? <PendingBadge className="ms-3" /> : null}
           </div>
         ),
         style: {
@@ -448,7 +448,7 @@ function affiliatedTableBodyRows(
               loading={isApproveLoading}
               size="sm"
               color="success"
-              className="mr-2"
+              className="me-2"
               symbol_={leftPlacement(iconLinkSymbol("user-check"))}
               onClick={() =>
                 dispatch(

@@ -17,7 +17,7 @@ Debugging the front-end might require evaluating MSG's in the state object.
 - dev tools in the browser
 
 1. Run the following
-`NODE_ENV=development npm run front-end:watch`
+`VITE_NODE_ENV=development npm run front-end:watch`
 
 2. Open the Console of a browser's Dev Tools to view a list of state events.
 
@@ -85,7 +85,7 @@ Debugging the front-end might require evaluating MSG's in the state object.
 
 Run the following for normal development:
 ```bash
-NODE_ENV=development npm run back-end:watch
+VITE_NODE_ENV=development npm run back-end:watch
 ```
 
 This will display server logs:

@@ -42,3 +42,4 @@ tsconfig.tsbuildinfo
 
 .specstory/
 .cursor/
+src/marketplace-ai/dist/

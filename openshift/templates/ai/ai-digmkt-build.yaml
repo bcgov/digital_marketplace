@@ -1,0 +1,101 @@
+---
+kind: Template
+apiVersion: template.openshift.io/v1
+metadata:
+  annotations:
+    description: Build template for the Digital Marketplace AI service.
+    tags: node,nestjs,ai
+  name: "${NAME}-build"
+objects:
+- kind: ImageStream
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
+
+- kind: BuildConfig
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${ENV_NAME}"
+    labels:
+      app: "${NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-build"
+  spec:
+    source:
+      type: Git
+      git:
+        uri: "${GIT_REPO_URL}"
+        ref: "${GIT_REF}"
+      contextDir: src/marketplace-ai
+    strategy:
+      type: Docker
+      dockerStrategy:
+        dockerfilePath: ./Dockerfile
+        from:
+          kind: ${SOURCE_IMAGE_KIND}
+          name: ${SOURCE_IMAGE_NAME_SPACE}/${SOURCE_IMAGE_NAME}:${SOURCE_IMAGE_TAG}
+    resources:
+      limits:
+        cpu: 2
+        memory: 4Gi
+      requests:
+        cpu: 1
+        memory: 2Gi
+    output:
+      to:
+        kind: ImageStreamTag
+        name: "${NAME}-${APP_GROUP}-${ENV_NAME}:${OUTPUT_IMAGE_TAG}"
+
+parameters:
+- name: NAME
+  displayName: Name
+  required: true
+  value: ai
+
+- name: APP_GROUP
+  displayName: App Group
+  required: true
+  value: digmkt
+
+- name: ENV_NAME
+  displayName: Environment TAG name
+  required: true
+  value: dev
+
+- name: GIT_REPO_URL
+  displayName: Git Repo URL
+  required: true
+  value: https://github.com/bcgov/digital_marketplace
+
+- name: GIT_REF
+  displayName: Git Reference
+  description: The git reference or branch.
+  required: true
+  value: development
+
+- name: SOURCE_IMAGE_KIND
+  displayName: Source Image Kind
+  required: true
+  value: DockerImage
+
+- name: SOURCE_IMAGE_NAME_SPACE
+  displayName: Source Image Name Space
+  required: true
+  value: docker.io
+
+- name: SOURCE_IMAGE_NAME
+  displayName: Source Image Name
+  required: true
+  value: node
+
+- name: SOURCE_IMAGE_TAG
+  displayName: Source Image Tag
+  required: true
+  description: The tag of the source image.
+  value: '22-slim'
+
+- name: OUTPUT_IMAGE_TAG
+  displayName: Output Image Tag
+  description: The tag given to the built image.
+  required: true
+  value: latest

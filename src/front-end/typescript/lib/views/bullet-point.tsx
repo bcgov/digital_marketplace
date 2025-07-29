@@ -21,7 +21,7 @@ export const BulletPoint: component.base.View<Props> = ({
   return (
     <div className={`d-flex ${className}`}>
       <Icon className="flex-shrink-0" name={icon} color={iconColor} />
-      <div className="ml-2">
+      <div className="ms-2">
         <h6 className="m-0">{header}</h6>
         <span className="font-size-small">{subText}</span>
       </div>

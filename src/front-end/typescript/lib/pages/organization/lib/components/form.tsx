@@ -486,7 +486,7 @@ export const view: component_.base.View<Props> = (props) => {
                 : orgLogoPath(state.organization)
             }
           />
-          <div className="ml-3 d-flex flex-column align-items-start flex-nowrap">
+          <div className="ms-3 d-flex flex-column align-items-start flex-nowrap">
             <div className="mb-2">
               <b>Profile Picture (Optional)</b>
             </div>

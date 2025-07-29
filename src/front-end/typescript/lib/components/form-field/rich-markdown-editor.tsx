@@ -354,7 +354,7 @@ const ControlSeparator: component_.base.View<{ desktopOnly?: boolean }> = ({
 }) => {
   return (
     <div
-      className={`mr-3 border-left h-100 ${
+      className={`me-3 border-start h-100 ${
         desktopOnly ? "d-none d-sm-block" : ""
       }`}></div>
   );
@@ -374,13 +374,13 @@ const Controls: ChildComponent["view"] = ({
     dispatch(adt("controlImage", file));
   };
   return (
-    <div className="bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 rounded-top border-top border-right border-left">
+    <div className="bg-light flex-grow-0 flex-shrink-0 d-flex flex-nowrap align-items-center px-3 py-2 rounded-top border-top border-end border-start">
       <ControlIcon
         name="undo"
         width={0.9}
         height={0.9}
         disabled={isDisabled || isStackEmpty(state.undo)}
-        className="mr-2"
+        className="me-2"
         onClick={() => dispatch(adt("controlUndo"))}
       />
       <ControlIcon
@@ -388,20 +388,20 @@ const Controls: ChildComponent["view"] = ({
         width={0.9}
         height={0.9}
         disabled={isDisabled || isStackEmpty(state.redo)}
-        className="mr-3"
+        className="me-3"
         onClick={() => dispatch(adt("controlRedo"))}
       />
       <ControlSeparator />
       <ControlIcon
         name="h1"
         disabled={isDisabled}
-        className="mr-2"
+        className="me-2"
         onClick={() => dispatch(adt("controlH1"))}
       />
       <ControlIcon
         name="h2"
         disabled={isDisabled}
-        className="mr-3"
+        className="me-3"
         onClick={() => dispatch(adt("controlH2"))}
       />
       <ControlSeparator />
@@ -410,7 +410,7 @@ const Controls: ChildComponent["view"] = ({
         disabled={isDisabled}
         width={0.9}
         height={0.9}
-        className="mr-2"
+        className="me-2"
         onClick={() => dispatch(adt("controlBold"))}
       />
       <ControlIcon
@@ -418,7 +418,7 @@ const Controls: ChildComponent["view"] = ({
         width={0.9}
         height={0.9}
         disabled={isDisabled}
-        className="mr-3"
+        className="me-3"
         onClick={() => dispatch(adt("controlItalics"))}
       />
       <ControlSeparator desktopOnly />
@@ -428,7 +428,7 @@ const Controls: ChildComponent["view"] = ({
         width={1}
         height={1}
         disabled={isDisabled}
-        className="mr-2"
+        className="me-2"
         onClick={() => dispatch(adt("controlUnorderedList"))}
       />
       <ControlIcon
@@ -437,7 +437,7 @@ const Controls: ChildComponent["view"] = ({
         width={1}
         height={1}
         disabled={isDisabled}
-        className="mr-3"
+        className="me-3"
         onClick={() => dispatch(adt("controlOrderedList"))}
       />
       {state.uploadImage ? (
@@ -459,7 +459,7 @@ const Controls: ChildComponent["view"] = ({
           </div>
         </Fragment>
       ) : null}
-      <div className="ml-auto d-flex align-items-center">
+      <div className="ms-auto d-flex align-items-center">
         <Spinner
           size="sm"
           color="secondary"
@@ -470,7 +470,7 @@ const Controls: ChildComponent["view"] = ({
           newTab
           dest={routeDest(adt("contentView", "markdown-guide"))}
           color="primary"
-          className="d-flex justify-content-center align-items-center ml-2"
+          className="d-flex justify-content-center align-items-center ms-2"
           style={{ lineHeight: 0 }}>
           <Icon name="markdown" width={1.25} height={1.25} />
         </Link>

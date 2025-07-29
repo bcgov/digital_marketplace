@@ -4,10 +4,10 @@ export { EMPTY_STRING } from "shared/config";
 
 // Set this environment variable if behind reverse proxies at a particular path.
 // e.g. www.example.com/marketplace/*
-export const PATH_PREFIX = process.env.PATH_PREFIX || "";
+export const VITE_PATH_PREFIX = import.meta.env.VITE_PATH_PREFIX || "";
 
 // ENV config
-export const NODE_ENV = process.env.NODE_ENV || "production";
+export const VITE_NODE_ENV = import.meta.env.VITE_NODE_ENV || "production";
 
 // HARDCODED CONFIG
 export const SOURCE_CODE_URL = "https://github.com/bcgov/digital_marketplace/";
@@ -74,3 +74,6 @@ export const CWU_COST_RECOVERY_FIGURE = 1000;
 export const SWU_COST_RECOVERY_FIGURE = 5000;
 
 export const TWU_COST_RECOVERY_FIGURE = 3000;
+
+export const MARKETPLACE_AI_URL =
+  import.meta.env.VITE_AI_SERVICE_URL || "http://localhost:5000";
