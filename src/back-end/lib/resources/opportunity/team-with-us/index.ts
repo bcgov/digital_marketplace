@@ -246,7 +246,7 @@ const create: crud.Create<
         remoteOk: getBoolean(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
-        resources: get(body, "resources") as any,
+        resources: get<typeof body, string>(body, "resources"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
@@ -258,8 +258,8 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestions: get(body, "resourceQuestions") as any,
-        evaluationPanel: get(body, "evaluationPanel") as any
+        resourceQuestions: get<typeof body, string>(body, "resourceQuestions"),
+        evaluationPanel: get<typeof body, string>(body, "evaluationPanel")
       };
     },
     // ensure the accuracy of values coming in from the request body
@@ -564,7 +564,10 @@ const update: crud.Update<
   return {
     async parseRequestBody(request) {
       const body = request.body.tag === "json" ? request.body.value : {};
-      const tag: UpdateRequestBody["tag"] = get(body, "tag") as any;
+      const tag: UpdateRequestBody["tag"] = get<typeof body, string>(
+        body,
+        "tag"
+      );
       const value: unknown = get(body, "value");
       switch (tag) {
         case "edit": {
@@ -574,7 +577,7 @@ const update: crud.Update<
             remoteOk: getBoolean(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
-            resources: get(value, "resources") as any,
+            resources: get<typeof value, string>(value, "resources"),
             description: getString(value, "description"),
             proposalDeadline: getString(value, "proposalDeadline"),
             assignmentDate: getString(value, "assignmentDate"),
@@ -585,8 +588,11 @@ const update: crud.Update<
             challengeWeight: getNumber<number>(value, "challengeWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            resourceQuestions: get(value, "resourceQuestions") as any,
-            evaluationPanel: get(value, "evaluationPanel") as any
+            resourceQuestions: get<typeof value, string>(
+              value,
+              "resourceQuestions"
+            ),
+            evaluationPanel: get<typeof value, string>(value, "evaluationPanel")
           });
         }
         case "submitForReview":
