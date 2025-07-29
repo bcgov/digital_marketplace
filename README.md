@@ -180,8 +180,8 @@ docker-compose up chroma
 # Terminal 6
 npx vite dev
 
-# Terminal 7 (in src/marketplace_ai)
-npm run start:dev
+# Terminal 7
+npm run marketplace-ai:start
 ```
 
 The application will be available at http://localhost:5173/
