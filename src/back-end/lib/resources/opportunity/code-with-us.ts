@@ -89,7 +89,6 @@ interface ValidatedUpdateRequestBody {
     | ADT<"edit", ValidatedUpdateEditRequestBody>
     | ADT<"submitForReview", string>
     | ADT<"publish", string>
-    | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
     | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>;
@@ -395,8 +394,7 @@ const create: crud.Create<
         if (dbResult.value.status === CWUOpportunityStatus.Published) {
           cwuOpportunityNotifications.handleCWUPublished(
             connection,
-            dbResult.value,
-            false
+            dbResult.value
           );
         }
         return basicResponse(
@@ -452,8 +450,6 @@ const update: crud.Update<
           return adt("submitForReview", getString(body, "value"));
         case "publish":
           return adt("publish", getString(body, "value", ""));
-        case "suspend":
-          return adt("suspend", getString(body, "value", ""));
         case "cancel":
           return adt("cancel", getString(body, "value", ""));
         case "addAddendum":
@@ -518,13 +514,12 @@ const update: crud.Update<
             attachments
           } = request.body.value;
 
-          // CWU Opportunities can only be edited if they are in DRAFT, PUBLISHED, or SUSPENDED
+          // CWU Opportunities can only be edited if they are in DRAFT or PUBLISHED
           if (
             ![
               CWUOpportunityStatus.Draft,
               CWUOpportunityStatus.UnderReview,
-              CWUOpportunityStatus.Published,
-              CWUOpportunityStatus.Suspended
+              CWUOpportunityStatus.Published
             ].includes(cwuOpportunity.status)
           ) {
             return invalid({
@@ -825,29 +820,6 @@ const update: crud.Update<
             body: adt("publish", validatedPublishNote.value)
           } as ValidatedUpdateRequestBody);
         }
-        case "suspend": {
-          if (
-            !isValidStatusChange(
-              validatedCWUOpportunity.value.status,
-              CWUOpportunityStatus.Suspended
-            ) ||
-            !permissions.suspendCWUOpportunity(request.session)
-          ) {
-            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-          }
-          const validatedSuspendNote = opportunityValidation.validateNote(
-            request.body.value
-          );
-          if (isInvalid(validatedSuspendNote)) {
-            return invalid({
-              opportunity: adt("suspend" as const, validatedSuspendNote.value)
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt("suspend", validatedSuspendNote.value)
-          } as ValidatedUpdateRequestBody);
-        }
         case "cancel": {
           if (
             !isValidStatusChange(
@@ -935,7 +907,6 @@ const update: crud.Update<
         const { session, body } = request.body;
         const doNotNotify = [
           CWUOpportunityStatus.Draft,
-          CWUOpportunityStatus.Suspended,
           CWUOpportunityStatus.Canceled
         ];
         switch (body.tag) {
@@ -947,7 +918,7 @@ const update: crud.Update<
             );
             /**
              * Notify all subscribed users on the opportunity of the update
-             * (only if not draft or suspended status)
+             * (only if not draft status)
              */
             if (
               isValid(dbResult) &&
@@ -976,14 +947,6 @@ const update: crud.Update<
             }
             break;
           case "publish": {
-            const existingOpportunity = getValidValue(
-              await db.readOneCWUOpportunity(
-                connection,
-                request.params.id,
-                session
-              ),
-              null
-            );
             dbResult = await db.updateCWUOpportunityStatus(
               connection,
               request.params.id,
@@ -995,28 +958,11 @@ const update: crud.Update<
             if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
               cwuOpportunityNotifications.handleCWUPublished(
                 connection,
-                dbResult.value,
-                existingOpportunity?.status === CWUOpportunityStatus.Suspended
-              );
-            }
-            break;
-          }
-          case "suspend":
-            dbResult = await db.updateCWUOpportunityStatus(
-              connection,
-              request.params.id,
-              CWUOpportunityStatus.Suspended,
-              body.value,
-              session
-            );
-            // Notify subscribers of suspension
-            if (isValid(dbResult) && permissions.isSignedIn(request.session)) {
-              cwuOpportunityNotifications.handleCWUSuspended(
-                connection,
                 dbResult.value
               );
             }
             break;
+          }
           case "cancel":
             dbResult = await db.updateCWUOpportunityStatus(
               connection,

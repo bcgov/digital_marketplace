@@ -18,7 +18,7 @@ export enum CWUOpportunityStatus {
   Evaluation = "EVALUATION",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
+  DeprecatedSuspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 
@@ -130,7 +130,6 @@ export function canAddAddendumToCWUOpportunity(o: CWUOpportunity): boolean {
     case CWUOpportunityStatus.Evaluation:
     case CWUOpportunityStatus.Processing:
     case CWUOpportunityStatus.Awarded:
-    case CWUOpportunityStatus.Suspended:
     case CWUOpportunityStatus.Canceled:
       return true;
     default:
@@ -207,7 +206,6 @@ export type UpdateRequestBody =
   | ADT<"edit", UpdateEditRequestBody>
   | ADT<"submitForReview", string>
   | ADT<"publish", string>
-  | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
   | ADT<"addNote", UpdateWithNoteRequestBody>;
@@ -228,7 +226,6 @@ type UpdateADTErrors =
   | ADT<"edit", UpdateEditValidationErrors>
   | ADT<"submitForReview", string[]>
   | ADT<"publish", string[]>
-  | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
   | ADT<"parseFailure">
@@ -257,32 +254,21 @@ export function isValidStatusChange(
         CWUOpportunityStatus.Published
       ].includes(to);
     case CWUOpportunityStatus.UnderReview:
-      return [
-        CWUOpportunityStatus.Published,
-        CWUOpportunityStatus.Suspended
-      ].includes(to);
+      return [CWUOpportunityStatus.Published].includes(to);
     case CWUOpportunityStatus.Published:
       return [
         CWUOpportunityStatus.Canceled,
-        CWUOpportunityStatus.Suspended,
         CWUOpportunityStatus.Evaluation
       ].includes(to);
     case CWUOpportunityStatus.Evaluation:
       return [
         CWUOpportunityStatus.Canceled,
-        CWUOpportunityStatus.Suspended,
         CWUOpportunityStatus.Processing
       ].includes(to);
     case CWUOpportunityStatus.Processing:
       return [
         CWUOpportunityStatus.Canceled,
-        CWUOpportunityStatus.Suspended,
         CWUOpportunityStatus.Awarded
-      ].includes(to);
-    case CWUOpportunityStatus.Suspended:
-      return [
-        CWUOpportunityStatus.Published,
-        CWUOpportunityStatus.Canceled
       ].includes(to);
     default:
       return false;
@@ -308,7 +294,6 @@ export function canCWUOpportunityDetailsBeEdited(
     case CWUOpportunityStatus.UnderReview:
       return true;
     case CWUOpportunityStatus.Published:
-    case CWUOpportunityStatus.Suspended:
       return adminsOnly;
     default:
       return false;
@@ -325,8 +310,7 @@ export const publicOpportunityStatuses: readonly CWUOpportunityStatus[] = [
 
 export const privateOpportunityStatuses: readonly CWUOpportunityStatus[] = [
   CWUOpportunityStatus.Draft,
-  CWUOpportunityStatus.UnderReview,
-  CWUOpportunityStatus.Suspended
+  CWUOpportunityStatus.UnderReview
 ];
 
 export function isCWUOpportunityAcceptingProposals(
@@ -341,8 +325,7 @@ export function isCWUOpportunityAcceptingProposals(
 export function isUnpublished(o: Pick<CWUOpportunity, "status">): boolean {
   return (
     o.status === CWUOpportunityStatus.Draft ||
-    o.status === CWUOpportunityStatus.UnderReview ||
-    o.status === CWUOpportunityStatus.Suspended
+    o.status === CWUOpportunityStatus.UnderReview
   );
 }
 
@@ -376,7 +359,6 @@ export function isCWUOpportunityClosed(o: CWUOpportunity): boolean {
     isDateInThePast(o.proposalDeadline) &&
     o.status !== CWUOpportunityStatus.Published &&
     o.status !== CWUOpportunityStatus.Draft &&
-    o.status !== CWUOpportunityStatus.UnderReview &&
-    o.status !== CWUOpportunityStatus.Suspended
+    o.status !== CWUOpportunityStatus.UnderReview
   );
 }

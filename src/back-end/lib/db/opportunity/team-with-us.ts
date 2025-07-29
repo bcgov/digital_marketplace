@@ -514,27 +514,24 @@ export function generateTWUOpportunityQuery(
     "twuOpportunities as opportunities"
   )
     // Join on latest TWU status
-    .join("twuOpportunityStatuses as statuses", function () {
-      this.on("opportunities.id", "=", "statuses.opportunity").andOn(
-        "statuses.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "twuOpportunityStatuses" as statuses2 where \
-            statuses2.opportunity = opportunities.id and statuses2.status is not null)'
-        )
-      );
-    })
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityStatuses"
+         WHERE status IS NOT NULL
+         ORDER BY opportunity, "createdAt" DESC) as statuses`
+      ),
+      "opportunities.id",
+      "statuses.opportunity"
+    )
     // Join on latest TWU version
-    .join("twuOpportunityVersions as versions", function () {
-      this.on("opportunities.id", "=", "versions.opportunity").andOn(
-        "versions.createdAt",
-        "=",
-        connection.raw(
-          '(select max("createdAt") from "twuOpportunityVersions" as versions2 where \
-            versions2.opportunity = opportunities.id)'
-        )
-      );
-    })
+    .join(
+      connection.raw(
+        `(SELECT DISTINCT ON (opportunity) * FROM "twuOpportunityVersions"
+         ORDER BY opportunity, "createdAt" DESC) as versions`
+      ),
+      "opportunities.id",
+      "versions.opportunity"
+    )
     .select<RawTWUOpportunitySlim[]>(
       "opportunities.id",
       "opportunities.createdAt",

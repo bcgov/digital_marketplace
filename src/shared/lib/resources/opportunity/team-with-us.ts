@@ -25,7 +25,7 @@ export enum TWUOpportunityStatus {
   EvaluationChallenge = "EVAL_C",
   Processing = "PROCESSING",
   Awarded = "AWARDED",
-  Suspended = "SUSPENDED",
+  DeprecatedSuspended = "SUSPENDED",
   Canceled = "CANCELED"
 }
 
@@ -133,8 +133,7 @@ export const publicOpportunityStatuses: readonly TWUOpportunityStatus[] = [
 
 export const privateOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Draft,
-  TWUOpportunityStatus.UnderReview,
-  TWUOpportunityStatus.Suspended
+  TWUOpportunityStatus.UnderReview
 ];
 
 export function isTWUOpportunityAcceptingProposals(
@@ -149,8 +148,7 @@ export function isTWUOpportunityAcceptingProposals(
 export function isUnpublished(o: Pick<TWUOpportunity, "status">): boolean {
   return (
     o.status === TWUOpportunityStatus.Draft ||
-    o.status === TWUOpportunityStatus.UnderReview ||
-    o.status === TWUOpportunityStatus.Suspended
+    o.status === TWUOpportunityStatus.UnderReview
   );
 }
 
@@ -169,8 +167,7 @@ export function isClosed(
 export const editableOpportunityStatuses: readonly TWUOpportunityStatus[] = [
   TWUOpportunityStatus.Draft,
   TWUOpportunityStatus.UnderReview,
-  TWUOpportunityStatus.Published,
-  TWUOpportunityStatus.Suspended
+  TWUOpportunityStatus.Published
 ];
 
 /**
@@ -379,7 +376,6 @@ export type UpdateRequestBody =
   | ADT<"submitForReview", string>
   | ADT<"publish", string>
   | ADT<"startChallenge", string>
-  | ADT<"suspend", string>
   | ADT<"cancel", string>
   | ADT<"addAddendum", string>
   | ADT<
@@ -415,7 +411,6 @@ type UpdateADTErrors =
   | ADT<"submitForReview", string[]>
   | ADT<"publish", string[]>
   | ADT<"startChallenge", string[]>
-  | ADT<"suspend", string[]>
   | ADT<"cancel", string[]>
   | ADT<"addAddendum", string[]>
   | ADT<"submitIndividualQuestionEvaluations", string[]>
@@ -464,44 +459,29 @@ export function isValidStatusChange(
         TWUOpportunityStatus.Published
       ].includes(to);
     case TWUOpportunityStatus.UnderReview:
-      return [
-        TWUOpportunityStatus.Published,
-        TWUOpportunityStatus.Suspended
-      ].includes(to);
+      return [TWUOpportunityStatus.Published].includes(to);
     case TWUOpportunityStatus.Published:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
         TWUOpportunityStatus.EvaluationResourceQuestionsIndividual
       ].includes(to);
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
         TWUOpportunityStatus.EvaluationResourceQuestionsConsensus
       ].includes(to);
     case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
         TWUOpportunityStatus.EvaluationChallenge
       ].includes(to);
     case TWUOpportunityStatus.EvaluationChallenge:
       return [
         TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended,
         TWUOpportunityStatus.Processing
       ].includes(to);
     case TWUOpportunityStatus.Processing:
-      return [
-        TWUOpportunityStatus.Canceled,
-        TWUOpportunityStatus.Suspended
-      ].includes(to);
-    case TWUOpportunityStatus.Suspended:
-      return [
-        TWUOpportunityStatus.Published,
-        TWUOpportunityStatus.Canceled
-      ].includes(to);
+      return [TWUOpportunityStatus.Canceled].includes(to);
     default:
       return false;
   }
@@ -566,7 +546,6 @@ export function canTWUOpportunityDetailsBeEdited(
     case TWUOpportunityStatus.UnderReview:
       return true;
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.Suspended:
       return adminsOnly;
     default:
       return false;
@@ -596,7 +575,6 @@ export function canAddAddendumToTWUOpportunity(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.EvaluationChallenge:
     case TWUOpportunityStatus.Processing:
     case TWUOpportunityStatus.Awarded:
-    case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.Canceled:
       return true;
     default:
@@ -609,7 +587,6 @@ export function canChangeEvaluationPanel(o: TWUOpportunity): boolean {
     case TWUOpportunityStatus.Draft:
     case TWUOpportunityStatus.UnderReview:
     case TWUOpportunityStatus.Published:
-    case TWUOpportunityStatus.Suspended:
     case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       return true;
     default:
@@ -622,8 +599,7 @@ export function isTWUOpportunityClosed(o: TWUOpportunity): boolean {
     isDateInThePast(o.proposalDeadline) &&
     o.status !== TWUOpportunityStatus.Published &&
     o.status !== TWUOpportunityStatus.Draft &&
-    o.status !== TWUOpportunityStatus.UnderReview &&
-    o.status !== TWUOpportunityStatus.Suspended
+    o.status !== TWUOpportunityStatus.UnderReview
   );
 }
 

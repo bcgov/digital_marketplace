@@ -119,7 +119,6 @@ interface ValidatedUpdateRequestBody {
     | ADT<"publish", string>
     | ADT<"startCodeChallenge", string>
     | ADT<"startTeamScenario", string>
-    | ADT<"suspend", string>
     | ADT<"cancel", string>
     | ADT<"addAddendum", string>
     | ADT<"addNote", ValidatedUpdateWithNoteRequestBody>
@@ -743,8 +742,7 @@ const create: crud.Create<
         if (dbResult.value.status === SWUOpportunityStatus.Published) {
           swuOpportunityNotifications.handleSWUPublished(
             connection,
-            dbResult.value,
-            false
+            dbResult.value
           );
         }
         return basicResponse(
@@ -822,8 +820,6 @@ const update: crud.Update<
           return adt("startCodeChallenge", getString(body, "value"));
         case "startTeamScenario":
           return adt("startTeamScenario", getString(body, "value"));
-        case "suspend":
-          return adt("suspend", getString(body, "value"));
         case "cancel":
           return adt("cancel", getString(body, "value"));
         case "addAddendum":
@@ -1672,29 +1668,6 @@ const update: crud.Update<
             )
           });
         }
-        case "suspend": {
-          if (
-            !isValidStatusChange(
-              validatedSWUOpportunity.value.status,
-              SWUOpportunityStatus.Suspended
-            ) ||
-            !permissions.suspendSWUOpportunity(request.session)
-          ) {
-            return invalid({ permissions: [permissions.ERROR_MESSAGE] });
-          }
-          const validatedSuspendNote = opportunityValidation.validateNote(
-            request.body.value
-          );
-          if (isInvalid(validatedSuspendNote)) {
-            return invalid({
-              opportunity: adt("suspend" as const, validatedSuspendNote.value)
-            });
-          }
-          return valid({
-            session: request.session,
-            body: adt("suspend", validatedSuspendNote.value)
-          } as ValidatedUpdateRequestBody);
-        }
         case "cancel": {
           if (
             !isValidStatusChange(
@@ -2083,7 +2056,6 @@ const update: crud.Update<
         const { session, body } = request.body;
         const doNotNotify = [
           SWUOpportunityStatus.Draft,
-          SWUOpportunityStatus.Suspended,
           SWUOpportunityStatus.Canceled
         ];
         const existingOpportunity = getValidValue(
@@ -2111,7 +2083,7 @@ const update: crud.Update<
             );
             /**
              * Notify all subscribed users on the opportunity of the update
-             * (only if not draft or suspended status)
+             * (only if not draft status)
              */
             if (
               isValid(dbResult) &&
@@ -2151,8 +2123,7 @@ const update: crud.Update<
             if (isValid(dbResult)) {
               swuOpportunityNotifications.handleSWUPublished(
                 connection,
-                dbResult.value,
-                existingOpportunity?.status === SWUOpportunityStatus.Suspended
+                dbResult.value
               );
             }
             break;
@@ -2174,22 +2145,6 @@ const update: crud.Update<
               body.value,
               session
             );
-            break;
-          case "suspend":
-            dbResult = await db.updateSWUOpportunityStatus(
-              connection,
-              request.params.id,
-              SWUOpportunityStatus.Suspended,
-              body.value,
-              session
-            );
-            // Notify all subscribed users of suspension
-            if (isValid(dbResult)) {
-              swuOpportunityNotifications.handleSWUSuspended(
-                connection,
-                dbResult.value
-              );
-            }
             break;
           case "cancel":
             dbResult = await db.updateSWUOpportunityStatus(
