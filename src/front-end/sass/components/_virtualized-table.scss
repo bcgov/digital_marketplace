@@ -1,0 +1,89 @@
+/* Scrollable container for the table body */
+.virtualized-body-container {
+  position: relative; /* Needed for absolute positioning inside and sticky context */
+  border: 1px solid #dee2e6;
+  border-radius: 4px; /* Full radius since no separate header */
+}
+
+/* Body table specific styles */
+.virtualized-body-table {
+  margin-bottom: 0;
+  width: 100%;
+  table-layout: fixed;
+  background-color: white;
+
+  /* Sticky header */
+  thead {
+    position: sticky;
+    top: 0; /* Sticks to top of scrollable container */
+    z-index: 10; /* Layers above body rows */
+    background-color: #f8f9fa; /* Header background */
+
+    th {
+      background: inherit; /* Inherit from thead or set explicitly */
+      border-bottom: 2px solid #dee2e6;
+      vertical-align: middle;
+      padding: 0.75rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+  }
+
+  /* Virtualized tbody styles */
+  .virtualized-tbody {
+    display: block;
+    height: 550px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+
+    /* Virtual spacer row */
+    .virtual-spacer {
+      display: block;
+      height: 0;
+    }
+
+    /* Container td for virtualized content */
+    .virtualized-container-td {
+      padding: 0;
+    }
+
+    /* Container for all virtualized rows */
+    .virtualized-rows-container {
+      display: table;
+      width: 100%;
+      table-layout: fixed;
+      position: absolute;
+      left: 0;
+    }
+
+    /* Individual virtualized row */
+    .virtualized-row {
+      display: table-row;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.075);
+      }
+    }
+
+    /* Individual virtualized cell */
+    .virtualized-cell {
+      display: table-cell;
+      vertical-align: middle;
+      padding: 0.75rem;
+      border-top: 1px solid #dee2e6;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+    }
+  }
+}
+
+.virtualized-table-layout {
+  table {
+    display: block;
+  }
+}
