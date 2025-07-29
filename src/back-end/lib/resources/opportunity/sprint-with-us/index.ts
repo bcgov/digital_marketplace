@@ -246,11 +246,14 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        inceptionPhase: get(body, "inceptionPhase"),
-        prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase") as any,
-        teamQuestions: get(body, "teamQuestions") as any,
-        evaluationPanel: get(body, "evaluationPanel") as any
+        inceptionPhase: get<typeof body, string>(body, "inceptionPhase"),
+        prototypePhase: get<typeof body, string>(body, "prototypePhase"),
+        implementationPhase: get<typeof body, string>(
+          body,
+          "implementationPhase"
+        ),
+        teamQuestions: get<typeof body, string>(body, "teamQuestions"),
+        evaluationPanel: get<typeof body, string>(body, "evaluationPanel")
       };
     },
     async validateRequestBody(request) {
@@ -799,11 +802,14 @@ const update: crud.Update<
             scenarioWeight: getNumber<number>(value, "scenarioWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            inceptionPhase: get(value, "inceptionPhase"),
-            prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: get(value, "implementationPhase") as any,
-            teamQuestions: get(value, "teamQuestions") as any,
-            evaluationPanel: get(value, "evaluationPanel") as any
+            inceptionPhase: get<typeof value, string>(value, "inceptionPhase"),
+            prototypePhase: get<typeof value, string>(value, "prototypePhase"),
+            implementationPhase: get<typeof value, string>(
+              value,
+              "implementationPhase"
+            ),
+            teamQuestions: get<typeof value, string>(value, "teamQuestions"),
+            evaluationPanel: get<typeof value, string>(value, "evaluationPanel")
           });
         }
         case "submitForReview":
