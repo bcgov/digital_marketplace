@@ -68,6 +68,11 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:3000', // Point proxy to backend on 3000
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
+        },
+        '/auth': {
+          target: 'http://localhost:3000', // Point proxy to backend on 3000
+          changeOrigin: true, // Needed for virtual hosted sites
+          secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
         }
       }
     },
