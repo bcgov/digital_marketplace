@@ -232,11 +232,17 @@ const create: crud.Create<
         organization: getString(body, "organization"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        inceptionPhase: get(body, "inceptionPhase"),
-        prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase") as any,
-        teamQuestionResponses: get(body, "teamQuestionResponses") as any,
-        references: get(body, "references") as any
+        inceptionPhase: get<typeof body, string>(body, "inceptionPhase"),
+        prototypePhase: get<typeof body, string>(body, "prototypePhase"),
+        implementationPhase: get<typeof body, string>(
+          body,
+          "implementationPhase"
+        ),
+        teamQuestionResponses: get<typeof body, string>(
+          body,
+          "teamQuestionResponses"
+        ),
+        references: get<typeof body, string>(body, "references")
       };
     },
     async validateRequestBody(request) {
@@ -561,11 +567,17 @@ const update: crud.Update<
         case "edit": {
           return adt("edit", {
             organization: getString(value, "organization"),
-            inceptionPhase: get(value, "inceptionPhase"),
-            prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: get(value, "implementationPhase") as any,
-            references: get(value, "references") as any,
-            teamQuestionResponses: get(value, "teamQuestionResponses") as any,
+            inceptionPhase: get<typeof value, string>(value, "inceptionPhase"),
+            prototypePhase: get<typeof value, string>(value, "prototypePhase"),
+            implementationPhase: get<typeof value, string>(
+              value,
+              "implementationPhase"
+            ),
+            references: get<typeof value, string>(value, "references"),
+            teamQuestionResponses: get<typeof value, string>(
+              value,
+              "teamQuestionResponses"
+            ),
             attachments: getStringArray(value, "attachments")
           });
         }
