@@ -361,6 +361,15 @@ a:hover {
   border-color: $white;
 }
 
+// Fix btn-outline-primary active state for Bootstrap 5
+.btn-outline-primary:not(:disabled):not(.disabled).active,
+.btn-outline-primary:not(:disabled):not(.disabled):active,
+.show > .btn-outline-primary.dropdown-toggle {
+  color: $white !important;
+  background-color: $blue;
+  border-color: $blue;
+}
+
 .dropdown-item:hover {
   text-decoration: none;
 }
