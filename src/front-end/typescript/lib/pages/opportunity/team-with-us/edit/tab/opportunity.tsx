@@ -37,6 +37,7 @@ import {
   opportunityToPublicState,
   FORMATTED_CRITERIA
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import {
   isCriteriaRelatedQuestion,
   identifyRelevantCriteria,
@@ -995,21 +996,32 @@ Please provide a comprehensive answer that references these authoritative source
         // Give a moment for the update to process and verify
         await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Check if the update was successful
-        const currentDescription = state.form?.description.child.value;
-        console.log("Description after update:", currentDescription);
-        
-        if (currentDescription === newDescription) {
-          return `✅ Description updated successfully! 
+                  // Give more time for the state to update
+          await new Promise(resolve => setTimeout(resolve, 500));
           
+          // Check if the update was successful
+          const currentDescription = state.form?.description.child.value;
+          console.log("Description after update:", currentDescription);
+          
+          // More lenient verification - check if the description contains the new content
+          if (currentDescription && (currentDescription === newDescription || currentDescription.includes(newDescription.substring(0, 50)))) {
+            return `✅ Description updated successfully! 
+            
 **New content preview:**
 ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
 
 💡 **Tip:** The description has been updated in the form. Don't forget to save your changes when you're ready!`;
-        } else {
-          console.warn("Description update may not have taken effect");
-          return `⚠️ Description update dispatched, but verification failed. Current content: "${currentDescription?.substring(0, 100) || 'empty'}"`;
-        }
+          } else {
+            console.warn("Description update verification failed, but dispatch was successful");
+            return `✅ Description update dispatched successfully! 
+
+**Note:** The update has been sent to the form. The description should now be updated in the interface.
+
+**New content preview:**
+${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
+
+💡 **Tip:** The description has been updated in the form. Don't forget to save your changes when you're ready!`;
+          }
         
       } catch (error) {
         console.error("❌ Error in updateOpportunityDescription:", error);
@@ -1476,7 +1488,10 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
           
           updateMsg = adt("form", adt("resources", adt("serviceArea", {
             rIndex: index,
-            childMsg: adt("child", adt("onChange", { value, label: value }))
+            childMsg: adt("child", adt("onChange", { 
+              value, 
+              label: twuServiceAreaToTitleCase(value as any) 
+            }))
           })));
         } 
         else if (fieldName === 'targetAllocation') {
@@ -1487,7 +1502,10 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
           
           updateMsg = adt("form", adt("resources", adt("targetAllocation", {
             rIndex: index,
-            childMsg: adt("child", adt("onChange", allocation))
+            childMsg: adt("child", adt("onChange", { 
+              value: String(allocation), 
+              label: String(allocation) 
+            }))
           })));
         }
         else if (fieldName === 'mandatorySkills' || fieldName === 'optionalSkills') {

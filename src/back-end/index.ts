@@ -109,9 +109,11 @@ const logger = makeDomainLogger(consoleAdapter, "back-end");
 
 // Ensure all environment variables are specified correctly.
 const configErrors = getConfigErrors();
-
 if (configErrors.length || !PG_CONFIG) {
-  configErrors.forEach((error: string) => logger.error(error));
+  // Use `console.error` here, since the logger will not have been configured.
+  configErrors.forEach((error: string) => console.error(error));
+  // Use `console.error` here, since the logger will not have been configured.
+  configErrors.forEach((error: string) => console.error(error));
   throw new Error("Invalid environment variable configuration.");
 }
 

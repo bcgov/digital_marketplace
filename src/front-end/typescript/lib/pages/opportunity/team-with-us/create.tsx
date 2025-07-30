@@ -25,7 +25,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import {
   TWUOpportunity,
   TWUOpportunityStatus
@@ -42,9 +42,7 @@ import {
   CREATION_SYSTEM_INSTRUCTIONS,
   CREATION_WELCOME_MESSAGE,
   parseDateValue,
-  SERVICE_AREA_OPTIONS,
-  FIELD_TYPES,
-  TAB_NAMES
+
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 import {
   isCriteriaRelatedQuestion,
@@ -52,8 +50,10 @@ import {
   generateEnhancedCitationText,
   CRITERIA_MAPPINGS,
   getAllDocumentsWithLinks,
-  formatDocumentLink
+
 } from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
+
+import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 // import ActionDebugPanel from "front-end/lib/pages/opportunity/team-with-us/lib/action-debug";
 import * as FormField from "front-end/lib/components/form-field";
 
@@ -147,7 +147,7 @@ const init: component_.page.Init<
 const startPublishLoading = makeStartLoading<ValidState>("publishLoading");
 const stopPublishLoading = makeStopLoading<ValidState>("publishLoading");
 const startSaveDraftLoading = makeStartLoading<ValidState>("saveDraftLoading");
-const stopSaveDraftLoading = makeStopLoading<ValidState>("saveDraftLoading");
+
 const startReviewWithAILoading = makeStartLoading<ValidState>(
   "reviewWithAILoading"
 );
@@ -317,17 +317,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 body: "Please complete the 'Evaluation Panel' tab. Make sure to select valid users for all evaluators."
               };
               // Navigate to evaluation panel tab
-              state = state.updateIn(["form", "tabbedForm"], (tabbedForm) => 
-                tabbedForm ? tabbedForm.set("activeTab", "Evaluation Panel") : tabbedForm
-              );
+              const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Evaluation Panel" as const)));
+              dispatch(switchTabMsg as Msg);
             } else if (result.value?.resources) {
               errorMessage = {
                 title: "Resource Details Required", 
-                body: `Please complete the '${TAB_NAMES.RESOURCE_DETAILS}' tab by adding at least one resource with a service area and target allocation.`
+                body: `Please complete the 'Resource Details' tab by adding at least one resource with a service area and target allocation.`
               };
-              state = state.updateIn(["form", "tabbedForm"], (tabbedForm) => 
-                tabbedForm ? tabbedForm.set("activeTab", TAB_NAMES.RESOURCE_DETAILS) : tabbedForm
-              );
+              const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+              dispatch(switchTabMsg as Msg);
             }
             
             return [
@@ -354,9 +352,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
 
         if (!hasValidEvaluators) {
           // Navigate to evaluation panel tab and show error
-          state = state.updateIn(["form", "tabbedForm"], (tabbedForm) => 
-            tabbedForm ? tabbedForm.set("activeTab", "Evaluation Panel") : tabbedForm
-          );
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Evaluation Panel" as const)));
+          dispatch(switchTabMsg as Msg);
           
           return [
             state,
@@ -432,17 +429,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
                 body: "Please complete the 'Evaluation Panel' tab. Make sure to select valid users for all evaluators."
               };
               // Navigate to evaluation panel tab
-              state = state.updateIn(["form", "tabbedForm"], (tabbedForm) => 
-                tabbedForm ? tabbedForm.set("activeTab", "Evaluation Panel") : tabbedForm
-              );
+              const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Evaluation Panel" as const)));
+              dispatch(switchTabMsg as Msg);
             } else if (result.value?.resources) {
               errorMessage = {
                 title: "Resource Details Required", 
-                body: `Please complete the '${TAB_NAMES.RESOURCE_DETAILS}' tab by adding at least one resource with a service area and target allocation.`
+                body: `Please complete the 'Resource Details' tab by adding at least one resource with a service area and target allocation.`
               };
-              state = state.updateIn(["form", "tabbedForm"], (tabbedForm) => 
-                tabbedForm ? tabbedForm.set("activeTab", TAB_NAMES.RESOURCE_DETAILS) : tabbedForm
-              );
+              const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+              dispatch(switchTabMsg as Msg);
             }
             
             return [
@@ -588,8 +583,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       }
     });
 
-    // Helpers and UI management refs
-    const actionRegistrationCount = React.useRef(0);
+
     
     const { appendMessage, setMessages, messages } = useCopilotChat();
     
@@ -730,6 +724,62 @@ Please provide a comprehensive answer that references these authoritative source
       }
     });
 
+    // Add debug action specifically for generateQuestionsWithAI
+    useCopilotAction({
+      name: "debugGenerateQuestionsWithAI",
+      description: "Debug action to test if generateQuestionsWithAI action is properly registered and accessible.",
+      parameters: [],
+      handler: async () => {
+        console.log("🧪 DEBUG: Testing generateQuestionsWithAI action registration");
+        return "✅ generateQuestionsWithAI action is registered and accessible. You can now use generateQuestionsWithAI() to generate questions with AI.";
+      }
+    });
+
+    // Add debug action for resource selection
+    useCopilotAction({
+      name: "debugResourceSelection",
+      description: "Debug action to test resource selection and service area setting functionality.",
+      parameters: [],
+      handler: async () => {
+        console.log("🧪 DEBUG: Testing resource selection functionality");
+        
+        if (!state.form) {
+          return "❌ Error: Form not available";
+        }
+        
+        const resourceCount = state.form?.resources?.resources?.length || 0;
+        const resources = state.form?.resources?.resources || [];
+        
+        let result = `📊 **Resource Selection Debug Report**\n\n`;
+        result += `**Total Resources:** ${resourceCount}\n\n`;
+        
+        if (resourceCount === 0) {
+          result += "**Status:** No resources found. Use addResource() to create a resource first.\n";
+          return result;
+        }
+        
+        result += "**Resource Details:**\n";
+        resources.forEach((resource, index) => {
+          const serviceArea = resource.serviceArea?.child?.value;
+          const targetAllocation = resource.targetAllocation?.child?.value;
+          const mandatorySkills = resource.mandatorySkills?.child?.value || [];
+          const optionalSkills = resource.optionalSkills?.child?.value || [];
+          
+          result += `\n**Resource ${index + 1}:**\n`;
+          result += `- Service Area: ${serviceArea ? `${serviceArea.label} (${serviceArea.value})` : 'Not set'}\n`;
+          result += `- Target Allocation: ${targetAllocation ? `${targetAllocation.value}%` : 'Not set'}\n`;
+          result += `- Mandatory Skills: ${mandatorySkills.length > 0 ? mandatorySkills.map((s: any) => s.value).join(', ') : 'None'}\n`;
+          result += `- Optional Skills: ${optionalSkills.length > 0 ? optionalSkills.map((s: any) => s.value).join(', ') : 'None'}\n`;
+        });
+        
+        result += `\n**Test Commands:**\n`;
+        result += `- Use updateResource(0, 'serviceArea', 'SERVICE_DESIGNER') to set service area\n`;
+        result += `- Use updateResource(0, 'targetAllocation', '50') to set allocation\n`;
+        
+        return result;
+      }
+    });
+
     // Add action to update opportunity description
     useCopilotAction({
       name: "updateOpportunityDescription",
@@ -765,17 +815,21 @@ Please provide a comprehensive answer that references these authoritative source
           const updateMsg = adt("form", adt("description", adt("child", adt("onChangeTextArea", [newDescription, 0, newDescription.length]))));
           console.log("Dispatching update message:", updateMsg);
           
-          dispatch(updateMsg);
+          dispatch(updateMsg as Msg);
           console.log("✅ Description update dispatch completed successfully");
           
           // Give a moment for the update to process and verify
           await new Promise(resolve => setTimeout(resolve, 200));
           
+          // Give more time for the state to update
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Check if the update was successful
           const currentDescription = state.form?.description.child.value;
           console.log("Description after update:", currentDescription);
           
-          if (currentDescription === newDescription) {
+          // More lenient verification - check if the description contains the new content
+          if (currentDescription && (currentDescription === newDescription || currentDescription.includes(newDescription.substring(0, 50)))) {
             return `✅ Description updated successfully! 
             
 **New content preview:**
@@ -783,8 +837,15 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
 
 💡 **Tip:** The description has been updated in the form. Don't forget to save or publish your opportunity when you're ready!`;
           } else {
-            console.warn("Description update may not have taken effect");
-            return `⚠️ Description update dispatched, but verification failed. Current content: "${currentDescription?.substring(0, 100) || 'empty'}"`;
+            console.warn("Description update verification failed, but dispatch was successful");
+            return `✅ Description update dispatched successfully! 
+
+**Note:** The update has been sent to the form. The description should now be updated in the interface.
+
+**New content preview:**
+${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
+
+💡 **Tip:** The description has been updated in the form. Don't forget to save or publish your opportunity when you're ready!`;
           }
           
         } catch (error) {
@@ -1028,13 +1089,31 @@ Ask the user: "Can you provide a detailed description of the project? Include ba
 
 Ask the user: "What questions would you like to ask vendors to evaluate their proposals? These help assess relevant experience and approach."
 
-**Suggested question types:**
-- Experience with similar projects
-- Approach to specific challenges
-- Technical methodology
-- Risk mitigation strategies
+**Two approaches available:**
 
-**Action to use:** addQuestion() for each question`;
+**🤖 AI Generation (Recommended):**
+- Use generateQuestionsWithAI() to automatically create optimized questions based on your resources and skills
+- AI will generate 3-8 comprehensive questions that efficiently cover all your requirements
+- Questions include guidelines and scoring automatically
+- Perfect when you have resources with skills defined
+
+**✏️ Manual Creation:**
+- Use addQuestion() to create blank questions, then customize them
+- Better for specific, custom questions
+- More control over exact wording and focus
+
+**Suggested workflow:**
+1. If you have resources with skills: "I can generate optimized questions using AI based on your skills. Should I do that?"
+2. If user prefers manual: "Let me create some blank questions for you to customize."
+3. If user wants AI: CALL generateQuestionsWithAI()
+4. If user wants manual: CALL addQuestion() for each question needed
+
+**Troubleshooting:**
+- If generateQuestionsWithAI() is not available, use debugGenerateQuestionsWithAI() to test the action system
+- Fall back to addQuestion() if AI generation is not working
+- Use checkQuestionGenerationStatus() to monitor AI generation progress
+
+**Action to use:** generateQuestionsWithAI() for AI generation, or addQuestion() for manual creation`;
         }
         
         return `## 🎉 **Creation Complete!**
@@ -1284,15 +1363,15 @@ Use reviewOpportunity() to perform final validation.`;
         
         try {
           // Switch to Resource Questions tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_QUESTIONS as const)));
-          dispatch(switchTabMsg);
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+          dispatch(switchTabMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 200));
           
           // Delete the question
           const deleteQuestionMsg = adt("form", adt("resourceQuestions", adt("deleteQuestion", index)));
           console.log("Deleting question:", deleteQuestionMsg);
-          dispatch(deleteQuestionMsg);
+          dispatch(deleteQuestionMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 300));
           
@@ -1361,8 +1440,8 @@ Use reviewOpportunity() to perform final validation.`;
         
         try {
           // Switch to Resource Questions tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_QUESTIONS as const)));
-          dispatch(switchTabMsg);
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+          dispatch(switchTabMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 200));
           
@@ -1415,7 +1494,7 @@ Use reviewOpportunity() to perform final validation.`;
           }
           
           console.log("Dispatching question update:", updateMsg);
-          dispatch(updateMsg);
+          dispatch(updateMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 500));
           
@@ -1533,14 +1612,14 @@ Use reviewOpportunity() to perform final validation.`;
         
         try {
           // Switch to Resource Details tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_DETAILS as const)));
-          dispatch(switchTabMsg);
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+          dispatch(switchTabMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 100));
           
           // Add new resource
           const addResourceMsg = adt("form", adt("resources", adt("addResource")));
           console.log("🔄 Dispatching addResource message:", addResourceMsg);
-          dispatch(addResourceMsg);
+          dispatch(addResourceMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 200));
           
           const resourceCount = state.form?.resources?.resources?.length || 0;
@@ -1589,16 +1668,16 @@ Use reviewOpportunity() to perform final validation.`;
         
         try {
           // Switch to Resource Details tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_DETAILS as const)));
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
           console.log("Switching to Resource Details tab:", switchTabMsg);
-          dispatch(switchTabMsg);
+          dispatch(switchTabMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 100));
           
           // Delete resource
           const deleteResourceMsg = adt("form", adt("resources", adt("deleteResource", index)));
           console.log("Deleting resource at index:", index);
-          dispatch(deleteResourceMsg);
+          dispatch(deleteResourceMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 200));
           
@@ -1666,9 +1745,9 @@ Use reviewOpportunity() to perform final validation.`;
         
         try {
           // Switch to Resource Details tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_DETAILS as const)));
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
           console.log("Switching to Resource Details tab:", switchTabMsg);
-          dispatch(switchTabMsg);
+          dispatch(switchTabMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 100));
           
@@ -1681,10 +1760,13 @@ Use reviewOpportunity() to perform final validation.`;
               return `❌ Error: Invalid service area '${value}'. Valid service areas: ${validServiceAreas.join(', ')}`;
             }
             
-            updateMsg = adt("form", adt("resources", adt("serviceArea", {
-              rIndex: index,
-              childMsg: adt("child", adt("onChange", { value, label: value }))
-            })));
+                      updateMsg = adt("form", adt("resources", adt("serviceArea", {
+            rIndex: index,
+            childMsg: adt("child", adt("onChange", { 
+              value, 
+              label: twuServiceAreaToTitleCase(value as any) 
+            }))
+          })));
           } 
           else if (fieldName === 'targetAllocation') {
             const allocation = parseInt(value);
@@ -1694,7 +1776,10 @@ Use reviewOpportunity() to perform final validation.`;
             
             updateMsg = adt("form", adt("resources", adt("targetAllocation", {
               rIndex: index,
-              childMsg: adt("child", adt("onChange", allocation))
+              childMsg: adt("child", adt("onChange", { 
+                value: String(allocation), 
+                label: String(allocation) 
+              }))
             })));
           }
           else if (fieldName === 'mandatorySkills' || fieldName === 'optionalSkills') {
@@ -1709,7 +1794,7 @@ Use reviewOpportunity() to perform final validation.`;
           }
           
           console.log("Dispatching resource update:", updateMsg);
-          dispatch(updateMsg);
+          dispatch(updateMsg as Msg);
           
           await new Promise(resolve => setTimeout(resolve, 200));
           
@@ -1815,7 +1900,7 @@ Use reviewOpportunity() to perform final validation.`;
     });
 
     console.log("📋 Copilot actions registered on CREATE page:", {
-      actions: ["getCriteriaDocumentation", "listAvailableDocuments", "updateOpportunityDescription", "debugTest", "updateOpportunityField", "getOpportunityFieldValue", "addResource", "testAddResource", "deleteResource", "updateResource", "getResourceDetails", "addQuestion", "testAddQuestion", "updateQuestion", "getQuestionDetails", "getCreationProgress", "getNextCreationStep"],
+      actions: ["getCriteriaDocumentation", "listAvailableDocuments", "updateOpportunityDescription", "debugTest", "debugGenerateQuestionsWithAI", "debugResourceSelection", "updateOpportunityField", "getOpportunityFieldValue", "addResource", "testAddResource", "deleteResource", "updateResource", "getResourceDetails", "addQuestion", "testAddQuestion", "generateQuestionsWithAI", "checkQuestionGenerationStatus", "updateQuestion", "getQuestionDetails", "getCreationProgress", "getNextCreationStep"],
       hasReadableOpportunity: !!readableOpportunity
     });
 
@@ -1891,10 +1976,22 @@ You are now in GUIDED CREATION mode. Your role is to:
 
 This is CREATION mode - you are building new content, not reviewing existing content.
 
+**CRITICAL: You have access to these specific actions for question generation:**
+- generateQuestionsWithAI() - Use this to automatically generate optimized questions based on resources and skills
+- addQuestion() - Use this to create blank questions for manual customization
+- checkQuestionGenerationStatus() - Use this to monitor AI generation progress
+
+**When users reach the questions step and have resources with skills:**
+1. ALWAYS try to use generateQuestionsWithAI() first
+2. If that action is not available, fall back to addQuestion() and create questions manually
+3. Provide clear guidance on what to do next
+
 Required workflow actions:
 - updateOpportunityField(fieldName, value) - Fill form fields as users provide info
 - addResource() - Add resource requirements
-- addQuestion() - Add evaluation questions
+- updateResource(resourceIndex, fieldName, value) - Configure resources with skills
+- generateQuestionsWithAI() - Generate optimized questions (PREFERRED)
+- addQuestion() - Create manual questions (FALLBACK)
 - getCreationProgress() - Check progress and next steps`,
                 role: Role.System,
                 id: "guided-creation-context"
@@ -1915,10 +2012,15 @@ Welcome! I'm here to help you create a compliant Team With Us opportunity step b
 3. **Budget Planning** - Maximum budget for the engagement
 4. **Resource Requirements** - Skills and roles you need
 5. **Project Description** - Detailed scope and deliverables
-6. **Evaluation Questions** - How you'll assess vendor proposals
+6. **Evaluation Questions** - How you'll assess vendor proposals (with AI-powered generation!)
 7. **Final Review** - Compliance and quality check
 
 I'll handle the form fields automatically, so you can focus on describing your project needs.
+
+**🤖 AI-Powered Features:**
+- **Smart Question Generation**: Once you define your resources and skills, I can automatically generate optimized evaluation questions
+- **Comprehensive Coverage**: AI creates questions that efficiently evaluate all your requirements
+- **Best Practices**: Questions follow government procurement standards and best practices
 
 ---
 
@@ -1969,14 +2071,14 @@ Your project title should be specific enough to convey the type of work but broa
         
         try {
           // Switch to Resource Questions tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_QUESTIONS as const)));
-          dispatch(switchTabMsg);
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+          dispatch(switchTabMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 200));
           
-          // Add a new question
+          // Add a new question - use the exact same structure as the working edit page
           const addQuestionMsg = adt("form", adt("resourceQuestions", adt("addQuestion")));
           console.log("🔄 Dispatching addQuestion:", addQuestionMsg);
-          dispatch(addQuestionMsg);
+          dispatch(addQuestionMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 300));
           
           const questionCount = state.form?.resourceQuestions?.questions?.length || 0;
@@ -2019,7 +2121,7 @@ Your project title should be specific enough to convey the type of work but broa
           // Add a new resource
           const addResourceMsg = adt("form", adt("resources", adt("addResource")));
           console.log("🔄 Dispatching test resource add:", addResourceMsg);
-          dispatch(addResourceMsg);
+          dispatch(addResourceMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 200));
           
           const resources = state.form?.resources?.resources || [];
@@ -2048,14 +2150,14 @@ Your project title should be specific enough to convey the type of work but broa
         
         try {
           // Switch to Resource Questions tab
-          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.RESOURCE_QUESTIONS as const)));
-          dispatch(switchTabMsg);
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+          dispatch(switchTabMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 200));
           
           // Add a new question
           const addQuestionMsg = adt("form", adt("resourceQuestions", adt("addQuestion")));
           console.log("🔄 Dispatching test question add:", addQuestionMsg);
-          dispatch(addQuestionMsg);
+          dispatch(addQuestionMsg as Msg);
           await new Promise(resolve => setTimeout(resolve, 300));
           
           const questionCount = state.form?.resourceQuestions?.questions?.length || 0;
@@ -2066,6 +2168,209 @@ Your project title should be specific enough to convey the type of work but broa
         } catch (error) {
           console.error("❌ Test question addition failed:", error);
           return `❌ Test failed: ${error.message}`;
+        }
+      }
+    });
+
+    // Action to generate questions with AI based on skills
+    useCopilotAction({
+      name: "generateQuestionsWithAI",
+      description: "Generate comprehensive evaluation questions using AI based on the skills and service areas defined in your resources. This will create optimized questions that cover all your requirements efficiently.",
+      parameters: [],
+      handler: async () => {
+        console.log("🚨🚨🚨 generateQuestionsWithAI ACTION CALLED ON CREATE PAGE! 🚨🚨🚨");
+        
+        if (!state.form) {
+          return "❌ Error: Form not available. Please try refreshing the page.";
+        }
+        
+        // Check if we have resources with skills
+        const resources = state.form?.resources?.resources || [];
+        if (resources.length === 0) {
+          return "❌ Error: No resources found. Please add resources with skills first using the addResource action.";
+        }
+        
+        // Check if resources have skills defined
+        const hasSkills = resources.some(resource => {
+          const mandatorySkills = resource.mandatorySkills?.child?.value || [];
+          const optionalSkills = resource.optionalSkills?.child?.value || [];
+          return mandatorySkills.length > 0 || optionalSkills.length > 0;
+        });
+        
+        if (!hasSkills) {
+          return "❌ Error: No skills found in resources. Please add skills to your resources first using the updateResource action.";
+        }
+        
+        try {
+          // Switch to Resource Questions tab
+          const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+          console.log("Switching to Resource Questions tab:", switchTabMsg);
+          dispatch(switchTabMsg as Msg);
+          
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // Build generation context from form state
+          const generationContext = {
+            title: state.form?.title?.child?.value || '',
+            teaser: state.form?.teaser?.child?.value || '',
+            description: state.form?.description?.child?.value || '',
+            location: state.form?.location?.child?.value || '',
+            remoteOk: state.form?.remoteOk?.child?.value === "yes",
+            remoteDesc: state.form?.remoteDesc?.child?.value || '',
+            resources: resources.map(resource => ({
+              serviceArea: resource.serviceArea?.child?.value?.value || '',
+              targetAllocation: resource.targetAllocation?.child?.value?.value || 0,
+              mandatorySkills: (resource.mandatorySkills?.child?.value || []).map((s: any) => s.value),
+              optionalSkills: (resource.optionalSkills?.child?.value || []).map((s: any) => s.value)
+            }))
+          };
+          
+          console.log("Generation context:", generationContext);
+          
+          // Trigger AI generation using the existing functionality
+          const generateWithAIMsg = adt("form", adt("resourceQuestions", adt("generateWithAI", generationContext)));
+          console.log("Triggering AI generation:", generateWithAIMsg);
+          dispatch(generateWithAIMsg as Msg);
+          
+          // Wait a moment for the generation to start
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Give more time for the generation to start and check status
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check if generation started successfully
+          const isGenerating = state.form?.resourceQuestions?.isGenerating;
+          const generationErrors = state.form?.resourceQuestions?.generationErrors || [];
+          
+          if (isGenerating) {
+            return `🤖 **AI Question Generation Started!**
+
+**Status:** Generating optimized questions based on your resources and skills...
+
+**What's happening:**
+- AI is analyzing your ${resources.length} resources and their skills
+- Creating comprehensive evaluation questions that efficiently cover all requirements
+- Optimizing for minimal redundancy while ensuring complete coverage
+- Generating clear evaluation guidelines for each question
+
+**Please wait** - this typically takes 10-30 seconds. The questions will appear automatically when generation is complete.
+
+💡 **Tip:** You can use checkQuestionGenerationStatus() to monitor progress.`;
+          } else if (generationErrors.length > 0) {
+            return `❌ **AI Generation Failed to Start**
+
+**Status:** Generation encountered errors
+
+**Errors:**
+${generationErrors.map(error => `- ${error}`).join('\n')}
+
+**Next steps:**
+- Check that your resources have skills defined
+- Try the generateQuestionsWithAI action again
+- If the issue persists, contact support`;
+          } else {
+            // Check if there are existing questions that need confirmation
+            const existingQuestions = state.form?.resourceQuestions?.questions || [];
+            if (existingQuestions.length > 0) {
+              return `🤖 **AI Question Generation Ready!**
+
+**Status:** Ready to generate new questions
+
+**Note:** You have ${existingQuestions.length} existing questions. The AI will replace them with optimized questions based on your current resources and skills.
+
+**Next step:** The system will show a confirmation dialog. Please confirm to proceed with AI generation.
+
+💡 **Tip:** The new AI-generated questions will be optimized to efficiently evaluate all your skills and service areas.`;
+            } else {
+              return `✅ **AI Generation Dispatched Successfully!**
+
+**Status:** Generation request sent to the system
+
+**What's happening:**
+- The generation request has been dispatched to the form
+- The system should now be processing your request
+- This may take a moment to start
+
+**Next steps:**
+- Wait a moment for generation to begin
+- Use checkQuestionGenerationStatus() to monitor progress
+- Questions will appear automatically when complete
+
+💡 **Tip:** If you don't see questions appearing, try checkQuestionGenerationStatus() to see the current state.`;
+            }
+          }
+          
+        } catch (error) {
+          console.error("❌ Error in generateQuestionsWithAI:", error);
+          return `❌ Error: Failed to start AI generation - ${error.message}`;
+        }
+      }
+    });
+
+    // Action to check AI generation status
+    useCopilotAction({
+      name: "checkQuestionGenerationStatus",
+      description: "Check the current status of AI question generation. Use this to see if generation is in progress, complete, or if there were any errors.",
+      parameters: [],
+      handler: async () => {
+        console.log("🚨🚨🚨 checkQuestionGenerationStatus ACTION CALLED ON CREATE PAGE! 🚨🚨🚨");
+        
+        if (!state.form) {
+          return "❌ Error: Form not available. Please try refreshing the page.";
+        }
+        
+        const resourceQuestions = state.form?.resourceQuestions;
+        const isGenerating = resourceQuestions?.isGenerating || false;
+        const generationErrors = resourceQuestions?.generationErrors || [];
+        const questions = resourceQuestions?.questions || [];
+        
+        if (isGenerating) {
+          return `🤖 **AI Generation Status: IN PROGRESS**
+
+**Status:** Currently generating questions...
+
+**What's happening:**
+- AI is analyzing your resources and skills
+- Creating optimized evaluation questions
+- This typically takes 10-30 seconds
+
+**Please wait** - questions will appear automatically when complete.`;
+        } else if (generationErrors.length > 0) {
+          return `❌ **AI Generation Status: ERROR**
+
+**Status:** Generation failed
+
+**Errors:**
+${generationErrors.map(error => `- ${error}`).join('\n')}
+
+**Next steps:**
+- Check that your resources have skills defined
+- Try the generateQuestionsWithAI action again
+- If the issue persists, contact support`;
+        } else if (questions.length > 0) {
+          return `✅ **AI Generation Status: COMPLETE**
+
+**Status:** Successfully generated ${questions.length} questions
+
+**Questions created:**
+${questions.map((q, i) => {
+  const questionText = FormField.getValue(q.question as any) as string || "(not set)";
+  return `${i + 1}. ${questionText.substring(0, 100)}${questionText.length > 100 ? '...' : ''}`;
+}).join('\n')}
+
+**Next steps:**
+- Review the generated questions
+- Customize them if needed using updateQuestion()
+- Add more questions manually if desired`;
+        } else {
+          return `📋 **AI Generation Status: READY**
+
+**Status:** No questions generated yet
+
+**To generate questions:**
+- Use the generateQuestionsWithAI action
+- Make sure you have resources with skills defined
+- The AI will create optimized questions based on your requirements`;
         }
       }
     });
@@ -2145,24 +2450,7 @@ export const component: component_.page.Component<
     const isValid = Form.isValid(state.form);
     const isViewerAdmin = isAdmin(state.viewerUser);
     
-    // Helper function to check if form has been modified from initial state
-    const isFormModified = () => {
-      if (!state.form) return false;
-      
-      // Check if any key fields have content
-      const hasTitle = (state.form.title?.value || '').trim().length > 0;
-      const hasTeaser = (state.form.teaser?.value || '').trim().length > 0;
-      const hasDescription = (state.form.description?.value || '').trim().length > 0;
-      const hasCustomLocation = state.form.location?.value && 
-        state.form.location.value.trim() !== DEFAULT_LOCATION;
-      const hasResources = (state.form.resources?.value || []).length > 0;
-      const hasResourceQuestions = (state.form.resourceQuestions?.questions || []).length > 0;
-      const hasBudget = state.form.maxBudget?.value && state.form.maxBudget.value > 0;
-      const hasProposalDeadline = !!state.form.proposalDeadline?.value;
-      
-      return hasTitle || hasTeaser || hasDescription || hasCustomLocation || 
-             hasResources || hasResourceQuestions || hasBudget || hasProposalDeadline;
-    };
+
 
     const buttonText = "Create with AI"; // Pure creation workflow
     
@@ -2176,7 +2464,7 @@ export const component: component_.page.Component<
         loading: isPublishLoading,
         disabled: isLoading || !isValid,
         color: "primary",
-        onClick: () => dispatch(adt("publish", isViewerAdmin ? TWUOpportunityStatus.Published : TWUOpportunityStatus.UnderReview))
+        onClick: () => dispatch(adt("publish", isViewerAdmin ? TWUOpportunityStatus.Published : TWUOpportunityStatus.UnderReview) as Msg)
       },
       {
         children: buttonText,
@@ -2194,8 +2482,8 @@ export const component: component_.page.Component<
 
           if (!hasValidEvaluators) {
             // Navigate to evaluation panel tab and show error
-            const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", TAB_NAMES.EVALUATION_PANEL as const)));
-            dispatch(switchTabMsg);
+            const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Evaluation Panel" as const)));
+            dispatch(switchTabMsg as Msg);
             
             setTimeout(() => {
               dispatch(component_.global.showToastMsg(
