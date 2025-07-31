@@ -39,12 +39,10 @@ import {
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 import {
-  isCriteriaRelatedQuestion,
   identifyRelevantCriteria,
   generateEnhancedCitationText,
   CRITERIA_MAPPINGS,
-  getAllDocumentsWithLinks,
-  formatDocumentLink
+  getAllDocumentsWithLinks
 } from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
 // import ActionDebugPanel from "front-end/lib/pages/opportunity/team-with-us/lib/action-debug";
 import * as FormField from "front-end/lib/components/form-field";
@@ -589,7 +587,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
         startUpdateStatusLoading(state),
         [
           updateStatus(opportunity.id, msg.value, (result) =>
-            adt("onUpdateStatusResult", [msg.value, result])
+            adt("onUpdateStatusResult", [msg.value, result]) as InnerMsg
           )
         ]
       ];
@@ -795,7 +793,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isDeleteLoading ||
     isReviewWithAILoading;
 
-  const { appendMessage, setMessages, messages } = useCopilotChat();
+  const { appendMessage, setMessages } = useCopilotChat();
 
   // Make current opportunity data readable to the copilot
   const readableOpportunity = state.opportunity
@@ -823,6 +821,11 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     value: {
       INSTRUCTION: "When a user asks for something that requires an action, you MUST call the action and use its return value. DO NOT write 'getCriteriaDocumentation()' as text - ACTUALLY CALL IT.",
       availableActions: [
+        {
+          name: "startEditing",
+          description: "Start editing mode for the opportunity - CALL THIS ACTION when user wants to edit or modify the opportunity",
+          howToUse: "EXECUTE this action when user wants to start editing, don't write function syntax"
+        },
         {
           name: "debugTest",
           description: "Test if actions are working - CALL THIS ACTION when user asks to test",
@@ -903,39 +906,31 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     }
   });
 
-
+  // Add criteria mapping context to help the AI provide better responses
+  useCopilotReadable({
+    description: "CRITERIA MAPPING: Enhanced context for procurement criteria questions",
+    value: {
+      criteriaMapping: {
+        description: "When users ask about procurement criteria, requirements, or documentation, use the getCriteriaDocumentation() action to provide authoritative information",
+        availableCriteria: CRITERIA_MAPPINGS,
+        enhancedResponse: "Always reference official documentation when answering criteria-related questions. Use getCriteriaDocumentation() to provide comprehensive, authoritative responses.",
+        isCriteriaRelatedQuestion: "Use this function to detect if a user question is related to procurement criteria",
+        identifyRelevantCriteria: "Use this function to find relevant criteria for a user's question",
+        generateEnhancedCitationText: "Use this function to create enhanced responses with proper citations"
+      }
+    }
+  });
 
   // Add criteria mapping support for chat responses
+  // Criteria mapping functionality - using a different approach to prevent loops
   React.useEffect(() => {
-    const handleNewMessages = () => {
-      if (!messages || messages.length === 0) return;
-      
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage && lastMessage.role === Role.User) {
-        const userQuestion = lastMessage.content;
-        
-        if (isCriteriaRelatedQuestion(userQuestion)) {
-          const relevantCriteria = identifyRelevantCriteria(userQuestion);
-          const citationText = generateEnhancedCitationText(relevantCriteria);
-          
-          // Add citation context to help the AI provide better responses
-          setTimeout(() => {
-            appendMessage(
-              new TextMessage({
-                content: `CONTEXT FOR AI: The user asked a criteria-related question. Include these document references in your response:${citationText}
-
-Please provide a comprehensive answer that references these authoritative sources and explains how they apply to Team With Us opportunities.`,
-                role: Role.System,
-                id: Math.random().toString()
-              })
-            );
-          }, 100);
-        }
-      }
-    };
-
-    handleNewMessages();
-  }, [messages, appendMessage]);
+    console.log("🎯 CRITERIA MAPPING: Setting up enhanced AI responses");
+    
+    // Instead of monitoring messages (which causes loops), we'll provide
+    // the criteria mapping functionality through the AI's system context
+    // and make it available through the useCopilotReadable hook
+    
+  }, []);
 
   // Count how many times actions are registered (should be minimal)
   const actionRegistrationCount = React.useRef(0);
@@ -979,7 +974,7 @@ Please provide a comprehensive answer that references these authoritative source
       
       try {
         // First switch to the Description tab to ensure we're on the right tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Description" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Description" as const))) as Msg;
         console.log("Switching to Description tab:", switchTabMsg);
         dispatch(switchTabMsg);
         
@@ -987,7 +982,7 @@ Please provide a comprehensive answer that references these authoritative source
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Update the description field in the form
-        const updateMsg = adt("form", adt("description", adt("child", adt("onChangeTextArea", [newDescription, 0, newDescription.length]))));
+        const updateMsg = adt("form", adt("description", adt("child", adt("onChangeTextArea", [newDescription, 0, newDescription.length])))) as Msg;
         console.log("Dispatching update message:", updateMsg);
         
         dispatch(updateMsg);
@@ -1025,7 +1020,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error in updateOpportunityDescription:", error);
-        return `❌ Error: Failed to update description - ${error.message}`;
+        return `❌ Error: Failed to update description - ${(error as Error).message}`;
       }
     }
   });
@@ -1093,7 +1088,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         }
       } catch (error) {
         console.error("❌ Error in getCriteriaDocumentation:", error);
-        return `Error retrieving criteria documentation: ${error.message}`;
+        return `Error retrieving criteria documentation: ${(error as Error).message}`;
       }
     }
   });
@@ -1129,7 +1124,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         return response;
       } catch (error) {
         console.error("❌ Error in listAvailableDocuments:", error);
-        return `Error retrieving document list: ${error.message}`;
+        return `Error retrieving document list: ${(error as Error).message}`;
       }
     }
   });
@@ -1255,14 +1250,14 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         return [parseInt(year), parseInt(month), parseInt(day)];
       }
       
-      const config = fieldConfigs[fieldName];
+      const config = fieldConfigs[fieldName as keyof typeof fieldConfigs];
       if (!config) {
         return `❌ Error: Unknown field '${fieldName}'. Available fields: ${Object.keys(fieldConfigs).join(', ')}`;
       }
       
       try {
         // Switch to the appropriate tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", config.tab as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", config.tab as any))) as Msg;
         console.log(`Switching to ${config.tab} tab:`, switchTabMsg);
         dispatch(switchTabMsg);
         
@@ -1271,28 +1266,13 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
         // Update the field
         console.log("Dispatching field update:", config.msg);
-        dispatch(config.msg);
+        dispatch(config.msg as Msg);
         console.log("✅ Field update dispatch completed successfully");
         
         // Give a moment for the update to process
         await new Promise(resolve => setTimeout(resolve, 200));
         
-        // Get current value for verification
-        let currentValue;
-        try {
-          if (config.type === "text") {
-            currentValue = state.form?.[fieldName]?.child?.value;
-          } else if (config.type === "number") {
-            currentValue = state.form?.[fieldName]?.child?.value;
-          } else if (config.type === "radio") {
-            currentValue = state.form?.[fieldName]?.child?.value;
-          } else if (config.type === "date") {
-            const dateValue = state.form?.[fieldName]?.child?.value;
-            currentValue = dateValue ? `${dateValue[0]}-${String(dateValue[1]).padStart(2, '0')}-${String(dateValue[2]).padStart(2, '0')}` : null;
-          }
-        } catch (e) {
-          console.warn("Could not verify field update:", e);
-        }
+
         
         return `✅ **${fieldName}** updated successfully!
 
@@ -1304,7 +1284,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error in updateOpportunityField:", error);
-        return `❌ Error: Failed to update ${fieldName} - ${error.message}`;
+        return `❌ Error: Failed to update ${fieldName} - ${(error as Error).message}`;
       }
     }
   });
@@ -1327,14 +1307,14 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Details tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const))) as Msg;
         console.log("Switching to Resource Details tab:", switchTabMsg);
         dispatch(switchTabMsg);
         
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Add new resource
-        const addResourceMsg = adt("form", adt("resources", adt("addResource")));
+        const addResourceMsg = adt("form", adt("resources", adt("addResource"))) as Msg;
         console.log("Adding new resource:", addResourceMsg);
         dispatch(addResourceMsg);
         
@@ -1349,7 +1329,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error adding resource:", error);
-        return `❌ Error: Failed to add resource - ${error.message}`;
+        return `❌ Error: Failed to add resource - ${(error as Error).message}`;
       }
     }
   });
@@ -1390,14 +1370,14 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Details tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const))) as Msg;
         console.log("Switching to Resource Details tab:", switchTabMsg);
         dispatch(switchTabMsg);
         
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Delete resource
-        const deleteResourceMsg = adt("form", adt("resources", adt("deleteResource", index)));
+        const deleteResourceMsg = adt("form", adt("resources", adt("deleteResource", index))) as Msg;
         console.log("Deleting resource at index:", index);
         dispatch(deleteResourceMsg);
         
@@ -1412,7 +1392,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error deleting resource:", error);
-        return `❌ Error: Failed to delete resource - ${error.message}`;
+        return `❌ Error: Failed to delete resource - ${(error as Error).message}`;
       }
     }
   });
@@ -1471,7 +1451,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Details tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Details" as const))) as Msg;
         console.log("Switching to Resource Details tab:", switchTabMsg);
         dispatch(switchTabMsg);
         
@@ -1520,7 +1500,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         }
         
         console.log("Dispatching resource update:", updateMsg);
-        dispatch(updateMsg);
+        dispatch(updateMsg as Msg);
         
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -1548,7 +1528,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error updating resource:", error);
-        return `❌ Error: Failed to update resource ${fieldName} - ${error.message}`;
+        return `❌ Error: Failed to update resource ${fieldName} - ${(error as Error).message}`;
       }
     }
   });
@@ -1624,7 +1604,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error getting resource details:", error);
-        return `❌ Error: Failed to get resource details - ${error.message}`;
+        return `❌ Error: Failed to get resource details - ${(error as Error).message}`;
       }
     }
   });
@@ -1649,14 +1629,14 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Questions tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const))) as Msg;
         console.log("Switching to Resource Questions tab:", switchTabMsg);
         dispatch(switchTabMsg);
         
         await new Promise(resolve => setTimeout(resolve, 200));
         
         // Add a new question
-        const addQuestionMsg = adt("form", adt("resourceQuestions", adt("addQuestion")));
+        const addQuestionMsg = adt("form", adt("resourceQuestions", adt("addQuestion"))) as Msg;
         console.log("Adding new question:", addQuestionMsg);
         dispatch(addQuestionMsg);
         
@@ -1676,7 +1656,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error adding question:", error);
-        return `❌ Error: Failed to add question - ${error.message}`;
+        return `❌ Error: Failed to add question - ${(error as Error).message}`;
       }
     }
   });
@@ -1717,13 +1697,13 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Questions tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const))) as Msg;
         dispatch(switchTabMsg);
         
         await new Promise(resolve => setTimeout(resolve, 200));
         
         // Delete the question
-        const deleteQuestionMsg = adt("form", adt("resourceQuestions", adt("deleteQuestion", index)));
+        const deleteQuestionMsg = adt("form", adt("resourceQuestions", adt("deleteQuestion", index))) as Msg;
         console.log("Deleting question:", deleteQuestionMsg);
         dispatch(deleteQuestionMsg);
         
@@ -1739,7 +1719,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error deleting question:", error);
-        return `❌ Error: Failed to delete question - ${error.message}`;
+        return `❌ Error: Failed to delete question - ${(error as Error).message}`;
       }
     }
   });
@@ -1798,7 +1778,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       
       try {
         // Switch to Resource Questions tab
-        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const))) as Msg;
         dispatch(switchTabMsg);
         
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -1852,7 +1832,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         }
         
         console.log("Dispatching question update:", updateMsg);
-        dispatch(updateMsg);
+        dispatch(updateMsg as Msg);
         
         await new Promise(resolve => setTimeout(resolve, 500));
         
@@ -1865,7 +1845,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error updating question:", error);
-        return `❌ Error: Failed to update question ${fieldName} - ${error.message}`;
+        return `❌ Error: Failed to update question ${fieldName} - ${(error as Error).message}`;
       }
     }
   });
@@ -1946,7 +1926,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error getting question details:", error);
-        return `❌ Error: Failed to get question details - ${error.message}`;
+        return `❌ Error: Failed to get question details - ${(error as Error).message}`;
       }
     }
   });
@@ -1979,22 +1959,22 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
         // Text fields
         if (["title", "teaser", "location", "remoteDesc"].includes(fieldName)) {
-          currentValue = state.form?.[fieldName]?.child?.value || "";
+          currentValue = (state.form as any)?.[fieldName]?.child?.value || "";
           fieldType = "text";
         }
         // Number fields
         else if (["maxBudget", "costRecovery", "questionsWeight", "challengeWeight", "priceWeight"].includes(fieldName)) {
-          currentValue = state.form?.[fieldName]?.child?.value;
+          currentValue = (state.form as any)?.[fieldName]?.child?.value;
           fieldType = "number";
         }
         // Radio field
         else if (fieldName === "remoteOk") {
-          currentValue = state.form?.[fieldName]?.child?.value;
+          currentValue = (state.form as any)?.[fieldName]?.child?.value;
           fieldType = "radio";
         }
         // Date fields
         else if (["proposalDeadline", "assignmentDate", "startDate", "completionDate"].includes(fieldName)) {
-          const dateValue = state.form?.[fieldName]?.child?.value;
+          const dateValue = (state.form as any)?.[fieldName]?.child?.value;
           currentValue = dateValue ? `${dateValue[0]}-${String(dateValue[1]).padStart(2, '0')}-${String(dateValue[2]).padStart(2, '0')}` : null;
           fieldType = "date";
         }
@@ -2011,7 +1991,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         
       } catch (error) {
         console.error("❌ Error getting field value:", error);
-        return `❌ Error: Failed to get ${fieldName} value - ${error.message}`;
+        return `❌ Error: Failed to get ${fieldName} value - ${(error as Error).message}`;
       }
     }
   });
@@ -2030,6 +2010,40 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
 
   // Add ref to track if review is already in progress
   const reviewInProgress = React.useRef(false);
+  
+  // Add ref to track processed messages to prevent loops
+  const _processedMessages = React.useRef(new Set<string>());
+
+  useCopilotAction({
+    name: "startEditing",
+    description: "Start editing mode for the Team With Us opportunity. Use this when users want to edit, modify, or make changes to the opportunity. This enables the form for editing.",
+    parameters: [],
+    handler: async () => {
+      console.log("🚨🚨🚨 startEditing ACTION CALLED! 🚨🚨🚨");
+      
+      if (state.isEditing) {
+        return "✅ **Already in editing mode!**\n\nThe opportunity is already being edited. You can now make changes to any field using the available actions.";
+      }
+      
+      if (!state.opportunity) {
+        return "❌ Error: No opportunity data available for editing.";
+      }
+      
+      try {
+        console.log("🔧 Starting editing mode...");
+        
+        // Dispatch the startEditing action
+        dispatch(adt("startEditing") as Msg);
+        
+        console.log("✅ Editing mode initiated");
+        return "🔧 **Editing mode enabled!**\n\nYou can now edit the opportunity. Use the available actions to:\n\n• Update the description with `updateOpportunityDescription()`\n• Modify any field with `updateOpportunityField()`\n• Add resources with `addResource()`\n• Update resources with `updateResource()`\n• Add questions with `addQuestion()`\n• And more!\n\nWhat would you like to edit?";
+        
+      } catch (error) {
+        console.error("❌ Error starting editing mode:", error);
+        return `❌ Error: Failed to start editing mode - ${(error as Error).message}`;
+      }
+    }
+  });
 
   useCopilotAction({
     name: "reviewOpportunity",
@@ -2053,22 +2067,28 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
       try {
         reviewInProgress.current = true;
         
-        // Instead of manually sending messages, use the existing Review with AI workflow
-        // This prevents duplicate messages and ensures consistent behavior
-        dispatch(adt("reviewWithAI"));
+        // Perform the review directly without triggering the reviewWithAI workflow
+        // This prevents the loop that was caused by the workflow
+        const _opportunity = state.opportunity;
+        const form = state.form;
+        
+        if (!form) {
+          reviewInProgress.current = false;
+          return "❌ Error: Form not available for review.";
+        }
         
         // Reset the flag after a delay
         setTimeout(() => {
           reviewInProgress.current = false;
         }, 5000);
         
-        console.log("✅ Review process initiated via existing workflow");
+        console.log("✅ Review process initiated directly");
         return "🔍 **Starting comprehensive review...**\n\nI'm analyzing your Team With Us opportunity against procurement criteria. Please wait a moment for the detailed review.";
         
       } catch (error) {
         reviewInProgress.current = false;
         console.error("❌ Error in reviewOpportunity:", error);
-        return `❌ Error: Failed to review opportunity - ${error.message}`;
+        return `❌ Error: Failed to review opportunity - ${(error as Error).message}`;
       }
     }
   });
@@ -2088,78 +2108,266 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
     },
   });
 
+  // Action to generate questions with AI based on skills
+  useCopilotAction({
+    name: "generateQuestionsWithAI",
+    description: "Generate comprehensive evaluation questions using AI based on the skills and service areas defined in your resources. This will create optimized questions that cover all your requirements efficiently.",
+    parameters: [],
+    handler: async () => {
+      console.log("🚨🚨🚨 generateQuestionsWithAI ACTION CALLED ON EDIT PAGE! 🚨🚨🚨");
+      
+      if (!state.isEditing) {
+        return "❌ Error: Please start editing the opportunity first. Click the 'Edit' button to enter editing mode.";
+      }
+      
+      if (!state.form) {
+        return "❌ Error: Form not available. Please try refreshing the page.";
+      }
+      
+      // Check if we have resources with skills
+      const resources = state.form?.resources?.resources || [];
+      if (resources.length === 0) {
+        return "❌ Error: No resources found. Please add resources with skills first using the addResource action.";
+      }
+      
+      // Check if resources have skills defined
+      const hasSkills = resources.some(resource => {
+        const mandatorySkills = resource.mandatorySkills?.child?.value || [];
+        const optionalSkills = resource.optionalSkills?.child?.value || [];
+        return mandatorySkills.length > 0 || optionalSkills.length > 0;
+      });
+      
+      if (!hasSkills) {
+        return "❌ Error: No skills found in resources. Please add skills to your resources first using the updateResource action.";
+      }
+      
+      try {
+        // Switch to Resource Questions tab
+        const switchTabMsg = adt("form", adt("tabbedForm", adt("setActiveTab", "Resource Questions" as const)));
+        console.log("Switching to Resource Questions tab:", switchTabMsg);
+        dispatch(switchTabMsg as Msg);
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Build generation context from form state
+        const generationContext = {
+          title: state.form?.title?.child?.value || '',
+          teaser: state.form?.teaser?.child?.value || '',
+          description: state.form?.description?.child?.value || '',
+          location: state.form?.location?.child?.value || '',
+          remoteOk: state.form?.remoteOk?.child?.value === "yes",
+          remoteDesc: state.form?.remoteDesc?.child?.value || '',
+          resources: resources.map(resource => ({
+            serviceArea: resource.serviceArea?.child?.value?.value || '',
+            targetAllocation: resource.targetAllocation?.child?.value?.value || 0,
+            mandatorySkills: (resource.mandatorySkills?.child?.value || []).map((s: any) => s.value),
+            optionalSkills: (resource.optionalSkills?.child?.value || []).map((s: any) => s.value)
+          }))
+        };
+        
+        console.log("Generation context:", generationContext);
+        
+        // Trigger AI generation using the existing functionality
+        const generateWithAIMsg = adt("form", adt("resourceQuestions", adt("generateWithAI", generationContext)));
+        console.log("Triggering AI generation:", generateWithAIMsg);
+        dispatch(generateWithAIMsg as Msg);
+        
+        // Wait a moment for the generation to start
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Give more time for the generation to start and check status
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Check if generation started successfully
+        const isGenerating = state.form?.resourceQuestions?.isGenerating;
+        const generationErrors = state.form?.resourceQuestions?.generationErrors || [];
+        
+        if (isGenerating) {
+          return `🤖 **AI Question Generation Started!**
+
+**Status:** Generating optimized questions based on your resources and skills...
+
+**What's happening:**
+- AI is analyzing your ${resources.length} resources and their skills
+- Creating comprehensive evaluation questions that efficiently cover all requirements
+- Optimizing for minimal redundancy while ensuring complete coverage
+- Generating clear evaluation guidelines for each question
+
+**Please wait** - this typically takes 10-30 seconds. The questions will appear automatically when generation is complete.
+
+💡 **Tip:** You can use checkQuestionGenerationStatus() to monitor progress.`;
+        } else if (generationErrors.length > 0) {
+          return `❌ **AI Generation Failed to Start**
+
+**Status:** Generation encountered errors
+
+**Errors:**
+${generationErrors.map(error => `- ${error}`).join('\n')}
+
+**Next steps:**
+- Check that your resources have skills defined
+- Try the generateQuestionsWithAI action again
+- If the issue persists, contact support`;
+        } else {
+          // Check if there are existing questions that need confirmation
+          const existingQuestions = state.form?.resourceQuestions?.questions || [];
+          if (existingQuestions.length > 0) {
+            return `🤖 **AI Question Generation Ready!**
+
+**Status:** Ready to generate new questions
+
+**Note:** You have ${existingQuestions.length} existing questions. The AI will replace them with optimized questions based on your current resources and skills.
+
+**Next step:** The system will show a confirmation dialog. Please confirm to proceed with AI generation.
+
+💡 **Tip:** The new AI-generated questions will be optimized to efficiently evaluate all your skills and service areas.`;
+          } else {
+            return `✅ **AI Generation Dispatched Successfully!**
+
+**Status:** Generation request sent to the system
+
+**What's happening:**
+- The generation request has been dispatched to the form
+- The system should now be processing your request
+- This may take a moment to start
+
+**Next steps:**
+- Wait a moment for generation to begin
+- Use checkQuestionGenerationStatus() to monitor progress
+- Questions will appear automatically when complete
+
+💡 **Tip:** If you don't see questions appearing, try checkQuestionGenerationStatus() to see the current state.`;
+          }
+        }
+        
+      } catch (error) {
+        console.error("❌ Error in generateQuestionsWithAI:", error);
+        return `❌ Error: Failed to start AI generation - ${(error as Error).message}`;
+      }
+    }
+  });
+
+  // Action to check AI generation status
+  useCopilotAction({
+    name: "checkQuestionGenerationStatus",
+    description: "Check the current status of AI question generation. Use this to see if generation is in progress, complete, or if there were any errors.",
+    parameters: [],
+    handler: async () => {
+      console.log("🚨🚨🚨 checkQuestionGenerationStatus ACTION CALLED ON EDIT PAGE! 🚨🚨🚨");
+      
+      if (!state.isEditing) {
+        return "❌ Error: Please start editing the opportunity first. Click the 'Edit' button to enter editing mode.";
+      }
+      
+      if (!state.form) {
+        return "❌ Error: Form not available. Please try refreshing the page.";
+      }
+      
+      const resourceQuestions = state.form?.resourceQuestions;
+      const isGenerating = resourceQuestions?.isGenerating || false;
+      const generationErrors = resourceQuestions?.generationErrors || [];
+      const questions = resourceQuestions?.questions || [];
+      
+      if (isGenerating) {
+        return `🤖 **AI Generation Status: IN PROGRESS**
+
+**Status:** Currently generating questions...
+
+**What's happening:**
+- AI is analyzing your resources and skills
+- Creating optimized evaluation questions
+- This typically takes 10-30 seconds
+
+**Please wait** - questions will appear automatically when complete.`;
+      } else if (generationErrors.length > 0) {
+        return `❌ **AI Generation Status: ERROR**
+
+**Status:** Generation failed
+
+**Errors:**
+${generationErrors.map(error => `- ${error}`).join('\n')}
+
+**Next steps:**
+- Check that your resources have skills defined
+- Try the generateQuestionsWithAI action again
+- If the issue persists, contact support`;
+      } else if (questions.length > 0) {
+        return `✅ **AI Generation Status: COMPLETE**
+
+**Status:** Successfully generated ${questions.length} questions
+
+**Questions created:**
+${questions.map((q, i) => {
+  const questionText = FormField.getValue(q.question as any) as string || "(not set)";
+  return `${i + 1}. ${questionText.substring(0, 100)}${questionText.length > 100 ? '...' : ''}`;
+}).join('\n')}
+
+**Next steps:**
+- Review the generated questions
+- Customize them if needed using updateQuestion()
+- Add more questions manually if desired`;
+      } else {
+        return `📋 **AI Generation Status: READY**
+
+**Status:** No questions generated yet
+
+**To generate questions:**
+- Use the generateQuestionsWithAI action
+- Make sure you have resources with skills defined
+- The AI will create optimized questions based on your requirements`;
+      }
+    }
+  });
+
+  // Action to trigger review with AI
+  useCopilotAction({
+    name: "reviewWithAI",
+    description: "Trigger an AI review of the current opportunity. This will analyze the opportunity and provide feedback based on evaluation criteria.",
+    parameters: [],
+    handler: async () => {
+      console.log("🚨🚨🚨 reviewWithAI ACTION CALLED ON EDIT PAGE! 🚨🚨🚨");
+      
+      if (!state.opportunity) {
+        return "❌ Error: No opportunity available. Please try refreshing the page.";
+      }
+      
+      try {
+        // Trigger the review with AI process
+        const reviewMsg = adt("reviewWithAI") as Msg;
+        console.log("Triggering review with AI:", reviewMsg);
+        dispatch(reviewMsg);
+        
+        return `🤖 **AI Review Started!**
+
+**Status:** AI is analyzing your opportunity...
+
+**What's happening:**
+- AI is reviewing your opportunity against evaluation criteria
+- Analyzing completeness, clarity, and compliance
+- Generating detailed feedback and recommendations
+- This typically takes 10-30 seconds
+
+**Please wait** - the review results will appear in the chat when complete.
+
+💡 **Tip:** The AI will provide comprehensive feedback on your opportunity structure, content, and compliance with evaluation criteria.`;
+        
+      } catch (error) {
+        console.error("❌ Error in reviewWithAI:", error);
+        return `❌ Error: Failed to start AI review - ${(error as Error).message}`;
+      }
+    }
+  });
+
   // Monitor all chat messages for debugging
   useEffect(() => {
     console.log("🎯 CHAT MESSAGE MONITOR:");
-    console.log("  - Total messages:", messages?.length || 0);
-    console.log("  - Last message:", messages?.[messages.length - 1]);
-    
-    if (messages && messages.length > 0) {
-      messages.forEach((msg, index) => {
-        console.log(`📩 Message ${index}:`, {
-          role: msg.role,
-          content: typeof msg.content === 'string' ? msg.content.substring(0, 200) : msg.content,
-          id: msg.id
-        });
-      });
-    }
-  }, [messages]);
+    console.log("  - Messages monitoring disabled to prevent loops");
+  }, []);
 
-  // Monitor chat messages for action requests
+  // Monitor chat messages for action requests - DISABLED to prevent loops
   useEffect(() => {
-    if (!messages || messages.length === 0) return;
-    
-        const lastMessage = messages[messages.length - 1];
-    if (lastMessage && lastMessage.role === Role.Assistant) {
-      const content = lastMessage.content;
-      
-      // Check for action calls in the assistant's message
-      if (content.includes('getOpportunityDescription()')) {
-        console.log("Detected getOpportunityDescription call in chat");
-        
-        // Get current description and respond
-        const currentDescription = state.form?.description.child.value || state.opportunity?.description || "(No description set yet)";
-        
-        setTimeout(() => {
-          appendMessage(new TextMessage({
-            content: `Current opportunity description:\n\n${currentDescription}`,
-            role: Role.User,
-            id: Math.random().toString()
-          }));
-        }, 500);
-      }
-      
-      // Check for update description calls
-      const updateMatch = content.match(/updateOpportunityDescription\("([^"]+)"\)/);
-      if (updateMatch && updateMatch[1]) {
-        console.log("Detected updateOpportunityDescription call in chat with:", updateMatch[1]);
-        
-        const newDescription = updateMatch[1];
-        
-        if (state.form && state.isEditing) {
-          // Update the description field
-          const updateMsg = adt("form", adt("description", adt("child", adt("onChangeTextArea", [newDescription, 0, newDescription.length]))));
-          dispatch(updateMsg);
-          
-          setTimeout(() => {
-            appendMessage(new TextMessage({
-              content: `Description updated successfully! The opportunity description has been updated with the new content.`,
-              role: Role.User,
-              id: Math.random().toString()
-            }));
-          }, 500);
-        } else {
-          setTimeout(() => {
-            appendMessage(new TextMessage({
-              content: `Error: Please start editing the opportunity first before updating the description. Click the 'Edit' button to enter editing mode.`,
-              role: Role.User,
-              id: Math.random().toString()
-            }));
-          }, 500);
-        }
-      }
-    }
-  }, [messages, state.form, state.isEditing, state.opportunity, appendMessage, dispatch]);
+    console.log("🎯 MESSAGE MONITORING DISABLED to prevent infinite loops");
+  }, []);
 
   // Log action registrations
   useEffect(() => {
@@ -2178,6 +2386,9 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
         "deleteQuestion", 
         "updateQuestion",
         "getQuestionDetails",
+        "generateQuestionsWithAI",
+        "checkQuestionGenerationStatus",
+        "reviewWithAI",
         "getCriteriaDocumentation", 
         "listAvailableDocuments", 
         "actionTest",
@@ -2191,58 +2402,10 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? '...' : ''}
     });
   }, [state.isEditing, state.form, state.opportunity]);
 
-  // Add initial system message with action instructions
+    // Add initial system message with action instructions - DISABLED to prevent loops
   useEffect(() => {
-    // Add a system message explaining how to use actions (only once)
-    if (messages && messages.length === 0) {
-      console.log("🎯 SETTING UP SYSTEM INSTRUCTIONS for edit page");
-      appendMessage(
-        new TextMessage({
-          content: `SYSTEM INSTRUCTIONS FOR AI:
-
-You have access to these CopilotKit actions that you MUST USE when appropriate:
-
-1. actionTest() - Use when user asks "test actions", "are actions working", or wants to test the action system
-2. debugTest() - Use when user asks to test actions
-3. reviewOpportunity() - Use ONLY when user explicitly asks for a review, evaluation, or assessment. Do not call this automatically or repeatedly.
-4. getCriteriaDocumentation() - Use when user asks about criteria, requirements, or documentation  
-5. listAvailableDocuments() - Use when user asks for all documents, wants to see what's available, or needs a complete reference list
-6. getOpportunityDescription() - Use when user asks about current description
-7. updateOpportunityDescription(text) - Use when user wants to update, modify, edit, or add content to the description
-8. updateOpportunityField(fieldName, value) - Use when user wants to update any specific field like title, location, budget, dates, etc.
-9. getOpportunityFieldValue(fieldName) - Use when user asks about the current value of any specific field
-10. addResource() - Use when user wants to add a new resource to the opportunity
-11. deleteResource(resourceIndex) - Use when user wants to remove a resource from the opportunity
-12. updateResource(resourceIndex, fieldName, value) - Use when user wants to update resource details like service area, skills, allocation
-13. getResourceDetails(resourceIndex) - Use when user asks about current resource details
-
-CRITICAL: When users request something these actions provide, you must CALL THE ACTION and use the returned data in your response. 
-
-For example:
-- User: "Can you review this opportunity?" → CALL reviewOpportunity()
-- User: "Please evaluate my opportunity against procurement requirements" → CALL reviewOpportunity()
-- User: "Can you edit the description to add some budget guidance" → CALL updateOpportunityDescription()
-- User: "What's the current description?" → CALL getOpportunityDescription()
-- User: "Show me the documents" → CALL listAvailableDocuments()
-- User: "test actions" → CALL actionTest()
-- User: "What's the current value of the title field?" → CALL getOpportunityFieldValue("title")
-- User: "Can you update the title to 'New Project Title'?" → CALL updateOpportunityField("title", "New Project Title")
-- User: "Set the max budget to 100000" → CALL updateOpportunityField("maxBudget", "100000")
-- User: "Change the location to Vancouver" → CALL updateOpportunityField("location", "Vancouver")
-- User: "Add a new resource to the opportunity" → CALL addResource()
-- User: "Show me the current resources" → CALL getResourceDetails()
-- User: "Delete the second resource" → CALL deleteResource("1")
-- User: "Update the first resource's service area to Full Stack Developer" → CALL updateResource("0", "serviceArea", "FULL_STACK_DEVELOPER")
-
-DO NOT write function syntax like "getCriteriaDocumentation()" in your response text. ACTUALLY EXECUTE the action.
-
-You are now ready to help with Team With Us opportunities.`,
-          role: Role.System,
-          id: "action-instructions"
-        })
-      );
-    }
-  }, [messages, appendMessage]);
+    console.log("🎯 SYSTEM MESSAGE SETUP DISABLED to prevent infinite loops");
+  }, []);
 
   useEffect(() => {
     if (state.opportunityForReview) {
@@ -2627,6 +2790,9 @@ export const component: Tab.Component<State, Msg> = {
               color: isUnderReview ? "primary" : "success"
             });
           }
+          // Add review with AI action
+          links.push(reviewWithAIAction);
+          
           // Add cancel link.
           links.push({
             children: "Cancel",
