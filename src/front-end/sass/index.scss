@@ -1,5 +1,10 @@
+@use "sass:color";
+@use "sass:map";
+
 // Imports
-@import "./components/virtualized-table";
+@use "./components/virtualized-table";
+
+// @import "./components/virtualized-table";
 
 $input-focus-border-color: #6bccf7;
 $input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
@@ -40,7 +45,7 @@ $container-max-widths: (
 // 'h' stands for 'half'
 // Merge standard Bootstrap spacers with custom ones.
 // Standard keys ensure Bootstrap utilities are generated correctly.
-$spacers: map-merge(
+$spacers: map.merge(
   (
     0: 0,
     1: $spacer * .25,
@@ -92,7 +97,7 @@ $blue-light: #e7edf3;
 $blue-light-alt: #e9f5fb;
 $blue-light-alt-2: #f4fafd;
 $purple: #52489c;
-$purple-light: lighten($purple, 20);
+$purple-light: color.adjust($purple, $lightness: 20%);
 $yellow: #fcba19;
 $yellow-light: #fdd675;
 $red: #dc3545;
@@ -115,7 +120,7 @@ $link-hover-color: #08658e;
 $dropdown-link-hover-bg: $gray-100;
 $dropdown-link-active-bg: $gray-200;
 $table-hover-bg: $blue-light-alt;
-
+$table-color: $gray-900;
 
 // App-Specific Utility Colors
 // App Views
@@ -271,7 +276,7 @@ $body: $body-color;
 $light: $gray-100;
 $dark: $gray-800;
 
-$theme-colors: map-merge(
+$theme-colors: map.merge(
   (
     "white": $white,
     "black": $black,
@@ -304,6 +309,7 @@ $h1-font-size: $font-size-base * 2.5;
 $input-btn-padding-x: 0.75rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
+$btn-padding-x-sm: 0.75rem;
 
 $badge-font-size: 80%;
 
@@ -323,7 +329,6 @@ $transition-duration: 240ms;
 // Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
 @import "bootstrap";
-
 @import "./font";
 
 // Bootstrap 5 overrides
@@ -380,9 +385,17 @@ $table-cell-padding-x: 0.75rem;
 
 // Restore Bootstrap 4 table header appearance
 .table > thead > tr > th {
-  background-color: #e9ecef; // Bootstrap 4 .thead-light background-color
-  border-color: #dee2e6;     // Bootstrap 4 .thead-light border-color
-  color: #495057;           // Bootstrap 4 .thead-light text color
+  border-color: $gray-300;     // Bootstrap 4 .thead-light border-color
+  color: $gray-600;           // Bootstrap 4 .thead-light text color
+}
+
+.table td, .table th, table td, table th {
+  border-top: 1px solid $gray-400;
+}
+
+.table thead th, table thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid $gray-400;
 }
 
 // Ensure the custom variables are applied if Bootstrap is imported AFTER them.
@@ -402,6 +415,11 @@ a.h1, a.h2, a.h3, a.h4, a.h5, a.h6 {
 a.h1:hover, a.h2:hover, a.h3:hover, a.h4:hover, a.h5:hover, a.h6:hover {
   color: $link-hover-color !important;
   text-decoration: underline;
+}
+
+.small, small, table thead {
+  font-size: 80%;
+  font-weight: 400;
 }
 
 // End Bootstrap 5 overrides
@@ -813,15 +831,15 @@ nav.navbar .nav-link:hover {
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
     &:hover {
-      color: darken(
+      color: color.adjust(
         $value,
-        15%
+        $lightness: -15%
       ) !important;
     }
     &:focus {
-      color: darken(
+      color: color.adjust(
         $value,
-        15%
+        $lightness: -15%
       ) !important;
     }
   }
@@ -832,15 +850,15 @@ nav.navbar .nav-link:hover {
   }
   .text-hover-gray-#{$color} {
     &:hover {
-      color: darken(
+      color: color.adjust(
         $value,
-        15%
+        $lightness: -15%
       ) !important;
     }
     &:focus {
-      color: darken(
+      color: color.adjust(
         $value,
-        15%
+        $lightness: -15%
       ) !important;
     }
   }
@@ -872,7 +890,7 @@ nav.navbar .nav-link:hover {
   white-space: normal !important;
 }
 
-@each $breakpoint in map-keys($grid-breakpoints) {
+@each $breakpoint in map.keys($grid-breakpoints) {
   $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
   @include media-breakpoint-up($breakpoint) {
@@ -908,19 +926,19 @@ nav.navbar .nav-link:hover {
 
 .toast-wrapper {
   position: fixed;
-  bottom: map-get($spacers, 4);
-  right: map-get($spacers, 4);
+  bottom: map.get($spacers, 4);
+  right: map.get($spacers, 4);
   width: 400px;
   z-index: 1001; // Above nav, below modals
 
   @include media-breakpoint-down(sm) {
-    left: map-get($spacers, 3);
+    left: map.get($spacers, 3);
     width: auto;
   }
 
   @include media-breakpoint-down(md) {
-    right: map-get($spacers, 3);
-    bottom: map-get($spacers, 3);
+    right: map.get($spacers, 3);
+    bottom: map.get($spacers, 3);
   }
 
   .toast {
@@ -977,8 +995,8 @@ nav.navbar .nav-link:hover {
 
   // Handle validation states.
   @each $state, $data in $form-validation-states {
-    $color: map-get($data, color);
-    $icon: map-get($data, icon);
+    $color: map.get($data, color);
+    $icon: map.get($data, icon);
 
     &.is-#{$state} {
       .react-select__control {

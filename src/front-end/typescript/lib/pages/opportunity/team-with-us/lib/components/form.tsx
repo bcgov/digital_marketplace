@@ -1145,7 +1145,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 export const AgreementView: component_.base.View = () => (
   <div className="table-responsive">
     <table className="table-hover" style={{ textAlign: "center" }}>
-      <thead>
+      <thead className="table-light">
         <tr>
           <th className="text-start" style={{ width: "50%" }}>
             Responsibility

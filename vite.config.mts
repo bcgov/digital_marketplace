@@ -50,6 +50,14 @@ export default defineConfig(({ mode }) => {
         })
       ] : [])
     ],
+    css: {
+      preprocessorOptions: {
+        scss: {
+          quietDeps: true,
+          silenceDeprecations: ['import']
+        }
+      }
+    },
     resolve: {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
