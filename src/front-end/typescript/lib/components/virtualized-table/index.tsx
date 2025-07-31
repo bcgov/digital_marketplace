@@ -184,6 +184,7 @@ interface VirtualizedTBodyProps {
   totalHeight: number;
   paddingTop: number;
   columnStyles?: CSSProperties[];
+  onScroll?: (event: React.UIEvent<HTMLDivElement>) => void;
 }
 
 const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
@@ -192,13 +193,15 @@ const VirtualizedTBody: component_.base.View<VirtualizedTBodyProps> = ({
   borderless,
   totalHeight,
   paddingTop,
-  columnStyles = []
+  columnStyles = [],
+  onScroll
 }) => {
   return (
     <tbody
       className={`font-size-small virtualized-tbody ${
         borderless ? "table-borderless" : ""
-      }`}>
+      }`}
+      onScroll={onScroll}>
       {/* Virtual spacer as first row */}
       <tr
         className="virtual-spacer"
@@ -274,6 +277,7 @@ export const view: component_.base.View<Props> = ({
 
   const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
     const target = event.target as HTMLDivElement;
+
     dispatch(
       adt("handleScroll", {
         scrollTop: target.scrollTop,
@@ -298,14 +302,17 @@ export const view: component_.base.View<Props> = ({
     borderless,
     totalHeight: virtualizationStyles.totalHeight,
     paddingTop: virtualizationStyles.paddingTop,
-    columnStyles: headCells.map((cell) => cell.style || {})
+    columnStyles: headCells.map((cell) => cell.style || {}),
+    onScroll: handleScroll
   };
 
   return (
     <div className="virtualized-table-layout">
+      {(() => {
+        return null;
+      })()}
       <ReactstrapTable
         id={state.scrollContainerId}
-        onScroll={handleScroll}
         className={`mb-0 virtualized-body-table virtualized-body-container table ${
           hover ? "table-hover" : ""
         } ${className}`}
