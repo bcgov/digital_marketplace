@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { compression, defineAlgorithm } from 'vite-plugin-compression2';
+import { constants } from 'zlib';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -32,7 +34,21 @@ export default defineConfig(({ mode }) => {
           path.resolve(process.cwd(), 'src/front-end/typescript/tsconfig.json')
         ]
       }),
-      nodePolyfills()
+      nodePolyfills(),
+      // Only enable compression for production builds
+      ...(mode === 'production' ? [
+        compression({
+          algorithms: [
+            defineAlgorithm('gzip', { level: 9 }),
+            defineAlgorithm('brotliCompress', {
+              params: {
+                [constants.BROTLI_PARAM_QUALITY]: 11
+              }
+            })
+          ],
+          exclude: [/\.woff2$/, /\.gz$/, /\.br$/]
+        })
+      ] : [])
     ],
     resolve: {
       alias: {

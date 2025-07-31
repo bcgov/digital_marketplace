@@ -52,7 +52,7 @@ The source code is split into six parts:
 ### 1. Front-End (`src/front-end`)
 
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
-The front-end's build system is executed by Grunt.
+The front-end's build system is executed by Vite.
 
 The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
@@ -202,14 +202,14 @@ npm run <SCRIPT_NAME>
 | `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                    |
 | `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                  |
 | `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                   |
-| `front-end:build`                       | Builds the front-end source code using grunt. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                                                                                    |
-| `front-end:watch`                       | Builds the front-end source code using grunt, and rebuilds it whenever a front-end or shared source file changes. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                |
+| `front-end:build`                       | Builds the front-end source code using Vite in production mode. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                                                                                    |
+| `front-end:watch`                       | Builds the front-end source code using Vite in development mode with watch, and rebuilds it whenever a front-end or shared source file changes. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                |
 | `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                  |
 | `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                     |
 | `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                   |
 | `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                    |
-| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                         |
-| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                          |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by TypeScript compiler).                                                                                                                                         |
+| `back-end:build`                        | Builds the back-end server using TypeScript compiler.                                                                                                                                                                          |
 | `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                  |
 | `back-end:debug-watch`                  | Similar to back-end:debug but generates source maps to enable IDE debugging of the API project
 | `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                   |
@@ -228,9 +228,7 @@ npm run <SCRIPT_NAME>
 | `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                         |
 | `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                           |
 | `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database-schema.md` from the database specified by the connection url.                                                                                           |
-| `learn-front-end:build`                 | Builds the learn-front-end project using grunt.                                                                                                                                                                  |
-| `learn-front-end:watch`                 | Builds the learn-front-end project using grunt, and rebuilds it whenever a learn-front-end, front-end or shared source file changes.                                                                             |
-| `learn-front-end:serve`                 | Serves the learn-front-end build files.                                                                                                                                                                          |
+
 
 ### Environment Variables
 
@@ -293,7 +291,7 @@ The Patroni credentials are `PGHOST`, `PGUSER`, `PGPASSWORD` and `PGDATABASE` wh
 
 #### Front-End Environment Variables
 
-Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`, and referenced to in `gruntfile.js`.
+Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`.
 
 | Name                  | Description                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

@@ -18,8 +18,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.es2023,
-        gruntConfig: "readonly"
+        ...globals.es2023
       },
       parser: typescriptParser,
       parserOptions: {
