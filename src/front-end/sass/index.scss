@@ -323,8 +323,10 @@ $enable-validation-icons: false;
 
 $transition-duration: 240ms;
 
-
-
+// disable responsive font size (RFS) to be in line with Bootstrap 4
+// When this is on, Bootstrap 5 automatically scales font sizes based on viewport width,
+// causing font size to be different from Bootstrap 4 on smaller screens.
+$enable-rfs: false;
 
 // Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
