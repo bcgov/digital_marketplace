@@ -524,7 +524,7 @@ function evaluationTableBodyRows(
         ? [
             {
               showOnHover: !isProposalLoading,
-              className: "text-right text-nowrap",
+              className: "text-end text-nowrap",
               children: (
                 <ContextMenuCell
                   dispatch={dispatch}
@@ -561,7 +561,7 @@ function evaluationTableHeadCells(state: Immutable<State>): Table.HeadCells {
       ? [
           {
             children: "",
-            className: "text-nowrap text-right",
+            className: "text-nowrap text-end",
             style: { width: "0px" }
           }
         ]

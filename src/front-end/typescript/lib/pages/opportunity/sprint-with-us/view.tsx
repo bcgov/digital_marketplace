@@ -282,7 +282,7 @@ const Header: component_.base.ComponentView<ValidState, Msg> = ({
                 }
               ]}
             />
-            <p className="font-italic small text-secondary mb-5">
+            <p className="fst-italic small text-secondary mb-5">
               This RFP is a Competition Notice under RFQ No. {compNumber} and is
               restricted to Proponents that have become Qualified Suppliers
               pursuant to that RFQ.
@@ -306,7 +306,7 @@ const Header: component_.base.ComponentView<ValidState, Msg> = ({
                 value={`Close${
                   isAcceptingProposals ? "s" : "d"
                 } ${formatDateAtTime(opportunity.proposalDeadline, true)}`}
-                className="ml-sm-3 flex-shrink-0"
+                className="ms-sm-3 flex-shrink-0"
               />
             </div>
             {opportunity.teaser ? (
@@ -326,7 +326,7 @@ const Header: component_.base.ComponentView<ValidState, Msg> = ({
               {state.viewerUser &&
               state.viewerUser.id !== opportunity.createdBy?.id ? (
                 <Link
-                  className="ml-3"
+                  className="ms-3"
                   disabled={isToggleWatchLoading}
                   loading={isToggleWatchLoading}
                   onClick={() => dispatch(adt("toggleWatch"))}
@@ -346,7 +346,7 @@ const Header: component_.base.ComponentView<ValidState, Msg> = ({
             xs="12"
             md="6"
             lg={{ offset: 1, size: 5 }}
-            className="mt-5 mt-md-0 pl-md-4">
+            className="mt-5 mt-md-0 ps-md-4">
             <Row className="mb-4 mb-md-5">
               <Col
                 xs="6"
@@ -433,7 +433,7 @@ const InfoDetailsHeading: component_.base.View<{
         className="flex-shrink-0"
         style={{ marginTop: "0.3rem" }}
       />
-      <h4 className="mb-0 ml-2">{text}</h4>
+      <h4 className="mb-0 ms-2">{text}</h4>
     </div>
   );
 };
@@ -665,7 +665,7 @@ const Phase: component_.base.View<PhaseProps> = ({ icon, phase }) => {
       <div className="rounded border overflow-hidden">
         <div className="p-3 border-bottom d-flex flex-nowrap align-items-center bg-light">
           <Icon name={icon} width={1.5} height={1.5} />
-          <h4 className="mb-0 ml-2">
+          <h4 className="mb-0 ms-2">
             {swuOpportunityPhaseTypeToTitleCase(phase.phase)}
           </h4>
         </div>
@@ -673,7 +673,7 @@ const Phase: component_.base.View<PhaseProps> = ({ icon, phase }) => {
           <IconInfo
             name="calendar"
             value="Phase Dates"
-            className="font-weight-bold mb-1"
+            className="fw-bold mb-1"
           />
           <p className="pb-4 border-bottom mb-4">
             {formatDate(phase.startDate, true)} to{" "}
@@ -682,7 +682,7 @@ const Phase: component_.base.View<PhaseProps> = ({ icon, phase }) => {
           <IconInfo
             name="toolbox-outline"
             value="Required Capabilities"
-            className="font-weight-bold mb-2"
+            className="fw-bold mb-2"
           />
           {phase.requiredCapabilities.length ? (
             <Capabilities
@@ -723,7 +723,7 @@ const Phases: component_.base.ComponentView<ValidState, Msg> = ({ state }) => {
         </Row>
         <Row>
           <Col xs="12">
-            <p className="mb-0 font-italic small">
+            <p className="mb-0 fst-italic small">
               * Capabilities are claimed by individuals in their personal
               profile.
             </p>

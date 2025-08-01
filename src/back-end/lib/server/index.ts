@@ -197,7 +197,7 @@ export function tryMakeFileResponseBody(
     } else {
       return null;
     }
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -669,7 +669,7 @@ export const notFoundJsonRoute: Route<
   any
 > = {
   method: ServerHttpMethod.Any,
-  path: "*",
+  path: "*path",
   handler: notFoundJsonHandler
 };
 

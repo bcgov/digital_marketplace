@@ -11,21 +11,21 @@ import { Msg } from "front-end/lib/framework/component/page/msg";
 // Re-exports
 
 export {
-  Msg,
+  type Msg,
   readyMsg,
-  ReadyMsg,
+  type ReadyMsg,
   mapMsg,
   mapDispatch
 } from "front-end/lib/framework/component/page/msg";
-export { Metadata } from "front-end/lib/framework/component/page/metadata";
-export { Sidebar } from "front-end/lib/framework/component/page/sidebar";
-export { Actions } from "front-end/lib/framework/component/page/actions";
+export type { Metadata } from "front-end/lib/framework/component/page/metadata";
+export type { Sidebar } from "front-end/lib/framework/component/page/sidebar";
+export type { Actions } from "front-end/lib/framework/component/page/actions";
 export * as actions from "front-end/lib/framework/component/page/actions";
-export { Modal } from "front-end/lib/framework/component/page/modal";
+export type { Modal } from "front-end/lib/framework/component/page/modal";
 export * as modal from "front-end/lib/framework/component/page/modal";
-export { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
+export type { Breadcrumbs } from "front-end/lib/framework/component/page/breadcrumbs";
 export * as breadcrumbs from "front-end/lib/framework/component/page/breadcrumbs";
-export { Alerts } from "front-end/lib/framework/component/page/alerts";
+export type { Alerts } from "front-end/lib/framework/component/page/alerts";
 export * as alerts from "front-end/lib/framework/component/page/alerts";
 
 // Component

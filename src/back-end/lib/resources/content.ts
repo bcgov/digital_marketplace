@@ -123,7 +123,7 @@ const create: crud.Create<
         slug: getString(body, "slug"),
         title: getString(body, "title"),
         body: getString(body, "body"),
-        fixed: get(body, "fixed")
+        fixed: get<typeof body, string>(body, "fixed")
       };
     },
     async validateRequestBody(request) {

@@ -1,11 +1,12 @@
-import { NODE_ENV } from "front-end/config";
+import "../sass/index.scss";
+import { VITE_NODE_ENV } from "front-end/config";
 import app from "front-end/lib/app";
 import { process } from "front-end/lib/framework";
 import { debounce, set } from "lodash";
 import { adt } from "shared/lib/types";
 
 const element = document.getElementById("main") || document.body;
-const debug = NODE_ENV === "development";
+const debug = VITE_NODE_ENV === "development";
 const process_ = process.start(app, element, debug);
 
 // Expose application process in development.

@@ -21,7 +21,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import React from "react";
-import { Col, CustomInput, Row } from "reactstrap";
+import { Col, Input, Row } from "reactstrap";
 import { compareStrings, find, formatDate } from "shared/lib";
 import {
   AffiliationMember,
@@ -350,8 +350,8 @@ const Dates: component_.base.View<Props> = ({ state }) => {
   return (
     <Row className="mb-4">
       <Col xs="12" className="d-flex flex-nowrap align-items-center">
-        <Icon name="calendar" width={0.9} height={0.9} className="mr-1" />
-        <span className="font-weight-bold mr-2">Phase Dates</span>
+        <Icon name="calendar" width={0.9} height={0.9} className="me-1" />
+        <span className="fw-bold me-2">Phase Dates</span>
         <span>
           {formatDate(opportunityPhase.startDate)} to{" "}
           {formatDate(opportunityPhase.completionDate)}
@@ -408,14 +408,14 @@ function membersTableBodyRows(
             symbol_={leftPlacement(imageLinkSymbol(userAvatarPath(m.user)))}>
             {m.user.name}
           </Link>
-          {memberIsPending(m) ? <PendingBadge className="ml-3" /> : null}
+          {memberIsPending(m) ? <PendingBadge className="ms-3" /> : null}
         </div>
       )
     },
     {
       className: "text-center align-middle",
       children: (
-        <CustomInput
+        <Input
           id={`${idNamespace}-phase-scrum-master-${m.id}`}
           checked={m.scrumMaster}
           disabled={disabled}
@@ -525,7 +525,7 @@ export const view: component_.base.View<Props> = (props) => {
       icon={icon}
       iconWidth={2}
       iconHeight={2}
-      iconClassName="mr-3"
+      iconClassName="me-3"
       iconColor={iconColor}
       chevronWidth={1.5}
       chevronHeight={1.5}
@@ -573,12 +573,12 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
                 .
               </p>
               {nonAddedMembers.length ? (
-                <div className="border-top border-left">
+                <div className="border-top border-start">
                   {nonAddedMembers.map((m, i) => {
                     return (
                       <div
                         key={`swu-proposal-phase-affiliation-${i}`}
-                        className="d-flex flex-nowrap align-items-center py-2 px-3 border-right border-bottom">
+                        className="d-flex flex-nowrap align-items-center py-2 px-3 border-end border-bottom">
                         <Link
                           onClick={() =>
                             dispatch(adt("toggleAffiliationToBeAdded", m.index))
@@ -594,7 +594,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
                           className="text-nowrap flex-nowrap"
                           color="body">
                           <img
-                            className="rounded-circle border mr-2"
+                            className="rounded-circle border me-2"
                             style={{
                               width: "1.75rem",
                               height: "1.75rem",
@@ -605,7 +605,7 @@ export const getModal: component_.page.GetModal<State, Msg> = (state) => {
                           {m.user.name}
                         </Link>
                         {memberIsPending(m) ? (
-                          <PendingBadge className="ml-3" />
+                          <PendingBadge className="ms-3" />
                         ) : null}
                       </div>
                     );

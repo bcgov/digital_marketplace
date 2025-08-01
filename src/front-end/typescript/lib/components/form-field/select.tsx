@@ -10,14 +10,14 @@ import { Immutable } from "front-end/lib/framework";
 import { find } from "lodash";
 import React from "react";
 import { ADT } from "shared/lib/types";
-import { InputGroup, InputGroupAddon, InputGroupText } from "reactstrap";
+import { InputGroup, InputGroupText } from "reactstrap";
 
 export {
   stringsToOptions,
   objectToOptions,
-  Options,
-  OptionGroup,
-  Option
+  type Options,
+  type OptionGroup,
+  type Option
 } from "front-end/lib/components/form-field/lib/select";
 
 export type Value = SingleValue;
@@ -95,11 +95,7 @@ const ChildView: ChildComponent["view"] = (props) => {
   }
   return (
     <InputGroup>
-      {prefix ? (
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>{prefix}</InputGroupText>
-        </InputGroupAddon>
-      ) : null}
+      {prefix ? <InputGroupText>{prefix}</InputGroupText> : null}
       <Select {...selectProps} />
     </InputGroup>
   );

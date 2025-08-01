@@ -1,7 +1,7 @@
 import { prefixPath } from "back-end/lib";
 import { CSSProperties, default as React, Fragment, ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { EMPTY_STRING, SHOW_TEST_INDICATOR } from "shared/config";
+import { EMPTY_STRING, VITE_SHOW_TEST_INDICATOR } from "shared/config";
 import { VIEWER_USER_ROUTE_PARAM } from "shared/lib/resources/user";
 
 // Styles.
@@ -393,7 +393,7 @@ const Layout: View<LayoutProps> = ({ title, description, children }) => {
               style={styles.classes.logoBackground}>
               <img
                 src={makeUrl(
-                  SHOW_TEST_INDICATOR
+                  VITE_SHOW_TEST_INDICATOR
                     ? "images/logo_test.png"
                     : "images/logo.png"
                 )}
