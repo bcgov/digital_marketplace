@@ -40,16 +40,14 @@ $container-max-widths: (
   lg: 1140px
 );
 
-
-
 // 'h' stands for 'half'
 // Merge standard Bootstrap spacers with custom ones.
 // Standard keys ensure Bootstrap utilities are generated correctly.
 $spacers: map.merge(
   (
     0: 0,
-    1: $spacer * .25,
-    2: $spacer * .5,
+    1: $spacer * 0.25,
+    2: $spacer * 0.5,
     3: $spacer,
     4: $spacer * 1.5,
     5: $spacer * 3,
@@ -69,8 +67,6 @@ $spacers: map.merge(
   ),
   $spacers
 );
-
-
 
 // Grays.
 $gray-100: #f8f9fa;
@@ -186,7 +182,6 @@ $c-static-html-fg: $white;
 // Select hover
 $c-select-option-hover: $blue-alt-3;
 
-
 $app-utility-colors: (
   // App Views
   "c-body-bg": $c-body-bg,
@@ -293,13 +288,23 @@ $theme-colors: map.merge(
   $app-utility-colors
 );
 
-
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-  Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
-  "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-sans-serif:
+  "BCSans",
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  Roboto,
+  "Helvetica Neue",
+  Arial,
+  "Noto Sans",
+  sans-serif,
+  "Apple Color Emoji",
+  "Segoe UI Emoji",
+  "Segoe UI Symbol",
+  "Noto Color Emoji" !default;
 $font-weight-bold: 500;
 $font-weight-bolder: 700;
 
@@ -362,7 +367,8 @@ a:hover {
   color: $white !important;
 }
 
-.btn-outline-c-nav-fg:hover, .btn-outline-c-nav-fg-alt:hover {
+.btn-outline-c-nav-fg:hover,
+.btn-outline-c-nav-fg-alt:hover {
   color: $gray-900;
   background-color: $white;
   border-color: $white;
@@ -387,17 +393,21 @@ $table-cell-padding-x: 0.75rem;
 
 // Restore Bootstrap 4 table header appearance
 .table > thead > tr > th {
-  border-color: $gray-300;     // Bootstrap 4 .thead-light border-color
-  color: $gray-600;           // Bootstrap 4 .thead-light text color
+  border-color: $gray-400; // Bootstrap 4 .thead-light border-color
+  color: $gray-600; // Bootstrap 4 .thead-light text color
 }
 
-.table td, .table th, table td, table th {
-  border-top: 1px solid $gray-400;
+.table td,
+.table th,
+table td,
+table th {
+  border-top: 1px solid $gray-300;
 }
 
-.table thead th, table thead th {
+.table thead th,
+table thead th {
   vertical-align: bottom;
-  border-bottom: 2px solid $gray-400;
+  border-bottom: 2px solid $gray-300;
 }
 
 // Ensure the custom variables are applied if Bootstrap is imported AFTER them.
@@ -409,17 +419,29 @@ $table-cell-padding-x: 0.75rem;
 
 // style header links
 
-a.h1, a.h2, a.h3, a.h4, a.h5, a.h6 {
-  color: $link-color ;
+a.h1,
+a.h2,
+a.h3,
+a.h4,
+a.h5,
+a.h6 {
+  color: $link-color;
 }
 
 // style header links on hover
-a.h1:hover, a.h2:hover, a.h3:hover, a.h4:hover, a.h5:hover, a.h6:hover {
+a.h1:hover,
+a.h2:hover,
+a.h3:hover,
+a.h4:hover,
+a.h5:hover,
+a.h6:hover {
   color: $link-hover-color !important;
   text-decoration: underline;
 }
 
-.small, small, table thead {
+.small,
+small,
+table thead {
   font-size: 80%;
   font-weight: 400;
 }
@@ -543,7 +565,8 @@ nav {
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
-        transition: transform $transition-duration ease-out,
+        transition:
+          transform $transition-duration ease-out,
           opacity 0ms linear $opacity-delay;
       }
 
@@ -833,16 +856,10 @@ nav.navbar .nav-link:hover {
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
     &:hover {
-      color: color.adjust(
-        $value,
-        $lightness: -15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
     &:focus {
-      color: color.adjust(
-        $value,
-        $lightness: -15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
   }
 }
@@ -852,16 +869,10 @@ nav.navbar .nav-link:hover {
   }
   .text-hover-gray-#{$color} {
     &:hover {
-      color: color.adjust(
-        $value,
-        $lightness: -15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
     &:focus {
-      color: color.adjust(
-        $value,
-        $lightness: -15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
   }
 }
@@ -1199,26 +1210,26 @@ nav.navbar .nav-link:hover {
 
 .opportunity-complete-page {
   // Show only the first header for the opportunity data
-  .opportunity-edit-tab-header{
+  .opportunity-edit-tab-header {
     display: none;
   }
-  .opportunity-complete-page-header .opportunity-edit-tab-header{
+  .opportunity-complete-page-header .opportunity-edit-tab-header {
     display: block;
   }
   // Show only the first header for the proposal data
-  .proposal-view-tab-header{
+  .proposal-view-tab-header {
     display: none;
   }
-  .proposal-complete-page-header .proposal-view-tab-header{
+  .proposal-complete-page-header .proposal-view-tab-header {
     display: block;
   }
   // Remove minimum height requirements for text boxes
   // (fixes print view)
-  .d-flex.flex-column{
+  .d-flex.flex-column {
     min-height: unset !important;
     height: unset !important;
   }
-   /* Force new page */
+  /* Force new page */
   .complete-report-section-header {
     page-break-before: always;
   }
@@ -1230,7 +1241,7 @@ nav.navbar .nav-link:hover {
   }
 
   // Hide headers on public tabs, except for the details tab
-  .public-tab-container > :first-child  {
+  .public-tab-container > :first-child {
     display: none;
   }
 
