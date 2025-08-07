@@ -10,7 +10,7 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as RichMarkdownEditor from "front-end/lib/components/form-field/rich-markdown-editor";
-import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
+// import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
 import * as SelectMulti from "front-end/lib/components/form-field/select-multi";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -76,7 +76,7 @@ export interface State {
   remoteOk: Immutable<RadioGroup.State<RemoteOk>>;
   remoteDesc: Immutable<LongText.State>;
   // Description Tab
-  description: Immutable<PlateEditor.State>;
+  // description: Immutable<PlateEditor.State>;
   // Details Tab
   proposalDeadline: Immutable<DateField.State>;
   startDate: Immutable<DateField.State>;
@@ -101,7 +101,7 @@ export type Msg =
   | ADT<"remoteOk", RadioGroup.Msg<RemoteOk>>
   | ADT<"remoteDesc", LongText.Msg>
   // Description Tab
-  | ADT<"description", PlateEditor.Msg>
+  // | ADT<"description", PlateEditor.Msg>
   // Details Tab
   | ADT<"proposalDeadline", DateField.Msg>
   | ADT<"startDate", DateField.Msg>
@@ -244,14 +244,14 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       id: "cwu-opportunity-remote-desc"
     }
   });
-  const [descriptionState, descriptionCmds] = PlateEditor.init({
-    errors: [],
-    validate: genericValidation.validateDescription,
-    child: {
-      value: opportunity?.description || "",
-      id: "cwu-opportunity-description"
-    }
-  });
+  // const [descriptionState, descriptionCmds] = PlateEditor.init({
+  //   errors: [],
+  //   validate: genericValidation.validateDescription,
+  //   child: {
+  //     value: opportunity?.description || "",
+  //     id: "cwu-opportunity-description"
+  //   }
+  // });
   const [proposalDeadlineState, proposalDeadlineCmds] = DateField.init({
     errors: [],
     validate: DateField.validateDate((v) =>
@@ -357,7 +357,7 @@ export const init: component_.base.Init<Params, State, Msg> = ({
       skills: immutable(skillsState),
       remoteOk: immutable(remoteOkState),
       remoteDesc: immutable(remoteDescState),
-      description: immutable(descriptionState),
+      // description: immutable(descriptionState),
       proposalDeadline: immutable(proposalDeadlineState),
       assignmentDate: immutable(assignmentDateState),
       startDate: immutable(startDateState),
@@ -392,10 +392,10 @@ export const init: component_.base.Init<Params, State, Msg> = ({
         remoteDescCmds,
         (msg) => adt("remoteDesc", msg) as Msg
       ),
-      ...component_.cmd.mapMany(
-        descriptionCmds,
-        (msg) => adt("description", msg) as Msg
-      ),
+      // ...component_.cmd.mapMany(
+      //   descriptionCmds,
+      //   (msg) => adt("description", msg) as Msg
+      // ),
       ...component_.cmd.mapMany(
         proposalDeadlineCmds,
         (msg) => adt("proposalDeadline", msg) as Msg
@@ -434,42 +434,48 @@ export const init: component_.base.Init<Params, State, Msg> = ({
 
 function setErrors(state: Immutable<State>, errors: Errors): Immutable<State> {
   if (errors) {
-    return state
-      .update("title", (s) => FormField.setErrors(s, errors.title || []))
-      .update("teaser", (s) => FormField.setErrors(s, errors.teaser || []))
-      .update("location", (s) => FormField.setErrors(s, errors.location || []))
-      .update("reward", (s) => FormField.setErrors(s, errors.reward || []))
-      .update("skills", (s) =>
-        FormField.setErrors(s, errors.skills ? flatten(errors.skills) : [])
-      )
-      .update("description", (s) =>
-        PlateEditor.setErrors(s, errors.description || [])
-      )
-      .update("remoteOk", (s) => FormField.setErrors(s, errors.remoteOk || []))
-      .update("remoteDesc", (s) =>
-        FormField.setErrors(s, errors.remoteDesc || [])
-      )
-      .update("proposalDeadline", (s) =>
-        FormField.setErrors(s, errors.proposalDeadline || [])
-      )
-      .update("startDate", (s) =>
-        FormField.setErrors(s, errors.startDate || [])
-      )
-      .update("assignmentDate", (s) =>
-        FormField.setErrors(s, errors.assignmentDate || [])
-      )
-      .update("completionDate", (s) =>
-        FormField.setErrors(s, errors.completionDate || [])
-      )
-      .update("submissionInfo", (s) =>
-        FormField.setErrors(s, errors.submissionInfo || [])
-      )
-      .update("acceptanceCriteria", (s) =>
-        FormField.setErrors(s, errors.acceptanceCriteria || [])
-      )
-      .update("evaluationCriteria", (s) =>
-        FormField.setErrors(s, errors.evaluationCriteria || [])
-      );
+    return (
+      state
+        .update("title", (s) => FormField.setErrors(s, errors.title || []))
+        .update("teaser", (s) => FormField.setErrors(s, errors.teaser || []))
+        .update("location", (s) =>
+          FormField.setErrors(s, errors.location || [])
+        )
+        .update("reward", (s) => FormField.setErrors(s, errors.reward || []))
+        .update("skills", (s) =>
+          FormField.setErrors(s, errors.skills ? flatten(errors.skills) : [])
+        )
+        // .update("description", (s) =>
+        //   PlateEditor.setErrors(s, errors.description || [])
+        // )
+        .update("remoteOk", (s) =>
+          FormField.setErrors(s, errors.remoteOk || [])
+        )
+        .update("remoteDesc", (s) =>
+          FormField.setErrors(s, errors.remoteDesc || [])
+        )
+        .update("proposalDeadline", (s) =>
+          FormField.setErrors(s, errors.proposalDeadline || [])
+        )
+        .update("startDate", (s) =>
+          FormField.setErrors(s, errors.startDate || [])
+        )
+        .update("assignmentDate", (s) =>
+          FormField.setErrors(s, errors.assignmentDate || [])
+        )
+        .update("completionDate", (s) =>
+          FormField.setErrors(s, errors.completionDate || [])
+        )
+        .update("submissionInfo", (s) =>
+          FormField.setErrors(s, errors.submissionInfo || [])
+        )
+        .update("acceptanceCriteria", (s) =>
+          FormField.setErrors(s, errors.acceptanceCriteria || [])
+        )
+        .update("evaluationCriteria", (s) =>
+          FormField.setErrors(s, errors.evaluationCriteria || [])
+        )
+    );
   } else {
     return state;
   }
@@ -482,7 +488,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("location", (s) => FormField.validate(s))
     .update("reward", (s) => FormField.validate(s))
     .update("skills", (s) => FormField.validate(s))
-    .update("description", (s) => PlateEditor.validateState(s))
+    // .update("description", (s) => PlateEditor.validateState(s))
     .update("remoteOk", (s) => FormField.validate(s))
     .update("proposalDeadline", (s) => FormField.validate(s))
     .update("startDate", (s) => FormField.validate(s))
@@ -513,9 +519,9 @@ export function isOverviewTabValid(state: Immutable<State>): boolean {
   );
 }
 
-export function isDescriptionTabValid(state: Immutable<State>): boolean {
-  return PlateEditor.isValid(state.description);
-}
+// export function isDescriptionTabValid(state: Immutable<State>): boolean {
+//   return PlateEditor.isValid(state.description);
+// }
 
 export function isDetailsTabValid(state: Immutable<State>): boolean {
   return (
@@ -536,7 +542,7 @@ export function isAttachmentsTabValid(state: Immutable<State>): boolean {
 export function isValid(state: Immutable<State>): boolean {
   return (
     isOverviewTabValid(state) &&
-    isDescriptionTabValid(state) &&
+    // isDescriptionTabValid(state) &&
     isDetailsTabValid(state) &&
     isAttachmentsTabValid(state)
   );
@@ -553,7 +559,7 @@ export function getValues(state: Immutable<State>): Values {
     location: FormField.getValue(state.location),
     reward: FormField.getValue(state.reward) || 0,
     skills: SelectMulti.getValueAsStrings(state.skills),
-    description: PlateEditor.getValue(state.description),
+    description: "", //PlateEditor.getValue(state.description),
     proposalDeadline: DateField.getValueAsString(state.proposalDeadline),
     assignmentDate: DateField.getValueAsString(state.assignmentDate),
     startDate: DateField.getValueAsString(state.startDate),
@@ -813,14 +819,14 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         mapChildMsg: (value) => adt("remoteDesc", value)
       });
 
-    case "description":
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["description"],
-        childUpdate: PlateEditor.update,
-        childMsg: msg.value,
-        mapChildMsg: (value) => adt("description", value)
-      });
+    // case "description":
+    //   return component_.base.updateChild({
+    //     state,
+    //     childStatePath: ["description"],
+    //     childUpdate: PlateEditor.update,
+    //     childMsg: msg.value,
+    //     mapChildMsg: (value) => adt("description", value)
+    //   });
 
     case "proposalDeadline": {
       return component_.base.updateChild({
@@ -1101,7 +1107,7 @@ export const DescriptionView: component_.base.View<Props> = ({
   return (
     <Row>
       <Col xs="12">
-        <PlateEditor.view
+        {/* <PlateEditor.view
           required
           label="Description"
           placeholder="Describe this opportunity..."
@@ -1121,7 +1127,7 @@ export const DescriptionView: component_.base.View<Props> = ({
           dispatch={component_.base.mapDispatch(dispatch, (value) =>
             adt("description" as const, value)
           )}
-        />
+        /> */}
       </Col>
     </Row>
   );
@@ -1331,7 +1337,7 @@ export const view: component_.base.View<Props> = (props) => {
           case "Overview":
             return isOverviewTabValid(state);
           case "Description":
-            return isDescriptionTabValid(state);
+            return isOverviewTabValid(state); //isDescriptionTabValid(state);
           case "Details":
             return isDetailsTabValid(state);
           case "Attachments":

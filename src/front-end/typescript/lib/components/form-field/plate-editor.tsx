@@ -1,20 +1,20 @@
 import React, { useRef, useEffect, useCallback } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import { Plate } from "@udecode/plate/react";
+// import { DndProvider } from "react-dnd";
+// import { HTML5Backend } from "react-dnd-html5-backend";
 import { Label } from "reactstrap";
 import {
   Editor,
   EditorContainer
-} from "front-end/lib/components/platejs/editor";
-import { useCreateEditor } from "front-end/lib/components/platejs/plugins/use-create-editor";
-import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
-import { OpportunityContextPlugin } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
-import type { OpportunityContext } from "front-end/lib/components/platejs/plugins/opportunity-context-plugin";
+} from "front-end/lib/components/platejs/ui/editor";
+// import { editorPlugins } from "front-end/lib/components/platejs/plugins/editor-plugins";
+import { OpportunityContextPlugin } from "front-end/lib/components/platejs/components/editor/plugins/opportunity-context-plugin";
+import type { OpportunityContext } from "front-end/lib/components/platejs/components/editor/plugins/opportunity-context-plugin";
 import { Immutable, component as component_ } from "front-end/lib/framework";
 import { adt, ADT } from "shared/lib/types";
 import { Validation } from "shared/lib/validation";
-import { createFixedToolbarPlugin } from "../platejs/plugins/fixed-toolbar-plugin";
+// import { createFixedToolbarPlugin } from "../platejs/plugins/fixed-toolbar-plugin";
+import { Plate } from "platejs/react";
+import { useCreateEditor } from "../platejs/hooks/use-create-editor";
 
 // State interface for the PlateJS editor
 export interface State {
@@ -140,7 +140,7 @@ export const view: component_.base.View<ViewProps> = ({
 
   const editor = useCreateEditor(
     {
-      plugins: [...editorPlugins, createFixedToolbarPlugin(toolbarMode)],
+      //   plugins: [...editorPlugins, createFixedToolbarPlugin(toolbarMode)],
       readOnly: disabled
     },
     [disabled, toolbarMode]
@@ -270,18 +270,16 @@ export const view: component_.base.View<ViewProps> = ({
         }}>
         <div className="preview relative flex size-full flex-col p-0 items-start">
           <div className="size-full grow">
-            <DndProvider backend={HTML5Backend}>
-              <Plate
-                editor={editor}
-                onChange={disabled ? undefined : handleEditorChange}
-                readOnly={disabled}>
-                <EditorContainer
-                  variant="demo"
-                  className="h-72 overflow-y-auto">
-                  <Editor placeholder={placeholder} disabled={disabled} />
-                </EditorContainer>
-              </Plate>
-            </DndProvider>
+            {/* <DndProvider backend={HTML5Backend}> */}
+            <Plate
+              editor={editor}
+              onChange={disabled ? undefined : handleEditorChange}
+              readOnly={disabled}>
+              <EditorContainer variant="demo" className="h-72 overflow-y-auto">
+                <Editor placeholder={placeholder} disabled={disabled} />
+              </EditorContainer>
+            </Plate>
+            {/* </DndProvider> */}
           </div>
         </div>
         {/* Display the actual markdown content as preview*/}

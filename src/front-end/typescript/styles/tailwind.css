@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" prefix(tw);
 /* @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme); */
 /* @import "./preflight.css" layer(base); */
@@ -125,15 +125,6 @@
   --brand: oklch(0.707 0.165 254.624);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 /* Temporary tailwind overrides to fix global leaking issues */
 img, svg{
   display: inline !important;
@@ -141,4 +132,13 @@ img, svg{
 
 .overline{
   text-decoration: none !important;
+}
+
+@layer base {
+  * {
+    @apply tw:border-border tw:outline-ring/50;
+  }
+  body {
+    @apply tw:bg-background tw:text-foreground;
+  }
 }

@@ -1,9 +1,11 @@
+"use client";
+
 import * as React from "react";
 
 import {
   useToggleToolbarButton,
   useToggleToolbarButtonState
-} from "@udecode/plate-toggle/react";
+} from "@platejs/toggle/react";
 import { ListCollapseIcon } from "lucide-react";
 
 import { ToolbarButton } from "./toolbar";

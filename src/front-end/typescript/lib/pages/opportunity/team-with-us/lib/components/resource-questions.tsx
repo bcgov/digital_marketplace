@@ -1,5 +1,5 @@
 import * as FormField from "front-end/lib/components/form-field";
-import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
+// import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
   component as component_,
@@ -34,8 +34,8 @@ import { MARKETPLACE_AI_URL } from "front-end/config";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
 
 interface Question {
-  question: Immutable<PlateEditor.State>;
-  guideline: Immutable<PlateEditor.State>;
+  // question: Immutable<PlateEditor.State>;
+  // guideline: Immutable<PlateEditor.State>;
   wordLimit: Immutable<NumberField.State>;
   score: Immutable<NumberField.State>;
   minimumScore: Immutable<NumberField.State>;
@@ -62,8 +62,8 @@ export interface State {
 export type Msg =
   | ADT<"addQuestion">
   | ADT<"deleteQuestion", number>
-  | ADT<"questionText", { childMsg: PlateEditor.Msg; qIndex: number }>
-  | ADT<"guidelineText", { childMsg: PlateEditor.Msg; qIndex: number }>
+  // | ADT<"questionText", { childMsg: PlateEditor.Msg; qIndex: number }>
+  // | ADT<"guidelineText", { childMsg: PlateEditor.Msg; qIndex: number }>
   | ADT<"wordLimit", { childMsg: NumberField.Msg; qIndex: number }>
   | ADT<"score", { childMsg: NumberField.Msg; qIndex: number }>
   | ADT<"generateWithAI", GenerationContext>
@@ -233,22 +233,22 @@ function createQuestion(
   question?: TWUResourceQuestion
 ): component_.base.InitReturnValue<Question, Msg> {
   const idNamespace = String(Math.random());
-  const [questionState, questionCmds] = PlateEditor.init({
-    errors: [],
-    validate: opportunityValidation.validateResourceQuestionQuestion,
-    child: {
-      value: question?.question || "",
-      id: `${idNamespace}-resource-questions-question`
-    }
-  });
-  const [guidelineState, guidelineCmds] = PlateEditor.init({
-    errors: [],
-    validate: opportunityValidation.validateResourceQuestionGuideline,
-    child: {
-      value: question?.guideline || "",
-      id: `${idNamespace}-resource-questions-response-guidelines`
-    }
-  });
+  // const [questionState, questionCmds] = PlateEditor.init({
+  //   errors: [],
+  //   validate: opportunityValidation.validateResourceQuestionQuestion,
+  //   child: {
+  //     value: question?.question || "",
+  //     id: `${idNamespace}-resource-questions-question`
+  //   }
+  // });
+  // const [guidelineState, guidelineCmds] = PlateEditor.init({
+  //   errors: [],
+  //   validate: opportunityValidation.validateResourceQuestionGuideline,
+  //   child: {
+  //     value: question?.guideline || "",
+  //     id: `${idNamespace}-resource-questions-response-guidelines`
+  //   }
+  // });
   const [wordLimitState, wordLimitCmds] = NumberField.init({
     errors: [],
     validate: (v) => {
@@ -300,21 +300,21 @@ function createQuestion(
   });
   return [
     {
-      question: immutable(questionState),
-      guideline: immutable(guidelineState),
+      // question: immutable(questionState),
+      // guideline: immutable(guidelineState),
       wordLimit: immutable(wordLimitState),
       score: immutable(scoreState),
       minimumScore: immutable(minimumScoreState)
     },
     [
-      ...component_.cmd.mapMany(
-        questionCmds,
-        (childMsg) => adt("questionText", { childMsg, qIndex }) as Msg
-      ),
-      ...component_.cmd.mapMany(
-        guidelineCmds,
-        (childMsg) => adt("guidelineText", { childMsg, qIndex }) as Msg
-      ),
+      // ...component_.cmd.mapMany(
+      //   questionCmds,
+      //   (childMsg) => adt("questionText", { childMsg, qIndex }) as Msg
+      // ),
+      // ...component_.cmd.mapMany(
+      //   guidelineCmds,
+      //   (childMsg) => adt("guidelineText", { childMsg, qIndex }) as Msg
+      // ),
       ...component_.cmd.mapMany(
         wordLimitCmds,
         (childMsg) => adt("wordLimit", { childMsg, qIndex }) as Msg
@@ -342,23 +342,23 @@ export function createQuestionFromAI(
     `🤖 [Create Question] Creating question from AI for question index ${questionIndex}`
   );
 
-  const [questionState] = PlateEditor.init({
-    errors: [],
-    validate: opportunityValidation.validateResourceQuestionQuestion,
-    child: {
-      value: questionText,
-      id: `ai-generated-question-${questionIndex}`
-    }
-  });
+  // const [questionState] = PlateEditor.init({
+  //   errors: [],
+  //   validate: opportunityValidation.validateResourceQuestionQuestion,
+  //   child: {
+  //     value: questionText,
+  //     id: `ai-generated-question-${questionIndex}`
+  //   }
+  // });
 
-  const [guidelineState] = PlateEditor.init({
-    errors: [],
-    validate: opportunityValidation.validateResourceQuestionGuideline,
-    child: {
-      value: guidelineText,
-      id: `ai-generated-guideline-${questionIndex}`
-    }
-  });
+  // const [guidelineState] = PlateEditor.init({
+  //   errors: [],
+  //   validate: opportunityValidation.validateResourceQuestionGuideline,
+  //   child: {
+  //     value: guidelineText,
+  //     id: `ai-generated-guideline-${questionIndex}`
+  //   }
+  // });
 
   const [wordLimitState] = NumberField.init({
     errors: [],
@@ -406,8 +406,8 @@ export function createQuestionFromAI(
   });
 
   return {
-    question: immutable(questionState),
-    guideline: immutable(guidelineState),
+    // question: immutable(questionState),
+    // guideline: immutable(guidelineState),
     wordLimit: immutable(wordLimitState),
     score: immutable(scoreState),
     minimumScore: immutable(minimumScoreState)
@@ -456,38 +456,38 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       ];
     }
 
-    case "questionText": {
-      console.log(
-        `📝 [Update] Updating question text for index:`,
-        msg.value.qIndex
-      );
-      const componentMessage = msg.value.childMsg;
-      const qIndex = msg.value.qIndex;
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["questions", `${qIndex}`, "question"],
-        childUpdate: PlateEditor.update,
-        childMsg: componentMessage,
-        mapChildMsg: (value) => adt("questionText", { qIndex, childMsg: value })
-      });
-    }
+    // case "questionText": {
+    //   console.log(
+    //     `📝 [Update] Updating question text for index:`,
+    //     msg.value.qIndex
+    //   );
+    //   const componentMessage = msg.value.childMsg;
+    //   const qIndex = msg.value.qIndex;
+    //   return component_.base.updateChild({
+    //     state,
+    //     childStatePath: ["questions", `${qIndex}`, "question"],
+    //     childUpdate: PlateEditor.update,
+    //     childMsg: componentMessage,
+    //     mapChildMsg: (value) => adt("questionText", { qIndex, childMsg: value })
+    //   });
+    // }
 
-    case "guidelineText": {
-      console.log(
-        `📝 [Update] Updating guideline text for index:`,
-        msg.value.qIndex
-      );
-      const componentMessage = msg.value.childMsg;
-      const qIndex = msg.value.qIndex;
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["questions", `${qIndex}`, "guideline"],
-        childUpdate: PlateEditor.update,
-        childMsg: componentMessage,
-        mapChildMsg: (value) =>
-          adt("guidelineText", { qIndex, childMsg: value })
-      });
-    }
+    // case "guidelineText": {
+    //   console.log(
+    //     `📝 [Update] Updating guideline text for index:`,
+    //     msg.value.qIndex
+    //   );
+    //   const componentMessage = msg.value.childMsg;
+    //   const qIndex = msg.value.qIndex;
+    //   return component_.base.updateChild({
+    //     state,
+    //     childStatePath: ["questions", `${qIndex}`, "guideline"],
+    //     childUpdate: PlateEditor.update,
+    //     childMsg: componentMessage,
+    //     mapChildMsg: (value) =>
+    //       adt("guidelineText", { qIndex, childMsg: value })
+    //   });
+    // }
 
     case "wordLimit": {
       console.log(
@@ -647,8 +647,8 @@ export function getValues(state: Immutable<State>): Values {
     const score = FormField.getValue(q.score) || 0;
     const wordLimit = FormField.getValue(q.wordLimit) || 0;
     acc.push({
-      question: FormField.getValue(q.question as any) as string,
-      guideline: FormField.getValue(q.guideline as any) as string,
+      question: "", //FormField.getValue(q.question as any) as string,
+      guideline: "", //FormField.getValue(q.guideline as any) as string,
       wordLimit,
       score,
       order,
@@ -715,8 +715,8 @@ export function isValid(state: Immutable<State>): boolean {
   return state.questions.reduce((acc, q) => {
     return (
       acc &&
-      FormField.isValid(q.question as any) &&
-      FormField.isValid(q.guideline as any) &&
+      // FormField.isValid(q.question as any) &&
+      // FormField.isValid(q.guideline as any) &&
       FormField.isValid(q.wordLimit) &&
       FormField.isValid(q.score) &&
       FormField.isValid(q.minimumScore)
@@ -757,38 +757,38 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
     : {};
 
   // Get existing questions text for context
-  const existingQuestions = allQuestions
-    .map((q, i) => {
-      if (i === index) return null; // Don't include current question
-      const questionText = FormField.getValue(q.question as any);
-      return questionText &&
-        typeof questionText === "string" &&
-        questionText.trim()
-        ? questionText.trim()
-        : null;
-    })
-    .filter(Boolean) as string[];
+  // const existingQuestions = allQuestions
+  //   .map((q, i) => {
+  //     if (i === index) return null; // Don't include current question
+  //     const questionText = FormField.getValue(q.question as any);
+  //     return questionText &&
+  //       typeof questionText === "string" &&
+  //       questionText.trim()
+  //       ? questionText.trim()
+  //       : null;
+  //   })
+  //   .filter(Boolean) as string[];
 
   // Get current question text for guideline generation
-  const currentQuestionTextValue = FormField.getValue(question.question as any);
-  const currentQuestionText =
-    typeof currentQuestionTextValue === "string"
-      ? currentQuestionTextValue
-      : "";
+  // const currentQuestionTextValue = FormField.getValue(question.question as any);
+  // const currentQuestionText =
+  //   typeof currentQuestionTextValue === "string"
+  //     ? currentQuestionTextValue
+  //     : "";
 
-  const questionContext = {
-    ...baseContext,
-    fieldType: "question" as const,
-    existingQuestions,
-    currentQuestionText
-  };
+  // const questionContext = {
+  //   ...baseContext,
+  //   fieldType: "question" as const,
+  //   existingQuestions,
+  //   currentQuestionText
+  //  };
 
-  const guidelineContext = {
-    ...baseContext,
-    fieldType: "guideline" as const,
-    existingQuestions,
-    currentQuestionText
-  };
+  // const guidelineContext = {
+  //   ...baseContext,
+  //   fieldType: "guideline" as const,
+  //   existingQuestions,
+  //   currentQuestionText
+  // };
 
   return (
     <div className={index > 0 ? "pt-5 mt-5 border-top" : ""}>
@@ -813,7 +813,7 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
       </Row>
       <Row>
         <Col xs="12">
-          <PlateEditor.view
+          {/* <PlateEditor.view
             key={`question-editor-${index}`}
             label="Question"
             placeholder="Enter your question here."
@@ -826,12 +826,12 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("questionText" as const, { childMsg: value, qIndex: index })
             )}
-          />
+          /> */}
         </Col>
       </Row>
       <Row>
         <Col xs="12">
-          <PlateEditor.view
+          {/* <PlateEditor.view
             key={`guideline-editor-${index}`}
             label="Response Guidelines"
             placeholder="Provide some guidance on how proponents can effectively respond to your question."
@@ -844,7 +844,7 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
             dispatch={component_.base.mapDispatch(dispatch, (value) =>
               adt("guidelineText" as const, { childMsg: value, qIndex: index })
             )}
-          />
+          /> */}
         </Col>
       </Row>
       <Row>

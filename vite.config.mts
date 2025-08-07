@@ -46,7 +46,9 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
-        '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript')
+        '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript'),
+        '@/components/ui': path.resolve(__dirname, 'src/front-end/typescript/lib/components/platejs/ui'),
+        "@": path.resolve(__dirname, "./src"),
       }
     },
     // Set the base public path when served in production

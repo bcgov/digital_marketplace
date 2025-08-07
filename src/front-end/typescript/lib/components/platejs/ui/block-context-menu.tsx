@@ -1,31 +1,27 @@
+"use client";
+
 import * as React from "react";
 
-import { AIChatPlugin } from "@udecode/plate-ai/react";
-// import { BlockquotePlugin } from "@udecode/plate-block-quote/react";
-// import { HEADING_KEYS } from "@udecode/plate-heading";
-// import { IndentListPlugin } from "@udecode/plate-indent-list/react";
+import { AIChatPlugin } from "@platejs/ai/react";
 import {
   BLOCK_CONTEXT_MENU_ID,
   BlockMenuPlugin,
   BlockSelectionPlugin
-} from "@udecode/plate-selection/react";
-import {
-  // ParagraphPlugin,
-  useEditorPlugin,
-  usePlateState
-} from "@udecode/plate/react";
+} from "@platejs/selection/react";
+import { KEYS } from "platejs";
+import { useEditorPlugin, usePlateState } from "platejs/react";
 
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuGroup,
   ContextMenuItem,
-  // ContextMenuSub,
-  // ContextMenuSubContent,
-  // ContextMenuSubTrigger,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger
 } from "./context-menu";
-import { useIsTouchDevice } from "../hooks/use-is-touch-device";
+import { useIsTouchDevice } from "front-end/lib/components/platejs/hooks/use-is-touch-device";
 
 type Value = "askAI" | null;
 
@@ -35,32 +31,32 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const isTouch = useIsTouchDevice();
   const [readOnly] = usePlateState("readOnly");
 
-  // const handleTurnInto = React.useCallback(
-  //   (type: string) => {
-  //     editor
-  //       .getApi(BlockSelectionPlugin)
-  //       .blockSelection.getNodes()
-  //       .forEach(([node, path]) => {
-  //         if (node[IndentListPlugin.key]) {
-  //           editor.tf.unsetNodes([IndentListPlugin.key, "indent"], {
-  //             at: path
-  //           });
-  //         }
+  const handleTurnInto = React.useCallback(
+    (type: string) => {
+      editor
+        .getApi(BlockSelectionPlugin)
+        .blockSelection.getNodes()
+        .forEach(([node, path]) => {
+          if (node[KEYS.listType]) {
+            editor.tf.unsetNodes([KEYS.listType, "indent"], {
+              at: path
+            });
+          }
 
-  //         editor.tf.toggleBlock(type, { at: path });
-  //       });
-  //   },
-  //   [editor]
-  // );
+          editor.tf.toggleBlock(type, { at: path });
+        });
+    },
+    [editor]
+  );
 
-  // const handleAlign = React.useCallback(
-  //   (align: "center" | "left" | "right") => {
-  //     editor
-  //       .getTransforms(BlockSelectionPlugin)
-  //       .blockSelection.setNodes({ align });
-  //   },
-  //   [editor]
-  // );
+  const handleAlign = React.useCallback(
+    (align: "center" | "left" | "right") => {
+      editor
+        .getTransforms(BlockSelectionPlugin)
+        .blockSelection.setNodes({ align });
+    },
+    [editor]
+  );
 
   if (isTouch) {
     return children;
@@ -81,8 +77,10 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
         asChild
         onContextMenu={(event) => {
           const dataset = (event.target as HTMLElement).dataset;
-
-          const disabled = dataset?.slateEditor === "true" || readOnly;
+          const disabled =
+            dataset?.slateEditor === "true" ||
+            readOnly ||
+            dataset?.plateOpenContextMenu === "false";
 
           if (disabled) return event.preventDefault();
 
@@ -91,10 +89,10 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
             y: event.clientY
           });
         }}>
-        <div className="w-full">{children}</div>
+        <div className="tw:w-full">{children}</div>
       </ContextMenuTrigger>
       <ContextMenuContent
-        className="w-64"
+        className="tw:w-64"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           editor.getApi(BlockSelectionPlugin).blockSelection.focus();
@@ -121,40 +119,39 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
             }}>
             Delete
           </ContextMenuItem>
-          {/* <ContextMenuItem
+          <ContextMenuItem
             onClick={() => {
               editor
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.duplicate();
             }}>
             Duplicate
+            {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
           </ContextMenuItem>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="w-48">
-              <ContextMenuItem
-                onClick={() => handleTurnInto(ParagraphPlugin.key)}>
+            <ContextMenuSubContent className="tw:w-48">
+              <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>
                 Paragraph
               </ContextMenuItem>
 
-              <ContextMenuItem onClick={() => handleTurnInto(HEADING_KEYS.h1)}>
+              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h1)}>
                 Heading 1
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleTurnInto(HEADING_KEYS.h2)}>
+              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h2)}>
                 Heading 2
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleTurnInto(HEADING_KEYS.h3)}>
+              <ContextMenuItem onClick={() => handleTurnInto(KEYS.h3)}>
                 Heading 3
               </ContextMenuItem>
-              <ContextMenuItem
-                onClick={() => handleTurnInto(BlockquotePlugin.key)}>
+              <ContextMenuItem onClick={() => handleTurnInto(KEYS.blockquote)}>
                 Blockquote
               </ContextMenuItem>
             </ContextMenuSubContent>
-          </ContextMenuSub> */}
+          </ContextMenuSub>
         </ContextMenuGroup>
 
-        {/* <ContextMenuGroup>
+        <ContextMenuGroup>
           <ContextMenuItem
             onClick={() =>
               editor
@@ -173,7 +170,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           </ContextMenuItem>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Align</ContextMenuSubTrigger>
-            <ContextMenuSubContent className="w-48">
+            <ContextMenuSubContent className="tw:w-48">
               <ContextMenuItem onClick={() => handleAlign("left")}>
                 Left
               </ContextMenuItem>
@@ -185,7 +182,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
-        </ContextMenuGroup> */}
+        </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>
   );

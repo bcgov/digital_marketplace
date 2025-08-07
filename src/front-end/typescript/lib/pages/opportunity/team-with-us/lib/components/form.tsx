@@ -49,6 +49,27 @@ import {
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
 import Icon from "front-end/lib/views/icon";
+import { Plate, usePlateEditor } from "platejs/react";
+import { AIKit } from "front-end/lib/components/platejs/components/editor/plugins/ai-kit";
+import {
+  Editor,
+  EditorContainer
+} from "front-end/lib/components/platejs/ui/editor";
+import { FixedToolbarKit } from "front-end/lib/components/platejs/components/editor/plugins/fixed-toolbar-kit";
+import { MarkdownKit } from "front-end/lib/components/platejs/components/editor/plugins/markdown-kit";
+import { BaseBasicBlocksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-blocks-base-kit";
+import { BasicMarksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-marks-kit";
+import { CommentKit } from "front-end/lib/components/platejs/components/editor/plugins/comment-kit";
+import { ListKit } from "front-end/lib/components/platejs/components/editor/plugins/list-kit";
+import { BasicBlocksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-blocks-kit";
+import { MediaKit } from "front-end/lib/components/platejs/components/editor/plugins/media-kit";
+import { AutoformatKit } from "front-end/lib/components/platejs/components/editor/plugins/autoformat-kit";
+import { CursorOverlayKit } from "front-end/lib/components/platejs/components/editor/plugins/cursor-overlay-kit";
+import { DndKit } from "front-end/lib/components/platejs/components/editor/plugins/dnd-kit";
+import { ExitBreakKit } from "front-end/lib/components/platejs/components/editor/plugins/exit-break-kit";
+import { TrailingBlockPlugin } from "platejs";
+import { BlockPlaceholderKit } from "front-end/lib/components/platejs/components/editor/plugins/block-placeholder-kit";
+import { BlockMenuKit } from "front-end/lib/components/platejs/components/editor/plugins/block-menu-kit";
 
 type RemoteOk = "yes" | "no";
 
@@ -1499,9 +1520,61 @@ export const DescriptionView: component_.base.View<Props> = ({
   const startDate = DateField.getValueAsString(state.startDate);
   const completionDate = DateField.getValueAsString(state.completionDate);
 
+  // const editor = usePlateEditor({
+  //   plugins: [
+  //     ...AIKit,
+  //     ...BlockMenuKit,
+  //     // Elements
+  //     ...BasicBlocksKit,
+  //     // ...CodeBlockKit,
+  //     // ...TableKit,
+  //     // ...ToggleKit,
+  //     // ...TocKit,
+  //     ...MediaKit,
+  //     // ...CalloutKit,
+  //     // ...ColumnKit,
+  //     // ...MathKit,
+  //     // ...DateKit,
+  //     // ...LinkKit,
+  //     // ...MentionKit,
+  //     // Marks
+  //     ...BasicMarksKit,
+  //     // ...FontKit,
+  //     // Block Style
+  //     ...ListKit,
+  //     // ...AlignKit,
+  //     // ...LineHeightKit,
+  //     // Collaboration
+  //     // ...DiscussionKit,
+  //     ...CommentKit,
+  //     // ...SuggestionKit,
+  //     // Editing
+  //     // ...SlashKit,
+  //     ...AutoformatKit,
+  //     ...CursorOverlayKit,
+  //     ...DndKit,
+  //     // ...EmojiKit,
+  //     ...ExitBreakKit,
+  //     TrailingBlockPlugin,
+  //     // Parsers
+  //     // ...DocxKit,
+  //     ...MarkdownKit,
+  //     // UI
+  //     ...BlockPlaceholderKit,
+  //     ...FixedToolbarKit,
+  //     // ...FloatingToolbarKit,
+  //   ],
+  // });
+
   return (
     <Row>
       <Col xs="12">
+        {/* <Plate editor={editor}>
+      <EditorContainer variant="demo">
+        <Editor />
+      </EditorContainer>
+    </Plate> */}
+
         <PlateEditor.view
           required
           label="Description and Contract Details"

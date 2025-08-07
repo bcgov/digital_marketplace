@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 
 import type { VariantProps } from "class-variance-authority";
@@ -7,10 +9,10 @@ import {
   Resizable as ResizablePrimitive,
   useResizeHandle,
   useResizeHandleState
-} from "@udecode/plate-resizable";
+} from "@platejs/resizable";
 import { cva } from "class-variance-authority";
 
-import { cn } from "../utils";
+import { cn } from "./utils";
 
 export const mediaResizeHandleVariants = cva(
   cn(
@@ -20,27 +22,26 @@ export const mediaResizeHandleVariants = cva(
   {
     variants: {
       direction: {
-        left: "-left-3 -ml-3 pl-3",
-        right: "-right-3 -mr-3 items-end pr-3"
+        left: "tw:-left-3 tw:-ml-3 tw:pl-3",
+        right: "tw:-right-3 tw:-mr-3 tw:items-end tw:pr-3"
       }
     }
   }
 );
 
-const resizeHandleVariants = cva(cn("absolute z-40"), {
+const resizeHandleVariants = cva("tw:absolute tw:z-40", {
   variants: {
     direction: {
-      bottom: "w-full cursor-row-resize",
-      left: "h-full cursor-col-resize",
-      right: "h-full cursor-col-resize",
-      top: "w-full cursor-row-resize"
+      bottom: "tw:w-full tw:cursor-row-resize",
+      left: "tw:h-full tw:cursor-col-resize",
+      right: "tw:h-full tw:cursor-col-resize",
+      top: "tw:w-full tw:cursor-row-resize"
     }
   }
 });
 
 export function ResizeHandle({
   className,
-  direction,
   options,
   ...props
 }: React.ComponentProps<typeof ResizeHandlePrimitive> &
@@ -52,7 +53,10 @@ export function ResizeHandle({
 
   return (
     <div
-      className={cn(resizeHandleVariants({ direction }), className)}
+      className={cn(
+        resizeHandleVariants({ direction: options?.direction }),
+        className
+      )}
       data-resizing={state.isResizing}
       {...resizeHandle.props}
       {...props}
@@ -60,12 +64,12 @@ export function ResizeHandle({
   );
 }
 
-const resizableVariants = cva("", {
+const resizableVariants = cva("tw:", {
   variants: {
     align: {
-      center: "mx-auto",
-      left: "mr-auto",
-      right: "ml-auto"
+      center: "tw:mx-auto",
+      left: "tw:mr-auto",
+      right: "tw:ml-auto"
     }
   }
 });

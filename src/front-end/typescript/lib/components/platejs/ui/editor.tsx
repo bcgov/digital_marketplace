@@ -1,15 +1,17 @@
+"use client";
+
 import * as React from "react";
 
-import type { PlateContentProps } from "@udecode/plate/react";
 import type { VariantProps } from "class-variance-authority";
+import type { PlateContentProps, PlateViewProps } from "platejs/react";
 
-import { PlateContainer, PlateContent } from "@udecode/plate/react";
 import { cva } from "class-variance-authority";
+import { PlateContainer, PlateContent, PlateView } from "platejs/react";
 
-import { cn } from "../utils";
+import { cn } from "./utils";
 
 const editorContainerVariants = cva(
-  "relative w-full cursor-text overflow-y-auto caret-primary select-text selection:bg-brand/25 focus-visible:outline-none [&_.slate-selection-area]:z-50 [&_.slate-selection-area]:border [&_.slate-selection-area]:border-brand/25 [&_.slate-selection-area]:bg-brand/15",
+  "tw:relative tw:w-full tw:cursor-text tw:overflow-y-auto tw:caret-primary tw:select-text tw:selection:bg-brand/25 tw:focus-visible:outline-none tw:[&_.slate-selection-area]:z-50 tw:[&_.slate-selection-area]:border tw:[&_.slate-selection-area]:border-brand/25 tw:[&_.slate-selection-area]:bg-brand/15",
   {
     defaultVariants: {
       variant: "default"
@@ -17,49 +19,46 @@ const editorContainerVariants = cva(
     variants: {
       variant: {
         comment: cn(
-          "flex flex-wrap justify-between gap-1 px-1 py-0.5 text-sm",
-          "rounded-md border-[1.5px] border-transparent bg-transparent",
-          "has-[[data-slate-editor]:focus]:border-brand/50 has-[[data-slate-editor]:focus]:ring-2 has-[[data-slate-editor]:focus]:ring-brand/30",
-          "has-aria-disabled:border-input has-aria-disabled:bg-muted"
+          "tw:flex tw:flex-wrap tw:justify-between tw:gap-1 tw:px-1 tw:py-0.5 tw:text-sm",
+          "tw:rounded-md tw:border-[1.5px] tw:border-transparent tw:bg-transparent",
+          "tw:has-[[data-slate-editor]:focus]:border-brand/50 tw:has-[[data-slate-editor]:focus]:ring-2 tw:has-[[data-slate-editor]:focus]:ring-brand/30",
+          "tw:has-aria-disabled:border-input tw:has-aria-disabled:bg-muted"
         ),
-        default: "h-full",
-        demo: "h-[650px]",
+        default: "tw:h-full",
+        demo: "tw:h-[650px]",
         select: cn(
-          "group rounded-md border border-input ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-          "has-data-readonly:w-fit has-data-readonly:cursor-default has-data-readonly:border-transparent has-data-readonly:focus-within:[box-shadow:none]"
+          "tw:group tw:rounded-md tw:border tw:border-input tw:ring-offset-background tw:focus-within:ring-2 tw:focus-within:ring-ring tw:focus-within:ring-offset-2",
+          "tw:has-data-readonly:w-fit tw:has-data-readonly:cursor-default tw:has-data-readonly:border-transparent tw:has-data-readonly:focus-within:[box-shadow:none]"
         )
       }
     }
   }
 );
 
-export const EditorContainer = ({
+export function EditorContainer({
   className,
   variant,
   ...props
-}: React.ComponentProps<"div"> &
-  VariantProps<typeof editorContainerVariants>) => {
+}: React.ComponentProps<"div"> & VariantProps<typeof editorContainerVariants>) {
   return (
     <PlateContainer
       className={cn(
-        "ignore-click-outside/toolbar",
+        "tw:ignore-click-outside/toolbar",
         editorContainerVariants({ variant }),
         className
       )}
       {...props}
     />
   );
-};
-
-EditorContainer.displayName = "EditorContainer";
+}
 
 const editorVariants = cva(
   cn(
-    "group/editor",
-    "relative w-full cursor-text overflow-x-hidden break-words whitespace-pre-wrap select-text",
-    "rounded-md ring-offset-background focus-visible:outline-none",
-    "placeholder:text-muted-foreground/80 **:data-slate-placeholder:top-[auto_!important] **:data-slate-placeholder:text-muted-foreground/80 **:data-slate-placeholder:opacity-100!",
-    "[&_strong]:font-bold"
+    "tw:group/editor",
+    "tw:relative tw:w-full tw:cursor-text tw:overflow-x-hidden tw:break-words tw:whitespace-pre-wrap tw:select-text",
+    "tw:rounded-md tw:ring-offset-background tw:focus-visible:outline-none",
+    "tw:placeholder:text-muted-foreground/80 tw:**:data-slate-placeholder:!top-1/2 tw:**:data-slate-placeholder:-translate-y-1/2 tw:**:data-slate-placeholder:text-muted-foreground/80 tw:**:data-slate-placeholder:opacity-100!",
+    "tw:[&_strong]:font-bold"
   ),
   {
     defaultVariants: {
@@ -67,22 +66,25 @@ const editorVariants = cva(
     },
     variants: {
       disabled: {
-        true: "cursor-not-allowed opacity-50"
+        true: "tw:cursor-not-allowed tw:opacity-50"
       },
       focused: {
-        true: "ring-2 ring-ring ring-offset-2"
+        true: "tw:ring-2 tw:ring-ring tw:ring-offset-2"
       },
       variant: {
-        ai: "w-full px-0 text-base md:text-sm",
+        ai: "tw:w-full tw:px-0 tw:text-base tw:md:text-sm",
         aiChat:
-          "max-h-[min(70vh,320px)] w-full max-w-[700px] overflow-y-auto px-3 py-2 text-base md:text-sm",
-        comment: cn("rounded-none border-none bg-transparent text-sm"),
+          "tw:max-h-[min(70vh,320px)] tw:w-full tw:max-w-[700px] tw:overflow-y-auto tw:px-3 tw:py-2 tw:text-base tw:md:text-sm",
+        comment: cn(
+          "tw:rounded-none tw:border-none tw:bg-transparent tw:text-sm"
+        ),
         default:
-          "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
-        demo: "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
-        fullWidth: "size-full px-16 pt-4 pb-72 text-base sm:px-24",
-        none: "",
-        select: "px-3 py-2 text-base data-readonly:w-fit"
+          "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-[max(64px,calc(50%-350px))]",
+        demo: "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-[max(64px,calc(50%-350px))]",
+        fullWidth:
+          "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-24",
+        none: "tw:",
+        select: "tw:px-3 tw:py-2 tw:text-base tw:data-readonly:w-fit"
       }
     }
   }
@@ -113,3 +115,18 @@ export const Editor = React.forwardRef<HTMLDivElement, EditorProps>(
 );
 
 Editor.displayName = "Editor";
+
+export function EditorView({
+  className,
+  variant,
+  ...props
+}: PlateViewProps & VariantProps<typeof editorVariants>) {
+  return (
+    <PlateView
+      {...props}
+      className={cn(editorVariants({ variant }), className)}
+    />
+  );
+}
+
+EditorView.displayName = "EditorView";

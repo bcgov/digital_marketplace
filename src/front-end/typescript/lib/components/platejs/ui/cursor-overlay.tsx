@@ -1,17 +1,31 @@
+"use client";
+
 import * as React from "react";
 
-import { RangeApi } from "@udecode/plate";
-import { AIChatPlugin } from "@udecode/plate-ai/react";
+import { AIChatPlugin } from "@platejs/ai/react";
 import {
   type CursorData,
   type CursorOverlayState,
   useCursorOverlay
-} from "@udecode/plate-selection/react";
-import { usePluginOption } from "@udecode/plate/react";
+} from "@platejs/selection/react";
+import { RangeApi } from "platejs";
+import { usePluginOption } from "platejs/react";
 
-import { cn } from "../utils";
+import { cn } from "./utils";
 
-export function Cursor({
+export function CursorOverlay() {
+  const { cursors } = useCursorOverlay();
+
+  return (
+    <>
+      {cursors.map((cursor) => (
+        <Cursor key={cursor.id} {...cursor} />
+      ))}
+    </>
+  );
+}
+
+function Cursor({
   id,
   caretPosition,
   data,
@@ -31,9 +45,9 @@ export function Cursor({
           <div
             key={i}
             className={cn(
-              "pointer-events-none absolute z-10",
-              id === "selection" && "bg-brand/25",
-              id === "selection" && isCursor && "bg-primary"
+              "tw:pointer-events-none tw:absolute tw:z-10",
+              id === "selection" && "tw:bg-brand/25",
+              id === "selection" && isCursor && "tw:bg-primary"
             )}
             style={{
               ...selectionStyle,
@@ -45,24 +59,12 @@ export function Cursor({
       {caretPosition && (
         <div
           className={cn(
-            "pointer-events-none absolute z-10 w-0.5",
-            id === "drag" && "w-px bg-brand"
+            "tw:pointer-events-none tw:absolute tw:z-10 tw:w-0.5",
+            id === "drag" && "tw:w-px tw:bg-brand"
           )}
           style={{ ...caretPosition, ...style }}
         />
       )}
-    </>
-  );
-}
-
-export function CursorOverlay() {
-  const { cursors } = useCursorOverlay();
-
-  return (
-    <>
-      {cursors.map((cursor) => (
-        <Cursor key={cursor.id} {...cursor} />
-      ))}
     </>
   );
 }

@@ -2,10 +2,10 @@ import * as React from "react";
 
 import type { VariantProps } from "class-variance-authority";
 
-import { type PlateStaticProps, PlateStatic } from "@udecode/plate";
 import { cva } from "class-variance-authority";
+import { type PlateStaticProps, PlateStatic } from "platejs";
 
-import { cn } from "../utils";
+import { cn } from "./utils";
 
 export const editorVariants = cva(
   cn(
@@ -21,21 +21,22 @@ export const editorVariants = cva(
     },
     variants: {
       disabled: {
-        true: "cursor-not-allowed opacity-50"
+        true: "tw:cursor-not-allowed tw:opacity-50"
       },
       focused: {
-        true: "ring-2 ring-ring ring-offset-2"
+        true: "tw:ring-2 tw:ring-ring tw:ring-offset-2"
       },
       variant: {
-        ai: "w-full px-0 text-base md:text-sm",
+        ai: "tw:w-full tw:px-0 tw:text-base tw:md:text-sm",
         aiChat:
-          "max-h-[min(70vh,320px)] w-full max-w-[700px] overflow-y-auto px-5 py-3 text-base md:text-sm",
+          "tw:max-h-[min(70vh,320px)] tw:w-full tw:max-w-[700px] tw:overflow-y-auto tw:px-5 tw:py-3 tw:text-base tw:md:text-sm",
         default:
-          "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
-        demo: "size-full px-16 pt-4 pb-72 text-base sm:px-[max(64px,calc(50%-350px))]",
-        fullWidth: "size-full px-16 pt-4 pb-72 text-base sm:px-24",
-        none: "",
-        select: "px-3 py-2 text-base data-readonly:w-fit"
+          "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-[max(64px,calc(50%-350px))]",
+        demo: "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-[max(64px,calc(50%-350px))]",
+        fullWidth:
+          "tw:size-full tw:px-16 tw:pt-4 tw:pb-72 tw:text-base tw:sm:px-24",
+        none: "tw:",
+        select: "tw:px-3 tw:py-2 tw:text-base tw:data-readonly:w-fit"
       }
     }
   }
