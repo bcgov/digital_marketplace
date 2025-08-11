@@ -4,7 +4,7 @@ import { ListPlugin } from "@platejs/list/react";
 import { KEYS } from "platejs";
 
 import { IndentKit } from "front-end/lib/components/platejs/components/editor/plugins/indent-kit";
-import { BlockList } from "front-end/lib/components/platejs/ui/block-list";
+
 
 export const ListKit = [
   ...IndentKit,
@@ -18,9 +18,6 @@ export const ListKit = [
         KEYS.toggle,
         KEYS.img
       ]
-    },
-    render: {
-      belowNodes: BlockList
     }
   })
 ];

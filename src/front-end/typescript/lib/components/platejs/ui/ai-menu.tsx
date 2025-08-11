@@ -45,6 +45,9 @@ import {
 } from './popover';
 import { cn } from './utils';
 import { useChat } from 'src/front-end/typescript/lib/components/platejs/components/editor/use-chat';
+import { MARKETPLACE_AI_URL } from '../../../../config';
+import { TWUServiceArea } from 'shared/lib/resources/opportunity/team-with-us';
+import { twuServiceAreaToTitleCase } from 'front-end/lib/pages/opportunity/team-with-us/lib';
 
 import { AIChatEditor } from './ai-chat-editor';
 
@@ -345,14 +348,331 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
       });
     },
   },
-  generateMdxSample: {
+  generateOpportunityDescription: {
     icon: <BookOpenCheck />,
-    label: 'Generate MDX sample',
-    value: 'generateMdxSample',
-    onSelect: ({ editor }) => {
+    label: 'Generate opportunity description',
+    value: 'generateOpportunityDescription',
+    onSelect: async ({ editor }) => {
+      const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+      const title = context?.title || '';
+      const teaser = context?.teaser || '';
+      const resources = context?.resources || [];
+      const location = context?.location || '';
+      const remoteOk = context?.remoteOk;
+      const remoteDesc = context?.remoteDesc || '';
+      const maxBudget = context?.maxBudget;
+      const proposalDeadline = context?.proposalDeadline;
+      const assignmentDate = context?.assignmentDate;
+      const startDate = context?.startDate;
+      const completionDate = context?.completionDate;
+
+      try {
+        // First, search for similar opportunities using RAG
+        const searchRequest = {
+          title: title,
+          teaser: teaser,
+          limit: 2
+        };
+
+        // Call the marketplace-ai service directly
+        const response = await fetch(`${MARKETPLACE_AI_URL}/rag/search-opportunities`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchRequest),
+        });
+
+        if (!response.ok) {
+          throw new Error(`RAG search failed: ${response.statusText}`);
+        }
+
+        const ragSearchResults = await response.json();
+
+        // Build enhanced prompt with RAG results
+        let prompt = 'Generate a comprehensive opportunity description based on the following information:\n\n';
+
+        if (title) {
+          prompt += `Title: ${title}\n`;
+        }
+        if (teaser) {
+          prompt += `Teaser: ${teaser}\n`;
+        }
+
+        // Add service areas and associated skills from resources
+        if (resources && resources.length > 0) {
+          prompt += '\n--- Service Areas and Skills ---\n';
+          resources.forEach((resource: any, index: number) => {
+            // Convert service area enum to user-friendly name
+            const serviceAreaName = resource.serviceArea && typeof resource.serviceArea === 'string'
+              ? twuServiceAreaToTitleCase(resource.serviceArea as TWUServiceArea)
+              : 'Unknown Service Area';
+
+            prompt += `Service Area ${index + 1}: ${serviceAreaName} (${resource.targetAllocation}% allocation)\n`;
+            if (resource.mandatorySkills && resource.mandatorySkills.length > 0) {
+              prompt += `  Mandatory Skills: ${resource.mandatorySkills.join(', ')}\n`;
+            }
+            if (resource.optionalSkills && resource.optionalSkills.length > 0) {
+              prompt += `  Optional Skills: ${resource.optionalSkills.join(', ')}\n`;
+            }
+          });
+        }
+
+        // Add dates information
+        if (proposalDeadline || assignmentDate || startDate || completionDate) {
+          prompt += '\n--- Timeline ---\n';
+          if (proposalDeadline) {
+            prompt += `Proposal Deadline: ${proposalDeadline}\n`;
+          }
+          if (assignmentDate) {
+            prompt += `Contract Award Date: ${assignmentDate}\n`;
+          }
+          if (startDate) {
+            prompt += `Contract Start Date: ${startDate}\n`;
+          }
+          if (completionDate) {
+            prompt += `Contract Completion Date: ${completionDate}\n`;
+          }
+        }
+
+        // Add location and remote work information
+        if (location) {
+          prompt += `\nLocation: ${location}\n`;
+        }
+        if (remoteOk !== undefined) {
+          prompt += `Remote Work: ${remoteOk ? 'Yes' : 'No'}\n`;
+          if (remoteOk && remoteDesc) {
+            prompt += `Remote Work Details: ${remoteDesc}\n`;
+          }
+        }
+
+        // Add budget information
+        if (maxBudget) {
+          prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
+        }
+
+        prompt += `\n\nIMPORTANT RULES:\nThe description should be follow the format similar to the reference material.
+        Ensure to include Organization, contract outcome, key responsibilities, minimum requirements, years of experience, and estimated procurement timeline.
+        For responsibilities and requirements, ensure to cover all aspects of service areas.
+        Include contract extension language if it exists in reference material.
+        If reference material is provided, use it for inspiration but create unique, original content.
+        Ignore markdown rules in reference material, and use standard markdown rules instead.
+        If some information is missing in the context, use placeholder text, for example "[YOUR ORGANIZATION]".
+        Use placeholders for any other unknown data that's present in example material, but not in provided context. Use only if necessary.
+        Important: follow the general format and length of the reference material as closely as possible.\n`;
+
+        // Add similar opportunities context if found
+        const results = ragSearchResults.results;
+        if (results && results.length > 0) {
+          prompt += '\n--- REFERENCE MATERIAL - Similar Opportunities for Reference ---\n';
+          results.forEach((result: any, index: number) => {
+            prompt += `\nSimilar Opportunity Description ${index + 1} ("${result.metadata.title}"):\n`;
+            prompt += `${result.metadata.full_description}\n`;
+          });
+          prompt += '\n--- End of Reference Material ---\n';
+        }
+
+        console.log('prompt', prompt);
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          prompt,
+        });
+
+      } catch (error) {
+        console.error('RAG search failed, falling back to basic prompt:', error);
+
+        // Fallback to enhanced basic prompt with available context
+        let prompt = 'Generate a comprehensive opportunity description based on the following information:\n\n';
+
+        if (title) {
+          prompt += `Title: ${title}\n`;
+        }
+        if (teaser) {
+          prompt += `Teaser: ${teaser}\n`;
+        }
+
+        // Add service areas and skills even in fallback
+        if (resources && resources.length > 0) {
+          prompt += '\n--- Service Areas and Skills ---\n';
+          resources.forEach((resource: any, index: number) => {
+            // Convert service area enum to user-friendly name
+            const serviceAreaName = resource.serviceArea && typeof resource.serviceArea === 'string'
+              ? twuServiceAreaToTitleCase(resource.serviceArea as TWUServiceArea)
+              : 'Unknown Service Area';
+
+            prompt += `Service Area ${index + 1}: ${serviceAreaName} (${resource.targetAllocation}% allocation)\n`;
+            if (resource.mandatorySkills && resource.mandatorySkills.length > 0) {
+              prompt += `  Mandatory Skills: ${resource.mandatorySkills.join(', ')}\n`;
+            }
+            if (resource.optionalSkills && resource.optionalSkills.length > 0) {
+              prompt += `  Optional Skills: ${resource.optionalSkills.join(', ')}\n`;
+            }
+          });
+        }
+
+        // Add timeline information
+        if (proposalDeadline || assignmentDate || startDate || completionDate) {
+          prompt += '\n--- Timeline ---\n';
+          if (proposalDeadline) {
+            prompt += `Proposal Deadline: ${proposalDeadline}\n`;
+          }
+          if (assignmentDate) {
+            prompt += `Contract Award Date: ${assignmentDate}\n`;
+          }
+          if (startDate) {
+            prompt += `Contract Start Date: ${startDate}\n`;
+          }
+          if (completionDate) {
+            prompt += `Contract Completion Date: ${completionDate}\n`;
+          }
+        }
+
+        // Add location and budget in fallback
+        if (location) {
+          prompt += `\nLocation: ${location}\n`;
+        }
+        if (remoteOk !== undefined) {
+          prompt += `Remote Work: ${remoteOk ? 'Yes' : 'No'}\n`;
+          if (remoteOk && remoteDesc) {
+            prompt += `Remote Work Details: ${remoteDesc}\n`;
+          }
+        }
+        if (maxBudget) {
+          prompt += `Maximum Budget: $${maxBudget.toLocaleString()}\n`;
+        }
+
+        prompt += '\nPlease create a detailed description that expands on this information, suitable for a professional opportunity posting. Include relevant context, background information, what the opportunity entails, key responsibilities based on the service areas and skills, minimum requirements, and timeline information.';
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          prompt,
+        });
+      }
+    },
+  },
+  generateQuestion: {
+    icon: <BookOpenCheck />,
+    label: 'Generate question',
+    value: 'generateQuestion',
+    onSelect: async ({ editor }) => {
+      const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+
+      if (!context) {
+        console.error('No context available for question generation');
+        return;
+      }
+
+      try {
+        const generationContext = {
+          title: context.title || '',
+          teaser: context.teaser || '',
+          description: context.description || '',
+          location: context.location || '',
+          remoteOk: context.remoteOk || false,
+          remoteDesc: context.remoteDesc || '',
+          resources: context.resources || []
+        };
+
+        const existingQuestions = context.existingQuestions || [];
+
+        // Default prompt for question generation
+        const defaultPrompt = `Generate a single evaluation question for a Team With Us opportunity.
+
+REQUIREMENTS:
+- Generate ONE evaluation question that covers multiple related skills/service areas
+- The question should be scenario-based and specific to the opportunity context
+- DO NOT duplicate or be too similar to existing questions listed below
+- Focus on skills and service areas that haven't been fully covered by existing questions
+- The question should help determine competency levels in the relevant areas
+- Use the example questions below as inspiration for format and quality, but create original content
+
+Please return only the question text, no additional formatting or explanation.`;
+
+        // Create a special prompt with markers that the backend will detect
+        const specialPrompt = `__USER_PROMPT_START__${defaultPrompt}__USER_PROMPT_END__
+__GENERATE_QUESTION__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__EXISTING_QUESTIONS_START__${JSON.stringify(existingQuestions)}__EXISTING_QUESTIONS_END__`;
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          mode: 'insert',
+          prompt: specialPrompt,
+        });
+
+      } catch (error) {
+        console.error('Question generation failed:', error);
+
+        // Fallback to basic question generation
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          prompt: 'Generate an evaluation question that assesses technical competency relevant to the skills and service areas mentioned in the context.',
+        });
+      }
+    },
+  },
+  generateGuideline: {
+    icon: <BookOpenCheck />,
+    label: 'Generate guideline',
+    value: 'generateGuideline',
+    onSelect: async ({ editor }) => {
+      const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+
+      if (!context) {
+        console.error('No context available for guideline generation');
+        return;
+      }
+
+      const currentQuestionText = context.currentQuestionText || '';
+
+      try {
+        const generationContext = {
+          title: context.title || '',
+          teaser: context.teaser || '',
+          description: context.description || '',
+          location: context.location || '',
+          remoteOk: context.remoteOk || false,
+          remoteDesc: context.remoteDesc || '',
+          resources: context.resources || []
+        };
+
+        // Default prompt for guideline generation
+        const defaultPrompt = `Generate evaluation guidelines for the following question in an opportunity.
+
+QUESTION TO GENERATE THE GUIDELINE FOR:
+
+${currentQuestionText}
+
+REQUIREMENTS:
+- Generate clear evaluation guidelines for the specific question below
+- Include what evaluators should look for in a good response
+- Provide specific criteria for assessing competency
+- Include guidance on how to score/evaluate responses
+- Focus on the skills and service areas relevant to the question
+- Use the example guidelines below as inspiration for format and quality, but create original content
+
+Please return only the guideline text, no additional formatting or explanation.`;
+
+        // Create a special prompt with markers that the backend will detect
+        const specialPrompt = `__USER_PROMPT_START__${defaultPrompt}__USER_PROMPT_END__
+__GENERATE_GUIDELINE__
+__CONTEXT_START__${JSON.stringify(generationContext)}__CONTEXT_END__
+__QUESTION_TEXT_START__${currentQuestionText}__QUESTION_TEXT_END__`;
+
+        void editor.getApi(AIChatPlugin).aiChat.submit({
+          mode: 'insert',
+          prompt: specialPrompt,
+        });
+
+      } catch (error) {
+        console.error('Guideline generation failed:', error);
+
+        // Fallback to basic guideline generation
+        const fallbackPrompt = currentQuestionText
+          ? `Generate evaluation guidelines for the following question: "${currentQuestionText}". Include what evaluators should look for in a good response and how to assess competency.`
+          : 'Generate evaluation guidelines that help evaluators assess candidate responses to technical questions. Include specific criteria for assessment and scoring guidance.';
+
       void editor.getApi(AIChatPlugin).aiChat.submit({
-        prompt: 'Generate a mdx sample',
+          prompt: fallbackPrompt,
       });
+      }
     },
   },
   improveWriting: {
@@ -464,11 +784,8 @@ const menuStateItems: Record<
   cursorCommand: [
     {
       items: [
-        aiChatItems.generateMdxSample,
-        aiChatItems.generateMarkdownSample,
+        aiChatItems.generateOpportunityDescription,
         aiChatItems.continueWrite,
-        aiChatItems.summarize,
-        aiChatItems.explain,
       ],
     },
   ],
@@ -481,7 +798,6 @@ const menuStateItems: Record<
     {
       items: [
         aiChatItems.improveWriting,
-        aiChatItems.emojify,
         aiChatItems.makeLonger,
         aiChatItems.makeShorter,
         aiChatItems.fixSpelling,
@@ -511,6 +827,10 @@ export const AIMenuItems = ({
   const aiEditor = usePluginOption(AIChatPlugin, 'aiEditor')!;
   const isSelecting = useIsSelecting();
 
+  // Get context to determine which menu items to show
+  const context = editor.getOption({ key: 'opportunityContext' }, 'context');
+  const fieldType = context?.fieldType;
+
   const menuState = React.useMemo(() => {
     if (messages && messages.length > 0) {
       return isSelecting ? 'selectionSuggestion' : 'cursorSuggestion';
@@ -520,10 +840,35 @@ export const AIMenuItems = ({
   }, [isSelecting, messages]);
 
   const menuGroups = React.useMemo(() => {
-    const items = menuStateItems[menuState];
+    let items = menuStateItems[menuState];
+
+    // Modify items based on field type context
+    if (fieldType === 'question' || fieldType === 'guideline') {
+      // For resource questions, show different cursor command items
+      if (menuState === 'cursorCommand') {
+        const resourceQuestionItems = [];
+
+        if (fieldType === 'question') {
+          resourceQuestionItems.push(aiChatItems.generateQuestion);
+        } else if (fieldType === 'guideline') {
+          resourceQuestionItems.push(aiChatItems.generateGuideline);
+        }
+
+        resourceQuestionItems.push(
+          aiChatItems.continueWrite
+        );
+
+        items = [
+          {
+            items: resourceQuestionItems,
+          },
+        ];
+      }
+      // Keep other menu states (selectionCommand, suggestions) as they are
+    }
 
     return items;
-  }, [menuState]);
+  }, [menuState, fieldType]);
 
   React.useEffect(() => {
     if (menuGroups.length > 0 && menuGroups[0].items.length > 0) {

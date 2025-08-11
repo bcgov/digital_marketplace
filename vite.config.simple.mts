@@ -47,6 +47,8 @@ export default defineConfig(({ mode }) => {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
         '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript'),
+        '@/components/ui': path.resolve(__dirname, 'src/front-end/typescript/lib/components/platejs/ui'),
+        "@": path.resolve(__dirname, "./src"),
         // Rely on tsconfig paths for '@/*' via vite-tsconfig-paths
       }
     },
