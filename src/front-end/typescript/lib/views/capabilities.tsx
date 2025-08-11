@@ -67,7 +67,7 @@ const Capabilities: component.base.View<Props> = ({
   showFullOrPartTime = false
 }) => {
   return (
-    <Row noGutters className={`border-top border-start ${className}`}>
+    <Row className={`border-top border-start ${className} g-0`}>
       {capabilities.map((c, i) => (
         <Col xs="12" md={grid ? "6" : undefined} key={`phase-capability-${i}`}>
           <Capability

@@ -209,7 +209,7 @@ export const view: component_.base.View<Props> = ({
   disabled
 }) => {
   return (
-    <Row noGutters className="border-top border-start">
+    <Row className="g-0 border-top border-start">
       {state.capabilities.map((c, i) => (
         <Col xs="12" md="6" key={`phase-capability-${i}`}>
           <Capability
