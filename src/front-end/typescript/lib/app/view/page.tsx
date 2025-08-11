@@ -227,6 +227,7 @@ export function view<
       <div
         className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
         <CopilotKit
+          showDevConsole={false}
           runtimeUrl={
             (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
             "/copilotkit"
@@ -258,6 +259,7 @@ export function view<
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
           <CopilotKit
+            showDevConsole={false}
             runtimeUrl={
               (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
               "/copilotkit"
@@ -310,6 +312,7 @@ export function view<
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
           <CopilotKit
+            showDevConsole={false}
             runtimeUrl={
               (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
               "/copilotkit"

@@ -9,6 +9,11 @@ import type {
 import { generateReactHelpers } from "@uploadthing/react";
 import { toast } from "sonner";
 import { z } from "zod";
+import * as api from "front-end/lib/http/api";
+import { isValid } from "shared/lib/validation";
+import * as Resource from "shared/lib/resources/file";
+import { fileBlobPath } from "front-end/lib";
+import { adt } from "shared/lib/types";
 
 export type UploadedFile<T = unknown> = ClientUploadedFileData<T>;
 
@@ -36,19 +41,53 @@ export function useUploadFile({
     setUploadingFile(file);
 
     try {
-      const res = await uploadFiles("editorUploader", {
-        ...props,
-        files: [file],
-        onUploadProgress: ({ progress }) => {
-          setProgress(Math.min(progress, 100));
-        }
+      // Use the existing upload API instead of UploadThing
+      const uploadCommand = api.files.markdownImages.makeUploadImage([
+        adt("any")
+      ])(file);
+
+      // Simulate progress while upload is happening
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          const next = prev + 10;
+          return next >= 90 ? 90 : next;
+        });
+      }, 100);
+
+      // Execute the command and wait for result
+      const result: any = await new Promise((resolve) => {
+        uploadCommand.value().then(resolve);
       });
 
-      setUploadedFile(res[0]);
+      clearInterval(progressInterval);
+      setProgress(100);
 
-      onUploadComplete?.(res[0]);
+      if (isValid(result as any)) {
+        // Get the encoded URL from upload response (FILE_ID:uuid format)
+        const encodedUrl = (result as any).value.url;
+        const fileName = (result as any).value.name || file.name;
 
-      return uploadedFile;
+        // Convert FILE_ID:uuid to actual blob URL for preview
+        const fileId = Resource.decodeMarkdownImageUrlToFileId(encodedUrl);
+        const displayUrl = fileId ? fileBlobPath({ id: fileId }) : encodedUrl;
+
+        // Create UploadThing-compatible response format
+        const uploadedFile = {
+          key: fileId || `file-${Date.now()}`,
+          name: fileName,
+          size: file.size,
+          type: file.type,
+          url: displayUrl,
+          appUrl: displayUrl
+        } as UploadedFile;
+
+        setUploadedFile(uploadedFile);
+        onUploadComplete?.(uploadedFile);
+
+        return uploadedFile;
+      } else {
+        throw new Error("Upload failed");
+      }
     } catch (error) {
       const errorMessage = getErrorMessage(error);
 
@@ -62,7 +101,6 @@ export function useUploadFile({
       onUploadError?.(error);
 
       // Mock upload for unauthenticated users
-      // toast.info('User not logged in. Mocking upload process.');
       const mockUploadedFile = {
         key: "mock-key-0",
         appUrl: `https://mock-app-url.com/${file.name}`,

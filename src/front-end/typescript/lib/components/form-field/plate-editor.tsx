@@ -15,6 +15,7 @@ import { Validation } from "shared/lib/validation";
 // import { createFixedToolbarPlugin } from "../platejs/plugins/fixed-toolbar-plugin";
 import { Plate } from "platejs/react";
 import { useCreateEditor } from "../platejs/hooks/use-create-editor";
+import { cn } from "../platejs/ui/utils";
 
 // State interface for the PlateJS editor
 export interface State {
@@ -140,10 +141,9 @@ export const view: component_.base.View<ViewProps> = ({
 
   const editor = useCreateEditor(
     {
-      //   plugins: [...editorPlugins, createFixedToolbarPlugin(toolbarMode)],
-      readOnly: disabled
+      readOnly: false
     },
-    [disabled, toolbarMode]
+    [toolbarMode] 
   );
 
   // Debounce ref for handling editor changes
@@ -275,7 +275,12 @@ export const view: component_.base.View<ViewProps> = ({
               editor={editor}
               onChange={disabled ? undefined : handleEditorChange}
               readOnly={disabled}>
-              <EditorContainer variant="demo" className="h-72 overflow-y-auto">
+              <EditorContainer 
+                variant="demo" 
+                className={cn(
+                  "h-72",
+                  disabled ? "overflow-hidden" : "overflow-y-auto"
+                )}>
                 <Editor placeholder={placeholder} disabled={disabled} />
               </EditorContainer>
             </Plate>

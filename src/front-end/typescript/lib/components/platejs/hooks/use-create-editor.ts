@@ -51,6 +51,7 @@ import { ExitBreakKit } from "../components/editor/plugins/exit-break-kit";
 import { ListKit } from "../components/editor/plugins/list-kit";
 import { MediaKit } from "../components/editor/plugins/media-kit";
 import { AIChatPlugin } from "@platejs/ai/react";
+import { CopilotKit } from "../components/editor/plugins/copilot-kit";
 
 export const viewComponents = {
   [AIChatPlugin.key]: AIAnchorElement,
@@ -95,6 +96,7 @@ export const useCreateEditor = (
 ) => {
   console.log("useCreateEditor");
   const editorPlugins = [
+    ...CopilotKit,
     ...AIKit,
     ...BlockMenuKit,
     // Elements
