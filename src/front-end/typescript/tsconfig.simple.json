@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "types": ["node","vite/client"],
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": [
+        "./src/front-end/typescript/lib/components/platejs/*"
+      ]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"]
+}

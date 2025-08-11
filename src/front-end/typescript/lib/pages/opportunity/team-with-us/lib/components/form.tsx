@@ -6,6 +6,7 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
+import * as AIEditor from "front-end/lib/components/platejs/ui/ai-chat-editor";
 import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -70,6 +71,7 @@ import { ExitBreakKit } from "front-end/lib/components/platejs/components/editor
 import { TrailingBlockPlugin } from "platejs";
 import { BlockPlaceholderKit } from "front-end/lib/components/platejs/components/editor/plugins/block-placeholder-kit";
 import { BlockMenuKit } from "front-end/lib/components/platejs/components/editor/plugins/block-menu-kit";
+import { EditorKit } from "front-end/lib/components/platejs/components/editor/editor-kit";
 
 type RemoteOk = "yes" | "no";
 
@@ -1524,6 +1526,7 @@ export const DescriptionView: component_.base.View<Props> = ({
   //   plugins: [
   //     ...AIKit,
   //     ...BlockMenuKit,
+
   //     // Elements
   //     ...BasicBlocksKit,
   //     // ...CodeBlockKit,
@@ -1537,6 +1540,7 @@ export const DescriptionView: component_.base.View<Props> = ({
   //     // ...DateKit,
   //     // ...LinkKit,
   //     // ...MentionKit,
+
   //     // Marks
   //     ...BasicMarksKit,
   //     // ...FontKit,
@@ -1544,6 +1548,7 @@ export const DescriptionView: component_.base.View<Props> = ({
   //     ...ListKit,
   //     // ...AlignKit,
   //     // ...LineHeightKit,
+
   //     // Collaboration
   //     // ...DiscussionKit,
   //     ...CommentKit,
@@ -1565,6 +1570,10 @@ export const DescriptionView: component_.base.View<Props> = ({
   //     // ...FloatingToolbarKit,
   //   ],
   // });
+
+  const editor = usePlateEditor({
+    plugins: EditorKit,
+  });
 
   return (
     <Row>

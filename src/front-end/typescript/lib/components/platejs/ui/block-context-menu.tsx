@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 
-import { AIChatPlugin } from "@platejs/ai/react";
+import { AIChatPlugin } from '@platejs/ai/react';
 import {
   BLOCK_CONTEXT_MENU_ID,
   BlockMenuPlugin,
-  BlockSelectionPlugin
-} from "@platejs/selection/react";
-import { KEYS } from "platejs";
-import { useEditorPlugin, usePlateState } from "platejs/react";
+  BlockSelectionPlugin,
+} from '@platejs/selection/react';
+import { KEYS } from 'platejs';
+import { useEditorPlugin, usePlateState } from 'platejs/react';
 
 import {
   ContextMenu,
@@ -19,17 +19,17 @@ import {
   ContextMenuSub,
   ContextMenuSubContent,
   ContextMenuSubTrigger,
-  ContextMenuTrigger
-} from "./context-menu";
-import { useIsTouchDevice } from "front-end/lib/components/platejs/hooks/use-is-touch-device";
+  ContextMenuTrigger,
+} from './context-menu';
+import { useIsTouchDevice } from 'front-end/lib/components/platejs/hooks/use-is-touch-device';
 
-type Value = "askAI" | null;
+type Value = 'askAI' | null;
 
 export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const { api, editor } = useEditorPlugin(BlockMenuPlugin);
   const [value, setValue] = React.useState<Value>(null);
   const isTouch = useIsTouchDevice();
-  const [readOnly] = usePlateState("readOnly");
+  const [readOnly] = usePlateState('readOnly');
 
   const handleTurnInto = React.useCallback(
     (type: string) => {
@@ -38,8 +38,8 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
         .blockSelection.getNodes()
         .forEach(([node, path]) => {
           if (node[KEYS.listType]) {
-            editor.tf.unsetNodes([KEYS.listType, "indent"], {
-              at: path
+            editor.tf.unsetNodes([KEYS.listType, 'indent'], {
+              at: path,
             });
           }
 
@@ -50,7 +50,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   );
 
   const handleAlign = React.useCallback(
-    (align: "center" | "left" | "right") => {
+    (align: 'center' | 'left' | 'right') => {
       editor
         .getTransforms(BlockSelectionPlugin)
         .blockSelection.setNodes({ align });
@@ -72,23 +72,25 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           }, 0);
         }
       }}
-      modal={false}>
+      modal={false}
+    >
       <ContextMenuTrigger
         asChild
         onContextMenu={(event) => {
           const dataset = (event.target as HTMLElement).dataset;
           const disabled =
-            dataset?.slateEditor === "true" ||
+            dataset?.slateEditor === 'true' ||
             readOnly ||
-            dataset?.plateOpenContextMenu === "false";
+            dataset?.plateOpenContextMenu === 'false';
 
           if (disabled) return event.preventDefault();
 
           api.blockMenu.show(BLOCK_CONTEXT_MENU_ID, {
             x: event.clientX,
-            y: event.clientY
+            y: event.clientY,
           });
-        }}>
+        }}
+      >
         <div className="tw:w-full">{children}</div>
       </ContextMenuTrigger>
       <ContextMenuContent
@@ -97,17 +99,19 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           e.preventDefault();
           editor.getApi(BlockSelectionPlugin).blockSelection.focus();
 
-          if (value === "askAI") {
+          if (value === 'askAI') {
             editor.getApi(AIChatPlugin).aiChat.show();
           }
 
           setValue(null);
-        }}>
+        }}
+      >
         <ContextMenuGroup>
           <ContextMenuItem
             onClick={() => {
-              setValue("askAI");
-            }}>
+              setValue('askAI');
+            }}
+          >
             Ask AI
           </ContextMenuItem>
           <ContextMenuItem
@@ -116,7 +120,8 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.removeNodes();
               editor.tf.focus();
-            }}>
+            }}
+          >
             Delete
           </ContextMenuItem>
           <ContextMenuItem
@@ -124,7 +129,8 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.duplicate();
-            }}>
+            }}
+          >
             Duplicate
             {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
           </ContextMenuItem>
@@ -157,7 +163,8 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.setIndent(1)
-            }>
+            }
+          >
             Indent
           </ContextMenuItem>
           <ContextMenuItem
@@ -165,19 +172,20 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
               editor
                 .getTransforms(BlockSelectionPlugin)
                 .blockSelection.setIndent(-1)
-            }>
+            }
+          >
             Outdent
           </ContextMenuItem>
           <ContextMenuSub>
             <ContextMenuSubTrigger>Align</ContextMenuSubTrigger>
             <ContextMenuSubContent className="tw:w-48">
-              <ContextMenuItem onClick={() => handleAlign("left")}>
+              <ContextMenuItem onClick={() => handleAlign('left')}>
                 Left
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleAlign("center")}>
+              <ContextMenuItem onClick={() => handleAlign('center')}>
                 Center
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleAlign("right")}>
+              <ContextMenuItem onClick={() => handleAlign('right')}>
                 Right
               </ContextMenuItem>
             </ContextMenuSubContent>

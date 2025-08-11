@@ -1,3 +1,16 @@
+import React from 'react'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App'
+import "./styles/tailwind2.css"
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
+
+
 // // import "../sass/index.scss";
 // import "./styles/tailwind.css";
 

@@ -24,7 +24,10 @@
       "scripts/*": ["./src/scripts/*"],
       "front-end/*": ["./src/front-end/typescript/*"],
       "learn-front-end/*": ["./docs/learn/front-end/typescript/*"],
-      "tests/*": ["./tests/*"]
+      "tests/*": ["./tests/*"],
+      "@/*": [
+        "./src/front-end/typescript/lib/components/platejs/*"
+      ]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"],

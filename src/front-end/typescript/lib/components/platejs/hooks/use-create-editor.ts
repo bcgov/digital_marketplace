@@ -23,7 +23,7 @@ import { AIKit } from "front-end/lib/components/platejs/components/editor/plugin
 //   usePlateEditor
 // } from "@udecode/plate/react";
 
-// import { AIAnchorElement } from "../ui/ai-anchor-element";
+import { AIAnchorElement } from "../ui/ai-node";
 // import { AILeaf } from "../ui/ai-leaf";
 // import { BlockquoteElement } from "../ui/blockquote-element";
 // import { HeadingElement } from "../ui/heading-element";
@@ -50,9 +50,10 @@ import { DndKit } from "../components/editor/plugins/dnd-kit";
 import { ExitBreakKit } from "../components/editor/plugins/exit-break-kit";
 import { ListKit } from "../components/editor/plugins/list-kit";
 import { MediaKit } from "../components/editor/plugins/media-kit";
+import { AIChatPlugin } from "@platejs/ai/react";
 
 export const viewComponents = {
-  // [AIChatPlugin.key]: AIAnchorElement,
+  [AIChatPlugin.key]: AIAnchorElement,
   // [BlockquotePlugin.key]: BlockquoteElement,
   // [BoldPlugin.key]: withProps(PlateLeaf, { as: "strong" }),
   // [HEADING_KEYS.h1]: withProps(HeadingElement, { variant: "h1" }),
@@ -92,6 +93,7 @@ export const useCreateEditor = (
   } & Omit<CreatePlateEditorOptions, "plugins"> = {},
   deps: any[] = []
 ) => {
+  console.log("useCreateEditor");
   const editorPlugins = [
     ...AIKit,
     ...BlockMenuKit,
@@ -145,14 +147,14 @@ export const useCreateEditor = (
 
   return usePlateEditor<Value, typeof editorPlugins[number]>(
     {
-      // components: {
-      //   ...(readOnly
-      //     ? viewComponents
-      //     : placeholders
-      //     ? editorComponents
-      //     : editorComponents),
-      //   ...components
-      // },
+      components: {
+        ...(readOnly
+          ? viewComponents
+          : placeholders
+          ? editorComponents
+          : editorComponents),
+        ...components
+      },
       plugins: configuredEditorPlugins as any
       // ...options
     }
