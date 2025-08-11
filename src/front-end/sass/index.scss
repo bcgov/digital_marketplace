@@ -4,8 +4,6 @@
 // Imports
 @use "./components/virtualized-table";
 
-// @import "./components/virtualized-table";
-
 $input-focus-border-color: #6bccf7;
 $input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
 
@@ -16,6 +14,9 @@ $grid-gutter-width: $spacer * 2;
 @import "bootstrap/scss/functions";
 $primary-bg-subtle: #ceebf7;
 $primary-border-subtle: #bbe2f4;
+$component-active-bg: #0c99d6;
+$input-placeholder-color: #6c757d;
+// $form-check-input-checked-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path fill='#ffffff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z'/></svg>") !default;
 @import "bootstrap/scss/variables";
 
 // Custom Bootstrap variable overrides.
@@ -45,12 +46,6 @@ $container-max-widths: (
 // Standard keys ensure Bootstrap utilities are generated correctly.
 $spacers: map.merge(
   (
-    0: 0,
-    1: $spacer * 0.25,
-    2: $spacer * 0.5,
-    3: $spacer,
-    4: $spacer * 1.5,
-    5: $spacer * 3,
     // custom spacers
     n4h: $spacer * -2,
     n6: $spacer * -4,
@@ -110,7 +105,6 @@ $nav-tabs-link-active-bg: $white;
 $nav-tabs-link-active-border-color: $nav-tabs-border-color
   $nav-tabs-border-color transparent;
 $component-active-bg: $blue;
-$custom-control-indicator-checked-disabled-bg: rgba($component-active-bg, 0.5);
 $link-color: $blue;
 $link-hover-color: #08658e;
 $dropdown-link-hover-bg: $gray-100;
@@ -730,6 +724,15 @@ pre {
   @extend .rounded;
 }
 
+label {
+  @extend .py-1;
+
+  .form-check & {
+    @extend .font-size-base;
+    @extend .py-0;
+  }
+}
+
 nav.navbar .nav-link:hover {
   text-decoration: underline;
 }
@@ -749,23 +752,48 @@ nav.navbar .nav-link:hover {
   }
 }
 
-.custom-radio,
-.custom-checkbox {
-  .custom-control-label::before {
-    transition: none;
+.form-check {
+  margin-bottom: 0;
+}
+
+.form-check-input {
+  transition: none;
+  font-size: 1rem;
+  border-color: $gray-500;
+
+  &[type="checkbox"] {
+    border-radius: 0.3rem;
+  }
+
+  &:disabled {
+    opacity: 1;
+    background-color: $gray-200;
+    border-color: $gray-500;
+
+    ~ .form-check-label {
+      opacity: 1;
+      color: $gray-600;
+    }
+  }
+
+  &:disabled:checked {
+    opacity: 1 !important;
+    background-color: rgba($form-check-input-checked-bg-color, 0.5);
+    border-color: rgba($form-check-input-checked-border-color, 1);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba($component-active-bg, 0.25);
   }
 }
 
 [class*="affiliations-admin-status"] {
-  .custom-control {
-    padding-left: 0;
-  }
-
-  .custom-control-label::before,
-  .custom-control-label::after {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+  min-height: 1.5rem;
+  .form-check-input[type="checkbox"] {
+    margin-top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
   }
 }
 
