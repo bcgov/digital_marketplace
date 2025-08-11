@@ -33,8 +33,8 @@ import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
-// import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
-// import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 
 import {
   opportunityToPublicState,
@@ -402,41 +402,41 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       ? opportunityToPublicState(state.opportunityForReview)
       : null;
 
-//     useCopilotReadable({
-//       description:
-//         "The Team With Us Opportunity that is currently being created or edited. This is the data that should be reviewed.",
-//       value: readableOpportunity
-//     });
+    useCopilotReadable({
+      description:
+        "The Team With Us Opportunity that is currently being created or edited. This is the data that should be reviewed.",
+      value: readableOpportunity
+    });
 
-//     const { appendMessage, setMessages } = useCopilotChat();
+    const { appendMessage, reset } = useCopilotChat();
 
-//     useEffect(() => {
-//       if (state.opportunityForReview) {
-//         // Clear chat history first for a fresh conversation
-//         setMessages([]);
-
-//         appendMessage(
-//           new TextMessage({
-//             content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
-
-// ${JSON.stringify(readableOpportunity, null, 2)}
-
-// ${FORMATTED_CRITERIA}`,
-//             role: Role.System,
-//             id: Math.random().toString()
-//           })
-//         );
-//         dispatch(adt("clearOpportunityForReview"));
-//       }
-//     }
+    useEffect(() => {
+      if (state.opportunityForReview) {
+        // Clear chat history first for a fresh conversation
+        reset(); // This replaces setMessages([])
+        
+        // Append the system message
+        appendMessage(
+          new TextMessage({
+            content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
     
-//     , [
-//       state.opportunityForReview,
-//       appendMessage,
-//       setMessages,
-//       dispatch,
-//       readableOpportunity
-//     ]);
+    ${JSON.stringify(readableOpportunity, null, 2)}
+    
+    ${FORMATTED_CRITERIA}`,
+            role: Role.System,
+            id: Math.random().toString()
+          })
+        );
+        
+        dispatch(adt("clearOpportunityForReview"));
+      }
+    }, [
+      state.opportunityForReview,
+      appendMessage,
+      reset,
+      dispatch,
+      readableOpportunity
+    ]);
 
     return (
       <div style={{ position: "relative" }}>

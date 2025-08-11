@@ -31,8 +31,8 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
-// import { useCopilotChat } from "@copilotkit/react-core";
-// import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import { useCopilotChat } from "@copilotkit/react-core";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   opportunityToPublicState,
   FORMATTED_CRITERIA
@@ -781,29 +781,32 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isDeleteLoading ||
     isReviewWithAILoading;
 
-//   const { appendMessage, setMessages } = useCopilotChat();
-//   useEffect(() => {
-//     if (state.opportunityForReview) {
-//       // Clear chat history first for a fresh conversation
-//       setMessages([]);
-
-//       const readableOpportunity = opportunityToPublicState(
-//         state.opportunityForReview
-//       );
-//       appendMessage(
-//         new TextMessage({
-//           content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
-
-// ${JSON.stringify(readableOpportunity, null, 2)}
-
-// ${FORMATTED_CRITERIA}`,
-//           role: Role.System,
-//           id: Math.random().toString()
-//         })
-//       );
-//       dispatch(adt("clearOpportunityForReview"));
-//     }
-//   }, [state.opportunityForReview, appendMessage, setMessages, dispatch]);
+    const { appendMessage, reset } = useCopilotChat();
+    
+    useEffect(() => {
+      if (state.opportunityForReview) {
+        // Use reset() instead of setMessages([])
+        reset();
+    
+        const readableOpportunity = opportunityToPublicState(
+          state.opportunityForReview
+        );
+        
+        appendMessage(
+          new TextMessage({
+            content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
+    
+    ${JSON.stringify(readableOpportunity, null, 2)}
+    
+    ${FORMATTED_CRITERIA}`,
+            role: Role.System,
+            id: Math.random().toString()
+          })
+        );
+        
+        dispatch(adt("clearOpportunityForReview"));
+      }
+    }, [state.opportunityForReview, appendMessage, reset, dispatch]);
 
   if (!state.opportunity || !state.form) {
     return (

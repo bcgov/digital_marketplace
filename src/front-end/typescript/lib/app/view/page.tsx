@@ -1,5 +1,5 @@
-// import { CopilotKit } from "@copilotkit/react-core";
-// import { CopilotSidebar } from "@copilotkit/react-ui";
+import { CopilotKit } from "@copilotkit/react-core";
+import { CopilotSidebar } from "@copilotkit/react-ui";
 import getAppAlerts from "front-end/lib/app/alerts";
 import {
   Msg,
@@ -226,19 +226,19 @@ export function view<
     return (
       <div
         className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-        {/*<CopilotKit
+        <CopilotKit
           runtimeUrl={
             (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
             "/copilotkit"
-          }>*/}
+          }>
           <ViewAlertsAndBreadcrumbs
             {...viewAlertsAndBreadcrumbsProps}
             container
             className="pt-4 pt-md-6"
           />
           <component.view {...viewProps} />
-          {/*<CopilotSidebar />
-        </CopilotKit>*/}
+          <CopilotSidebar />
+        </CopilotKit>
       </div>
     );
   } else {
@@ -257,11 +257,11 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          {/* <CopilotKit
+          <CopilotKit
             runtimeUrl={
               (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
               "/copilotkit"
-            }> */}
+            }>
             <div className="d-flex flex-column flex-grow-1">
               <Container className="position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch">
                 <div
@@ -300,8 +300,8 @@ export function view<
                 </Row>
               </Container>
             </div>
-            {/* <CopilotSidebar />
-          </CopilotKit> */}
+            <CopilotSidebar />
+          </CopilotKit>
         </div>
       );
     } else {
@@ -309,17 +309,17 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          {/* <CopilotKit
+          <CopilotKit
             runtimeUrl={
               (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
               "/copilotkit"
-            }> */}
+            }>
             <Container className="pt-4 pt-md-6 pb-6 flex-grow-1">
               <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
               <component.view {...viewProps} />
-              {/* <CopilotSidebar /> */}
+              <CopilotSidebar />
             </Container>
-          {/* </CopilotKit> */}
+          </CopilotKit>
         </div>
       );
     }
