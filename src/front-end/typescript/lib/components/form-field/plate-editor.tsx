@@ -176,44 +176,43 @@ export const view: component_.base.View<ViewProps> = ({
 
   // Initialize editor with markdown content on first load
   useEffect(() => {
-    if (editor && markdownContent) {
-      try {
-        const deserializedValue =
-          editor.api.markdown.deserialize(markdownContent);
-        editor.tf.setValue(deserializedValue);
-      } catch (error) {
-        console.warn("Failed to deserialize markdown content:", error);
-        // Fallback to plain text
-        editor.tf.setValue([
-          {
-            type: "p",
-            children: [{ text: markdownContent }]
-          }
-        ]);
-      }
+    try {
+      const deserializedValue =
+        editor.api.markdown.deserialize(markdownContent);
+      editor.tf.setValue(deserializedValue);
+    } catch (error) {
+      console.warn("Failed to deserialize markdown content:", error);
+      // Fallback to plain text
+      editor.tf.setValue([
+        {
+          type: "p",
+          children: [{ text: markdownContent }]
+        }
+      ]);
     }
   }, [editor]); // Only run on editor creation
 
   // Update the opportunity context in the editor
   useEffect(() => {
-    if (editor && opportunityContext) {
+    try {
+      // Set the context using the plugin
       editor.setOption(OpportunityContextPlugin, "context", opportunityContext);
+    } catch (error) {
+      console.error("🔧 [PlateEditor] Error setting context:", error);
     }
   }, [editor, opportunityContext]);
 
   // Update editor content when markdown content changes externally
   useEffect(() => {
-    if (editor && markdownContent !== undefined) {
-      try {
-        const currentMarkdown = editor.api.markdown.serialize();
-        if (currentMarkdown !== markdownContent) {
-          const deserializedValue =
-            editor.api.markdown.deserialize(markdownContent);
-          editor.tf.setValue(deserializedValue);
-        }
-      } catch (error) {
-        console.warn("Failed to deserialize updated markdown content:", error);
+    try {
+      const currentMarkdown = editor.api.markdown.serialize();
+      if (currentMarkdown !== markdownContent) {
+        const deserializedValue =
+          editor.api.markdown.deserialize(markdownContent);
+        editor.tf.setValue(deserializedValue);
       }
+    } catch (error) {
+      console.warn("Failed to deserialize updated markdown content:", error);
     }
   }, [markdownContent]); // Run when markdown content changes
 
@@ -259,7 +258,6 @@ export const view: component_.base.View<ViewProps> = ({
           );
         }
       }, 300); // 300ms debounce
-      //   console.log("handleEditorChange", _value);
     },
     [editor, markdownContent, dispatch, disabled]
   );
@@ -306,7 +304,12 @@ export const view: component_.base.View<ViewProps> = ({
                   "h-72",
                   disabled ? "overflow-hidden" : "overflow-y-auto"
                 )}>
-                <Editor placeholder={placeholder} disabled={disabled} />
+                <Editor
+                  id={childId}
+                  data-editor-id={childId}
+                  placeholder={placeholder}
+                  disabled={disabled}
+                />
               </EditorContainer>
             </Plate>
             {/* </DndProvider> */}

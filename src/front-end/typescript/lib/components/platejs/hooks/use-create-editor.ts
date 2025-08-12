@@ -52,6 +52,7 @@ import { ListKit } from "../components/editor/plugins/list-kit";
 import { MediaKit } from "../components/editor/plugins/media-kit";
 import { AIChatPlugin } from "@platejs/ai/react";
 import { CopilotKit } from "../components/editor/plugins/copilot-kit";
+import { OpportunityContextPlugin } from "../components/editor/plugins/opportunity-context-plugin";
 
 export const viewComponents = {
   [AIChatPlugin.key]: AIAnchorElement
@@ -135,9 +136,16 @@ export const useCreateEditor = (
     ...MarkdownKit,
     // UI
     ...BlockPlaceholderKit,
-    ...FixedToolbarKit
+    ...FixedToolbarKit,
+    // Custom plugins
+    OpportunityContextPlugin
     // ...FloatingToolbarKit,
   ];
+
+  console.log(
+    "🔧 [useCreateEditor] Editor plugins registered:",
+    editorPlugins.map((p: any) => p.key)
+  );
 
   const configuredEditorPlugins = readOnly
     ? [] //viewPlugins
@@ -146,7 +154,7 @@ export const useCreateEditor = (
         ...editorPlugins
       ];
 
-  return usePlateEditor<Value, (typeof editorPlugins)[number]>(
+  const editor = usePlateEditor<Value, (typeof editorPlugins)[number]>(
     {
       components: {
         ...(readOnly
@@ -161,4 +169,6 @@ export const useCreateEditor = (
     }
     // deps
   );
+
+  return editor;
 };

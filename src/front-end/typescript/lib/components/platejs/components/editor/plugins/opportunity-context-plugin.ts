@@ -21,14 +21,13 @@ export interface OpportunityContext {
   fieldType?: "question" | "guideline";
   existingQuestions?: string[];
   currentQuestionText?: string;
+  // Unique editor identifier to help AI module target the correct editor
+  editorId?: string;
 }
 
 export const OpportunityContextPlugin = createPlatePlugin({
   key: "opportunityContext",
   options: {
-    context: {
-      title: "",
-      teaser: ""
-    } as OpportunityContext
+    context: undefined as OpportunityContext | undefined
   }
 });

@@ -39,6 +39,7 @@ import { useChat } from "src/front-end/typescript/lib/components/platejs/compone
 import { MARKETPLACE_AI_URL } from "../../../../config";
 import { TWUServiceArea } from "shared/lib/resources/opportunity/team-with-us";
 import { twuServiceAreaToTitleCase } from "front-end/lib/pages/opportunity/team-with-us/lib";
+import { OpportunityContextPlugin } from "../components/editor/plugins/opportunity-context-plugin";
 
 import { AIChatEditor } from "./ai-chat-editor";
 
@@ -51,7 +52,10 @@ export function AIMenu() {
 
   const [value, setValue] = React.useState("");
 
-  const chat = useChat(); // editor.id todo: add editor.id to useChat
+  // Get editor ID from opportunity context to ensure unique chat sessions
+  const context = editor.getOption(OpportunityContextPlugin, "context");
+  const editorId = context?.editorId || `editor-${Math.random()}`;
+  const chat = useChat(editorId); // Use unique editor ID for each chat session
 
   const { input, messages, setInput, status } = chat;
   const [anchorElement, setAnchorElement] = React.useState<HTMLElement | null>(
@@ -168,7 +172,7 @@ export function AIMenu() {
                 if (isHotkey("enter")(e) && !e.shiftKey && !value) {
                   e.preventDefault();
                   const context = editor.getOption(
-                    { key: "opportunityContext" },
+                    OpportunityContextPlugin,
                     "context"
                   );
                   const fieldType = context?.fieldType;
@@ -331,10 +335,7 @@ Start writing a new paragraph AFTER <Document> ONLY ONE SENTENCE`
     label: "Generate opportunity description",
     value: "generateOpportunityDescription",
     onSelect: async ({ editor }) => {
-      const context = editor.getOption(
-        { key: "opportunityContext" },
-        "context"
-      );
+      const context = editor.getOption(OpportunityContextPlugin, "context");
       const title = context?.title || "";
       const teaser = context?.teaser || "";
       const resources = context?.resources || [];
@@ -835,7 +836,7 @@ export const AIMenuItems = ({
   const isSelecting = useIsSelecting();
 
   // Get context to determine which menu items to show
-  const context = editor.getOption({ key: "opportunityContext" }, "context");
+  const context = editor.getOption(OpportunityContextPlugin, "context");
   const fieldType = context?.fieldType;
 
   const menuState = React.useMemo(() => {

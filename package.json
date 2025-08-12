@@ -51,6 +51,7 @@
     "docs:readme-toc": "npx markdown-toc --maxdepth 3 -i README.md",
     "docs:licenses": "npx license-checker | grep -v 'path:' | grep -v 'licenseFile:' > docs/open-source-licenses.txt",
     "docs:db": "npx pg-doc --out docs/database-schema.md --connection",
+    "marketplace-ai:start": "cd src/marketplace-ai && npm run start:dev",
     "integration-tests:run": "scripts/run-integration-tests.sh"
   },
   "repository": {

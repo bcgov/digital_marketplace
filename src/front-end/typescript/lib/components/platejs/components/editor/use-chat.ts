@@ -8,8 +8,9 @@ import { usePluginOption } from "platejs/react";
 
 import { aiChatPlugin } from "src/front-end/typescript/lib/components/platejs/components/editor/plugins/ai-kit";
 
-export const useChat = () => {
+export const useChat = (editorId?: string) => {
   const options = usePluginOption(aiChatPlugin, "chatOptions");
+  const finalEditorId = editorId || "editor";
 
   // remove when you implement the route /api/ai/command
   const abortControllerRef = React.useRef<AbortController | null>(null);
@@ -21,7 +22,7 @@ export const useChat = () => {
   };
 
   const chat = useBaseChat({
-    id: "editor",
+    id: finalEditorId,
     // Mock the API response. Remove it when you implement the route /api/ai/command
     fetch: async (input, init) => {
       const res = await fetch(input, init);
