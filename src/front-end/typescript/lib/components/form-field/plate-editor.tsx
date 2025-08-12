@@ -158,8 +158,8 @@ export const view: component_.base.View<ViewProps> = ({
   required = false,
   disabled = false,
   extraChildProps = {},
-  opportunityContext,
-  toolbarMode = "full"
+  opportunityContext
+  // toolbarMode = "full"
 }) => {
   const childId = state.child.id;
   const markdownContent = state.child.value;
@@ -167,8 +167,8 @@ export const view: component_.base.View<ViewProps> = ({
   const editor = useCreateEditor(
     {
       readOnly: false
-    },
-    [toolbarMode]
+    }
+    // [toolbarMode]
   );
 
   // Debounce ref for handling editor changes

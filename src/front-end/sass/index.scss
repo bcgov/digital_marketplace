@@ -1,4 +1,8 @@
+@use "sass:color";
+@use "sass:map";
+
 // Imports
+@use "./components/virtualized-table";
 
 $input-focus-border-color: #6bccf7;
 $input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
@@ -10,9 +14,11 @@ $grid-gutter-width: $spacer * 2;
 @import "bootstrap/scss/functions";
 $primary-bg-subtle: #ceebf7;
 $primary-border-subtle: #bbe2f4;
+$component-active-bg: #0c99d6;
+$input-placeholder-color: #6c757d;
+// $form-check-input-checked-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path fill='#ffffff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z'/></svg>") !default;
 @import "bootstrap/scss/variables";
 @import "./components/virtualized-table";
-
 
 // Custom Bootstrap variable overrides.
 
@@ -36,19 +42,11 @@ $container-max-widths: (
   lg: 1140px
 );
 
-
-
 // 'h' stands for 'half'
 // Merge standard Bootstrap spacers with custom ones.
 // Standard keys ensure Bootstrap utilities are generated correctly.
-$spacers: map-merge(
+$spacers: map.merge(
   (
-    0: 0,
-    1: $spacer * .25,
-    2: $spacer * .5,
-    3: $spacer,
-    4: $spacer * 1.5,
-    5: $spacer * 3,
     // custom spacers
     n4h: $spacer * -2,
     n6: $spacer * -4,
@@ -65,8 +63,6 @@ $spacers: map-merge(
   ),
   $spacers
 );
-
-
 
 // Grays.
 $gray-100: #f8f9fa;
@@ -93,7 +89,7 @@ $blue-light: #e7edf3;
 $blue-light-alt: #e9f5fb;
 $blue-light-alt-2: #f4fafd;
 $purple: #52489c;
-$purple-light: lighten($purple, 20);
+$purple-light: color.adjust($purple, $lightness: 20%);
 $yellow: #fcba19;
 $yellow-light: #fdd675;
 $red: #dc3545;
@@ -110,13 +106,12 @@ $nav-tabs-link-active-bg: $white;
 $nav-tabs-link-active-border-color: $nav-tabs-border-color
   $nav-tabs-border-color transparent;
 $component-active-bg: $blue;
-$custom-control-indicator-checked-disabled-bg: rgba($component-active-bg, 0.5);
 $link-color: $blue;
 $link-hover-color: #08658e;
 $dropdown-link-hover-bg: $gray-100;
 $dropdown-link-active-bg: $gray-200;
 $table-hover-bg: $blue-light-alt;
-
+$table-color: $gray-900;
 
 // App-Specific Utility Colors
 // App Views
@@ -181,7 +176,6 @@ $c-static-html-bg: $blue-dark;
 $c-static-html-fg: $white;
 // Select hover
 $c-select-option-hover: $blue-alt-3;
-
 
 $app-utility-colors: (
   // App Views
@@ -272,7 +266,7 @@ $body: $body-color;
 $light: $gray-100;
 $dark: $gray-800;
 
-$theme-colors: map-merge(
+$theme-colors: map.merge(
   (
     "white": $white,
     "black": $black,
@@ -289,13 +283,23 @@ $theme-colors: map-merge(
   $app-utility-colors
 );
 
-
 // Other overrides.
 $border-width: 1px;
 
-$font-family-sans-serif: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI",
-  Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
-  "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-sans-serif:
+  "BCSans",
+  -apple-system,
+  BlinkMacSystemFont,
+  "Segoe UI",
+  Roboto,
+  "Helvetica Neue",
+  Arial,
+  "Noto Sans",
+  sans-serif,
+  "Apple Color Emoji",
+  "Segoe UI Emoji",
+  "Segoe UI Symbol",
+  "Noto Color Emoji" !default;
 $font-weight-bold: 500;
 $font-weight-bolder: 700;
 
@@ -305,6 +309,7 @@ $h1-font-size: $font-size-base * 2.5;
 $input-btn-padding-x: 0.75rem;
 $input-btn-padding-x-sm: 0.75rem;
 $input-btn-padding-x-lg: 1.25rem;
+$btn-padding-x-sm: 0.75rem;
 
 $badge-font-size: 80%;
 
@@ -318,13 +323,14 @@ $enable-validation-icons: false;
 
 $transition-duration: 240ms;
 
-
-
+// disable responsive font size (RFS) to be in line with Bootstrap 4
+// When this is on, Bootstrap 5 automatically scales font sizes based on viewport width,
+// causing font size to be different from Bootstrap 4 on smaller screens.
+$enable-rfs: false;
 
 // Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
 
 @import "bootstrap";
-
 @import "./font";
 
 // Bootstrap 5 overrides
@@ -356,7 +362,8 @@ a:hover {
   color: $white !important;
 }
 
-.btn-outline-c-nav-fg:hover, .btn-outline-c-nav-fg-alt:hover {
+.btn-outline-c-nav-fg:hover,
+.btn-outline-c-nav-fg-alt:hover {
   color: $gray-900;
   background-color: $white;
   border-color: $white;
@@ -381,9 +388,21 @@ $table-cell-padding-x: 0.75rem;
 
 // Restore Bootstrap 4 table header appearance
 .table > thead > tr > th {
-  background-color: #e9ecef; // Bootstrap 4 .thead-light background-color
-  border-color: #dee2e6;     // Bootstrap 4 .thead-light border-color
-  color: #495057;           // Bootstrap 4 .thead-light text color
+  border-color: $gray-400; // Bootstrap 4 .thead-light border-color
+  color: $gray-600; // Bootstrap 4 .thead-light text color
+}
+
+.table td,
+.table th,
+table td,
+table th {
+  border-top: 1px solid $gray-300;
+}
+
+.table thead th,
+table thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid $gray-300;
 }
 
 // Ensure the custom variables are applied if Bootstrap is imported AFTER them.
@@ -395,14 +414,31 @@ $table-cell-padding-x: 0.75rem;
 
 // style header links
 
-a.h1, a.h2, a.h3, a.h4, a.h5, a.h6 {
-  color: $link-color ;
+a.h1,
+a.h2,
+a.h3,
+a.h4,
+a.h5,
+a.h6 {
+  color: $link-color;
 }
 
 // style header links on hover
-a.h1:hover, a.h2:hover, a.h3:hover, a.h4:hover, a.h5:hover, a.h6:hover {
+a.h1:hover,
+a.h2:hover,
+a.h3:hover,
+a.h4:hover,
+a.h5:hover,
+a.h6:hover {
   color: $link-hover-color !important;
   text-decoration: underline;
+}
+
+.small,
+small,
+table thead {
+  font-size: 80%;
+  font-weight: 400;
 }
 
 // End Bootstrap 5 overrides
@@ -524,7 +560,8 @@ nav {
       background: $c-nav-bg-alt;
 
       @mixin menu-transition($opacity-delay) {
-        transition: transform $transition-duration ease-out,
+        transition:
+          transform $transition-duration ease-out,
           opacity 0ms linear $opacity-delay;
       }
 
@@ -688,6 +725,15 @@ pre {
   @extend .rounded;
 }
 
+label {
+  @extend .py-1;
+
+  .form-check & {
+    @extend .font-size-base;
+    @extend .py-0;
+  }
+}
+
 nav.navbar .nav-link:hover {
   text-decoration: underline;
 }
@@ -707,23 +753,48 @@ nav.navbar .nav-link:hover {
   }
 }
 
-.custom-radio,
-.custom-checkbox {
-  .custom-control-label::before {
-    transition: none;
+.form-check {
+  margin-bottom: 0;
+}
+
+.form-check-input {
+  transition: none;
+  font-size: 1rem;
+  border-color: $gray-500;
+
+  &[type="checkbox"] {
+    border-radius: 0.3rem;
+  }
+
+  &:disabled {
+    opacity: 1;
+    background-color: $gray-200;
+    border-color: $gray-500;
+
+    ~ .form-check-label {
+      opacity: 1;
+      color: $gray-600;
+    }
+  }
+
+  &:disabled:checked {
+    opacity: 1 !important;
+    background-color: rgba($form-check-input-checked-bg-color, 0.5);
+    border-color: rgba($form-check-input-checked-border-color, 1);
+  }
+
+  &:focus {
+    box-shadow: 0 0 0 0.2rem rgba($component-active-bg, 0.25);
   }
 }
 
 [class*="affiliations-admin-status"] {
-  .custom-control {
-    padding-left: 0;
-  }
-
-  .custom-control-label::before,
-  .custom-control-label::after {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
+  min-height: 1.5rem;
+  .form-check-input[type="checkbox"] {
+    margin-top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.3rem;
   }
 }
 
@@ -814,16 +885,10 @@ nav.navbar .nav-link:hover {
 @each $color, $value in $theme-colors {
   .text-hover-#{$color} {
     &:hover {
-      color: darken(
-        $value,
-        15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
     &:focus {
-      color: darken(
-        $value,
-        15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
   }
 }
@@ -833,16 +898,10 @@ nav.navbar .nav-link:hover {
   }
   .text-hover-gray-#{$color} {
     &:hover {
-      color: darken(
-        $value,
-        15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
     &:focus {
-      color: darken(
-        $value,
-        15%
-      ) !important;
+      color: color.adjust($value, $lightness: -15%) !important;
     }
   }
 }
@@ -873,7 +932,7 @@ nav.navbar .nav-link:hover {
   white-space: normal !important;
 }
 
-@each $breakpoint in map-keys($grid-breakpoints) {
+@each $breakpoint in map.keys($grid-breakpoints) {
   $infix: breakpoint-infix($breakpoint, $grid-breakpoints);
 
   @include media-breakpoint-up($breakpoint) {
@@ -909,19 +968,19 @@ nav.navbar .nav-link:hover {
 
 .toast-wrapper {
   position: fixed;
-  bottom: map-get($spacers, 4);
-  right: map-get($spacers, 4);
+  bottom: map.get($spacers, 4);
+  right: map.get($spacers, 4);
   width: 400px;
   z-index: 1001; // Above nav, below modals
 
   @include media-breakpoint-down(sm) {
-    left: map-get($spacers, 3);
+    left: map.get($spacers, 3);
     width: auto;
   }
 
   @include media-breakpoint-down(md) {
-    right: map-get($spacers, 3);
-    bottom: map-get($spacers, 3);
+    right: map.get($spacers, 3);
+    bottom: map.get($spacers, 3);
   }
 
   .toast {
@@ -978,8 +1037,8 @@ nav.navbar .nav-link:hover {
 
   // Handle validation states.
   @each $state, $data in $form-validation-states {
-    $color: map-get($data, color);
-    $icon: map-get($data, icon);
+    $color: map.get($data, color);
+    $icon: map.get($data, icon);
 
     &.is-#{$state} {
       .react-select__control {
@@ -1180,26 +1239,26 @@ nav.navbar .nav-link:hover {
 
 .opportunity-complete-page {
   // Show only the first header for the opportunity data
-  .opportunity-edit-tab-header{
+  .opportunity-edit-tab-header {
     display: none;
   }
-  .opportunity-complete-page-header .opportunity-edit-tab-header{
+  .opportunity-complete-page-header .opportunity-edit-tab-header {
     display: block;
   }
   // Show only the first header for the proposal data
-  .proposal-view-tab-header{
+  .proposal-view-tab-header {
     display: none;
   }
-  .proposal-complete-page-header .proposal-view-tab-header{
+  .proposal-complete-page-header .proposal-view-tab-header {
     display: block;
   }
   // Remove minimum height requirements for text boxes
   // (fixes print view)
-  .d-flex.flex-column{
+  .d-flex.flex-column {
     min-height: unset !important;
     height: unset !important;
   }
-   /* Force new page */
+  /* Force new page */
   .complete-report-section-header {
     page-break-before: always;
   }
@@ -1211,7 +1270,7 @@ nav.navbar .nav-link:hover {
   }
 
   // Hide headers on public tabs, except for the details tab
-  .public-tab-container > :first-child  {
+  .public-tab-container > :first-child {
     display: none;
   }
 

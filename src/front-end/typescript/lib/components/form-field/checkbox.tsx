@@ -60,27 +60,31 @@ const ChildView: ChildComponent["view"] = (props) => {
   return (
     <FormGroup
       check
-      inline={typeof inlineLabel === "string"}
-      className={`${className} ${slimHeight ? "" : "h-input"}`}>
-      <Input
-        id={inputId}
-        name={inputId}
-        type="checkbox"
-        checked={state.value}
-        disabled={disabled}
-        className={validityClassName}
-        onChange={(e) => {
-          const value = e.currentTarget.checked;
-          dispatch({ tag: "onChange", value });
-          props.onChange(value);
-        }}
-      />
-      <Label check for={inputId}>
-        {inlineLabel}
-        {loading ? (
-          <Spinner size="sm" color="secondary" className="ms-2" />
-        ) : null}
-      </Label>
+      className={`d-flex align-items-center ${className} ${
+        slimHeight ? "" : "h-input"
+      }`}
+      disabled={disabled}>
+      <div className="align-items-start">
+        <Input
+          id={inputId}
+          name={inputId}
+          type="checkbox"
+          checked={state.value}
+          disabled={disabled}
+          onChange={(e) => {
+            const value = e.currentTarget.checked;
+            dispatch({ tag: "onChange", value });
+            props.onChange(value);
+          }}
+          className={validityClassName}
+        />
+        <Label check for={inputId}>
+          {inlineLabel}
+          {loading ? (
+            <Spinner size="sm" color="secondary" className="ml-2" />
+          ) : null}
+        </Label>
+      </div>
     </FormGroup>
   );
 };

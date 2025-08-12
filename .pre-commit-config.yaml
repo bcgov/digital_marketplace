@@ -29,13 +29,13 @@ repos:
           ]
         files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
         types: [file]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+  - repo: local
     hooks:
       - id: prettier
-        additional_dependencies:
-          - prettier@2.7.1
-        files: \.[jt]sx?$ # *.js, *.jsx, *.ts and *.tsx
+        name: prettier
+        entry: npx prettier --write --ignore-unknown
+        language: node
+        files: \.[jt]sx?$
         types: [file]
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.4.0
@@ -45,7 +45,7 @@ repos:
         exclude: .*/tests/.*
         additional_dependencies: ["gibberish-detector"]
   - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-    rev: v2.2.0
+    rev: v9.22.0
     hooks:
       - id: commitlint
         stages: [commit-msg]

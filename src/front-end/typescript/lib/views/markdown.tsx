@@ -31,11 +31,11 @@ function newTabLinkTarget(url: string): string | undefined {
   }
 }
 
-function headingLevelToClassName(level: number): string {
-  switch (level) {
-    case 1:
+function headingToClassName(heading: typeof HEADINGS[number]): string {
+  switch (heading) {
+    case "h1":
       return "h4";
-    case 2:
+    case "h2":
       return "h5";
     default:
       return "h6";
@@ -46,6 +46,16 @@ function decodeImgSrc(src: string): string {
   const decoded = decodeMarkdownImageUrlToFileId(src);
   return decoded ? fileBlobPath({ id: decoded }) : src;
 }
+
+const HEADINGS = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
+const CustomHeading: component.base.View<{
+  children?: React.ReactNode;
+  heading: typeof HEADINGS[number];
+}> = ({ children, heading }) => (
+  <div className={`${headingToClassName(heading)} text-secondary`}>
+    {children}
+  </div>
+);
 
 const Markdown: component.base.View<Props> = ({
   source,
@@ -116,21 +126,11 @@ const Markdown: component.base.View<Props> = ({
   }
 
   if (smallerHeadings) {
-    (customComponents as any).heading = ({
-      level,
-      children,
-      node: _node
-    }: {
-      level: 1 | 2 | 3 | 4 | 5 | 6;
-      children?: React.ReactNode;
-      node?: any;
-    }) => {
-      return (
-        <div className={`${headingLevelToClassName(level)} text-secondary`}>
-          {children}
-        </div>
+    HEADINGS.forEach((heading) => {
+      customComponents[heading] = ({ children }) => (
+        <CustomHeading heading={heading}>{children}</CustomHeading>
       );
-    };
+    });
   }
 
   return (

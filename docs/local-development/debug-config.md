@@ -7,7 +7,7 @@ It is difficult to debug/step-through front-end code so the recommendation is to
 The module aliasing (e.g. import * from "shared/...") is what throws off most debuggers and build tools. Usually `tsconfig` files are used by debuggers and you may need to create a separate tsconfig for your local environment so that the IDE knows how to run your app.
 
 ## Alternatives
-Another solution is to configure grunt to emit source maps alongside JS and just debug the JS.
+Another solution is to configure TypeScript to emit source maps alongside JS and just debug the JS.
 
 ## Front-end
 Debugging the front-end might require evaluating MSG's in the state object.

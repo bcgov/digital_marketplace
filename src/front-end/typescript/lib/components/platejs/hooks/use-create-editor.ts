@@ -54,7 +54,7 @@ import { AIChatPlugin } from "@platejs/ai/react";
 import { CopilotKit } from "../components/editor/plugins/copilot-kit";
 
 export const viewComponents = {
-  [AIChatPlugin.key]: AIAnchorElement,
+  [AIChatPlugin.key]: AIAnchorElement
   // [BlockquotePlugin.key]: BlockquoteElement,
   // [BoldPlugin.key]: withProps(PlateLeaf, { as: "strong" }),
   // [HEADING_KEYS.h1]: withProps(HeadingElement, { variant: "h1" }),
@@ -85,16 +85,15 @@ export const useCreateEditor = (
   {
     components,
     placeholders = true,
-    readOnly,
-    ...options
-  }: {
+    readOnly
+  }: // ...options
+  {
     placeholders?: boolean;
     plugins?: any[];
     readOnly?: boolean;
-  } & Omit<CreatePlateEditorOptions, "plugins"> = {},
-  deps: any[] = []
+  } & Omit<CreatePlateEditorOptions, "plugins"> = {}
+  // deps: any[] = []
 ) => {
-  console.log("useCreateEditor");
   const editorPlugins = [
     ...CopilotKit,
     ...AIKit,
@@ -147,14 +146,14 @@ export const useCreateEditor = (
         ...editorPlugins
       ];
 
-  return usePlateEditor<Value, typeof editorPlugins[number]>(
+  return usePlateEditor<Value, (typeof editorPlugins)[number]>(
     {
       components: {
         ...(readOnly
           ? viewComponents
           : placeholders
-          ? editorComponents
-          : editorComponents),
+            ? editorComponents
+            : editorComponents),
         ...components
       },
       plugins: configuredEditorPlugins as any

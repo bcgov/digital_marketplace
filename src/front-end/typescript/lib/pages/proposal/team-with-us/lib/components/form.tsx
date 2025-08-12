@@ -493,7 +493,7 @@ export const EvaluationView: component_.base.View<Props> = ({ state }) => {
         <h4 className="mt-5 mb-3">Scoring Table</h4>
         <div className="table-responsive">
           <table className="table-hover">
-            <thead>
+            <thead className="table-light">
               <tr>
                 <th style={{ width: "100%" }}>Evaluation Criteria</th>
                 <th style={{ width: "0px" }}>Weightings</th>

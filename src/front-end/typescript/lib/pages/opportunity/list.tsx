@@ -674,16 +674,15 @@ const Filters: component_.page.View<State, InnerMsg, Route> = ({
         </Col>
       ) : null}
       <Col xs="12" md="2" className="d-flex align-items-end order-3 order-md-2">
-        <div className="mb-n2">
-          <Checkbox.view
-            extraChildProps={{ inlineLabel: "Remote OK" }}
-            disabled={isLoading(state)}
-            state={state.remoteOkFilter}
-            dispatch={component_.base.mapDispatch(dispatch, (value) =>
-              adt("remoteOkFilter" as const, value)
-            )}
-          />
-        </div>
+        <Checkbox.view
+          extraChildProps={{ inlineLabel: "Remote OK" }}
+          disabled={isLoading(state)}
+          state={state.remoteOkFilter}
+          className="flex-grow-1 mt-n2 mt-md-0"
+          dispatch={component_.base.mapDispatch(dispatch, (value) =>
+            adt("remoteOkFilter" as const, value)
+          )}
+        />
       </Col>
       <Col
         xs="12"

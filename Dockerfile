@@ -3,9 +3,9 @@ ARG DIRPATH=/usr/app
 ARG VITE_AI_SERVICE_URL
 WORKDIR $DIRPATH
 COPY ./src $DIRPATH/src
-COPY package.json gruntfile.js yarn.lock tsconfig.json vite.config.mts ./
+COPY package.json yarn.lock tsconfig.json vite.config.mts ./
 COPY ./lib $DIRPATH/lib
-COPY ./grunt-configs ./grunt-configs
+
 
 # `yarn install` runs twice as a workaround for development and production
 # dependencies in package.json needing better taxonomy
@@ -16,7 +16,7 @@ RUN yarn install --frozen-lockfile && \
     VITE_NODE_ENV=production \
     VITE_AI_SERVICE_URL=${VITE_AI_SERVICE_URL} \
     npm run front-end:build && \
-    npm run back-end:build && \
+    npm run back-end:build:production && \
     yarn install --frozen-lockfile --production && \
     yarn cache clean && \
     rm -Rf $DIRPATH/tmp && \

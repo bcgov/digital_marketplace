@@ -284,7 +284,7 @@ const Participants: component_.base.View<Pick<State, "proposal">> = ({
       <h4 className="mb-4">Participants</h4>
       <div className="table-responsive">
         <table className="table-hover">
-          <thead>
+          <thead className="table-light">
             <tr>
               <th style={{ width: "100%" }}>Name</th>
               <th className="text-nowrap" style={{ width: "0px" }}>

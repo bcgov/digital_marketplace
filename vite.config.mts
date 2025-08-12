@@ -5,6 +5,8 @@ import path from 'path';
 import fs from 'fs';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import tailwindcss from '@tailwindcss/vite'
+import { compression, defineAlgorithm } from 'vite-plugin-compression2';
+import { constants } from 'zlib';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -41,8 +43,30 @@ export default defineConfig(({ mode }) => {
         ]
       }),
       nodePolyfills(),
-      tailwindcss()
+      tailwindcss(),
+      // Only enable compression for production builds
+      ...(mode === 'production' ? [
+        compression({
+          algorithms: [
+            defineAlgorithm('gzip', { level: 9 }),
+            defineAlgorithm('brotliCompress', {
+              params: {
+                [constants.BROTLI_PARAM_QUALITY]: 11
+              }
+            })
+          ],
+          exclude: [/\.woff2$/, /\.gz$/, /\.br$/]
+        })
+      ] : [])
     ],
+    css: {
+      preprocessorOptions: {
+        scss: {
+          quietDeps: true,
+          silenceDeprecations: ['import']
+        }
+      }
+    },
     resolve: {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
@@ -83,7 +107,6 @@ export default defineConfig(({ mode }) => {
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
           // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
         },
-        // todo: temporary auth fix
         '/auth': {
           target: 'http://localhost:3000',
           changeOrigin: true,
