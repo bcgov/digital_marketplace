@@ -23,6 +23,7 @@ export interface State {
   showHelp: boolean;
   validate: (value: string) => Validation<string>;
   child: Child;
+  isDirty: boolean;
 }
 
 export interface Child {
@@ -47,7 +48,8 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
       errors: params.errors,
       showHelp: false,
       validate: params.validate || ((v) => ({ tag: "valid", value: v })),
-      child: params.child
+      child: params.child,
+      isDirty: false
     },
     []
   ];
@@ -57,14 +59,16 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
   switch (msg.tag) {
     case "child":
       switch (msg.value.tag) {
-        case "onChangeTextArea":
-          return [
-            state.set("child", {
+        case "onChangeTextArea": {
+          const newState = state
+            .set("child", {
               ...state.child,
               value: msg.value.value[0]
-            }),
-            []
-          ];
+            })
+            .set("isDirty", true);
+          // Trigger validation after content change when field is dirty
+          return [validate(newState), []];
+        }
       }
   }
 };
@@ -97,14 +101,35 @@ export function setValidate(
 ): Immutable<State> {
   state = state.set("validate", validate);
   if (runValidation) {
+    // Mark as dirty when running validation on existing content
+    state = state.set("isDirty", true);
     state = validateState(state);
   }
   return state;
 }
 
+function cleanPlateEditorValue(value: string): string {
+  // Remove zero-width spaces, regular whitespace, and newlines
+  // This handles the case where PlateJS serializes empty content as whitespace/special chars
+  return value
+    .replace(/\u200B|\u200C|\u200D|\uFEFF/g, "") // Remove zero-width spaces
+    .trim(); // Remove regular whitespace and newlines
+}
+
 export function validateState(state: Immutable<State>): Immutable<State> {
-  const result = state.validate(state.child.value);
+  // Only run validation if the field is dirty (user has made changes)
+  if (!state.isDirty) {
+    return state;
+  }
+
+  const rawValue = state.child.value;
+  const cleanedValue = cleanPlateEditorValue(rawValue);
+  const result = state.validate(cleanedValue);
   return state.set("errors", result.tag === "invalid" ? result.value : []);
+}
+
+export function validate(state: Immutable<State>): Immutable<State> {
+  return validateState(state);
 }
 
 export function isValid(state: Immutable<State>): boolean {
@@ -143,11 +168,11 @@ export const view: component_.base.View<ViewProps> = ({
     {
       readOnly: false
     },
-    [toolbarMode] 
+    [toolbarMode]
   );
 
   // Debounce ref for handling editor changes
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize editor with markdown content on first load
   useEffect(() => {
@@ -263,7 +288,7 @@ export const view: component_.base.View<ViewProps> = ({
       <div
         className={`form-control tw-scoped ${hasErrors ? "is-invalid" : ""}`}
         style={{
-          border: "1px solid #cfd4da",
+          border: hasErrors ? "1px solid #dc3545" : "1px solid #cfd4da",
           borderRadius: "8px",
           padding: "12px",
           ...extraChildProps.style
@@ -275,8 +300,8 @@ export const view: component_.base.View<ViewProps> = ({
               editor={editor}
               onChange={disabled ? undefined : handleEditorChange}
               readOnly={disabled}>
-              <EditorContainer 
-                variant="demo" 
+              <EditorContainer
+                variant="demo"
                 className={cn(
                   "h-72",
                   disabled ? "overflow-hidden" : "overflow-y-auto"

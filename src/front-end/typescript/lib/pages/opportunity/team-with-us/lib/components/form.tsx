@@ -6,7 +6,7 @@ import * as LongText from "front-end/lib/components/form-field/long-text";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import * as RadioGroup from "front-end/lib/components/form-field/radio-group";
 import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
-import * as AIEditor from "front-end/lib/components/platejs/ui/ai-chat-editor";
+
 import * as Select from "front-end/lib/components/form-field/select";
 import * as ShortText from "front-end/lib/components/form-field/short-text";
 import * as TabbedForm from "front-end/lib/components/tabbed-form";
@@ -49,29 +49,8 @@ import {
 } from "shared/lib/validation";
 import * as opportunityValidation from "shared/lib/validation/opportunity/team-with-us";
 import * as genericValidation from "shared/lib/validation/opportunity/utility";
+
 import Icon from "front-end/lib/views/icon";
-import { Plate, usePlateEditor } from "platejs/react";
-import { AIKit } from "front-end/lib/components/platejs/components/editor/plugins/ai-kit";
-import {
-  Editor,
-  EditorContainer
-} from "front-end/lib/components/platejs/ui/editor";
-import { FixedToolbarKit } from "front-end/lib/components/platejs/components/editor/plugins/fixed-toolbar-kit";
-import { MarkdownKit } from "front-end/lib/components/platejs/components/editor/plugins/markdown-kit";
-import { BaseBasicBlocksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-blocks-base-kit";
-import { BasicMarksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-marks-kit";
-import { CommentKit } from "front-end/lib/components/platejs/components/editor/plugins/comment-kit";
-import { ListKit } from "front-end/lib/components/platejs/components/editor/plugins/list-kit";
-import { BasicBlocksKit } from "front-end/lib/components/platejs/components/editor/plugins/basic-blocks-kit";
-import { MediaKit } from "front-end/lib/components/platejs/components/editor/plugins/media-kit";
-import { AutoformatKit } from "front-end/lib/components/platejs/components/editor/plugins/autoformat-kit";
-import { CursorOverlayKit } from "front-end/lib/components/platejs/components/editor/plugins/cursor-overlay-kit";
-import { DndKit } from "front-end/lib/components/platejs/components/editor/plugins/dnd-kit";
-import { ExitBreakKit } from "front-end/lib/components/platejs/components/editor/plugins/exit-break-kit";
-import { TrailingBlockPlugin } from "platejs";
-import { BlockPlaceholderKit } from "front-end/lib/components/platejs/components/editor/plugins/block-placeholder-kit";
-import { BlockMenuKit } from "front-end/lib/components/platejs/components/editor/plugins/block-menu-kit";
-import { EditorKit } from "front-end/lib/components/platejs/components/editor/editor-kit";
 
 type RemoteOk = "yes" | "no";
 
@@ -591,7 +570,7 @@ export function validate(state: Immutable<State>): Immutable<State> {
     .update("completionDate", (s) => FormField.validate(s))
     .update("maxBudget", (s) => FormField.validate(s))
     .update("resources", (s) => Resources.validate(s))
-    .update("description", (s) => PlateEditor.validateState(s))
+    .update("description", (s) => PlateEditor.validate(s))
     .update("resourceQuestions", (s) => ResourceQuestions.validate(s))
     .update("questionsWeight", (s) => FormField.validate(s))
     .update("challengeWeight", (s) => FormField.validate(s))
@@ -1522,68 +1501,9 @@ export const DescriptionView: component_.base.View<Props> = ({
   const startDate = DateField.getValueAsString(state.startDate);
   const completionDate = DateField.getValueAsString(state.completionDate);
 
-  // const editor = usePlateEditor({
-  //   plugins: [
-  //     ...AIKit,
-  //     ...BlockMenuKit,
-
-  //     // Elements
-  //     ...BasicBlocksKit,
-  //     // ...CodeBlockKit,
-  //     // ...TableKit,
-  //     // ...ToggleKit,
-  //     // ...TocKit,
-  //     ...MediaKit,
-  //     // ...CalloutKit,
-  //     // ...ColumnKit,
-  //     // ...MathKit,
-  //     // ...DateKit,
-  //     // ...LinkKit,
-  //     // ...MentionKit,
-
-  //     // Marks
-  //     ...BasicMarksKit,
-  //     // ...FontKit,
-  //     // Block Style
-  //     ...ListKit,
-  //     // ...AlignKit,
-  //     // ...LineHeightKit,
-
-  //     // Collaboration
-  //     // ...DiscussionKit,
-  //     ...CommentKit,
-  //     // ...SuggestionKit,
-  //     // Editing
-  //     // ...SlashKit,
-  //     ...AutoformatKit,
-  //     ...CursorOverlayKit,
-  //     ...DndKit,
-  //     // ...EmojiKit,
-  //     ...ExitBreakKit,
-  //     TrailingBlockPlugin,
-  //     // Parsers
-  //     // ...DocxKit,
-  //     ...MarkdownKit,
-  //     // UI
-  //     ...BlockPlaceholderKit,
-  //     ...FixedToolbarKit,
-  //     // ...FloatingToolbarKit,
-  //   ],
-  // });
-
-  const editor = usePlateEditor({
-    plugins: EditorKit,
-  });
-
   return (
     <Row>
       <Col xs="12">
-        {/* <Plate editor={editor}>
-      <EditorContainer variant="demo">
-        <Editor />
-      </EditorContainer>
-    </Plate> */}
-
         <PlateEditor.view
           required
           label="Description and Contract Details"

@@ -1,11 +1,19 @@
 "use client";
 
 import * as React from "react";
+import { useEditorReadOnly } from "platejs/react";
 import { cn } from "./utils";
 
 import { Toolbar } from "./toolbar";
 
 export function FixedToolbar(props: React.ComponentProps<typeof Toolbar>) {
+  const readOnly = useEditorReadOnly();
+
+  // Don't render the toolbar when in readOnly mode
+  if (readOnly) {
+    return null;
+  }
+
   return (
     <Toolbar
       {...props}
