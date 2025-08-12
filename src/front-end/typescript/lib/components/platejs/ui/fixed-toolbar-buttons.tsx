@@ -2,16 +2,9 @@
 
 import * as React from "react";
 
-import {
-  BoldIcon,
-  ItalicIcon,
-  WandSparklesIcon
-} from "lucide-react";
+import { BoldIcon, ItalicIcon, WandSparklesIcon } from "lucide-react";
 import { useEditorReadOnly, useEditorRef } from "platejs/react";
-import {
-  BoldPlugin,
-  ItalicPlugin,
-} from "@platejs/basic-nodes/react";
+import { BoldPlugin, ItalicPlugin } from "@platejs/basic-nodes/react";
 import { ImagePlugin } from "@platejs/media/react";
 
 import { AIToolbarButton } from "./ai-toolbar-button";
@@ -22,6 +15,7 @@ import {
 import { MarkToolbarButton } from "./mark-toolbar-button";
 import { MediaToolbarButton } from "./media-toolbar-button";
 import { ToolbarGroup, ToolbarButton } from "./toolbar";
+import { UndoToolbarButton, RedoToolbarButton } from "./history-toolbar-button";
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -31,6 +25,11 @@ export function FixedToolbarButtons() {
     <div className="tw:flex tw:w-full">
       {!readOnly && (
         <>
+          <ToolbarGroup>
+            <UndoToolbarButton tooltip="Undo (⌘+Z)" />
+            <RedoToolbarButton tooltip="Redo (⌘+⇧+Z)" />
+          </ToolbarGroup>
+
           <ToolbarGroup>
             <AIToolbarButton tooltip="AI commands">
               <WandSparklesIcon />
@@ -65,9 +64,7 @@ export function FixedToolbarButtons() {
           {/* </ToolbarGroup> */}
 
           <ToolbarGroup>
-            <MarkToolbarButton
-              nodeType={BoldPlugin.key}
-              tooltip="Bold (⌘+B)">
+            <MarkToolbarButton nodeType={BoldPlugin.key} tooltip="Bold (⌘+B)">
               <BoldIcon />
             </MarkToolbarButton>
 
