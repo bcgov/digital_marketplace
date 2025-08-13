@@ -188,6 +188,7 @@ export function view<
   }, []);
 
   // pageState is undefined, so redirect to 404 page.
+  // This shouldn't happen.
   if (!pageState) return null;
   // pageState is defined, render page.
   const {

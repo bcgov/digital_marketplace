@@ -912,7 +912,6 @@ const view: component_.base.ComponentView<State, Msg> = (props) => {
           ) as component_.page.Modal<Msg>)
         : (component_.page.modal.hide() as component_.page.Modal<Msg>);
     const appModal = getAppModal(state);
-
     return (
       <div
         className={`route-${state.activeRoute.tag} ${
