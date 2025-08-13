@@ -235,6 +235,15 @@ export const view: component_.base.View<ViewProps> = ({
 
           // Only update if the markdown content has actually changed
           if (markdownOutput !== markdownContent) {
+            // Clean both old and new content to check for meaningful changes
+            const cleanedOld = cleanPlateEditorValue(markdownContent);
+            const cleanedNew = cleanPlateEditorValue(markdownOutput);
+
+            // Ignore changes that are just PlateJS adding invisible characters to empty content
+            if (!cleanedOld && !cleanedNew) {
+              return;
+            }
+
             // Update the form state with the markdown content
             // The Snapshot type is [string, number, number] = [value, selectionStart, selectionEnd]
             dispatch(
