@@ -1,0 +1,146 @@
+2025-07-03 16:40:53,620 - INFO - Input directory: ../../chroma_data/exported_docs/full_text
+2025-07-03 16:40:53,620 - INFO - Output directory: ../../chroma_data/exported_docs/summaries
+2025-07-03 16:40:53,620 - INFO - Model: gpt-4o-mini
+2025-07-03 16:40:53,620 - INFO - Use OpenAI: False
+2025-07-03 16:40:53,620 - INFO - Target compression: 10.0%
+2025-07-03 16:40:55,468 - INFO - Found 4 documents to process
+2025-07-03 16:40:55,488 - INFO - Creating summary for Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 16:40:55,488 - INFO - Original tokens: 29,023
+2025-07-03 16:40:55,488 - INFO - Target tokens: 2,902
+2025-07-03 16:40:55,533 - INFO - Summary created: 2,931 tokens (10.1% of original)
+2025-07-03 16:40:55,533 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 16:40:55,533 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.json
+2025-07-03 16:40:55,556 - INFO - Creating summary for Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 16:40:55,556 - INFO - Original tokens: 20,845
+2025-07-03 16:40:55,556 - INFO - Target tokens: 2,084
+2025-07-03 16:40:55,590 - INFO - Summary created: 2,062 tokens (9.9% of original)
+2025-07-03 16:40:55,592 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 16:40:55,592 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).json
+2025-07-03 16:40:55,593 - INFO - Creating summary for RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 16:40:55,593 - INFO - Original tokens: 329
+2025-07-03 16:40:55,593 - INFO - Target tokens: 100
+2025-07-03 16:40:55,594 - INFO - Summary created: 49 tokens (14.9% of original)
+2025-07-03 16:40:55,594 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 16:40:55,595 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.json
+2025-07-03 16:40:55,602 - INFO - Creating summary for Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 16:40:55,603 - INFO - Original tokens: 10,228
+2025-07-03 16:40:55,603 - INFO - Target tokens: 1,022
+2025-07-03 16:40:55,621 - INFO - Summary created: 921 tokens (9.0% of original)
+2025-07-03 16:40:55,621 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 16:40:55,621 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.json
+2025-07-03 16:40:55,621 - INFO - Processing report saved to: ..\..\chroma_data\exported_docs\summaries\summarization_report.json
+2025-07-03 16:40:55,621 - INFO - Overall compression: 9.9%
+2025-07-03 16:52:10,692 - INFO - Input directory: ../../chroma_data/exported_docs/full_text
+2025-07-03 16:52:10,692 - INFO - Output directory: ../../chroma_data/exported_docs/summaries
+2025-07-03 16:52:10,692 - INFO - Model: gpt-4o-mini
+2025-07-03 16:52:10,692 - INFO - Use OpenAI: False
+2025-07-03 16:52:10,692 - INFO - Target compression: 10.0%
+2025-07-03 16:52:10,853 - INFO - Found 5 documents to process
+2025-07-03 16:52:10,876 - INFO - Creating summary for Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 16:52:10,876 - INFO - Original tokens: 29,023
+2025-07-03 16:52:10,876 - INFO - Target tokens: 2,902
+2025-07-03 16:52:10,920 - INFO - Summary created: 2,931 tokens (10.1% of original)
+2025-07-03 16:52:10,920 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 16:52:10,920 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.json
+2025-07-03 16:52:10,936 - INFO - Creating summary for Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 16:52:10,936 - INFO - Original tokens: 20,845
+2025-07-03 16:52:10,936 - INFO - Target tokens: 2,084
+2025-07-03 16:52:10,970 - INFO - Summary created: 2,062 tokens (9.9% of original)
+2025-07-03 16:52:10,972 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 16:52:10,972 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).json
+2025-07-03 16:52:10,978 - INFO - Creating summary for procurement-practice-standard_html.txt
+2025-07-03 16:52:10,978 - INFO - Original tokens: 10,080
+2025-07-03 16:52:10,979 - INFO - Target tokens: 1,008
+2025-07-03 16:52:10,998 - INFO - Summary created: 862 tokens (8.6% of original)
+2025-07-03 16:52:10,999 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.txt
+2025-07-03 16:52:10,999 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.json
+2025-07-03 16:52:11,000 - INFO - Creating summary for RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 16:52:11,000 - INFO - Original tokens: 329
+2025-07-03 16:52:11,000 - INFO - Target tokens: 100
+2025-07-03 16:52:11,001 - INFO - Summary created: 49 tokens (14.9% of original)
+2025-07-03 16:52:11,002 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 16:52:11,002 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.json
+2025-07-03 16:52:11,009 - INFO - Creating summary for Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 16:52:11,009 - INFO - Original tokens: 10,228
+2025-07-03 16:52:11,009 - INFO - Target tokens: 1,022
+2025-07-03 16:52:11,020 - INFO - Summary created: 921 tokens (9.0% of original)
+2025-07-03 16:52:11,020 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 16:52:11,020 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.json
+2025-07-03 16:52:11,020 - INFO - Processing report saved to: ..\..\chroma_data\exported_docs\summaries\summarization_report.json
+2025-07-03 16:52:11,020 - INFO - Overall compression: 9.7%
+2025-07-03 17:18:06,485 - INFO - Input directory: ../../chroma_data/exported_docs/full_text
+2025-07-03 17:18:06,485 - INFO - Output directory: ../../chroma_data/exported_docs/summaries
+2025-07-03 17:18:06,485 - INFO - Model: gpt-4o-mini
+2025-07-03 17:18:06,485 - INFO - Use OpenAI: False
+2025-07-03 17:18:06,485 - INFO - Target compression: 10.0%
+2025-07-03 17:18:06,645 - INFO - Found 5 documents to process
+2025-07-03 17:18:06,665 - INFO - Creating summary for Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 17:18:06,665 - INFO - Original tokens: 29,023
+2025-07-03 17:18:06,666 - INFO - Target tokens: 2,902
+2025-07-03 17:18:06,768 - INFO - Summary created: 2,727 tokens (9.4% of original)
+2025-07-03 17:18:06,786 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 17:18:06,786 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.json
+2025-07-03 17:18:06,801 - INFO - Creating summary for Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 17:18:06,801 - INFO - Original tokens: 20,845
+2025-07-03 17:18:06,801 - INFO - Target tokens: 2,084
+2025-07-03 17:18:06,867 - INFO - Summary created: 2,074 tokens (9.9% of original)
+2025-07-03 17:18:06,902 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 17:18:06,902 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).json
+2025-07-03 17:18:06,918 - INFO - Creating summary for procurement-practice-standard_html.txt
+2025-07-03 17:18:06,918 - INFO - Original tokens: 10,080
+2025-07-03 17:18:06,918 - INFO - Target tokens: 1,008
+2025-07-03 17:18:06,952 - INFO - Summary created: 753 tokens (7.5% of original)
+2025-07-03 17:18:06,968 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.txt
+2025-07-03 17:18:06,968 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.json
+2025-07-03 17:18:06,968 - INFO - Creating summary for RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 17:18:06,968 - INFO - Original tokens: 329
+2025-07-03 17:18:06,968 - INFO - Target tokens: 100
+2025-07-03 17:18:06,984 - INFO - Summary created: 53 tokens (16.1% of original)
+2025-07-03 17:18:06,985 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 17:18:06,985 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.json
+2025-07-03 17:18:07,001 - INFO - Creating summary for Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 17:18:07,001 - INFO - Original tokens: 10,228
+2025-07-03 17:18:07,001 - INFO - Target tokens: 1,022
+2025-07-03 17:18:07,035 - INFO - Summary created: 1,029 tokens (10.1% of original)
+2025-07-03 17:18:07,051 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 17:18:07,051 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.json
+2025-07-03 17:18:07,070 - INFO - Processing report saved to: ..\..\chroma_data\exported_docs\summaries\summarization_report.json
+2025-07-03 17:18:07,070 - INFO - Overall compression: 9.4%
+2025-07-03 17:19:12,261 - INFO - Input directory: ../../chroma_data/exported_docs/full_text
+2025-07-03 17:19:12,261 - INFO - Output directory: ../../chroma_data/exported_docs/summaries
+2025-07-03 17:19:12,261 - INFO - Model: gpt-4o-mini
+2025-07-03 17:19:12,261 - INFO - Use OpenAI: False
+2025-07-03 17:19:12,261 - INFO - Target compression: 10.0%
+2025-07-03 17:19:12,440 - INFO - Found 5 documents to process
+2025-07-03 17:19:12,479 - INFO - Creating summary for Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 17:19:12,479 - INFO - Original tokens: 29,023
+2025-07-03 17:19:12,479 - INFO - Target tokens: 2,902
+2025-07-03 17:19:12,588 - INFO - Summary created: 2,727 tokens (9.4% of original)
+2025-07-03 17:19:12,592 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.txt
+2025-07-03 17:19:12,592 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Agile_Software_Development_Agreement_-_Version_June_3_2025.json
+2025-07-03 17:19:12,622 - INFO - Creating summary for Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 17:19:12,622 - INFO - Original tokens: 20,845
+2025-07-03 17:19:12,622 - INFO - Target tokens: 2,084
+2025-07-03 17:19:12,716 - INFO - Summary created: 2,074 tokens (9.9% of original)
+2025-07-03 17:19:12,718 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).txt
+2025-07-03 17:19:12,718 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Appendix D - Multi-Resource Agreement (Version June 3 2025).json
+2025-07-03 17:19:12,740 - INFO - Creating summary for procurement-practice-standard_html.txt
+2025-07-03 17:19:12,740 - INFO - Original tokens: 10,080
+2025-07-03 17:19:12,740 - INFO - Target tokens: 1,008
+2025-07-03 17:19:12,784 - INFO - Summary created: 753 tokens (7.5% of original)
+2025-07-03 17:19:12,784 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.txt
+2025-07-03 17:19:12,784 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\procurement-practice-standard_html.json
+2025-07-03 17:19:12,784 - INFO - Creating summary for RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 17:19:12,784 - INFO - Original tokens: 329
+2025-07-03 17:19:12,784 - INFO - Target tokens: 100
+2025-07-03 17:19:12,784 - INFO - Summary created: 53 tokens (16.1% of original)
+2025-07-03 17:19:12,784 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.txt
+2025-07-03 17:19:12,784 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\RFQ_ON-003166_Addendum_8_-_TRANSFER_TO_NEW_BC_BID_August_30_2022.json
+2025-07-03 17:19:12,802 - INFO - Creating summary for Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 17:19:12,802 - INFO - Original tokens: 10,228
+2025-07-03 17:19:12,817 - INFO - Target tokens: 1,022
+2025-07-03 17:19:12,852 - INFO - Summary created: 1,029 tokens (10.1% of original)
+2025-07-03 17:19:12,861 - INFO - Saved summary to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.txt
+2025-07-03 17:19:12,861 - INFO - Saved metadata to: ..\..\chroma_data\exported_docs\summaries\Sprint_With_Us_-_Request_for_Qualifications.json
+2025-07-03 17:19:12,861 - INFO - Processing report saved to: ..\..\chroma_data\exported_docs\summaries\summarization_report.json
+2025-07-03 17:19:12,861 - INFO - Overall compression: 9.4%

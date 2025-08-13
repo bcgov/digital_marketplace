@@ -6,16 +6,25 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2023",
+    "target": "ES2022",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
-  }
+    "noFallthroughCasesInSwitch": false,
+    "isolatedModules": true,
+    "preserveWatchOutput": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo"
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "files": true
+  },
+  "compileOnSave": false
 }

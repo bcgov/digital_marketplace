@@ -120,7 +120,7 @@ function generateAllQuestionsAtOnce(
         );
 
         const response = await fetch(
-          `${MARKETPLACE_AI_URL}/generate-resource-questions`,
+          `${MARKETPLACE_AI_URL}/api/ai/generate-resource-questions`,
           {
             method: "POST",
             headers: {

@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Scan the files in the .cursor_ref folder for background information on the project
