@@ -3,30 +3,15 @@
 
 // Imports
 @use "./components/virtualized-table";
-
-$input-focus-border-color: #6bccf7;
-$input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
+@import "./font";
 
 $spacer: 1rem;
 $grid-gutter-width: $spacer * 2;
 
-// Import Bootstrap functions and variables FIRST
-@import "bootstrap/scss/functions";
-$primary-bg-subtle: #ceebf7;
-$primary-border-subtle: #bbe2f4;
-$component-active-bg: #0c99d6;
-$input-placeholder-color: #6c757d;
-// $form-check-input-checked-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'><path fill='#ffffff' d='M6.564.75l-3.59 3.612-1.538-1.55L0 4.26l2.974 2.99L8 2.193z'/></svg>") !default;
-@import "bootstrap/scss/variables";
-
 // Custom Bootstrap variable overrides.
-
-// Ensure $gutters is defined using the custom $spacers map for Bootstrap's grid utilities
-$gutters: $spacers;
 
 // Ensure negative margins are enabled and $negative-spacers is defined for the Utility API
 $enable-negative-margins: true;
-$negative-spacers: if($enable-negative-margins, negativify-map($spacers), null);
 
 $grid-breakpoints: (
   xs: 0,
@@ -39,28 +24,6 @@ $container-max-widths: (
   sm: 720px,
   md: 960px,
   lg: 1140px
-);
-
-// 'h' stands for 'half'
-// Merge standard Bootstrap spacers with custom ones.
-// Standard keys ensure Bootstrap utilities are generated correctly.
-$spacers: map.merge(
-  (
-    // custom spacers
-    n4h: $spacer * -2,
-    n6: $spacer * -4,
-    n7: $spacer * -5,
-    n8: $spacer * -6,
-    n9: $spacer * -8,
-    n10: $spacer * -10,
-    4h: $spacer * 2,
-    6: $spacer * 4,
-    7: $spacer * 5,
-    8: $spacer * 6,
-    9: $spacer * 8,
-    10: $spacer * 10
-  ),
-  $spacers
 );
 
 // Grays.
@@ -327,10 +290,21 @@ $transition-duration: 240ms;
 // causing font size to be different from Bootstrap 4 on smaller screens.
 $enable-rfs: false;
 
-// Import the REST of Bootstrap (via _bootstrap.scss which should now exclude functions and variables)
+// Restore Bootstrap 4 table padding
+$table-cell-padding-y: 0.75rem;
+$table-cell-padding-x: 0.75rem;
+
+// Restore Bootstrap 4 alert padding
+$alert-padding-y: 0.75rem;
+$alert-padding-x: 1.25rem;
+
+// Restore Bootstrap 4 input styles
+$body-tertiary-bg: $gray-200;
+$input-color: $gray-700;
+$input-placeholder-color: $gray-600;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25);
 
 @import "bootstrap";
-@import "./font";
 
 // Bootstrap 5 overrides
 
@@ -380,10 +354,6 @@ a:hover {
 .dropdown-item:hover {
   text-decoration: none;
 }
-
-// Restore Bootstrap 4 table padding
-$table-cell-padding-y: 0.75rem;
-$table-cell-padding-x: 0.75rem;
 
 // Restore Bootstrap 4 table header appearance
 .table > thead > tr > th {
