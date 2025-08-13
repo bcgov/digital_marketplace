@@ -54,7 +54,7 @@ export function AIMenu() {
 
   // Get editor ID from opportunity context to ensure unique chat sessions
   const context = editor.getOption(OpportunityContextPlugin, "context");
-  const editorId = context?.editorId || `editor-${Math.random()}`;
+  const editorId = context?.editorId || `editor`;
   const chat = useChat(editorId); // Use unique editor ID for each chat session
 
   const { input, messages, setInput, status } = chat;
