@@ -2,17 +2,15 @@
   font-family: "BCSans";
   font-style: normal;
   font-weight: 400;
-  src: url('/fonts/BCSans/BCSans-Regular.woff2') format("woff2"),
-       url('/fonts/BCSans/BCSans-Regular.woff') format("woff");
+  src:
+    url("/fonts/BCSans/BCSans-Regular.woff2") format("woff2"),
+    url("/fonts/BCSans/BCSans-Regular.woff") format("woff");
 }
 
 @font-face {
   font-family: "BCSans";
   font-weight: 500 700;
-  src: url('/fonts/BCSans/BCSans-Bold.woff2') format("woff2"),
-       url('/fonts/BCSans/BCSans-Bold.woff') format("woff");
-}
-
-body {
-  font-family: "BCSans", sans-serif;
+  src:
+    url("/fonts/BCSans/BCSans-Bold.woff2") format("woff2"),
+    url("/fonts/BCSans/BCSans-Bold.woff") format("woff");
 }
