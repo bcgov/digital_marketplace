@@ -410,6 +410,13 @@ table thead {
   font-weight: 400;
 }
 
+// FormGroup applies mb-3 automatically; need an equally specific override
+// to appear later in the load order
+.mb-0 {
+  @extend .mb-0;
+  margin-bottom: 0 !important;
+}
+
 // End Bootstrap 5 overrides
 
 // Mixins.
