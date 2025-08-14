@@ -251,7 +251,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 value={`Close${
                   isAcceptingProposals ? "s" : "d"
                 } ${formatDateAtTime(opp.proposalDeadline, true)}`}
-                className="ml-sm-3 flex-shrink-0"
+                className="ms-sm-3 flex-shrink-0"
               />
             </div>
             {opp.teaser ? (
@@ -270,7 +270,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
               </Link>
               {state.viewerUser && state.viewerUser.id !== opp.createdBy?.id ? (
                 <Link
-                  className="ml-3"
+                  className="ms-3"
                   disabled={isToggleWatchLoading}
                   loading={isToggleWatchLoading}
                   onClick={() => dispatch(adt("toggleWatch"))}
@@ -290,7 +290,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
             xs="12"
             md="6"
             lg={{ offset: 1, size: 5 }}
-            className="mt-5 mt-md-0 pl-md-4">
+            className="mt-5 mt-md-0 ps-md-4">
             <Row className="mb-4 mb-md-5">
               <Col
                 xs="6"
@@ -373,7 +373,7 @@ const InfoDetailsHeading: component_.base.View<{
         className="flex-shrink-0"
         style={{ marginTop: "0.3rem" }}
       />
-      <h4 className="mb-0 ml-2">{text}</h4>
+      <h4 className="mb-0 ms-2">{text}</h4>
     </div>
   );
 };

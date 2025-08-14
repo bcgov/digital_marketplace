@@ -261,11 +261,11 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
       </Row>
       <Row className="mt-3">
         <Col xs="12" sm="6">
-          <div className="font-weight-bold mb-2">Mandatory Skills</div>
+          <div className="fw-bold mb-2">Mandatory Skills</div>
           <Skills skills={mandatorySkills} />
         </Col>
         <Col xs="12" sm="6">
-          <div className="font-weight-bold mb-2">Optional Skills</div>
+          <div className="fw-bold mb-2">Optional Skills</div>
           <Skills skills={optionalSkills} />
         </Col>
       </Row>

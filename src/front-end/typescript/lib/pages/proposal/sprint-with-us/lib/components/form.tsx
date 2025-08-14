@@ -773,7 +773,7 @@ export const EvaluationView: component_.base.View<Props> = ({ state }) => {
         <h4 className="mt-5 mb-3">Scoring Table</h4>
         <div className="table-responsive">
           <table className="table-hover">
-            <thead>
+            <thead className="table-light">
               <tr>
                 <th style={{ width: "100%" }}>Evaluation Criteria</th>
                 <th style={{ width: "0px" }}>Weightings</th>
@@ -1134,21 +1134,21 @@ const ReviewPhaseView: component_.base.View<ReviewPhaseViewProps> = ({
       icon={icon}
       iconWidth={2}
       iconHeight={2}
-      iconClassName="mr-3"
+      iconClassName="me-3"
       chevronWidth={1.5}
       chevronHeight={1.5}
       open={isOpen}>
       <div className="d-flex flex-nowrap align-items-center mb-2">
-        <Icon name="calendar" width={0.9} height={0.9} className="mr-1" />
-        <span className="font-weight-bold mr-2">Phase Dates</span>
+        <Icon name="calendar" width={0.9} height={0.9} className="me-1" />
+        <span className="fw-bold me-2">Phase Dates</span>
         <span>
           {formatDate(opportunityPhase.startDate)} to{" "}
           {formatDate(opportunityPhase.completionDate)}
         </span>
       </div>
       <div className="d-flex flex-nowrap align-items-center">
-        <Icon name="comment-dollar" width={0.9} height={0.9} className="mr-1" />
-        <span className="font-weight-bold mr-2">Proposed Phase Cost</span>
+        <Icon name="comment-dollar" width={0.9} height={0.9} className="me-1" />
+        <span className="fw-bold me-2">Proposed Phase Cost</span>
         <span>{formatAmount(proposedCost, "$")}</span>
       </div>
       <div className="mt-4">
@@ -1174,11 +1174,11 @@ const ReviewPhaseView: component_.base.View<ReviewPhaseViewProps> = ({
                   <Badge
                     text="Scrum Master"
                     color="c-proposal-swu-form-scrum-master"
-                    className="ml-3"
+                    className="ms-3"
                   />
                 ) : null}
                 {m.membershipStatus === MembershipStatus.Pending ? (
-                  <PendingBadge className={m.scrumMaster ? "ml-2" : "ml-3"} />
+                  <PendingBadge className={m.scrumMaster ? "ms-2" : "ms-3"} />
                 ) : null}
               </div>
             ))}
@@ -1296,9 +1296,9 @@ export const ReviewProposalView: component_.base.View<Props> = ({
               name="comment-dollar"
               width={0.9}
               height={0.9}
-              className="mr-1"
+              className="me-1"
             />
-            <span className="font-weight-bold mr-2">Total Proposed Cost</span>
+            <span className="fw-bold me-2">Total Proposed Cost</span>
             <span>
               {formatAmount(FormField.getValue(state.totalCost) || 0, "$")}
             </span>

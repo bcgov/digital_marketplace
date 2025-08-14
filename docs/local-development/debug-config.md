@@ -7,7 +7,7 @@ It is difficult to debug/step-through front-end code so the recommendation is to
 The module aliasing (e.g. import * from "shared/...") is what throws off most debuggers and build tools. Usually `tsconfig` files are used by debuggers and you may need to create a separate tsconfig for your local environment so that the IDE knows how to run your app.
 
 ## Alternatives
-Another solution is to configure grunt to emit source maps alongside JS and just debug the JS.
+Another solution is to configure TypeScript to emit source maps alongside JS and just debug the JS.
 
 ## Front-end
 Debugging the front-end might require evaluating MSG's in the state object.
@@ -17,7 +17,7 @@ Debugging the front-end might require evaluating MSG's in the state object.
 - dev tools in the browser
 
 1. Run the following
-`NODE_ENV=development npm run front-end:watch`
+`VITE_NODE_ENV=development npm run front-end:watch`
 
 2. Open the Console of a browser's Dev Tools to view a list of state events.
 
@@ -85,7 +85,7 @@ Debugging the front-end might require evaluating MSG's in the state object.
 
 Run the following for normal development:
 ```bash
-NODE_ENV=development npm run back-end:watch
+VITE_NODE_ENV=development npm run back-end:watch
 ```
 
 This will display server logs:

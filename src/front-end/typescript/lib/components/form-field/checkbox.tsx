@@ -1,8 +1,7 @@
 import * as FormField from "front-end/lib/components/form-field";
 import { component as component_ } from "front-end/lib/framework";
 import React from "react";
-import { Spinner } from "reactstrap";
-import { CustomInput } from "reactstrap";
+import { Spinner, Input, FormGroup, Label } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
 export type Value = boolean;
@@ -55,27 +54,38 @@ const ChildView: ChildComponent["view"] = (props) => {
     inlineLabel,
     loading = false
   } = props;
+
+  const inputId = state.id;
+
   return (
-    <CustomInput
-      id={state.id}
-      name={state.id}
-      checked={state.value}
-      disabled={disabled}
-      type="checkbox"
-      label={inlineLabel}
-      className={`d-flex align-items-center ${className} ${validityClassName} ${
+    <FormGroup
+      check
+      className={`d-flex align-items-center ${className} ${
         slimHeight ? "" : "h-input"
       }`}
-      onChange={(e) => {
-        const value = e.currentTarget.checked;
-        dispatch({ tag: "onChange", value });
-        // Let the parent form field component know that the value has been updated.
-        props.onChange(value);
-      }}>
-      {loading ? (
-        <Spinner size="sm" color="secondary" className="ml-2" />
-      ) : null}
-    </CustomInput>
+      disabled={disabled}>
+      <div className="align-items-start">
+        <Input
+          id={inputId}
+          name={inputId}
+          type="checkbox"
+          checked={state.value}
+          disabled={disabled}
+          onChange={(e) => {
+            const value = e.currentTarget.checked;
+            dispatch({ tag: "onChange", value });
+            props.onChange(value);
+          }}
+          className={validityClassName}
+        />
+        <Label check for={inputId}>
+          {inlineLabel}
+          {loading ? (
+            <Spinner size="sm" color="secondary" className="ml-2" />
+          ) : null}
+        </Label>
+      </div>
+    </FormGroup>
   );
 };
 

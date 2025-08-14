@@ -1,4 +1,4 @@
-import { PATH_PREFIX } from "front-end/config";
+import { VITE_PATH_PREFIX } from "front-end/config";
 import { component, Immutable } from "front-end/lib/framework";
 import React from "react";
 import { Fragment, ReactElement } from "react";
@@ -17,7 +17,7 @@ import {
 } from "shared/lib/validation";
 
 export function prefixPath(path: string): string {
-  return `/${prefix(PATH_PREFIX)(path)}`;
+  return `/${prefix(VITE_PATH_PREFIX)(path)}`;
 }
 
 export type WithState<

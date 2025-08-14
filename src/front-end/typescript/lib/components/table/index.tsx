@@ -135,7 +135,7 @@ export const THead: component_.base.View<THeadProps> = ({ cells, THView }) => {
     <THView key={`table-thead-${i}`} {...cell} />
   ));
   return (
-    <thead>
+    <thead className="table-light">
       <tr>{children}</tr>
     </thead>
   );

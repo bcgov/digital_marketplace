@@ -215,9 +215,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
           <DescriptionList items={items} />
         </Col>
         <Col xs="12" md="6">
-          <div className="font-weight-bold mb-2 mt-3 mt-md-0">
-            Required Skills
-          </div>
+          <div className="fw-bold mb-2 mt-3 mt-md-0">Required Skills</div>
           <Skills skills={skills} />
         </Col>
       </Row>

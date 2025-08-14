@@ -11,7 +11,7 @@ services:
       - "3000:3000"
     environment:
       POSTGRES_URL: postgresql://digmkt:digmkt@db:5432/digmkt
-      NODE_ENV: ${NODE_ENV}
+      VITE_NODE_ENV: ${VITE_NODE_ENV}
     depends_on:
       - db
 

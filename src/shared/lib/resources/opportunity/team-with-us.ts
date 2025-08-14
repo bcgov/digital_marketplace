@@ -5,7 +5,7 @@ import { User, UserSlim } from "shared/lib/resources/user";
 import { ADT, BodyWithErrors, Id } from "shared/lib/types";
 import { ErrorTypeFrom } from "shared/lib/validation";
 
-export { Addendum } from "shared/lib/resources/addendum";
+export type { Addendum } from "shared/lib/resources/addendum";
 
 export const DEFAULT_OPPORTUNITY_TITLE = "Untitled";
 export const DEFAULT_QUESTIONS_WEIGHT = 25;
