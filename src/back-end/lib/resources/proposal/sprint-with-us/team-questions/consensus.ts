@@ -118,7 +118,7 @@ const create: crud.Create<
       return {
         proposal: getString(body, "proposal"),
         status: getString(body, "status"),
-        scores: get(body, "scores")
+        scores: get<typeof body, string>(body, "scores")
       };
     },
     async validateRequestBody(request) {
@@ -264,7 +264,7 @@ const update: crud.Update<
       switch (tag) {
         case "edit":
           return adt("edit", {
-            scores: get(value, "scores")
+            scores: get<typeof value, string>(value, "scores")
           });
         default:
           return null;

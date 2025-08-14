@@ -125,7 +125,7 @@ export const view: component_.base.View<Props> = ({
             </span>
           )
         }}
-        className="font-weight-bold"
+        className="fw-bold"
         state={state.proposal}
         dispatch={component_.base.mapDispatch(
           dispatch,
@@ -141,7 +141,7 @@ export const view: component_.base.View<Props> = ({
             </span>
           )
         }}
-        className="font-weight-bold"
+        className="fw-bold"
         state={state.app}
         dispatch={component_.base.mapDispatch(
           dispatch,

@@ -1,3 +1,5 @@
+import { CopilotKit } from "@copilotkit/react-core";
+import { CopilotSidebar } from "@copilotkit/react-ui";
 import getAppAlerts from "front-end/lib/app/alerts";
 import {
   Msg,
@@ -8,9 +10,13 @@ import {
 } from "front-end/lib/app/types";
 import { Immutable, component as component_ } from "front-end/lib/framework";
 import { ThemeColor } from "front-end/lib/types";
+import {
+  setupCopilotSidebarPositioning,
+  setupCopilotKitTextReplacement
+} from "front-end/lib/utils/copilotkit";
 import Icon from "front-end/lib/views/icon";
 import Link from "front-end/lib/views/link";
-import React, { ReactElement } from "react";
+import React, { ReactElement, useEffect } from "react";
 import {
   Alert,
   Breadcrumb,
@@ -44,7 +50,7 @@ export function ViewAlert<Msg>({
           <div
             className="d-flex align-items-start"
             style={{ padding: "0.75rem 1.25rem" }}>
-            <div className="flex-grow-1 pr-3">{text}</div>
+            <div className="flex-grow-1 pe-3">{text}</div>
             {dismissMsg ? (
               <Icon
                 hover
@@ -170,6 +176,17 @@ export function view<
   PageMsg extends ADT<unknown, unknown>
 >(props: Props<RouteParams, PageState, PageMsg>) {
   const { state, dispatch, mapPageMsg, component, pageState } = props;
+
+  // Setup CopilotKit sidebar positioning
+  useEffect(() => {
+    return setupCopilotSidebarPositioning();
+  }, []);
+
+  // Setup CopilotKit text replacement
+  useEffect(() => {
+    return setupCopilotKitTextReplacement();
+  }, []);
+
   // pageState is undefined, so redirect to 404 page.
   // This shouldn't happen.
   if (!pageState) return null;
@@ -210,12 +227,20 @@ export function view<
     return (
       <div
         className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-        <ViewAlertsAndBreadcrumbs
-          {...viewAlertsAndBreadcrumbsProps}
-          container
-          className="pt-4 pt-md-6"
-        />
-        <component.view {...viewProps} />
+        <CopilotKit
+          showDevConsole={false}
+          runtimeUrl={
+            (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+            "/copilotkit"
+          }>
+          <ViewAlertsAndBreadcrumbs
+            {...viewAlertsAndBreadcrumbsProps}
+            container
+            className="pt-4 pt-md-6"
+          />
+          <component.view {...viewProps} />
+          <CopilotSidebar />
+        </CopilotKit>
       </div>
     );
   } else {
@@ -234,44 +259,52 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          <div className="d-flex flex-column flex-grow-1">
-            <Container className="position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch">
-              <div
-                className={`d-none d-md-block position-absolute bg-${sidebar.color}`}
-                style={{
-                  top: 0,
-                  right: "100%",
-                  bottom: 0,
-                  width: "50vw"
-                }}></div>
-              <Row className="flex-grow-1 align-content-start align-content-md-stretch">
-                <Col
-                  xs="12"
-                  md={sidebarColWidth}
-                  className={`sidebar bg-${
-                    sidebar.color
-                  } pr-md-4 pr-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 align-self-start align-self-md-stretch ${
-                    isEmptyOnMobile ? "pb-md-6" : "pb-5"
-                  }`}>
-                  <ViewAlertsAndBreadcrumbs
-                    {...viewAlertsAndBreadcrumbsProps}
-                    className="d-md-none"
-                  />
-                  <sidebar.view {...viewProps} />
-                </Col>
-                <Col
-                  xs="12"
-                  md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }}
-                  className="pt-md-6 pb-6">
-                  <ViewAlertsAndBreadcrumbs
-                    {...viewAlertsAndBreadcrumbsProps}
-                    className="d-none d-md-block"
-                  />
-                  <component.view {...viewProps} />
-                </Col>
-              </Row>
-            </Container>
-          </div>
+          <CopilotKit
+            showDevConsole={false}
+            runtimeUrl={
+              (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+              "/copilotkit"
+            }>
+            <div className="d-flex flex-column flex-grow-1">
+              <Container className="position-relative flex-grow-1 d-md-flex flex-md-column align-items-md-stretch">
+                <div
+                  className={`d-none d-md-block position-absolute bg-${sidebar.color}`}
+                  style={{
+                    top: 0,
+                    right: "100%",
+                    bottom: 0,
+                    width: "50vw"
+                  }}></div>
+                <Row className="flex-grow-1 align-content-start align-content-md-stretch">
+                  <Col
+                    xs="12"
+                    md={sidebarColWidth}
+                    className={`sidebar bg-${
+                      sidebar.color
+                    } pe-md-4 pe-lg-5 d-flex flex-column align-items-stretch pt-4 pt-md-6 align-self-start align-self-md-stretch ${
+                      isEmptyOnMobile ? "pb-md-6" : "pb-5"
+                    }`}>
+                    <ViewAlertsAndBreadcrumbs
+                      {...viewAlertsAndBreadcrumbsProps}
+                      className="d-md-none"
+                    />
+                    <sidebar.view {...viewProps} />
+                  </Col>
+                  <Col
+                    xs="12"
+                    md={{ size: 12 - 1 - sidebarColWidth, offset: 1 }}
+                    className="pt-md-6 pb-6">
+                    <ViewAlertsAndBreadcrumbs
+                      {...viewAlertsAndBreadcrumbsProps}
+                      className="d-none d-md-block"
+                    />
+                    <component.view {...viewProps} />
+                  </Col>
+                </Row>
+              </Container>
+            </div>
+            <CopilotSidebar />
+          </CopilotKit>
         </div>
       );
     } else {
@@ -279,10 +312,18 @@ export function view<
       return (
         <div
           className={`d-flex flex-column flex-grow-1 page-container ${backgroundClassName}`}>
-          <Container className="pt-4 pt-md-6 pb-6 flex-grow-1">
-            <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
-            <component.view {...viewProps} />
-          </Container>
+          <CopilotKit
+            showDevConsole={false}
+            runtimeUrl={
+              (process.env.VITE_AI_SERVICE_URL || "http://localhost:5000") +
+              "/copilotkit"
+            }>
+            <Container className="pt-4 pt-md-6 pb-6 flex-grow-1">
+              <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
+              <component.view {...viewProps} />
+              <CopilotSidebar />
+            </Container>
+          </CopilotKit>
         </div>
       );
     }

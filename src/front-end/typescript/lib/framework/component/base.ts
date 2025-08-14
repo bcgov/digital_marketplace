@@ -1,4 +1,4 @@
-import { NODE_ENV } from "front-end/config";
+import { VITE_NODE_ENV } from "front-end/config";
 import * as Immutable from "immutable";
 import { ReactElement } from "react";
 import { Cmd } from "front-end/lib/framework/component/cmd";
@@ -105,8 +105,8 @@ export function updateChild<PS, PM, CS, CM>(
   let { state } = params;
   const childState = state.getIn(childStatePath) as Immutable<CS>;
   // tslint:disable:next-line no-console
-  if (NODE_ENV === "development") {
-    console.assert(childState);
+  if (VITE_NODE_ENV === "development") {
+    console.assert(!!childState);
   }
   if (!childState) {
     return [state, []];

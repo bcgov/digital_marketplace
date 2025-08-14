@@ -53,6 +53,7 @@ import userResource from "back-end/lib/resources/user";
 import contactListResource from "back-end/lib/resources/contact-list";
 import adminRouter from "back-end/lib/routers/admin";
 import authRouter from "back-end/lib/routers/auth";
+import jwtRouter from "back-end/lib/routers/jwt";
 import frontEndRouter from "back-end/lib/routers/front-end";
 import statusRouter from "back-end/lib/routers/status";
 import {
@@ -104,15 +105,15 @@ type AppRouter = Router<
   Session
 >;
 
+// logger should be declared before getConfigErrors() gets triggered
+const logger = makeDomainLogger(consoleAdapter, "back-end");
+
 // Ensure all environment variables are specified correctly.
 const configErrors = getConfigErrors();
-
 if (configErrors.length || !PG_CONFIG) {
-  configErrors.forEach((error: string) => logger.error(error));
+  configErrors.forEach((error: string) => console.error(error));
   throw new Error("Invalid environment variable configuration.");
 }
-
-const logger = makeDomainLogger(consoleAdapter, "back-end");
 
 const config: Knex.Config = {
   client: "pg",
@@ -206,6 +207,8 @@ export function createRouter(connection: Connection): AppRouter {
     flippedConcat(crudRoutes),
     // Authentication router for SSO with OpenID Connect.
     flippedConcat(authRouter(connection)),
+    // JWT router for AI service authentication.
+    flippedConcat(jwtRouter(connection)),
     // Admin router
     flippedConcat(
       adminRouter().map((route) => namespaceRoute("/admin", route))

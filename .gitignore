@@ -42,3 +42,11 @@ tsconfig.tsbuildinfo
 
 .specstory/
 .cursor/
+src/marketplace-ai/dist
+
+# Cursor reference files
+.cursor_ref
+/chroma_data/procurement_docs/
+/src/procurement-tokenizer/venv
+/chroma_data/exported_docs/
+procurement-tokenizer/

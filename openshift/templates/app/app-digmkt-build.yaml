@@ -36,6 +36,8 @@ objects:
       env:
         - name: SET_TEST_INDICATOR
           value: ${SET_TEST_INDICATOR}
+        - name: VITE_AI_SERVICE_URL
+          value: https://ai-digmkt-${ENV_NAME}
     resources:
       limits:
         cpu: 2
@@ -94,7 +96,7 @@ parameters:
   displayName: Source Image Tag
   required: true
   description: The tag of the source image.
-  value: '16.19'
+  value: '22'
 
 - name: OUTPUT_IMAGE_TAG
   displayName: Output Image Tag
@@ -102,7 +104,7 @@ parameters:
   required: true
   value: latest
 
-- name: SHOW_TEST_INDICATOR
+- name: VITE_SHOW_TEST_INDICATOR
   displayName: Show test environment indicators in emails and banners.
   required: true
   value: '0'

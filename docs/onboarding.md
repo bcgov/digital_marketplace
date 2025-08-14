@@ -1,6 +1,6 @@
 # Developer Onboarding
 
-The Digital Marketplace web application has been implemented as a full stack, TypeScript web application. Its codebase has been split into three parts: back-end, front-end and shared. This repository uses grunt to implement various build tasks for both local development and hosted environments. Developers can build and run these codebases by running the scripts defined in `package.json`.
+The Digital Marketplace web application has been implemented as a full stack, TypeScript web application. Its codebase has been split into three parts: back-end, front-end and shared. This repository uses Vite and Typescript to implement various build tasks for both local development and hosted environments. Developers can build and run these codebases by running the scripts defined in `package.json`.
 
 ## Back-End Overview
 
@@ -46,19 +46,18 @@ To better understand the front-end architecture, it is recommended that develope
 
 ## Build System
 
-The front-end is built using tasks defined with Grunt. This includes:
+The front-end is built using Vite. This includes:
 
 1. Compiling the TypeScript codebase to JavaScript.
-2. Combining the JavaScript build output to a single file using Browserify.
-3. Transpiling SASS styles to CSS.
-4. Compiling EJS templates to HTML.
-5. Copying static assets to the build directory.
-6. Minifying JavaScript, CSS and HTML assets for production builds only.
-7. Compressing static assets using gzip and brotli for production builds only.
+2. Bundling JavaScript modules with Rollup.
+3. Processing CSS and SASS styles.
+4. Handling static assets and HTML templates.
+5. Minifying JavaScript, CSS and HTML assets for production builds.
+6. Compressing static assets using gzip and brotli for production builds.
 
 All commonly-used build scripts are aliased as NPM scripts in `package.json` for convenience.
 
-To build the front-end, simply run `NODE_ENV=development npm run front-end:build`. To build the app for production, which includes asset minification, optimization and compression, change the value of `NODE_ENV` to `production`.
+To build the front-end, simply run `npm run front-end:build` which builds for production with asset minification, optimization and compression.
 
 To watch for source file changes and rebuild the front-end during local development, execute the `npm run front-end:watch` command in your terminal.
 
@@ -99,9 +98,9 @@ The `npm run migrations:*` scripts in `package.json` are how developers can crea
 
 ## Build/Execution System
 
-The back-end is compiled from TypeScript to JavaScript, which is implemented as a Grunt task.
+The back-end is compiled from TypeScript to JavaScript using the TypeScript compiler directly.
 
-To build the back-end, simply run `NODE_ENV=development npm run back-end:build`. To build the app for production, which involves cleaning the build directory before rebuilding, change the value of `NODE_ENV` to `production`.
+To build the back-end, simply run `npm run back-end:build`. To build the app for production, which involves cleaning the build directory before rebuilding, run `npm run back-end:build:production`.
 
 To watch for source file changes and rebuild the back-end during local development, execute the `npm run back-end:watch` command in your terminal.
 
@@ -112,7 +111,7 @@ To watch for source file changes and rebuild the back-end during local developme
 | Path               | Description                                                                                          |
 | ------------------ | ---------------------------------------------------------------------------------------------------- |
 | `build/`           | Directory containing all final build artifacts. Ignored by `git`.                                    |
-| `grunt-configs/`   | Directory containing `grunt` task configurations.                                                    |
+
 | `tmp`              | Directory containing all intermediary build artifacts. Ignored by `git`.                             |
 | `.eslintrc.js`     | `eslint` configuration file for automated code linting.                                              |
 | `.prettierrc.json` | `prettierrc` configuration file for automated code formatting.                                       |

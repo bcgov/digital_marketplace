@@ -140,17 +140,17 @@ const Capability: component_.base.View<CapabilityProps> = ({
           disabled={loading || disabled}>
           <span>{name}</span>
           {loading ? (
-            <Spinner color="secondary" size="sm" className="ml-3" />
+            <Spinner color="secondary" size="sm" className="ms-3" />
           ) : null}
         </Link>
         <Icon
           color="info"
-          className="ml-auto"
+          className="ms-auto"
           name={open ? "chevron-up" : "chevron-down"}
         />
       </div>
       {open ? (
-        <ul className={open ? "py-5 pr-4 pl-5 m-0" : "d-none"}>
+        <ul className={open ? "py-5 pe-4 ps-5 m-0" : "d-none"}>
           {description.map((item, i) => (
             <li key={`capability-${index}-description-${i}`}>{item}</li>
           ))}

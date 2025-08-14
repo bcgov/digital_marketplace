@@ -52,7 +52,7 @@ The source code is split into six parts:
 ### 1. Front-End (`src/front-end`)
 
 A TypeScript single-page application using React, Immutable.js, Bootstrap and SASS.
-The front-end's build system is executed by Grunt.
+The front-end's build system is executed by Vite.
 
 The front-end's state management framework (`src/front-end/typescript/lib/framework/**/*.tsx`) provides type-safe state management, and is heavily influenced by the [Elm Architecture](https://guide.elm-lang.org/architecture/). If you've used Redux before, you will find this to be very similar since Redux is also based on the Elm Architecture. The main difference is that this project's framework derives greater inspiration from the Elm Architecture and it aims to be far more type-safe than Redux.
 
@@ -118,7 +118,7 @@ cp sample.env .env
 Please ensure the following packages have been installed:
 
 - yarn
-- Node.js 16.x
+- Node.js 22.x
 - SASS
 - Docker
 - Docker Compose 3.x
@@ -169,11 +169,22 @@ docker-compose up db # Start PostgreSQL only
 npm run back-end:watch # Start the back-end server, restart on source changes.
 
 # Terminal 3
-npm run front-end:watch # Build the front-end source code, rebuild on source changes.
+npx vite dev # Start the development server, serves files with hot module replacement on source changes.
 
 # Terminal 4
 npm run migrations:latest # Run all database migrations.
+
+# Terminal 5
+docker-compose up chroma
+
+# Terminal 6
+npx vite dev
+
+# Terminal 7
+npm run marketplace-ai:start
 ```
+
+The application will be available at http://localhost:5173/
 
 #### Admin user
 
@@ -200,14 +211,14 @@ npm run <SCRIPT_NAME>
 | `front-end:lint`                        | Lints the front-end source code using eslint.                                                                                                                                                                    |
 | `front-end:typecheck`                   | Typechecks the front-end source code using tsc.                                                                                                                                                                  |
 | `front-end:test`                        | Runs unit tests for the front-end source code.                                                                                                                                                                   |
-| `front-end:build`                       | Builds the front-end source code using grunt.                                                                                                                                                                    |
-| `front-end:watch`                       | Builds the front-end source code using grunt, and rebuilds it whenever a front-end or shared source file changes.                                                                                                |
+| `front-end:build`                       | Builds the front-end source code using Vite in production mode. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                                                                                    |
+| `front-end:watch`                       | Builds the front-end source code using Vite in development mode with watch, and rebuilds it whenever a front-end or shared source file changes. This builds the front end into /build/front-end and makes it available to be served from the backend, as in production environment.                                                                                                |
 | `front-end:typedoc`                     | Builds TypeDoc API documentation for the front-end source code.                                                                                                                                                  |
 | `back-end:lint`                         | Lints the back-end source code using eslint.                                                                                                                                                                     |
 | `back-end:typecheck`                    | Typechecks the back-end source code using tsc.                                                                                                                                                                   |
 | `back-end:test`                         | Runs unit tests for the back-end source code.                                                                                                                                                                    |
-| `back-end:start`                        | Starts the back-end server (assumes it has already been built by grunt).                                                                                                                                         |
-| `back-end:build`                        | Builds the back-end server using grunt.                                                                                                                                                                          |
+| `back-end:start`                        | Starts the back-end server (assumes it has already been built by TypeScript compiler).                                                                                                                                         |
+| `back-end:build`                        | Builds the back-end server using TypeScript compiler.                                                                                                                                                                          |
 | `back-end:watch`                        | Builds and starts the back-end server inside a nodemon process, rebuilding and restarting it whenever a back-end or shared source file changes.                                                                  |
 | `back-end:debug-watch`                  | Similar to back-end:debug but generates source maps to enable IDE debugging of the API project
 | `back-end:typedoc`                      | Builds TypeDoc API documentation for the back-end source code.                                                                                                                                                   |
@@ -226,9 +237,7 @@ npm run <SCRIPT_NAME>
 | `docs:readme-toc`                       | Generate and insert a table of contents for `README.md`.                                                                                                                                                         |
 | `docs:licenses`                         | Generate the list of licenses from this project's NPM dependencies in `docs/open-source-licenses.txt`.                                                                                                           |
 | `docs:db -- <POSTGRESQL_URL>`           | Generate database schema documentation in `docs/database-schema.md` from the database specified by the connection url.                                                                                           |
-| `learn-front-end:build`                 | Builds the learn-front-end project using grunt.                                                                                                                                                                  |
-| `learn-front-end:watch`                 | Builds the learn-front-end project using grunt, and rebuilds it whenever a learn-front-end, front-end or shared source file changes.                                                                             |
-| `learn-front-end:serve`                 | Serves the learn-front-end build files.                                                                                                                                                                          |
+
 
 ### Environment Variables
 
@@ -243,7 +252,7 @@ Environment variables that affect the back-end server's functionality are stored
 
 | Name                                    | Description                                                                                                                                                                                                                                                                                                                                |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `NODE_ENV`                              | The back-end run-time's environment. Possible values include either "development" or "production".                                                                                                                                                                                                                                         |
+| `VITE_NODE_ENV`                              | The back-end run-time's environment. Possible values include either "development" or "production".                                                                                                                                                                                                                                         |
 | `SERVER_HOST`                           | The IPv4 address for the back-end to bind to.                                                                                                                                                                                                                                                                                              |
 | `SERVER_PORT`                           | The TCP port for the back-end to bind to.                                                                                                                                                                                                                                                                                                  |
 | `SCHEDULED_DOWNTIME`                    | A boolean flag (set to `0` for `false`, `1` for `true`) to turn off CRUD endpoints and vend a downtime HTML page to all users when set to a non-zero number. Defaults to `false` if `SCHEDULED_DOWNTIME` is undefined or invalid.                                                                                                          |
@@ -280,8 +289,8 @@ Environment variables that affect the back-end server's functionality are stored
 | `SWAGGER_ENABLE`                        | A flag to enable the Swagger UI API documentation under `SWAGGER_UI_PATH`. Defaults to `false`.                                                                                                                                                                                                                                            |
 | `SWAGGER_UI_PATH`                       | The base path to run the Swagger UI under for serving of API documentation. Defaults to `/docs/api`.                                                                                                                                                                                                                                       |
 | `TZ`                                    | Time-zone to use for the back-end. Required by the Linux OS that runs the back-end, but not used as application configuration.                                                                                                                                                                                                             |
-| `SHOW_TEST_INDICATOR`                   | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`.                                                                                                   |
-| `LOG_LEVEL`                             | An enumerated logging level that can be used to control the level of output when running the application. Allowed values are `debug`, `info`, `warn`, `error`, and `none`. The level will default to `debug` when `NODE_ENV` is set to `development`. Otherwise, the level will default to `info` unless explicity set in the environment. |
+| `VITE_SHOW_TEST_INDICATOR`                   | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (prefixes emails subjects and shows a testing variant of the logo in email notifications). Defaults to `false`.                                                                                                   |
+| `LOG_LEVEL`                             | An enumerated logging level that can be used to control the level of output when running the application. Allowed values are `debug`, `info`, `warn`, `error`, and `none`. The level will default to `debug` when `VITE_NODE_ENV` is set to `development`. Otherwise, the level will default to `info` unless explicity set in the environment. |
 | `DISABLE_NOTIFICATIONS`                 | A boolean flag that will disable all outgoing email notifications when set to `1` (`true`). Defaults to `0` (`false`).                                                                                                                                                                                                                     |
 | `LOG_MEM_USAGE`                         | A boolean flag (set to `0` for `false`, `1` for `true`) to enable debug-level logging of Node memory usage. Defaults to `false`.                                                                                                                                                                                                           |
 
@@ -291,14 +300,14 @@ The Patroni credentials are `PGHOST`, `PGUSER`, `PGPASSWORD` and `PGDATABASE` wh
 
 #### Front-End Environment Variables
 
-Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`, and referenced to in `gruntfile.js`.
+Environment variables that affect the front-end's build process are stored and sanitized in `src/front-end/config.ts`.
 
 | Name                  | Description                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `NODE_ENV`            | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production".                                          |
+| `VITE_NODE_ENV`            | Determines whether the front-end is built for production (e.g. minification, compression, etc). Possible values include either "development" or "production".                                          |
 | `CONTACT_EMAIL`       | The Digital Marketplace team's contact email address.                                                                                                                                                  |
-| `PATH_PREFIX`         | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`.                      |
-| `SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo in the web app UI). Defaults to `false`. |
+| `VITE_PATH_PREFIX`         | The URL path prefix that the Digital Marketplace is deployed to. For example, if deployed to `digital.gov.bc.ca/marketplace`, the value of this variable should be `marketplace`.                      |
+| `VITE_SHOW_TEST_INDICATOR` | A boolean flag (set to `0` for `false`, `1` for `true`) to indicate that an environment is intended for testing purposes (shows a testing variant of the logo in the web app UI). Defaults to `false`. |
 
 ## Deployment
 

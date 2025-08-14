@@ -227,7 +227,7 @@ const create: crud.Create<
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: getBoolean(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
         totalMaxBudget: getNumber(body, "totalMaxBudget"),
@@ -245,11 +245,14 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        inceptionPhase: get(body, "inceptionPhase"),
-        prototypePhase: get(body, "prototypePhase"),
-        implementationPhase: get(body, "implementationPhase"),
-        teamQuestions: get(body, "teamQuestions"),
-        evaluationPanel: get(body, "evaluationPanel")
+        inceptionPhase: get<typeof body, string>(body, "inceptionPhase"),
+        prototypePhase: get<typeof body, string>(body, "prototypePhase"),
+        implementationPhase: get<typeof body, string>(
+          body,
+          "implementationPhase"
+        ),
+        teamQuestions: get<typeof body, string>(body, "teamQuestions"),
+        evaluationPanel: get<typeof body, string>(body, "evaluationPanel")
       };
     },
     async validateRequestBody(request) {
@@ -771,12 +774,13 @@ const update: crud.Update<
       const body = request.body.tag === "json" ? request.body.value : {};
       const tag = get(body, "tag");
       const value: unknown = get(body, "value");
+
       switch (tag) {
-        case "edit":
+        case "edit": {
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: getBoolean(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
             totalMaxBudget: getNumber<number>(value, "totalMaxBudget"),
@@ -796,12 +800,16 @@ const update: crud.Update<
             scenarioWeight: getNumber<number>(value, "scenarioWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            inceptionPhase: get(value, "inceptionPhase"),
-            prototypePhase: get(value, "prototypePhase"),
-            implementationPhase: get(value, "implementationPhase"),
-            teamQuestions: get(value, "teamQuestions"),
-            evaluationPanel: get(value, "evaluationPanel")
+            inceptionPhase: get<typeof value, string>(value, "inceptionPhase"),
+            prototypePhase: get<typeof value, string>(value, "prototypePhase"),
+            implementationPhase: get<typeof value, string>(
+              value,
+              "implementationPhase"
+            ),
+            teamQuestions: get<typeof value, string>(value, "teamQuestions"),
+            evaluationPanel: get<typeof value, string>(value, "evaluationPanel")
           });
+        }
         case "submitForReview":
           return adt("submitForReview", getString(body, "value"));
         case "publish":

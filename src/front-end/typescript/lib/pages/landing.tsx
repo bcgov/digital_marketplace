@@ -130,7 +130,7 @@ const Stats: component_.page.View<State, InnerMsg, Route> = ({ state }) => {
             <Stat
               stat={formatAmount(state.totalCount)}
               description="Total Opportunities Awarded"
-              className="mr-md-6 mb-5 mb-md-0"
+              className="me-md-6 mb-5 mb-md-0"
             />
             <Stat
               stat={formatAmount(state.totalAwarded, "$")}
@@ -153,9 +153,7 @@ const Stat: component_.base.View<{
       className={`d-flex flex-column justify-content-center align-items-center text-center ${className}`}>
       <div className="mb-3 text-c-landing-stats-stat">
         <span className="d-md-none h1">{stat}</span>
-        <span className="d-none d-md-inline display-4 font-weight-bold">
-          {stat}
-        </span>
+        <span className="d-none d-md-inline display-4 fw-bold">{stat}</span>
       </div>
       <div className="overline text-c-landing-stats-description">
         {description}
@@ -294,7 +292,7 @@ const VendorRoleInfo: component_.base.View = () => {
       <Row>
         <Col xs="12" className="order-2 order-md-1">
           <h6 className="text-c-landing-role-heading">
-            <Icon name="store" className="mr-2 mb-1" />
+            <Icon name="store" className="me-2 mb-1" />
             Vendors
           </h6>
         </Col>
@@ -304,21 +302,21 @@ const VendorRoleInfo: component_.base.View = () => {
             innovative digital products.
           </h4>
           <BulletPoint
-            className="ml-3 my-4"
+            className="ms-3 my-4"
             icon="star-exclamation"
             iconColor="c-landing-role-icon"
             header="Submit proposals to open opportunities"
             subText="Save a draft version of your proposal until you are ready to submit it."
           />
           <BulletPoint
-            className="ml-3 my-4"
+            className="ms-3 my-4"
             icon="star-exclamation"
             iconColor="c-landing-role-icon"
             header="View and export your submitted proposals"
             subText="View all outstanding and past submissions, where you can see your scores and rankings once submitted."
           />
           <BulletPoint
-            className="ml-3 my-4"
+            className="ms-3 my-4"
             icon="star-exclamation"
             iconColor="c-landing-role-icon"
             header="Build your team"
@@ -352,7 +350,7 @@ const GovRoleInfo: component_.base.View = () => {
           <Row>
             <Col xs="12">
               <h6 className="text-c-landing-role-heading">
-                <Icon name="government" className="mr-2 pb-1" />
+                <Icon name="government" className="me-2 pb-1" />
                 Public Service Employees
               </h6>
             </Col>
@@ -361,14 +359,14 @@ const GovRoleInfo: component_.base.View = () => {
                 Connect with talented developers to build your digital products.
               </h4>
               <BulletPoint
-                className="ml-3 my-4"
+                className="ms-3 my-4"
                 icon="star-exclamation"
                 iconColor="c-landing-role-icon"
                 header="Post a new opportunity"
                 subText="Select the program that suits your unique needs, post your opportunity and wait for the proposals to come in."
               />
               <BulletPoint
-                className="ml-3 my-4"
+                className="ms-3 my-4"
                 icon="star-exclamation"
                 iconColor="c-landing-role-icon"
                 header="View and manage your posted opportunities"

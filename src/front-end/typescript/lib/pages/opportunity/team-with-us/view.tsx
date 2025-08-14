@@ -303,7 +303,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 }
               ]}
             />
-            <p className="font-italic small text-secondary mb-5">
+            <p className="fst-italic small text-secondary mb-5">
               This RFP is a Competition Notice under Opportunity ID{" "}
               {competitionNoticeOpportunityId} and is restricted to Proponents
               that have become Qualified Suppliers pursuant to that Opportunity.
@@ -325,7 +325,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                 value={`Close${
                   isAcceptingProposals ? "s" : "d"
                 } ${formatDateAtTime(opp.proposalDeadline, true)}`}
-                className="ml-sm-3 flex-shrink-0"
+                className="ms-sm-3 flex-shrink-0"
               />
             </div>
             {opp.teaser ? (
@@ -344,7 +344,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
               </Link>
               {state.viewerUser && state.viewerUser.id !== opp.createdBy?.id ? (
                 <Link
-                  className="ml-3"
+                  className="ms-3"
                   disabled={isToggleWatchLoading}
                   loading={isToggleWatchLoading}
                   onClick={() => dispatch(adt("toggleWatch"))}
@@ -364,7 +364,7 @@ const Header: component_.base.ComponentView<State, Msg> = ({
             xs="12"
             md="6"
             lg={{ offset: 1, size: 5 }}
-            className="mt-5 mt-md-0 pl-md-4">
+            className="mt-5 mt-md-0 ps-md-4">
             <Row className="mb-4 mb-md-5">
               <Col
                 xs="6"
@@ -449,7 +449,7 @@ const InfoDetailsHeading: component_.base.View<{
         className="flex-shrink-0"
         style={{ marginTop: "0.3rem" }}
       />
-      <h4 className="mb-0 ml-2">{text}</h4>
+      <h4 className="mb-0 ms-2">{text}</h4>
     </div>
   );
 };
@@ -801,19 +801,19 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
             <h3 className="mb-4">Key Dates</h3>
             <p className="mb-2">
               <strong>Closing Date and Time</strong>{" "}
-              <span className="ml-3">{formatDateAtTime(proposal, true)}</span>
+              <span className="ms-3">{formatDateAtTime(proposal, true)}</span>
             </p>
             <p className="mb-2">
               <strong>Contract Award Date (Anticipated)</strong>{" "}
-              <span className="ml-3">{formatDate(assignment, false)}</span>
+              <span className="ms-3">{formatDate(assignment, false)}</span>
             </p>
             <p className="mb-2">
               <strong>Contract Start Date (Anticipated)</strong>{" "}
-              <span className="ml-3">{formatDate(startDate, false)}</span>
+              <span className="ms-3">{formatDate(startDate, false)}</span>
             </p>
             <p className="mb-2">
               <strong>Contract Completion Date (Anticipated)</strong>{" "}
-              <span className="ml-3">{formatDate(completionDate, false)}</span>
+              <span className="ms-3">{formatDate(completionDate, false)}</span>
             </p>
           </Col>
         </Row>

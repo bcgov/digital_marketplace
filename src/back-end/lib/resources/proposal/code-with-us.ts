@@ -266,7 +266,7 @@ const create: crud.Create<
         proposalText: getString(body, "proposalText"),
         additionalComments: getString(body, "additionalComments"),
         proponent: await parseProponentRequestBody(
-          get(body, "proponent"),
+          get<typeof body, string>(body, "proponent"),
           connection,
           request.session
         ),
@@ -479,7 +479,7 @@ const update: crud.Update<
             proposalText: getString(value, "proposalText"),
             additionalComments: getString(value, "additionalComments"),
             proponent: await parseProponentRequestBody(
-              get(value, "proponent"),
+              get<typeof value, string>(value, "proponent"),
               connection,
               request.session
             ),

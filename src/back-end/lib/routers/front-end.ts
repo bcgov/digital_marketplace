@@ -36,7 +36,7 @@ function makeRouter(
   return [
     {
       method: ServerHttpMethod.Get,
-      path: "*",
+      path: "*path",
       handler: nullRequestBodyHandler(async (request) => {
         const fileResponseBody = (() => {
           const acceptEncodingHeader = coerceHeaderToString(

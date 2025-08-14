@@ -1,6 +1,6 @@
 import * as FormField from "front-end/lib/components/form-field";
 import React from "react";
-import { InputGroup, InputGroupAddon, InputGroupText } from "reactstrap";
+import { InputGroup, InputGroupText } from "reactstrap";
 import { ADT } from "shared/lib/types";
 
 export type Value = number | null;
@@ -99,17 +99,9 @@ const ChildView: ChildComponent["view"] = (props) => {
   }
   return (
     <InputGroup>
-      {prefix ? (
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>{prefix}</InputGroupText>
-        </InputGroupAddon>
-      ) : null}
+      {prefix ? <InputGroupText>{prefix}</InputGroupText> : null}
       {input}
-      {suffix ? (
-        <InputGroupAddon addonType="append">
-          <InputGroupText>{suffix}</InputGroupText>
-        </InputGroupAddon>
-      ) : null}
+      {suffix ? <InputGroupText>{suffix}</InputGroupText> : null}
     </InputGroup>
   );
 };
