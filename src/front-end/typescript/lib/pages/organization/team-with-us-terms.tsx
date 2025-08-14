@@ -225,7 +225,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             <div className="d-flex flex-nowrap flex-row-reverse">
               <Link
                 button
-                className="ml-3"
+                className="ms-3"
                 color="primary"
                 onClick={() => dispatch(adt("accept"))}>
                 Accept Terms & Conditions

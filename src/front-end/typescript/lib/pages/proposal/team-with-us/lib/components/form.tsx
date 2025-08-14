@@ -493,7 +493,7 @@ export const EvaluationView: component_.base.View<Props> = ({ state }) => {
         <h4 className="mt-5 mb-3">Scoring Table</h4>
         <div className="table-responsive">
           <table className="table-hover">
-            <thead>
+            <thead className="table-light">
               <tr>
                 <th style={{ width: "100%" }}>Evaluation Criteria</th>
                 <th style={{ width: "0px" }}>Weightings</th>
@@ -631,7 +631,7 @@ export const ResourceQuestionsView: component_.base.View<Props> = ({
   return (
     <Row>
       <Col xs="12">
-        <p className="font-weight-bold">
+        <p className="fw-bold">
           General Instructions for Team with Us Proposal Response Form:
         </p>
         <ul>
@@ -747,7 +747,7 @@ const ContractDate: component_.base.View<ContractDateProps> = ({
   date
 }) => (
   <>
-    <p className="font-weight-bold d-flex flex-nowrap text-nowrap align-items-end mb-1">
+    <p className="fw-bold d-flex flex-nowrap text-nowrap align-items-end mb-1">
       {label}
     </p>
     {formatDate(date)}
@@ -847,7 +847,7 @@ export const ReviewProposalView: component_.base.View<Props> = ({
                   </h5>
                   <Row className="mb-2">
                     <Col md="9" xs="7">
-                      <div className="font-weight-bold d-flex flex-nowrap">
+                      <div className="fw-bold d-flex flex-nowrap">
                         Resource Name
                       </div>
                       {resource.user ? (
@@ -855,7 +855,7 @@ export const ReviewProposalView: component_.base.View<Props> = ({
                           className="d-flex text-nowrap flex-nowrap align-items-center"
                           color="body">
                           <img
-                            className="rounded-circle border mr-2"
+                            className="rounded-circle border me-2"
                             style={{
                               width: "1.75rem",
                               height: "1.75rem",
@@ -870,7 +870,7 @@ export const ReviewProposalView: component_.base.View<Props> = ({
                       )}
                     </Col>
                     <Col md="3" xs="5" className="text-center">
-                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                      <div className="fw-bold d-flex flex-nowrap justify-content-center">
                         Hourly Rate
                       </div>
                       <p>
@@ -881,13 +881,13 @@ export const ReviewProposalView: component_.base.View<Props> = ({
                     </Col>
                     <div className="w-100"></div>
                     <Col md="9" xs="7">
-                      <div className="font-weight-bold d-flex flex-nowrap">
+                      <div className="fw-bold d-flex flex-nowrap">
                         Service Area
                       </div>
                       <p>{twuServiceAreaToTitleCase(resource.serviceArea)}</p>
                     </Col>
                     <Col md="3" xs="5">
-                      <div className="font-weight-bold d-flex flex-nowrap justify-content-center">
+                      <div className="fw-bold d-flex flex-nowrap justify-content-center">
                         Allocation
                       </div>
                       <p className="text-center">

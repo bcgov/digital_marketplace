@@ -676,7 +676,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           <Header />
           <Row>
             <Col xs="12" md="9">
-              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+              <div className="rounded-3 bg-white p-4 p-sm-4h shadow-hover">
                 <Proposals state={state} dispatch={dispatch} />
               </div>
             </Col>
@@ -689,7 +689,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
           <Header />
           <Row>
             <Col xs="12" md="9">
-              <div className="rounded-lg bg-white p-4 p-sm-4h shadow-hover">
+              <div className="rounded-3 bg-white p-4 p-sm-4h shadow-hover">
                 {state.table ? (
                   state.activeTab === "my-opportunities" ? (
                     <Dashboard
@@ -751,7 +751,7 @@ const Welcome: component_.base.View<Pick<ValidState, "viewerUser">> = ({
             {!vendor ? (
               <Link
                 button
-                className="ml-sm-4 mt-3 mt-sm-0 text-nowrap"
+                className="ms-sm-4 mt-3 mt-sm-0 text-nowrap"
                 dest={routeDest(adt("opportunityCreate", null))}
                 color="primary">
                 Create Your First Opportunity
@@ -818,9 +818,9 @@ const Dashboard: component_.base.View<DashboardProps> = ({
         <GovTabs activeTab={activeTab} dispatch={dispatch} />
       ) : null}
       <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center mb-3">
-        <div className="font-weight-bold mr-sm-3">{table.title}</div>
+        <div className="fw-bold me-sm-3">{table.title}</div>
         {table.link ? (
-          <span className="d-none d-sm-inline-flex ml-sm-auto font-size-small">
+          <span className="d-none d-sm-inline-flex ms-sm-auto font-size-small">
             <Link
               dest={routeDest(table.link.route)}
               iconSymbolSize={0.9}

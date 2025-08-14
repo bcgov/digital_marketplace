@@ -136,20 +136,20 @@ const FullTimeSwitch: component_.base.View<FullTimeSwitchProps> = ({
     <div
       onClick={() => !disabled && dispatch(adt("toggleFullTime", index))}
       style={{ cursor: "pointer" }}
-      className={`d-flex align-items-stretch font-size-extra-small font-weight-bold ml-auto ${
+      className={`d-flex align-items-stretch font-size-extra-small fw-bold ms-auto ${
         disabled ? "disabled o-75" : ""
       }`}>
       <div
         className={`${baseSwitchClassName} ${selectedClassName(
           !fullTime
-        )} rounded-left border-right-0`}
+        )} rounded-start border-end-0`}
         style={{ width, padding }}>
         P/T
       </div>
       <div
         className={`${baseSwitchClassName} ${selectedClassName(
           fullTime
-        )} rounded-right border-left-0`}
+        )} rounded-end border-start-0`}
         style={{ width, padding }}>
         F/T
       </div>
@@ -174,7 +174,7 @@ const Capability: component_.base.View<CapabilityProps> = ({
   disabled
 }) => {
   return (
-    <div className="border-right border-bottom d-flex flex-nowrap align-items-center p-2">
+    <div className="border-end border-bottom d-flex flex-nowrap align-items-center p-2">
       <Link
         onClick={() => dispatch(adt("toggleChecked", index))}
         symbol_={leftPlacement(
@@ -209,7 +209,7 @@ export const view: component_.base.View<Props> = ({
   disabled
 }) => {
   return (
-    <Row noGutters className="border-top border-left">
+    <Row className="g-0 border-top border-start">
       {state.capabilities.map((c, i) => (
         <Col xs="12" md="6" key={`phase-capability-${i}`}>
           <Capability
