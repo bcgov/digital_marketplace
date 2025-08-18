@@ -93,7 +93,7 @@ export const getQuestionDetailsAction = async (
 };
 
 export const getQuestionDetailsCopilotAction = {
-  name: "getQuestionDetails",
+  name: "getQuestionDetails_review",
   description:
     "Get the current details of all questions or a specific question in the Team With Us opportunity.",
   parameters: [

@@ -157,7 +157,7 @@ ${generationErrors.map((error: any) => `- ${error}`).join("\n")}
 };
 
 export const generateQuestionsWithAICopilotAction = {
-  name: "generateQuestionsWithAI",
+  name: "generateQuestionsWithAI_review",
   description:
     "Generate comprehensive evaluation questions using AI based on the skills and service areas defined in your resources. This will create optimized questions that cover all your requirements efficiently.",
   parameters: [],

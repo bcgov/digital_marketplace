@@ -187,7 +187,7 @@ export const updateResourceAction = async (
 };
 
 export const updateResourceCopilotAction = {
-  name: "updateResource",
+  name: "updateResource_review",
   description:
     "Update a specific field of a resource in the Team With Us opportunity. Use this to modify service area, target allocation, or skills.",
   parameters: [

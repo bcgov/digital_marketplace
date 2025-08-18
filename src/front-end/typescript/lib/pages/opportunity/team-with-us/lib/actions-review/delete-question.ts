@@ -69,7 +69,7 @@ export const deleteQuestionAction = async (
 };
 
 export const deleteQuestionCopilotAction = {
-  name: "deleteQuestion",
+  name: "deleteQuestion_review",
   description:
     "Delete a specific resource question from the Team With Us opportunity.",
   parameters: [

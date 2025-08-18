@@ -1,17 +1,13 @@
-import {
-  TWUOpportunity
-} from "shared/lib/resources/opportunity/team-with-us";
+import { TWUOpportunity } from "shared/lib/resources/opportunity/team-with-us";
 
 export function opportunityToPublicState(
   opportunity: TWUOpportunity
-): Omit<TWUOpportunity, "createdBy" | "updatedBy" | "status" | "id"> {
-  const {
-    createdBy,
-    updatedBy,
-    status,
-    id,
-    ...publicState
-  } = opportunity;
+): Omit<
+  TWUOpportunity,
+  "createdBy" | "updatedBy" | "status" | "id" | "history"
+> {
+  const { createdBy, updatedBy, status, id, history, ...publicState } =
+    opportunity;
   return publicState;
 }
 
@@ -31,7 +27,7 @@ export const CREATION_SYSTEM_INSTRUCTIONS = `SYSTEM INSTRUCTIONS FOR AI:
 🎯 **CREATION WORKFLOW:**
 1. **Project Overview** → Ask for title, summary, location
 2. **Timeline Planning** → Get proposal deadline, start and completion dates
-3. **Budget Planning** → Determine maximum budget for engagement  
+3. **Budget Planning** → Determine maximum budget for engagement
 4. **Resource Requirements** → Identify needed skills and roles
 5. **Project Description** → Gather detailed scope and deliverables
 6. **Evaluation Questions** → Create questions to assess vendor proposals
@@ -48,7 +44,7 @@ export const CREATION_SYSTEM_INSTRUCTIONS = `SYSTEM INSTRUCTIONS FOR AI:
 You have access to these CopilotKit actions that you MUST USE when appropriate:
 
 1. debugTest() - Use when user asks to test actions or verify the action system is working
-2. getCriteriaDocumentation() - Use when user asks about criteria, requirements, or documentation  
+2. getCriteriaDocumentation() - Use when user asks about criteria, requirements, or documentation
 3. listAvailableDocuments() - Use when user asks for all documents, wants to see what's available, or need a complete reference list
 4. updateOpportunityDescription() - Use when user wants to update or modify the opportunity description
 5. updateOpportunityField() - Use when user wants to update any specific field (title, teaser, location, etc.)
@@ -86,13 +82,13 @@ When conducting guided creation, follow this structured approach:
 
 ### **Creation Workflow:**
 1. **Project Overview**: Get title → CALL updateOpportunityField("title", value)
-2. **Project Summary**: Get teaser → CALL updateOpportunityField("teaser", value)  
+2. **Project Summary**: Get teaser → CALL updateOpportunityField("teaser", value)
 3. **Location**: Get location → CALL updateOpportunityField("location", value)
 4. **Timeline**: Get dates → CALL updateOpportunityField("proposalDeadline", "YYYY-MM-DD") etc.
 5. **Budget**: Get budget → CALL updateOpportunityField("maxBudget", amount)
 6. **Resources**: Get resource needs → CALL addResource() then updateResource() to configure each role
 7. **Description**: Get detailed description → CALL updateOpportunityDescription(content)
-8. **Questions**: 
+8. **Questions**:
    - **AI Generation** (Recommended): CALL generateQuestionsWithAI() when resources have skills
    - **Manual Creation**: CALL addQuestion() then updateQuestion() to customize
    - **Status Check**: CALL checkQuestionGenerationStatus() to monitor AI generation
@@ -100,7 +96,7 @@ When conducting guided creation, follow this structured approach:
 
 ### **Key Action Guidelines:**
 - **For Resources**: Use addResource() to create new resources, then updateResource() to configure them with skills
-- **For Questions**: 
+- **For Questions**:
   - **AI Generation**: Use generateQuestionsWithAI() when resources have skills defined (creates optimized questions automatically)
   - **Manual Creation**: Use addQuestion() to create blank questions, then updateQuestion() to customize
   - **Status Monitoring**: Use checkQuestionGenerationStatus() to check AI generation progress
@@ -148,7 +144,7 @@ Hello! I'm your AI assistant, and I'm excited to help you create a professional 
 
 ## 📋 **Our Step-by-Step Journey:**
 1. **Project Overview** → Title, summary, and location
-2. **Timeline Planning** → Proposal deadline and project dates  
+2. **Timeline Planning** → Proposal deadline and project dates
 3. **Budget Planning** → Maximum budget for the engagement
 4. **Resource Requirements** → Skills and roles needed (I'll fill existing blank resources first)
 5. **Project Description** → Detailed scope and deliverables
@@ -167,15 +163,15 @@ First, let's give your project a clear and compelling title. This will be the fi
 
 **Great examples:**
 - "Digital Platform Modernization Initiative"
-- "Customer Portal Development Project" 
+- "Customer Portal Development Project"
 - "Data Analytics Platform Implementation"
 - "Legacy System Migration to Cloud"
 
 **What's your project title?**`;
 
-// Review-focused criteria for edit/review workflow  
+// Review-focused criteria for edit/review workflow
 export const FORMATTED_CRITERIA = `
-Please review this Team With Us opportunity and identify only the areas that need improvement or are inadequately addressed. 
+Please review this Team With Us opportunity and identify only the areas that need improvement or are inadequately addressed.
 Focus on providing specific, actionable feedback in a conversational, helpful tone without referencing technical field names or JSON structure.
 
 **Review the following areas and only mention those that need attention:**
@@ -247,7 +243,7 @@ DO NOT write function call syntax like "getCriteriaDocumentation()" in your resp
 Available actions you can call:
 - getCriteriaDocumentation() - Returns comprehensive criteria documentation with authoritative sources
 - debugTest() - Tests if action system is working
-- getOpportunityDescription() - Gets current opportunity description  
+- getOpportunityDescription() - Gets current opportunity description
 - updateOpportunityDescription(text) - Updates description (edit mode only)
 
 The actions provide:
@@ -258,14 +254,16 @@ The actions provide:
 
 If the opportunity adequately addresses all areas, simply respond with: "This opportunity appears to be well-structured and complete. No significant improvements needed."
 
-Otherwise, provide specific suggestions for the areas that need attention, focusing on improvements that would make this opportunity more compliant with procurement requirements, 
+Otherwise, provide specific suggestions for the areas that need attention, focusing on improvements that would make this opportunity more compliant with procurement requirements,
 more attractive to qualified vendors, and more likely to result in successful project outcomes.
 
 After your review, identify the most critical issue you found and ask: "Would you like me to help you address [the most pressing issue], or would you prefer guidance on a different aspect of the opportunity?"
 `;
 
 // Utility functions for Team With Us opportunity creation
-export function parseDateValue(dateStr: string): [number, number, number] | null {
+export function parseDateValue(
+  dateStr: string
+): [number, number, number] | null {
   const match = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
   if (!match) return null;
   const [, year, month, day] = match;
@@ -274,29 +272,29 @@ export function parseDateValue(dateStr: string): [number, number, number] | null
 
 // Service area options for resources
 export const SERVICE_AREA_OPTIONS = [
-  'DevOps Engineer',
-  'Software Developer', 
-  'Cybersecurity Specialist',
-  'Data Specialist',
-  'UX Designer',
-  'Other'
+  "DevOps Engineer",
+  "Software Developer",
+  "Cybersecurity Specialist",
+  "Data Specialist",
+  "UX Designer",
+  "Other"
 ] as const;
 
-export type ServiceArea = typeof SERVICE_AREA_OPTIONS[number];
+export type ServiceArea = (typeof SERVICE_AREA_OPTIONS)[number];
 
 // Common field types for form configuration
 export const FIELD_TYPES = {
-  TEXT: 'text',
-  NUMBER: 'number',
-  DATE: 'date',
-  RADIO: 'radio'
+  TEXT: "text",
+  NUMBER: "number",
+  DATE: "date",
+  RADIO: "radio"
 } as const;
 
 // Tab names for form navigation
 export const TAB_NAMES = {
-  OVERVIEW: 'Overview',
-  RESOURCE_DETAILS: 'Resource Details',
-  RESOURCE_QUESTIONS: 'Resource Questions',
-  EVALUATION_PANEL: 'Evaluation Panel',
-  SCORING: 'Scoring'
-} as const; 
+  OVERVIEW: "Overview",
+  RESOURCE_DETAILS: "Resource Details",
+  RESOURCE_QUESTIONS: "Resource Questions",
+  EVALUATION_PANEL: "Evaluation Panel",
+  SCORING: "Scoring"
+} as const;

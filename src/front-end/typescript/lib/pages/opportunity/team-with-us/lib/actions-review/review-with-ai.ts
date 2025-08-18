@@ -45,7 +45,7 @@ export const reviewWithAIAction = async (
 };
 
 export const reviewWithAICopilotAction = {
-  name: "reviewWithAI",
+  name: "reviewWithAI_review",
   description:
     "Trigger an AI review of the current opportunity. This will analyze the opportunity and provide feedback based on evaluation criteria.",
   parameters: [],

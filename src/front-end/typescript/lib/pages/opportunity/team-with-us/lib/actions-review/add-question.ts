@@ -61,7 +61,7 @@ export const addQuestionAction = async (
 };
 
 export const addQuestionCopilotAction = {
-  name: "addQuestion",
+  name: "addQuestion_review",
   description:
     "Add a new resource question to the Team With Us opportunity. This will create a blank question that you can then customize.",
   parameters: [],

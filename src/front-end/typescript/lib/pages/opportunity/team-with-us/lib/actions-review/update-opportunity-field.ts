@@ -214,7 +214,7 @@ export const updateOpportunityFieldAction = async (
 };
 
 export const updateOpportunityFieldCopilotAction = {
-  name: "updateOpportunityField",
+  name: "updateOpportunityField_review",
   description:
     "Update any field in the Team With Us opportunity form. Use this when users want to modify specific fields like title, location, budget, dates, etc.",
   parameters: [

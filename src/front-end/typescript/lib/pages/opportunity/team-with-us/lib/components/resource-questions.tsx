@@ -305,8 +305,8 @@ function createQuestion(
   });
   return [
     {
-      question: immutable(questionState),
-      guideline: immutable(guidelineState),
+      question: immutable<PlateEditor.State>(questionState),
+      guideline: immutable<PlateEditor.State>(guidelineState),
       wordLimit: immutable(wordLimitState),
       score: immutable(scoreState),
       minimumScore: immutable(minimumScoreState)
@@ -709,10 +709,10 @@ export function validate(state: Immutable<State>): Immutable<State> {
   return state.questions.reduce((acc, q, i) => {
     return acc
       .updateIn(["questions", i, "question"], (s) =>
-        FormField.validate(s as any)
+        PlateEditor.validate(s as any)
       )
       .updateIn(["questions", i, "guideline"], (s) =>
-        FormField.validate(s as any)
+        PlateEditor.validate(s as any)
       )
       .updateIn(["questions", i, "wordLimit"], (s) =>
         FormField.validate(s as any)

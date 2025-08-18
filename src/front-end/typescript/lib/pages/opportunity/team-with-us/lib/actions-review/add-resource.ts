@@ -53,7 +53,7 @@ export const addResourceAction = async (
 };
 
 export const addResourceCopilotAction = {
-  name: "addResource",
+  name: "addResource_review",
   description:
     "Add a new resource to the Team With Us opportunity. Use this when the user wants to add another resource requirement.",
   parameters: [],

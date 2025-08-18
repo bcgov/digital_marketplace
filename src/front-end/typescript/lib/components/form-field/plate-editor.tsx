@@ -61,15 +61,16 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       switch (msg.value.tag) {
         case "onChangeTextArea": {
           const newState = state
-            .set("child", {
-              ...state.child,
-              value: msg.value.value[0]
-            })
+            .set("child", { ...state.child, value: msg.value.value[0] })
             .set("isDirty", true);
           // Trigger validation after content change when field is dirty
           return [validate(newState), []];
         }
+        default:
+          return [state, []];
       }
+    default:
+      return [state, []];
   }
 };
 

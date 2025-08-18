@@ -68,7 +68,7 @@ export const deleteResourceAction = async (
 };
 
 export const deleteResourceCopilotAction = {
-  name: "deleteResource",
+  name: "deleteResource_review",
   description:
     "Delete a resource from the Team With Us opportunity. Use this when the user wants to remove a resource requirement.",
   parameters: [

@@ -83,7 +83,7 @@ ${questions
 };
 
 export const checkQuestionGenerationStatusCopilotAction = {
-  name: "checkQuestionGenerationStatus",
+  name: "checkQuestionGenerationStatus_review",
   description:
     "Check the current status of AI question generation. Use this to see if generation is in progress, complete, or if there were any errors.",
   parameters: [],

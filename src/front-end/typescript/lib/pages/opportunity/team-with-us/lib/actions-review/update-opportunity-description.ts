@@ -103,7 +103,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}
 };
 
 export const updateOpportunityDescriptionCopilotAction = {
-  name: "updateOpportunityDescription",
+  name: "updateOpportunityDescription_review",
   description:
     "EDIT, UPDATE, MODIFY, or REWRITE the opportunity description field. Use this action when the user wants to: edit the description, update the description, modify the description, add content to the description, improve the description, rewrite the description, or change the description text. This includes adding budget guidance, technical requirements, or any other content to the description.",
   parameters: [

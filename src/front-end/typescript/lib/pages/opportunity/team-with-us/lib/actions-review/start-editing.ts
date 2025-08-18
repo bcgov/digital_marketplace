@@ -37,7 +37,7 @@ export const startEditingAction = async (
 };
 
 export const startEditingCopilotAction = {
-  name: "startEditing",
+  name: "startEditing_review",
   description:
     "Start editing mode for the Team With Us opportunity. Use this when users want to edit, modify, or make changes to the opportunity. This enables the form for editing.",
   parameters: [],

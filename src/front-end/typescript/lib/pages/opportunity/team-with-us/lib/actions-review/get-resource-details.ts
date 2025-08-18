@@ -93,7 +93,7 @@ export const getResourceDetailsAction = async (
 };
 
 export const getResourceDetailsCopilotAction = {
-  name: "getResourceDetails",
+  name: "getResourceDetails_review",
   description:
     "Get the current details of all resources or a specific resource in the Team With Us opportunity.",
   parameters: [

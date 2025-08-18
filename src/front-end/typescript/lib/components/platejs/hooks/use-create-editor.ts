@@ -142,10 +142,10 @@ export const useCreateEditor = (
     // ...FloatingToolbarKit,
   ];
 
-  console.log(
-    "🔧 [useCreateEditor] Editor plugins registered:",
-    editorPlugins.map((p: any) => p.key)
-  );
+  // console.log(
+  //   "🔧 [useCreateEditor] Editor plugins registered:",
+  //   editorPlugins.map((p: any) => p.key)
+  // );
 
   const configuredEditorPlugins = readOnly
     ? [] //viewPlugins

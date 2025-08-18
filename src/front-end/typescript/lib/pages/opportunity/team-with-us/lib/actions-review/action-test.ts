@@ -14,7 +14,7 @@ export const actionTestAction = async (
 };
 
 export const actionTestCopilotAction = {
-  name: "actionTest",
+  name: "actionTest_review",
   description:
     "A simple action that responds immediately. Use this when the user asks 'test actions' or 'are actions working'.",
   parameters: [],

@@ -14,22 +14,33 @@ export const reviewOpportunityAction = async (
   _dispatch: GenericDispatch
 ): Promise<string> => {
   console.log("🚨🚨🚨 reviewOpportunity ACTION CALLED! 🚨🚨🚨");
+  console.log("🔍 State keys:", Object.keys(state));
+  console.log("🔍 Opportunity exists:", !!state.opportunity);
+  console.log("🔍 Form exists:", !!state.form);
 
   // Get the reviewInProgress ref from state
   const reviewInProgress = state.reviewInProgress;
 
-  console.log("🔍 Review in progress:", reviewInProgress);
-
   // Prevent multiple simultaneous calls
   if (reviewInProgress?.current) {
-    console.log("⚠️ Review already in progress, skipping duplicate call");
     return "⏳ A review is already in progress. Please wait for it to complete.";
   }
 
-  console.log("🔍 Starting comprehensive opportunity review...");
+  // Check for opportunity data in multiple possible locations
+  let opportunity = state.opportunity;
+  if (!opportunity && state.form?.opportunity) {
+    console.log("Found opportunity in form.opportunity");
+    opportunity = state.form.opportunity;
+  }
+  if (!opportunity && state.form?.state?.opportunity) {
+    console.log("Found opportunity in form.state.opportunity");
+    opportunity = state.form.state.opportunity;
+  }
 
-  if (!state.opportunity) {
-    return "❌ Error: No opportunity data available for review.";
+  if (!opportunity) {
+    console.error("❌ No opportunity data found in any expected location");
+    console.error("❌ State structure:", state);
+    return "It seems I wasn't able to access the opportunity data needed for the review. Could you please confirm if you want me to review the current opportunity you have been editing? If so, I will fetch the latest details and proceed with the review.";
   }
 
   try {
@@ -37,9 +48,10 @@ export const reviewOpportunityAction = async (
       reviewInProgress.current = true;
     }
 
+    console.log("✅ Opportunity data found:", opportunity);
+
     // Perform the review directly without triggering the reviewWithAI workflow
     // This prevents the loop that was caused by the workflow
-    // const _opportunity = state.opportunity;
     const form = state.form;
 
     if (!form) {
@@ -68,7 +80,7 @@ export const reviewOpportunityAction = async (
 };
 
 export const reviewOpportunityCopilotAction = {
-  name: "reviewOpportunity",
+  name: "reviewOpportunity_review",
   description:
     "Perform a comprehensive review of the Team With Us opportunity against procurement criteria. Use this ONLY when users explicitly request a review. Do not call automatically or repeatedly.",
   parameters: [],

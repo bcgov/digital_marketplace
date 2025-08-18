@@ -157,7 +157,7 @@ export const updateQuestionAction = async (
 };
 
 export const updateQuestionCopilotAction = {
-  name: "updateQuestion",
+  name: "updateQuestion_review",
   description:
     "Update a specific field of a resource question in the Team With Us opportunity. Use this to modify question text, guidelines, word limits, or scoring.",
   parameters: [

@@ -75,7 +75,7 @@ export const getOpportunityFieldValueAction = async (
 };
 
 export const getOpportunityFieldValueCopilotAction = {
-  name: "getOpportunityFieldValue",
+  name: "getOpportunityFieldValue_review",
   description:
     "Get the current value of any field in the Team With Us opportunity form. Use this to check what's currently in a field before updating it.",
   parameters: [

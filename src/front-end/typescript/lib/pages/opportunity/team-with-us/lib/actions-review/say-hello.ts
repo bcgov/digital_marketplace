@@ -14,7 +14,7 @@ export const sayHelloAction = async (
 };
 
 export const sayHelloCopilotAction = {
-  name: "sayHello",
+  name: "sayHello_review",
   description: "Say hello to someone.",
   parameters: [
     {
