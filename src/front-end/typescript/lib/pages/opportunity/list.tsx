@@ -687,7 +687,7 @@ const Filters: component_.page.View<State, InnerMsg, Route> = ({
       <Col
         xs="12"
         md="4"
-        className="d-flex align-items-end order-2 order-md-3 ml-auto">
+        className="d-flex align-items-end order-2 order-md-3 ms-auto">
         <ShortText.view
           extraChildProps={{}}
           placeholder="Search by Title or Location"
@@ -748,7 +748,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
 
   return (
     <Col xs="12" md="6" className="mb-4h" style={{ minHeight: "320px" }}>
-      <div className="overflow-hidden shadow-hover w-100 h-100 rounded-lg border align-items-stretch d-flex flex-column align-items-stretch">
+      <div className="overflow-hidden shadow-hover w-100 h-100 rounded-3 border align-items-stretch d-flex flex-column align-items-stretch">
         <Link
           disabled={disabled}
           style={{ outline: "none" }}
@@ -769,7 +769,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
               value={`Close${
                 isAcceptingProposals ? "s" : "d"
               } ${formatDateAtTime(opportunity.value.proposalDeadline, true)}`}
-              className="ml-sm-3 flex-shrink-0"
+              className="ms-sm-3 flex-shrink-0"
             />
           </div>
           <p className="mt-3 mb-0 text-secondary font-size-small">
@@ -781,7 +781,7 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
           className="px-4 pt-3 border-top d-flex flex-wrap mt-auto flex-shrink-0 flex-grow-0 font-size-small align-items-center">
           <IconInfo
             small
-            className="mr-3 mb-3"
+            className="me-3 mb-3"
             value={formatAmount(
               oppHelpers(opportunity).list.getOppDollarAmount(
                 opportunity.value
@@ -792,15 +792,15 @@ const OpportunityCard: component_.base.View<OpportunityCardProps> = ({
           />
           <IconInfo
             small
-            className="mr-3 mb-3 d-none d-sm-flex"
+            className="me-3 mb-3 d-none d-sm-flex"
             value={opportunity.value.location}
             name="map-marker-outline"
           />
-          <div className="mr-auto">
+          <div className="me-auto">
             {opportunity.value.remoteOk ? (
               <IconInfo
                 small
-                className="mr-3 mb-3"
+                className="me-3 mb-3"
                 value="Remote OK"
                 name="laptop-outline"
               />
@@ -867,7 +867,7 @@ const OpportunityList: component_.base.View<OpportunityListProps> = ({
         pill
         color="success"
         text={String(opportunities.length)}
-        className="font-size-small ml-2"
+        className="font-size-small ms-2"
       />
     ) : undefined;
   return (
@@ -911,10 +911,10 @@ const OpportunityList: component_.base.View<OpportunityListProps> = ({
           titleClassName="h4 mb-0"
           iconWidth={2}
           iconHeight={2}
-          iconClassName="mr-3"
+          iconClassName="me-3"
           chevronWidth={1.5}
           chevronHeight={1.5}
-          chevronClassName="ml-3"
+          chevronClassName="ms-3"
           linkClassName="w-auto"
           open={isOpen}
           childrenWrapperClassName={isOpen ? "pt-2" : ""}>

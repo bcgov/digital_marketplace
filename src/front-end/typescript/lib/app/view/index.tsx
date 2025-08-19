@@ -82,7 +82,7 @@ import {
   Toast,
   ToastBody
 } from "reactstrap";
-import { SHOW_TEST_INDICATOR } from "shared/config";
+import { VITE_SHOW_TEST_INDICATOR } from "shared/config";
 import { hasAcceptedTermsOrIsAnonymous } from "shared/lib/resources/session";
 import { UserType } from "shared/lib/resources/user";
 import { ADT, adt, adtCurried } from "shared/lib/types";
@@ -572,7 +572,13 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
         className="align-items-center"
         toggle={closeModal}
         close={
-          <Icon hover name="times" color="secondary" onClick={closeModal} />
+          <Icon
+            hover
+            name="times"
+            color="secondary"
+            onClick={closeModal}
+            className="ms-auto"
+          />
         }>
         {modalToShow.title}
       </ModalHeader>
@@ -585,22 +591,27 @@ const ViewModal: component_.base.View<ViewModalProps> = ({
             {modalToShow.actions.map(
               ({ loading, disabled, icon, button, text, color, msg }, i) => {
                 const props = {
-                  key: `modal-action-${i}`,
                   symbol_: icon && leftPlacement(iconLinkSymbol(icon)),
                   color,
                   loading,
                   disabled,
                   onClick: () => dispatch(msg),
-                  className: i === 0 ? "mx-0" : "mr-3"
+                  className: i === 0 ? "mx-0" : "me-3"
                 };
                 if (button) {
+                  // Use a key that includes text in addition to index
+                  // (SonarQube - "Avoid using index as key")
                   return (
-                    <Link button {...props}>
+                    <Link key={`modal-action-${i}-${text}`} button {...props}>
                       {text}
                     </Link>
                   );
                 } else {
-                  return <Link {...props}>{text}</Link>;
+                  return (
+                    <Link key={`modal-action-${i}-${text}`} {...props}>
+                      {text}
+                    </Link>
+                  );
                 }
               }
             )}
@@ -661,7 +672,7 @@ const ViewToasts: component_.base.ComponentView<State, Msg> = ({
             <strong className="mx-2">{toast.value.title}</strong>
             <Icon
               hover
-              className="ml-auto"
+              className="ms-auto"
               name="times"
               color="secondary"
               onClick={() => dispatch(adt("dismissToast", i))}
@@ -838,7 +849,7 @@ function regularNavProps(
     dispatch: dispatchNav,
     isLoading: !!state.incomingRoute,
     logoImageUrl: prefixPath(
-      SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
+      VITE_SHOW_TEST_INDICATOR ? "/images/logo_test.svg" : "/images/logo.svg"
     ),
     title: "Digital Marketplace",
     homeDest: routeDest(adt("landing", null)),

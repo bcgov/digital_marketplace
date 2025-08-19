@@ -218,7 +218,7 @@ function ConditionalHelpToggle<
         color="info"
         width={1}
         height={1}
-        className="mt-n1 ml-2 flex-shrink-0 d-inline"
+        className="mt-n1 ms-2 flex-shrink-0 d-inline"
         onClick={(e) => {
           dispatch(adt("toggleHelp"));
           e.preventDefault();
@@ -233,9 +233,7 @@ function ConditionalHelpToggle<
 export const ViewRequiredAsterisk: component_.base.View<
   Record<string, never>
 > = () => {
-  return (
-    <span className="font-weight-bold text-c-form-field-required ml-1">*</span>
-  );
+  return <span className="fw-bold text-c-form-field-required ms-1">*</span>;
 };
 
 export function ConditionalLabel<
@@ -246,7 +244,7 @@ export function ConditionalLabel<
   props: ViewProps<Value, ChildState, InnerChildMsg>
 ): component_.base.ViewElement<ViewProps<Value, ChildState, InnerChildMsg>> {
   const { state, label, required, disabled, labelClassName, action } = props;
-  const className = `font-weight-bold d-flex flex-nowrap align-items-end ${
+  const className = `fw-bold d-flex flex-nowrap align-items-end ${
     labelClassName || ""
   }`;
   if (label) {
@@ -258,7 +256,7 @@ export function ConditionalLabel<
           <ConditionalHelpToggle {...props} />
         </div>
         {action && !disabled ? (
-          <div className="flex-shrink-0 ml-0">
+          <div className="flex-shrink-0 ms-0">
             <Icon
               name={action.icon}
               color="info"

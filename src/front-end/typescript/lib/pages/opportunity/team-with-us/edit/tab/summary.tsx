@@ -250,7 +250,7 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({
     ],
     (rc: ReportCard): ReportCard => ({
       ...rc,
-      className: "flex-grow-1 mr-3 mb-4"
+      className: "flex-grow-1 me-3 mb-4"
     })
   );
 
@@ -279,11 +279,11 @@ const Details: component_.page.View<State, InnerMsg, Route> = ({
       </Row>
       <Row className="mb-5">
         <Col xs="12" sm="6">
-          <div className="font-weight-bold mb-2">Mandatory Skills</div>
+          <div className="fw-bold mb-2">Mandatory Skills</div>
           <Skills skills={skills.mandatory} />
         </Col>
         <Col xs="12" sm="6">
-          <div className="font-weight-bold mb-2">Optional Skills</div>
+          <div className="fw-bold mb-2">Optional Skills</div>
           <Skills skills={skills.optional} />
         </Col>
       </Row>
@@ -309,7 +309,7 @@ const ServiceAreasHeading: component_.base.View<{
         className="flex-shrink-0"
         style={{ marginTop: "0.3rem" }}
       />
-      <h4 className="mb-0 ml-2">{text}</h4>
+      <h4 className="mb-0 ms-2">{text}</h4>
     </div>
   );
 };

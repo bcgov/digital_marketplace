@@ -63,7 +63,7 @@ export function view<TabId>(
             <Icon
               name="caret-down"
               color="body"
-              className="ml-2"
+              className="ms-2"
               width={DROPDOWN_CARET_SIZE}
               height={DROPDOWN_CARET_SIZE}
             />
@@ -72,7 +72,7 @@ export function view<TabId>(
             {state.tabs.map((tab, i) => (
               <div
                 key={`form-tab-dropdown-item-${i}`}
-                className="dropdown-item d-flex align-items-center flex-nowrap pl-3">
+                className="dropdown-item d-flex align-items-center flex-nowrap ps-3">
                 <Link
                   symbol_={
                     valid

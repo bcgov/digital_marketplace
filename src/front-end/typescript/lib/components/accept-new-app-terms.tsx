@@ -147,7 +147,7 @@ const View: component_.base.View<Props> = ({ disabled, state, dispatch }) => {
           )
         }}
         disabled={disabled}
-        className="font-weight-bold"
+        className="fw-bold"
         state={state}
         dispatch={dispatch}
       />

@@ -383,7 +383,7 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
                 outline
                 size="sm"
                 color="info"
-                className="ml-4"
+                className="ms-4"
                 symbol_={leftPlacement(iconLinkSymbol("trash"))}
                 onClick={() => dispatch(adt("deleteQuestion", index))}>
                 Delete

@@ -760,7 +760,7 @@ const router: router_.Router<Route> = {
       }
     },
     {
-      path: "(.*)",
+      path: "*path",
       makeRoute({ path }) {
         return adt("notFound", { path });
       }

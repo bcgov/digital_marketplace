@@ -16,7 +16,13 @@ import {
   validateTWUResources
 } from "back-end/lib/validation";
 import { get, omit } from "lodash";
-import { addDays, getNumber, getString, getStringArray } from "shared/lib";
+import {
+  addDays,
+  getBoolean,
+  getNumber,
+  getString,
+  getStringArray
+} from "shared/lib";
 import { invalid } from "shared/lib/http";
 import {
   CreateRequestBody as SharedCreateRequestBody,
@@ -236,10 +242,10 @@ const create: crud.Create<
       return {
         title: getString(body, "title"),
         teaser: getString(body, "teaser"),
-        remoteOk: get(body, "remoteOk"),
+        remoteOk: getBoolean(body, "remoteOk"),
         remoteDesc: getString(body, "remoteDesc"),
         location: getString(body, "location"),
-        resources: get(body, "resources"),
+        resources: get<typeof body, string>(body, "resources"),
         description: getString(body, "description"),
         proposalDeadline: getString(body, "proposalDeadline"),
         assignmentDate: getString(body, "assignmentDate"),
@@ -251,8 +257,8 @@ const create: crud.Create<
         priceWeight: getNumber(body, "priceWeight"),
         attachments: getStringArray(body, "attachments"),
         status: getString(body, "status"),
-        resourceQuestions: get(body, "resourceQuestions"),
-        evaluationPanel: get(body, "evaluationPanel")
+        resourceQuestions: get<typeof body, string>(body, "resourceQuestions"),
+        evaluationPanel: get<typeof body, string>(body, "evaluationPanel")
       };
     },
     // ensure the accuracy of values coming in from the request body
@@ -556,17 +562,20 @@ const update: crud.Update<
   return {
     async parseRequestBody(request) {
       const body = request.body.tag === "json" ? request.body.value : {};
-      const tag: UpdateRequestBody["tag"] = get(body, "tag");
+      const tag: UpdateRequestBody["tag"] = get<typeof body, string>(
+        body,
+        "tag"
+      );
       const value: unknown = get(body, "value");
       switch (tag) {
         case "edit": {
           return adt("edit", {
             title: getString(value, "title"),
             teaser: getString(value, "teaser"),
-            remoteOk: get(value, "remoteOk"),
+            remoteOk: getBoolean(value, "remoteOk"),
             remoteDesc: getString(value, "remoteDesc"),
             location: getString(value, "location"),
-            resources: get(value, "resources"),
+            resources: get<typeof value, string>(value, "resources"),
             description: getString(value, "description"),
             proposalDeadline: getString(value, "proposalDeadline"),
             assignmentDate: getString(value, "assignmentDate"),
@@ -577,8 +586,11 @@ const update: crud.Update<
             challengeWeight: getNumber<number>(value, "challengeWeight"),
             priceWeight: getNumber<number>(value, "priceWeight"),
             attachments: getStringArray(value, "attachments"),
-            resourceQuestions: get(value, "resourceQuestions"),
-            evaluationPanel: get(value, "evaluationPanel")
+            resourceQuestions: get<typeof value, string>(
+              value,
+              "resourceQuestions"
+            ),
+            evaluationPanel: get<typeof value, string>(value, "evaluationPanel")
           });
         }
         case "submitForReview":

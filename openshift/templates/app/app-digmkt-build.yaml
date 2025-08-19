@@ -102,7 +102,7 @@ parameters:
   required: true
   value: latest
 
-- name: SHOW_TEST_INDICATOR
+- name: VITE_SHOW_TEST_INDICATOR
   displayName: Show test environment indicators in emails and banners.
   required: true
   value: '0'

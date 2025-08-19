@@ -1231,9 +1231,9 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 export const AgreementView: component_.base.View = () => (
   <div className="table-responsive">
     <table className="table-hover" style={{ textAlign: "center" }}>
-      <thead>
+      <thead className="table-light">
         <tr>
-          <th className="text-left" style={{ width: "50%" }}>
+          <th className="text-start" style={{ width: "50%" }}>
             Responsibility
           </th>
           <th className="text-nowrap" style={{ width: "50%" }}>
@@ -1246,63 +1246,63 @@ export const AgreementView: component_.base.View = () => (
       </thead>
       <tbody>
         <tr>
-          <td className="text-left">Project Funding</td>
+          <td className="text-start">Project Funding</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Problem Statement</td>
+          <td className="text-start">Problem Statement</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Business Area Expertise</td>
+          <td className="text-start">Business Area Expertise</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Technical SME</td>
+          <td className="text-start">Technical SME</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Product Owner/Roadmap</td>
+          <td className="text-start">Product Owner/Roadmap</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Creating Opportunity</td>
+          <td className="text-start">Creating Opportunity</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Evaluating Proposals</td>
+          <td className="text-start">Evaluating Proposals</td>
           <td>
             <Icon name="check" />
           </td>
           <td />
         </tr>
         <tr>
-          <td className="text-left">Consultancy</td>
+          <td className="text-start">Consultancy</td>
           <td />
           <td>
             <Icon name="check" />
           </td>
         </tr>
         <tr>
-          <td className="text-left text-nowrap">
+          <td className="text-start text-nowrap">
             Tech Advice (Code Challenge)
           </td>
           <td />
@@ -1311,14 +1311,14 @@ export const AgreementView: component_.base.View = () => (
           </td>
         </tr>
         <tr>
-          <td className="text-left">Procurement Advice</td>
+          <td className="text-start">Procurement Advice</td>
           <td />
           <td>
             <Icon name="check" />
           </td>
         </tr>
         <tr>
-          <td className="text-left">Support</td>
+          <td className="text-start">Support</td>
           <td />
           <td>
             <Icon name="check" />
@@ -1616,7 +1616,7 @@ export const PhasesView: component_.base.View<Props> = ({
           <Alert color="primary" fade={false} className="mt-4 mb-0">
             <div className="d-flex align-items-start">
               <div
-                className="flex-grow-1 pr-3"
+                className="flex-grow-1 pe-3"
                 style={{ whiteSpace: "pre-line" }}>
                 {(() => {
                   switch (startingPhase) {
@@ -1701,7 +1701,7 @@ export const ScoringView: component_.base.View<Props> = ({
             evaluation process. Assign a weight to each evaluation stage using
             the fields available below.
           </p>
-          <p className="mb-4 font-size-small font-italic">
+          <p className="mb-4 font-size-small fst-italic">
             Note: Weights are specified as percentages and the sum of all
             weights must total 100%.
           </p>

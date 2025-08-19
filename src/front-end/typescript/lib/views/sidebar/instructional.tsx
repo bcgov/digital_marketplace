@@ -44,7 +44,7 @@ function makeSidebar<
               Go Back
             </Link>
           ) : null}
-          <h1 className="mb-3 font-weight-bolder">{getTitle(state)}</h1>
+          <h1 className="mb-3 fw-bolder">{getTitle(state)}</h1>
           <div className={footer ? "mb-3" : "mb-0"}>
             {getDescription(state)}
           </div>

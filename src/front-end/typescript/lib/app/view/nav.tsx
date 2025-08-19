@@ -109,7 +109,7 @@ const NavLink: component_.base.View<NavLinkProps> = (props) => {
       {...linkProps}
       onClick={onClick}
       className={`text-nowrap ${props.className || ""} ${
-        props.active ? "font-weight-bold" : ""
+        props.active ? "fw-bold" : ""
       }`}
     />
   );
@@ -128,7 +128,7 @@ const ContextualDropdown: component_.base.View<
       <DropdownToggle tag="div">
         <Link
           symbol_={rightPlacement(iconLinkSymbol("caret-down"))}
-          symbolClassName="mr-n1"
+          symbolClassName="me-n1"
           iconSymbolSize={DROPDOWN_CARET_SIZE}
           loading={loading}
           button
@@ -137,7 +137,7 @@ const ContextualDropdown: component_.base.View<
           {text}
         </Link>
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-contextual-dropdown-group-${i}`}>
             {group.label ? (
@@ -180,7 +180,7 @@ const NavAccountDropdown: component_.base.View<
         tag="div"
         className="text-c-nav-fg text-hover-c-nav-fg"
         style={{ cursor: "pointer" }}>
-        <span className="mr-2 o-75">{text}</span>
+        <span className="me-2 o-75">{text}</span>
         <img
           src={imageUrl}
           className="rounded-circle"
@@ -193,12 +193,12 @@ const NavAccountDropdown: component_.base.View<
         <Icon
           name="caret-down"
           color="c-nav-fg"
-          className="ml-2"
+          className="ms-2"
           width={DROPDOWN_CARET_SIZE}
           height={DROPDOWN_CARET_SIZE}
         />
       </DropdownToggle>
-      <DropdownMenu right>
+      <DropdownMenu end>
         {linkGroups.map((group, i) => (
           <Fragment key={`nav-account-dropdown-group-${i}`}>
             {group.label ? (
@@ -322,7 +322,7 @@ const DesktopAccountMenu: component_.base.View<Props> = (props) => {
           {menu.value.map((action, i) => (
             <AccountAction
               action={action}
-              className={i !== menu.value.length - 1 ? "mr-3" : ""}
+              className={i !== menu.value.length - 1 ? "me-3" : ""}
               dispatch={dispatch}
               color="c-nav-fg"
               key={`desktop-account-menu-action-${i}`}
@@ -359,7 +359,7 @@ const MobileAccountMenu: component_.base.View<Props> = (props) => {
             action={clonedAction}
             color="c-nav-fg-alt"
             className={`${i !== arr.length - 1 ? marginClassName : ""} ${
-              active && !button ? "font-weight-bold" : ""
+              active && !button ? "fw-bold" : ""
             }`}
             dispatch={props.dispatch}
             key={`mobile-account-menu-action-${i}`}
@@ -370,7 +370,7 @@ const MobileAccountMenu: component_.base.View<Props> = (props) => {
   );
   switch (menu.tag) {
     case "unauthenticated":
-      return <div className="d-flex">{viewActions(menu.value, "mr-3")}</div>;
+      return <div className="d-flex">{viewActions(menu.value, "me-3")}</div>;
     case "authenticated":
       return (
         <div className="d-flex flex-column align-items-stretch">
@@ -411,7 +411,7 @@ const Title: component_.base.View<TitleProps> = ({
       color={color}
       dest={homeDest}
       style={{ pointerEvents: homeDest ? undefined : "none" }}
-      className="font-weight-bolder font-size-large"
+      className="fw-bolder font-size-large"
     />
   </div>
 );
@@ -420,7 +420,7 @@ const MobileMenu: component_.base.View<Props> = (props) => {
   const isMobileMenuOpen = props.state.isMobileMenuOpen;
   const { appLinks } = props;
   const linkClassName = (link: NavLink, numLinks: number, i: number) =>
-    `${link.active && !link.button ? "font-weight-bold" : ""} ${
+    `${link.active && !link.button ? "fw-bold" : ""} ${
       i < numLinks - 1 ? "mb-3" : ""
     }`;
   return (
@@ -486,13 +486,13 @@ const TopNavbar: component_.base.View<Props> = (props) => {
                   title={props.title}
                   homeDest={props.homeDest}
                   dispatch={dispatch}
-                  className="ml-3 d-none d-md-block"
+                  className="ms-3 d-none d-md-block"
                 />
                 {isLoading ? (
                   <Spinner
                     size="sm"
-                    color="c-nav-bg-alt"
-                    className="transition-indicator ml-3"
+                    color="secondary"
+                    className="transition-indicator ms-3"
                   />
                 ) : null}
               </div>
@@ -531,14 +531,14 @@ const ContextualLinks: component_.base.View<
     case "links":
       return (
         <div
-          className="d-flex flex-nowrap align-items-center flex-row-reverse py-1 pr-1 mr-n1"
+          className="d-flex flex-nowrap align-items-center flex-row-reverse py-1 pe-1 me-n1"
           style={{ overflowX: "auto" }}>
           {contextualActions.value.map((link, i) => {
             const linkProps = {
               ...link,
               color: link.color || "c-nav-fg-alt",
               size: link.button ? "sm" : undefined,
-              className: `ml-3 ${link.button ? "" : "font-size-small"}`
+              className: `ms-3 ${link.button ? "" : "font-size-small"}`
             } as NavLink;
             return (
               <NavLink
@@ -552,7 +552,7 @@ const ContextualLinks: component_.base.View<
       );
     case "dropdown":
       return (
-        <div className="py-1 pr-1 mr-n1">
+        <div className="py-1 pe-1 me-n1">
           <ContextualDropdown
             {...contextualActions.value}
             isOpen={isOpen}
@@ -567,7 +567,7 @@ const ContextualLinks: component_.base.View<
 const DesktopBottomNavbar: component_.base.View<Props> = (props) => {
   const { appLinks, contextualActions } = props;
   const linkClassName = (link: NavLink) =>
-    `${link.active && !link.button ? "font-weight-bold" : ""}`;
+    `${link.active && !link.button ? "fw-bold" : ""}`;
   if (!appLinks.length && !contextualActions) {
     return null;
   }

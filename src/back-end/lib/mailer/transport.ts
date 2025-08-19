@@ -6,9 +6,9 @@ import {
 import { makeDomainLogger } from "back-end/lib/logger";
 import { console as consoleAdapter } from "back-end/lib/logger/adapters";
 import { Emails } from "back-end/lib/mailer";
-import { fromString } from "html-to-text";
+import { convert } from "html-to-text";
 import nodemailer from "nodemailer";
-import { SHOW_TEST_INDICATOR } from "shared/config";
+import { VITE_SHOW_TEST_INDICATOR } from "shared/config";
 
 const logger = makeDomainLogger(consoleAdapter, "mailer");
 
@@ -27,8 +27,8 @@ export function send(params: SendParams): Promise<void> {
       {
         ...params,
         from: MAILER_FROM,
-        text: fromString(params.html, { wordwrap: 130 }),
-        subject: `${SHOW_TEST_INDICATOR ? "[TEST] " : ""}${params.subject}`
+        text: convert(params.html, { wordwrap: 130 }),
+        subject: `${VITE_SHOW_TEST_INDICATOR ? "[TEST] " : ""}${params.subject}`
       },
       (error) => {
         if (error) {

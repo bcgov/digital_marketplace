@@ -9,8 +9,8 @@ export function parseBooleanEnvironmentVariable(raw?: string): boolean | null {
   }
 }
 
-export const SHOW_TEST_INDICATOR =
-  parseBooleanEnvironmentVariable(process.env.SHOW_TEST_INDICATOR) || false;
+export const VITE_SHOW_TEST_INDICATOR =
+  process.env.VITE_SHOW_TEST_INDICATOR || false;
 
 export const CONTACT_EMAIL = "digitalmarketplace@gov.bc.ca";
 
@@ -54,4 +54,4 @@ export const DEFAULT_PAGE_SIZE = 50;
 
 export const SWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 4;
 
-export const TWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 4;
+export const TWU_CODE_CHALLENGE_SCREEN_IN_COUNT = 3;
