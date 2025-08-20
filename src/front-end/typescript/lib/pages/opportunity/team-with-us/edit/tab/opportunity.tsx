@@ -32,17 +32,15 @@ import {
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
 import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
-import { useCopilotActionWrapper } from "../../lib/hooks/use-copilot-action-wrapper";
+import { useCopilotActions } from "../../lib/hooks/use-copilot-actions";
+import { ReviewActions } from "../../lib/components/review-actions";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   opportunityToPublicState,
   FORMATTED_CRITERIA
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 import { CRITERIA_MAPPINGS } from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
-import {
-  ReviewProvider,
-  useReviewContext
-} from "../../lib/contexts/review-context";
+import { ReviewProvider } from "../../lib/contexts/review-context";
 
 type ModalId =
   | "publish"
@@ -775,79 +773,6 @@ export const Reporting: component_.base.ComponentView<State, Msg> = ({
   );
 };
 
-// Component that uses the review context to register actions
-const ReviewActions: React.FC<{
-  state: State;
-  dispatch: component_.base.Dispatch<InnerMsg>;
-}> = React.memo(({ state, dispatch }) => {
-  // todo: find a way to pass the state directly as was done originally
-  // the issue is that we're also trying to pass reviewInProgress, which exists separately from the state
-  // add this to the state instead of using context?
-  // console.log('ReviewActions()');
-  const { reviewInProgress } = useReviewContext();
-
-  // // Register the review opportunity action with the context
-  // console.log("Would have passed: ", state, state.form?.toJS)
-  // useCopilotActionWrapper(
-  //   "reviewOpportunity",
-  //   { ...state, reviewInProgress },
-  //   dispatch
-  // );
-
-  const plainState = React.useMemo(
-    () => ({
-      opportunity: state.opportunity,
-      form: state.form?.toJS ? state.form.toJS() : state.form,
-      isEditing: state.isEditing,
-      viewerUser: state.viewerUser,
-      users: state.users,
-      reviewInProgress
-    }),
-    [
-      state.opportunity,
-      state.form,
-      state.isEditing,
-      state.viewerUser,
-      state.users,
-      reviewInProgress
-    ]
-  );
-
-  const memoizedDispatch = React.useCallback(dispatch, [dispatch]);
-  // console.log('plainState: ', plainState);
-  useCopilotActionWrapper(
-    "reviewOpportunity",
-    plainState,
-    memoizedDispatch,
-    "review"
-  );
-
-  return null;
-
-  // console.log('ReviewActions()');
-  // const { reviewInProgress } = useReviewContext();
-
-  // // Memoize the state object to prevent unnecessary re-registrations
-  // const memoizedState = React.useMemo(() => {
-  //   return { ...state, reviewInProgress };
-  // }, [state, reviewInProgress]);
-
-  // // Memoize the dispatch to prevent unnecessary re-registrations
-  // const memoizedDispatch = React.useCallback(dispatch, [dispatch]);
-
-  // // Register the review opportunity action with the context
-  // useCopilotActionWrapper(
-  //   "reviewOpportunity",
-  //   memoizedState,
-  //   memoizedDispatch
-  // );
-
-  // return null;
-});
-
-// Add display name for the memoized component
-ReviewActions.displayName = "ReviewActions";
-
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
   const isStartEditingLoading = state.startEditingLoading > 0;
@@ -1025,113 +950,8 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     }
   });
 
-  // Count how many times actions are registered (should be minimal)
-  const actionRegistrationCount = React.useRef(0);
-  actionRegistrationCount.current += 1;
-
-  // Log registration count (should stay low)
-  useEffect(() => {
-    console.log(
-      `🔧 CopilotKit actions registered (count: ${actionRegistrationCount.current})`,
-      {
-        isEditing: state.isEditing,
-        hasForm: !!state.form,
-        hasOpportunity: !!state.opportunity
-      }
-    );
-  }, []); // Empty dependency array = run once on mount
-
-  useCopilotActionWrapper(
-    "updateOpportunityDescription",
-    state,
-    dispatch,
-    "review"
-  );
-
-  // Copilot action to get the current description
-  useCopilotActionWrapper(
-    "getOpportunityDescription",
-    state,
-    dispatch,
-    "review"
-  );
-
-  // Add copilot action for criteria documentation lookup
-  useCopilotActionWrapper(
-    "getCriteriaDocumentation",
-    state,
-    dispatch,
-    "review"
-  );
-
-  // Add action to list all available documents with links
-  useCopilotActionWrapper("listAvailableDocuments", state, dispatch, "review");
-
-  // Add a simple debug action to test if actions work at all
-  useCopilotActionWrapper("debugTest", state, dispatch, "review");
-
-  // Comprehensive action to update any form field
-  useCopilotActionWrapper("updateOpportunityField", state, dispatch, "review");
-
-  // Action to add a new resource
-  useCopilotActionWrapper("addResource", state, dispatch, "review");
-
-  // Action to delete a resource
-  useCopilotActionWrapper("deleteResource", state, dispatch, "review");
-
-  // Action to update resource fields
-  useCopilotActionWrapper("updateResource", state, dispatch, "review");
-
-  // Action to get resource details
-  useCopilotActionWrapper("getResourceDetails", state, dispatch, "review");
-
-  // ==================== QUESTION MANAGEMENT ACTIONS ====================
-
-  // Action to add a new question
-  useCopilotActionWrapper("addQuestion", state, dispatch, "review");
-
-  // Action to delete a question
-  useCopilotActionWrapper("deleteQuestion", state, dispatch, "review");
-
-  // Action to update a question
-  useCopilotActionWrapper("updateQuestion", state, dispatch, "review");
-
-  // Action to get question details
-  useCopilotActionWrapper("getQuestionDetails", state, dispatch, "review");
-
-  // ==================== FIELD MANAGEMENT ACTIONS ====================
-
-  // Action to get current field values
-  useCopilotActionWrapper(
-    "getOpportunityFieldValue",
-    state,
-    dispatch,
-    "review"
-  );
-
-  // Add a very simple action for easy testing
-  useCopilotActionWrapper("actionTest", state, dispatch, "review");
-
-  // Add ref to track processed messages to prevent loops
-  // const _processedMessages = React.useRef(new Set<string>());
-
-  useCopilotActionWrapper("startEditing", state, dispatch, "review");
-
-  useCopilotActionWrapper("sayHello", state, dispatch, "review");
-
-  // Action to generate questions with AI based on skills
-  useCopilotActionWrapper("generateQuestionsWithAI", state, dispatch, "review");
-
-  // Action to check AI generation status
-  useCopilotActionWrapper(
-    "checkQuestionGenerationStatus",
-    state,
-    dispatch,
-    "review"
-  );
-
-  // Action to trigger review with AI
-  useCopilotActionWrapper("reviewWithAI", state, dispatch, "review");
+  // Use the unified CopilotKit actions hook
+  useCopilotActions({ state, dispatch, context: "edit" });
 
   useEffect(() => {
     if (state.opportunityForReview) {
@@ -1173,7 +993,7 @@ ${FORMATTED_CRITERIA}`,
   // console.log('render state: ', state)
   return (
     <ReviewProvider>
-      <ReviewActions state={state} dispatch={dispatch} />
+      <ReviewActions state={state} dispatch={dispatch} context="edit" />
       <OpportunityViewWrapper
         {...props}
         opportunity={opportunity}

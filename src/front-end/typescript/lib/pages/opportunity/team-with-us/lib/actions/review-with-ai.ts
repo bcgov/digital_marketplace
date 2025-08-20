@@ -13,9 +13,16 @@ export const reviewWithAIAction = async (
   state: GenericFormState,
   dispatch: GenericDispatch
 ): Promise<string> => {
-  console.log("🚨🚨🚨 reviewWithAI ACTION CALLED ON EDIT PAGE! 🚨🚨🚨");
+  console.log(
+    "🚨🚨🚨 reviewWithAI ACTION CALLED ON EDIT PAGE! 🚨🚨🚨, state: ",
+    state
+  );
 
   if (!state.opportunity) {
+    console.log(
+      "❌ No opportunity available. Please try refreshing the page, state: ",
+      state
+    );
     return "❌ Error: No opportunity available. Please try refreshing the page.";
   }
 

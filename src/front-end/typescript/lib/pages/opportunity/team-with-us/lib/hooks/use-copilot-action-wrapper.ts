@@ -13,9 +13,7 @@ import { deleteQuestionCopilotAction } from "../actions/delete-question";
 import { getOpportunityFieldValueCopilotAction } from "../actions/get-opportunity-field-value";
 import { getResourceDetailsCopilotAction } from "../actions/get-resource-details";
 import { getQuestionDetailsCopilotAction } from "../actions/get-question-details";
-import { actionTestCopilotAction } from "../actions/action-test";
 import { getOpportunityDescriptionCopilotAction } from "../actions/get-opportunity-description";
-import { sayHelloCopilotAction } from "../actions/say-hello";
 
 // Import workflow-specific actions
 import { startGuidedCreationCopilotAction } from "../actions/start-guided-creation";
@@ -35,8 +33,6 @@ import {
 } from "../actions/debug-actions";
 import { generateQuestionsWithAICopilotAction } from "../actions/generate-questions-with-ai";
 import { checkQuestionGenerationStatusCopilotAction } from "../actions/check-question-generation-status";
-import { testAddResourceCopilotAction } from "../actions/test-add-resource";
-import { testAddQuestionCopilotAction } from "../actions/test-add-question";
 
 // Import unified context interface
 import { UnifiedActionContext } from "../actions/base-action-template";
@@ -98,10 +94,8 @@ registerAction(deleteQuestionCopilotAction);
 registerAction(getOpportunityFieldValueCopilotAction);
 registerAction(getResourceDetailsCopilotAction);
 registerAction(getQuestionDetailsCopilotAction);
-registerAction(actionTestCopilotAction);
 registerAction(getOpportunityDescriptionCopilotAction);
 registerAction(reviewWithAICopilotAction);
-registerAction(sayHelloCopilotAction);
 
 // Register workflow-specific actions
 registerAction(startGuidedCreationCopilotAction); // Creation workflow only
@@ -122,8 +116,6 @@ registerAction(debugGenerateQuestionsWithAICopilotAction);
 registerAction(debugResourceSelectionCopilotAction);
 registerAction(generateQuestionsWithAICopilotAction);
 registerAction(checkQuestionGenerationStatusCopilotAction);
-registerAction(testAddResourceCopilotAction);
-registerAction(testAddQuestionCopilotAction);
 
 // The main wrapper hook for unified actions
 export const useCopilotActionWrapper = (

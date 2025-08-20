@@ -28,7 +28,8 @@ import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional"
 import React, { useEffect } from "react";
 import {
   TWUOpportunity,
-  TWUOpportunityStatus
+  TWUOpportunityStatus,
+  TWUServiceArea
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User, UserType } from "shared/lib/resources/user";
 import { adt, ADT } from "shared/lib/types";
@@ -50,7 +51,85 @@ import {
 } from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
 
 // import ActionDebugPanel from "front-end/lib/pages/opportunity/team-with-us/lib/action-debug";
-import { useCopilotActionWrapper } from "front-end/lib/pages/opportunity/team-with-us/lib/hooks/use-copilot-action-wrapper";
+import { useCopilotActions } from "front-end/lib/pages/opportunity/team-with-us/lib/hooks/use-copilot-actions";
+import { ReviewActions } from "front-end/lib/pages/opportunity/team-with-us/lib/components/review-actions";
+
+// Debug flag to enable test data initialization
+const ENABLE_TEST_DATA = false; // Set to true to enable test data
+
+// Test data generator function
+function createTestOpportunity(viewerUser: User): TWUOpportunity {
+  return {
+    id: "test-opportunity-id",
+    title: "Digital Service Enhancement Project",
+    teaser:
+      "Enhance and modernize digital services for better user experience and streamlined operations.",
+    remoteOk: true,
+    remoteDesc: "Remote work is acceptable for this project.",
+    location: "Victoria",
+    proposalDeadline: new Date("2024-07-12"),
+    assignmentDate: new Date("2024-07-15"),
+    startDate: new Date("2024-08-01"),
+    completionDate: new Date("2025-01-31"),
+    maxBudget: 200000,
+    questionsWeight: 30,
+    challengeWeight: 40,
+    priceWeight: 30,
+    description:
+      "Modernization of digital platforms, integration of analytics, and user-focused enhancements. Deliverables include updated platforms, documentation, training, and dashboards.",
+    resources: [
+      {
+        id: "test-resource-1",
+        serviceArea: TWUServiceArea.FullStackDeveloper,
+        targetAllocation: 100,
+        mandatorySkills: ["JavaScript", "React", "Node.js", "REST APIs"],
+        optionalSkills: ["Agile", "TypeScript"],
+        order: 1
+      },
+      {
+        id: "test-resource-2",
+        serviceArea: TWUServiceArea.DataProfessional,
+        targetAllocation: 100,
+        mandatorySkills: ["SQL", "Python", "Data Visualization"],
+        optionalSkills: ["ETL", "Stakeholder Engagement"],
+        order: 2
+      }
+    ],
+    resourceQuestions: [
+      {
+        question: "What experience do you have with React and Node.js?",
+        guideline:
+          "Please provide specific examples of React applications you have built.",
+        score: 5,
+        wordLimit: 500,
+        order: 1,
+        createdAt: new Date(),
+        createdBy: viewerUser
+      },
+      {
+        question:
+          "How would you approach data visualization for executive dashboards?",
+        guideline:
+          "Describe your experience with data visualization tools and methodologies.",
+        score: 5,
+        wordLimit: 500,
+        order: 2,
+        createdAt: new Date(),
+        createdBy: viewerUser
+      }
+    ],
+    status: TWUOpportunityStatus.Draft,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: viewerUser,
+    updatedBy: viewerUser,
+    publishedAt: undefined,
+    reporting: undefined,
+    history: [],
+    attachments: [],
+    addenda: []
+  };
+}
 
 type TWUCreateSubmitStatus =
   | TWUOpportunityStatus.Published
@@ -101,7 +180,13 @@ const init: component_.page.Init<
 > = isUserType<RouteParams, State, InnerMsg>({
   userType: [UserType.Government, UserType.Admin],
   success({ shared, routePath }) {
+    // Create test data if enabled
+    const testOpportunity = ENABLE_TEST_DATA
+      ? createTestOpportunity(shared.sessionUser)
+      : undefined;
+
     const [formState, formCmds] = Form.init({
+      opportunity: testOpportunity,
       canRemoveExistingAttachments: true, //moot
       viewerUser: shared.sessionUser,
       users: []
@@ -170,7 +255,14 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
             ]
           ];
         }
+
+        // Create test data if enabled
+        const testOpportunity = ENABLE_TEST_DATA
+          ? createTestOpportunity(state.viewerUser)
+          : undefined;
+
         const [formState, formCmds] = Form.init({
+          opportunity: testOpportunity,
           canRemoveExistingAttachments: true, //moot
           viewerUser: state.viewerUser,
           users: response.value
@@ -720,95 +812,8 @@ Please provide a comprehensive answer that references these authoritative source
       handleNewMessages();
     }, [visibleMessages, appendMessage]);
 
-    // Add copilot action for criteria documentation lookup
-    useCopilotActionWrapper(
-      "getCriteriaDocumentation",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Add action to list all available documents with links
-    useCopilotActionWrapper(
-      "listAvailableDocuments",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Add a simple debug action to test if actions work at all
-    useCopilotActionWrapper("debugTest", state, dispatch, "create");
-
-    // Add debug action specifically for generateQuestionsWithAI
-    useCopilotActionWrapper(
-      "debugGenerateQuestionsWithAI",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Add debug action for resource selection
-    useCopilotActionWrapper(
-      "debugResourceSelection",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Add action to update opportunity description
-    useCopilotActionWrapper(
-      "updateOpportunityDescription",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Action to get current creation progress and next steps
-    useCopilotActionWrapper("getCreationProgress", state, dispatch, "create");
-
-    // Action to advance to next creation step
-    useCopilotActionWrapper("getNextCreationStep", state, dispatch, "create");
-
-    // Comprehensive action to update any form field during creation
-    useCopilotActionWrapper(
-      "updateOpportunityField",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Action to get current field values during creation
-    useCopilotActionWrapper(
-      "getOpportunityFieldValue",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // ==================== QUESTION MANAGEMENT ACTIONS ====================
-
-    // Action to delete a question
-    useCopilotActionWrapper("deleteQuestion", state, dispatch, "create");
-
-    // Action to update a question
-    useCopilotActionWrapper("updateQuestion", state, dispatch, "create");
-
-    // Action to get question details
-    useCopilotActionWrapper("getQuestionDetails", state, dispatch, "create");
-
-    // ==================== RESOURCE MANAGEMENT ACTIONS ====================
-
-    // Action to add a new resource during creation
-    useCopilotActionWrapper("addResource", state, dispatch, "create");
-
-    // Action to delete a resource during creation
-    useCopilotActionWrapper("deleteResource", state, dispatch, "create");
-
-    // Action to update resource fields during creation
-    useCopilotActionWrapper("updateResource", state, dispatch, "create");
-
-    // Action to get resource details during creation
-    useCopilotActionWrapper("getResourceDetails", state, dispatch, "create");
+    // Use the unified CopilotKit actions hook
+    useCopilotActions({ state, dispatch, context: "create" });
 
     // Add initial system message with action instructions
     useEffect(() => {
@@ -858,44 +863,10 @@ ${CREATION_SYSTEM_INSTRUCTIONS}`,
       readableOpportunity
     ]);
 
-    // Add dedicated guided creation action - separate from review workflow
-    useCopilotActionWrapper(
-      "startGuidedCreation",
-      state,
-      dispatch,
-      "create",
-      reset,
-      appendMessage
-    );
-
-    // Action to add a new question during creation
-    useCopilotActionWrapper("addQuestion", state, dispatch, "create");
-
-    // Simple test action to verify resource addition works
-    useCopilotActionWrapper("testAddResource", state, dispatch, "create");
-
-    // Simple test action to verify question addition works
-    useCopilotActionWrapper("testAddQuestion", state, dispatch, "create");
-
-    // Action to generate questions with AI based on skills
-    useCopilotActionWrapper(
-      "generateQuestionsWithAI",
-      state,
-      dispatch,
-      "create"
-    );
-
-    // Action to check AI generation status
-    useCopilotActionWrapper(
-      "checkQuestionGenerationStatus",
-      state,
-      dispatch,
-      "create"
-    );
-
     return (
       <div style={{ position: "relative" }}>
         {/* <ActionDebugPanel /> */}
+        <ReviewActions state={state} dispatch={dispatch} context="create" />
         <Form.view
           state={state.form}
           dispatch={component_.base.mapDispatch(dispatch, (v) =>
