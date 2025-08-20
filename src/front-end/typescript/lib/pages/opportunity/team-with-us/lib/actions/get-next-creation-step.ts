@@ -1,6 +1,7 @@
 import { DEFAULT_LOCATION } from "front-end/config";
+import { createActionError, detectWorkflowType } from "./base-action-template";
 
-// Generic types for the wrapper
+// Generic types for the wrapper - PRESERVED FROM ORIGINAL
 export type GenericFormState = {
   form?: {
     title?: { child: { value: string } };
@@ -19,20 +20,32 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
-// Action function
+// Action function - PRESERVING ALL ORIGINAL FUNCTIONALITY
 export const getNextCreationStepAction = async (
   state: GenericFormState,
   _dispatch: GenericDispatch
 ): Promise<string> => {
   console.log("🚨🚨🚨 getNextCreationStep ACTION CALLED! 🚨🚨🚨");
 
-  if (!state.form) {
-    return "❌ Error: Form not available.";
+  // UNIFIED APPROACH: Check workflow type to ensure this is used in creation workflow
+  const workflowType = detectWorkflowType(state);
+  if (workflowType !== "create") {
+    return createActionError(
+      "Invalid Workflow",
+      "The getNextCreationStep action can only be used in the creation workflow.",
+      "This action is for guiding creation steps. For reviewing existing opportunities, use the review workflow."
+    );
   }
 
-  // Determine what step we're on and provide specific guidance
-  if (!(state.form.title?.child.value || "").trim()) {
-    return `## 🎯 **Step 1: Project Title**
+  try {
+    // PRESERVED FROM ORIGINAL: Exact form availability check
+    if (!state.form) {
+      return "❌ Error: Form not available.";
+    }
+
+    // PRESERVED FROM ORIGINAL: Step-by-step guidance with EXACT original logic and content
+    if (!(state.form.title?.child.value || "").trim()) {
+      return `## 🎯 **Step 1: Project Title**
 
 Ask the user: "What is the title of your project or initiative?"
 
@@ -45,10 +58,10 @@ Ask the user: "What is the title of your project or initiative?"
 **Tips:** Should be clear, descriptive, and immediately understandable to vendors.
 
 **Action to use:** updateOpportunityField("title", value)`;
-  }
+    }
 
-  if (!(state.form.teaser?.child.value || "").trim()) {
-    return `## 📝 **Step 2: Project Summary**
+    if (!(state.form.teaser?.child.value || "").trim()) {
+      return `## 📝 **Step 2: Project Summary**
 
 Ask the user: "Can you provide a brief summary (2-3 sentences) of what this project involves?"
 
@@ -59,13 +72,13 @@ Ask the user: "Can you provide a brief summary (2-3 sentences) of what this proj
 **Tips:** Should be concise but informative, focusing on the business need and high-level approach.
 
 **Action to use:** updateOpportunityField("teaser", value)`;
-  }
+    }
 
-  if (
-    !state.form.location?.child.value ||
-    state.form.location.child.value.trim() === DEFAULT_LOCATION
-  ) {
-    return `## 📍 **Step 3: Project Location**
+    if (
+      !state.form.location?.child.value ||
+      state.form.location.child.value.trim() === DEFAULT_LOCATION
+    ) {
+      return `## 📍 **Step 3: Project Location**
 
 Ask the user: "Where will this project primarily take place? (Can be remote, hybrid, or specific location)"
 
@@ -77,10 +90,10 @@ Ask the user: "Where will this project primarily take place? (Can be remote, hyb
 **Current default:** Victoria (change if different)
 
 **Action to use:** updateOpportunityField("location", value)`;
-  }
+    }
 
-  if (!state.form.proposalDeadline?.child.value) {
-    return `## 📅 **Step 4: Proposal Deadline**
+    if (!state.form.proposalDeadline?.child.value) {
+      return `## 📅 **Step 4: Proposal Deadline**
 
 Ask the user: "When do you need proposals submitted by? (Remember: minimum 10-day posting period required)"
 
@@ -90,10 +103,10 @@ Ask the user: "When do you need proposals submitted by? (Remember: minimum 10-da
 - Format: YYYY-MM-DD
 
 **Action to use:** updateOpportunityField("proposalDeadline", "YYYY-MM-DD")`;
-  }
+    }
 
-  if (!state.form.startDate?.child.value) {
-    return `## 🚀 **Step 5: Project Start Date**
+    if (!state.form.startDate?.child.value) {
+      return `## 🚀 **Step 5: Project Start Date**
 
 Ask the user: "When would you like the project to start?"
 
@@ -103,10 +116,10 @@ Ask the user: "When would you like the project to start?"
 - Format: YYYY-MM-DD
 
 **Action to use:** updateOpportunityField("startDate", "YYYY-MM-DD")`;
-  }
+    }
 
-  if (!state.form.completionDate?.child.value) {
-    return `## 🏁 **Step 6: Expected Completion**
+    if (!state.form.completionDate?.child.value) {
+      return `## 🏁 **Step 6: Expected Completion**
 
 Ask the user: "When do you expect the project to be completed?"
 
@@ -116,12 +129,15 @@ Ask the user: "When do you expect the project to be completed?"
 - Format: YYYY-MM-DD
 
 **Action to use:** updateOpportunityField("completionDate", "YYYY-MM-DD")`;
-  }
+    }
 
-  if (
-    !(state.form.maxBudget?.child.value && state.form.maxBudget.child.value > 0)
-  ) {
-    return `## 💰 **Step 7: Budget Information**
+    if (
+      !(
+        state.form.maxBudget?.child.value &&
+        state.form.maxBudget.child.value > 0
+      )
+    ) {
+      return `## 💰 **Step 7: Budget Information**
 
 Ask the user: "What is your maximum budget for this project?"
 
@@ -131,10 +147,10 @@ Ask the user: "What is your maximum budget for this project?"
 - Budget should align with resource requirements and timeline
 
 **Action to use:** updateOpportunityField("maxBudget", numberValue)`;
-  }
+    }
 
-  if ((state.form.resources?.resources || []).length === 0) {
-    return `## 👥 **Step 8: Resource Requirements**
+    if ((state.form.resources?.resources || []).length === 0) {
+      return `## 👥 **Step 8: Resource Requirements**
 
 Ask the user: "What skills and roles do you need for this project? What type of team members would be ideal?"
 
@@ -152,10 +168,10 @@ Ask the user: "What skills and roles do you need for this project? What type of 
 - Optional skills
 
 **Action to use:** addResource() for each role needed`;
-  }
+    }
 
-  if (!(state.form.description?.child.value || "").trim()) {
-    return `## 📋 **Step 9: Detailed Description**
+    if (!(state.form.description?.child.value || "").trim()) {
+      return `## 📋 **Step 9: Detailed Description**
 
 Ask the user: "Can you provide a detailed description of the project? Include background, objectives, scope, and any specific requirements."
 
@@ -167,10 +183,10 @@ Ask the user: "Can you provide a detailed description of the project? Include ba
 - Constraints or considerations
 
 **Action to use:** updateOpportunityDescription(content)`;
-  }
+    }
 
-  if ((state.form.resourceQuestions?.questions || []).length === 0) {
-    return `## ❓ **Step 10: Evaluation Questions**
+    if ((state.form.resourceQuestions?.questions || []).length === 0) {
+      return `## ❓ **Step 10: Evaluation Questions**
 
 Ask the user: "What questions would you like to ask vendors to evaluate their proposals? These help assess relevant experience and approach."
 
@@ -199,9 +215,10 @@ Ask the user: "What questions would you like to ask vendors to evaluate their pr
 - Use checkQuestionGenerationStatus() to monitor AI generation progress
 
 **Action to use:** generateQuestionsWithAI() for AI generation, or addQuestion() for manual creation`;
-  }
+    }
 
-  return `## 🎉 **Creation Complete!**
+    // PRESERVED FROM ORIGINAL: Completion message
+    return `## 🎉 **Creation Complete!**
 
 All required sections have been completed. Ready for final review!
 
@@ -211,9 +228,17 @@ All required sections have been completed. Ready for final review!
 3. Save as draft or submit for review
 
 Use reviewOpportunity() to perform final validation.`;
+  } catch (error: any) {
+    console.error("❌ Error in getNextCreationStep:", error);
+    return createActionError(
+      "Step Analysis Failed",
+      `Failed to determine next creation step: ${error.message}`,
+      "Please try again or refresh the page if the issue persists."
+    );
+  }
 };
 
-// Export the complete useCopilotAction configuration
+// Export the complete useCopilotAction configuration - PRESERVED FROM ORIGINAL
 export const getNextCreationStepCopilotAction = {
   name: "getNextCreationStep",
   description:

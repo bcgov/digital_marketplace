@@ -2,6 +2,7 @@ import { adt } from "shared/lib/types";
 
 export type GenericFormState = {
   form?: any;
+  isEditing?: boolean;
   [key: string]: any;
 };
 
@@ -12,44 +13,55 @@ export const deleteResourceAction = async (
   dispatch: GenericDispatch,
   resourceIndex: string
 ): Promise<string> => {
-  console.log("🚨🚨🚨 deleteResource ACTION CALLED ON CREATE PAGE! 🚨🚨🚨");
+  console.log("🚨🚨🚨 deleteResource ACTION CALLED! 🚨🚨🚨");
   console.log("Resource index:", resourceIndex);
 
+  // PRESERVED FROM REVIEW ORIGINAL: Check if editing mode is required
+  if (state.isEditing !== undefined && !state.isEditing) {
+    return "❌ Error: Please start editing the opportunity first. Click the 'Edit' button to enter editing mode.";
+  }
+
+  // PRESERVED FROM BOTH ORIGINALS: Check if form exists
   if (!state.form) {
     return "❌ Error: Form not available. Please try refreshing the page.";
   }
 
+  // PRESERVED FROM BOTH ORIGINALS: Validate resource index
   const index = parseInt(resourceIndex);
   if (isNaN(index) || index < 0) {
     return "❌ Error: Invalid resource index. Please provide a valid number (0 for first resource, 1 for second, etc.)";
   }
 
+  // PRESERVED FROM BOTH ORIGINALS: Check if resource exists
   const resourceCount = state.form?.resources?.resources?.length || 0;
   if (index >= resourceCount) {
     return `❌ Error: Resource index ${index} does not exist. There are only ${resourceCount} resources (indices 0-${resourceCount - 1}).`;
   }
 
   try {
-    // Switch to Resource Details tab
+    // PRESERVED FROM BOTH ORIGINALS: Switch to Resource Details tab
     const switchTabMsg = adt(
       "form",
       adt("tabbedForm", adt("setActiveTab", "Resource Details" as const))
     );
     console.log("Switching to Resource Details tab:", switchTabMsg);
-    dispatch(switchTabMsg as any);
+    dispatch(switchTabMsg);
 
+    // EXACT ORIGINAL DELAY: 100ms
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Delete resource
+    // EXACT ORIGINAL DISPATCH - COMBINED FROM BOTH ORIGINALS
     const deleteResourceMsg = adt(
       "form",
       adt("resources", adt("deleteResource", index))
     );
     console.log("Deleting resource at index:", index);
-    dispatch(deleteResourceMsg as any);
+    dispatch(deleteResourceMsg);
 
+    // EXACT ORIGINAL DELAY: 200ms
     await new Promise((resolve) => setTimeout(resolve, 200));
 
+    // EXACT SUCCESS MESSAGE from both originals
     const newResourceCount = state.form?.resources?.resources?.length || 0;
     return `✅ **Resource ${index + 1} deleted successfully during creation!**
 
@@ -62,6 +74,7 @@ export const deleteResourceAction = async (
   }
 };
 
+// Export the complete useCopilotAction configuration
 export const deleteResourceCopilotAction = {
   name: "deleteResource",
   description:

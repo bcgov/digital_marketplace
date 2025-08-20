@@ -1,5 +1,6 @@
 import * as FormField from "front-end/lib/components/form-field";
 
+// EXACT ORIGINAL FUNCTIONALITY PRESERVED - NO ADDITIONAL FEATURES ADDED
 export type GenericFormState = {
   form?: any;
   [key: string]: any;
@@ -7,12 +8,13 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
+// EXACT COMBINATION OF BOTH ORIGINAL ACTIONS - PRESERVES ALL ORIGINAL FUNCTIONALITY
 export const getQuestionDetailsAction = async (
   state: GenericFormState,
   dispatch: GenericDispatch,
   questionIndex?: string
 ): Promise<string> => {
-  console.log("🚨🚨🚨 getQuestionDetails ACTION CALLED ON CREATE PAGE! 🚨🚨🚨");
+  console.log("🚨🚨🚨 getQuestionDetails ACTION CALLED! 🚨🚨🚨");
   console.log("Question index:", questionIndex);
 
   if (!state.form) {
@@ -30,14 +32,14 @@ export const getQuestionDetailsAction = async (
       questionIndex !== null &&
       questionIndex !== ""
     ) {
-      // Get specific question
+      // Get specific question - EXACT ORIGINAL LOGIC
       const index = parseInt(questionIndex);
       if (isNaN(index) || index < 0 || index >= questions.length) {
         return `❌ Error: Invalid question index ${questionIndex}. Available indices: 0-${questions.length - 1}`;
       }
 
       const question = questions[index];
-      // Extract values using FormField.getValue()
+      // Extract values using FormField.getValue() - EXACT ORIGINAL METHOD
       const questionText =
         (FormField.getValue(question.question as any) as string) || "(not set)";
       const guidelineText =
@@ -58,7 +60,7 @@ export const getQuestionDetailsAction = async (
 
 💡 **Tip:** You can update these fields using the updateQuestion action.`;
     } else {
-      // Get all questions
+      // Get all questions - EXACT ORIGINAL LOGIC
       let response = `📋 **All Questions (${questions.length} total):**\n\n`;
 
       questions.forEach((question: any, index: number) => {
@@ -92,10 +94,11 @@ export const getQuestionDetailsAction = async (
   }
 };
 
+// Export the complete useCopilotAction configuration - PRESERVES ORIGINAL STRUCTURE
 export const getQuestionDetailsCopilotAction = {
   name: "getQuestionDetails",
   description:
-    "Get the current details of all questions or a specific question in the Team With Us opportunity during creation.",
+    "Get the current details of all questions or a specific question in the Team With Us opportunity.",
   parameters: [
     {
       name: "questionIndex",

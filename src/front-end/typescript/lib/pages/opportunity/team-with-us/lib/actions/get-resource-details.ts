@@ -1,3 +1,4 @@
+// EXACT ORIGINAL FUNCTIONALITY PRESERVED - NO ADDITIONAL FEATURES ADDED
 export type GenericFormState = {
   form?: any;
   [key: string]: any;
@@ -5,6 +6,7 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
+// EXACT COMBINATION OF BOTH ORIGINAL ACTIONS
 export const getResourceDetailsAction = async (
   state: GenericFormState,
   dispatch: GenericDispatch,
@@ -106,6 +108,7 @@ export const getResourceDetailsAction = async (
   }
 };
 
+// Export the complete useCopilotAction configuration
 export const getResourceDetailsCopilotAction = {
   name: "getResourceDetails",
   description:

@@ -816,9 +816,10 @@ const ReviewActions: React.FC<{
   const memoizedDispatch = React.useCallback(dispatch, [dispatch]);
   // console.log('plainState: ', plainState);
   useCopilotActionWrapper(
-    "reviewOpportunity_review",
+    "reviewOpportunity",
     plainState,
-    memoizedDispatch
+    memoizedDispatch,
+    "review"
   );
 
   return null;
@@ -895,7 +896,7 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
         "When a user asks for something that requires an action, you MUST call the action and use its return value. DO NOT write 'getCriteriaDocumentation()' as text - ACTUALLY CALL IT.",
       availableActions: [
         {
-          name: "startEditing_review",
+          name: "startEditing",
           description:
             "Start editing mode for the opportunity - CALL THIS ACTION when user wants to edit or modify the opportunity",
           howToUse:
@@ -916,83 +917,83 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
             "EXECUTE this action and return the documentation, don't write function syntax"
         },
         {
-          name: "getOpportunityDescription_review",
+          name: "getOpportunityDescription",
           description:
             "Get current opportunity description - CALL THIS ACTION when user asks about description",
           howToUse: "EXECUTE this action to get real description content"
         },
         {
-          name: "updateOpportunityDescription_review",
+          name: "updateOpportunityDescription",
           description:
             "Update the opportunity description - CALL THIS ACTION when user wants to change description",
           howToUse:
             "EXECUTE this action with new text, don't write function syntax"
         },
         {
-          name: "reviewOpportunity_review",
+          name: "reviewOpportunity",
           description:
             "Perform comprehensive review against procurement criteria - CALL ONLY when user explicitly requests review",
           howToUse:
             "EXECUTE this action ONLY when user explicitly asks for review. Do not call automatically."
         },
         {
-          name: "updateOpportunityField_review",
+          name: "updateOpportunityField",
           description:
             "Update any field in the opportunity - CALL THIS ACTION when user wants to change field values",
           howToUse: "EXECUTE this action with field name and new value"
         },
         {
-          name: "getOpportunityFieldValue_review",
+          name: "getOpportunityFieldValue",
           description:
             "Get current field value - CALL THIS ACTION when user asks about field values",
           howToUse: "EXECUTE this action to get current field values"
         },
         {
-          name: "addResource_review",
+          name: "addResource",
           description:
             "Add new resource requirement - CALL THIS ACTION when user wants to add resources",
           howToUse: "EXECUTE this action to add new resource"
         },
         {
-          name: "deleteResource_review",
+          name: "deleteResource",
           description:
             "Delete a resource - CALL THIS ACTION when user wants to remove resources",
           howToUse: "EXECUTE this action with resource index"
         },
         {
-          name: "updateResource_review",
+          name: "updateResource",
           description:
             "Update resource details - CALL THIS ACTION when user wants to modify resource fields",
           howToUse:
             "EXECUTE this action with resource index, field name, and new value"
         },
         {
-          name: "getResourceDetails_review",
+          name: "getResourceDetails",
           description:
             "Get resource information - CALL THIS ACTION when user asks about resource details",
           howToUse: "EXECUTE this action to get resource details"
         },
         {
-          name: "addQuestion_review",
+          name: "addQuestion",
           description:
             "Add new resource question - CALL THIS ACTION when user wants to add questions",
           howToUse: "EXECUTE this action to add new question"
         },
         {
-          name: "deleteQuestion_review",
+          name: "deleteQuestion",
           description:
             "Delete a question - CALL THIS ACTION when user wants to remove questions",
           howToUse: "EXECUTE this action with question index"
         },
         {
-          name: "updateQuestion_review",
+          name: "updateQuestion",
           description:
             "Update question details - CALL THIS ACTION when user wants to modify question fields",
           howToUse:
             "EXECUTE this action with question index, field name, and new value"
         },
         {
-          name: "getQuestionDetails_review",
+          name: "getQuestionDetails",
           description:
             "Get question information - CALL THIS ACTION when user asks about question details",
           howToUse: "EXECUTE this action to get question details"
@@ -1041,79 +1042,96 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   }, []); // Empty dependency array = run once on mount
 
   useCopilotActionWrapper(
-    "updateOpportunityDescription_review",
+    "updateOpportunityDescription",
     state,
-    dispatch
+    dispatch,
+    "review"
   );
 
   // Copilot action to get the current description
-  useCopilotActionWrapper("getOpportunityDescription_review", state, dispatch);
+  useCopilotActionWrapper(
+    "getOpportunityDescription",
+    state,
+    dispatch,
+    "review"
+  );
 
   // Add copilot action for criteria documentation lookup
-  useCopilotActionWrapper("getCriteriaDocumentation", state, dispatch);
+  useCopilotActionWrapper(
+    "getCriteriaDocumentation",
+    state,
+    dispatch,
+    "review"
+  );
 
   // Add action to list all available documents with links
-  useCopilotActionWrapper("listAvailableDocuments", state, dispatch);
+  useCopilotActionWrapper("listAvailableDocuments", state, dispatch, "review");
 
   // Add a simple debug action to test if actions work at all
-  useCopilotActionWrapper("debugTest", state, dispatch);
+  useCopilotActionWrapper("debugTest", state, dispatch, "review");
 
   // Comprehensive action to update any form field
-  useCopilotActionWrapper("updateOpportunityField_review", state, dispatch);
+  useCopilotActionWrapper("updateOpportunityField", state, dispatch, "review");
 
   // Action to add a new resource
-  useCopilotActionWrapper("addResource_review", state, dispatch);
+  useCopilotActionWrapper("addResource", state, dispatch, "review");
 
   // Action to delete a resource
-  useCopilotActionWrapper("deleteResource_review", state, dispatch);
+  useCopilotActionWrapper("deleteResource", state, dispatch, "review");
 
   // Action to update resource fields
-  useCopilotActionWrapper("updateResource_review", state, dispatch);
+  useCopilotActionWrapper("updateResource", state, dispatch, "review");
 
   // Action to get resource details
-  useCopilotActionWrapper("getResourceDetails_review", state, dispatch);
+  useCopilotActionWrapper("getResourceDetails", state, dispatch, "review");
 
   // ==================== QUESTION MANAGEMENT ACTIONS ====================
 
   // Action to add a new question
-  useCopilotActionWrapper("addQuestion_review", state, dispatch);
+  useCopilotActionWrapper("addQuestion", state, dispatch, "review");
 
   // Action to delete a question
-  useCopilotActionWrapper("deleteQuestion_review", state, dispatch);
+  useCopilotActionWrapper("deleteQuestion", state, dispatch, "review");
 
   // Action to update a question
-  useCopilotActionWrapper("updateQuestion_review", state, dispatch);
+  useCopilotActionWrapper("updateQuestion", state, dispatch, "review");
 
   // Action to get question details
-  useCopilotActionWrapper("getQuestionDetails_review", state, dispatch);
+  useCopilotActionWrapper("getQuestionDetails", state, dispatch, "review");
 
   // ==================== FIELD MANAGEMENT ACTIONS ====================
 
   // Action to get current field values
-  useCopilotActionWrapper("getOpportunityFieldValue_review", state, dispatch);
+  useCopilotActionWrapper(
+    "getOpportunityFieldValue",
+    state,
+    dispatch,
+    "review"
+  );
 
   // Add a very simple action for easy testing
-  useCopilotActionWrapper("actionTest_review", state, dispatch);
+  useCopilotActionWrapper("actionTest", state, dispatch, "review");
 
   // Add ref to track processed messages to prevent loops
   // const _processedMessages = React.useRef(new Set<string>());
 
-  useCopilotActionWrapper("startEditing_review", state, dispatch);
+  useCopilotActionWrapper("startEditing", state, dispatch, "review");
 
-  useCopilotActionWrapper("sayHello_review", state, dispatch);
+  useCopilotActionWrapper("sayHello", state, dispatch, "review");
 
   // Action to generate questions with AI based on skills
-  useCopilotActionWrapper("generateQuestionsWithAI_review", state, dispatch);
+  useCopilotActionWrapper("generateQuestionsWithAI", state, dispatch, "review");
 
   // Action to check AI generation status
   useCopilotActionWrapper(
-    "checkQuestionGenerationStatus_review",
+    "checkQuestionGenerationStatus",
     state,
-    dispatch
+    dispatch,
+    "review"
   );
 
   // Action to trigger review with AI
-  useCopilotActionWrapper("reviewWithAI_review", state, dispatch);
+  useCopilotActionWrapper("reviewWithAI", state, dispatch, "review");
 
   useEffect(() => {
     if (state.opportunityForReview) {

@@ -1,5 +1,6 @@
 import { adt } from "shared/lib/types";
 
+// EXACT ORIGINAL FUNCTIONALITY PRESERVED - NO ADDITIONAL FEATURES ADDED
 export type GenericFormState = {
   opportunity?: any;
   isEditing?: boolean; // Added for edit context
@@ -37,7 +38,7 @@ export const startEditingAction = async (
 };
 
 export const startEditingCopilotAction = {
-  name: "startEditing_review",
+  name: "startEditing",
   description:
     "Start editing mode for the Team With Us opportunity. Use this when users want to edit, modify, or make changes to the opportunity. This enables the form for editing.",
   parameters: [],

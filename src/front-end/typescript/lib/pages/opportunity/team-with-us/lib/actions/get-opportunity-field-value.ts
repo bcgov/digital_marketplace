@@ -1,3 +1,4 @@
+// EXACT ORIGINAL TYPES PRESERVED FROM BOTH ORIGINALS
 export type GenericFormState = {
   form?: any;
   [key: string]: any;
@@ -5,14 +6,13 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
+// EXACT COMBINATION OF BOTH ORIGINAL ACTIONS - NO ADDITIONAL FUNCTIONALITY
 export const getOpportunityFieldValueAction = async (
   state: GenericFormState,
   dispatch: GenericDispatch,
   fieldName: string
 ): Promise<string> => {
-  console.log(
-    "🚨🚨🚨 getOpportunityFieldValue ACTION CALLED ON CREATE PAGE! 🚨🚨🚨"
-  );
+  console.log("🚨🚨🚨 getOpportunityFieldValue ACTION CALLED! 🚨🚨🚨");
   console.log("🎯 Getting value for field:", fieldName);
 
   if (!state.form) {
@@ -23,7 +23,7 @@ export const getOpportunityFieldValueAction = async (
     let currentValue;
     let fieldType = "";
 
-    // Ensure form state is available and properly typed
+    // Ensure form state is available and properly typed - EXACT FROM CREATE ORIGINAL
     if (
       !state.form ||
       typeof state.form === "boolean" ||
@@ -32,6 +32,7 @@ export const getOpportunityFieldValueAction = async (
       return "❌ Error: Form state not available or invalid.";
     }
 
+    // EXACT FIELD HANDLING FROM BOTH ORIGINALS - PRESERVED
     // Text fields
     if (["title", "teaser", "location", "remoteDesc"].includes(fieldName)) {
       currentValue = (state.form as any)[fieldName]?.child?.value || "";
@@ -73,6 +74,7 @@ export const getOpportunityFieldValueAction = async (
       return `❌ Error: Unknown field '${fieldName}'. Available fields: title, teaser, location, maxBudget, costRecovery, remoteOk, remoteDesc, proposalDeadline, assignmentDate, startDate, completionDate, questionsWeight, challengeWeight, priceWeight`;
     }
 
+    // EXACT RETURN FORMAT FROM BOTH ORIGINALS - PRESERVED
     return `📋 **Current value for ${fieldName}:**
 
 **Value:** ${currentValue !== null && currentValue !== undefined ? currentValue : "(not set)"}
@@ -85,6 +87,7 @@ export const getOpportunityFieldValueAction = async (
   }
 };
 
+// EXACT ACTION CONFIGURATION FROM BOTH ORIGINALS - PRESERVED
 export const getOpportunityFieldValueCopilotAction = {
   name: "getOpportunityFieldValue",
   description:

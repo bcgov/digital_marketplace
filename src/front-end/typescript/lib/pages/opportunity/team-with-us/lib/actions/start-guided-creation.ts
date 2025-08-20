@@ -1,19 +1,28 @@
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import {
+  UnifiedActionContext,
+  createActionError,
+  detectWorkflowType
+} from "./base-action-template";
 
-export type GenericFormState = {
-  form?: any;
-  [key: string]: any;
-};
-
-export type GenericDispatch = (msg: any) => void;
-
+// Creation workflow action function
 export const startGuidedCreationAction = async (
-  state: GenericFormState,
-  dispatch: GenericDispatch,
+  state: UnifiedActionContext,
+  dispatch: any,
   reset: () => void,
   appendMessage: (message: TextMessage) => void
 ): Promise<string> => {
-  console.log("Starting guided creation workflow");
+  console.log("🚨🚨🚨 startGuidedCreation ACTION CALLED! 🚨🚨🚨");
+
+  // Check workflow type - this action is only for creation workflow
+  const workflowType = detectWorkflowType(state);
+  if (workflowType !== "create") {
+    return createActionError(
+      "Invalid Workflow",
+      "The startGuidedCreation action can only be used in the creation workflow.",
+      "This action is for creating new opportunities. For editing existing opportunities, use the startEditing action instead."
+    );
+  }
 
   try {
     console.log("✨ Starting dedicated guided creation workflow");
@@ -113,6 +122,7 @@ Your project title should be specific enough to convey the type of work but broa
   }
 };
 
+// Export the complete useCopilotAction configuration
 export const startGuidedCreationCopilotAction = {
   name: "startGuidedCreation",
   description:

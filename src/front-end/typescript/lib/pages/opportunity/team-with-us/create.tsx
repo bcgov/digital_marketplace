@@ -721,59 +721,94 @@ Please provide a comprehensive answer that references these authoritative source
     }, [visibleMessages, appendMessage]);
 
     // Add copilot action for criteria documentation lookup
-    useCopilotActionWrapper("getCriteriaDocumentation", state, dispatch);
+    useCopilotActionWrapper(
+      "getCriteriaDocumentation",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Add action to list all available documents with links
-    useCopilotActionWrapper("listAvailableDocuments", state, dispatch);
+    useCopilotActionWrapper(
+      "listAvailableDocuments",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Add a simple debug action to test if actions work at all
-    useCopilotActionWrapper("debugTest", state, dispatch);
+    useCopilotActionWrapper("debugTest", state, dispatch, "create");
 
     // Add debug action specifically for generateQuestionsWithAI
-    useCopilotActionWrapper("debugGenerateQuestionsWithAI", state, dispatch);
+    useCopilotActionWrapper(
+      "debugGenerateQuestionsWithAI",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Add debug action for resource selection
-    useCopilotActionWrapper("debugResourceSelection", state, dispatch);
+    useCopilotActionWrapper(
+      "debugResourceSelection",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Add action to update opportunity description
-    useCopilotActionWrapper("updateOpportunityDescription", state, dispatch);
+    useCopilotActionWrapper(
+      "updateOpportunityDescription",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Action to get current creation progress and next steps
-    useCopilotActionWrapper("getCreationProgress", state, dispatch);
+    useCopilotActionWrapper("getCreationProgress", state, dispatch, "create");
 
     // Action to advance to next creation step
-    useCopilotActionWrapper("getNextCreationStep", state, dispatch);
+    useCopilotActionWrapper("getNextCreationStep", state, dispatch, "create");
 
     // Comprehensive action to update any form field during creation
-    useCopilotActionWrapper("updateOpportunityField", state, dispatch);
+    useCopilotActionWrapper(
+      "updateOpportunityField",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Action to get current field values during creation
-    useCopilotActionWrapper("getOpportunityFieldValue", state, dispatch);
+    useCopilotActionWrapper(
+      "getOpportunityFieldValue",
+      state,
+      dispatch,
+      "create"
+    );
 
     // ==================== QUESTION MANAGEMENT ACTIONS ====================
 
     // Action to delete a question
-    useCopilotActionWrapper("deleteQuestion", state, dispatch);
+    useCopilotActionWrapper("deleteQuestion", state, dispatch, "create");
 
     // Action to update a question
-    useCopilotActionWrapper("updateQuestion", state, dispatch);
+    useCopilotActionWrapper("updateQuestion", state, dispatch, "create");
 
     // Action to get question details
-    useCopilotActionWrapper("getQuestionDetails", state, dispatch);
+    useCopilotActionWrapper("getQuestionDetails", state, dispatch, "create");
 
     // ==================== RESOURCE MANAGEMENT ACTIONS ====================
 
     // Action to add a new resource during creation
-    useCopilotActionWrapper("addResource", state, dispatch);
+    useCopilotActionWrapper("addResource", state, dispatch, "create");
 
     // Action to delete a resource during creation
-    useCopilotActionWrapper("deleteResource", state, dispatch);
+    useCopilotActionWrapper("deleteResource", state, dispatch, "create");
 
     // Action to update resource fields during creation
-    useCopilotActionWrapper("updateResource", state, dispatch);
+    useCopilotActionWrapper("updateResource", state, dispatch, "create");
 
     // Action to get resource details during creation
-    useCopilotActionWrapper("getResourceDetails", state, dispatch);
+    useCopilotActionWrapper("getResourceDetails", state, dispatch, "create");
 
     // Add initial system message with action instructions
     useEffect(() => {
@@ -828,24 +863,35 @@ ${CREATION_SYSTEM_INSTRUCTIONS}`,
       "startGuidedCreation",
       state,
       dispatch,
+      "create",
       reset,
       appendMessage
     );
 
     // Action to add a new question during creation
-    useCopilotActionWrapper("addQuestion", state, dispatch);
+    useCopilotActionWrapper("addQuestion", state, dispatch, "create");
 
     // Simple test action to verify resource addition works
-    useCopilotActionWrapper("testAddResource", state, dispatch);
+    useCopilotActionWrapper("testAddResource", state, dispatch, "create");
 
     // Simple test action to verify question addition works
-    useCopilotActionWrapper("testAddQuestion", state, dispatch);
+    useCopilotActionWrapper("testAddQuestion", state, dispatch, "create");
 
     // Action to generate questions with AI based on skills
-    useCopilotActionWrapper("generateQuestionsWithAI", state, dispatch);
+    useCopilotActionWrapper(
+      "generateQuestionsWithAI",
+      state,
+      dispatch,
+      "create"
+    );
 
     // Action to check AI generation status
-    useCopilotActionWrapper("checkQuestionGenerationStatus", state, dispatch);
+    useCopilotActionWrapper(
+      "checkQuestionGenerationStatus",
+      state,
+      dispatch,
+      "create"
+    );
 
     return (
       <div style={{ position: "relative" }}>

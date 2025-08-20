@@ -2,6 +2,7 @@ import { adt } from "shared/lib/types";
 
 export type GenericFormState = {
   form?: any;
+  isEditing?: boolean; // Added for edit context
   [key: string]: any;
 };
 
@@ -14,7 +15,7 @@ export const updateQuestionAction = async (
   fieldName: string,
   value: string
 ): Promise<string> => {
-  console.log("🚨🚨🚨 updateQuestion ACTION CALLED ON CREATE PAGE! 🚨🚨🚨");
+  console.log("🚨🚨🚨 updateQuestion ACTION CALLED! 🚨🚨🚨");
   console.log(
     "Question index:",
     questionIndex,
@@ -23,6 +24,10 @@ export const updateQuestionAction = async (
     "Value:",
     value
   );
+
+  if (state.isEditing !== undefined && !state.isEditing) {
+    return "❌ Error: Please start editing the opportunity first. Click the 'Edit' button to enter editing mode.";
+  }
 
   if (!state.form) {
     return "❌ Error: Form not available. Please try refreshing the page.";
@@ -139,7 +144,7 @@ export const updateQuestionAction = async (
 
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return `✅ **Question ${index + 1} ${fieldName} updated successfully during creation!**
+    return `✅ **Question ${index + 1} ${fieldName} updated successfully!**
 
 **Field:** ${fieldName}
 **New value:** ${value}
@@ -151,10 +156,11 @@ export const updateQuestionAction = async (
   }
 };
 
+// Export the complete useCopilotAction configuration
 export const updateQuestionCopilotAction = {
   name: "updateQuestion",
   description:
-    "Update a specific field of a resource question in the Team With Us opportunity during creation. Use this to modify question text, guidelines, word limits, or scoring.",
+    "Update a specific field of a resource question in the Team With Us opportunity. Use this to modify question text, guidelines, word limits, or scoring.",
   parameters: [
     {
       name: "questionIndex",

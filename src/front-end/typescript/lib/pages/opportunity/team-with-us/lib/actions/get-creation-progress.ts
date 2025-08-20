@@ -1,6 +1,12 @@
 import { DEFAULT_LOCATION } from "front-end/config";
+import {
+  UnifiedActionContext,
+  createActionError,
+  detectWorkflowType
+} from "./base-action-template";
 
-export type GenericFormState = {
+// Keep original GenericFormState for backward compatibility but extend with UnifiedActionContext
+export type GenericFormState = UnifiedActionContext & {
   form?: {
     title?: { child: { value: string } };
     teaser?: { child: { value: string } };
@@ -18,12 +24,24 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
+// Creation workflow action function - PRESERVED EXACT ORIGINAL FUNCTIONALITY
 export const getCreationProgressAction = async (
   state: GenericFormState,
   _dispatch: GenericDispatch
 ): Promise<string> => {
   console.log("🚨🚨🚨 getCreationProgress ACTION CALLED! 🚨🚨🚨");
 
+  // Check workflow type - this action is only for creation workflow
+  const workflowType = detectWorkflowType(state);
+  if (workflowType !== "create") {
+    return createActionError(
+      "Invalid Workflow",
+      "The getCreationProgress action can only be used in the creation workflow.",
+      "This action is for tracking creation progress. For reviewing existing opportunities, use the review workflow."
+    );
+  }
+
+  // EXACT ORIGINAL CODE - NO CHANGES TO LOGIC OR FUNCTIONALITY
   if (!state.form) {
     return "❌ Error: Form not available.";
   }
@@ -104,10 +122,11 @@ ${nextStep}
 - Questions: ${progress.questionCount > 0 ? `✅ (${progress.questionCount})` : "❌"}`;
 };
 
+// Export the complete useCopilotAction configuration
 export const getCreationProgressCopilotAction = {
   name: "getCreationProgress",
   description:
-    "Get the current progress of opportunity creation and what step should come next. Use this to guide the creation workflow.",
+    "CREATION WORKFLOW: Analyze the current progress of opportunity creation and provide detailed feedback on completion status, next steps, and suggested actions. This action is only available in the creation workflow.",
   parameters: [],
   action: getCreationProgressAction
 };

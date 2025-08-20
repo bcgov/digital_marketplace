@@ -34,7 +34,7 @@ export const getOpportunityDescriptionAction = async (
 };
 
 export const getOpportunityDescriptionCopilotAction = {
-  name: "getOpportunityDescription_review",
+  name: "getOpportunityDescription",
   description:
     "Get the current description content of the Team With Us opportunity to understand what's currently written.",
   parameters: [],

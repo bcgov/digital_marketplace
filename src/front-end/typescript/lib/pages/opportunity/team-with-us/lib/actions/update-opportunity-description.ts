@@ -1,38 +1,54 @@
 import { adt } from "shared/lib/types";
+import {
+  UnifiedActionContext,
+  GenericDispatch,
+  detectWorkflowType,
+  createActionError,
+  createActionSuccess,
+  validateFormExists,
+  validateEditMode
+} from "./base-action-template";
 
-// Generic types for the wrapper
-export type GenericFormState = {
-  form?: any;
-  [key: string]: any;
-};
-
-export type GenericDispatch = (msg: any) => void;
-
-// Action function
+// Unified action function
 export const updateOpportunityDescriptionAction = async (
-  state: GenericFormState,
+  state: UnifiedActionContext,
   dispatch: GenericDispatch,
   newDescription: string
 ): Promise<string> => {
   console.log(
-    "🚨🚨🚨 updateOpportunityDescription ACTION CALLED ON CREATE PAGE! 🚨🚨🚨"
+    "🚨🚨🚨 UNIFIED updateOpportunityDescription ACTION CALLED! 🚨🚨🚨"
   );
   console.log(
-    "🎯 CopilotKit: updateOpportunityDescription called on CREATE page with:",
+    "🎯 CopilotKit: Unified updateOpportunityDescription called with:",
     newDescription
   );
-  console.log("State.form exists:", !!state.form);
+
+  // Auto-detect workflow type
+  const workflowType = detectWorkflowType(state);
   console.log(
-    "Current description before update:",
-    state.form?.description?.child?.value
+    `🔍 Detected workflow: ${workflowType}, isEditing: ${state.isEditing}`
   );
 
-  if (!state.form) {
-    return "❌ Error: Form not available. Please try refreshing the page.";
+  // Validate form exists
+  const formError = validateFormExists(state, "updateOpportunityDescription");
+  if (formError) return formError;
+
+  // Validate edit mode for review workflow
+  if (workflowType === "review") {
+    const editError = validateEditMode(state, "updateOpportunityDescription");
+    if (editError) return editError;
   }
 
   try {
-    // First switch to the Description tab to ensure we're on the right tab
+    console.log("State.form exists:", !!state.form);
+    console.log(
+      "Current description before update:",
+      state.form?.description?.child?.value ||
+        state.form?.description?.value ||
+        "Not found"
+    );
+
+    // Switch to Description tab
     const switchTabMsg = adt(
       "form",
       adt("tabbedForm", adt("setActiveTab", "Description" as const))
@@ -43,8 +59,22 @@ export const updateOpportunityDescriptionAction = async (
     // Small delay to ensure tab switch completes
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // Update the description field in the form
-    const updateMsg = adt(
+    // Update the description field - handle both state structures
+    const descriptionField =
+      state.form?.description?.child || state.form?.description;
+    if (!descriptionField) {
+      return createActionError(
+        "Description Field Not Found",
+        "Could not locate the description field in the form.",
+        "Please ensure you are on the correct form tab and try again."
+      );
+    }
+
+    // Update description based on workflow type
+    let updateMsg;
+    // if (workflowType === 'review') {
+    // Review workflow uses child.value structure
+    updateMsg = adt(
       "form",
       adt(
         "description",
@@ -54,49 +84,41 @@ export const updateOpportunityDescriptionAction = async (
         )
       )
     );
-    console.log("Dispatching update message:", updateMsg);
+    // } else {
+    //   // Create workflow uses direct value structure
+    //   updateMsg = adt(
+    //     "form",
+    //     adt(
+    //       "description",
+    //       adt("onChangeTextArea", [newDescription, 0, newDescription.length])
+    //     )
+    //   );
+    // }
 
+    console.log("Dispatching update message:", updateMsg);
     dispatch(updateMsg);
     console.log("✅ Description update dispatch completed successfully");
 
-    // Give a moment for the update to process and verify
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    // Give more time for the state to update
+    // Give time for the update to process
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Check if the update was successful
-    const currentDescription = state.form?.description?.child?.value;
-    console.log("Description after update:", currentDescription);
+    const workflowSpecificMsg =
+      workflowType === "review"
+        ? "Don't forget to save your changes when you're ready!"
+        : "Don't forget to save or publish your opportunity when you're ready!";
 
-    // More lenient verification - check if the description contains the new content
-    if (
-      currentDescription &&
-      (currentDescription === newDescription ||
-        currentDescription.includes(newDescription.substring(0, 50)))
-    ) {
-      return `✅ Description updated successfully!
-
-**New content preview:**
-${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}
-
-💡 **Tip:** The description has been updated in the form. Don't forget to save or publish your opportunity when you're ready!`;
-    } else {
-      console.warn(
-        "Description update verification failed, but dispatch was successful"
-      );
-      return `✅ Description update dispatched successfully!
-
-**Note:** The update has been sent to the form. The description should now be updated in the interface.
-
-**New content preview:**
-${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}
-
-💡 **Tip:** The description has been updated in the form. Don't forget to save or publish your opportunity when you're ready!`;
-    }
+    return createActionSuccess(
+      "Description Updated Successfully!",
+      `✅ **Description updated successfully!**\n\n**New content preview:**\n${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}\n\n💡 **Tip:** The description has been updated in the form. ${workflowSpecificMsg}`,
+      `Updated in ${workflowType} workflow`
+    );
   } catch (error: any) {
-    console.error("❌ Error in updateOpportunityDescription:", error);
-    return `❌ Error: Failed to update description - ${error.message}`;
+    console.error("❌ Error in unified updateOpportunityDescription:", error);
+    return createActionError(
+      "Update Failed",
+      `Failed to update description: ${error.message}`,
+      "Please try again or refresh the page if the issue persists."
+    );
   }
 };
 
@@ -104,7 +126,7 @@ ${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}
 export const updateOpportunityDescriptionCopilotAction = {
   name: "updateOpportunityDescription",
   description:
-    "Update or replace the description field content of the Team With Us opportunity during creation. This action can be used when the user wants to modify, improve, or completely rewrite the opportunity description.",
+    "UNIFIED: Update or replace the description field content of the Team With Us opportunity. Works in both creation and review workflows. This action can be used when the user wants to modify, improve, or completely rewrite the opportunity description.",
   parameters: [
     {
       name: "newDescription",

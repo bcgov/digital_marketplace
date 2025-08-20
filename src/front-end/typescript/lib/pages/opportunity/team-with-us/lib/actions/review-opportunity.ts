@@ -1,5 +1,6 @@
 import React from "react";
 
+// Keep original GenericFormState for backward compatibility
 export type GenericFormState = {
   opportunity?: any;
   form?: any;
@@ -9,6 +10,7 @@ export type GenericFormState = {
 
 export type GenericDispatch = (msg: any) => void;
 
+// Review workflow action function - EXACT ORIGINAL FUNCTIONALITY PRESERVED
 export const reviewOpportunityAction = async (
   state: GenericFormState,
   _dispatch: GenericDispatch
@@ -79,8 +81,9 @@ export const reviewOpportunityAction = async (
   }
 };
 
+// Export the complete useCopilotAction configuration
 export const reviewOpportunityCopilotAction = {
-  name: "reviewOpportunity_review",
+  name: "reviewOpportunity",
   description:
     "Perform a comprehensive review of the Team With Us opportunity against procurement criteria. Use this ONLY when users explicitly request a review. Do not call automatically or repeatedly.",
   parameters: [],
