@@ -1040,7 +1040,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     );
   }, []); // Empty dependency array = run once on mount
 
-  // Copilot action to edit the description field
   useCopilotActionWrapper(
     "updateOpportunityDescription_review",
     state,
@@ -1115,55 +1114,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
 
   // Action to trigger review with AI
   useCopilotActionWrapper("reviewWithAI_review", state, dispatch);
-
-  // Monitor all chat messages for debugging
-  useEffect(() => {
-    console.log("🎯 CHAT MESSAGE MONITOR:");
-    console.log("  - Messages monitoring disabled to prevent loops");
-  }, []);
-
-  // Monitor chat messages for action requests - DISABLED to prevent loops
-  useEffect(() => {
-    console.log("🎯 MESSAGE MONITORING DISABLED to prevent infinite loops");
-  }, []);
-
-  // Log action registrations
-  useEffect(() => {
-    console.log("🎯 COPILOT ACTION REGISTRATION DEBUG:");
-    console.log("📍 Edit page - actions being registered:", {
-      actions: [
-        "updateOpportunityDescription",
-        "getOpportunityDescription",
-        "updateOpportunityField",
-        "getOpportunityFieldValue",
-        "addResource",
-        "deleteResource",
-        "updateResource",
-        "getResourceDetails",
-        "addQuestion",
-        "deleteQuestion",
-        "updateQuestion",
-        "getQuestionDetails",
-        "generateQuestionsWithAI",
-        "checkQuestionGenerationStatus",
-        "reviewWithAI",
-        "getCriteriaDocumentation",
-        "listAvailableDocuments",
-        "actionTest",
-        "debugTest",
-        "sayHello"
-      ],
-      isEditing: state.isEditing,
-      hasForm: !!state.form,
-      hasOpportunity: !!state.opportunity,
-      timestamp: new Date().toISOString()
-    });
-  }, [state.isEditing, state.form, state.opportunity]);
-
-  // Add initial system message with action instructions - DISABLED to prevent loops
-  useEffect(() => {
-    console.log("🎯 SYSTEM MESSAGE SETUP DISABLED to prevent infinite loops");
-  }, []);
 
   useEffect(() => {
     if (state.opportunityForReview) {

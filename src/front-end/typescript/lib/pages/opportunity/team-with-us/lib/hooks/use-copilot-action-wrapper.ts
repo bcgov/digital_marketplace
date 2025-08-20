@@ -1,3 +1,4 @@
+import React from "react";
 import { useCopilotAction } from "@copilotkit/react-core";
 import { addQuestionCopilotAction } from "../actions/add-question";
 import { getCriteriaDocumentationCopilotAction } from "../actions/get-criteria-documentation";
@@ -133,13 +134,62 @@ export const useCopilotActionWrapper = (
     return;
   }
 
-  return useCopilotAction({
-    name: action.name,
-    description: action.description,
-    parameters: action.parameters,
-    handler: async (params: any) =>
-      action.action(state, dispatch, ...Object.values(params))
-  });
+  // Generate unique handler instance ID
+  const handlerInstanceId = React.useRef(
+    Math.random().toString(36).substring(7)
+  );
+  const componentInstanceId = React.useRef(
+    Math.random().toString(36).substring(7)
+  );
+
+  // ✅ Stabilize the handler with useCallback and add instance tracking
+  const stableHandler = React.useCallback(
+    async (params: any) => {
+      const executionId = Math.random().toString(36).substring(7);
+
+      console.log(`🚨🚨🚨 ACTION HANDLER EXECUTING: ${actionName} 🚨🚨🚨`, {
+        executionId, // Unique per execution
+        handlerInstanceId: handlerInstanceId.current, // Unique per handler instance
+        componentInstanceId: componentInstanceId.current, // Unique per component instance
+        timestamp: new Date().toISOString(),
+        params,
+        stateKeys: Object.keys(state || {}),
+        isEditing: state?.isEditing
+      });
+
+      const result = await action.action(
+        state,
+        dispatch,
+        ...Object.values(params)
+      );
+
+      console.log(`✅✅✅ ACTION HANDLER COMPLETED: ${actionName} ✅✅✅`, {
+        executionId,
+        handlerInstanceId: handlerInstanceId.current,
+        componentInstanceId: componentInstanceId.current,
+        timestamp: new Date().toISOString(),
+        resultLength: result?.length || 0,
+        resultPreview: result?.substring(0, 100) || "No result"
+      });
+
+      return result;
+    },
+    [actionName, state, dispatch, action, ..._args]
+  );
+
+  // ✅ Stabilize the action object with useMemo
+  const stableAction = React.useMemo(() => {
+    return {
+      name: action.name,
+      description: action.description,
+      parameters: action.parameters,
+      handler: stableHandler,
+      _isRenderAndWait: true // todo: temporary fix for copilotkit library bug. Remove once patched - https://github.com/CopilotKit/CopilotKit/issues/2310
+    };
+  }, [action.name, action.description, action.parameters, stableHandler]);
+
+  // ✅ Register with stable dependencies
+  return useCopilotAction(stableAction, [stableAction]);
 };
 
 // Export the registry for external access if needed

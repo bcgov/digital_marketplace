@@ -43,7 +43,8 @@ export const addQuestionAction = async (
 
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const questionCount = state.form?.resourceQuestions?.questions?.length || 0;
+    const questionCount =
+      state.form?.resourceQuestions?.questions?.length + 1 || 0;
 
     return `✅ **New question added successfully!**
 
