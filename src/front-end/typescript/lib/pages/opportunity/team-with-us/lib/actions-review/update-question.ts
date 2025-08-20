@@ -78,6 +78,13 @@ export const updateQuestionAction = async (
           })
         )
       );
+
+      console.log("🚨🚨🚨 [updateQuestion] Created text update message:", {
+        fieldName,
+        value,
+        index,
+        message: updateMsg
+      });
     } else if (fieldName === "guideline") {
       updateMsg = adt(
         "form",
@@ -142,7 +149,13 @@ export const updateQuestionAction = async (
     console.log("Dispatching question update:", updateMsg);
     dispatch(updateMsg);
 
+    console.log("🚨🚨🚨 [updateQuestion] Message dispatched, waiting 500ms...");
+
     await new Promise((resolve) => setTimeout(resolve, 500));
+
+    console.log(
+      "🚨🚨🚨 [updateQuestion] Wait completed, returning success message"
+    );
 
     return `✅ **Question ${index + 1} ${fieldName} updated successfully!**
 

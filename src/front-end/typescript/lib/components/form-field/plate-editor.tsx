@@ -56,13 +56,37 @@ export const init: component_.base.Init<Params, State, Msg> = (params) => {
 };
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
+  console.log(
+    `🔧 [PlateEditor] Update called with message:`,
+    msg.tag,
+    msg.value
+  );
+
   switch (msg.tag) {
     case "child":
       switch (msg.value.tag) {
         case "onChangeTextArea": {
+          console.log(
+            `🔧 [PlateEditor] ========== onChangeTextArea case reached ==========`
+          );
+          console.log(`🔧 [PlateEditor] Processing onChangeTextArea:`, {
+            oldValue: state.child.value,
+            newValue: msg.value.value[0],
+            childId: state.child.id
+          });
+
           const newState = state
             .set("child", { ...state.child, value: msg.value.value[0] })
             .set("isDirty", true);
+
+          console.log(`🔧 [PlateEditor] State after update:`, {
+            newValue: newState.child.value,
+            isDirty: newState.isDirty,
+            childId: newState.child.id,
+            stateChanged: newState !== state,
+            valueChanged: newState.child.value !== state.child.value
+          });
+
           // Trigger validation after content change when field is dirty
           return [validate(newState), []];
         }
@@ -207,7 +231,26 @@ export const view: component_.base.View<ViewProps> = ({
   useEffect(() => {
     try {
       const currentMarkdown = editor.api.markdown.serialize();
+      console.log(`🔧 [PlateEditor] External content update check:`, {
+        currentMarkdown,
+        markdownContent,
+        isEqual: currentMarkdown === markdownContent,
+        childId
+      });
+
+      // Only update if the content is significantly different
       if (currentMarkdown !== markdownContent) {
+        const cleanedCurrent = cleanPlateEditorValue(currentMarkdown);
+        const cleanedNew = cleanPlateEditorValue(markdownContent);
+
+        console.log(`🔧 [PlateEditor] Updating editor content externally:`, {
+          from: currentMarkdown,
+          to: markdownContent,
+          cleanedFrom: cleanedCurrent,
+          cleanedTo: cleanedNew,
+          childId
+        });
+
         const deserializedValue =
           editor.api.markdown.deserialize(markdownContent);
         editor.tf.setValue(deserializedValue);

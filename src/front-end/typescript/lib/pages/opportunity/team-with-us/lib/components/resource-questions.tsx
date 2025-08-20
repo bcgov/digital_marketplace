@@ -1,5 +1,6 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
+import { Msg as PlateEditorMsg } from "front-end/lib/components/form-field/plate-editor";
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
   component as component_,
@@ -472,15 +473,90 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         `📝 [Update] Updating question text for index:`,
         msg.value.qIndex
       );
+      console.log(`📝 [Update] Message details:`, {
+        qIndex: msg.value.qIndex,
+        childMsg: msg.value.childMsg,
+        currentQuestionValue: FormField.getValue(
+          state.questions[msg.value.qIndex].question as any
+        )
+      });
+
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-      return component_.base.updateChild({
-        state,
-        childStatePath: ["questions", `${qIndex}`, "question"],
-        childUpdate: PlateEditor.update,
-        childMsg: componentMessage,
-        mapChildMsg: (value) => adt("questionText", { qIndex, childMsg: value })
+
+      // Before component_.base.updateChild - Deep state inspection
+      console.log("🔍 [questionText] Deep state analysis:", {
+        questionsArray: state.questions,
+        questionsArrayType: Array.isArray(state.questions),
+        questionAtIndex0: state.questions[0],
+        questionAtIndex0Type: typeof state.questions[0],
+        questionField: state.questions[0]?.question,
+        questionFieldType: typeof state.questions[0]?.question,
+        stateKeys: Object.keys(state),
+        stateType: typeof state,
+        isImmutable: state.toJS !== undefined
       });
+
+      // Test path resolution manually
+      console.log("🔍 [questionText] Path resolution test:", {
+        path: ["questions", `${qIndex}`, "question"],
+        resolvedValue: state.getIn
+          ? state.getIn(["questions", `${qIndex}`, "question"])
+          : "No getIn method",
+        directAccess: state.questions?.[qIndex]?.question,
+        pathExists: state.hasIn
+          ? state.hasIn(["questions", `${qIndex}`, "question"])
+          : "No hasIn method"
+      });
+
+      // Before component_.base.updateChild
+      console.log("🔍 [questionText] State before update:", {
+        currentState: state.toJS ? state.toJS() : state,
+        childStatePath: ["questions", `${qIndex}`, "question"],
+        targetQuestion: state.questions[qIndex],
+        targetQuestionValue: FormField.getValue(
+          state.questions[qIndex].question as any
+        )
+      });
+
+      console.log(`📝 [Update] About to update child with:`, {
+        childStatePath: ["questions", `${qIndex}`, "question"],
+        childMsg: componentMessage
+      });
+
+      const result: component_.base.UpdateReturnValue<State, Msg> =
+        component_.base.updateChild({
+          state,
+          childStatePath: ["questions", `${qIndex}`, "question"],
+          childUpdate: PlateEditor.update,
+          childMsg: adt(
+            "child" as const,
+            componentMessage as any
+          ) as PlateEditorMsg,
+          mapChildMsg: (value) =>
+            adt("questionText", { qIndex, childMsg: value })
+        });
+
+      console.log("🔍 [updateChild] Raw result:", result);
+
+      // After component_.base.updateChild, before return
+      console.log("🔍 [questionText] Update result:", {
+        newState: result[0],
+        commands: result[1],
+        newQuestionValue: FormField.getValue(
+          result[0].questions[qIndex].question as any
+        ),
+        stateUpdated: result[0] !== state
+      });
+
+      console.log(`📝 [Update] Child update completed:`, {
+        newQuestionValue: FormField.getValue(
+          result[0].questions[qIndex].question as any
+        ),
+        commands: result[1].length
+      });
+
+      return result;
     }
 
     case "guidelineText": {
@@ -494,7 +570,10 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         state,
         childStatePath: ["questions", `${qIndex}`, "guideline"],
         childUpdate: PlateEditor.update,
-        childMsg: componentMessage,
+        childMsg: adt(
+          "child" as const,
+          componentMessage as any
+        ) as PlateEditorMsg,
         mapChildMsg: (value) =>
           adt("guidelineText", { qIndex, childMsg: value })
       });
@@ -651,18 +730,55 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
 export type Values = CreateTWUResourceQuestionBody[];
 
 export function getValues(state: Immutable<State>): Values {
-  console.log("getting values");
+  // At the start of getValues
+  console.log("🔍 [getValues] Full state structure:", {
+    stateKeys: Object.keys(state),
+    questionsLength: state.questions?.length,
+    questionsStructure: state.questions?.map((q, i) => ({
+      index: i,
+      questionValue: FormField.getValue(q.question as any),
+      questionType: typeof FormField.getValue(q.question as any),
+      questionState: q.question
+    }))
+  });
+
+  // Check if state is being mutated elsewhere
+  console.log("🔍 [getValues] State mutation check:", {
+    stateReference: state,
+    stateId: state.toString ? state.toString() : "No toString",
+    questionsReference: state.questions,
+    questionsId: state.questions.toString
+      ? state.questions.toString()
+      : "No toString"
+  });
+
+  console.log(
+    "🔍 [getValues] Getting values from questions:",
+    state.questions.length
+  );
+
   return state.questions.reduce<Values>((acc, q, order) => {
-    console.log("acc", acc);
+    const questionValue = FormField.getValue(q.question as any);
+    const guidelineValue = FormField.getValue(q.guideline as any);
+
+    console.log(`🔍 [getValues] Processing question ${order}:`, {
+      questionValue,
+      guidelineValue,
+      wordLimit: FormField.getValue(q.wordLimit),
+      score: FormField.getValue(q.score),
+      minimumScore: FormField.getValue(q.minimumScore),
+      questionValueType: typeof questionValue
+    });
+
     if (!acc) {
       return acc;
     }
     const score = FormField.getValue(q.score) || 0;
     const wordLimit = FormField.getValue(q.wordLimit) || 0;
     console.log(
-      "pushing quesiton/guideline:",
-      FormField.getValue(q.question as any) as string,
-      FormField.getValue(q.guideline as any) as string
+      "🔍 [getValues] Pushing question/guideline:",
+      questionValue,
+      guidelineValue
     );
     acc.push({
       question: FormField.getValue(q.question as any) as string,
@@ -936,13 +1052,13 @@ const AIGenerationControls: component_.base.View<Props> = ({
   const hasQuestions = state.questions.length > 0;
   const hasSkills = uniqueSkills.length > 0;
 
-  console.log(
-    `🎛️ [AI Controls] Rendering with ${uniqueSkills.length} skills:`,
-    uniqueSkills
-  );
-  console.log(
-    `🎛️ [AI Controls] Has questions: ${hasQuestions}, Is generating: ${state.isGenerating}`
-  );
+  // console.log(
+  //   `🎛️ [AI Controls] Rendering with ${uniqueSkills.length} skills:`,
+  //   uniqueSkills
+  // );
+  // console.log(
+  //   `🎛️ [AI Controls] Has questions: ${hasQuestions}, Is generating: ${state.isGenerating}`
+  // );
 
   // Don't show if no skills
   if (!hasSkills) return null;

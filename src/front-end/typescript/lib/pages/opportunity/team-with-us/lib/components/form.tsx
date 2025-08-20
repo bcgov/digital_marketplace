@@ -1076,6 +1076,11 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
       });
 
     case "resourceQuestions":
+      console.log("🔧 [Form] Routing resourceQuestions message:", {
+        childMsg: msg.value,
+        currentResourceQuestionsState: state.resourceQuestions
+      });
+
       return component_.base.updateChild({
         state,
         childStatePath: ["resourceQuestions"],
