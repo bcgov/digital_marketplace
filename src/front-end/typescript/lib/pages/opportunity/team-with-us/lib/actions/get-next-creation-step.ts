@@ -227,7 +227,7 @@ All required sections have been completed. Ready for final review!
 2. Validate against procurement requirements
 3. Save as draft or submit for review
 
-Use reviewOpportunity() to perform final validation.`;
+Use reviewWithAI() to perform final validation.`;
   } catch (error: any) {
     console.error("❌ Error in getNextCreationStep:", error);
     return createActionError(

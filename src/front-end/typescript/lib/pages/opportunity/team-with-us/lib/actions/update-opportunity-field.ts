@@ -241,10 +241,10 @@ export const updateOpportunityFieldAction = async (
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Determine workflow-specific success message
-    const workflowSpecificMsg =
-      workflowType === "review"
-        ? "Don't forget to save your changes when you're ready!"
-        : "Don't forget to save or publish your opportunity when you're ready!";
+    // const workflowSpecificMsg =
+    //   workflowType === "review"
+    //     ? "Don't forget to save your changes when you're ready!"
+    //     : "Don't forget to save or publish your opportunity when you're ready!";
 
     return createActionSuccess(
       "Field Updated Successfully",
@@ -252,10 +252,10 @@ export const updateOpportunityFieldAction = async (
 
 **Tab:** ${config.tab}
 **New value:** ${value}
-**Field type:** ${config.type}
+**Field type:** ${config.type}`
 
-💡 **Tip:** The field has been updated in the form. ${workflowSpecificMsg}`,
-      `Updated ${fieldName} in ${workflowType} workflow`
+      // 💡 **Tip:** The field has been updated in the form. ${workflowSpecificMsg}`,
+      //       `Updated ${fieldName} in ${workflowType} workflow`
     );
   } catch (error: any) {
     console.error("❌ Error in unified updateOpportunityField:", error);

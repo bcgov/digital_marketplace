@@ -36,26 +36,75 @@ import { adt, ADT } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
-import { MessageRole, Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 
-import {
-  opportunityToPublicState,
-  CREATION_SYSTEM_INSTRUCTIONS,
-  CREATION_WELCOME_MESSAGE,
-  TAB_NAMES
-} from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
-import {
-  isCriteriaRelatedQuestion,
-  identifyRelevantCriteria,
-  generateEnhancedCitationText
-} from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
+import { UNIFIED_SYSTEM_INSTRUCTIONS } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 
 // import ActionDebugPanel from "front-end/lib/pages/opportunity/team-with-us/lib/action-debug";
 import { useCopilotActions } from "front-end/lib/pages/opportunity/team-with-us/lib/hooks/use-copilot-actions";
-import { ReviewActions } from "front-end/lib/pages/opportunity/team-with-us/lib/components/review-actions";
+// import { ReviewActions } from "front-end/lib/pages/opportunity/team-with-us/lib/components/review-actions";
 
 // Debug flag to enable test data initialization
 const ENABLE_TEST_DATA = false; // Set to true to enable test data
+
+// Function to derive opportunity from form state without saving
+function deriveOpportunityFromForm(
+  form: Immutable<Form.State>,
+  viewerUser: User
+): TWUOpportunity | null {
+  // if (!Form.isValid(form)) return null;
+
+  // Use the same logic as Form.persist but without API calls
+  const values = Form.getValues(form);
+
+  // Transform the values into opportunity format
+  return {
+    id: "draft", // Temporary ID for draft state
+    title: values.title || "",
+    teaser: values.teaser || "",
+    remoteOk: values.remoteOk,
+    remoteDesc: values.remoteDesc || "",
+    location: values.location || "",
+    proposalDeadline: values.proposalDeadline
+      ? new Date(values.proposalDeadline)
+      : new Date(),
+    assignmentDate: values.assignmentDate
+      ? new Date(values.assignmentDate)
+      : new Date(),
+    startDate: values.startDate ? new Date(values.startDate) : new Date(),
+    completionDate: values.completionDate
+      ? new Date(values.completionDate)
+      : new Date(),
+    maxBudget: values.maxBudget || 0,
+    questionsWeight: values.questionsWeight || 0,
+    challengeWeight: values.challengeWeight || 0,
+    priceWeight: values.priceWeight || 0,
+    description: values.description || "",
+    resources: (values.resources || []).map((resource, index) => ({
+      ...resource,
+      id: `draft-resource-${index}`,
+      serviceArea: resource.serviceArea as any // Cast to satisfy type requirements
+    })),
+    resourceQuestions: (values.resourceQuestions || []).map(
+      (question, index) => ({
+        ...question,
+        id: `draft-question-${index}`,
+        createdAt: new Date(),
+        createdBy: viewerUser
+      })
+    ),
+    status: TWUOpportunityStatus.Draft,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: viewerUser,
+    updatedBy: viewerUser,
+    publishedAt: undefined,
+    reporting: undefined,
+    history: [],
+    attachments: [],
+    addenda: []
+  };
+}
 
 // Test data generator function
 function createTestOpportunity(viewerUser: User): TWUOpportunity {
@@ -66,7 +115,7 @@ function createTestOpportunity(viewerUser: User): TWUOpportunity {
       "Enhance and modernize digital services for better user experience and streamlined operations.",
     remoteOk: true,
     remoteDesc: "Remote work is acceptable for this project.",
-    location: "Victoria",
+    location: "Toronto",
     proposalDeadline: new Date("2024-07-12"),
     assignmentDate: new Date("2024-07-15"),
     startDate: new Date("2024-08-01"),
@@ -142,10 +191,9 @@ interface ValidState {
   showModal: ModalId | null;
   publishLoading: number;
   saveDraftLoading: number;
-  reviewWithAILoading: number;
   viewerUser: User;
   form: Immutable<Form.State>;
-  opportunityForReview: TWUOpportunity | null;
+  opportunity: TWUOpportunity | null;
 }
 
 export type State = Validation<Immutable<ValidState>, null>;
@@ -158,14 +206,9 @@ type InnerMsg =
   | ADT<"onPublishResponse", [TWUCreateSubmitStatus, Form.PersistResult]>
   | ADT<"saveDraft">
   | ADT<"onSaveDraftResponse", Form.PersistResult>
-  | ADT<"reviewWithAI">
-  | ADT<"onReviewWithAIResponse", Form.PersistResult>
   | ADT<"startGuidedCreation">
   | ADT<"triggerGuidedCreation">
-  | ADT<"form", Form.Msg>
-  | ADT<"setOpportunityForReview", TWUOpportunity>
-  | ADT<"clearOpportunityForReview">
-  | ADT<"analyzeOpportunity">;
+  | ADT<"form", Form.Msg>;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -191,6 +234,11 @@ const init: component_.page.Init<
       viewerUser: shared.sessionUser,
       users: []
     });
+
+    const derivedOpportunity =
+      testOpportunity ||
+      deriveOpportunityFromForm(immutable(formState), shared.sessionUser);
+
     return [
       valid(
         immutable({
@@ -198,10 +246,9 @@ const init: component_.page.Init<
           showModal: null,
           publishLoading: 0,
           saveDraftLoading: 0,
-          reviewWithAILoading: 0,
           viewerUser: shared.sessionUser,
           form: immutable(formState),
-          opportunityForReview: null
+          opportunity: derivedOpportunity
         })
       ),
       [
@@ -227,13 +274,6 @@ const init: component_.page.Init<
 const startPublishLoading = makeStartLoading<ValidState>("publishLoading");
 const stopPublishLoading = makeStopLoading<ValidState>("publishLoading");
 const startSaveDraftLoading = makeStartLoading<ValidState>("saveDraftLoading");
-
-const startReviewWithAILoading = makeStartLoading<ValidState>(
-  "reviewWithAILoading"
-);
-const stopReviewWithAILoading = makeStopLoading<ValidState>(
-  "reviewWithAILoading"
-);
 
 const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
   ({ state, msg }) => {
@@ -267,8 +307,15 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           viewerUser: state.viewerUser,
           users: response.value
         });
+
+        const derivedOpportunity =
+          testOpportunity ||
+          deriveOpportunityFromForm(immutable(formState), state.viewerUser);
+
         return [
-          state.set("form", immutable(formState)),
+          state
+            .set("form", immutable(formState))
+            .set("opportunity", derivedOpportunity),
           [
             ...component_.cmd.mapMany(
               formCmds,
@@ -458,161 +505,13 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           }
         }
       }
-      case "reviewWithAI": {
-        state = state.set("showModal", null);
-
-        // Check if evaluation panel is properly configured
-        const evaluationPanelValues = state.form
-          ? state.form.evaluationPanel
-          : null;
-        const hasValidEvaluators =
-          evaluationPanelValues &&
-          state.form &&
-          Form.isEvaluationPanelTabValid(state.form);
-
-        if (!hasValidEvaluators) {
-          // Navigate to evaluation panel tab and show error
-          const switchTabMsg = adt(
-            "form",
-            adt("tabbedForm", adt("setActiveTab", "Evaluation Panel" as const))
-          );
-
-          return [
-            state,
-            [
-              component_.cmd.dispatch(switchTabMsg as Msg),
-              component_.cmd.dispatch(
-                component_.global.showToastMsg(
-                  adt("error", {
-                    title: "Evaluation Panel Required",
-                    body: "Please complete the 'Evaluation Panel' tab first. You need to add at least one evaluator before creating the opportunity."
-                  })
-                )
-              )
-            ]
-          ];
-        }
-
-        // Programmatically click the CopilotKit button to open the chat window
-        setTimeout(() => {
-          const copilotButton = document.querySelector(
-            ".copilotKitButton"
-          ) as HTMLButtonElement;
-          if (copilotButton) {
-            copilotButton.click();
-          }
-        }, 100);
-
-        return [
-          startReviewWithAILoading(state),
-          [
-            component_.cmd.map(
-              Form.persist(
-                state.form,
-                adt("create", TWUOpportunityStatus.Draft)
-              ),
-              (result) => adt("onReviewWithAIResponse", result)
-            )
-          ]
-        ];
-      }
-      case "onReviewWithAIResponse": {
-        const result = msg.value;
-        state = stopReviewWithAILoading(state);
-        switch (result.tag) {
-          case "valid": {
-            const [resultFormState, resultCmds, opportunity] = result.value;
-            return [
-              state.set("form", resultFormState),
-              [
-                ...component_.cmd.mapMany(
-                  resultCmds,
-                  (msg) => adt("form", msg) as Msg
-                ),
-                component_.cmd.dispatch(
-                  component_.global.showToastMsg(
-                    adt("success", toasts.draftCreated.success)
-                  )
-                ),
-                component_.cmd.dispatch(
-                  adt("setOpportunityForReview", opportunity) as Msg
-                )
-              ]
-            ];
-          }
-          case "invalid":
-          default: {
-            // Check if it's an evaluation panel error and provide specific guidance
-            const formErrors = result.value?.evaluationPanel;
-            let errorMessage = toasts.draftCreated.error;
-
-            if (
-              formErrors &&
-              Array.isArray(formErrors) &&
-              formErrors.length > 0
-            ) {
-              errorMessage = {
-                title: "Evaluation Panel Required",
-                body: "Please complete the 'Evaluation Panel' tab. Make sure to select valid users for all evaluators."
-              };
-              // Navigate to evaluation panel tab
-              const switchTabMsg = adt(
-                "form",
-                adt(
-                  "tabbedForm",
-                  adt("setActiveTab", "Evaluation Panel" as const)
-                )
-              );
-              return [
-                state.set("form", result.value),
-                [
-                  component_.cmd.dispatch(switchTabMsg as Msg),
-                  component_.cmd.dispatch(
-                    component_.global.showToastMsg(adt("error", errorMessage))
-                  )
-                ]
-              ];
-            } else if (result.value?.resources) {
-              errorMessage = {
-                title: "Resource Details Required",
-                body: `Please complete the 'Resource Details' tab by adding at least one resource with a service area and target allocation.`
-              };
-              const switchTabMsg = adt(
-                "form",
-                adt(
-                  "tabbedForm",
-                  adt("setActiveTab", "Resource Details" as const)
-                )
-              );
-              return [
-                state.set("form", result.value),
-                [
-                  component_.cmd.dispatch(switchTabMsg as Msg),
-                  component_.cmd.dispatch(
-                    component_.global.showToastMsg(adt("error", errorMessage))
-                  )
-                ]
-              ];
-            }
-
-            return [
-              state.set("form", result.value),
-              [
-                component_.cmd.dispatch(
-                  component_.global.showToastMsg(adt("error", errorMessage))
-                )
-              ]
-            ];
-          }
-        }
-      }
       case "startGuidedCreation":
         return [
           state.set("showModal", null),
           [component_.cmd.dispatch(adt("triggerGuidedCreation"))]
         ];
       case "triggerGuidedCreation":
-        // Use globally accessible CopilotKit functions
+        // Simply open the CopilotKit chat window
         setTimeout(() => {
           const copilotButton = document.querySelector(
             ".copilotKitButton"
@@ -620,61 +519,27 @@ const update: component_.page.Update<State, InnerMsg, Route> = updateValid(
           if (copilotButton) {
             copilotButton.click();
           }
-
-          // Start guided creation using global functions
-          setTimeout(() => {
-            const appendMessage = (window as any).__copilotAppendMessage;
-            const welcomeMessage = (window as any).__copilotCreationWelcome;
-
-            if (appendMessage && welcomeMessage) {
-              console.log(
-                "🚀 Starting guided creation workflow using global functions"
-              );
-
-              // Set flag to prevent system instructions from interfering
-              (window as any).__guidedCreationActive = true;
-
-              // Clear chat and start guided creation
-              // setMessages([]);
-              console.log(welcomeMessage);
-              setTimeout(() => {
-                appendMessage(
-                  new TextMessage({
-                    content: welcomeMessage,
-                    role: Role.Assistant,
-                    id: "guided-creation"
-                  })
-                );
-
-                // Reset flag after welcome message is sent
-                setTimeout(() => {
-                  (window as any).__guidedCreationActive = false;
-                }, 100);
-              }, 100);
-            } else {
-              console.error("❌ Global CopilotKit functions not available");
-            }
-          }, 200);
         }, 100);
         return [state, []];
-      case "form":
-        return component_.base.updateChild({
+      case "form": {
+        const [newFormState, newFormCmds] = component_.base.updateChild({
           state,
           childStatePath: ["form"],
           childUpdate: Form.update,
           childMsg: msg.value,
-          mapChildMsg: (value) => adt("form", value)
+          mapChildMsg: (value) => value
         });
-      case "setOpportunityForReview":
+        const derivedOpportunity = deriveOpportunityFromForm(
+          newFormState.form,
+          state.viewerUser
+        );
         return [
-          state.set("opportunityForReview", msg.value),
-          [component_.cmd.dispatch(adt("analyzeOpportunity"))]
+          newFormState.set("opportunity", derivedOpportunity),
+          newFormCmds.map((cmd) =>
+            component_.cmd.map(cmd, (msg) => adt("form", msg) as Msg)
+          )
         ];
-      case "clearOpportunityForReview":
-        return [state.set("opportunityForReview", null), []];
-      case "analyzeOpportunity":
-        // This is handled by the useCopilotAction hook
-        return [state, []];
+      }
       default:
         return [state, []];
     }
@@ -685,19 +550,7 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
   ({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isReviewWithAILoading = state.reviewWithAILoading > 0;
-    const isDisabled =
-      isSaveDraftLoading || isPublishLoading || isReviewWithAILoading;
-
-    const readableOpportunity = state.opportunityForReview
-      ? opportunityToPublicState(state.opportunityForReview)
-      : null;
-
-    useCopilotReadable({
-      description:
-        "The Team With Us Opportunity that is currently being created or edited. This is the data that should be reviewed.",
-      value: readableOpportunity
-    });
+    const isDisabled = isSaveDraftLoading || isPublishLoading;
 
     // Add creation progress context to help guide the AI through the workflow
     useCopilotReadable({
@@ -743,6 +596,12 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
             return "Need project location";
           if (!state.form?.proposalDeadline?.child.value)
             return "Need proposal deadline";
+          if (!state.form?.assignmentDate?.child.value)
+            return "Need contract award date";
+          if (!state.form?.startDate?.child.value)
+            return "Need contract start date";
+          if (!state.form?.completionDate?.child.value)
+            return "Need contract end date";
           if (!state.form?.maxBudget?.child.value)
             return "Need budget information";
           if ((state.form?.resources?.resources || []).length === 0)
@@ -756,61 +615,61 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
       }
     });
 
-    const { visibleMessages, appendMessage, reset } = useCopilotChat();
+    const { visibleMessages, appendMessage } = useCopilotChat();
 
     // Update refs when functions change
-    React.useEffect(() => {
-      // Make functions globally accessible for actions
-      (window as any).__copilotAppendMessage = appendMessage;
-      (window as any).__copilotResetMessages = reset; // Use reset instead of setMessages
-      (window as any).__copilotMessages = visibleMessages; // Note: deprecated format
-      (window as any).__copilotCreationWelcome = CREATION_WELCOME_MESSAGE;
-      (window as any).__guidedCreationActive = false;
+    // React.useEffect(() => {
+    //   // Make functions globally accessible for actions
+    //   (window as any).__copilotAppendMessage = appendMessage;
+    //   (window as any).__copilotResetMessages = reset; // Use reset instead of setMessages
+    //   (window as any).__copilotMessages = visibleMessages; // Note: deprecated format
+    //   (window as any).__copilotCreationWelcome = CREATION_WELCOME_MESSAGE;
+    //   (window as any).__guidedCreationActive = false;
 
-      // Cleanup on unmount
-      return () => {
-        delete (window as any).__copilotAppendMessage;
-        delete (window as any).__copilotResetMessages;
-        delete (window as any).__copilotMessages;
-        delete (window as any).__copilotCreationWelcome;
-        delete (window as any).__guidedCreationActive;
-      };
-    }, [appendMessage, reset, visibleMessages]);
+    //   // Cleanup on unmount
+    //   return () => {
+    //     delete (window as any).__copilotAppendMessage;
+    //     delete (window as any).__copilotResetMessages;
+    //     delete (window as any).__copilotMessages;
+    //     delete (window as any).__copilotCreationWelcome;
+    //     delete (window as any).__guidedCreationActive;
+    //   };
+    // }, [appendMessage, reset, visibleMessages]);
 
     // Add criteria mapping support for chat responses
-    React.useEffect(() => {
-      const handleNewMessages = () => {
-        if (!visibleMessages || visibleMessages.length === 0) return;
+    //     React.useEffect(() => {
+    //       const handleNewMessages = () => {
+    //         if (!visibleMessages || visibleMessages.length === 0) return;
 
-        const lastMessage = visibleMessages[
-          visibleMessages.length - 1
-        ] as TextMessage;
-        if (lastMessage && lastMessage.role === Role.User) {
-          // Changed from Role.User
-          const userQuestion = lastMessage.content;
+    //         const lastMessage = visibleMessages[
+    //           visibleMessages.length - 1
+    //         ] as TextMessage;
+    //         if (lastMessage && lastMessage.role === Role.User) {
+    //           // Changed from Role.User
+    //           const userQuestion = lastMessage.content;
 
-          if (isCriteriaRelatedQuestion(userQuestion)) {
-            const relevantCriteria = identifyRelevantCriteria(userQuestion);
-            const citationText = generateEnhancedCitationText(relevantCriteria);
+    //           if (isCriteriaRelatedQuestion(userQuestion)) {
+    //             const relevantCriteria = identifyRelevantCriteria(userQuestion);
+    //             const citationText = generateEnhancedCitationText(relevantCriteria);
 
-            // Add citation context to help the AI provide better responses
-            setTimeout(() => {
-              appendMessage(
-                new TextMessage({
-                  content: `CONTEXT FOR AI: The user asked a criteria-related question. Include these document references in your response:${citationText}
+    //             // Add citation context to help the AI provide better responses
+    //             setTimeout(() => {
+    //               appendMessage(
+    //                 new TextMessage({
+    //                   content: `CONTEXT FOR AI: The user asked a criteria-related question. Include these document references in your response:${citationText}
 
-Please provide a comprehensive answer that references these authoritative sources and explains how they apply to Team With Us opportunities.`,
-                  role: MessageRole.System, // Changed from Role.System
-                  id: Math.random().toString()
-                })
-              );
-            }, 100);
-          }
-        }
-      };
+    // Please provide a comprehensive answer that references these authoritative sources and explains how they apply to Team With Us opportunities.`,
+    //                   role: Role.System, // Changed from Role.System
+    //                   id: Math.random().toString()
+    //                 })
+    //               );
+    //             }, 100);
+    //           }
+    //         }
+    //       };
 
-      handleNewMessages();
-    }, [visibleMessages, appendMessage]);
+    //       handleNewMessages();
+    //     }, [visibleMessages, appendMessage]);
 
     // Use the unified CopilotKit actions hook
     useCopilotActions({ state, dispatch, context: "create" });
@@ -819,15 +678,15 @@ Please provide a comprehensive answer that references these authoritative source
     useEffect(() => {
       // Add a system message explaining how to use actions (only once when no messages)
       // Don't send if guided creation is active - it will send its own welcome message
-      const isGuidedCreationActive = (window as any).__guidedCreationActive;
+      // const isGuidedCreationActive = (window as any).__guidedCreationActive;
       if (
         visibleMessages &&
-        visibleMessages.length === 0 &&
-        !isGuidedCreationActive
+        visibleMessages.length === 0 //&&
+        // !isGuidedCreationActive
       ) {
         appendMessage(
           new TextMessage({
-            content: CREATION_SYSTEM_INSTRUCTIONS,
+            content: UNIFIED_SYSTEM_INSTRUCTIONS,
             role: Role.System,
             id: "action-instructions-create"
           })
@@ -835,38 +694,10 @@ Please provide a comprehensive answer that references these authoritative source
       }
     }, [visibleMessages, appendMessage]);
 
-    useEffect(() => {
-      if (state.opportunityForReview) {
-        // Clear chat history first for a fresh conversation
-        reset(); // This replaces setMessages([])
-
-        // Append the system message
-        appendMessage(
-          new TextMessage({
-            content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
-
-${JSON.stringify(readableOpportunity, null, 2)}
-
-${CREATION_SYSTEM_INSTRUCTIONS}`,
-            role: Role.System,
-            id: Math.random().toString()
-          })
-        );
-
-        dispatch(adt("clearOpportunityForReview"));
-      }
-    }, [
-      state.opportunityForReview,
-      appendMessage,
-      reset,
-      dispatch,
-      readableOpportunity
-    ]);
-
     return (
       <div style={{ position: "relative" }}>
         {/* <ActionDebugPanel /> */}
-        <ReviewActions state={state} dispatch={dispatch} context="create" />
+        {/* <ReviewActions state={state} dispatch={dispatch} context="create" /> */}
         <Form.view
           state={state.form}
           dispatch={component_.base.mapDispatch(dispatch, (v) =>
@@ -933,9 +764,7 @@ export const component: component_.page.Component<
   getActions: getActionsValid(({ state, dispatch }) => {
     const isPublishLoading = state.publishLoading > 0;
     const isSaveDraftLoading = state.saveDraftLoading > 0;
-    const isReviewWithAILoading = state.reviewWithAILoading > 0;
-    const isLoading =
-      isPublishLoading || isSaveDraftLoading || isReviewWithAILoading;
+    const isLoading = isPublishLoading || isSaveDraftLoading;
     const isValid = Form.isValid(state.form);
     const isViewerAdmin = isAdmin(state.viewerUser);
 
@@ -964,61 +793,12 @@ export const component: component_.page.Component<
       {
         children: buttonText,
         symbol_: leftPlacement(iconLinkSymbol("question-circle")),
-        loading: isReviewWithAILoading,
         disabled: isLoading,
         button: true,
         color: "info",
         onClick: () => {
-          // Check if evaluation panel is properly configured first
-          const evaluationPanelValues = state.form
-            ? state.form.evaluationPanel
-            : null;
-          const hasValidEvaluators =
-            evaluationPanelValues &&
-            state.form &&
-            Form.isEvaluationPanelTabValid(state.form);
-
-          if (!hasValidEvaluators) {
-            // Navigate to evaluation panel tab and show error
-            const switchTabMsg = adt(
-              "form",
-              adt(
-                "tabbedForm",
-                adt("setActiveTab", "Evaluation Panel" as const)
-              )
-            );
-            dispatch(switchTabMsg as Msg);
-
-            setTimeout(() => {
-              dispatch(
-                component_.global.showToastMsg(
-                  adt("error", {
-                    title: "Evaluation Panel Required",
-                    body: `Please complete the '${TAB_NAMES.EVALUATION_PANEL}' tab first. You need to add at least one evaluator before using Create with AI.`
-                  })
-                )
-              );
-            }, 100);
-            return;
-          }
-
-          // If evaluators are valid, start guided creation
-          console.log(
-            "🌟 Starting guided creation workflow - evaluators validated"
-          );
-
-          // Dispatch the guided creation action
+          // Simply open the CopilotKit chat window
           dispatch(adt("startGuidedCreation"));
-
-          // Open chat after a short delay
-          setTimeout(() => {
-            const copilotButton = document.querySelector(
-              ".copilotKitButton"
-            ) as HTMLButtonElement;
-            if (copilotButton) {
-              copilotButton.click();
-            }
-          }, 100);
         }
       },
       {

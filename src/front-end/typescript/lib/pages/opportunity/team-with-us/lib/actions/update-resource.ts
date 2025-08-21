@@ -184,18 +184,18 @@ export const updateResourceAction = async (
     }
 
     // USE REVIEW SUCCESS MESSAGE FOR BOTH workflows
-    const workflowSpecificTip =
-      workflowType === "review"
-        ? "Don't forget to save your changes when you're ready!"
-        : "Don't forget to save or publish your opportunity when you're ready!";
+    // const workflowSpecificTip =
+    //   workflowType === "review"
+    //     ? "Don't forget to save your changes when you're ready!"
+    //     : "Don't forget to save or publish your opportunity when you're ready!";
 
     return `✅ **Resource ${index + 1} ${fieldName} updated successfully!**
 
 **Field:** ${fieldName}
 **New value:** ${value}
-**Current value in form:** ${currentValue}
+**Current value in form:** ${currentValue}`;
 
-💡 **Tip:** The resource has been updated in the form. ${workflowSpecificTip}`;
+    // 💡 **Tip:** The resource has been updated in the form. ${workflowSpecificTip}`;
   } catch (error: any) {
     console.error("❌ Error updating resource:", error);
     return `❌ Error: Failed to update resource ${fieldName} - ${error.message}`;

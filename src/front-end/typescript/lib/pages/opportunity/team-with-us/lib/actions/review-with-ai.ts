@@ -1,4 +1,4 @@
-import { adt } from "shared/lib/types";
+import { FORMATTED_CRITERIA } from "../ai";
 
 export type GenericFormState = {
   opportunity?: any;
@@ -11,14 +11,14 @@ export type Msg = any; // Add Msg type for the adt usage
 
 export const reviewWithAIAction = async (
   state: GenericFormState,
-  dispatch: GenericDispatch
+  _dispatch: GenericDispatch
 ): Promise<string> => {
   console.log(
     "🚨🚨🚨 reviewWithAI ACTION CALLED ON EDIT PAGE! 🚨🚨🚨, state: ",
     state
   );
 
-  if (!state.opportunity) {
+  if (!state.opportunity && !state.form?.opportunity) {
     console.log(
       "❌ No opportunity available. Please try refreshing the page, state: ",
       state
@@ -27,24 +27,14 @@ export const reviewWithAIAction = async (
   }
 
   try {
-    // Trigger the review with AI process
-    const reviewMsg = adt("reviewWithAI") as Msg;
-    console.log("Triggering review with AI:", reviewMsg);
-    dispatch(reviewMsg);
+    // Get the opportunity data
+    const opportunity = state.opportunity || state.form?.opportunity;
 
-    return `🤖 **AI Review Started!**
+    return `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
 
-**Status:** AI is analyzing your opportunity...
+${JSON.stringify(opportunity, null, 2)}
 
-**What's happening:**
-- AI is reviewing your opportunity against evaluation criteria
-- Analyzing completeness, clarity, and compliance
-- Generating detailed feedback and recommendations
-- This typically takes 10-30 seconds
-
-**Please wait** - the review results will appear in the chat when complete.
-
-💡 **Tip:** The AI will provide comprehensive feedback on your opportunity structure, content, and compliance with evaluation criteria.`;
+${FORMATTED_CRITERIA}`;
   } catch (error) {
     console.error("❌ Error in reviewWithAI:", error);
     return `❌ Error: Failed to start AI review - ${(error as Error).message}`;

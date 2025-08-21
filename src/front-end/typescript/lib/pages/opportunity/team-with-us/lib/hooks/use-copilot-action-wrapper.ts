@@ -18,7 +18,7 @@ import { getOpportunityDescriptionCopilotAction } from "../actions/get-opportuni
 // Import workflow-specific actions
 import { startGuidedCreationCopilotAction } from "../actions/start-guided-creation";
 import { startEditingCopilotAction } from "../actions/start-editing";
-import { reviewOpportunityCopilotAction } from "../actions/review-opportunity";
+// import { reviewOpportunityCopilotAction } from "../actions/review-opportunity";
 import { getCreationProgressCopilotAction } from "../actions/get-creation-progress";
 import { getNextCreationStepCopilotAction } from "../actions/get-next-creation-step";
 import { reviewWithAICopilotAction } from "../actions/review-with-ai";
@@ -100,7 +100,7 @@ registerAction(reviewWithAICopilotAction);
 // Register workflow-specific actions
 registerAction(startGuidedCreationCopilotAction); // Creation workflow only
 registerAction(startEditingCopilotAction); // Review workflow only
-registerAction(reviewOpportunityCopilotAction); // Review workflow only
+// registerAction(reviewOpportunityCopilotAction); // Review workflow only
 registerAction(getCreationProgressCopilotAction); // Creation workflow only
 registerAction(getNextCreationStepCopilotAction); // Creation workflow only
 registerAction(reviewWithAICopilotAction); // Review workflow only
@@ -202,7 +202,8 @@ export const useCopilotActionWrapper = (
   }, [action.name, action.description, action.parameters, stableHandler]);
 
   // Register with stable dependencies
-  return useCopilotAction(stableAction, [stableAction]);
+  // console.log("useCopilotActionWrapper", action.name);
+  return useCopilotAction(stableAction); //, [stableAction]
 };
 
 // Export the registry for external access if needed

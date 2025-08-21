@@ -33,13 +33,12 @@ import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
 import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
 import { useCopilotActions } from "../../lib/hooks/use-copilot-actions";
-import { ReviewActions } from "../../lib/components/review-actions";
+// import { ReviewActions } from "../../lib/components/review-actions";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   opportunityToPublicState,
-  FORMATTED_CRITERIA
+  UNIFIED_SYSTEM_INSTRUCTIONS
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
-import { CRITERIA_MAPPINGS } from "front-end/lib/pages/opportunity/team-with-us/lib/criteria-mapping";
 import { ReviewProvider } from "../../lib/contexts/review-context";
 
 type ModalId =
@@ -62,8 +61,6 @@ export interface State extends Tab.Params {
   saveChangesAndUpdateStatusLoading: number;
   updateStatusLoading: number;
   deleteLoading: number;
-  reviewWithAILoading: number;
-  opportunityForReview: TWUOpportunity | null;
   isEditing: boolean;
 }
 
@@ -101,10 +98,7 @@ export type InnerMsg =
       "onDeleteResult",
       api.ResponseValidation<TWUOpportunity, BodyWithErrors>
     >
-  | ADT<"reviewWithAI">
-  | ADT<"onReviewAIResponse", Form.PersistResult>
-  | ADT<"setOpportunityForReview", TWUOpportunity>
-  | ADT<"clearOpportunityForReview">;
+  | ADT<"openCopilotChat">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -145,8 +139,6 @@ const init: component_.base.Init<Tab.Params, State, Msg> = (params) => {
       saveChangesAndUpdateStatusLoading: 0,
       updateStatusLoading: 0,
       deleteLoading: 0,
-      reviewWithAILoading: 0,
-      opportunityForReview: null,
       isEditing: false
     },
     []
@@ -167,8 +159,6 @@ const startUpdateStatusLoading = makeStartLoading<State>("updateStatusLoading");
 const stopUpdateStatusLoading = makeStopLoading<State>("updateStatusLoading");
 const startDeleteLoading = makeStartLoading<State>("deleteLoading");
 const stopDeleteLoading = makeStopLoading<State>("deleteLoading");
-const startReviewWithAILoading = makeStartLoading<State>("reviewWithAILoading");
-const stopReviewWithAILoading = makeStopLoading<State>("reviewWithAILoading");
 
 function persistForm(
   form: Immutable<Form.State>,
@@ -690,10 +680,7 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           ];
       }
     }
-    case "reviewWithAI": {
-      const form = state.form;
-      if (!form) return [state, []];
-
+    case "openCopilotChat": {
       // Programmatically click the CopilotKit button to open the chat window
       setTimeout(() => {
         const copilotButton = document.querySelector(
@@ -703,36 +690,8 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           copilotButton.click();
         }
       }, 100);
-
-      return [
-        startReviewWithAILoading(state),
-        [persistForm(form, (result) => adt("onReviewAIResponse", result))]
-      ];
-    }
-    case "onReviewAIResponse": {
-      state = stopReviewWithAILoading(state);
-      const result = msg.value;
-      if (result.tag === "valid") {
-        const [resultFormState, resultCmds, opportunity] = result.value;
-        return [
-          state.set("form", resultFormState),
-          [
-            ...component_.cmd.mapMany(
-              resultCmds,
-              (msg) => adt("form", msg) as Msg
-            ),
-            component_.cmd.dispatch(
-              adt("setOpportunityForReview", opportunity) as Msg
-            )
-          ]
-        ];
-      }
       return [state, []];
     }
-    case "setOpportunityForReview":
-      return [state.set("opportunityForReview", msg.value), []];
-    case "clearOpportunityForReview":
-      return [state.set("opportunityForReview", null), []];
     default:
       return [state, []];
   }
@@ -780,13 +739,11 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
 
   const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
-  const isReviewWithAILoading = state.reviewWithAILoading > 0;
   const isLoading =
     isStartEditingLoading ||
     isSaveChangesLoading ||
     isUpdateStatusLoading ||
-    isDeleteLoading ||
-    isReviewWithAILoading;
+    isDeleteLoading;
 
   const { appendMessage, reset } = useCopilotChat();
 
@@ -813,168 +770,162 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   });
 
   // Make available actions visible to the AI with explicit instructions
-  useCopilotReadable({
-    description:
-      "CRITICAL: Available CopilotKit actions that you MUST ACTUALLY EXECUTE when requested - DO NOT just write the function syntax",
-    value: {
-      INSTRUCTION:
-        "When a user asks for something that requires an action, you MUST call the action and use its return value. DO NOT write 'getCriteriaDocumentation()' as text - ACTUALLY CALL IT.",
-      availableActions: [
-        {
-          name: "startEditing",
-          description:
-            "Start editing mode for the opportunity - CALL THIS ACTION when user wants to edit or modify the opportunity",
-          howToUse:
-            "EXECUTE this action when user wants to start editing, don't write function syntax"
-        },
-        {
-          name: "debugTest",
-          description:
-            "Test if actions are working - CALL THIS ACTION when user asks to test",
-          howToUse:
-            "EXECUTE the action when user asks to test, don't write text"
-        },
-        {
-          name: "getCriteriaDocumentation",
-          description:
-            "Get Team With Us criteria documentation - CALL THIS ACTION when user asks about criteria",
-          howToUse:
-            "EXECUTE this action and return the documentation, don't write function syntax"
-        },
-        {
-          name: "getOpportunityDescription",
-          description:
-            "Get current opportunity description - CALL THIS ACTION when user asks about description",
-          howToUse: "EXECUTE this action to get real description content"
-        },
-        {
-          name: "updateOpportunityDescription",
-          description:
-            "Update the opportunity description - CALL THIS ACTION when user wants to change description",
-          howToUse:
-            "EXECUTE this action with new text, don't write function syntax"
-        },
-        {
-          name: "reviewOpportunity",
-          description:
-            "Perform comprehensive review against procurement criteria - CALL ONLY when user explicitly requests review",
-          howToUse:
-            "EXECUTE this action ONLY when user explicitly asks for review. Do not call automatically."
-        },
-        {
-          name: "updateOpportunityField",
-          description:
-            "Update any field in the opportunity - CALL THIS ACTION when user wants to change field values",
-          howToUse: "EXECUTE this action with field name and new value"
-        },
-        {
-          name: "getOpportunityFieldValue",
-          description:
-            "Get current field value - CALL THIS ACTION when user asks about field values",
-          howToUse: "EXECUTE this action to get current field values"
-        },
-        {
-          name: "addResource",
-          description:
-            "Add new resource requirement - CALL THIS ACTION when user wants to add resources",
-          howToUse: "EXECUTE this action to add new resource"
-        },
-        {
-          name: "deleteResource",
-          description:
-            "Delete a resource - CALL THIS ACTION when user wants to remove resources",
-          howToUse: "EXECUTE this action with resource index"
-        },
-        {
-          name: "updateResource",
-          description:
-            "Update resource details - CALL THIS ACTION when user wants to modify resource fields",
-          howToUse:
-            "EXECUTE this action with resource index, field name, and new value"
-        },
-        {
-          name: "getResourceDetails",
-          description:
-            "Get resource information - CALL THIS ACTION when user asks about resource details",
-          howToUse: "EXECUTE this action to get resource details"
-        },
-        {
-          name: "addQuestion",
-          description:
-            "Add new resource question - CALL THIS ACTION when user wants to add questions",
-          howToUse: "EXECUTE this action to add new question"
-        },
-        {
-          name: "deleteQuestion",
-          description:
-            "Delete a question - CALL THIS ACTION when user wants to remove questions",
-          howToUse: "EXECUTE this action with question index"
-        },
-        {
-          name: "updateQuestion",
-          description:
-            "Update question details - CALL THIS ACTION when user wants to modify question fields",
-          howToUse:
-            "EXECUTE this action with question index, field name, and new value"
-        },
-        {
-          name: "getQuestionDetails",
-          description:
-            "Get question information - CALL THIS ACTION when user asks about question details",
-          howToUse: "EXECUTE this action to get question details"
-        }
-      ],
-      IMPORTANT_REMINDER:
-        "You are equipped with these actions. When users request something these actions can provide, CALL THE ACTION and use the result in your response. Do not write function call syntax as text."
-    }
-  });
+  // useCopilotReadable({
+  //   description:
+  //     "CRITICAL: Available CopilotKit actions that you MUST ACTUALLY EXECUTE when requested - DO NOT just write the function syntax",
+  //   value: {
+  //     INSTRUCTION:
+  //       "When a user asks for something that requires an action, you MUST call the action and use its return value. DO NOT write 'getCriteriaDocumentation()' as text - ACTUALLY CALL IT.",
+  //     availableActions: [
+  //       {
+  //         name: "startEditing",
+  //         description:
+  //           "Start editing mode for the opportunity - CALL THIS ACTION when user wants to edit or modify the opportunity",
+  //         howToUse:
+  //           "EXECUTE this action when user wants to start editing, don't write function syntax"
+  //       },
+  //       {
+  //         name: "debugTest",
+  //         description:
+  //           "Test if actions are working - CALL THIS ACTION when user asks to test",
+  //         howToUse:
+  //           "EXECUTE the action when user asks to test, don't write text"
+  //       },
+  //       {
+  //         name: "getCriteriaDocumentation",
+  //         description:
+  //           "Get Team With Us criteria documentation - CALL THIS ACTION when user asks about criteria",
+  //         howToUse:
+  //           "EXECUTE this action and return the documentation, don't write function syntax"
+  //       },
+  //       {
+  //         name: "getOpportunityDescription",
+  //         description:
+  //           "Get current opportunity description - CALL THIS ACTION when user asks about description",
+  //         howToUse: "EXECUTE this action to get real description content"
+  //       },
+  //       {
+  //         name: "updateOpportunityDescription",
+  //         description:
+  //           "Update the opportunity description - CALL THIS ACTION when user wants to change description",
+  //         howToUse:
+  //           "EXECUTE this action with new text, don't write function syntax"
+  //       },
+  //       {
+  //         name: "reviewWithAI",
+  //         description:
+  //           "Perform comprehensive review against procurement criteria - CALL ONLY when user explicitly requests review",
+  //         howToUse:
+  //           "EXECUTE this action ONLY when user explicitly asks for review. Do not call automatically."
+  //       },
+  //       {
+  //         name: "updateOpportunityField",
+  //         description:
+  //           "Update any field in the opportunity - CALL THIS ACTION when user wants to change field values",
+  //         howToUse: "EXECUTE this action with field name and new value"
+  //       },
+  //       {
+  //         name: "getOpportunityFieldValue",
+  //         description:
+  //           "Get current field value - CALL THIS ACTION when user asks about field values",
+  //         howToUse: "EXECUTE this action to get current field values"
+  //       },
+  //       {
+  //         name: "addResource",
+  //         description:
+  //           "Add new resource requirement - CALL THIS ACTION when user wants to add resources",
+  //         howToUse: "EXECUTE this action to add new resource"
+  //       },
+  //       {
+  //         name: "deleteResource",
+  //         description:
+  //           "Delete a resource - CALL THIS ACTION when user wants to remove resources",
+  //         howToUse: "EXECUTE this action with resource index"
+  //       },
+  //       {
+  //         name: "updateResource",
+  //         description:
+  //           "Update resource details - CALL THIS ACTION when user wants to modify resource fields",
+  //         howToUse:
+  //           "EXECUTE this action with resource index, field name, and new value"
+  //       },
+  //       {
+  //         name: "getResourceDetails",
+  //         description:
+  //           "Get resource information - CALL THIS ACTION when user asks about resource details",
+  //         howToUse: "EXECUTE this action to get resource details"
+  //       },
+  //       {
+  //         name: "addQuestion",
+  //         description:
+  //           "Add new resource question - CALL THIS ACTION when user wants to add questions",
+  //         howToUse: "EXECUTE this action to add new question"
+  //       },
+  //       {
+  //         name: "deleteQuestion",
+  //         description:
+  //           "Delete a question - CALL THIS ACTION when user wants to remove questions",
+  //         howToUse: "EXECUTE this action with question index"
+  //       },
+  //       {
+  //         name: "updateQuestion",
+  //         description:
+  //           "Update question details - CALL THIS ACTION when user wants to modify question fields",
+  //         howToUse:
+  //           "EXECUTE this action with question index, field name, and new value"
+  //       },
+  //       {
+  //         name: "getQuestionDetails",
+  //         description:
+  //           "Get question information - CALL THIS ACTION when user asks about question details",
+  //         howToUse: "EXECUTE this action to get question details"
+  //       }
+  //     ],
+  //     IMPORTANT_REMINDER:
+  //       "You are equipped with these actions. When users request something these actions can provide, CALL THE ACTION and use the result in your response. Do not write function call syntax as text."
+  //   }
+  // });
 
-  // Add criteria mapping context to help the AI provide better responses
-  useCopilotReadable({
-    description:
-      "CRITERIA MAPPING: Enhanced context for procurement criteria questions",
-    value: {
-      criteriaMapping: {
-        description:
-          "When users ask about procurement criteria, requirements, or documentation, use the getCriteriaDocumentation() action to provide authoritative information",
-        availableCriteria: CRITERIA_MAPPINGS,
-        enhancedResponse:
-          "Always reference official documentation when answering criteria-related questions. Use getCriteriaDocumentation() to provide comprehensive, authoritative responses.",
-        isCriteriaRelatedQuestion:
-          "Use this function to detect if a user question is related to procurement criteria",
-        identifyRelevantCriteria:
-          "Use this function to find relevant criteria for a user's question",
-        generateEnhancedCitationText:
-          "Use this function to create enhanced responses with proper citations"
-      }
-    }
-  });
+  // // Add criteria mapping context to help the AI provide better responses
+  // useCopilotReadable({
+  //   description:
+  //     "CRITERIA MAPPING: Enhanced context for procurement criteria questions",
+  //   value: {
+  //     criteriaMapping: {
+  //       description:
+  //         "When users ask about procurement criteria, requirements, or documentation, use the getCriteriaDocumentation() action to provide authoritative information",
+  //       availableCriteria: CRITERIA_MAPPINGS,
+  //       enhancedResponse:
+  //         "Always reference official documentation when answering criteria-related questions. Use getCriteriaDocumentation() to provide comprehensive, authoritative responses.",
+  //       isCriteriaRelatedQuestion:
+  //         "Use this function to detect if a user question is related to procurement criteria",
+  //       identifyRelevantCriteria:
+  //         "Use this function to find relevant criteria for a user's question",
+  //       generateEnhancedCitationText:
+  //         "Use this function to create enhanced responses with proper citations"
+  //     }
+  //   }
+  // });
 
   // Use the unified CopilotKit actions hook
   useCopilotActions({ state, dispatch, context: "edit" });
 
   useEffect(() => {
-    if (state.opportunityForReview) {
-      // Clear chat history first for a fresh conversation
-      reset();
+    // Clear chat history first for a fresh conversation
+    reset();
 
-      const readableOpportunity = opportunityToPublicState(
-        state.opportunityForReview
-      );
-      appendMessage(
-        new TextMessage({
-          content: `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
-
-${JSON.stringify(readableOpportunity, null, 2)}
-
-${FORMATTED_CRITERIA}`,
-          role: Role.System,
-          id: Math.random().toString()
-        })
-      );
-      dispatch(adt("clearOpportunityForReview"));
-    }
-  }, [state.opportunityForReview, appendMessage, reset, dispatch]);
+    // const readableOpportunity = opportunityToPublicState(
+    //   state.opportunityForReview
+    // );
+    appendMessage(
+      new TextMessage({
+        content: `
+${UNIFIED_SYSTEM_INSTRUCTIONS}`,
+        role: Role.System,
+        id: Math.random().toString()
+      })
+    );
+  }, [appendMessage, reset, dispatch]);
 
   if (!state.opportunity || !state.form) {
     return (
@@ -993,7 +944,7 @@ ${FORMATTED_CRITERIA}`,
   // console.log('render state: ', state)
   return (
     <ReviewProvider>
-      <ReviewActions state={state} dispatch={dispatch} context="edit" />
+      {/* <ReviewActions state={state} dispatch={dispatch} context="edit" /> */}
       <OpportunityViewWrapper
         {...props}
         opportunity={opportunity}
@@ -1199,13 +1150,11 @@ export const component: Tab.Component<State, Msg> = {
       state.saveChangesAndUpdateStatusLoading > 0;
     const isUpdateStatusLoading = state.updateStatusLoading > 0;
     const isDeleteLoading = state.deleteLoading > 0;
-    const isReviewWithAILoading = state.reviewWithAILoading > 0;
     const isLoading =
       isStartEditingLoading ||
       isSaveChangesLoading ||
       isUpdateStatusLoading ||
-      isDeleteLoading ||
-      isReviewWithAILoading;
+      isDeleteLoading;
     const opp = state.opportunity;
     const form = state.form;
     if (!opp || !form) return component_.page.actions.none();
@@ -1216,13 +1165,13 @@ export const component: Tab.Component<State, Msg> = {
     const isUnderReview = opp.status === TWUOpportunityStatus.UnderReview;
 
     const reviewWithAIAction: LinkProps = {
-      children: "Review with AI",
+      children: "Create with AI",
       symbol_: leftPlacement(iconLinkSymbol("question-circle")),
       button: true,
       color: AI_REVIEW_BUTTON_COLOR,
-      loading: isReviewWithAILoading,
+      loading: false, // Removed isReviewWithAILoading
       disabled: isLoading,
-      onClick: () => dispatch(adt("reviewWithAI"))
+      onClick: () => dispatch(adt("openCopilotChat"))
     };
 
     // Show relevant actions when the user is editing the opportunity.

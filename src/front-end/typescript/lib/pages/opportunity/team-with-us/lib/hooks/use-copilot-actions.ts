@@ -60,7 +60,6 @@ export function useCopilotActions({
     workflow
   );
   useCopilotActionWrapper("startEditing", state, dispatch, workflow);
-  useCopilotActionWrapper("sayHello", state, dispatch, workflow);
   useCopilotActionWrapper("getCreationProgress", state, dispatch, workflow);
   useCopilotActionWrapper("getNextCreationStep", state, dispatch, workflow);
 

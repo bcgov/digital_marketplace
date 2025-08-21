@@ -102,15 +102,15 @@ export const updateOpportunityDescriptionAction = async (
     // Give time for the update to process
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const workflowSpecificMsg =
-      workflowType === "review"
-        ? "Don't forget to save your changes when you're ready!"
-        : "Don't forget to save or publish your opportunity when you're ready!";
+    // const workflowSpecificMsg =
+    //   workflowType === "review"
+    //     ? "Don't forget to save your changes when you're ready!"
+    //     : "Don't forget to save or publish your opportunity when you're ready!";
 
     return createActionSuccess(
       "Description Updated Successfully!",
-      `✅ **Description updated successfully!**\n\n**New content preview:**\n${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}\n\n💡 **Tip:** The description has been updated in the form. ${workflowSpecificMsg}`,
-      `Updated in ${workflowType} workflow`
+      `✅ **Description updated successfully!**` //\n\n**New content preview:**\n${newDescription.substring(0, 200)}${newDescription.length > 200 ? "..." : ""}\n\n💡 **Tip:** The description has been updated in the form. ${workflowSpecificMsg}`,
+      //`Updated in ${workflowType} workflow`
     );
   } catch (error: any) {
     console.error("❌ Error in unified updateOpportunityDescription:", error);
@@ -126,7 +126,7 @@ export const updateOpportunityDescriptionAction = async (
 export const updateOpportunityDescriptionCopilotAction = {
   name: "updateOpportunityDescription",
   description:
-    "UNIFIED: Update or replace the description field content of the Team With Us opportunity. Works in both creation and review workflows. This action can be used when the user wants to modify, improve, or completely rewrite the opportunity description.",
+    "Update or replace the description field content of the Team With Us opportunity. This action can be used when the user wants to modify, improve, or completely rewrite the opportunity description.",
   parameters: [
     {
       name: "newDescription",
