@@ -1,4 +1,4 @@
-import { FORMATTED_CRITERIA } from "../ai";
+import { FORMATTED_CRITERIA, opportunityToPublicState } from "../ai";
 
 export type GenericFormState = {
   opportunity?: any;
@@ -32,7 +32,7 @@ export const reviewWithAIAction = async (
 
     return `Please review this Team With Us opportunity and provide feedback based on the evaluation criteria. Here's the opportunity data:
 
-${JSON.stringify(opportunity, null, 2)}
+${JSON.stringify(opportunityToPublicState(opportunity), null, 2)}
 
 ${FORMATTED_CRITERIA}`;
   } catch (error) {

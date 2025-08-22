@@ -50,6 +50,9 @@ export interface Component<
   getBreadcrumbs?: GetBreadcrumbs<State, Msg<PageMsg, Route>>;
   getModal?: GetModal<State, Msg<PageMsg, Route>>;
   getActions?: GetActions<State, Msg<PageMsg, Route>>;
+  getSidebarOpenCallback?: (
+    state: State
+  ) => ((isOpen: boolean) => void) | undefined;
 }
 
 // Init

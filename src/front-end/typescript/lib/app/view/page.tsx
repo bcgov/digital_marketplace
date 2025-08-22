@@ -168,6 +168,7 @@ export interface Props<RouteParams, PageState, PageMsg> {
   >;
   pageState?: Immutable<PageState>;
   mapPageMsg(msg: PageMsg): InnerMsg;
+  onSidebarOpen?: (isOpen: boolean) => void;
 }
 
 export function view<
@@ -175,7 +176,8 @@ export function view<
   PageState,
   PageMsg extends ADT<unknown, unknown>
 >(props: Props<RouteParams, PageState, PageMsg>) {
-  const { state, dispatch, mapPageMsg, component, pageState } = props;
+  const { state, dispatch, mapPageMsg, component, pageState, onSidebarOpen } =
+    props;
 
   // Setup CopilotKit sidebar positioning
   useEffect(() => {
@@ -202,9 +204,17 @@ export function view<
     dispatch,
     mapPageMsg
   );
+  // Get the sidebar callback from the component if available, otherwise use the prop
+  const componentCallback = component.getSidebarOpenCallback
+    ? component.getSidebarOpenCallback(pageState)
+    : undefined;
+
+  const effectiveCallback = componentCallback || onSidebarOpen;
+
   const viewProps = {
     dispatch: dispatchPage,
-    state: pageState
+    state: pageState,
+    onSidebarOpen: effectiveCallback
   };
   const appAlerts = getAppAlerts({ state, dispatch });
   const pageAlerts = component_.page.alerts.map(
@@ -239,7 +249,14 @@ export function view<
             className="pt-4 pt-md-6"
           />
           <component.view {...viewProps} />
-          <CopilotSidebar />
+          <CopilotSidebar
+            onSetOpen={
+              effectiveCallback ||
+              ((isOpen: boolean) => {
+                console.log("sidebar open default", isOpen);
+              })
+            }
+          />
         </CopilotKit>
       </div>
     );
@@ -303,7 +320,14 @@ export function view<
                 </Row>
               </Container>
             </div>
-            <CopilotSidebar />
+            <CopilotSidebar
+              onSetOpen={
+                effectiveCallback ||
+                ((isOpen: boolean) => {
+                  console.log("sidebar open default", isOpen);
+                })
+              }
+            />
           </CopilotKit>
         </div>
       );
@@ -321,7 +345,14 @@ export function view<
             <Container className="pt-4 pt-md-6 pb-6 flex-grow-1">
               <ViewAlertsAndBreadcrumbs {...viewAlertsAndBreadcrumbsProps} />
               <component.view {...viewProps} />
-              <CopilotSidebar />
+              <CopilotSidebar
+                onSetOpen={
+                  effectiveCallback ||
+                  ((isOpen: boolean) => {
+                    console.log("sidebar open default", isOpen);
+                  })
+                }
+              />
             </Container>
           </CopilotKit>
         </div>

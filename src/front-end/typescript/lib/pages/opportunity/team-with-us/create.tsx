@@ -25,7 +25,7 @@ import Link, {
   routeDest
 } from "front-end/lib/views/link";
 import makeInstructionalSidebar from "front-end/lib/views/sidebar/instructional";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   TWUOpportunity,
   TWUOpportunityStatus,
@@ -37,7 +37,6 @@ import { invalid, valid, Validation } from "shared/lib/validation";
 import { GUIDE_AUDIENCE } from "front-end/lib/pages/guide/view";
 import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
 import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
-
 import { UNIFIED_SYSTEM_INSTRUCTIONS } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
 
 // import ActionDebugPanel from "front-end/lib/pages/opportunity/team-with-us/lib/action-debug";
@@ -671,28 +670,32 @@ const view: component_.page.View<State, InnerMsg, Route> = viewValid(
     //       handleNewMessages();
     //     }, [visibleMessages, appendMessage]);
 
-    // Use the unified CopilotKit actions hook
-    useCopilotActions({ state, dispatch, context: "create" });
+    // Store references globally for the component method to access
+    React.useEffect(() => {
+      (window as any).__copilotAppendMessage = appendMessage;
+      (window as any).__copilotVisibleMessages = visibleMessages;
+    }, [appendMessage, visibleMessages]);
 
-    // Add initial system message with action instructions
-    useEffect(() => {
-      // Add a system message explaining how to use actions (only once when no messages)
-      // Don't send if guided creation is active - it will send its own welcome message
-      // const isGuidedCreationActive = (window as any).__guidedCreationActive;
-      if (
-        visibleMessages &&
-        visibleMessages.length === 0 //&&
-        // !isGuidedCreationActive
-      ) {
-        appendMessage(
-          new TextMessage({
-            content: UNIFIED_SYSTEM_INSTRUCTIONS,
-            role: Role.System,
-            id: "action-instructions-create"
-          })
-        );
-      }
-    }, [visibleMessages, appendMessage]);
+    // useEffect(() => {
+    //   // Add a system message explaining how to use actions (only once when no messages)
+    //   // Don't send if guided creation is active - it will send its own welcome message
+    //   // const isGuidedCreationActive = (window as any).__guidedCreationActive;
+    //   if (
+    //     visibleMessages &&
+    //     visibleMessages.length === 0 //&&
+    //     // !isGuidedCreationActive
+    //   ) {
+    //     appendMessage(
+    //       new TextMessage({
+    //         content: UNIFIED_SYSTEM_INSTRUCTIONS,
+    //         role: Role.System,
+    //         id: "action-instructions-create"
+    //       })
+    //     );
+    //   }
+    // }, [visibleMessages, appendMessage]);
+
+    useCopilotActions({ state, dispatch, context: "create" });
 
     return (
       <div style={{ position: "relative" }}>
@@ -720,6 +723,7 @@ export const component: component_.page.Component<
   init,
   update,
   view,
+
   sidebar: sidebarValid({
     size: "large",
     color: "c-sidebar-instructional-bg",
@@ -881,6 +885,38 @@ export const component: component_.page.Component<
         });
     }
   }),
+  getSidebarOpenCallback: (state) => {
+    console.log("Create page getSidebarOpenCallback called with state:", state);
+    console.log("Create page getSidebarOpenCallback method exists!");
+
+    return (isOpen: boolean) => {
+      console.log("Create page getSidebarOpenCallback: sidebar open:", isOpen);
+      if (!isOpen) return;
+
+      // For create page, check if no messages exist
+      const visibleMessages = (window as any).__copilotVisibleMessages;
+      if (visibleMessages && visibleMessages.length > 0) {
+        console.log(
+          "Messages already exist, skipping system message for create"
+        );
+        return;
+      }
+
+      console.log("appending system message for create");
+
+      const appendMessage = (window as any).__copilotAppendMessage;
+
+      if (appendMessage) {
+        appendMessage(
+          new TextMessage({
+            content: UNIFIED_SYSTEM_INSTRUCTIONS,
+            role: Role.System,
+            id: "action-instructions-create"
+          })
+        );
+      }
+    };
+  },
   getMetadata() {
     return makePageMetadata("Create a Team With Us Opportunity");
   }

@@ -17,7 +17,7 @@ import {
 import ReportCardList, {
   ReportCard
 } from "front-end/lib/views/report-card-list";
-import React, { useEffect } from "react";
+import React from "react";
 import OpportunityViewWrapper from "front-end/lib/pages/opportunity/team-with-us/edit/tab/opportunity-view-wrapper";
 import { Col, Row } from "reactstrap";
 import { formatAmount, formatDate } from "shared/lib";
@@ -34,11 +34,11 @@ import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
 import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
 import { useCopilotActions } from "../../lib/hooks/use-copilot-actions";
 // import { ReviewActions } from "../../lib/components/review-actions";
-import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import {
   opportunityToPublicState,
   UNIFIED_SYSTEM_INSTRUCTIONS
 } from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
 import { ReviewProvider } from "../../lib/contexts/review-context";
 
 type ModalId =
@@ -737,6 +737,14 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
 
+  const { appendMessage, reset } = useCopilotChat();
+
+  // Store references globally for the component method to access
+  React.useEffect(() => {
+    (window as any).__copilotAppendMessage = appendMessage;
+    (window as any).__copilotReset = reset;
+  }, [appendMessage, reset]);
+
   const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
   const isLoading =
@@ -744,8 +752,6 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isSaveChangesLoading ||
     isUpdateStatusLoading ||
     isDeleteLoading;
-
-  const { appendMessage, reset } = useCopilotChat();
 
   // Make current opportunity data readable to the copilot
   const readableOpportunity = state.opportunity
@@ -760,12 +766,11 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
 
   // Also make the current form state readable
   useCopilotReadable({
-    description:
-      "Current form state including whether the opportunity is being edited and field values",
+    description: "Is form being edited",
     value: {
-      isEditing: state.isEditing,
-      currentDescription: state.form?.description.child.value || "",
-      formValid: state.form ? Form.isValid(state.form) : false
+      isEditing: state.isEditing
+      // currentDescription: state.form?.description.child.value || "",
+      // formValid: state.form ? Form.isValid(state.form) : false
     }
   });
 
@@ -910,23 +915,30 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   // Use the unified CopilotKit actions hook
   useCopilotActions({ state, dispatch, context: "edit" });
 
-  useEffect(() => {
-    // Clear chat history first for a fresh conversation
-    reset();
+  //   useEffect(() => {
+  //     const opportunity = state.opportunity || state.form?.opportunity;
+  //     if (!opportunity) return;
+  //     console.log('setting up chat for opportunity: ', opportunity)
 
-    // const readableOpportunity = opportunityToPublicState(
-    //   state.opportunityForReview
-    // );
-    appendMessage(
-      new TextMessage({
-        content: `
-${UNIFIED_SYSTEM_INSTRUCTIONS}`,
-        role: Role.System,
-        id: Math.random().toString()
-      })
-    );
-  }, [appendMessage, reset, dispatch]);
+  //     // Clear chat history first for a fresh conversation
+  //     reset();
 
+  //     // const readableOpportunity = opportunityToPublicState(
+  //     //   state.opportunityForReview
+  //     // );
+  //     setTimeout(() => {
+  //       console.log('appending system message')
+  //     appendMessage(
+  //       new TextMessage({
+  //         content: `
+  // ${UNIFIED_SYSTEM_INSTRUCTIONS}`,
+  //         role: Role.System,
+  //         id: Math.random().toString()
+  //       })
+  //     );
+  //   }, 200) // timeout required to ensure copilotreadable and actions are set up
+
+  //   }, [appendMessage, reset, dispatch, state.opportunity, state.form?.opportunity]);
   if (!state.opportunity || !state.form) {
     return (
       <div className="pt-8">
@@ -965,6 +977,48 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
+  getSidebarOpenCallback: (state) => {
+    console.log("getSidebarOpenCallback called with state:", state);
+    console.log("getSidebarOpenCallback method exists!");
+
+    return (isOpen: boolean) => {
+      console.log("getSidebarOpenCallback: sidebar open:", isOpen);
+      if (!isOpen) return;
+
+      const opportunity = state.opportunity || state.form?.opportunity;
+      if (!opportunity) {
+        console.log("No opportunity available for sidebar setup");
+        return;
+      }
+
+      console.log("setting up chat for opportunity: ", opportunity);
+
+      // Clear chat history first for a fresh conversation
+      const reset = (window as any).__copilotReset;
+      if (reset) {
+        reset();
+      }
+
+      // Use setTimeout to ensure copilotreadable and actions are set up
+      setTimeout(() => {
+        console.log("appending system message");
+
+        const appendMessage = (window as any).__copilotAppendMessage;
+
+        if (appendMessage) {
+          appendMessage(
+            new TextMessage({
+              content: `
+${UNIFIED_SYSTEM_INSTRUCTIONS}`,
+              role: Role.System,
+              id: Math.random().toString()
+            })
+          );
+        }
+      }, 200);
+    };
+  },
 
   onInitResponse(response) {
     return adt("resetOpportunity", [
