@@ -979,20 +979,20 @@ export const component: Tab.Component<State, Msg> = {
   view,
 
   getSidebarOpenCallback: (state) => {
-    console.log("getSidebarOpenCallback called with state:", state);
-    console.log("getSidebarOpenCallback method exists!");
+    // console.log("getSidebarOpenCallback called with state:", state);
+    // console.log("getSidebarOpenCallback method exists!");
 
     return (isOpen: boolean) => {
-      console.log("getSidebarOpenCallback: sidebar open:", isOpen);
+      // console.log("getSidebarOpenCallback: sidebar open:", isOpen);
       if (!isOpen) return;
 
       const opportunity = state.opportunity || state.form?.opportunity;
       if (!opportunity) {
-        console.log("No opportunity available for sidebar setup");
+        // console.log("No opportunity available for sidebar setup");
         return;
       }
 
-      console.log("setting up chat for opportunity: ", opportunity);
+      // console.log("setting up chat for opportunity: ", opportunity);
 
       // Clear chat history first for a fresh conversation
       const reset = (window as any).__copilotReset;
@@ -1002,7 +1002,7 @@ export const component: Tab.Component<State, Msg> = {
 
       // Use setTimeout to ensure copilotreadable and actions are set up
       setTimeout(() => {
-        console.log("appending system message");
+        // console.log("appending system message");
 
         const appendMessage = (window as any).__copilotAppendMessage;
 

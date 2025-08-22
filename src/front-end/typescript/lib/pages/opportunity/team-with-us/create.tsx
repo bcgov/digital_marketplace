@@ -885,24 +885,24 @@ export const component: component_.page.Component<
         });
     }
   }),
-  getSidebarOpenCallback: (state) => {
-    console.log("Create page getSidebarOpenCallback called with state:", state);
-    console.log("Create page getSidebarOpenCallback method exists!");
+  getSidebarOpenCallback: () => {
+    // console.log("Create page getSidebarOpenCallback called with state:", state);
+    // console.log("Create page getSidebarOpenCallback method exists!");
 
     return (isOpen: boolean) => {
-      console.log("Create page getSidebarOpenCallback: sidebar open:", isOpen);
+      // console.log("Create page getSidebarOpenCallback: sidebar open:", isOpen);
       if (!isOpen) return;
 
       // For create page, check if no messages exist
       const visibleMessages = (window as any).__copilotVisibleMessages;
       if (visibleMessages && visibleMessages.length > 0) {
-        console.log(
-          "Messages already exist, skipping system message for create"
-        );
+        // console.log(
+        //   "Messages already exist, skipping system message for create"
+        // );
         return;
       }
 
-      console.log("appending system message for create");
+      // console.log("appending system message for create");
 
       const appendMessage = (window as any).__copilotAppendMessage;
 
