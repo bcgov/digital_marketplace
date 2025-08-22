@@ -43,16 +43,18 @@ export interface Params {
 }
 
 export const init: component_.base.Init<Params, State, Msg> = (params) => {
-  return [
-    {
-      errors: params.errors,
-      showHelp: false,
-      validate: params.validate || ((v) => ({ tag: "valid", value: v })),
-      child: params.child,
-      isDirty: false
-    },
-    []
-  ];
+  // Check if there's existing content to determine if the field should be considered dirty
+  const isDirty = shouldBeDirty(params.child.value);
+
+  const initialState = {
+    errors: params.errors,
+    showHelp: false,
+    validate: params.validate || ((v) => ({ tag: "valid", value: v })),
+    child: params.child,
+    isDirty
+  };
+
+  return [initialState, []];
 };
 
 export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
@@ -122,14 +124,19 @@ export function setErrors(
 export function setValidate(
   state: Immutable<State>,
   validate: (value: string) => Validation<string>,
-  runValidation?: boolean
+  runValidation?: boolean,
+  disabled?: boolean
 ): Immutable<State> {
+  // Update the validate function
   state = state.set("validate", validate);
-  if (runValidation) {
+
+  // If runValidation is true or if there's existing content, and component is not disabled, mark as dirty and run validation
+  if ((runValidation || shouldBeDirty(state.child.value)) && !disabled) {
     // Mark as dirty when running validation on existing content
     state = state.set("isDirty", true);
-    state = validateState(state);
+    state = validateState(state, disabled);
   }
+
   return state;
 }
 
@@ -141,8 +148,21 @@ function cleanPlateEditorValue(value: string): string {
     .trim(); // Remove regular whitespace and newlines
 }
 
-export function validateState(state: Immutable<State>): Immutable<State> {
-  // Only run validation if the field is dirty (user has made changes)
+function shouldBeDirty(value: string): boolean {
+  const cleanedValue = cleanPlateEditorValue(value);
+  return cleanedValue.length > 0;
+}
+
+export function validateState(
+  state: Immutable<State>,
+  disabled?: boolean
+): Immutable<State> {
+  // Don't run validation if the component is disabled
+  if (disabled) {
+    return state;
+  }
+
+  // Only run validation if the field is dirty (user has made changes or has existing content)
   if (!state.isDirty) {
     return state;
   }
@@ -153,8 +173,27 @@ export function validateState(state: Immutable<State>): Immutable<State> {
   return state.set("errors", result.tag === "invalid" ? result.value : []);
 }
 
-export function validate(state: Immutable<State>): Immutable<State> {
-  return validateState(state);
+export function validate(
+  state: Immutable<State>,
+  disabled?: boolean
+): Immutable<State> {
+  return validateState(state, disabled);
+}
+
+export function forceValidate(
+  state: Immutable<State>,
+  disabled?: boolean
+): Immutable<State> {
+  // Don't run validation if the component is disabled
+  if (disabled) {
+    return state;
+  }
+
+  // Force validation regardless of dirty state - useful for external validation calls
+  const rawValue = state.child.value;
+  const cleanedValue = cleanPlateEditorValue(rawValue);
+  const result = state.validate(cleanedValue);
+  return state.set("errors", result.tag === "invalid" ? result.value : []);
 }
 
 export function isValid(state: Immutable<State>): boolean {

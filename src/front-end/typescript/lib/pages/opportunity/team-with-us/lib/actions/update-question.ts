@@ -74,7 +74,10 @@ export const updateQuestionAction = async (
           "resourceQuestions",
           adt("questionText", {
             qIndex: index,
-            childMsg: adt("onChangeTextArea", [value, 0, value.length])
+            childMsg: adt(
+              "child",
+              adt("onChangeTextArea", [value, 0, value.length])
+            )
           })
         )
       );
@@ -85,7 +88,10 @@ export const updateQuestionAction = async (
           "resourceQuestions",
           adt("guidelineText", {
             qIndex: index,
-            childMsg: adt("onChangeTextArea", [value, 0, value.length])
+            childMsg: adt(
+              "child",
+              adt("onChangeTextArea", [value, 0, value.length])
+            )
           })
         )
       );

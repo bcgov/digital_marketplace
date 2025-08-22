@@ -1,6 +1,6 @@
 import * as FormField from "front-end/lib/components/form-field";
 import * as PlateEditor from "front-end/lib/components/form-field/plate-editor";
-import { Msg as PlateEditorMsg } from "front-end/lib/components/form-field/plate-editor";
+
 import * as NumberField from "front-end/lib/components/form-field/number";
 import {
   component as component_,
@@ -473,88 +473,18 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         `📝 [Update] Updating question text for index:`,
         msg.value.qIndex
       );
-      console.log(`📝 [Update] Message details:`, {
-        qIndex: msg.value.qIndex,
-        childMsg: msg.value.childMsg,
-        currentQuestionValue: FormField.getValue(
-          state.questions[msg.value.qIndex].question as any
-        )
-      });
-
       const componentMessage = msg.value.childMsg;
       const qIndex = msg.value.qIndex;
-
-      // Before component_.base.updateChild - Deep state inspection
-      console.log("🔍 [questionText] Deep state analysis:", {
-        questionsArray: state.questions,
-        questionsArrayType: Array.isArray(state.questions),
-        questionAtIndex0: state.questions[0],
-        questionAtIndex0Type: typeof state.questions[0],
-        questionField: state.questions[0]?.question,
-        questionFieldType: typeof state.questions[0]?.question,
-        stateKeys: Object.keys(state),
-        stateType: typeof state,
-        isImmutable: state.toJS !== undefined
-      });
-
-      // Test path resolution manually
-      console.log("🔍 [questionText] Path resolution test:", {
-        path: ["questions", `${qIndex}`, "question"],
-        resolvedValue: state.getIn
-          ? state.getIn(["questions", `${qIndex}`, "question"])
-          : "No getIn method",
-        directAccess: state.questions?.[qIndex]?.question,
-        pathExists: state.hasIn
-          ? state.hasIn(["questions", `${qIndex}`, "question"])
-          : "No hasIn method"
-      });
-
-      // Before component_.base.updateChild
-      console.log("🔍 [questionText] State before update:", {
-        currentState: state.toJS ? state.toJS() : state,
-        childStatePath: ["questions", `${qIndex}`, "question"],
-        targetQuestion: state.questions[qIndex],
-        targetQuestionValue: FormField.getValue(
-          state.questions[qIndex].question as any
-        )
-      });
-
-      console.log(`📝 [Update] About to update child with:`, {
-        childStatePath: ["questions", `${qIndex}`, "question"],
-        childMsg: componentMessage
-      });
 
       const result: component_.base.UpdateReturnValue<State, Msg> =
         component_.base.updateChild({
           state,
           childStatePath: ["questions", `${qIndex}`, "question"],
           childUpdate: PlateEditor.update,
-          childMsg: adt(
-            "child" as const,
-            componentMessage as any
-          ) as PlateEditorMsg,
+          childMsg: componentMessage,
           mapChildMsg: (value) =>
             adt("questionText", { qIndex, childMsg: value })
         });
-
-      console.log("🔍 [updateChild] Raw result:", result);
-
-      // After component_.base.updateChild, before return
-      console.log("🔍 [questionText] Update result:", {
-        newState: result[0],
-        commands: result[1],
-        newQuestionValue: FormField.getValue(
-          result[0].questions[qIndex].question as any
-        ),
-        stateUpdated: result[0] !== state
-      });
-
-      console.log(`📝 [Update] Child update completed:`, {
-        newQuestionValue: FormField.getValue(
-          result[0].questions[qIndex].question as any
-        ),
-        commands: result[1].length
-      });
 
       return result;
     }
@@ -570,10 +500,7 @@ export const update: component_.base.Update<State, Msg> = ({ state, msg }) => {
         state,
         childStatePath: ["questions", `${qIndex}`, "guideline"],
         childUpdate: PlateEditor.update,
-        childMsg: adt(
-          "child" as const,
-          componentMessage as any
-        ) as PlateEditorMsg,
+        childMsg: componentMessage,
         mapChildMsg: (value) =>
           adt("guidelineText", { qIndex, childMsg: value })
       });
