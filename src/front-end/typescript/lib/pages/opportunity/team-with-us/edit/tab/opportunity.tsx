@@ -737,13 +737,14 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
 
-  const { appendMessage, reset } = useCopilotChat();
+  const { appendMessage, reset, visibleMessages } = useCopilotChat();
 
   // Store references globally for the component method to access
   React.useEffect(() => {
     (window as any).__copilotAppendMessage = appendMessage;
     (window as any).__copilotReset = reset;
-  }, [appendMessage, reset]);
+    (window as any).__copilotVisibleMessages = visibleMessages;
+  }, [appendMessage, reset, visibleMessages]);
 
   const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
@@ -989,6 +990,15 @@ export const component: Tab.Component<State, Msg> = {
       const opportunity = state.opportunity || state.form?.opportunity;
       if (!opportunity) {
         // console.log("No opportunity available for sidebar setup");
+        return;
+      }
+
+      const visibleMessages = (window as any).__copilotVisibleMessages;
+      console.log("visibleMessages: ", visibleMessages);
+      if (visibleMessages && visibleMessages.length > 0) {
+        // console.log(
+        //   "Messages already exist, skipping system message for create"
+        // );
         return;
       }
 
