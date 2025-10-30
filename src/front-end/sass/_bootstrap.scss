@@ -5,7 +5,30 @@
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  */
 
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
 @import "bootstrap/scss/variables-dark";
+// 'h' stands for 'half'
+// Merge standard Bootstrap spacers with custom ones.
+// Standard keys ensure Bootstrap utilities are generated correctly.
+$spacers: map.merge(
+  (
+    // custom spacers
+    n4h: $spacer * -2,
+    n6: $spacer * -4,
+    n7: $spacer * -5,
+    n8: $spacer * -6,
+    n9: $spacer * -8,
+    n10: $spacer * -10,
+    4h: $spacer * 2,
+    6: $spacer * 4,
+    7: $spacer * 5,
+    8: $spacer * 6,
+    9: $spacer * 8,
+    10: $spacer * 10
+  ),
+  $spacers
+);
 @import "bootstrap/scss/maps";
 @import "bootstrap/scss/mixins";
 @import "bootstrap/scss/utilities";
