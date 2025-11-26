@@ -131,8 +131,8 @@ const VendorView: component_.page.View<State, InnerMsg, Route> = ({
               <div className="mb-5">
                 <em>Team With Us</em> allows private-sector vendors to provide
                 individual tech resources to government development teams. To
-                participate in these competitions, vendors must first
-                pre-qualify for one or more <em>Team With Us</em> service areas.
+                participate in these competitions, vendors must first qualify
+                for one or more <em>Team With Us</em> service areas.
               </div>
               <VendorHIW />
               <div className="d-flex flex-column flex-sm-row mt-5 flex-nowrap align-items-start align-items-sm-center">
@@ -192,7 +192,7 @@ const VendorHIW: component_.base.View = () => {
       <HowItWorksItem
         symbol_={adt("text", "2")}
         mobileSymbol={adt("text", "2.")}
-        title="Apply to Become a Supplier"
+        title="Apply to Become a Qualified Supplier"
         description={
           <div>
             <p>
