@@ -5,7 +5,7 @@ on:
     branches:
       - development
       - master
-  workflow_dispatch:
+  push:
 
 jobs:
   test:
