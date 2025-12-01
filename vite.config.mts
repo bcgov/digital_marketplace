@@ -2,7 +2,9 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'path';
+import fs from 'fs';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import tailwindcss from '@tailwindcss/vite'
 import { compression, defineAlgorithm } from 'vite-plugin-compression2';
 import { constants } from 'zlib';
 
@@ -25,6 +27,12 @@ export default defineConfig(({ mode }) => {
     basePath = '/';
   }
 
+  const inputFiles = {
+    main: path.resolve(__dirname, 'src/front-end/index.html'),
+    downtime: path.resolve(__dirname, 'src/front-end/downtime.html'),
+    unsupportedBrowser: path.resolve(__dirname, 'src/front-end/unsupported-browser.html')
+  };
+
   return {
     plugins: [
       react(),
@@ -35,6 +43,7 @@ export default defineConfig(({ mode }) => {
         ]
       }),
       nodePolyfills(),
+      tailwindcss(),
       // Only enable compression for production builds
       ...(mode === 'production' ? [
         compression({
@@ -61,30 +70,28 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         'bootstrap': path.resolve(process.cwd(), 'node_modules/bootstrap'),
-        '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript')
+        '/typescript': path.resolve(process.cwd(), 'src/front-end/typescript'),
+        // Rely on tsconfig paths for '@/*' via vite-tsconfig-paths
       }
     },
     // Set the base public path when served in production
     // Ensure leading/trailing slashes are correct
     base: basePath,
     // Specify the project root directory (where index.html is expected)
-    root: './src/front-end/html', // Project root
-    publicDir: '../public',
+    // root: './src/front-end/html', // does not work
+    root: './src/front-end',
+    publicDir: './public',
     build: {
-      outDir: '../../../build/front-end', // Navigate up from src/front-end/html to project root
+      outDir: '../../build/front-end', // Navigate up from src/front-end/html to project root
       emptyOutDir: true,
       sourcemap: mode === 'development',
       rollupOptions: {
-        input: {
-          main: path.resolve(process.cwd(), 'src/front-end/html/index.html'),
-          downtime: path.resolve(process.cwd(), 'src/front-end/html/downtime.html'),
-          unsupportedBrowser: path.resolve(process.cwd(), 'src/front-end/html/unsupported-browser.html')
-        }
+        input: inputFiles
       }
     },
     server: {
       // Configure the development server
-      port: 5173, // Vite runs on 5173
+      port: 3001, // Vite runs on 3000
       strictPort: true, // Exit if port is already in use
       // Proxy API requests to the backend server
       proxy: {
@@ -92,16 +99,24 @@ export default defineConfig(({ mode }) => {
           target: 'http://localhost:3000', // Point proxy to backend on 3000
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
+          // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
         },
-        '/auth': {
+        '/jwt': {
           target: 'http://localhost:3000', // Point proxy to backend on 3000
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false,      // Optional: Ignore invalid SSL certs if backend uses HTTPS
+          // rewrite: (path) => path.replace(/^\/api/, '') // Optional: Remove /api prefix before forwarding
+        },
+        '/auth': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false
         }
       }
     },
     define: {
-      'process.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.VITE_SHOW_TEST_INDICATOR)
+      'process.env.VITE_SHOW_TEST_INDICATOR': JSON.stringify(env.VITE_SHOW_TEST_INDICATOR),
+      'process.env.VITE_AI_SERVICE_URL': JSON.stringify(env.VITE_AI_SERVICE_URL)
     }
   };
 });

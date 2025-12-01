@@ -31,6 +31,15 @@ import {
 } from "shared/lib/resources/opportunity/team-with-us";
 import { isAdmin, User } from "shared/lib/resources/user";
 import { adt, ADT, Id, BodyWithErrors } from "shared/lib/types";
+import { useCopilotChat, useCopilotReadable } from "@copilotkit/react-core";
+import { useCopilotActions } from "../../lib/hooks/use-copilot-actions";
+// import { ReviewActions } from "../../lib/components/review-actions";
+import {
+  opportunityToPublicState,
+  UNIFIED_SYSTEM_INSTRUCTIONS
+} from "front-end/lib/pages/opportunity/team-with-us/lib/ai";
+import { Role, TextMessage } from "@copilotkit/runtime-client-gql";
+import { ReviewProvider } from "../../lib/contexts/review-context";
 
 type ModalId =
   | "publish"
@@ -88,7 +97,8 @@ export type InnerMsg =
   | ADT<
       "onDeleteResult",
       api.ResponseValidation<TWUOpportunity, BodyWithErrors>
-    >;
+    >
+  | ADT<"openCopilotChat">;
 
 export type Msg = component_.page.Msg<InnerMsg, Route>;
 
@@ -557,8 +567,11 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
       return [
         startUpdateStatusLoading(state),
         [
-          updateStatus(opportunity.id, msg.value, (result) =>
-            adt("onUpdateStatusResult", [msg.value, result])
+          updateStatus(
+            opportunity.id,
+            msg.value,
+            (result) =>
+              adt("onUpdateStatusResult", [msg.value, result]) as InnerMsg
           )
         ]
       ];
@@ -667,11 +680,24 @@ const update: component_.page.Update<State, InnerMsg, Route> = ({
           ];
       }
     }
+    case "openCopilotChat": {
+      // Programmatically click the CopilotKit button to open the chat window
+      setTimeout(() => {
+        const copilotButton = document.querySelector(
+          ".copilotKitButton"
+        ) as HTMLButtonElement;
+        if (copilotButton) {
+          copilotButton.click();
+        }
+      }, 100);
+      return [state, []];
+    }
     default:
       return [state, []];
   }
 };
 
+const AI_REVIEW_BUTTON_COLOR = "primary";
 export const Reporting: component_.base.ComponentView<State, Msg> = ({
   state
 }) => {
@@ -708,12 +734,18 @@ export const Reporting: component_.base.ComponentView<State, Msg> = ({
 
 const view: component_.page.View<State, InnerMsg, Route> = (props) => {
   const { state, dispatch } = props;
-  const opportunity = state.opportunity;
-  const form = state.form;
-  if (!opportunity || !form) return null;
-  const viewerUser = state.viewerUser;
   const isStartEditingLoading = state.startEditingLoading > 0;
   const isSaveChangesLoading = state.saveChangesLoading > 0;
+
+  const { appendMessage, reset, visibleMessages } = useCopilotChat();
+
+  // Store references globally for the component method to access
+  React.useEffect(() => {
+    (window as any).__copilotAppendMessage = appendMessage;
+    (window as any).__copilotReset = reset;
+    (window as any).__copilotVisibleMessages = visibleMessages;
+  }, [appendMessage, reset, visibleMessages]);
+
   const isUpdateStatusLoading = state.updateStatusLoading > 0;
   const isDeleteLoading = state.deleteLoading > 0;
   const isLoading =
@@ -721,19 +753,224 @@ const view: component_.page.View<State, InnerMsg, Route> = (props) => {
     isSaveChangesLoading ||
     isUpdateStatusLoading ||
     isDeleteLoading;
+
+  // Make current opportunity data readable to the copilot
+  const readableOpportunity = state.opportunity
+    ? opportunityToPublicState(state.opportunity)
+    : null;
+
+  useCopilotReadable({
+    description:
+      "The Team With Us Opportunity that is currently being edited. This includes all form fields and their current values.",
+    value: readableOpportunity
+  });
+
+  // Also make the current form state readable
+  useCopilotReadable({
+    description: "Is form being edited",
+    value: {
+      isEditing: state.isEditing
+      // currentDescription: state.form?.description.child.value || "",
+      // formValid: state.form ? Form.isValid(state.form) : false
+    }
+  });
+
+  // Make available actions visible to the AI with explicit instructions
+  // useCopilotReadable({
+  //   description:
+  //     "CRITICAL: Available CopilotKit actions that you MUST ACTUALLY EXECUTE when requested - DO NOT just write the function syntax",
+  //   value: {
+  //     INSTRUCTION:
+  //       "When a user asks for something that requires an action, you MUST call the action and use its return value. DO NOT write 'getCriteriaDocumentation()' as text - ACTUALLY CALL IT.",
+  //     availableActions: [
+  //       {
+  //         name: "startEditing",
+  //         description:
+  //           "Start editing mode for the opportunity - CALL THIS ACTION when user wants to edit or modify the opportunity",
+  //         howToUse:
+  //           "EXECUTE this action when user wants to start editing, don't write function syntax"
+  //       },
+  //       {
+  //         name: "debugTest",
+  //         description:
+  //           "Test if actions are working - CALL THIS ACTION when user asks to test",
+  //         howToUse:
+  //           "EXECUTE the action when user asks to test, don't write text"
+  //       },
+  //       {
+  //         name: "getCriteriaDocumentation",
+  //         description:
+  //           "Get Team With Us criteria documentation - CALL THIS ACTION when user asks about criteria",
+  //         howToUse:
+  //           "EXECUTE this action and return the documentation, don't write function syntax"
+  //       },
+  //       {
+  //         name: "getOpportunityDescription",
+  //         description:
+  //           "Get current opportunity description - CALL THIS ACTION when user asks about description",
+  //         howToUse: "EXECUTE this action to get real description content"
+  //       },
+  //       {
+  //         name: "updateOpportunityDescription",
+  //         description:
+  //           "Update the opportunity description - CALL THIS ACTION when user wants to change description",
+  //         howToUse:
+  //           "EXECUTE this action with new text, don't write function syntax"
+  //       },
+  //       {
+  //         name: "reviewWithAI",
+  //         description:
+  //           "Perform comprehensive review against procurement criteria - CALL ONLY when user explicitly requests review",
+  //         howToUse:
+  //           "EXECUTE this action ONLY when user explicitly asks for review. Do not call automatically."
+  //       },
+  //       {
+  //         name: "updateOpportunityField",
+  //         description:
+  //           "Update any field in the opportunity - CALL THIS ACTION when user wants to change field values",
+  //         howToUse: "EXECUTE this action with field name and new value"
+  //       },
+  //       {
+  //         name: "getOpportunityFieldValue",
+  //         description:
+  //           "Get current field value - CALL THIS ACTION when user asks about field values",
+  //         howToUse: "EXECUTE this action to get current field values"
+  //       },
+  //       {
+  //         name: "addResource",
+  //         description:
+  //           "Add new resource requirement - CALL THIS ACTION when user wants to add resources",
+  //         howToUse: "EXECUTE this action to add new resource"
+  //       },
+  //       {
+  //         name: "deleteResource",
+  //         description:
+  //           "Delete a resource - CALL THIS ACTION when user wants to remove resources",
+  //         howToUse: "EXECUTE this action with resource index"
+  //       },
+  //       {
+  //         name: "updateResource",
+  //         description:
+  //           "Update resource details - CALL THIS ACTION when user wants to modify resource fields",
+  //         howToUse:
+  //           "EXECUTE this action with resource index, field name, and new value"
+  //       },
+  //       {
+  //         name: "getResourceDetails",
+  //         description:
+  //           "Get resource information - CALL THIS ACTION when user asks about resource details",
+  //         howToUse: "EXECUTE this action to get resource details"
+  //       },
+  //       {
+  //         name: "addQuestion",
+  //         description:
+  //           "Add new resource question - CALL THIS ACTION when user wants to add questions",
+  //         howToUse: "EXECUTE this action to add new question"
+  //       },
+  //       {
+  //         name: "deleteQuestion",
+  //         description:
+  //           "Delete a question - CALL THIS ACTION when user wants to remove questions",
+  //         howToUse: "EXECUTE this action with question index"
+  //       },
+  //       {
+  //         name: "updateQuestion",
+  //         description:
+  //           "Update question details - CALL THIS ACTION when user wants to modify question fields",
+  //         howToUse:
+  //           "EXECUTE this action with question index, field name, and new value"
+  //       },
+  //       {
+  //         name: "getQuestionDetails",
+  //         description:
+  //           "Get question information - CALL THIS ACTION when user asks about question details",
+  //         howToUse: "EXECUTE this action to get question details"
+  //       }
+  //     ],
+  //     IMPORTANT_REMINDER:
+  //       "You are equipped with these actions. When users request something these actions can provide, CALL THE ACTION and use the result in your response. Do not write function call syntax as text."
+  //   }
+  // });
+
+  // // Add criteria mapping context to help the AI provide better responses
+  // useCopilotReadable({
+  //   description:
+  //     "CRITERIA MAPPING: Enhanced context for procurement criteria questions",
+  //   value: {
+  //     criteriaMapping: {
+  //       description:
+  //         "When users ask about procurement criteria, requirements, or documentation, use the getCriteriaDocumentation() action to provide authoritative information",
+  //       availableCriteria: CRITERIA_MAPPINGS,
+  //       enhancedResponse:
+  //         "Always reference official documentation when answering criteria-related questions. Use getCriteriaDocumentation() to provide comprehensive, authoritative responses.",
+  //       isCriteriaRelatedQuestion:
+  //         "Use this function to detect if a user question is related to procurement criteria",
+  //       identifyRelevantCriteria:
+  //         "Use this function to find relevant criteria for a user's question",
+  //       generateEnhancedCitationText:
+  //         "Use this function to create enhanced responses with proper citations"
+  //     }
+  //   }
+  // });
+
+  // Use the unified CopilotKit actions hook
+  useCopilotActions({ state, dispatch, context: "edit" });
+
+  //   useEffect(() => {
+  //     const opportunity = state.opportunity || state.form?.opportunity;
+  //     if (!opportunity) return;
+  //     console.log('setting up chat for opportunity: ', opportunity)
+
+  //     // Clear chat history first for a fresh conversation
+  //     reset();
+
+  //     // const readableOpportunity = opportunityToPublicState(
+  //     //   state.opportunityForReview
+  //     // );
+  //     setTimeout(() => {
+  //       console.log('appending system message')
+  //     appendMessage(
+  //       new TextMessage({
+  //         content: `
+  // ${UNIFIED_SYSTEM_INSTRUCTIONS}`,
+  //         role: Role.System,
+  //         id: Math.random().toString()
+  //       })
+  //     );
+  //   }, 200) // timeout required to ensure copilotreadable and actions are set up
+
+  //   }, [appendMessage, reset, dispatch, state.opportunity, state.form?.opportunity]);
+  if (!state.opportunity || !state.form) {
+    return (
+      <div className="pt-8">
+        <Row>
+          <Col xs="12">
+            <Reporting {...props} />
+          </Col>
+        </Row>
+      </div>
+    );
+  }
+
+  const { opportunity, form, viewerUser } = state;
+
+  // console.log('render state: ', state)
   return (
-    <OpportunityViewWrapper
-      {...props}
-      opportunity={opportunity}
-      viewerUser={viewerUser}>
-      <Form.view
-        disabled={!state.isEditing || isLoading}
-        state={form}
-        dispatch={component_.base.mapDispatch(dispatch, (msg) =>
-          adt("form" as const, msg)
-        )}
-      />
-    </OpportunityViewWrapper>
+    <ReviewProvider>
+      {/* <ReviewActions state={state} dispatch={dispatch} context="edit" /> */}
+      <OpportunityViewWrapper
+        {...props}
+        opportunity={opportunity}
+        viewerUser={viewerUser}>
+        <Form.view
+          disabled={!state.isEditing || isLoading}
+          state={form}
+          dispatch={component_.base.mapDispatch(dispatch, (msg) =>
+            adt("form" as const, msg)
+          )}
+        />
+      </OpportunityViewWrapper>
+    </ReviewProvider>
   );
 };
 
@@ -741,6 +978,57 @@ export const component: Tab.Component<State, Msg> = {
   init,
   update,
   view,
+
+  getSidebarOpenCallback: (state) => {
+    // console.log("getSidebarOpenCallback called with state:", state);
+    // console.log("getSidebarOpenCallback method exists!");
+
+    return (isOpen: boolean) => {
+      // console.log("getSidebarOpenCallback: sidebar open:", isOpen);
+      if (!isOpen) return;
+
+      const opportunity = state.opportunity || state.form?.opportunity;
+      if (!opportunity) {
+        // console.log("No opportunity available for sidebar setup");
+        return;
+      }
+
+      const visibleMessages = (window as any).__copilotVisibleMessages;
+      console.log("visibleMessages: ", visibleMessages);
+      if (visibleMessages && visibleMessages.length > 0) {
+        // console.log(
+        //   "Messages already exist, skipping system message for create"
+        // );
+        return;
+      }
+
+      // console.log("setting up chat for opportunity: ", opportunity);
+
+      // Clear chat history first for a fresh conversation
+      const reset = (window as any).__copilotReset;
+      if (reset) {
+        reset();
+      }
+
+      // Use setTimeout to ensure copilotreadable and actions are set up
+      setTimeout(() => {
+        // console.log("appending system message");
+
+        const appendMessage = (window as any).__copilotAppendMessage;
+
+        if (appendMessage) {
+          appendMessage(
+            new TextMessage({
+              content: `
+${UNIFIED_SYSTEM_INSTRUCTIONS}`,
+              role: Role.System,
+              id: Math.random().toString()
+            })
+          );
+        }
+      }, 200);
+    };
+  },
 
   onInitResponse(response) {
     return adt("resetOpportunity", [
@@ -939,6 +1227,17 @@ export const component: Tab.Component<State, Msg> = {
     const isPublic = isTWUOpportunityPublic(opp);
     const isDraft = opp.status === TWUOpportunityStatus.Draft;
     const isUnderReview = opp.status === TWUOpportunityStatus.UnderReview;
+
+    const reviewWithAIAction: LinkProps = {
+      children: "Create with AI",
+      symbol_: leftPlacement(iconLinkSymbol("question-circle")),
+      button: true,
+      color: AI_REVIEW_BUTTON_COLOR,
+      loading: false, // Removed isReviewWithAILoading
+      disabled: isLoading,
+      onClick: () => dispatch(adt("openCopilotChat"))
+    };
+
     // Show relevant actions when the user is editing the opportunity.
     if (state.isEditing) {
       return component_.page.actions.links(
@@ -1029,6 +1328,9 @@ export const component: Tab.Component<State, Msg> = {
               color: isUnderReview ? "primary" : "success"
             });
           }
+          // Add review with AI action
+          links.push(reviewWithAIAction);
+
           // Add cancel link.
           links.push({
             children: "Cancel",
@@ -1059,15 +1361,16 @@ export const component: Tab.Component<State, Msg> = {
                     dispatch(
                       adt(
                         "showModal",
-                        viewerIsAdmin ? "publish" : "submit"
-                      ) as Msg
+                        (viewerIsAdmin ? "publish" : "submit") as any
+                      )
                     )
                 },
                 {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   onClick: () => dispatch(adt("startEditing"))
-                }
+                },
+                reviewWithAIAction
               ]
             },
             {
@@ -1094,13 +1397,15 @@ export const component: Tab.Component<State, Msg> = {
                     children: "Publish",
                     disabled: !isValid(),
                     symbol_: leftPlacement(iconLinkSymbol("bullhorn")),
-                    onClick: () => dispatch(adt("showModal", "publish") as Msg)
+                    onClick: () =>
+                      dispatch(adt("showModal", "publish" as const))
                   },
                   {
                     children: "Edit",
                     symbol_: leftPlacement(iconLinkSymbol("edit")),
                     onClick: () => dispatch(adt("startEditing"))
-                  }
+                  },
+                  reviewWithAIAction
                 ]
               },
               {
@@ -1122,7 +1427,8 @@ export const component: Tab.Component<State, Msg> = {
               onClick: () => dispatch(adt("startEditing")),
               button: true,
               color: "primary"
-            }
+            },
+            reviewWithAIAction
           ]);
         }
       case TWUOpportunityStatus.Published:
@@ -1139,7 +1445,8 @@ export const component: Tab.Component<State, Msg> = {
                   children: "Edit",
                   symbol_: leftPlacement(iconLinkSymbol("edit")),
                   onClick: () => dispatch(adt("startEditing"))
-                }
+                },
+                reviewWithAIAction
               ]
             },
             {

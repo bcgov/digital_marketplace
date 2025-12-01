@@ -1,0 +1,277 @@
+---
+kind: Template
+apiVersion: template.openshift.io/v1
+metadata:
+  annotations:
+    description: Deployment template for the Digital Marketplace AI service.
+    tags: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+  name: "${NAME}-${APP_GROUP}-${TAG_NAME}-deploy"
+
+
+objects:
+- kind: ConfigMap
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
+  data:
+    NODE_ENV: production
+    PORT: '5000'
+    CHROMA_URL: ${CHROMA_URL}
+    DATABASE_SERVICE_NAME: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
+    TZ: America/Vancouver
+    LOG_DEBUG: "1"
+    USE_AZURE_OPENAI: "true"
+    AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+    FRONTEND_URL: https://app-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca
+
+- kind: Secret
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
+  stringData:
+    JWT_SECRET: ${JWT_SECRET}
+    AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+    AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+    AZURE_OPENAI_DEPLOYMENT_NAME: ${AZURE_OPENAI_DEPLOYMENT_NAME}
+
+
+- kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 25%
+        maxSurge: 25%
+    replicas: ${{REPLICAS}}
+    selector:
+      matchLabels:
+        app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+        deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    template:
+      metadata:
+        labels:
+          app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+          app-group: "${APP_GROUP}"
+          deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+          template: "${NAME}-deploy"
+      spec:
+        containers:
+        - name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+          image: image-registry.openshift-image-registry.svc:5000/${IMAGE_NAMESPACE}/${NAME}-${APP_GROUP}-${TAG_NAME}:latest
+          ports:
+          - containerPort: 5000
+            protocol: TCP
+          env:
+          # Database connection components from Patroni secret
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                key: DATABASE_USERNAME
+                name: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}-secret
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: DATABASE_PASSWORD
+                name: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}-secret
+          - name: PGDATABASE
+            valueFrom:
+              secretKeyRef:
+                key: DATABASE_NAME
+                name: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}-secret
+          - name: PGPORT
+            value: "5432"
+          - name: PGHOST
+            value: ${DATABASE_SERVICE_NAME}-${APP_GROUP}-${TAG_NAME}
+          # Construct DATABASE_URL from components
+          - name: DATABASE_URL
+            value: "postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)"
+          envFrom:
+          - secretRef:
+              name: "${NAME}-${APP_GROUP}-${TAG_NAME}-secret"
+          - configMapRef:
+              name: "${NAME}-${APP_GROUP}-${TAG_NAME}-config"
+          resources:
+            requests:
+              cpu: "${CPU_REQUEST}"
+              memory: "${MEMORY_REQUEST}"
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: "${MEMORY_LIMIT}"
+          livenessProbe:
+            httpGet:
+              path: "/health"
+              port: 5000
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 60
+          readinessProbe:
+            httpGet:
+              path: "/health"
+              port: 5000
+              scheme: HTTP
+            timeoutSeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            failureThreshold: 3
+            initialDelaySeconds: 30
+          terminationMessagePath: "/dev/termination-log"
+          terminationMessagePolicy: File
+          imagePullPolicy: Always
+        restartPolicy: Always
+        terminationGracePeriodSeconds: 30
+
+
+- kind: Service
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    creationTimestamp:
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    ports:
+    - name: 5000-tcp
+      protocol: TCP
+      port: 5000
+      targetPort: 5000
+    selector:
+      deployment: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    type: ClusterIP
+    sessionAffinity: None
+  status:
+    loadBalancer: {}
+
+- kind: Route
+  apiVersion: v1
+  metadata:
+    name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+    labels:
+      app: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      app-group: "${APP_GROUP}"
+      template: "${NAME}-deploy"
+  spec:
+    host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+    to:
+      kind: Service
+      name: "${NAME}-${APP_GROUP}-${TAG_NAME}"
+      weight: 100
+    port:
+      targetPort: 5000-tcp
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+  status:
+    ingress:
+    - host: "${NAME}-${APP_GROUP}-${TAG_NAME}.apps.silver.devops.gov.bc.ca"
+      routerName: router
+      conditions:
+      - type: Admitted
+        status: 'True'
+      wildcardPolicy: None
+
+parameters:
+- name: NAME
+  displayName: Name
+  required: true
+  value: ai
+
+
+- name: APP_GROUP
+  displayName: App Group
+  required: true
+  value: digmkt
+
+
+- name: TAG_NAME
+  displayName: Environment tag name.
+  required: true
+  value: dev
+
+
+- name: IMAGE_NAMESPACE
+  displayName: Image Namespace
+  required: true
+  value: ccc866-tools
+
+
+- name: DATABASE_SERVICE_NAME
+  displayName: Database Service Name
+  required: true
+  value: patroni-pg12
+
+
+- name: CHROMA_URL
+  displayName: ChromaDB Service URL
+  required: true
+  value: http://chroma-chromadb.ccc866-dev.svc.cluster.local:8000
+
+
+- name: CPU_REQUEST
+  displayName: Resources CPU Request
+  required: true
+  value: 50m
+
+
+- name: CPU_LIMIT
+  displayName: Resources CPU Limit
+  description: The resources CPU limit (in cores) for this build.
+  required: true
+  value: 200m
+
+
+- name: MEMORY_REQUEST
+  displayName: Resources Memory Request
+  required: true
+  value: 256Mi
+
+
+- name: MEMORY_LIMIT
+  displayName: Resources Memory Limit
+  required: true
+  value: 512Mi
+
+- name: REPLICAS
+  displayName: The number of replicas to run
+  required: true
+  value: '2'
+
+- name: JWT_SECRET
+  displayName: JWT Secret Key
+  description: Secret key used for JWT token signing and verification
+  required: true
+  generate: expression
+  from: "[a-zA-Z0-9]{64}"
+
+- name: AZURE_OPENAI_API_KEY
+  displayName: Azure OpenAI API Key
+  description: Azure OpenAI API Key
+  required: true
+
+- name: AZURE_OPENAI_ENDPOINT
+  displayName: Azure OpenAI Endpoint
+  description: Azure OpenAI Endpoint
+  required: true
+
+- name: AZURE_OPENAI_DEPLOYMENT_NAME
+  displayName: Azure OpenAI Deployment Name
+  description: Azure OpenAI Deployment Name
+  required: true
+
+- name: AZURE_OPENAI_API_VERSION
+  displayName: Azure OpenAI API Version
+  description: Azure OpenAI API Version
+  required: true
+  value: 2024-02-15-preview

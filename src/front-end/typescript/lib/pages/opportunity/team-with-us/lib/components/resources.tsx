@@ -291,11 +291,22 @@ export function getValues(state: Immutable<State>): Values {
     if (!acc) {
       return acc;
     }
+    
+    // Get the raw values
+    const serviceAreaValue = Select.getValue(r.serviceArea);
+    const targetAllocationValue = getNumberSelectValue(r.targetAllocation);
+    
+    // Only include resources that have been properly configured
+    // Skip resources where service area is not selected or target allocation is 0/null
+    if (!serviceAreaValue || !targetAllocationValue || targetAllocationValue === 0) {
+      return acc;
+    }
+    
     acc.push({
       serviceArea:
-        parseTWUServiceArea(Select.getValue(r.serviceArea)) ??
+        parseTWUServiceArea(serviceAreaValue) ??
         TWUServiceArea.FullStackDeveloper,
-      targetAllocation: getNumberSelectValue(r.targetAllocation) || 0,
+      targetAllocation: targetAllocationValue,
       mandatorySkills: SelectMulti.getValueAsStrings(r.mandatorySkills),
       optionalSkills: SelectMulti.getValueAsStrings(r.optionalSkills),
       order: order

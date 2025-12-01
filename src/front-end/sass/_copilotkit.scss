@@ -1,0 +1,126 @@
+// CopilotKit Configuration and Styling
+// ===================================
+
+// CopilotKit sidebar positioning - CSS custom properties that will be set dynamically by JavaScript
+:root {
+  --copilot-sidebar-top: 123px; // Default: full nav height (67px + 56px)
+  --copilot-sidebar-height: calc(100vh - 123px);
+}
+
+// Target only the main CopilotKit sidebar container
+[data-copilot-sidebar],
+.copilotKitSidebar .copilotKitWindow {
+  top: var(--copilot-sidebar-top) !important;
+  min-height: var(--copilot-sidebar-height) !important;
+  z-index: 999 !important;
+}
+
+// Custom CopilotKit styling to match site theme
+.copilotKitSidebar {
+  // Set CSS custom properties that CopilotKit can use
+  --copilot-kit-primary-color: #{$blue-dark-alt-2} !important;
+  --copilot-kit-secondary-color: #{$gray-600} !important;
+  --copilot-kit-background-color: #{$white} !important;
+  --copilot-kit-foreground-color: #{$gray-900} !important;
+  --copilot-kit-muted-color: #{$gray-100} !important;
+  --copilot-kit-border-color: #{$gray-400} !important;
+  --copilot-kit-accent-color: #{$blue-dark-alt} !important;
+  --copilot-kit-separator-color: #{$yellow-light} !important;
+  
+  // Apply font family
+  font-family: "BCSans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+// Header styling
+.copilotKitHeader,
+[data-copilot-header] {
+  background-color: #{$blue-dark-alt-2} !important;
+  color: #{$white} !important;
+}
+
+// Remove any CopilotKit branding
+.copilotKitLogo,
+[data-copilot-logo] {
+  display: none !important;
+}
+
+// Chat container styling
+.copilotKitChat,
+.copilotKitWindow,
+[data-copilot-chat] {
+  background-color: #{$white} !important;
+  border: 1px solid #{$gray-400} !important;
+  border-radius: 0.3rem !important;
+}
+
+// Message styling
+.copilotKitMessage,
+[data-copilot-message] {
+  // User messages
+  &[data-role="user"],
+  &.user {
+    background-color: #{$blue} !important;
+    color: #{$white} !important;
+    border-radius: 0.3rem !important;
+  }
+  
+  // Assistant messages
+  &[data-role="assistant"],
+  &.assistant {
+    background-color: #{$gray-100} !important;
+    color: #{$gray-900} !important;
+    border-radius: 0.3rem !important;
+  }
+}
+
+// Input area styling
+.copilotKitInput,
+[data-copilot-input] {
+  border: 1px solid #{$gray-400} !important;
+  border-radius: 0.3rem !important;
+  background-color: #{$white} !important;
+  color: #{$gray-900} !important;
+  
+  &:focus {
+    border-color: #{$blue} !important;
+    box-shadow: 0 0 0 0.2rem rgba(12, 153, 214, 0.25) !important;
+  }
+  
+  &::placeholder {
+    color: #{$gray-600} !important;
+  }
+}
+
+// Send button styling
+.copilotKitSendButton,
+[data-copilot-send] {
+  background-color: #{$blue} !important;
+  color: #{$white} !important;
+  border: none !important;
+  border-radius: 0.3rem !important;
+  
+  &:hover {
+    background-color: #{$link-hover-color} !important;
+  }
+  
+  &:disabled {
+    background-color: #{$gray-400} !important;
+    color: #{$gray-600} !important;
+  }
+}
+
+// Hide any "Powered by CopilotKit" text or branding
+.copilotKitBranding,
+.copilotKitPoweredBy,
+[data-copilot-branding],
+[data-copilot-powered-by] {
+  display: none !important;
+}
+
+// Remove CopilotKit text from any elements that might contain it
+// This will be handled by JavaScript text replacement, but we can also hide known selectors
+*[data-text*="CopilotKit"],
+*[title*="CopilotKit"],
+*[aria-label*="CopilotKit"] {
+  // The text replacement will be handled by JavaScript
+} 

@@ -173,6 +173,15 @@ npx vite dev # Start the development server, serves files with hot module replac
 
 # Terminal 4
 npm run migrations:latest # Run all database migrations.
+
+# Terminal 5
+docker-compose up chroma
+
+# Terminal 6
+npx vite dev
+
+# Terminal 7
+npm run marketplace-ai:start
 ```
 
 The application will be available at http://localhost:5173/

@@ -9,6 +9,11 @@ export default [
   // Base ESLint recommended config
   js.configs.recommended,
 
+  // Ignore patterns
+  {
+    ignores: ["**/dist/**", "dist/**"]
+  },
+
   // Main configuration object
   {
     files: ["**/*.{js,jsx,ts,tsx}"],

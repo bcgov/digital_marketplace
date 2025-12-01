@@ -276,7 +276,39 @@ function makeComponent<K extends Tab.TabId>(): component_.page.Component<
           state.opportunity?.title || DEFAULT_OPPORTUNITY_TITLE
       }),
       makePageMetadata("Edit Team With Us Opportunity")
-    )
+    ),
+    getSidebarOpenCallback: (state) => {
+      console.log("Edit page getSidebarOpenCallback called with state:", state);
+
+      // Handle Validation type - only work with valid state
+      if (state.tag !== "valid") {
+        console.log("State is invalid, cannot get sidebar callback");
+        return undefined;
+      }
+
+      const validState = state.value;
+      if (!validState.tab) {
+        console.log("No active tab in state");
+        return undefined;
+      }
+
+      const tabId = validState.tab[0];
+      const tabState = validState.tab[1];
+      const tabDefinition = Tab.idToDefinition(tabId);
+      const tabComponent = tabDefinition.component;
+
+      console.log("Active tab:", tabId, "Component:", tabComponent);
+
+      // Check if the tab component has the getSidebarOpenCallback method
+      if (tabComponent.getSidebarOpenCallback) {
+        console.log("Tab component has getSidebarOpenCallback, calling it");
+        // Convert Immutable to regular object for the callback
+        return tabComponent.getSidebarOpenCallback(tabState.toJS() as any);
+      } else {
+        console.log("Tab component does NOT have getSidebarOpenCallback");
+        return undefined;
+      }
+    }
   };
 }
 
