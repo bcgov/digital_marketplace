@@ -4,11 +4,11 @@ import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
 import cypressPlugin from "eslint-plugin-cypress";
 import globals from "globals";
+import jestPlugin from "eslint-plugin-jest";
 
 export default [
   // Base ESLint recommended config
   js.configs.recommended,
-
   // Main configuration object
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
@@ -18,7 +18,8 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
-        ...globals.es2023
+        ...globals.es2023,
+        ...cypressPlugin.configs.recommended.languageOptions.globals
       },
       parser: typescriptParser,
       parserOptions: {
@@ -54,14 +55,21 @@ export default [
     }
   },
 
+  {
+    files: ["tests/**", "**/*.test.{js, ts}"],
+    ...jestPlugin.configs["flat/recommended"]
+  },
+
   // TypeScript-specific overrides
   {
     files: ["**/*.{ts,tsx}"],
     rules: {
+      "no-undef": "off",
       "@typescript-eslint/no-var-requires": "error",
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
+          caughtErrorsIgnorePattern: "^_",
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           ignoreRestSiblings: true
