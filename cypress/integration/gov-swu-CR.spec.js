@@ -21,11 +21,16 @@ describe("As a user authenticated via IDIR", function () {
     cy.get("#swu-opportunity-teaser").type("SWU cy teaser");
     cy.get("#swu-opportunity-remote-ok-0").check({ force: true });
     cy.get("#swu-opportunity-remote-desc").type("SWU cy remote desc");
-    cy.get("#swu-opportunity-location").clear().type("Sechelt");
-    cy.get("#swu-opportunity-proposal-deadline").clear().type("2030-01-01");
-    cy.get("#swu-opportunity-assignment-date").clear().type("2030-01-02");
-    cy.get("#swu-opportunity-total-max-budget").clear().type("1000000");
-    cy.get("#swu-opportunity-min-team-members").clear().type("2");
+    cy.get("#swu-opportunity-location").clear();
+    cy.get("#swu-opportunity-location").type("Sechelt");
+    cy.get("#swu-opportunity-proposal-deadline").clear();
+    cy.get("#swu-opportunity-proposal-deadline").type("2030-01-01");
+    cy.get("#swu-opportunity-assignment-date").clear();
+    cy.get("#swu-opportunity-assignment-date").type("2030-01-02");
+    cy.get("#swu-opportunity-total-max-budget").clear();
+    cy.get("#swu-opportunity-total-max-budget").type("1000000");
+    cy.get("#swu-opportunity-min-team-members").clear();
+    cy.get("#swu-opportunity-min-team-members").type("2");
     cy.get("#swu-opportunity-mandatory-skills").type(
       "Back-End Development{enter}"
     );
@@ -92,15 +97,21 @@ describe("As a user authenticated via IDIR", function () {
     cy.get('[id*="team-questions-response-guidelines"]').type(
       "SWU cy response"
     );
-    cy.get('[id*="team-questions-word-limit"]').clear().type("600");
-    cy.get('[id*="team-questions-score"]').clear().type("10");
+    cy.get('[id*="team-questions-word-limit"]').clear();
+    cy.get('[id*="team-questions-word-limit"]').type("600");
+    cy.get('[id*="team-questions-score"]').clear();
+    cy.get('[id*="team-questions-score"]').type("10");
     cy.get("a").contains("Next").click();
 
     // 5. Scoring
-    cy.get("#swu-opportunity-questions-weight").clear().type("20");
-    cy.get("#swu-opportunity-code-challenge-weight").clear().type("20");
-    cy.get("#swu-opportunity-scenario-weight").clear().type("20");
-    cy.get("#swu-opportunity-price-weight").clear().type("40");
+    cy.get("#swu-opportunity-questions-weight").clear();
+    cy.get("#swu-opportunity-questions-weight").type("20");
+    cy.get("#swu-opportunity-code-challenge-weight").clear();
+    cy.get("#swu-opportunity-code-challenge-weight").type("20");
+    cy.get("#swu-opportunity-scenario-weight").clear();
+    cy.get("#swu-opportunity-scenario-weight").type("20");
+    cy.get("#swu-opportunity-price-weight").clear();
+    cy.get("#swu-opportunity-price-weight").type("40");
     cy.get("a").contains("Next").click();
 
     // 6. Attachments
