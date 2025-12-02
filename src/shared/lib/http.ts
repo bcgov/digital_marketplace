@@ -118,7 +118,7 @@ export const request: RequestFunction = async (
 export function parseJsonSafely(raw: string): Validation<any, undefined> {
   try {
     return valid(JSON.parse(raw));
-  } catch (error) {
+  } catch (_) {
     return invalid(undefined);
   }
 }

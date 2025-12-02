@@ -27,7 +27,6 @@ enum TWUServiceArea {
   DevopsSpecialist = "DEVOPS_SPECIALIST"
 }
 
-// eslint-disable-next-line no-empty
 export async function up(connection: Knex): Promise<void> {
   await connection.schema.createTable("twuOpportunities", (table) => {
     table.uuid("id").primary().unique().notNullable();
@@ -139,7 +138,6 @@ export async function up(connection: Knex): Promise<void> {
   logger.info("Created twuResourceQuestions table.");
 }
 
-// eslint-disable-next-line no-empty
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.dropTable("twuResourceQuestions");
   logger.info("Dropped table twuResourceQuestions");

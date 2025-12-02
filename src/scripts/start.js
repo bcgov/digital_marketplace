@@ -1,8 +1,8 @@
-const path = require("path");
-const moduleAlias = require("module-alias");
-moduleAlias.addAlias("scripts", __dirname);
-moduleAlias.addAlias("back-end", path.resolve(__dirname, "../back-end"));
-moduleAlias.addAlias("shared", path.resolve(__dirname, "../shared"));
-moduleAlias.addAlias("migrations", path.resolve(__dirname, "../migrations"));
+import { resolve } from "path";
+import moduleAlias, { addAlias } from "module-alias";
+addAlias("scripts", __dirname);
+addAlias("back-end", resolve(__dirname, "../back-end"));
+addAlias("shared", resolve(__dirname, "../shared"));
+addAlias("migrations", resolve(__dirname, "../migrations"));
 moduleAlias();
-require("./index.js");
+import "./index.js";

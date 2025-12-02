@@ -42,7 +42,8 @@ describe("cmd", function () {
       });
       describe("and the resulting function is called once", function () {
         describe("and the debounce duration has passed", function () {
-          it("returns the dispatch Msg", function (done) {
+          // eslint-disable-next-line jest/no-done-callback
+          it("returns the dispatch Msg", async function (done) {
             const duration = 300;
             const dispatch = makeDebouncedDispatch(duration);
             const cmd = dispatch();
@@ -64,6 +65,7 @@ describe("cmd", function () {
 
       describe("and the resulting function is called multiple times during the debounce period", function () {
         describe("and the debounce duration has passed", function () {
+          // eslint-disable-next-line jest/no-done-callback
           it("returns the noop Msg on the intermediary call and the dispatch Msg on the final call", function (done) {
             const duration = 300;
             const dispatch = makeDebouncedDispatch(duration);

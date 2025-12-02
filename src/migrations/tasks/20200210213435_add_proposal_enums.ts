@@ -46,7 +46,6 @@ export async function up(connection: Knex): Promise<void> {
   logger.info("Modified constraint on cwuProposalStatuses");
 }
 
-// eslint-disable-next-line no-empty
 export async function down(connection: Knex): Promise<void> {
   await connection.schema.raw(
     ' \

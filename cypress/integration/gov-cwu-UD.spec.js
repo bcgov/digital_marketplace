@@ -18,11 +18,15 @@ describe("As a user authenticated via IDIR", function () {
     // Make updates
 
     // 1. Overview tab
-    cy.get("#cwu-opportunity-title").clear().type("new title");
-    cy.get("#cwu-opportunity-teaser").clear().type("new teaser");
+    cy.get("#cwu-opportunity-title").clear();
+    cy.get("#cwu-opportunity-title").type("new title");
+    cy.get("#cwu-opportunity-teaser").clear();
+    cy.get("#cwu-opportunity-teaser").type("new teaser");
     cy.get("#cwu-opportunity-remote-ok-1").check({ force: true });
-    cy.get("#cwu-opportunity-location").clear().type("new location");
-    cy.get("#cwu-opportunity-reward").clear().type("567");
+    cy.get("#cwu-opportunity-location").clear();
+    cy.get("#cwu-opportunity-location").type("new location");
+    cy.get("#cwu-opportunity-reward").clear();
+    cy.get("#cwu-opportunity-reward").type("567");
     cy.get("#cwu-opportunity-skills").click();
     cy.contains("Angular").click({ force: true });
     cy.get("a").contains("Next").click();
@@ -34,13 +38,18 @@ describe("As a user authenticated via IDIR", function () {
     cy.get("a").contains("Next").click();
 
     // 3. Details tab
-    cy.get("#cwu-opportunity-proposal-deadline").clear().type("2029-01-15");
-    cy.get("#cwu-opportunity-assignment-date").clear().type("2029-01-31");
-    cy.get("#cwu-opportunity-start-date").clear().type("2029-02-15");
-    cy.get("#cwu-opportunity-completion-date").clear().type("2029-02-28");
-    cy.get("#cwu-opportunity-submission-info").clear().type("new repo");
-    cy.get("#cwu-opportunity-acceptance-criteria").clear().type("new criteria");
-    cy.get("#cwu-opportunity-evaluation-criteria").clear().type("new criteria");
+    cy.get("#cwu-opportunity-proposal-deadline").clear();
+    cy.get("#cwu-opportunity-proposal-deadline").type("2029-01-15");
+    cy.get("#cwu-opportunity-assignment-date").clear();
+    cy.get("#cwu-opportunity-assignment-date").type("2029-01-31");
+    cy.get("#cwu-opportunity-start-date").clear();
+    cy.get("#cwu-opportunity-start-date").type("2029-02-15");
+    cy.get("#cwu-opportunity-completion-date").clear();
+    cy.get("#cwu-opportunity-completion-date").type("2029-02-28");
+    cy.get("#cwu-opportunity-submission-info").clear();
+    cy.get("#cwu-opportunity-submission-info").type("new repo");
+    cy.get("#cwu-opportunity-acceptance-criteria").clear();
+    cy.get("#cwu-opportunity-evaluation-criteria").type("new criteria");
     cy.get("a").contains("Next").click();
 
     // 4. Attachments tab

@@ -470,7 +470,7 @@ const QuestionView: component_.base.View<QuestionViewProps> = (props) => {
             }}
             label="Minimum Score"
             placeholder="Minimum Score"
-            help="Please enter a number between zero and score entered above. Proponents scoring below this value will be disqualified."
+            help="Please enter a number between zero and score entered above. Proposals scoring below this value will be deemed to be non-compliant, and removed from consideration."
             className="mb-0"
             disabled={disabled}
             state={question.minimumScore}

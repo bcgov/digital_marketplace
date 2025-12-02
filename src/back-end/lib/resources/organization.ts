@@ -568,7 +568,6 @@ const update: crud.Update<
               validatedServiceAreas.value
             )
           });
-          break;
         }
         default:
           return invalid({ organization: adt("parseFailure" as const) });

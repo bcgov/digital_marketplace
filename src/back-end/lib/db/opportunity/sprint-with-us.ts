@@ -550,7 +550,7 @@ export async function isSWUOpportunityAuthor(
       .select("*")
       .where({ id, createdBy: user.id });
     return !!result && result.length > 0;
-  } catch (exception) {
+  } catch (_) {
     return false;
   }
 }

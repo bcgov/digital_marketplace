@@ -20,11 +20,7 @@ export const isUnsupportedBrowser = (): boolean => {
   return isSafari() || isFirefox();
 };
 
-export interface Props {
-  // No props needed for this component
-}
-
-const BrowserWarning: component.base.View<Props> = () => {
+const BrowserWarning: component.base.View = () => {
   const browserName = isSafari()
     ? "Safari"
     : isFirefox()
