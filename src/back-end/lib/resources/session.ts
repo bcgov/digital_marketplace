@@ -39,7 +39,7 @@ export async function signOut(
       formData,
       { "Content-Type": "application/x-www-form-urlencoded" }
     );
-  } catch (e) {
+  } catch (_) {
     return invalid(["KeyCloak sign-out request failed."]);
   }
   // Delete the current session
