@@ -509,7 +509,7 @@ export async function readActiveOwnerCount(
         "organizations.active": true
       });
     return result ? result.length : 0;
-  } catch (exception) {
+  } catch (_) {
     return 0;
   }
 }
