@@ -459,8 +459,7 @@ test("team-with-us proposal crud", async () => {
     TWUOpportunityStatus.EvaluationChallenge,
     "",
     testAdminSession
-  ),
-    null;
+  );
 
   const challengeScore = 100;
   const scoreChallengeResult = await adminAppAgent
