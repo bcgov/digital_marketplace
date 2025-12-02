@@ -27,6 +27,12 @@
       "tests/*": ["./tests/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.json", "**/*.js"],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.json",
+    "**/*.js",
+    "eslint.config.js"
+  ],
   "exclude": ["node_modules"]
 }
