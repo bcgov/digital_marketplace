@@ -59,4 +59,4 @@ export async function down(connection: Knex): Promise<void> {
     )}')) \
   `);
   logger.info("Completed reverting CWUOpportunityStatuses table.");
-} // eslint-disable-line
+}
