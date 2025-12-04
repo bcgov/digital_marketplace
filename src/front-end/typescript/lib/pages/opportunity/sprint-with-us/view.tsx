@@ -883,7 +883,7 @@ export const component: component_.page.Component<
                 </Link>{" "}
                 and a{" "}
                 <Link dest={routeDest(adt("learnMoreSWU", null))}>
-                  Qualified Supplier
+                  Sprint With Us Qualified Supplier
                 </Link>{" "}
                 in order to submit a proposal to this opportunity.
               </span>
@@ -901,7 +901,7 @@ export const component: component_.page.Component<
               <span>
                 You must be a{" "}
                 <Link dest={routeDest(adt("learnMoreSWU", null))}>
-                  Qualified Supplier
+                  Sprint With Us Qualified Supplier
                 </Link>{" "}
                 in order to submit a proposal to this opportunity.
               </span>
