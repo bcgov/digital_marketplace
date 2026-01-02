@@ -17,14 +17,21 @@ describe("As a user authenticated via IDIR", function () {
     // Make updates
 
     // 1. Overview tab
-    cy.get("#swu-opportunity-title").clear().type("new title");
-    cy.get("#swu-opportunity-teaser").clear().type("new teaser");
+    cy.get("#swu-opportunity-title").clear();
+    cy.get("#swu-opportunity-title").type("new title");
+    cy.get("#swu-opportunity-teaser").clear();
+    cy.get("#swu-opportunity-teaser").type("new teaser");
     cy.get("#swu-opportunity-remote-ok-1").check({ force: true });
-    cy.get("#swu-opportunity-location").clear().type("new location");
-    cy.get("#swu-opportunity-proposal-deadline").clear().type("2029-01-15");
-    cy.get("#swu-opportunity-assignment-date").clear().type("2029-01-31");
-    cy.get("#swu-opportunity-total-max-budget").clear().type("5000000");
-    cy.get("#swu-opportunity-min-team-members").clear().type("5");
+    cy.get("#swu-opportunity-location").clear();
+    cy.get("#swu-opportunity-location").type("new location");
+    cy.get("#swu-opportunity-proposal-deadline").clear();
+    cy.get("#swu-opportunity-proposal-deadline").type("2029-01-15");
+    cy.get("#swu-opportunity-assignment-date").clear();
+    cy.get("#swu-opportunity-assignment-date").type("2029-01-31");
+    cy.get("#swu-opportunity-total-max-budget").clear();
+    cy.get("#swu-opportunity-total-max-budget").type("5000000");
+    cy.get("#swu-opportunity-min-team-members").clear();
+    cy.get("#swu-opportunity-min-team-members").type("5");
     cy.get(
       'path[d="M207.6 256l107.72-107.72c6.23-6.23 6.23-16.34 0-22.58l-25.03-25.03c-6.23-6.23-16.34-6.23-22.58 0L160 208.4 52.28 100.68c-6.23-6.23-16.34-6.23-22.58 0L4.68 125.7c-6.23 6.23-6.23 16.34 0 22.58L112.4 256 4.68 363.72c-6.23 6.23-6.23 16.34 0 22.58l25.03 25.03c6.23 6.23 16.34 6.23 22.58 0L160 303.6l107.72 107.72c6.23 6.23 16.34 6.23 22.58 0l25.03-25.03c6.23-6.23 6.23-16.34 0-22.58L207.6 256z"]'
     )
@@ -49,9 +56,12 @@ describe("As a user authenticated via IDIR", function () {
 
     cy.get('div[class="h3 mb-0"]').contains("Proof of Concept").click();
     cy.contains("During the Proof of Concept phase").should("be.visible");
-    cy.get("[id*=start-date]").eq(0).clear().type("2029-02-01");
-    cy.get("[id*=completion-date]").eq(0).clear().type("2029-02-15");
-    cy.get("[id*=max-budget]").eq(0).clear().type("400000");
+    cy.get("[id*=start-date]").eq(0).clear();
+    cy.get("[id*=start-date]").eq(0).type("2029-02-01");
+    cy.get("[id*=completion-date]").eq(0).clear();
+    cy.get("[id*=completion-date]").eq(0).type("2029-02-15");
+    cy.get("[id*=max-budget]").eq(0).clear();
+    cy.get("[id*=max-budget]").eq(0).type("400000");
     cy.get('div[class="pt-2 pb-4 mb-4"]')
       .eq(0)
       .contains("Backend Development")
@@ -75,27 +85,36 @@ describe("As a user authenticated via IDIR", function () {
 
     cy.get('div[class="h3 mb-0"]').contains("Implementation").click();
     cy.contains("As you reach the Implementation phase").should("be.visible");
-    cy.get("[id*=start-date]").eq(1).clear().type("2029-02-16");
-    cy.get("[id*=completion-date]").eq(1).clear().type("2029-02-28");
-    cy.get("[id*=max-budget]").eq(1).clear().type("1000000");
+    cy.get("[id*=start-date]").eq(1).clear();
+    cy.get("[id*=start-date]").eq(1).type("2029-02-16");
+    cy.get("[id*=completion-date]").eq(1).clear();
+    cy.get("[id*=completion-date]").eq(1).type("2029-02-28");
+    cy.get("[id*=max-budget]").eq(1).clear();
+    cy.get("[id*=max-budget]").eq(1).type("1000000");
     cy.get('div[class="pt-2 pb-4 "]').contains("DevOps Engineering").click();
 
     cy.get("a").contains("Next").click();
 
     // 4. Team questions
-    cy.get("[id*=team-questions-question]").clear().type("new question");
-    cy.get('[id*="team-questions-response-guidelines"]')
-      .clear()
-      .type("new response");
-    cy.get('[id*="team-questions-word-limit"]').clear().type("1000");
-    cy.get('[id*="team-questions-score"]').clear().type("20");
+    cy.get("[id*=team-questions-question]").clear();
+    cy.get("[id*=team-questions-question]").type("new question");
+    cy.get('[id*="team-questions-response-guidelines"]').clear();
+    cy.get('[id*="team-questions-response-guidelines"]').type("new response");
+    cy.get('[id*="team-questions-word-limit"]').clear();
+    cy.get('[id*="team-questions-word-limit"]').type("1000");
+    cy.get('[id*="team-questions-score"]').clear();
+    cy.get('[id*="team-questions-score"]').type("20");
     cy.get("a").contains("Next").click();
 
     // 5. Scoring
-    cy.get("#swu-opportunity-questions-weight").clear().type("10");
-    cy.get("#swu-opportunity-code-challenge-weight").clear().type("10");
-    cy.get("#swu-opportunity-scenario-weight").clear().type("10");
-    cy.get("#swu-opportunity-price-weight").clear().type("70");
+    cy.get("#swu-opportunity-questions-weight").clear();
+    cy.get("#swu-opportunity-questions-weight").type("10");
+    cy.get("#swu-opportunity-code-challenge-weight").clear();
+    cy.get("#swu-opportunity-code-challenge-weight").type("10");
+    cy.get("#swu-opportunity-scenario-weight").clear();
+    cy.get("#swu-opportunity-scenario-weight").type("10");
+    cy.get("#swu-opportunity-price-weight").clear();
+    cy.get("#swu-opportunity-price-weight").type("70");
     cy.get("a").contains("Next").click();
 
     // 6. Attachments
@@ -156,7 +175,6 @@ describe("As a user authenticated via IDIR", function () {
       "have.text",
       "Proof of Concept"
     );
-    // eslint-disable-next-line
     cy.get('div[class="h3 mb-0"]').contains("Proof of Concept").click();
     cy.contains("During the Proof of Concept phase").should("be.visible");
     cy.get("[id*=start-date]").eq(0).should("have.value", "2029-02-01");

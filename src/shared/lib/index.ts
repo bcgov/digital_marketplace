@@ -146,7 +146,7 @@ export function formatAmount(
 export function parseDate(raw: string): Date | null {
   try {
     return normalizeDateTimezone(raw).toDate();
-  } catch (e) {
+  } catch (_) {
     return null;
   }
 }
@@ -298,7 +298,7 @@ export function formatTermsAndConditionsAgreementDate(
 export function parseJsonSafely(raw: string): Validation<any, undefined> {
   try {
     return valid(JSON.parse(raw));
-  } catch (error) {
+  } catch (_) {
     return invalid(undefined);
   }
 }

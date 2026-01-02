@@ -127,7 +127,7 @@ export async function validateTWUProposalId(
       return invalid(["The specified proposal was not found."]);
     }
     return valid(proposal);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid proposal."]);
   }
 }
@@ -162,7 +162,7 @@ export async function validateTWUOpportunityId(
       return invalid(["The specified Team With Us opportunity was not found."]);
     }
     return valid(opportunity);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid Team With Us opportunity."]);
   }
 }
@@ -209,7 +209,7 @@ export async function validateServiceArea(
     } else {
       return invalid(["The specified service area was not found."]);
     }
-  } catch (e) {
+  } catch (_) {
     return invalid(["Please specify a valid service area."]);
   }
 }
@@ -559,7 +559,7 @@ export async function validateTWUResourceQuestionResponseEvaluation(
       ]);
     }
     return valid(evaluation);
-  } catch (exception) {
+  } catch (_) {
     return invalid([
       "Please select a valid resource question response evaluation."
     ]);
@@ -606,7 +606,7 @@ export async function validateFileRecord(
     } else {
       return invalid(["The specified file was not found."]);
     }
-  } catch (e) {
+  } catch (_) {
     return invalid(["Please specify a valid file id."]);
   }
 }
@@ -645,7 +645,7 @@ export async function validateOrganizationId(
       return invalid(["The specified organization was not found."]);
     }
     return valid(dbResult.value);
-  } catch (e) {
+  } catch (_) {
     return invalid(["Please select a valid organization."]);
   }
 }
@@ -672,7 +672,7 @@ export async function validateAffiliationId(
     } else {
       return valid(affiliation);
     }
-  } catch (e) {
+  } catch (_) {
     return invalid(["Please select a valid affiliation."]);
   }
 }
@@ -707,7 +707,7 @@ export async function validateCWUOpportunityId(
       return invalid(["The specified Code With Us opportunity was not found."]);
     }
     return valid(opportunity);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid Code With Us opportunity."]);
   }
 }
@@ -735,7 +735,7 @@ export async function validateCWUProposalId(
       return invalid(["The specified proposal was not found."]);
     }
     return valid(proposal);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid proposal."]);
   }
 }
@@ -766,7 +766,7 @@ export async function validateSWUProposalId(
       return invalid(["The specified proposal was not found."]);
     }
     return valid(proposal);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid proposal."]);
   }
 }
@@ -839,7 +839,7 @@ export async function validateSWUOpportunityId(
       ]);
     }
     return valid(opportunity);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid Sprint With Us opportunity."]);
   }
 }
@@ -1174,7 +1174,7 @@ export async function validateSWUTeamQuestionResponseEvaluation(
       ]);
     }
     return valid(evaluation);
-  } catch (exception) {
+  } catch (_) {
     return invalid([
       "Please select a valid team question response evaluation."
     ]);
@@ -1204,7 +1204,7 @@ export async function validateContentId(
       return invalid(["The specified content was not found."]);
     }
     return valid(content);
-  } catch (exception) {
+  } catch (_) {
     return invalid(["Please select a valid content id."]);
   }
 }

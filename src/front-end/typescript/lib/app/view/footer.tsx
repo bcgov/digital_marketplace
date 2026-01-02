@@ -1,4 +1,4 @@
-import {  SOURCE_CODE_URL } from "front-end/config";
+import { SOURCE_CODE_URL } from "front-end/config";
 import { component } from "front-end/lib/framework";
 import Link, {
   AnchorProps,
@@ -48,7 +48,7 @@ const links: AnchorProps[] = [
     dest: externalDest(SOURCE_CODE_URL),
     newTab: true,
     symbol_: leftPlacement(iconLinkSymbol("github"))
-  },
+  }
 ];
 
 const Footer: component.base.View<Record<string, never>> = () => {

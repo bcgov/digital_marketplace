@@ -19,24 +19,32 @@ describe("As a user authenticated via GitHub,", function () {
     cy.contains("Edit").click();
 
     // 1. Proponent tab
-    cy.get("#cwu-proposal-individual-legalName").clear().type("new legal name");
-    cy.get("#cwu-proposal-individual-email").clear().type("new@gmail.com");
-    cy.get("#cwu-proposal-individual-phone").clear().type("222-222-2222");
-    cy.get("#cwu-proposal-individual-street1").clear().type("new address1");
-    cy.get("#cwu-proposal-individual-street2").clear().type("new address2");
-    cy.get("#cwu-proposal-individual-city").clear().type("new city");
-    cy.get("#cwu-proposal-individual-region").clear().type("new province");
-    cy.get("#cwu-proposal-individual-mailCode").clear().type("new postal code");
-    cy.get("#cwu-proposal-individual-country").clear().type("new country");
+    cy.get("#cwu-proposal-individual-legalName").clear();
+    cy.get("#cwu-proposal-individual-legalName").type("new legal name");
+    cy.get("#cwu-proposal-individual-email").clear();
+    cy.get("#cwu-proposal-individual-email").type("new@gmail.com");
+    cy.get("#cwu-proposal-individual-phone").clear();
+    cy.get("#cwu-proposal-individual-phone").type("222-222-2222");
+    cy.get("#cwu-proposal-individual-street1").clear();
+    cy.get("#cwu-proposal-individual-street1").type("new address1");
+    cy.get("#cwu-proposal-individual-street2").clear();
+    cy.get("#cwu-proposal-individual-street2").type("new address2");
+    cy.get("#cwu-proposal-individual-city").clear();
+    cy.get("#cwu-proposal-individual-city").type("new city");
+    cy.get("#cwu-proposal-individual-region").clear();
+    cy.get("#cwu-proposal-individual-region").type("new province");
+    cy.get("#cwu-proposal-individual-mailCode").clear();
+    cy.get("#cwu-proposal-individual-mailCode").type("new postal code");
+    cy.get("#cwu-proposal-individual-country").clear();
+    cy.get("#cwu-proposal-individual-country").type("new country");
     cy.get("a").contains("Next").click();
 
     // 2. Proposal
     cy.get("#cwu-proposal-proposalText").clear();
     cy.get("#cwu-proposal-proposalText").should("be.empty");
     cy.get("#cwu-proposal-proposalText").type("new Proposal");
-    cy.get("#cwu-proposal-additional-comments")
-      .clear()
-      .type("new Additional comments");
+    cy.get("#cwu-proposal-additional-comments").clear();
+    cy.get("#cwu-proposal-additional-comments").type("new Additional comments");
     cy.get("a").contains("Next").click();
 
     // 3. Attachments

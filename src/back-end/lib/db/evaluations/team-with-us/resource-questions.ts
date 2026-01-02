@@ -94,7 +94,7 @@ function makeIsTWUOpportunityEvaluationPanelMember(
       return !!opportunity?.evaluationPanel?.find(
         (epm) => epm.user.id === session.user.id && typeFn(epm)
       );
-    } catch (exception) {
+    } catch (_) {
       return false;
     }
   };

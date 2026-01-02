@@ -162,7 +162,7 @@ export async function hasFilePermission(
       }
     }
     return false;
-  } catch (exception) {
+  } catch (_) {
     return false;
   }
 }
