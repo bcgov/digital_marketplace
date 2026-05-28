@@ -360,7 +360,8 @@ function hasDuplicates(arr: string[]): boolean {
 export async function validateTWUProposalTeamMembers(
   connection: db.Connection,
   raw: CreateTWUProposalTeamMemberBody[],
-  organization: Id
+  organization: Id,
+  validResourceIds: Set<Id>
 ): Promise<
   ArrayValidation<
     CreateTWUProposalTeamMemberBody,
@@ -385,19 +386,21 @@ export async function validateTWUProposalTeamMembers(
       const validatedHourlyRate = validateTWUHourlyRate(
         getNumber<number>(rawMember, "hourlyRate")
       );
-      const validatedResource = getValidValue(
-        await db.readOneResource(connection, getString(rawMember, "resource")),
-        null
-      );
+      // Resource must belong to the current opportunity version. This guards
+      // against saves from a form that was opened before the opportunity was
+      // amended; without this, stale resource IDs silently overwrite members
+      // that the opportunity-update porting code already migrated.
+      const rawResource = getString(rawMember, "resource");
+      const isResourceCurrent = validResourceIds.has(rawResource);
       if (
         isValid(validatedMember) &&
         isValid(validatedHourlyRate) &&
-        validatedResource
+        isResourceCurrent
       ) {
         return valid({
           member: validatedMember.value.id,
           hourlyRate: validatedHourlyRate.value,
-          resource: validatedResource.id
+          resource: rawResource
         });
       } else {
         return invalid({
@@ -406,7 +409,11 @@ export async function validateTWUProposalTeamMembers(
             undefined
           ),
           hourlyRate: getInvalidValue(validatedHourlyRate, undefined),
-          resource: ["This resource cannot be found."]
+          resource: isResourceCurrent
+            ? ["This resource cannot be found."]
+            : [
+                "This opportunity was amended after this form was opened. Please refresh the page and re-select your team before saving."
+              ]
         }) as Validation<
           CreateTWUProposalTeamMemberBody,
           CreateTWUProposalTeamMemberValidationErrors
