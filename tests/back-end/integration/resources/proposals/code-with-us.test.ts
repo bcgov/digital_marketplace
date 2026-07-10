@@ -413,3 +413,62 @@ test("code-with-us proposal crud", async () => {
     createdAt: expect.any(String) // TODO: fix this after writing tests
   });
 });
+
+test("code-with-us proposal cannot be created as submitted after the deadline has passed", async () => {
+  const { testUser, testUserSession, testAdminSession, userAppAgent } =
+    await setup();
+
+  // Publish an opportunity with a near-future proposal deadline.
+  const opportunityParams = buildCreateCWUOpportunityParams({
+    status: CWUOpportunityStatus.Published,
+    proposalDeadline: faker.date.soon()
+  });
+  const opportunity = await insertCWUOpportunity(
+    connection,
+    opportunityParams,
+    testAdminSession
+  );
+
+  // Move the deadline into the past and close the opportunity, mirroring the
+  // production auto-close that transitions the opportunity to Evaluation.
+  await updateCWUOpportunityVersion(
+    connection,
+    {
+      ...omit(opportunityParams, ["status"]),
+      id: opportunity.id,
+      proposalDeadline: faker.date.recent()
+    },
+    testAdminSession
+  );
+  await closeCWUOpportunities(connection);
+
+  // A vendor attempts to create a proposal directly as Submitted after the
+  // deadline. Every field below is valid; the ONLY thing wrong is that the
+  // opportunity is no longer accepting proposals. The create endpoint must
+  // reject it (the draft->submit path is already guarded by the deadline).
+  const submittedBody: CreateRequestBody = {
+    opportunity: opportunity.id,
+    proposalText: faker.lorem.paragraphs(),
+    additionalComments: faker.lorem.paragraphs(),
+    proponent: adt("individual", {
+      ...omit(
+        buildCWUIndividualProponent({
+          legalName: testUser.name,
+          ...(testUser.email ? { email: testUser.email } : {})
+        }),
+        ["id", "phone", "street2"]
+      ),
+      phone: getPhoneNumber(),
+      street2: null
+    }),
+    attachments: [],
+    status: CWUProposalStatus.Submitted
+  };
+
+  const createRequest = userAppAgent
+    .post("/api/proposals/code-with-us")
+    .send(submittedBody);
+  const createResult = await requestWithCookie(createRequest, testUserSession);
+
+  expect(createResult.status).toEqual(400);
+});
