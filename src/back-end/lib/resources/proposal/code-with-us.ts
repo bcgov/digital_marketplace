@@ -19,6 +19,7 @@ import {
 import { get, omit } from "lodash";
 import { getNumber, getString, getStringArray } from "shared/lib";
 import { FileRecord } from "shared/lib/resources/file";
+import { isCWUOpportunityAcceptingProposals } from "shared/lib/resources/opportunity/code-with-us";
 import {
   createBlankIndividualProponent,
   CreateCWUProposalStatus,
@@ -310,6 +311,19 @@ const create: crud.Create<
       if (isInvalid(validatedCWUOpportunity)) {
         return invalid({
           notFound: ["The specified opportunity does not exist."]
+        });
+      }
+
+      // Reject submissions once the opportunity is no longer accepting
+      // proposals (not published, or past its deadline). This guards the
+      // create endpoint, which otherwise allows creating a proposal directly
+      // as Submitted after the deadline has passed.
+      if (
+        validatedStatus.value === CWUProposalStatus.Submitted &&
+        !isCWUOpportunityAcceptingProposals(validatedCWUOpportunity.value)
+      ) {
+        return invalid({
+          status: ["This opportunity is no longer accepting proposals."]
         });
       }
 
