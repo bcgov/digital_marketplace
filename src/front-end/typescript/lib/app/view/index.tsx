@@ -167,6 +167,7 @@ function pageToViewPageProps(
         (value) => ({ tag: "pageLearnMoreSWU", value })
       );
 
+    case "vendorInformationSessions":
     case "cwuGuide":
     case "swuGuide":
     case "twuGuide":

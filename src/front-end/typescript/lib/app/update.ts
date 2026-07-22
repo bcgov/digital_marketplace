@@ -22,6 +22,7 @@ import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
 import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
+import * as PageVendorInformationSessions from "front-end/lib/pages/vendor-information-sessions/view";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
 import * as PageOpportunityCWUCreate from "front-end/lib/pages/opportunity/code-with-us/create";
@@ -662,6 +663,18 @@ function initPage(
         pageStatePath: ["pages", "contentView"],
         pageRouteParams: route.value,
         pageInit: PageGuideView.init,
+        pageGetMetadata: PageContentView.component.getMetadata,
+        mapPageMsg(value) {
+          return adt("pageContentView", value);
+        }
+      });
+
+    case "vendorInformationSessions":
+      return component.app.initPage({
+        ...defaultPageInitParams,
+        pageStatePath: ["pages", "contentView"],
+        pageRouteParams: route.value,
+        pageInit: PageVendorInformationSessions.init,
         pageGetMetadata: PageContentView.component.getMetadata,
         mapPageMsg(value) {
           return adt("pageContentView", value);

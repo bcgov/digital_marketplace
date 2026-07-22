@@ -24,6 +24,10 @@ const links: AnchorProps[] = [
     dest: routeDest(adt("contentView", "about"))
   },
   {
+    children: "Vendor Information Sessions",
+    dest: routeDest(adt("vendorInformationSessions", null))
+  },
+  {
     children: "Disclaimer",
     dest: routeDest(adt("contentView", "disclaimer"))
   },
