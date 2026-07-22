@@ -12,6 +12,7 @@ import * as PageLanding from "front-end/lib/pages/landing";
 import * as PageLearnMoreCWU from "front-end/lib/pages/learn-more/code-with-us";
 import * as PageLearnMoreTWU from "front-end/lib/pages/learn-more/team-with-us";
 import * as PageLearnMoreSWU from "front-end/lib/pages/learn-more/sprint-with-us";
+import * as PageVendorInformationSessions from "front-end/lib/pages/vendor-information-sessions/view";
 import * as PageNotFound from "front-end/lib/pages/not-found";
 import * as PageNotice from "front-end/lib/pages/notice";
 import * as PageOpportunityCWUCreate from "front-end/lib/pages/opportunity/code-with-us/create";
@@ -158,6 +159,7 @@ export type Route =
   | ADT<"cwuGuide", PageGuideView.RouteParams>
   | ADT<"swuGuide", PageGuideView.RouteParams>
   | ADT<"twuGuide", PageGuideView.RouteParams>
+  | ADT<"vendorInformationSessions", PageVendorInformationSessions.RouteParams>
   | ADT<"swuOpportunityCompleteView", PageOpportunitySWUComplete.RouteParams>
   | ADT<"cwuOpportunityCompleteView", PageOpportunityCWUComplete.RouteParams>
   | ADT<"twuOpportunityCompleteView", PageOpportunityTWUComplete.RouteParams>;
@@ -168,6 +170,7 @@ export type Route =
 const routesAllowedForUsersWithUnacceptedTerms: Array<Route["tag"]> = [
   "signUpStepTwo",
   "contentView",
+  "vendorInformationSessions",
   "learnMoreCWU",
   "learnMoreTWU",
   "learnMoreSWU",

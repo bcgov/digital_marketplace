@@ -703,6 +703,12 @@ const router: router_.Router<Route> = {
       }
     },
     {
+      path: prefixPath("/vendor-information-sessions"),
+      makeRoute() {
+        return adt("vendorInformationSessions", null);
+      }
+    },
+    {
       path: prefixPath("/cwu/:guideAudience"),
       makeRoute({ path, params }) {
         return PageGuide.isGuideAudience(params.guideAudience)
@@ -1059,6 +1065,8 @@ const router: router_.Router<Route> = {
               return prefixPath(`/notice/${route.value.tag}`);
           }
         })();
+      case "vendorInformationSessions":
+        return prefixPath("/vendor-information-sessions");
       case "cwuGuide":
         return prefixPath(`/cwu/${route.value.guideAudience}`);
       case "swuGuide":
