@@ -1153,6 +1153,7 @@ export const component: Tab.Component<State, Msg> = {
       case SWUOpportunityStatus.EvaluationTeamQuestionsConsensus:
       case SWUOpportunityStatus.EvaluationCodeChallenge:
       case SWUOpportunityStatus.EvaluationTeamScenario:
+      case SWUOpportunityStatus.Processing:
         if (!viewerIsAdmin) {
           return component_.page.actions.none();
         }

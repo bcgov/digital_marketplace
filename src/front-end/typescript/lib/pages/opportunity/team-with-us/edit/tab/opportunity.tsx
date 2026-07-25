@@ -1156,6 +1156,7 @@ export const component: Tab.Component<State, Msg> = {
       case TWUOpportunityStatus.EvaluationResourceQuestionsIndividual:
       case TWUOpportunityStatus.EvaluationResourceQuestionsConsensus:
       case TWUOpportunityStatus.EvaluationChallenge:
+      case TWUOpportunityStatus.Processing:
         if (!viewerIsAdmin) {
           return component_.page.actions.none();
         }

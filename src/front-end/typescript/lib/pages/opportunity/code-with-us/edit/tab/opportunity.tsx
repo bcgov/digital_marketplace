@@ -1128,6 +1128,7 @@ export const component: Tab.Component<State, Msg> = {
           return component_.page.actions.none();
         }
       case CWUOpportunityStatus.Evaluation:
+      case CWUOpportunityStatus.Processing:
         return adt("links", [
           {
             children: "Cancel",
