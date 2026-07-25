@@ -447,7 +447,8 @@ const create: crud.Create<
       const validatedTeamMembers = await validateTWUProposalTeamMembers(
         connection,
         team,
-        validatedOrganization.value.id
+        validatedOrganization.value.id,
+        new Set(validatedTWUOpportunity.value.resources.map((r) => r.id))
       );
 
       /**
@@ -753,7 +754,8 @@ const update: crud.Update<
           const validatedProposalTeam = await validateTWUProposalTeamMembers(
             connection,
             team,
-            validatedOrganization.value.id
+            validatedOrganization.value.id,
+            new Set(twuOpportunity.resources.map((r) => r.id))
           );
 
           /**
@@ -845,7 +847,8 @@ const update: crud.Update<
                     resource
                   })
                 ) ?? [],
-                validatedOrganization.value.id
+                validatedOrganization.value.id,
+                new Set(twuOpportunity.resources.map((r) => r.id))
               ),
               proposalValidation.validateTWUProposalOrganizationServiceAreas(
                 twuOpportunity,
