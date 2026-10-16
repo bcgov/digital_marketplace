@@ -145,7 +145,7 @@ export function formatAmount(
 
 export function parseDate(raw: string): Date | null {
   try {
-    return normalizeDateTimezone(raw).toDate();
+    return moment.tz(raw, TIMEZONE).toDate();
   } catch (_) {
     return null;
   }
