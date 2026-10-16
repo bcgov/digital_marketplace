@@ -325,12 +325,12 @@ export function makeTWUOpportunityInformation(
     ...serviceAreas,
     {
       name: "Estimated Contract Start Date",
-      value: formatDate(opportunity.startDate, false)
+      value: formatDate(opportunity.startDate)
     },
     {
       name: "Estimated Contract End Date",
       value: opportunity.completionDate
-        ? formatDate(opportunity.completionDate, false)
+        ? formatDate(opportunity.completionDate)
         : ""
     },
     { name: "Location", value: opportunity.location },
@@ -339,10 +339,10 @@ export function makeTWUOpportunityInformation(
   if (showDueDate) {
     items.push({
       name: "Proposals Deadline",
-      value: `${formatDate(
+      value: `${formatDate(opportunity.proposalDeadline)} at ${formatTime(
         opportunity.proposalDeadline,
-        false
-      )} at ${formatTime(opportunity.proposalDeadline, true)}`
+        true
+      )}`
     });
   }
   return {

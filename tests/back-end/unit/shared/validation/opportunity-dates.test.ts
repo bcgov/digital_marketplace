@@ -1,4 +1,4 @@
-import { formatDateAndTime, parseDate } from "shared/lib";
+import { formatDateAndTime, formatTime, parseDate } from "shared/lib";
 import { isValid } from "shared/lib/validation";
 import { validateProposalDeadline } from "shared/lib/validation/opportunity/code-with-us";
 
@@ -31,5 +31,21 @@ describe("opportunity dates after B.C.'s move to year-round Pacific time", () =>
     expect(formatDateAndTime(new Date("2026-12-01T23:00:00Z"))).toBe(
       "Dec 1, 2026 4:00 PM"
     );
+  });
+
+  // The IM/IT Date and Time Standard replaces PST and PDT with PCT from
+  // November 1, 2026, at 2 AM PDT (09:00 UTC), when clocks would have moved
+  // back. Earlier times keep PST (UTC-8) or PDT (UTC-7), whatever label the
+  // time zone database gives them.
+  it.each([
+    ["2025-12-02T00:00:00Z", "4:00 PM PST"],
+    ["2026-03-08T09:59:00Z", "1:59 AM PST"],
+    ["2026-03-08T10:00:00Z", "3:00 AM PDT"],
+    ["2026-07-15T23:00:00Z", "4:00 PM PDT"],
+    ["2026-11-01T08:59:00Z", "1:59 AM PDT"],
+    ["2026-11-01T09:00:00Z", "2:00 AM PCT"],
+    ["2026-12-01T23:00:00Z", "4:00 PM PCT"]
+  ])("labels %s as %s", (instant, expected) => {
+    expect(formatTime(new Date(instant), true)).toBe(expected);
   });
 });

@@ -222,15 +222,13 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                   ? {
                       tag: "date",
                       date: opp.publishedAt,
-                      label: "Published",
-                      withTimeZone: true
+                      label: "Published"
                     }
                   : null,
                 {
                   tag: "date",
                   date: opp.updatedAt,
-                  label: "Updated",
-                  withTimeZone: true
+                  label: "Updated"
                 }
               ]}
             />
@@ -676,7 +674,7 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             <OpportunityInfo
               icon="comment-dollar-outline"
               name="Proposal Deadline"
-              value={formatDate(state.opportunity.proposalDeadline, true)}
+              value={formatDate(state.opportunity.proposalDeadline)}
             />
           </Col>
         </Row>
