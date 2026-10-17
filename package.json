@@ -127,7 +127,7 @@
     "mime-types": "^3.0.1",
     "module-alias": "^2.2.2",
     "moment": "^2.24.0",
-    "moment-timezone": "^0.6.0",
+    "moment-timezone": "^0.6.5",
     "multiparty": "^4.2.1",
     "nodemailer": "^7.0.5",
     "openapi-types": "^12.1.3",

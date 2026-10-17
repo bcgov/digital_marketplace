@@ -291,15 +291,13 @@ const Header: component_.base.ComponentView<State, Msg> = ({
                   ? {
                       tag: "date",
                       date: opp.publishedAt,
-                      label: "Published",
-                      withTimeZone: true
+                      label: "Published"
                     }
                   : null,
                 {
                   tag: "date",
                   date: opp.updatedAt,
-                  label: "Updated",
-                  withTimeZone: true
+                  label: "Updated"
                 }
               ]}
             />
@@ -756,7 +754,7 @@ const HowToApply: component_.base.ComponentView<State, Msg> = ({ state }) => {
             <OpportunityInfo
               icon="comment-dollar-outline"
               name="Closing Date"
-              value={formatDate(state.opportunity.proposalDeadline, true)}
+              value={formatDate(state.opportunity.proposalDeadline)}
             />
           </Col>
         </Row>
@@ -805,15 +803,15 @@ const KeyDates: component_.base.ComponentView<State, Msg> = ({ state }) => {
             </p>
             <p className="mb-2">
               <strong>Contract Award Date (Anticipated)</strong>{" "}
-              <span className="ms-3">{formatDate(assignment, false)}</span>
+              <span className="ms-3">{formatDate(assignment)}</span>
             </p>
             <p className="mb-2">
               <strong>Contract Start Date (Anticipated)</strong>{" "}
-              <span className="ms-3">{formatDate(startDate, false)}</span>
+              <span className="ms-3">{formatDate(startDate)}</span>
             </p>
             <p className="mb-2">
               <strong>Contract Completion Date (Anticipated)</strong>{" "}
-              <span className="ms-3">{formatDate(completionDate, false)}</span>
+              <span className="ms-3">{formatDate(completionDate)}</span>
             </p>
           </Col>
         </Row>

@@ -1,7 +1,11 @@
 import { count } from "@wordpress/wordcount";
 import { get, isArray, isBoolean, reduce, repeat } from "lodash";
 import moment, { isDate, Moment } from "moment-timezone";
-import { TIMEZONE } from "shared/config";
+import {
+  PACIFIC_TIME_ABBREVIATION,
+  PACIFIC_TIME_START,
+  TIMEZONE
+} from "shared/config";
 import { Comparison } from "shared/lib/types";
 import { invalid, valid, Validation } from "shared/lib/validation";
 
@@ -145,7 +149,7 @@ export function formatAmount(
 
 export function parseDate(raw: string): Date | null {
   try {
-    return normalizeDateTimezone(raw).toDate();
+    return moment.tz(raw, TIMEZONE).toDate();
   } catch (_) {
     return null;
   }
@@ -160,9 +164,24 @@ export function rawFormatDate(
   formatType: string,
   withTimeZone: boolean
 ): string {
-  return normalizeDateTimezone(date).format(
-    `${formatType}${withTimeZone ? " z" : ""}`
-  );
+  const normalized = normalizeDateTimezone(date);
+  const formatted = normalized.format(formatType);
+  return withTimeZone
+    ? `${formatted} ${timeZoneAbbreviation(normalized)}`
+    : formatted;
+}
+
+/**
+ * B.C.'s abbreviations under the IM/IT Date and Time Standard: PST (UTC-8) and
+ * PDT (UTC-7) until November 1, 2026, then PCT. The offset comes from the time
+ * zone database, but the label does not, because the database's labels for
+ * 2026 are provisional.
+ */
+function timeZoneAbbreviation(date: Moment): string {
+  if (!date.isBefore(PACIFIC_TIME_START)) {
+    return PACIFIC_TIME_ABBREVIATION;
+  }
+  return date.utcOffset() === -7 * 60 ? "PDT" : "PST";
 }
 
 export function formatDateAtTime(date: Date, withTimeZone = false): string {
@@ -173,8 +192,8 @@ export function formatDateAndTime(date: Date, withTimeZone = false): string {
   return rawFormatDate(date, "lll", withTimeZone);
 }
 
-export function formatDate(date: Date, withTimeZone = false): string {
-  return rawFormatDate(date, "ll", withTimeZone);
+export function formatDate(date: Date): string {
+  return rawFormatDate(date, "ll", false);
 }
 
 export function formatTime(date: Date, withTimeZone = false): string {

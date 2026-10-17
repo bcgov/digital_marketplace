@@ -450,10 +450,10 @@ export function makeCWUOpportunityInformation(
   if (showDueDate) {
     items.push({
       name: "Proposals Deadline",
-      value: `${formatDate(
+      value: `${formatDate(opportunity.proposalDeadline)} at ${formatTime(
         opportunity.proposalDeadline,
-        false
-      )} at ${formatTime(opportunity.proposalDeadline, true)}`
+        true
+      )}`
     });
   }
   return {

@@ -270,15 +270,13 @@ const Header: component_.base.ComponentView<ValidState, Msg> = ({
                   ? {
                       tag: "date",
                       date: opportunity.publishedAt,
-                      label: "Published",
-                      withTimeZone: true
+                      label: "Published"
                     }
                   : null,
                 {
                   tag: "date",
                   date: opportunity.updatedAt,
-                  label: "Updated",
-                  withTimeZone: true
+                  label: "Updated"
                 }
               ]}
             />
@@ -676,8 +674,7 @@ const Phase: component_.base.View<PhaseProps> = ({ icon, phase }) => {
             className="fw-bold mb-1"
           />
           <p className="pb-4 border-bottom mb-4">
-            {formatDate(phase.startDate, true)} to{" "}
-            {formatDate(phase.completionDate, true)}
+            {formatDate(phase.startDate)} to {formatDate(phase.completionDate)}
           </p>
           <IconInfo
             name="toolbox-outline"
@@ -799,7 +796,7 @@ const HowToApply: component_.base.ComponentView<ValidState, Msg> = ({
             <OpportunityInfo
               icon="comment-dollar-outline"
               name="Proposal Deadline"
-              value={formatDate(opportunity.proposalDeadline, true)}
+              value={formatDate(opportunity.proposalDeadline)}
             />
           </Col>
         </Row>

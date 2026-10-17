@@ -6,7 +6,7 @@ import { formatDate, formatDateAndTime, formatTime } from "shared/lib";
 function format(date: SingleDate): string {
   switch (date.tag) {
     case "date":
-      return formatDate(date.date, date.withTimeZone);
+      return formatDate(date.date);
     case "time":
       return formatTime(date.date, date.withTimeZone);
     case "dateAndTime":
@@ -18,6 +18,10 @@ interface DateDefinition<Tag> {
   tag: Tag;
   date: Date;
   label?: string;
+}
+
+// A time zone label only means something next to a time.
+interface TimeDefinition<Tag> extends DateDefinition<Tag> {
   withTimeZone?: boolean;
 }
 
@@ -35,8 +39,8 @@ export const SingleDate: component.base.View<
 
 type SingleDate =
   | DateDefinition<"date">
-  | DateDefinition<"time">
-  | DateDefinition<"dateAndTime">;
+  | TimeDefinition<"time">
+  | TimeDefinition<"dateAndTime">;
 
 export interface Props {
   dates: Array<SingleDate | null>;
