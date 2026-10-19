@@ -25,6 +25,13 @@ export const VENDOR_IDP_NAME = "GitHub";
 
 export const TIMEZONE = "America/Vancouver";
 
+// The IM/IT Date and Time Standard replaces PST and PDT with PCT in displayed
+// text from November 1, 2026. The label changes at 2 AM PDT that day, when
+// clocks would have moved back.
+export const PACIFIC_TIME_START = new Date("2026-11-01T09:00:00Z");
+
+export const PACIFIC_TIME_ABBREVIATION = "PCT";
+
 export const CWU_MAX_BUDGET = 70000;
 
 export const SWU_MAX_BUDGET = 5000000;

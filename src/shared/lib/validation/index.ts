@@ -1,6 +1,7 @@
 import * as immutable from "immutable";
 import { uniq } from "lodash";
-import moment from "moment";
+import moment from "moment-timezone";
+import { TIMEZONE } from "shared/config";
 import {
   compareDates,
   countWords,
@@ -336,7 +337,7 @@ export function validateNumberWithPrecision(
 // Date Validators.
 
 function parseDate(raw: string): Date | null {
-  const parsed = moment(raw);
+  const parsed = moment.tz(raw, TIMEZONE);
   return parsed.isValid() ? parsed.toDate() : null;
 }
 
